@@ -56,6 +56,7 @@ galileo.gnu
 juqueen.perf
 plx.perf
 cygwin.perf
+galileo.ifort
 *~
 opt_report.txt
 *.optrpt
