@@ -57,7 +57,7 @@ MODULES     = $(addsuffix .mod, $(addprefix $(OBJ_FOLDER)/, $(basename $(FILES))
 EXECUTABLE  = $(addprefix $(EXE_FOLDER)/, $(EXE))
 
 all: $(OBJECTS) $(MODULES)
-	$(FC) $(OPTFC) -L$(FFTW_LIB) -L$(BOOST_LIB) -L$(OTHER_LIB) $(OBJECTS) -o $(EXECUTABLE) $(OTHER_LINKS) $(STDCPP_LINK) $(FFTW) $(BOOST_FS) $(BOOST_S) $(MATH_LIB) $(REDIRECT)
+  $(FC) $(OPTFC) -L$(FFTW_LIB) -L$(BOOST_LIB) -L$(OTHER_LIB) $(OBJECTS) -o $(EXECUTABLE) $(OTHER_LINKS) $(STDCPP_LINK) $(FFTW) $(BOOST_FS) $(BOOST_S) $(MATH_LIB) $(REDIRECT)
 
 brew: FFTW_LIB = /usr/local/Cellar/fftw/3.3.4_1/lib
 brew: FFTW_INC = /usr/local/Cellar/fftw/3.3.4_1/include
@@ -193,162 +193,162 @@ galileo_perf: all
 
 #shared_variables_and_params start
 $(OBJ_FOLDER)/precision_def.o: $(SRC_FOLDER)/precision_def.F90
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/precision_def.mod: $(SRC_FOLDER)/precision_def.F90 $(OBJ_FOLDER)/precision_def.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/mpi_var.o: $(SRC_FOLDER)/mpi_var.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/mpi_var.mod: $(SRC_FOLDER)/mpi_var.f90 $(OBJ_FOLDER)/mpi_var.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/phys_param.o: $(SRC_FOLDER)/phys_param.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/phys_param.mod: $(SRC_FOLDER)/phys_param.f90 $(OBJ_FOLDER)/phys_param.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/grid_and_particles.o: $(SRC_FOLDER)/grid_and_particles.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/grid_and_particles.mod: $(SRC_FOLDER)/grid_and_particles.f90 $(OBJ_FOLDER)/grid_and_particles.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/code_util.o: $(SRC_FOLDER)/code_util.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/code_util.mod: $(SRC_FOLDER)/code_util.f90 $(OBJ_FOLDER)/code_util.o
-	@true
+  @true
 #shared_variables_and_params end
 
 $(OBJ_FOLDER)/cpp_folder_tree.o: $(SRC_FOLDER)/cpp_folder_tree.cpp 
-	$(CC) $(OPTCC) -I$(BOOST_INC) -c -o $@ $< $(REDIRECT)
+  $(CC) $(OPTCC) -I$(BOOST_INC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/cpp_folder_tree.mod: $(SRC_FOLDER)/cpp_folder_tree.cpp $(OBJ_FOLDER)/cpp_folder_tree.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/system_utilities.o: $(SRC_FOLDER)/system_utilities.f90 $(OBJ_FOLDER)/mpi_var.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/system_utilities.mod: $(SRC_FOLDER)/system_utilities.f90 $(OBJ_FOLDER)/system_utilities.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/util.o: $(SRC_FOLDER)/util.f90 $(OBJ_FOLDER)/code_util.mod $(OBJ_FOLDER)/grid_and_particles.mod \
                       $(OBJ_FOLDER)/phys_param.mod $(OBJ_FOLDER)/mpi_var.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $(SRC_FOLDER)/util.f90 $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $(SRC_FOLDER)/util.f90 $(REDIRECT)
 $(OBJ_FOLDER)/util.mod: $(SRC_FOLDER)/util.f90 $(OBJ_FOLDER)/util.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/fft_lib.o: $(SRC_FOLDER)/fft_lib.F90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) $(FFTW_DEF) -I$(FFTW_INC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) $(FFTW_DEF) -I$(FFTW_INC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/fft_lib.mod: $(SRC_FOLDER)/fft_lib.F90 $(OBJ_FOLDER)/fft_lib.o
-	@true
+  @true
 
 #pic_mod start
 $(OBJ_FOLDER)/struct_def.o: $(SRC_FOLDER)/struct_def.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/struct_def.mod: $(SRC_FOLDER)/struct_def.f90 $(OBJ_FOLDER)/struct_def.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/fftg_param.o: $(SRC_FOLDER)/fftg_param.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/fftg_param.mod: $(SRC_FOLDER)/fftg_param.f90 $(OBJ_FOLDER)/fftg_param.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/grid_param.o: $(SRC_FOLDER)/grid_param.f90 $(OBJ_FOLDER)/struct_def.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/grid_param.mod: $(SRC_FOLDER)/grid_param.f90 $(OBJ_FOLDER)/grid_param.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/control_bunch_input.o: $(SRC_FOLDER)/control_bunch_input.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/control_bunch_input.mod: $(SRC_FOLDER)/control_bunch_input.f90 $(OBJ_FOLDER)/control_bunch_input.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/ionize.o: $(SRC_FOLDER)/ionize.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/ionize.mod: $(SRC_FOLDER)/ionize.f90 $(OBJ_FOLDER)/ionize.o
-	@true
+  @true
 
 #common_param_and_fields start
 $(OBJ_FOLDER)/pstruct_data.o: $(SRC_FOLDER)/pstruct_data.f90 $(OBJ_FOLDER)/struct_def.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pstruct_data.mod: $(SRC_FOLDER)/pstruct_data.f90 $(OBJ_FOLDER)/pstruct_data.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/fstruct_data.o: $(SRC_FOLDER)/fstruct_data.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/fstruct_data.mod: $(SRC_FOLDER)/fstruct_data.f90 $(OBJ_FOLDER)/fstruct_data.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/all_param.o: $(SRC_FOLDER)/all_param.f90 $(OBJ_FOLDER)/fftg_param.mod \
                            $(OBJ_FOLDER)/control_bunch_input.mod $(OBJ_FOLDER)/precision_def.mod \
                            $(OBJ_FOLDER)/ionize.mod $(OBJ_FOLDER)/mpi_var.mod \
                            $(OBJ_FOLDER)/phys_param.mod $(OBJ_FOLDER)/grid_and_particles.mod \
                            $(OBJ_FOLDER)/code_util.mod $(OBJ_FOLDER)/grid_param.mod 
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/all_param.mod: $(SRC_FOLDER)/all_param.f90 $(OBJ_FOLDER)/all_param.o
-	@true
+  @true
 #common_param_and_fields end
 #pic_mod end
 
 $(OBJ_FOLDER)/particles.o: $(SRC_FOLDER)/particles.f90 $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/precision_def.mod \
                            $(OBJ_FOLDER)/pstruct_data.mod $(OBJ_FOLDER)/fstruct_data.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/particles.mod: $(SRC_FOLDER)/particles.f90 $(OBJ_FOLDER)/particles.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/parallel.o: $(SRC_FOLDER)/parallel.F90 $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/pstruct_data.mod \
                           $(OBJ_FOLDER)/fstruct_data.mod $(OBJ_FOLDER)/fft_lib.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/parallel.mod: $(SRC_FOLDER)/parallel.F90 $(OBJ_FOLDER)/parallel.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pic_rutil.o: $(SRC_FOLDER)/pic_rutil.f90 $(OBJ_FOLDER)/pstruct_data.mod $(OBJ_FOLDER)/util.mod \
                            $(OBJ_FOLDER)/fstruct_data.mod $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/parallel.mod \
                            $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pic_rutil.mod: $(SRC_FOLDER)/pic_rutil.f90 $(OBJ_FOLDER)/pic_rutil.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/der_lib.o: $(SRC_FOLDER)/der_lib.f90 $(OBJ_FOLDER)/util.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/der_lib.mod: $(SRC_FOLDER)/der_lib.f90 $(OBJ_FOLDER)/der_lib.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/grid_fields.o: $(SRC_FOLDER)/grid_fields.f90 $(OBJ_FOLDER)/util.mod $(OBJ_FOLDER)/der_lib.mod \
                              $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/fft_lib.mod $(OBJ_FOLDER)/precision_def.mod \
                              $(OBJ_FOLDER)/parallel.mod $(OBJ_FOLDER)/fstruct_data.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/grid_fields.mod: $(SRC_FOLDER)/grid_fields.f90 $(OBJ_FOLDER)/grid_fields.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pdf_moments.o: $(SRC_FOLDER)/pdf_moments.f90 $(OBJ_FOLDER)/all_param.mod \
                              $(OBJ_FOLDER)/fstruct_data.mod $(OBJ_FOLDER)/pic_rutil.mod \
                              $(OBJ_FOLDER)/grid_fields.mod $(OBJ_FOLDER)/fstruct_data.mod \
                              $(OBJ_FOLDER)/pstruct_data.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pdf_moments.mod: $(SRC_FOLDER)/pdf_moments.f90 $(OBJ_FOLDER)/pdf_moments.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pic_in.o: $(SRC_FOLDER)/pic_in.f90 $(OBJ_FOLDER)/particles.mod $(OBJ_FOLDER)/pic_rutil.mod \
                         $(OBJ_FOLDER)/fft_lib.mod $(OBJ_FOLDER)/grid_fields.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pic_in.mod: $(SRC_FOLDER)/pic_in.f90 $(OBJ_FOLDER)/pic_in.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pic_out.o: $(SRC_FOLDER)/pic_out.f90 $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/pstruct_data.mod \
                          $(OBJ_FOLDER)/fstruct_data.mod $(OBJ_FOLDER)/parallel.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pic_out.mod: $(SRC_FOLDER)/pic_out.f90 $(OBJ_FOLDER)/pic_out.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pic_dump.o: $(SRC_FOLDER)/pic_dump.f90 $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/pstruct_data.mod \
                           $(OBJ_FOLDER)/fstruct_data.mod $(OBJ_FOLDER)/parallel.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pic_dump.mod: $(SRC_FOLDER)/pic_dump.f90 $(OBJ_FOLDER)/pic_dump.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pic_evolve_in_time.o: $(SRC_FOLDER)/pic_evolve_in_time.f90 $(OBJ_FOLDER)/pic_rutil.mod \
                                     $(OBJ_FOLDER)/particles.mod $(OBJ_FOLDER)/grid_fields.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pic_evolve_in_time.mod: $(SRC_FOLDER)/pic_evolve_in_time.f90 $(OBJ_FOLDER)/pic_evolve_in_time.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o: $(SRC_FOLDER)/pwfa_bunch_field_calculation.f90 \
                                               $(OBJ_FOLDER)/pic_in.mod \
@@ -361,36 +361,36 @@ $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o: $(SRC_FOLDER)/pwfa_bunch_field_cal
                                               $(OBJ_FOLDER)/pstruct_data.mod \
                                               $(OBJ_FOLDER)/fstruct_data.mod \
                                               $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pwfa_bunch_field_calculation.mod: $(SRC_FOLDER)/pwfa_bunch_field_calculation.f90 \
-	                                            $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o
-	@true
+                                              $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o
+  @true
 
 $(OBJ_FOLDER)/read_input.o: $(SRC_FOLDER)/read_input.f90 $(OBJ_FOLDER)/control_bunch_input.mod \
                             $(OBJ_FOLDER)/grid_and_particles.mod $(OBJ_FOLDER)/phys_param.mod \
                             $(OBJ_FOLDER)/code_util.mod $(OBJ_FOLDER)/mpi_var.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/read_input.mod: $(SRC_FOLDER)/read_input.f90 $(OBJ_FOLDER)/read_input.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/pwfa_output_addons.o: $(SRC_FOLDER)/pwfa_output_addons.f90 $(OBJ_FOLDER)/pic_in.mod \
                                     $(OBJ_FOLDER)/pic_evolve_in_time.mod $(OBJ_FOLDER)/read_input.mod \
                                     $(OBJ_FOLDER)/pdf_moments.mod $(OBJ_FOLDER)/system_utilities.mod \
                                     $(OBJ_FOLDER)/pic_out.mod $(OBJ_FOLDER)/pic_dump.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pwfa_output_addons.mod: $(SRC_FOLDER)/pwfa_output_addons.f90 $(OBJ_FOLDER)/pwfa_output_addons.o
-	@true
+  @true
 
 $(OBJ_FOLDER)/ALaDyn.o: $(SRC_FOLDER)/ALaDyn.F90 $(OBJ_FOLDER)/pic_in.mod $(OBJ_FOLDER)/pic_out.mod $(OBJ_FOLDER)/pic_dump.mod \
                         $(OBJ_FOLDER)/read_input.mod $(OBJ_FOLDER)/pdf_moments.mod $(OBJ_FOLDER)/pwfa_output_addons.mod \
                         $(OBJ_FOLDER)/pic_evolve_in_time.mod $(OBJ_FOLDER)/system_utilities.mod $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
+  $(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/ALaDyn.mod: $(SRC_FOLDER)/ALaDyn.F90 $(OBJ_FOLDER)/ALaDyn.o
-	@true
+  @true
 
 clean:
-	rm -f $(OBJECTS) $(MODULES)
+  rm -f $(OBJECTS) $(MODULES)
 
 cleanall:
-	rm -f $(OBJECTS) $(MODULES) $(EXECUTABLE) opt_report.txt *.exe *~ .*~ log.txt *.optrpt bin/*.optrpt
+  rm -f $(OBJECTS) $(MODULES) $(EXECUTABLE) opt_report.txt *.exe *~ .*~ log.txt *.optrpt bin/*.optrpt
 

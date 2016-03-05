@@ -1,24 +1,24 @@
-!*****************************************************************************************************!
-!             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
-!                                 Alberto Marocchino                                                  !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !                                 Alberto Marocchino                                                  !
+ !*****************************************************************************************************!
 
-!*****************************************************************************************************!
-!  This file is part of ALaDyn.                                                                       !
-!                                                                                                     !
-!  ALaDyn is free software: you can redistribute it and/or modify                                     !
-!  it under the terms of the GNU General Public License as published by                               !
-!  the Free Software Foundation, either version 3 of the License, or                                  !
-!  (at your option) any later version.                                                                !
-!                                                                                                     !
-!  ALaDyn is distributed in the hope that it will be useful,                                          !
-!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
-!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
-!  GNU General Public License for more details.                                                       !
-!                                                                                                     !
-!  You should have received a copy of the GNU General Public License                                  !
-!  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !  This file is part of ALaDyn.                                                                       !
+ !                                                                                                     !
+ !  ALaDyn is free software: you can redistribute it and/or modify                                     !
+ !  it under the terms of the GNU General Public License as published by                               !
+ !  the Free Software Foundation, either version 3 of the License, or                                  !
+ !  (at your option) any later version.                                                                !
+ !                                                                                                     !
+ !  ALaDyn is distributed in the hope that it will be useful,                                          !
+ !  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
+ !  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
+ !  GNU General Public License for more details.                                                       !
+ !                                                                                                     !
+ !  You should have received a copy of the GNU General Public License                                  !
+ !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
+ !*****************************************************************************************************!
 
  module pic_evolve_in_time
  use precision_def
@@ -2907,11 +2907,11 @@
   Ltz=Lorentz_bfact(ic)
   if(np >0)then
    if(ibmod==0)                      call set_part3d_twofield_acc(ebf,ebf_bunch,&
-                                     bunch(ic),ebfb,1,np,n_st,xm,ym,zm)
+    bunch(ic),ebfb,1,np,n_st,xm,ym,zm)
    if(ibmod==1.and. .not.L_Bpoloidal)call set_part3d_two_bfield_acc(ebf,ebf_bunch,&
-                                     ebf1_bunch,bunch(ic),ebfb,1,np,n_st,xm,ym,zm)
+    ebf1_bunch,bunch(ic),ebfb,1,np,n_st,xm,ym,zm)
    if(ibmod==1.and.      L_Bpoloidal)call set_part3d_three_bfield_acc(ebf,ebf_bunch,&
-                                     ebf1_bunch,ebf0_bunch,bunch(ic),ebfb,1,np,n_st,xm,ym,zm)
+    ebf1_bunch,ebf0_bunch,bunch(ic),ebfb,1,np,n_st,xm,ym,zm)
    if(initial_time)call init_lpf_momenta(bunch(ic),ebfb,1,np,dt_loc,Ltz)
    call lpf_momenta_and_positions(bunch(ic),ebfb,1,np,dt_loc,vb,Ltz)
    if(ompe>0.0)call curr_accumulate(bunch(ic),ebfb,1,np,iform,n_st,xm,ym,zm)

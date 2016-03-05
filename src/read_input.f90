@@ -1,24 +1,24 @@
-!*****************************************************************************************************!
-!             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
-!                                 Alberto Marocchino                                                  !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !                                 Alberto Marocchino                                                  !
+ !*****************************************************************************************************!
 
-!*****************************************************************************************************!
-!  This file is part of ALaDyn.                                                                       !
-!                                                                                                     !
-!  ALaDyn is free software: you can redistribute it and/or modify                                     !
-!  it under the terms of the GNU General Public License as published by                               !
-!  the Free Software Foundation, either version 3 of the License, or                                  !
-!  (at your option) any later version.                                                                !
-!                                                                                                     !
-!  ALaDyn is distributed in the hope that it will be useful,                                          !
-!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
-!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
-!  GNU General Public License for more details.                                                       !
-!                                                                                                     !
-!  You should have received a copy of the GNU General Public License                                  !
-!  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !  This file is part of ALaDyn.                                                                       !
+ !                                                                                                     !
+ !  ALaDyn is free software: you can redistribute it and/or modify                                     !
+ !  it under the terms of the GNU General Public License as published by                               !
+ !  the Free Software Foundation, either version 3 of the License, or                                  !
+ !  (at your option) any later version.                                                                !
+ !                                                                                                     !
+ !  ALaDyn is distributed in the hope that it will be useful,                                          !
+ !  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
+ !  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
+ !  GNU General Public License for more details.                                                       !
+ !                                                                                                     !
+ !  You should have received a copy of the GNU General Public License                                  !
+ !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
+ !*****************************************************************************************************!
 
  module read_input
 
@@ -370,7 +370,7 @@
  write(1,nml=BPOLOIDAL,ERR=30)
 30 continue
  close(1)
-END SUBROUTINE
+ END SUBROUTINE
 
 
 
@@ -435,24 +435,24 @@ END SUBROUTINE
  nprocz=-1
  end subroutine read_input_data
 
-!------------------------------------------------------!
-  subroutine nml_consistency_check_number_of_particles()
-  !--->case 1: error in input files all values left to -1
-    if( all(ppc==-1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1) ) then
-      write(6,'(A)') 'No number of particles has been selected. Force ppc(:)=8'
-      ppc=8
+ !------------------------------------------------------!
+ subroutine nml_consistency_check_number_of_particles()
+ !--->case 1: error in input files all values left to -1
+ if( all(ppc==-1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1) ) then
+  write(6,'(A)') 'No number of particles has been selected. Force ppc(:)=8'
+  ppc=8
   !--->case 2: y and z with the same number of particles
-    elseif( all(ppc==-1) .and. all(np_per_xc>=0) .and. all(np_per_yc>=0) .and. all(np_per_zc==-1) ) then
-      write(6,'(A)') 'number of particles: strategy: same number of particles along y and z'
-      np_per_zc=np_per_yc
+ elseif( all(ppc==-1) .and. all(np_per_xc>=0) .and. all(np_per_yc>=0) .and. all(np_per_zc==-1) ) then
+  write(6,'(A)') 'number of particles: strategy: same number of particles along y and z'
+  np_per_zc=np_per_yc
   !--->case 3: error
-elseif( all(ppc>=1) .and. ( all(np_per_xc>=1) .or. all(np_per_yc>=1) .or. all(np_per_zc>=1) ) ) then
-      write(6,'(A)') 'Error in the number of particle selection: ppc-strategy chosen'
-      np_per_xc=-1
-      np_per_yc=-1
-      np_per_zc=-1
-    endif
-  end subroutine nml_consistency_check_number_of_particles
+ elseif( all(ppc>=1) .and. ( all(np_per_xc>=1) .or. all(np_per_yc>=1) .or. all(np_per_zc>=1) ) ) then
+  write(6,'(A)') 'Error in the number of particle selection: ppc-strategy chosen'
+  np_per_xc=-1
+  np_per_yc=-1
+  np_per_zc=-1
+ endif
+ end subroutine nml_consistency_check_number_of_particles
 
 
 

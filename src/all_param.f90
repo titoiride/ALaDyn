@@ -1,23 +1,23 @@
-!*****************************************************************************************************!
-!             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !*****************************************************************************************************!
 
-!*****************************************************************************************************!
-!  This file is part of ALaDyn.                                                                       !
-!                                                                                                     !
-!  ALaDyn is free software: you can redistribute it and/or modify                                     !
-!  it under the terms of the GNU General Public License as published by                               !
-!  the Free Software Foundation, either version 3 of the License, or                                  !
-!  (at your option) any later version.                                                                !
-!                                                                                                     !
-!  ALaDyn is distributed in the hope that it will be useful,                                          !
-!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
-!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
-!  GNU General Public License for more details.                                                       !
-!                                                                                                     !
-!  You should have received a copy of the GNU General Public License                                  !
-!  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !  This file is part of ALaDyn.                                                                       !
+ !                                                                                                     !
+ !  ALaDyn is free software: you can redistribute it and/or modify                                     !
+ !  it under the terms of the GNU General Public License as published by                               !
+ !  the Free Software Foundation, either version 3 of the License, or                                  !
+ !  (at your option) any later version.                                                                !
+ !                                                                                                     !
+ !  ALaDyn is distributed in the hope that it will be useful,                                          !
+ !  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
+ !  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
+ !  GNU General Public License for more details.                                                       !
+ !                                                                                                     !
+ !  You should have received a copy of the GNU General Public License                                  !
+ !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
+ !*****************************************************************************************************!
 
  module all_param
 
@@ -182,7 +182,7 @@
  if(iform>1)Charge_cons=.false.
  !==========================
  nsp_run=nsp
-!===============================
+ !===============================
  do i=1, nsp-1                  !ion species
   if(ion_min(i)< ion_max(i))nsp_ionz=i+1
  enddo
@@ -324,7 +324,7 @@
    Envelope=.true.
   endif
   !=======================
- ! Code Units for laser fields
+  ! Code Units for laser fields
   nc=pi/(rc0*lam0*lam0)    !critical density in units n0=10^21/cm^3=10^9/mu^3
   nm_fact=nc*(1.e+9)       ! critical density (1/mu^3)
   oml=pi2/lam0             !laser frequency in unit c/l0
@@ -785,11 +785,11 @@
  !--------------------------
 
  !------> Particle organisation
-  subroutine distribute_number_of_particles()
-    if( all(ppc>=1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1) ) then
-      call from_ppc_to_npx_npy_npz()
-    endif
-  end subroutine distribute_number_of_particles
+ subroutine distribute_number_of_particles()
+ if( all(ppc>=1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1) ) then
+  call from_ppc_to_npx_npy_npz()
+ endif
+ end subroutine distribute_number_of_particles
 
  subroutine from_ppc_to_npx_npy_npz()
  !--->Subdivide ppc into np_per_xc,np_per_yc and theoretically into np_per_zc
@@ -799,77 +799,77 @@
 
  !verify input 'ppc' are not prime numbers
  do i=1,6
-   do while(ISPRIME(ppc(i)))
-     if(pe0) write(6,'(A,I1,A,I3)')'The input parameter ppc(',i,') is prime - corrected to >',ppc(i)+1
-       ppc(i)=ppc(i)+1
-     enddo
+  do while(ISPRIME(ppc(i)))
+   if(pe0) write(6,'(A,I1,A,I3)')'The input parameter ppc(',i,') is prime - corrected to >',ppc(i)+1
+   ppc(i)=ppc(i)+1
+  enddo
  enddo
 
  !subdivide ppc into np_per_xc,yc,zc
  do i=1,6
-   ALLOCATE(factors(ppc(i)/2))
-   CALL PRIMEFACTORS(ppc(i),factors,number_of_factors)
-   if(ndim==2) then
-       np_per_xc(i)  = factors(1)
-       np_per_yc(i)  = PRODUCT(factors(2:number_of_factors))
-       if(pe0) write(6,'(A,I2,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),' particles'
-   elseif(ndim==3) then
-     if(number_of_factors>2) then
-       np_per_xc(i)  = factors(1)
-       np_per_yc(i)  = factors(2)
-       np_per_zc(i)  = PRODUCT(factors(3:number_of_factors))
-     else
-       np_per_xc(i)  = 1
-       np_per_yc(i)  = factors(1)
-       np_per_zc(i)  = factors(2)
-     endif
-   if(pe0) write(6,'(A,I2,A,I3,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),'*',np_per_zc(i),' particles'
+  ALLOCATE(factors(ppc(i)/2))
+  CALL PRIMEFACTORS(ppc(i),factors,number_of_factors)
+  if(ndim==2) then
+   np_per_xc(i)  = factors(1)
+   np_per_yc(i)  = PRODUCT(factors(2:number_of_factors))
+   if(pe0) write(6,'(A,I2,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),' particles'
+  elseif(ndim==3) then
+   if(number_of_factors>2) then
+    np_per_xc(i)  = factors(1)
+    np_per_yc(i)  = factors(2)
+    np_per_zc(i)  = PRODUCT(factors(3:number_of_factors))
+   else
+    np_per_xc(i)  = 1
+    np_per_yc(i)  = factors(1)
+    np_per_zc(i)  = factors(2)
    endif
-   deallocate(factors)
+   if(pe0) write(6,'(A,I2,A,I3,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),'*',np_per_zc(i),' particles'
+  endif
+  deallocate(factors)
  enddo
  end subroutine from_ppc_to_npx_npy_npz
 
  FUNCTION ISPRIME(num)
-  IMPLICIT NONE
-  INTEGER, INTENT(IN) :: num  !input number
-  INTEGER :: i, number_factors
-  LOGICAL :: ISPRIME
+ IMPLICIT NONE
+ INTEGER, INTENT(IN) :: num  !input number
+ INTEGER :: i, number_factors
+ LOGICAL :: ISPRIME
 
-  ISPRIME=.TRUE.
+ ISPRIME=.TRUE.
 
-  Do i=2,num-1
-    IF( MOD(num,i) == 0 ) then
-      ISPRIME=.FALSE.
-      EXIT
-    ENDIF
-  EndDo
-END FUNCTION ISPRIME
+ Do i=2,num-1
+  IF( MOD(num,i) == 0 ) then
+   ISPRIME=.FALSE.
+   EXIT
+  ENDIF
+ EndDo
+ END FUNCTION ISPRIME
 
-SUBROUTINE PRIMEFACTORS(num, factors, number_factors)
-  IMPLICIT NONE
-  INTEGER, INTENT(IN) :: num  !input number
-  INTEGER,INTENT(OUT), DIMENSION((num/2))::factors !Array to store factors
-  INTEGER, INTENT(INOUT) :: number_factors
-  INTEGER :: i, n
-  i = 2  !Eligible factor
-  number_factors = 1  !Number of factors
-  n = num !store input number into a temporary variable
-  DO
-    IF (MOD(n,i) == 0) THEN !If i divides 2, it is a factor
-      factors(number_factors) = i
-      number_factors = number_factors+1
-      n = n/i
-    ELSE
-      i = i+1     !Not a factor. Move to next number
-    END IF
-    IF (n == 1) THEN
-      !Since f is incremented after a factor is found
-      number_factors = number_factors-1		!its value will be one more than the number of factors
-      !Hence the value of number_factors is decremented
-      EXIT
-    END IF
-  END DO
-END SUBROUTINE PRIMEFACTORS
+ SUBROUTINE PRIMEFACTORS(num, factors, number_factors)
+ IMPLICIT NONE
+ INTEGER, INTENT(IN) :: num  !input number
+ INTEGER,INTENT(OUT), DIMENSION((num/2))::factors !Array to store factors
+ INTEGER, INTENT(INOUT) :: number_factors
+ INTEGER :: i, n
+ i = 2  !Eligible factor
+ number_factors = 1  !Number of factors
+ n = num !store input number into a temporary variable
+ DO
+  IF (MOD(n,i) == 0) THEN !If i divides 2, it is a factor
+   factors(number_factors) = i
+   number_factors = number_factors+1
+   n = n/i
+  ELSE
+   i = i+1     !Not a factor. Move to next number
+  END IF
+  IF (n == 1) THEN
+   !Since f is incremented after a factor is found
+   number_factors = number_factors-1  !its value will be one more than the number of factors
+   !Hence the value of number_factors is decremented
+   EXIT
+  END IF
+ END DO
+ END SUBROUTINE PRIMEFACTORS
 
 
 

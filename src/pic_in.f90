@@ -1,23 +1,23 @@
-!*****************************************************************************************************!
-!             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !*****************************************************************************************************!
 
-!*****************************************************************************************************!
-!  This file is part of ALaDyn.                                                                       !
-!                                                                                                     !
-!  ALaDyn is free software: you can redistribute it and/or modify                                     !
-!  it under the terms of the GNU General Public License as published by                               !
-!  the Free Software Foundation, either version 3 of the License, or                                  !
-!  (at your option) any later version.                                                                !
-!                                                                                                     !
-!  ALaDyn is distributed in the hope that it will be useful,                                          !
-!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
-!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
-!  GNU General Public License for more details.                                                       !
-!                                                                                                     !
-!  You should have received a copy of the GNU General Public License                                  !
-!  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !  This file is part of ALaDyn.                                                                       !
+ !                                                                                                     !
+ !  ALaDyn is free software: you can redistribute it and/or modify                                     !
+ !  it under the terms of the GNU General Public License as published by                               !
+ !  the Free Software Foundation, either version 3 of the License, or                                  !
+ !  (at your option) any later version.                                                                !
+ !                                                                                                     !
+ !  ALaDyn is distributed in the hope that it will be useful,                                          !
+ !  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
+ !  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
+ !  GNU General Public License for more details.                                                       !
+ !                                                                                                     !
+ !  You should have received a copy of the GNU General Public License                                  !
+ !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
+ !*****************************************************************************************************!
 
  module pic_in
  use precision_def
@@ -375,36 +375,36 @@
   endif
  enddo
  if(ndim > 2)then !along-z-drection
-   do ic=1,nsp
-     npzc(ic)=nyh*np_per_zc(ic)
-     nptz_ne=npzc(ic)
-     dpz=(zp_max-zp_min)/real(npzc(ic),dp)
-     do i=1,npzc(ic)
-       zpt(i,ic)=zp_min+dpz*(real(i,dp)-0.5)
-     enddo
-     if(Stretch)then
-       zz=str_zgrid%smin
-       if(zz>zp_min)then
-         dpz=dzi/real(np_per_zc(ic),dp)
-         i1=(str_zgrid%sind(1)-nzl1+1)*np_per_zc(ic)
-         i2=nptz_ne-i1
-         do i=1,i1
-           dxip=dpz*(real(i-i1,dp)-0.5)
-           zpt(i,ic)=str_zgrid%smin+L_s*tan(dxip)
-           wz(i,ic)=1./(cos(dxip)*cos(dxip))
-         enddo
-         dxip=dz/real(np_per_zc(ic),dp)
-         do i=i1+1,i2
-           zpt(i,ic)=str_zgrid%smin+dxip*(real(i-i1,dp)-0.5)
-         enddo
-         do i=i2+1,nptz_ne
-           dxip=dpz*(real(i-i2,dp)-0.5)
-           zpt(i,ic)=str_zgrid%smax+L_s*tan(dxip)
-           wz(i,ic)=1./(cos(dxip)*cos(dxip))
-         enddo
-       endif
-     endif
+  do ic=1,nsp
+   npzc(ic)=nyh*np_per_zc(ic)
+   nptz_ne=npzc(ic)
+   dpz=(zp_max-zp_min)/real(npzc(ic),dp)
+   do i=1,npzc(ic)
+    zpt(i,ic)=zp_min+dpz*(real(i,dp)-0.5)
    enddo
+   if(Stretch)then
+    zz=str_zgrid%smin
+    if(zz>zp_min)then
+     dpz=dzi/real(np_per_zc(ic),dp)
+     i1=(str_zgrid%sind(1)-nzl1+1)*np_per_zc(ic)
+     i2=nptz_ne-i1
+     do i=1,i1
+      dxip=dpz*(real(i-i1,dp)-0.5)
+      zpt(i,ic)=str_zgrid%smin+L_s*tan(dxip)
+      wz(i,ic)=1./(cos(dxip)*cos(dxip))
+     enddo
+     dxip=dz/real(np_per_zc(ic),dp)
+     do i=i1+1,i2
+      zpt(i,ic)=str_zgrid%smin+dxip*(real(i-i1,dp)-0.5)
+     enddo
+     do i=i2+1,nptz_ne
+      dxip=dpz*(real(i-i2,dp)-0.5)
+      zpt(i,ic)=str_zgrid%smax+L_s*tan(dxip)
+      wz(i,ic)=1./(cos(dxip)*cos(dxip))
+     enddo
+    endif
+   endif
+  enddo
  endif
  ! Now the y-z particle distribution are shared among mpi-tasks
  ! on output =>> loc_jmax, loc_kmax
@@ -2328,7 +2328,7 @@
  case(5)
   call one_layer_nano_wires(ny_targ,xf0)
  case(6)
-  call preplasma_nano_wires(ny_targ,xf0) 
+  call preplasma_nano_wires(ny_targ,xf0)
  case(7)
   call one_layer_nano_tubes(ny_targ,xf0)
  end select
