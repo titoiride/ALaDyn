@@ -81,8 +81,8 @@
  read(1,TARGET_DESCRIPTION,ERR=19,END=19)
 19 continue
  close(1)
- call distribute_number_of_particles
- call nml_consistency_check_number_of_particles
+ !call nml_consistency_check_number_of_particles
+ call nml_consistency_check_number_of_particles_comp
 
  !--- reading laser parameters ---!
  open(1,file='input.nml', status='old')
@@ -436,32 +436,44 @@
  nprocz=-1
  end subroutine read_input_data
 
+
+ subroutine nml_consistency_check_number_of_particles_comp
+  if(all(ppc>=1)) then
+   call from_ppc_to_npx_npy_npz
+  else
+   np_per_zc=np_per_yc
+  endif
+ end subroutine nml_consistency_check_number_of_particles_comp
+
+
+
  !------------------------------------------------------!
- subroutine nml_consistency_check_number_of_particles
- !--->case 1: error in input files all values left to -1
- if( all(ppc==-1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1) ) then
-  !write(6,'(A)') 'No number of particles has been selected. Force ppc(:)=8'
-  ppc=8
-  !--->case 2: y and z with the same number of particles
+ subroutine nml_consistency_check_number_of_particles !excluded temporarily because it doesn't deal with few cases, most of all np_per_xc=0
+
+ !--->case 0: ppc is the only defined (new nml)
+ if(all(ppc>=1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1 ) ) then
+   call from_ppc_to_npx_npy_npz
+
+ !--->case 1: np_per_zc not defined: copy from np_per_yc
  elseif( all(ppc==-1) .and. all(np_per_xc>=0) .and. all(np_per_yc>=0) .and. all(np_per_zc==-1) ) then
-  !write(6,'(A)') 'number of particles: strategy: same number of particles along y and z'
   np_per_zc=np_per_yc
-  !--->case 3: error
+
+ !--->case 3: new and old methods both defined
  elseif( all(ppc>=1) .and. ( all(np_per_xc>=1) .or. all(np_per_yc>=1) .or. all(np_per_zc>=1) ) ) then
-  !write(6,'(A)') 'Error in the number of particle selection: ppc-strategy chosen'
   np_per_xc=-1
   np_per_yc=-1
   np_per_zc=-1
+  call from_ppc_to_npx_npy_npz
+
+ !--->case default
+ else
+  ppc=8
+  call from_ppc_to_npx_npy_npz
  endif
+
  end subroutine nml_consistency_check_number_of_particles
 
  !------> Particle organisation
- subroutine distribute_number_of_particles
- if( all(ppc>=1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1) ) then
-  call from_ppc_to_npx_npy_npz
- endif
- end subroutine distribute_number_of_particles
-
  subroutine from_ppc_to_npx_npy_npz
  !--->Subdivide ppc into np_per_xc,np_per_yc and theoretically into np_per_zc
  !logical isprime
