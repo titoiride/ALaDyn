@@ -39,7 +39,7 @@
  logical :: Diag
  real(dp) :: tdia,dtdia,tout,dtout,tstart
  real(dp) :: dt_loc
- integer :: t_ind,ic,lun
+ integer :: t_ind,ic
 
  mem_psize_max=0.0
 
@@ -54,10 +54,6 @@
  tnow=tstart
  ! iter=last_iter
  iter=0
- if(pe0)then
-  lun=999
-  open(lun,file='part.dist.dat')
- endif
  call diag_part_dist
 
  select case(mod_ord)
@@ -476,8 +472,10 @@
  !--------------------------
 
  subroutine diag_part_dist
- integer :: j, jj, jjj
+ integer :: j, jj, jjj, lun
  if (pe0) then
+  lun=999
+  open(lun,file='part.dist.dat')
   write(lun,*)' Local node grid points in y-z-x coord'
   write(lun,*)'loc_ymin'
   write(lun,'(4e13.6)')loc_ygrid(0:npe_yloc-1)%gmin
@@ -509,6 +507,7 @@
     endif
    end do
   end if
+  close(lun)
  end if
  end subroutine diag_part_dist
 
@@ -1125,7 +1124,6 @@
 
  subroutine final_run_info
  if (pe0)then
-  close(lun)
   write (6,'(a7,i6,a5,e11.4,a11,e11.4)') 'iter = ',iter,' t = ',tnow,' last dt = ',dt_loc
   call tot_num_part(nptot_global)
   call cpu_time(unix_time_now)
