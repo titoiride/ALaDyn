@@ -58,6 +58,7 @@
   lun=999
   open(lun,file='part.dist.dat')
  endif
+ call diag_part_dist
 
  select case(mod_ord)
  case(1)
@@ -474,11 +475,47 @@
 
  !--------------------------
 
- subroutine timing
- integer,parameter :: imod=50
+ subroutine diag_part_dist
  integer :: j, jj, jjj
+ if (pe0) then
+  write(lun,*)' Local node grid points in y-z-x coord'
+  write(lun,*)'loc_ymin'
+  write(lun,'(4e13.6)')loc_ygrid(0:npe_yloc-1)%gmin
+  write(lun,*)'loc_ymax'
+  write(lun,'(4e13.6)')loc_ygrid(0:npe_yloc-1)%gmax
+  write(lun,*)'loc_zmin'
+  write(lun,'(4e13.6)')loc_zgrid(0:npe_zloc-1)%gmin
+  write(lun,*)'loc_zmax'
+  write(lun,'(4e13.6)')loc_zgrid(0:npe_zloc-1)%gmax
+  write(lun,*)'loc_xmin'
+  write(lun,'(4e13.6)')loc_xgrid(0:npe_xloc-1)%gmin
+  write(lun,*)'loc_xmax'
+  write(lun,'(4e13.6)')loc_xgrid(0:npe_xloc-1)%gmax
+  write(lun,*)'Node P-distribution'
+  if (Part) then
+   write(lun,'(a9,i6,a5,i4)')'at iter =',iter,'dcmp=',dcmp_count
+   do j=0,npe_zloc-1
+    write(lun,*)'npe_zloc=',j
+    do jj=0,npe_xloc-1
+     write(lun,*)'npe_xloc=',jj
+     do jjj=1,nsp_run
+      write(lun,*)'nsp=',jjj
+      write(lun,'(4i8)')loc_npart(0:npe_yloc-1,j,jj,jjj)
+     end do
+    end do
+    if(Beam)then
+     write(lun,*)'B-part'
+     write(lun,'(4i8)')loc_nbpart(0:npe_yloc-1,j,jj,1)
+    endif
+   end do
+  end if
+ end if
+ end subroutine diag_part_dist
 
- if (mod(iter,imod)==0) then
+
+ subroutine timing
+ integer,parameter :: write_every=50
+ if (mod(iter,write_every)==0) then
   if (Part) then
    if (prl) then
     call part_numbers
@@ -487,41 +524,7 @@
   endif
 
   if (pe0) then
-   if (iter==0) then
-    write(lun,*)' Local node grid points in y-z-x coord'
-    write(lun,*)'loc_ymin'
-    write(lun,'(4e13.6)')loc_ygrid(0:npe_yloc-1)%gmin
-    write(lun,*)'loc_ymax'
-    write(lun,'(4e13.6)')loc_ygrid(0:npe_yloc-1)%gmax
-    write(lun,*)'loc_zmin'
-    write(lun,'(4e13.6)')loc_zgrid(0:npe_zloc-1)%gmin
-    write(lun,*)'loc_zmax'
-    write(lun,'(4e13.6)')loc_zgrid(0:npe_zloc-1)%gmax
-    write(lun,*)'loc_xmin'
-    write(lun,'(4e13.6)')loc_xgrid(0:npe_xloc-1)%gmin
-    write(lun,*)'loc_xmax'
-    write(lun,'(4e13.6)')loc_xgrid(0:npe_xloc-1)%gmax
-    write(lun,*)'Node P-distribution'
-    if (Part) then
-     write(lun,'(a9,i6,a5,i4)')'at iter =',iter,'dcmp=',dcmp_count
-     do j=0,npe_zloc-1
-      write(lun,*)'npe_zloc=',j
-      do jj=0,npe_xloc-1
-       write(lun,*)'npe_xloc=',jj
-       do jjj=1,nsp_run
-        write(lun,*)'nsp=',jjj
-        write(lun,'(4i8)')loc_npart(0:npe_yloc-1,j,jj,jjj)
-       end do
-      end do
-      if(Beam)then
-       write(lun,*)'B-part'
-       write(lun,'(4i8)')loc_nbpart(0:npe_yloc-1,j,jj,1)
-      endif
-     end do
-    end if
-   end if
-
-   write(6,1) 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
+   write(6,'(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
    call tot_num_part(nptot_global)
    call cpu_time(unix_time_now)
    write(6,'(a15,f12.3,a10,i15)') 'Time elapsed = ',unix_time_now-unix_time_begin,', nptot = ', nptot_global
@@ -541,8 +544,6 @@
   tnow=tnow+dt_loc
   iter=iter+1
  endif
-
-1 format (a10,i6,a10,e11.4,a10,e11.4)
  end subroutine timing
 
  !---------------------------
