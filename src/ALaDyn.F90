@@ -600,7 +600,7 @@
  endif
  call param
  !=========================
- if (ndim==1) Stretch=.false.
+ if(ndim==1) Stretch=.false.
  if(Ionization)then
   if(iform==1)iform=0
   if(ibeam==0)ibeam=1
