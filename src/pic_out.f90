@@ -1,23 +1,23 @@
-!*****************************************************************************************************!
-!             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !*****************************************************************************************************!
 
-!*****************************************************************************************************!
-!  This file is part of ALaDyn.                                                                       !
-!                                                                                                     !
-!  ALaDyn is free software: you can redistribute it and/or modify                                     !
-!  it under the terms of the GNU General Public License as published by                               !
-!  the Free Software Foundation, either version 3 of the License, or                                  !
-!  (at your option) any later version.                                                                !
-!                                                                                                     !
-!  ALaDyn is distributed in the hope that it will be useful,                                          !
-!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
-!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
-!  GNU General Public License for more details.                                                       !
-!                                                                                                     !
-!  You should have received a copy of the GNU General Public License                                  !
-!  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !  This file is part of ALaDyn.                                                                       !
+ !                                                                                                     !
+ !  ALaDyn is free software: you can redistribute it and/or modify                                     !
+ !  it under the terms of the GNU General Public License as published by                               !
+ !  the Free Software Foundation, either version 3 of the License, or                                  !
+ !  (at your option) any later version.                                                                !
+ !                                                                                                     !
+ !  ALaDyn is distributed in the hope that it will be useful,                                          !
+ !  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
+ !  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
+ !  GNU General Public License for more details.                                                       !
+ !                                                                                                     !
+ !  You should have received a copy of the GNU General Public License                                  !
+ !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
+ !*****************************************************************************************************!
 
  module pic_out
 
@@ -638,11 +638,11 @@
  nz1=sum(nzh(1:npe_zloc))
  nx1=sum(nxh(1:npe_xloc))
 
-  real_par(1:20) =(/real(tnow,sp),real(xmin,sp),real(xmax,sp),real(ymin,sp),&
-   real(ymax,sp),real(zmin,sp),real(zmax,sp),real(w0_x,sp),real(w0_y,sp),&
-   real(n_over_nc,sp),real(a0,sp),real(lam0,sp),real(E0,sp),real(ompe,sp),&
-   real(targ_in,sp),real(targ_end,sp),real(gam0,sp),real(nb_over_np,sp),&
-   real(b_charge,sp),real(vbeam,sp)/)
+ real_par(1:20) =(/real(tnow,sp),real(xmin,sp),real(xmax,sp),real(ymin,sp),&
+  real(ymax,sp),real(zmin,sp),real(zmax,sp),real(w0_x,sp),real(w0_y,sp),&
+  real(n_over_nc,sp),real(a0,sp),real(lam0,sp),real(E0,sp),real(ompe,sp),&
+  real(targ_in,sp),real(targ_end,sp),real(gam0,sp),real(nb_over_np,sp),&
+  real(b_charge,sp),real(vbeam,sp)/)
 
  int_par(1:20) = (/npe_yloc,npe_zloc,npe_xloc,nx1,ny1,nz1,&
   loc_nyc_max,jump,ibx,iby,iform,&
@@ -1136,11 +1136,11 @@
  call endian(i_end)
  real_par=0.0
 
-  real_par(1:20) =(/real(tnow,sp),real(xmin,sp),real(xmax,sp),real(ymin,sp),&
-   real(ymax,sp),real(zmin,sp),real(zmax,sp),real(w0_x,sp),real(w0_y,sp),&
-   real(n_over_nc,sp),real(a0,sp),real(lam0,sp),real(E0,sp),real(ompe,sp),&
-   real(np_per_cell,sp),real(targ_in,sp),real(targ_end,sp),real(unit_charge(pid),sp),&
-   real(mass(pid),sp),0.0_sp/)
+ real_par(1:20) =(/real(tnow,sp),real(xmin,sp),real(xmax,sp),real(ymin,sp),&
+  real(ymax,sp),real(zmin,sp),real(zmax,sp),real(w0_x,sp),real(w0_y,sp),&
+  real(n_over_nc,sp),real(a0,sp),real(lam0,sp),real(E0,sp),real(ompe,sp),&
+  real(np_per_cell,sp),real(targ_in,sp),real(targ_end,sp),real(unit_charge(pid),sp),&
+  real(mass(pid),sp),0.0_sp/)
 
  int_par(1:20) = (/npe,nx,ny_loc,nz_loc,jmp,iby,iform,&
   model_id,dmodel_id,nsp,curr_ndim,mp_per_cell(1),&
@@ -1242,12 +1242,12 @@
  call endian(i_end)
  real_par=0.0
 
-  real_par(1:20) =(/real(tnow,sp),real(xmin,sp),real(xmax,sp),real(ymin,sp),&
-   real(ymax,sp),real(zmin,sp),real(zmax,sp),real(w0_x,sp),real(w0_y,sp),&
-   real(n_over_nc,sp),real(a0,sp),real(lam0,sp),real(E0,sp),real(ompe,sp),&
-   real(np_per_cell,sp),real(targ_in,sp),real(targ_end,sp),real(unit_charge(1),sp),&
-   real(mass(1),sp),0.0_sp/)
- 
+ real_par(1:20) =(/real(tnow,sp),real(xmin,sp),real(xmax,sp),real(ymin,sp),&
+  real(ymax,sp),real(zmin,sp),real(zmax,sp),real(w0_x,sp),real(w0_y,sp),&
+  real(n_over_nc,sp),real(a0,sp),real(lam0,sp),real(E0,sp),real(ompe,sp),&
+  real(np_per_cell,sp),real(targ_in,sp),real(targ_end,sp),real(unit_charge(1),sp),&
+  real(mass(1),sp),0.0_sp/)
+
  int_par(1:20) = &
   (/npe,nx,ny_loc,nz_loc,jmp,iby,iform,&
   model_id,dmodel_id,nsb,curr_ndim,mp_per_cell(1),&

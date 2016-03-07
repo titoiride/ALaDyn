@@ -1,24 +1,24 @@
-!*****************************************************************************************************!
-!             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
-!                                 Alberto Marocchino                                                  !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !                                 Alberto Marocchino                                                  !
+ !*****************************************************************************************************!
 
-!*****************************************************************************************************!
-!  This file is part of ALaDyn.                                                                       !
-!                                                                                                     !
-!  ALaDyn is free software: you can redistribute it and/or modify                                     !
-!  it under the terms of the GNU General Public License as published by                               !
-!  the Free Software Foundation, either version 3 of the License, or                                  !
-!  (at your option) any later version.                                                                !
-!                                                                                                     !
-!  ALaDyn is distributed in the hope that it will be useful,                                          !
-!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
-!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
-!  GNU General Public License for more details.                                                       !
-!                                                                                                     !
-!  You should have received a copy of the GNU General Public License                                  !
-!  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
+ !  This file is part of ALaDyn.                                                                       !
+ !                                                                                                     !
+ !  ALaDyn is free software: you can redistribute it and/or modify                                     !
+ !  it under the terms of the GNU General Public License as published by                               !
+ !  the Free Software Foundation, either version 3 of the License, or                                  !
+ !  (at your option) any later version.                                                                !
+ !                                                                                                     !
+ !  ALaDyn is distributed in the hope that it will be useful,                                          !
+ !  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
+ !  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
+ !  GNU General Public License for more details.                                                       !
+ !                                                                                                     !
+ !  You should have received a copy of the GNU General Public License                                  !
+ !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
+ !*****************************************************************************************************!
 
  module read_input
 
@@ -81,7 +81,8 @@
  read(1,TARGET_DESCRIPTION,ERR=19,END=19)
 19 continue
  close(1)
- call nml_consistency_check_number_of_particles
+ !call nml_consistency_check_number_of_particles
+ call nml_consistency_check_number_of_particles_comp
 
  !--- reading laser parameters ---!
  open(1,file='input.nml', status='old')
@@ -370,7 +371,7 @@
  write(1,nml=BPOLOIDAL,ERR=30)
 30 continue
  close(1)
-END SUBROUTINE
+ END SUBROUTINE
 
 
 
@@ -435,25 +436,121 @@ END SUBROUTINE
  nprocz=-1
  end subroutine read_input_data
 
-!------------------------------------------------------!
-  subroutine nml_consistency_check_number_of_particles()
-  !--->case 1: error in input files all values left to -1
-    if( all(ppc==-1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1) ) then
-      write(6,'(A)') 'No number of particles has been selected. Force ppc(:)=8'
-      ppc=8
-  !--->case 2: y and z with the same number of particles
-    elseif( all(ppc==-1) .and. all(np_per_xc>=0) .and. all(np_per_yc>=0) .and. all(np_per_zc==-1) ) then
-      write(6,'(A)') 'number of particles: strategy: same number of particles along y and z'
-      np_per_zc=np_per_yc
-  !--->case 3: error
-elseif( all(ppc>=1) .and. ( all(np_per_xc>=1) .or. all(np_per_yc>=1) .or. all(np_per_zc>=1) ) ) then
-      write(6,'(A)') 'Error in the number of particle selection: ppc-strategy chosen'
-      np_per_xc=-1
-      np_per_yc=-1
-      np_per_zc=-1
-    endif
-  end subroutine nml_consistency_check_number_of_particles
 
+ subroutine nml_consistency_check_number_of_particles_comp
+  if(all(ppc>=1)) then
+   call from_ppc_to_npx_npy_npz
+  else
+   np_per_zc=np_per_yc
+  endif
+ end subroutine nml_consistency_check_number_of_particles_comp
+
+
+
+ !------------------------------------------------------!
+ subroutine nml_consistency_check_number_of_particles !excluded temporarily because it doesn't deal with few cases, most of all np_per_xc=0
+
+ !--->case 0: ppc is the only defined (new nml)
+ if(all(ppc>=1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1 ) ) then
+   call from_ppc_to_npx_npy_npz
+
+ !--->case 1: np_per_zc not defined: copy from np_per_yc
+ elseif( all(ppc==-1) .and. all(np_per_xc>=0) .and. all(np_per_yc>=0) .and. all(np_per_zc==-1) ) then
+  np_per_zc=np_per_yc
+
+ !--->case 3: new and old methods both defined
+ elseif( all(ppc>=1) .and. ( all(np_per_xc>=1) .or. all(np_per_yc>=1) .or. all(np_per_zc>=1) ) ) then
+  np_per_xc=-1
+  np_per_yc=-1
+  np_per_zc=-1
+  call from_ppc_to_npx_npy_npz
+
+ !--->case default
+ else
+  ppc=8
+  call from_ppc_to_npx_npy_npz
+ endif
+
+ end subroutine nml_consistency_check_number_of_particles
+
+ !------> Particle organisation
+ subroutine from_ppc_to_npx_npy_npz
+ !--->Subdivide ppc into np_per_xc,np_per_yc and theoretically into np_per_zc
+ !logical isprime
+ integer i,number_of_factors
+ integer, allocatable, dimension(:) :: factors
+
+ !verify input 'ppc' are not prime numbers
+ do i=1,6
+  do while(ISPRIME(ppc(i)))
+   if(pe0) write(6,'(A,I1,A,I3)')'The input parameter ppc(',i,') is prime - corrected to >',ppc(i)+1
+   ppc(i)=ppc(i)+1
+  enddo
+ enddo
+
+ !subdivide ppc into np_per_xc,yc,zc
+ do i=1,6
+  ALLOCATE(factors(ppc(i)/2))
+  CALL PRIMEFACTORS(ppc(i),factors,number_of_factors)
+  if(ndim==2) then
+   np_per_xc(i)  = factors(1)
+   np_per_yc(i)  = PRODUCT(factors(2:number_of_factors))
+   if(pe0) write(6,'(A,I2,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),' particles'
+  elseif(ndim==3) then
+   if(number_of_factors>2) then
+    np_per_xc(i)  = factors(1)
+    np_per_yc(i)  = factors(2)
+    np_per_zc(i)  = PRODUCT(factors(3:number_of_factors))
+   else
+    np_per_xc(i)  = 1
+    np_per_yc(i)  = factors(1)
+    np_per_zc(i)  = factors(2)
+   endif
+   if(pe0) write(6,'(A,I2,A,I3,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),'*',np_per_zc(i),' particles'
+  endif
+  deallocate(factors)
+ enddo
+ end subroutine from_ppc_to_npx_npy_npz
+
+ FUNCTION ISPRIME(num)
+ INTEGER, INTENT(IN) :: num  !input number
+ INTEGER :: i
+ LOGICAL :: ISPRIME
+
+ ISPRIME=.TRUE.
+
+ Do i=2,num-1
+  IF( MOD(num,i) == 0 ) then
+   ISPRIME=.FALSE.
+   EXIT
+  ENDIF
+ EndDo
+ END FUNCTION ISPRIME
+
+ SUBROUTINE PRIMEFACTORS(num, factors, number_factors)
+ INTEGER, INTENT(IN) :: num  !input number
+ INTEGER,INTENT(OUT), DIMENSION((num/2))::factors !Array to store factors
+ INTEGER, INTENT(INOUT) :: number_factors
+ INTEGER :: i, n
+ i = 2  !Eligible factor
+ number_factors = 1  !Number of factors
+ n = num !store input number into a temporary variable
+ DO
+  IF (MOD(n,i) == 0) THEN !If i divides 2, it is a factor
+   factors(number_factors) = i
+   number_factors = number_factors+1
+   n = n/i
+  ELSE
+   i = i+1     !Not a factor. Move to next number
+  END IF
+  IF (n == 1) THEN
+   !Since f is incremented after a factor is found
+   number_factors = number_factors-1  !its value will be one more than the number of factors
+   !Hence the value of number_factors is decremented
+   EXIT
+  END IF
+ END DO
+ END SUBROUTINE PRIMEFACTORS
 
 
  end module read_input

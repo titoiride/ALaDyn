@@ -363,7 +363,7 @@ $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o: $(SRC_FOLDER)/pwfa_bunch_field_cal
                                               $(OBJ_FOLDER)/precision_def.mod
 	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/pwfa_bunch_field_calculation.mod: $(SRC_FOLDER)/pwfa_bunch_field_calculation.f90 \
-	                                            $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o
+                                              $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o
 	@true
 
 $(OBJ_FOLDER)/read_input.o: $(SRC_FOLDER)/read_input.f90 $(OBJ_FOLDER)/control_bunch_input.mod \
