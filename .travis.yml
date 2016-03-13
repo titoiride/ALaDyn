@@ -2,19 +2,17 @@ sudo: false
 language: c++
 addons:
   apt:
-    sources:
-    - ubuntu-toolchain-r-test
     packages:
-    - gcc-4.9
-    - g++-4.9
-    - gfortran-4.9
+    - gfortran
+    - gcc
+    - g++
     - libopenmpi-dev
     - libboost-all-dev
     - libfftw3-dev
 install:
-    - export CXX="/usr/bin/g++-4.9"
-    - export CC="/usr/bin/gcc-4.9"
-    - export FC="/usr/bin/gfortran-4.9"
+    - export CXX="/usr/bin/g++"
+    - export CC="/usr/bin/gcc"
+    - export FC="/usr/bin/gfortran"
     - export OMPI_MPICXX=$CXX
     - export OMPI_CXX=$CXX
     - export OMPI_MPICC=$CC
