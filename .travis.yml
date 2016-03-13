@@ -12,7 +12,14 @@ addons:
     - libboost-all-dev
     - libfftw3-dev
 install:
-    - export CXX="g++-4.8" CC="gcc-4.8" OMPI_MPICXX="g++-4.8" OMPI_MPICC="gcc-4.8" OMPI_MPIF90="gfortran-4.8" OMPI_MPIF77="gfortran-4.8"
+    - export CXX="g++-4.8"
+    - export CC="gcc-4.8"
+    - export OMPI_MPICXX="g++-4.8"
+    - export OMPI_MPICC="gcc-4.8"
+    - export OMPI_MPIF90="gfortran-4.8"
+    - export OMPI_MPIF77="gfortran-4.8"
+    - which gfortran
+    - which gfortran-4.8
 compiler:
   - gcc
 script:
