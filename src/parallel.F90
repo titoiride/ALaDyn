@@ -23,16 +23,12 @@
  use precision_def
  use mpi_var
 
-#if !defined (_MSC_VER) && !defined (__INTEL_COMPILER) && !defined (_GALILEO)
+#if !defined (_MSC_VER) && !defined (__INTEL_COMPILER)
  use mpi
  use fft_lib
  implicit none
-#elif defined (_MSC_VER)
- use fft_lib
- implicit none
- include 'mpif.h'
- ! include 'mpif-mpi-io.h'
 #else
+#define ENABLE_MPI_LONG_INT
  use fft_lib
  implicit none
  include 'mpif.h'
@@ -791,6 +787,8 @@
 
  end subroutine allreduce_dpreal
 
+
+#ifdef ENABLE_MPI_LONG_INT
  !---------------------------------------------
  ! WARNING: unsupported on some architecture!!
  subroutine allreduce_big_int(n0,n1)
@@ -804,8 +802,9 @@
  endif
 
  end subroutine allreduce_big_int
-
  !---------------------------------------------
+#endif
+
 
  subroutine allreduce_sint(ib,dt0,dt)
 
