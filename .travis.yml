@@ -16,12 +16,13 @@ install:
     - export CC="/usr/bin/gcc-4.9"
     - export FC="/usr/bin/gfortran-4.9"
     - export OMPI_MPICXX=$CXX
+    - export OMPI_CXX=$CXX
     - export OMPI_MPICC=$CC
+    - export OMPI_CC=$CC
     - export OMPI_MPIF90=$FC
+    - export OMPI_FC=$FC
     - export OMPI_MPIF77=$FC
-    - $CXX --version
-    - $FC --version
-    - $OMPI_MPIF90 --version
+    - export OMPI_F77=$FC
 compiler:
   - gcc
 script:
