@@ -5,22 +5,20 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - gcc-4.8
-    - g++-4.8
-    - gfortran-4.8
+    - gcc-4.9
+    - g++-4.9
+    - gfortran-4.9
     - libopenmpi-dev
     - libboost-all-dev
     - libfftw3-dev
 install:
-    - export CXX="g++-4.8"
-    - export CC="gcc-4.8"
-    - export FC="gfortran-4.8"
-    - export OMPI_MPICXX="g++-4.8"
-    - export OMPI_MPICC="gcc-4.8"
-    - export OMPI_MPIF90="gfortran-4.8"
-    - export OMPI_MPIF77="gfortran-4.8"
-    - gfortran --version
-    - gfortran-4.8 --version
+    - export CXX="/usr/bin/g++-4.9"
+    - export CC="/usr/bin/gcc-4.9"
+    - export FC="/usr/bin/gfortran-4.9"
+    - export OMPI_MPICXX=$CXX
+    - export OMPI_MPICC=$CC
+    - export OMPI_MPIF90=$FC
+    - export OMPI_MPIF77=$FC
     - $CXX --version
     - $FC --version
     - $OMPI_MPIF90 --version
