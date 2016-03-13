@@ -33,23 +33,29 @@
 
  implicit none
  contains
- !--------------------------
+ 
+ 
+ 
+ !--- --- ---!
+ 
+ 
+ 
  subroutine bunch_output_struct(tdia,dtdia,tout,dtout)
  real(dp),intent(inout) :: tdia,dtdia,tout,dtout
-
  dump_t1=MPI_Wtime()
 
- !---diag output---!
+ !---scalar diagnostic output---!
  if (tnow>=tdia) then
   call diagnostic_integrated_output
   tdia=tdia+dtdia
  endif
 
+ !--- 3D output ---!
  if(time_interval_dumps <= 0.) then !original output 3D+dumpdata
   if (tnow>=tout) then
    call create_timestep_folder(iout)
    call bunch_3D_output
-   call dump_data(iter,tnow)
+   if(dump>0 .and. iter>0) call dump_data(iter,tnow)
    tout=tout+dtout
   endif
  else !--- output3D and dumpdata independently called
@@ -72,7 +78,6 @@
    time2dump=0
   endif
  endif
-
  end subroutine bunch_output_struct
 
  !--- --- ---!
