@@ -87,7 +87,7 @@
   do ic=2,nsp_ionz
    call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt)
   end do
-  if(Pe0) call Ioniz_data(lp_max,ion_min,atomic_number,ionz_lev)
+  if(Pe0) call Ioniz_data(lp_max,ion_min,atomic_number,ionz_lev,ionz_model)
   if(Impact_ioniz)then
    call set_impact_ioniz_wfunction(atomic_number(nsp_ionz-1),2)
    if(Pe0) call Impact_ioniz_data(atomic_number(nsp_ionz-1),z1_coll)
@@ -146,7 +146,7 @@
   do ic=2,nsp_ionz
    call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,eb_max,dt)
   end do
-  if(Pe0) call Ioniz_data(eb_max,ion_min,atomic_number,ionz_lev)
+  if(Pe0) call Ioniz_data(eb_max,ion_min,atomic_number,ionz_lev,ionz_model)
  endif
 
  do while (tnow < tmax)
