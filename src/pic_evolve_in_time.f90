@@ -945,8 +945,8 @@
   call den_zyxbd(jc,i1,i2,j1,nyf,k1,nzf,kk)
  end do
  if(ic==1)jc(i1:i2,j1:nyf,k1:nzf,1)=-jc(i1:i2,j1:nyf,k1:nzf,1)
- jc(i1:i2,j1:nyf,k1:nzf,2)=mass(ic)*jc(i1:i2,j1:nyf,k1:nzf,2)
- !=========== energy density in mc^2= 0.51 Mev unit
+ jc(i1:i2,j1:nyf,k1:nzf,2)=mass(ic)*electron_mass*jc(i1:i2,j1:nyf,k1:nzf,2)
+ !=========== energy density in Mev*n/n_0
  if(Stretch)then
   kk=1
   do k=k1,nzf
@@ -2052,6 +2052,7 @@
  jc(:,:,:,:)=0.0
  !curr_clean
  if(Part)then
+  ! SORTING NOT ACTIVATED
   !if(mod(iter_loc,1000)==0)then
   ! do ic=1,nsp_run
   !  np=loc_npart(imody,imodz,imodx,ic)

@@ -708,14 +708,14 @@
  end subroutine start
 
  !---------------------------
- subroutine Ioniz_data(Ef_max,z0,An,ionz_sch)
+ subroutine Ioniz_data(Ef_max,z0,An,zlev,zmodel)
  real(dp),intent(in) :: Ef_max
- integer,intent(in) :: z0(:),An(:),ionz_sch
+ integer,intent(in) :: z0(:),An(:),zlev,zmodel
  integer :: i,ic,k,zmax,zm_loc
- if(ionz_sch==1)open(10,file='diag_one_level_ionz.dat')
- if(ionz_sch==2)open(10,file='diag_multi_level_ionz.dat')
- write(10,*)'nsp_ionz,ionz_sch,   N_ge '
- write(10,'(3i8)')nsp_ionz-1,ionz_sch,N_ge
+ if(zlev==1)open(10,file='diag_one_level_ionz.dat')
+ if(zlev> 1)open(10,file='diag_multi_level_ionz.dat')
+ write(10,*)'nsp_ionz,ionz_lev,  ionz_mod   N_ge '
+ write(10,'(4i8)')nsp_ionz-1,zlev,zmodel,N_ge
  write(10,*)'  Max Ef       dt      Omega_au  '
  write(10,'(3E11.4)')Ef_max,dt,omega_a
  do ic=1,nsp_ionz-1
@@ -732,7 +732,7 @@
    write(10,*)i
    write(10,'(6e12.4)')wi(1:N_ge,i,ic)
   end do
-  if(ionz_sch==1)then
+  if(zlev==1)then
    write(10,*)'ionization one level probability  wsp(Ne_g,z0:zmax)'
    do i=0,zm_loc-1
     write(10,*)i

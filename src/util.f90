@@ -779,7 +779,7 @@
  call boxmuller_vector(rnumber,n2-n1+1)
  bunch_utility(3,:)=rnumber*sz
  call boxmuller_vector(rnumber,n2-n1+1)
- bunch_utility(4,:)=rnumber * 0.01*dg*gm + gm !sqrt(3.0)
+ bunch_utility(4,:)=rnumber * sqrt(3.0)*0.01*dg*gm + gm
  call boxmuller_vector(rnumber,n2-n1+1)
  bunch_utility(5,:)=rnumber*ey/sy
  call boxmuller_vector(rnumber,n2-n1+1)
@@ -826,7 +826,7 @@
   call boxmuller_vector(rnumber,n2-n1+1)
   bunch(3,n1:n2)=rnumber*sz + zcm
   call boxmuller_vector(rnumber,n2-n1+1)
-  bunch(4,n1:n2)=rnumber * 0.01*dg*gm + gm !sqrt(3.0)
+  bunch(4,n1:n2)=rnumber * sqrt(3.0)*0.01*dg*gm + gm
   call boxmuller_vector(rnumber,n2-n1+1)
   bunch(5,n1:n2)=rnumber*ey/sy
   call boxmuller_vector(rnumber,n2-n1+1)
