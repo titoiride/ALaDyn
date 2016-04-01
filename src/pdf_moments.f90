@@ -39,7 +39,8 @@
 
 
  SUBROUTINE bunch_diagnostics(bunch_number)
- integer, intent(in) :: bunch_number,i
+ integer, intent(in) :: bunch_number
+ integer :: i
  real(dp) :: moments(2,6)
 
  !--- general diagnostic function
