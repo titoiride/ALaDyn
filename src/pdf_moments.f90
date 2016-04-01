@@ -616,7 +616,8 @@
    write(b2str,'(I1.1)') bunch_number
    write(nslices2str,'(I3.3)') number_slices
    write(islice2str, '(I3.3)') islice
-   open(11,file='diagnostics/bunch_sliced_quantity_'//b2str//'_'//nslices2str//'_'//islice2str'.dat',form='formatted', position='append')
+   open(11,file='diagnostics/bunch_sliced_quantity_'//b2str//'_'//nslices2str//'_'//islice2str'.dat', &
+                                                                   form='formatted', position='append')
    !1  2   3   4   5    6    7     8      9      10     11      12      13     14    15    16     17       18       19       20
    !t,<X>,<Y>,<Z>,<Px>,<Py>,<Pz>,<rmsX>,<rmsY>,<rmsZ>,<rmsPx>,<rmsPy>,<rmsPz>,<Emy>,<Emz>,<Gam>,DGam/Gam,cov<xPx>,cov<yPy>,cov<zPz>
    write(11,'(100e14.5)') tnow,mu_x,mu_y,mu_z,mu_px,mu_py,mu_pz,s_x,s_y,s_z,s_px,s_py, &
