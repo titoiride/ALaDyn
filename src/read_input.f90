@@ -129,7 +129,7 @@
 
  !--- *** namelist *** ---!
  NAMELIST/NUMBER_BUNCHES/ n_bunches, L_particles, L_intdiagnostics_pwfa, &
-  L_intdiagnostics_classic
+  L_intdiagnostics_classic,number_of_slices
  NAMELIST/BUNCH1/rho_b_1,gamma_1,xb_1,yb_1,zb_1,sx_1,sy_1,epsy_1,epsz_1,dg_1,np_1,bunch_type_1
  NAMELIST/BUNCH2/rho_b_2,gamma_2,xb_2,yb_2,zb_2,sx_2,sy_2,epsy_2,epsz_2,dg_2,np_2,bunch_type_2
  NAMELIST/BUNCH3/rho_b_3,gamma_3,xb_3,yb_3,zb_3,sx_3,sy_3,epsy_3,epsz_3,dg_3,np_3,bunch_type_3
@@ -141,6 +141,7 @@
  L_particles = .false.
  L_intdiagnostics_pwfa=.false.
  L_intdiagnostics_classic=.true.
+ number_of_slices = (/10,0,0,0/)
  read(1,NUMBER_BUNCHES,ERR=10,END=10)
 10 continue
  close(1)
