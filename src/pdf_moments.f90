@@ -300,7 +300,7 @@
 
  !--- --- ---!
 
- SUBROUTINE bunch_truncated_diagnostics(bunch_number,moments)
+ SUBROUTINE bunch_truncated_diagnostics(bunch_number,moments) !to be inserted here
  integer, intent(in) :: bunch_number
  integer :: np_local,np
  real(dp),intent(inout) :: moments(2,6)
