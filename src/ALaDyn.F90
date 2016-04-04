@@ -63,6 +63,8 @@
   call ENV_cycle
  case(3)
   call BUNCH_cycle
+ case(4)
+  call PBUNCH_cycle
  end select
 
  call timing
@@ -168,6 +170,29 @@
 
  end subroutine BUNCH_cycle
  !======================
+ subroutine PBUNCH_cycle
+
+ call pbdata_out(jump)
+ dt_loc=dt
+ t_ind=0
+
+ do while (tnow < tmax)
+  call PBUNCH_run(tnow,dt_loc,iter)
+
+  call timing
+  call pbdata_out(jump)
+
+  if (ier /= 0) then
+   call error_message
+   exit
+  endif
+  if (tnow+dt_loc >= tmax) dt_loc=tmax-tnow
+ end do
+ if (dump>0) call dump_data(iter,tnow)
+
+ end subroutine PBUNCH_cycle
+
+ !--------------------------
 
  subroutine data_out(jump)
  integer,intent(in) :: jump
@@ -323,6 +348,7 @@
    ic=0
    call prl_bden_energy_interp(ic)
    call bden_ene_mom_out(tnow,1,jump)
+!============= bunch density
    do i=1,nsp
     call prl_den_energy_interp(i)
     ic=1
@@ -518,7 +544,7 @@
   if (Part) then
    if (prl) then
     call part_numbers
-    call max_pmemory_check(mem_psize_max)
+    call max_pmemory_check()
    endif
   endif
 
@@ -627,7 +653,7 @@
  !====== Fields and current arrays allocated on [1: N_loc+5]
  !==========================
  call v_alloc(nxp,nyp,nzp,nfield,nj_dim,&
-  ndim,ns_ioniz,LPf_ord,Envelope,mem_size)
+          ndim,ns_ioniz,ibeam,LPf_ord,Envelope,mem_size)
  if (Beam) then
   if(Pbeam)then
    call pbv_alloc(nx+2,nyp,nzp,nbfield,ndim,mem_size)
@@ -698,7 +724,7 @@
  if(Part)then
   if(prl)then
    call part_numbers
-   call max_pmemory_check(mem_psize_max)
+   call max_pmemory_check()
   endif
  endif
 
@@ -708,14 +734,14 @@
  end subroutine start
 
  !---------------------------
- subroutine Ioniz_data(Ef_max,z0,An,zlev,zmodel)
+ subroutine Ioniz_data(Ef_max,z0,An,zlev,zmod)
  real(dp),intent(in) :: Ef_max
- integer,intent(in) :: z0(:),An(:),zlev,zmodel
+ integer,intent(in) :: z0(:),An(:),zlev,zmod
  integer :: i,ic,k,zmax,zm_loc
  if(zlev==1)open(10,file='diag_one_level_ionz.dat')
- if(zlev> 1)open(10,file='diag_multi_level_ionz.dat')
- write(10,*)'nsp_ionz,ionz_lev,  ionz_mod   N_ge '
- write(10,'(4i8)')nsp_ionz-1,zlev,zmodel,N_ge
+ if(zlev==2)open(10,file='diag_multi_level_ionz.dat')
+ write(10,*)'nsp_ionz,ionz_lev,ionz_mod, N_ge '
+ write(10,'(4i8)')nsp_ionz-1,zlev,zmod,N_ge
  write(10,*)'  Max Ef       dt      Omega_au  '
  write(10,'(3E11.4)')Ef_max,dt,omega_a
  do ic=1,nsp_ionz-1
@@ -930,14 +956,15 @@
  write(6,'(a18,i3)')' Field components ',nfield
  write(6,'(a20,i3)')' Current components ',curr_ndim
  write(6,'(a42,3i4)')' Species numbers (tot, running, ionized): ',nsp,nsp_run,nsp_ionz
+ write(6,*)' charge       charge_tomass'
  do i=1,nsp
-  write(6,*)' charge    charge_tomass'
   write(6,'(a2,2e11.4)')' ',unit_charge(i),charge_to_mass(i)
  enddo
  if(Charge_cons)then
   write(6,*)'Charge conserving scheme'
  else
   write(6,*)'No charge conserving '
+  if(ibeam==2)write(6,*)'Enforces Poisson equation,  curr_dim= ',nj_dim
  endif
  write(6,*)'***********************************************'
  write(6,'(a17,3i8)')' total grid size ',nx,ny,nz
@@ -951,10 +978,13 @@
   if(LPf_ord>2)write(6,'(a22)')' RK multi-step scheme '
  endif
  write(6,'(a13,i3)')' Spline order',spl_ord
+ if(ibeam>1)then
+  write(6,'(a35,i3)')' Maxwell equations using potentials',ibeam
+ endif
  write(6,*)'***********************************************'
  if(Stretch)then
-  write(6,'(a32,2e11.4)')' Tang stretched layer with size=',y(n_stretch+1),y(ny+1-n_stretch)
-  if(str_flag==2) write(6,'(a40,e11.4)')' Tang stretched right-x layer with size=',x(nx+1-nx_stretch)
+  write(6,'(a32,2e11.4)')' tang stretched layer with size=',y(ny_stretch+1),y(ny+1-ny_stretch)
+  if(str_flag==2) write(6,'(a40,e11.4)')' tang stretched right-x layer with size=',x(nx+1-nx_stretch)
  endif
  write(6,*)'Staggered grid Yee-module'
 
@@ -1025,9 +1055,9 @@
     if(ionz_model==1)write(6,*)' ADK field ionization active '
     if(ionz_model > 1)write(6,*)' ADK+BSI field ionization active '
     write(6,*)'active ion species ',nsp_ionz-1
-    write(6,*)'  Z_in,    A_numb, '
+    write(6,*)' Z_in,  A_numb,  Mass_numb '
     do i=1,nsp_ionz-1
-     write(6,'(2i6)')ion_min(i),atomic_number(i)
+     write(6,'(3i6)')ion_min(i),atomic_number(i),mass_number(i)
     end do
    end if
    select case(dmodel_id)
@@ -1035,7 +1065,7 @@
     write(6,*)' One H1-H2 ions +electrons plasma '
     write(6,*)' Initial electron-ion thermal speed V_T/c'
     write(6,'(3E12.4)')t0_pl(1:3)
-    write(6,*)'number of electron/ion number per cell'
+    write(6,*)'electron/ion ratio per cell'
     write(6,'(3i6)')mp_per_cell(1:3)
    case(3)
     write(6,*)' Target Preplasma-enabled '
@@ -1133,55 +1163,59 @@
  end subroutine final_run_info
 
  !---------------------------
+ subroutine submem(rmem)
+  real(dp),intent(out) :: rmem
+  integer(kind=8) :: addr
+  real(dp), allocatable :: am(:)
 
- subroutine check_dcmp
- if(prl)then
-  if(part_dcmp)then
-   part_dcmp=.false.
-  endif
- endif
- end subroutine check_dcmp
-
+   allocate( am(100) )
+   call memaddr( am, addr )
+   deallocate(am)
+   rmem=addr
+end subroutine submem
  !---------------------------
 
- subroutine max_pmemory_check(psz_max)
+ subroutine max_pmemory_check()
 
- real(dp),intent(out) :: psz_max
  integer :: ndv,np
- real(dp) :: mem_loc(1),max_mem(1)
+ real(dp) :: mem_loc(1),max_mem(1),adr
 
  mem_loc=0.
  max_mem=0.
- psz_max=0.0
- ndv=nd2+1
+ ndv=P_ncmp
  do ic=1,nsp
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)mem_loc(1)=mem_loc(1)+real(ndv*size(spec(ic)%part),dp)
  end do
- if(allocated(ebfp))then
-  mem_loc(1)=mem_loc(1)+real(size(ebfp,1)*size(ebfp,2),dp)
+ if(allocated(ebfp%part))then
+  mem_loc(1)=mem_loc(1)+real(ndv*size(ebfp%part),dp)
  endif
  if(Beam)then
   do ic=1,nsb
    np=loc_nbpart(imody,imodz,imodx,ic)
    if(np>0)mem_loc(1)=mem_loc(1)+real(ndv*size(bunch(ic)%part),dp)
   end do
-  if(allocated(ebfb))then
-   mem_loc(1)=mem_loc(1)+real(size(ebfb,1)*size(ebfb,2),dp)
+  if(allocated(ebfb%part))then
+   mem_loc(1)=mem_loc(1)+real(ndv*size(ebfb%part),dp)
   endif
  endif
- if(allocated(ebfp0))then
-  mem_loc(1)=mem_loc(1)+real(size(ebfp0,1)*size(ebfp0,2),dp)
+ if(allocated(ebfp0%part))then
+  mem_loc(1)=mem_loc(1)+real(ndv*size(ebfp0%part),dp)
  endif
- if(allocated(ebfp1))then
-  mem_loc(1)=mem_loc(1)+real(size(ebfp1,1)*size(ebfp1,2),dp)
+ if(allocated(ebfp1%part))then
+  mem_loc(1)=mem_loc(1)+real(ndv*size(ebfp1%part),dp)
  endif
  call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
- psz_max=kind(electron_charge_norm)*1.e-06*max_mem(1)
+ mem_psize_max=kind(electron_charge_norm)*1.e-06*max_mem(1)
 
-
+ call submem(adr) 
+ mem_loc(1)=adr
+ call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
+ 
  end subroutine max_pmemory_check
 
 
+ !---------------------------
 
  end program ALaDyn
+

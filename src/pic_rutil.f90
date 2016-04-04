@@ -838,7 +838,7 @@
   sp_loc,pstore,xl,xr,xlmin,xrmax,pel,per,ibd,dir,ndv,old_np,n_sr,npt)
 
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: pstore(:,:)
+ type(species),intent(inout) :: pstore
  real(dp),intent(in) :: xl,xr,xlmin,xrmax
  logical,intent(in) :: pel,per
  integer,intent(in) :: ibd,dir,ndv,old_np,n_sr(4)
@@ -905,7 +905,7 @@
    left_pind(q)=n
   else
    npt=npt+1
-   pstore(1:ndv,npt)=sp_loc%part(n)%cmp(1:ndv)
+   pstore%part(npt)%cmp(1:ndv)=sp_loc%part(n)%cmp(1:ndv)
   endif
  enddo
  !=======================
@@ -948,7 +948,7 @@
    p=p+1
    do q=1,ndv
     kk=kk+1
-    pstore(q,p)=aux2(kk)
+    pstore%part(p)%cmp(q)=aux2(kk)
    end do
   end do
   npt=p
@@ -991,7 +991,7 @@
    p=p+1
    do q=1,ndv
     kk=kk+1
-    pstore(q,p)=aux2(kk)
+    pstore%part(p)%cmp(q)=aux2(kk)
    end do
   end do
   npt=p
@@ -1003,7 +1003,7 @@
  subroutine part_numbers
  integer :: ip,iz,ix,pp,ic,np_new,nploc(npe)
 
- do ic=1,nsp_run
+ do ic=1,nsp
   nploc=0
   np_new=loc_npart(imody,imodz,imodx,ic)
   call intvec_distribute(np_new,nploc,npe)
@@ -1018,7 +1018,7 @@
   end do
  end do
  nploc=0
- do ic=1,nsp_run
+ do ic=1,nsp
   pp=0
   do ix=0,npe_xloc-1
    do iz=0,npe_zloc-1
@@ -1073,7 +1073,7 @@
  !=============================
  subroutine reset_all_part_dist(loc_sp,pstore,xl,xr,ib,np,ndv,cin,ndm,np_new)
  type(species),intent(inout) :: loc_sp
- real(dp),intent(inout) :: pstore(:,:)
+ type(species),intent(inout) :: pstore
  real(dp),intent(in) :: xl,xr
  integer,intent(in) :: ib,np,ndv,cin,ndm
  integer,intent(out) :: np_new
@@ -1115,7 +1115,7 @@
    xp=loc_sp%part(n)%cmp(cin)
    if(xp> xl.and.xp <= xr)then
     p=p+1
-    pstore(1:ndv,p)=loc_sp%part(n)%cmp(1:ndv)
+    pstore%part(p)%cmp(1:ndv)=loc_sp%part(n)%cmp(1:ndv)
    endif
   end do
   np_new=p
@@ -1156,22 +1156,16 @@
     np_new_allocate=max(1,np_new)
     np_rs=maxval(n_sr(1:4))
     if(np_rs >0)then
-     if(size(ebfp,2) < np_new) then
-      deallocate(ebfp)
-      allocate(ebfp(ndv,np_new_allocate))
-     endif
+     call p_realloc(ebfp, np_new)
      call part_prl_exchange(spec(ic),ebfp,ymm,ymx,lbd_min,rbd_max,&
       pe0y,pe1y,iby,2,ndv,np,n_sr,npout)
      if(npout/=np_new)then
       write(6,*)'error in y-part count',mype,npout,np_new
       ier=99
      endif
-     if(size(spec(ic)%part) < np_new) then
-      deallocate(spec(ic)%part)
-      allocate(spec(ic)%part(np_new_allocate))
-     endif
+     call p_realloc(spec(ic), np_new)
      do n=1,np_new
-      spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+      spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
      end do
      loc_npart(imody,imodz,imodx,ic)=np_new
     endif
@@ -1184,7 +1178,7 @@
      if(np_new < np)then
       loc_npart(imody,imodz,imodx,ic)=np_new
       do n=1,np_new
-       spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+       spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
       end do
      endif
     endif
@@ -1204,22 +1198,16 @@
      np_new_allocate=max(1,np_new)
      np_rs=maxval(n_sr(1:4))
      if(np_rs >0)then
-      if(size(ebfp,2) < np_new) then
-       deallocate(ebfp)
-       allocate(ebfp(ndv,np_new_allocate))
-      endif
+      call p_realloc(ebfp, np_new)
       call part_prl_exchange(spec(ic),ebfp,zmm,zmx,lbd_min,rbd_max,&
        pe0z,pe1z,ibz,3,ndv,np,n_sr,npout)
       if(npout/=np_new)then
        write(6,*)'error in x-part count',mype,npout,np_new
        ier=99
       endif
-      if(size(spec(ic)%part) < np_new) then
-       deallocate(spec(ic)%part)
-       allocate(spec(ic)%part(np_new_allocate))
-      endif
+      call p_realloc(spec(ic), np_new)
       do n=1,np_new
-       spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+       spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
       end do
       loc_npart(imody,imodz,imodx,ic)=np_new
      endif
@@ -1232,7 +1220,7 @@
       if(np_new < np)then
        loc_npart(imody,imodz,imodx,ic)=np_new
        do n=1,np_new
-        spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+        spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
        end do
       endif
      endif
@@ -1256,22 +1244,16 @@
    np_new_allocate=max(1,np_new)
    np_rs=maxval(n_sr(1:4))
    if(np_rs >0)then
-    if(size(ebfp,2) < np_new) then
-     deallocate(ebfp)
-     allocate(ebfp(ndv,np_new_allocate))
-    endif
+    call p_realloc(ebfp, np_new)
     call part_prl_exchange(spec(ic),ebfp,xmm,xmx,lbd_min,rbd_max,&
      pex0,pex1,ibx,1,ndv,np,n_sr,npout)
     if(npout/=np_new)then
      write(6,*)'error in x-part count',mype,npout,np_new
      ier=99
     endif
-    if(size(spec(ic)%part) < np_new) then
-     deallocate(spec(ic)%part)
-     allocate(spec(ic)%part(np_new_allocate))
-    endif
+    call p_realloc(spec(ic), np_new)
     do n=1,np_new
-     spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+     spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
     end do
     loc_npart(imody,imodz,imodx,ic)=np_new
    endif
@@ -1284,7 +1266,7 @@
     if(np_new < np)then
      loc_npart(imody,imodz,imodx,ic)=np_new
      do n=1,np_new
-      spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+      spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
      end do
     endif
    endif
@@ -1319,30 +1301,16 @@
     np_rs=maxval(n_sr(1:4))
     np_new_allocate=max(1,np_new)
     if(np_rs >0)then
-     if(allocated(ebfb))then
-      if(size(ebfb,2) < np_new) then
-       deallocate(ebfb)
-       allocate(ebfb(ndv,np_new_allocate))
-      endif
-     else
-      allocate(ebfb(ndv,np_new_allocate))
-     endif
+     call p_realloc(ebfb,np_new)
      call part_prl_exchange(bunch(ic),ebfb,ymm,ymx,lbd_min,rbd_max,&
       pe0y,pe1y,iby,2,ndv,np,n_sr,npout)
      if(npout/=np_new)then
       write(6,*)'error in y-bpart count',mype,npout,np_new
       ier=99
      endif
-     if(allocated(bunch(ic)%part)) then
-      if(size(bunch(ic)%part) < np_new) then
-       deallocate(bunch(ic)%part)
-       allocate(bunch(ic)%part(np_new_allocate))
-      endif
-     else
-      allocate(bunch(ic)%part(np_new_allocate))
-     endif
+     call p_realloc(bunch(ic),np_new)
      do n=1,np_new
-      bunch(ic)%part(n)%cmp(1:ndv)=ebfb(1:ndv,n)
+      bunch(ic)%part(n)%cmp(1:ndv)=ebfb%part(n)%cmp(1:ndv)
      end do
      loc_nbpart(imody,imodz,imodx,ic)=np_new
     endif
@@ -1355,7 +1323,7 @@
      if(np_new < np)then
       loc_nbpart(imody,imodz,imodx,ic)=np_new
       do n=1,np_new
-       bunch(ic)%part(n)%cmp(1:ndv)=ebfb(1:ndv,n)
+       bunch(ic)%part(n)%cmp(1:ndv)=ebfb%part(n)%cmp(1:ndv)
       end do
      endif
     endif
@@ -1376,29 +1344,15 @@
     np_rs=maxval(n_sr(1:4))
     np_new_allocate=max(1,np_new)
     if(np_rs >0)then
-     if(allocated(ebfb))then
-      if(size(ebfb,2) < np_new) then
-       deallocate(ebfb)
-       allocate(ebfb(ndv,np_new_allocate))
-      endif
-     else
-      allocate(ebfb(ndv,np_new_allocate))
-     endif
+     call p_realloc(ebfb,np_new)
      call part_prl_exchange(bunch(ic),ebfb,zmm,zmx,lbd_min,rbd_max,&
       pe0z,pe1z,ibz,3,ndv,np,n_sr,npout)
      if(npout/=np_new)then
       ier=99
      endif
-     if(allocated(bunch(ic)%part)) then
-      if(size(bunch(ic)%part) < np_new) then
-       deallocate(bunch(ic)%part)
-       allocate(bunch(ic)%part(np_new_allocate))
-      endif
-     else
-      allocate(bunch(ic)%part(np_new_allocate))
-     endif
+     call p_realloc(bunch(ic),np_new)
      do n=1,np_new
-      bunch(ic)%part(n)%cmp(1:ndv)=ebfb(1:ndv,n)
+      bunch(ic)%part(n)%cmp(1:ndv)=ebfb%part(n)%cmp(1:ndv)
      end do
      loc_nbpart(imody,imodz,imodx,ic)=np_new
     endif
@@ -1412,7 +1366,7 @@
       if(np_new < np)then
        loc_nbpart(imody,imodz,imodx,ic)=np_new
        do n=1,np_new
-        bunch(ic)%part(n)%cmp(1:ndv)=ebfb(1:ndv,n)
+        bunch(ic)%part(n)%cmp(1:ndv)=ebfb%part(n)%cmp(1:ndv)
        end do
       endif
      endif
@@ -1436,29 +1390,15 @@
    np_rs=maxval(n_sr(1:4))
    np_new_allocate=max(1,np_new)
    if(np_rs >0)then
-    if(allocated(ebfb))then
-     if(size(ebfb,2) < np_new) then
-      deallocate(ebfb)
-      allocate(ebfb(ndv,np_new_allocate))
-     endif
-    else
-     allocate(ebfb(ndv,np_new_allocate))
-    endif
+    call p_realloc(ebfb,np_new)
     call part_prl_exchange(bunch(ic),ebfb,xmm,xmx,lbd_min,rbd_max,&
      pex0,pex1,ibx,1,ndv,np,n_sr,npout)
     if(npout/=np_new)then
      ier=99
     endif
-    if(allocated(bunch(ic)%part)) then
-     if(size(bunch(ic)%part) < np_new) then
-      deallocate(bunch(ic)%part)
-      allocate(bunch(ic)%part(np_new_allocate))
-     endif
-    else
-     allocate(bunch(ic)%part(np_new_allocate))
-    endif
+    call p_realloc(bunch(ic),np_new)
     do n=1,np_new
-     bunch(ic)%part(n)%cmp(1:ndv)=ebfb(1:ndv,n)
+     bunch(ic)%part(n)%cmp(1:ndv)=ebfb%part(n)%cmp(1:ndv)
     end do
     loc_nbpart(imody,imodz,imodx,ic)=np_new
    endif
@@ -1471,7 +1411,7 @@
     if(np_new < np)then
      loc_nbpart(imody,imodz,imodx,ic)=np_new
      do n=1,np_new
-      bunch(ic)%part(n)%cmp(1:ndv)=ebfb(1:ndv,n)
+      bunch(ic)%part(n)%cmp(1:ndv)=ebfb%part(n)%cmp(1:ndv)
      end do
     endif
    endif

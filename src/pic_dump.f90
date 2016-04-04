@@ -36,7 +36,7 @@
  character(13) :: fname='             '
  integer :: np,i,ic
  integer :: nxf,nyf,nzf,nf
- integer :: i2b,j2b,k2b,nbf
+ integer :: i2b,j2b,k2b,nbf,nd_pot
  real(dp) :: rdata(10)
  integer :: ndata(10)
  !==============
@@ -50,13 +50,15 @@
  j2b=nyf
  k2b=nzf
  nbf=nf
+ nd_pot=0
  if(Beam)then
   i2b=size(ebf_bunch,1)
   j2b=size(ebf_bunch,2)
   k2b=size(ebf_bunch,3)
   nbf=size(ebf_bunch,4)
  endif
- !=========================
+ if(allocated(pot))nd_pot=size(pot,4)
+!=========================
  ndata=0
  rdata=0.0
  rdata(1)=tloc
@@ -106,6 +108,9 @@
   if(Pbeam)write(10)ebf0_bunch(1:i2b,1:j2b,1:k2b,1:3)
   if(L_Bpoloidal)write(10)ebf0_bunch(1:i2b,1:j2b,1:k2b,1:3)
  endif
+ if(nd_pot>0)then
+  write(10)pot(1:nxf,1:nyf,1:nzf,1:nd_pot)
+ endif
  !========================================Particle section
  if(Part)then
   write(10)loc_npart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsp)
@@ -141,7 +146,7 @@
  integer :: np,nps_loc(4),np_max,ic
  integer :: ix,n1_old
  integer :: nxf,nyf,nzf,nf
- integer :: i2b,j2b,k2b,nbf
+ integer :: i2b,j2b,k2b,nbf,nd_pot
  integer :: n1_loc,n2_loc,n3_loc,nf_loc
  real(dp) :: rdata(10)
  integer :: ndata(10)
@@ -221,6 +226,10 @@
  endif
  !=================
  read(10)ebf(1:nxf,1:nyf,1:nzf,1:nf)
+ if(allocated(pot))then
+  nd_pot=size(pot,4)
+  read(10)pot(1:nxf,1:nyf,1:nzf,1:nd_pot)
+ endif
  if(Envelope)then
   read(10)env(1:nxf,1:nyf,1:nzf,1:2)
   read(10)env0(1:nxf,1:nyf,1:nzf,1:2)
@@ -237,7 +246,7 @@
   nps_loc(1:nsp)=loc_npart(imody,imodz,imodx,1:nsp)
   np_max=maxval(nps_loc(1:nsp))
   np_max=max(np_max,1)
-  call p_alloc(np_max,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
+  call p_alloc(np_max,nps_loc,nsp,LPf_ord,1,1,mem_psize)
   !=========================
   do ic=1,nsp
    np=loc_npart(imody,imodz,imodx,ic)
@@ -251,7 +260,7 @@
    read(10)loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsb)
    nps_loc(1:nsb)=loc_nbpart(imody,imodz,imodx,1:nsb)
    np_max=maxval(nps_loc(1:nsb))
-   if(np_max >0)call p_alloc(np_max,nps_loc,nsb,LPf_ord,1,nd2+1,2,mem_psize)
+   if(np_max >0)call p_alloc(np_max,nps_loc,nsb,LPf_ord,1,2,mem_psize)
    !========================
    do ic=1,nsb
     np=loc_nbpart(imody,imodz,imodx,ic)

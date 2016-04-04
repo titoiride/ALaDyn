@@ -289,7 +289,7 @@
  integer,intent(in) :: ngm,ib
  integer :: ix
  !============== ww collocated at half-integers; ww1 collocated at integers
- ! Enter w(ngm+1) right boundary
+ ! Enter ww(ngm+1) right boundary
  select case(ib)
  case(0)
   dw(1)=ww(1)
@@ -933,38 +933,35 @@
  end subroutine env_matrix_inv
  !==============
  subroutine pp_lapl(&
-  av,source,st_ind,nbf,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
+  av,source,ic1,ic2,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
 
  real(dp),intent(inout) :: av(:,:,:,:)
  real(dp),intent(inout) :: source(:,:,:,:)
 
- integer,intent(in) :: st_ind,nbf,i1,n1p,j1,n2p,k1,n3p
+ integer,intent(in) :: ic1,ic2,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: dhy,dhz
- integer :: i,j,k,jj,kk,ic,jj0,j01,j02,kk0,k01,k02,ic1
+ integer :: i,j,k,jj,kk,ic,jj0,j01,j02,kk0,k01,k02
  real(dp) :: dy2_inv,dz2_inv
  real(dp) :: sdy,sdz,sdym,sdzm
  !==========================
  dy2_inv=dhy*dhy
  dz2_inv=dhz*dhz
  !===========================
- select case(st_ind)
- case(0)            !NO STRETCHING
   j01=j1
   j02=n2p
   k01=k1
   k02=n3p
   if(pe0y)then
-   do ic1=1,nbf
-    ic=ic1
+   do ic=ic1,ic2
     do k=k1,n3p
      j=j1
      do i=i1,n1p
-      av(i,j-1,k,ic)=3.*(av(i,j,k,ic)-av(i,j+1,k,ic))+av(i,j+2,k,ic)
+      av(i,j-1,k,ic)=2.*av(i,j,k,ic)-av(i,j+1,k,ic)
      end do
      do j=j1,j1+1
       do i=i1,n1p
-       source(i,j,k,ic1)=source(i,j,k,ic1)+dy2_inv*(&
-        av(i,j+1,k,ic)-2.*av(i,j,k,ic)+av(i,j-1,k,ic))
+       source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
+                                  av(i,j+1,k,ic)-2.*av(i,j,k,ic)+av(i,j-1,k,ic))
       end do
      end do
     end do
@@ -972,196 +969,83 @@
    j01=j1+2
   endif
   if(pe1y)then
-   do ic1=1,nbf
-    ic=ic1
+   do ic=ic1,ic2
     do k=k1,n3p
      j=n2p
      do i=i1,n1p
-      av(i,j+1,k,ic)=3.*(av(i,j,k,ic)-av(i,j-1,k,ic))+av(i,j-2,k,ic)
+      av(i,j+1,k,ic)=2.*av(i,j,k,ic)-av(i,j-1,k,ic)
      end do
      do j=n2p-1,n2p
       do i=i1,n1p
-       source(i,j,k,ic1)=source(i,j,k,ic1)+dy2_inv*(&
-        av(i,j+1,k,ic)-2.*av(i,j,k,ic)+av(i,j-1,k,ic))
+       source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
+                        av(i,j+1,k,ic)-2.*av(i,j,k,ic)+av(i,j-1,k,ic))
       end do
      end do
     end do
    end do
    j02=n2p-2
   endif
-  do ic1=1,nbf
-   ic=ic1
+  do ic=ic1,ic2
    do k=k1,n3p
     do j=j01,j02
      do i=i1,n1p
-      source(i,j,k,ic1)=source(i,j,k,ic1)+dy2_inv*(&
-       av(i,j+1,k,ic)-2.*av(i,j,k,ic)+av(i,j-1,k,ic))
+      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
+                       av(i,j+1,k,ic)-2.*av(i,j,k,ic)+av(i,j-1,k,ic))
      end do
     end do
    end do
   end do
+  if(ndim< 3)return
   !====================
-  if(ndim > 2)then
-   if(pe0z)then
-    do ic1=1,nbf
-     ic=ic1
-     k=k1
-     do j=j1,n2p
-      do i=i1,n1p
-       av(i,j,k-1,ic)=3.*(av(i,j,k,ic)-av(i,j,k+1,ic))+av(i,j,k+2,ic)
-      end do
-     end do
-     do k=k1,k1+1
-      do j=j1,n2p
-       do i=i1,n1p
-        source(i,j,k,ic1)=source(i,j,k,ic1)+dz2_inv*(&
-         av(i,j,k+1,ic)-2.*av(i,j,k,ic)+av(i,j,k-1,ic))
-       end do
-      end do
-     end do
-    end do
-    k01=k1+2
-   endif
-   if(pe1z)then
-    do ic1=1,nbf
-     ic=ic1
-     k=n3p
-     do j=j1,n2p
-      do i=i1,n1p
-       av(i,j,k+1,ic)=3.*(av(i,j,k,ic)-av(i,j,k-1,ic))+av(i,j,k-2,ic)
-      end do
-     end do
-     do k=n3p-1,n3p
-      do j=j1,n2p
-       do i=i1,n1p
-        source(i,j,k,ic1)=source(i,j,k,ic1)+dz2_inv*(&
-         av(i,j,k-1,ic)-2.*av(i,j,k,ic)+av(i,j,k+1,ic))
-       end do
-      end do
-     end do
-    end do
-    k02=n3p-2
-   endif
-   do ic1=1,nbf
-    ic=ic1
-    do k=k01,k02
-     do j=j1,n2p
-      do i=i1,n1p
-       source(i,j,k,ic1)=source(i,j,k,ic1)+dz2_inv*(&
-        av(i,j,k+1,ic)-2.*av(i,j,k,ic)+av(i,j,k-1,ic))
-      end do
-     end do
-    end do
-   end do
-  endif
-  !======================================
- case(1)            !y-z STRETCHING
-  jj0=1
-  j01=j1
-  j02=n2p
-  kk0=1
-  k01=k1
-  k02=n3p
-  if(pe0y)then
-   jj=2
-   sdy=loc_yg(jj,4,imody)
-   sdym=loc_yg(jj-1,4,imody)
-   j=j1
-   do ic=1,nbf
-    do k=k1,n3p
+  if(pe0z)then
+   do ic=ic1,ic2
+    k=k1
+    do j=j1,n2p
      do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(sdy*(&
-       av(i,j+2,k,ic)-av(i,j+1,k,ic))-sdym*(&
-       av(i,j+1,k,ic)-av(i,j,k,ic)))
+      av(i,j,k-1,ic)=2.*av(i,j,k,ic)-av(i,j,k+1,ic)
      end do
     end do
-   end do
-   j01=j1+1
-   jj0=2
-  endif
-  if(pe1y)then
-   jj=loc_ygrid(imody)%ng
-   j=n2p
-   sdy=loc_yg(jj-1,4,imody)
-   sdym=loc_yg(jj-2,4,imody)
-   do ic=1,nbf
-    do k=k1,n3p
-     do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(sdy*(&
-       av(i,j,k,ic)-av(i,j-1,k,ic))-sdym*(&
-       av(i,j-1,k,ic)-av(i,j-2,k,ic)))
-     end do
-    end do
-   end do
-   j02=n2p-1
-  endif
-  do ic=1,nbf
-   do k=k1,n3p
-    jj=jj0
-    do j=j01,j02
-     sdy=loc_yg(jj,4,imody)
-     sdym=loc_yg(jj-1,4,imody)
-     do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(sdy*(&
-       av(i,j+1,k,ic)-av(i,j,k,ic))-sdym*(&
-       av(i,j,k,ic)-av(i,j-1,k,ic)))
-     end do
-     jj=jj+1
-    end do
-   end do
-  end do
-  !====================
-  if(ndim==3)then
-   if(pe0z)then
-    do ic=1,2
-     kk=2
-     k=1
-     sdz=loc_zg(kk,4,imodz)
-     sdzm=loc_zg(kk-1,4,imodz)
+    do k=k1,k1+1
      do j=j1,n2p
       do i=i1,n1p
-       source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(sdz*(&
-        av(i,j,k+2,ic)-av(i,j,k+1,ic))-sdzm*(&
-        av(i,j,k+1,ic)-av(i,j,k,ic)))
+       source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
+                        av(i,j,k+1,ic)-2.*av(i,j,k,ic)+av(i,j,k-1,ic))
       end do
      end do
     end do
-    kk0=2
-    k01=k1+1
-   endif
-   if(pe1z)then
-    kk=loc_zgrid(imodz)%ng
+   end do
+   k01=k1+2
+  endif
+  if(pe1z)then
+   do ic=ic1,ic2
     k=n3p
-    sdz=loc_zg(kk-1,4,imodz)
-    sdzm=loc_zg(kk-2,4,imodz)
-    do ic=1,2
-     do j=j1,n2p
-      do i=i1,n1p
-       source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(sdz*(&
-        av(i,j,k,ic)-av(i,j,k-1,ic))-sdzm*(&
-        av(i,j,k-1,ic)-av(i,j,k-2,ic)))
-      end do
+    do j=j1,n2p
+     do i=i1,n1p
+      av(i,j,k+1,ic)=2.*av(i,j,k,ic)-av(i,j,k-1,ic)
      end do
     end do
-    k02=n3p-1
-   endif
-   do ic=1,2
-    kk=kk0
-    do k=k01,k02
-     sdz=loc_zg(kk,4,imodz)
-     sdzm=loc_zg(kk-1,4,imodz)
+    do k=n3p-1,n3p
      do j=j1,n2p
       do i=i1,n1p
-       source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(sdz*(&
-        av(i,j,k+1,ic)-av(i,j,k,ic))-sdzm*(&
-        av(i,j,k,ic)-av(i,j,k-1,ic)))
+       source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
+                       av(i,j,k-1,ic)-2.*av(i,j,k,ic)+av(i,j,k+1,ic))
       end do
      end do
-     kk=kk+1
     end do
    end do
+   k02=n3p-2
   endif
- end select
+  do ic=ic1,ic2
+   do k=k01,k02
+    do j=j1,n2p
+     do i=i1,n1p
+      source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
+                       av(i,j,k+1,ic)-2.*av(i,j,k,ic)+av(i,j,k-1,ic))
+     end do
+    end do
+   end do
+  end do
+  !======================================
  end subroutine pp_lapl
  !========================
  subroutine env_grad_nostag(envg,i1,n1p,j1,n2p,k1,n3p,ider,dhx,dhy,dhz)
@@ -1498,8 +1382,7 @@
  ! Computes the transverse Laplacian of A^{0}=env(3:4) components
  !======== in jc(1:2)= <n/gam_p> density *env(1:2) or *env(3,4)
  ic=2
- call pp_lapl(env,curr,st_ind,ic,&
-  i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
+ call pp_lapl(env,curr,1,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  !=====================
  ! jc(1:2)= F(A)=[D^2_{pp}+omp^2*chi]A chi=<rho/gam_p> <0 for electrons
  !=================
@@ -1512,43 +1395,6 @@
    end do
   end do
  end do
- if(cmp==0)then       !uses FFT in x directiom
-  !=======================================
-  !ftw1d(-1)   !Real to complex on n1/2 frequencies
-  ! FFT stores   X_1 on odd index 1,3,5,..,N-1  X_2 on even 2,4,6,   N
-  !              X_1 are real components in Fourier space
-  !              X_2 are mm components in Fourier space
-  !==========================================
-  do k=k1,n3p
-   do j=j1,n2p
-    do i=i1,n1p
-     ii=i-2
-     wft(ii,1,1)=-curr(i,j,k,1)   !F_R
-     wft(ii,2,1)=-curr(i,j,k,2)   !F_I
-    end do
-    call ftw1d(wft,n1,2,1,-1,1)  ! R=>C fft1D
-    do i=1,n1/2
-     ii=2*i
-     kern=1./(om2-sf2(i))
-     ww0(ii-1,1)=kern*(om0*wft(ii-1,2,1)-sf1(i)*wft(ii,1,1))
-     ww0(ii,1)=kern*(om0*wft(ii,2,1)+sf1(i)*wft(ii-1,1,1))
-
-     ww0(ii-1,2)=-kern*(om0*wft(ii-1,1,1)+sf1(i)*wft(ii,2,1))
-     ww0(ii,2)=-kern*(om0*wft(ii,1,1)-sf1(i)*wft(ii-1,2,1))
-    end do
-    do ii=1,n1
-     wft(ii,1,1)=ww0(ii,1)
-     wft(ii,2,1)=ww0(ii,2)
-    end do
-    call ftw1d(wft,n1,2,1,1,1)  ! complex to real
-    do i=i1,n1p
-     ii=i-2
-     curr(i,j,k,1)=wft(ii,1,1)
-     curr(i,j,k,2)=wft(ii,2,1)
-    end do
-   end do
-  end do
- else
   do ic=1,2
    do k=k1,n3p
     do j=j1,n2p
@@ -1576,7 +1422,6 @@
     end do
    end do
   end do
- endif
  if(ib>0)then     !fixed coordinate system
   !=======================
   !==================================
@@ -1718,37 +1563,6 @@
   end do
  end do
  ! curr=> S[A]=[D^2_{perp}+omp2*chi]A
- if(cmp==0)then
-  do k=k1,n3p
-   do j=j1,n2p
-    do i=i1,n1p
-     ii=i-2
-     wft(ii,1,1)=-curr(i,j,k,1)
-     wft(ii,2,1)=-curr(i,j,k,2)
-    end do
-    call ftw1d(wft,n1,2,1,-1,1)  ! R=>C fft1D
-    do i=1,n1/2
-     ii=2*i
-     kern=1./(om2-sf2(i))
-     ww0(ii-1,1)=kern*(om0*wft(ii-1,2,1)-sf1(i)*wft(ii,1,1))
-     ww0(ii,1)=kern*(om0*wft(ii,2,1)+sf1(i)*wft(ii-1,1,1))
-
-     ww0(ii-1,2)=-kern*(om0*wft(ii-1,1,1)+sf1(i)*wft(ii,2,1))
-     ww0(ii,2)=-kern*(om0*wft(ii,1,1)-sf1(i)*wft(ii-1,2,1))
-    end do
-    do ii=1,n1
-     wft(ii,1,1)=ww0(ii,1)
-     wft(ii,2,1)=ww0(ii,2)
-    end do
-    call ftw1d(wft,n1,2,1,1,1)  ! complex to real
-    do i=i1,n1p
-     ii=i-2
-     curr(i,j,k,1)=wft(ii,1,1)
-     curr(i,j,k,2)=wft(ii,2,1)
-    end do
-   end do
-  end do
- else
   !=====================
   ! F(A)=[D^2_{pp}+omp^2*chi]A chi=<rho/gam_p> <0 for electrons
   !=================
@@ -1786,7 +1600,6 @@
     end do
    end do
   end do
- endif
  !=======================
  if(ib==0)return
  !=======================
@@ -2977,8 +2790,9 @@
  end do
 
  end subroutine init_cp_fields
-
-
+!++++++++++++++++++++++++++++++++++++++++++++++
+!  END SECTION FOR Laser field init
+!==========================================
  !=========================
  subroutine divE(ef,dv,ix1,n1p,iy1,n2p,iz1,n3p,ndm,ic)
  real(dp),intent(inout) :: ef(:,:,:,:)
@@ -3347,133 +3161,6 @@
  endif
  end subroutine ef_bds
  !=========================================
- subroutine set_eb_fields(apf,apf0,ef,nbf,i1,n1p,j1,j2,k1,k2,&
-  dt_loc,aphx,aphy,aphz)
-
- real(dp),intent(inout) :: apf(:,:,:,:),apf0(:,:,:,:)
- real(dp),intent(out) :: ef(:,:,:,:)
- integer,intent(in) :: nbf,i1,n1p,j1,j2,k1,k2
- real(dp),intent(in) :: dt_loc,aphx,aphy,aphz
- real(dp) :: dt_inv
- integer :: ic,i,j,k
- ! apf(1:4)=(Ax,Ay,az,phi) apf(5)=f_gauge
- ! Definitions of (E,B) fields at t^{n+1} time level
- !=======================================
- ! CORRECTS
- ! enter boundary fields
- dt_inv=1./dt_loc
- ic=nbf      !the f_g gauge
- if(pex1)then
-  i=n1p+1
-  do k=k1,k2
-   do j=j1,j2
-    apf(i,j,k,ic)=2.*apf(i-1,j,k,ic)-apf(i-2,j,k,ic)
-   end do
-  end do
- endif
- do k=k1,k2
-  do j=j1,j2
-   do i=i1,n1p
-    apf(i,j,k,1)=apf(i,j,k,1)+aphx*(apf(i+1,j,k,ic)-apf(i,j,k,ic))  !Ax
-    apf(i,j,k,ic-1)=apf(i,j,k,ic-1)-dt_inv*(apf(i,j,k,ic)-apf0(i,j,k,ic)) !phi
-   end do
-  end do
- end do
- if(ndim >1)then
-  if(pe1y)then
-   do k=k1,k2
-    j=j2+1
-    do i=i1,n1p
-     apf(i,j,k,ic)=3.*(apf(i,j-1,k,ic)-apf(i,j-2,k,ic))+apf(i,j-3,k,ic)
-    end do
-   end do
-  endif
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,n1p
-     apf(i,j,k,2)=apf(i,j,k,2)+aphy*(apf(i,j+1,k,ic)-apf(i,j,k,ic)) !Ay
-    end do
-   end do
-  end do
-
-  if(ndim > 2)then
-   !==================================
-   if(pe1z)then
-    k=k2+1
-    do j=j1,j2
-     do i=i1,n1p
-      apf(i,j,k,ic)=3.*(apf(i,j,k-1,ic)-apf(i,j,k-2,ic))+apf(i,j,k-3,ic)
-     end do
-    end do
-   endif
-   do k=k1,k2
-    do j=j1,j2
-     do i=i1,n1p
-      apf(i,j,k,3)=apf(i,j,k,3)+aphz*(apf(i,j,k+1,ic)-apf(i,j,k,ic))
-     end do
-    end do
-   end do
-  endif
- endif
- !++++++++++ SETS (E,B) FIELDS
- !1D components
- do k=k1,k2
-  do j=j1,j2
-   do i=i1,n1p
-    ef(i,j,k,1)=-aphx*(apf(i+1,j,k,4)-apf(i,j,k,4))- &   !E_x
-    dt_inv*(apf(i,j,k,1)-apf0(i,j,k,1))
-    ef(i,j,k,2)=- dt_inv*(apf(i,j,k,2)-apf0(i,j,k,2))    ! Ey
-    ef(i,j,k,nfield)=0.5*aphx*(apf0(i+1,j,k,2)-apf0(i,j,k,2) +&
-     apf(i+1,j,k,2)+apf(i,j,k,2))!Bz
-   end do
-  end do
- end do
- if(nfield >3)then
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,n1p
-     ef(i,j,k,3)=-dt_inv*(apf(i,j,k,3)-apf0(i,j,k,3))
-     ef(i,j,k,5)=-0.5*aphx*(apf0(i+1,j,k,3)-apf0(i,j,k,3)+ &
-      apf(i+1,j,k,3)- apf(i,j,k,3))
-    end do
-   end do
-  end do
- endif
- if(ndim <2)return
-
- do k=k1,k2
-  do j=j1,j2
-   do i=i1,n1p
-    ef(i,j,k,2)=ef(i,j,k,2)-aphy*(apf(i,j+1,k,4)-apf(i,j,k,4)) !E_y
-    ef(i,j,k,nfield)=ef(i,j,k,nfield)- 0.5*aphy*(&
-     apf0(i,j+1,k,1)-apf0(i,j,k,1)+&       !B_z
-    apf(i,j+1,k,1)-apf(i,j,k,1))       !B_z
-   end do
-  end do
- end do
- if(nfield >3)then
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,n1p
-     ef(i,j,k,4)=0.5*aphy*(apf0(i,j+1,k+1,3)-apf0(i,j,k,3)+&
-      apf(i,j+1,k,3)-apf(i,j,k,3))
-    end do
-   end do
-  end do
- endif
- do k=k1,k2
-  do j=j1,j2
-   do i=i1,n1p
-    ef(i,j,k,3)=ef(i,j,k,3)-aphz*(apf(i,j,k+1,4)-apf(i,j,k,4)) !E_z
-    ef(i,j,k,4)=ef(i,j,k,4)-0.5*aphz*(apf0(i,j,k+1,2)-apf0(i,j,k,2)+&
-     apf(i,j,k+1,2)-apf(i,j,k,2))
-    ef(i,j,k,5)=ef(i,j,k,5)+0.5*aphz*(apf0(i,j,k+1,1)-apf0(i,j,k,1)+&
-     apf(i,j,k+1,1)-apf(i,j,k,1))
-   end do
-  end do
- end do
- end subroutine set_eb_fields
- !==========================
  subroutine divA(ef,curr,i1,n1p,j1,j2,k1,k2,ic,aphx,aphy,aphz)
 
  real(dp),intent(inout) :: ef(:,:,:,:),curr(:,:,:,:)
@@ -3493,7 +3180,7 @@
  do k=k1,k2
   do j=j1,j2
    do i=i1,n1p
-    curr(i,j,k,ic)=curr(i,j,k,ic)+aphx*(ef(i+1,j,k,1)-ef(i,j,k,1))
+    curr(i,j,k,ic)=curr(i,j,k,ic)+aphx*(ef(i,j,k,1)-ef(i-1,j,k,1))
    end do
   end do
  end do
@@ -3502,7 +3189,7 @@
   j=j1
   do k=k1,k2
    do i=i1,n1p
-    ef(i,j-1,k,2)=3.*(ef(i,j,k,2)-ef(i,j+1,k,2))+ef(i,j+2,k,2)
+    ef(i,j-1,k,2)=2.*ef(i,j,k,2)-ef(i,j+1,k,2)
    end do
   end do
  endif
@@ -3510,132 +3197,118 @@
   do j=j1,j2
    do i=i1,n1p
     curr(i,j,k,ic)=curr(i,j,k,ic)+aphy*(ef(i,j,k,2)-ef(i,j-1,k,2))
-
    end do
   end do
  end do
- if(ndim==2)return
  !================ ndim >2
- if(pe0z)then
-  k=k1
-  do j=j1,j2
-   do i=i1,n1p
-    ef(i,j,k-1,3)=3.*(ef(i,j,k,3)-ef(i,j,k+1,3))+ef(i,j,k+2,3)
+ if(ndim ==3)then
+  if(pe0z)then
+   k=k1
+   do j=j1,j2
+    do i=i1,n1p
+     ef(i,j,k-1,3)=2.*ef(i,j,k,3)-ef(i,j,k+1,3)
+    end do
+   end do
+  endif
+  do k=k1,k2
+   do j=j1,j2
+    do i=i1,n1p
+     curr(i,j,k,ic)=curr(i,j,k,ic)+aphz*(ef(i,j,k,3)-ef(i,j,k-1,3))
+    end do
+   end do
+  end do
+ endif
+
+ end subroutine divA
+!==============================
+ subroutine grad_pot(apf,grad,i1,i2,j1,j2,k1,k2,ic,dhx,dhy,dhz)
+  real(dp),intent(inout) :: apf(:,:,:,:)
+  real(dp),intent(inout) :: grad(:,:,:,:)
+  integer,intent(in) :: i1,i2,j1,j2,k1,k2,ic
+  real(dp),intent(in) :: dhx,dhy,dhz
+  integer :: i,j,k,j01,j02,k01,k02
+
+  j01=j1
+  j02=j2
+  k01=k1
+  k02=k2
+  if(pex1)then
+   i=i2+1
+   do k=k1,k2
+    do j=j1,j2
+     apf(i,j,k,ic)=2.*apf(i-1,j,k,ic)-apf(i-2,j,k,ic)
    end do
   end do
  endif
  do k=k1,k2
   do j=j1,j2
-   do i=i1,n1p
-    curr(i,j,k,ic)=curr(i,j,k,ic)+aphz*(ef(i,j,k,3)-ef(i,j,k-1,3))
+   do i=i1,i2
+    grad(i,j,k,1)= dhx*(apf(i+1,j,k,ic)-apf(i,j,k,ic))    ! (D_x)_{i+1/2} 
    end do
   end do
  end do
- end subroutine divA
+ if(ndim >1)then
+  if(pe1y)then
+   do k=k1,k2
+    j=j2+1
+    do i=i1,i2
+     apf(i,j,k,ic)=2.*apf(i,j-1,k,ic)-apf(i,j-2,k,ic)   
+    end do
+   end do
+  endif
+  do k=k1,k2
+   do j=j1,j2
+    do i=i1,i2
+     grad(i,j,k,2)= dhy*(apf(i,j+1,k,ic)-apf(i,j,k,ic))   !(D_y)_{j+1/2}
+    end do
+   end do
+  end do
+ endif
+ if(ndim==2)return
+     
  !==================================
- subroutine potential_lapl(apf,curr,nbf,i1,n1p,j1,n2p,k1,n3p,&
-  dhx,dhy,dhz)
- real(dp),intent(inout) :: apf(:,:,:,:),curr(:,:,:,:)
+  if(pe1z)then
+   k=k2+1
+   do j=j1,j2
+    do i=i1,i2
+     apf(i,j,k,ic)=2.*apf(i,j,k-1,ic)-apf(i,j,k-2,ic)
+    end do
+   end do
+  endif
+  do k=k1,k2
+   do j=j1,j2
+    do i=i1,i2
+     grad(i,j,k,3)= dhz*(apf(i,j,k+1,ic)-apf(i,j,k,ic)) !Dz
+    end do
+   end do
+  end do
+ end subroutine grad_pot
+ !==================================
+ subroutine potential_lapl(apf,curr,ic1,ic2,i1,n1p,j1,n2p,k1,n3p,&
+                                                       dhx,dhy,dhz)
+ real(dp),intent(inout)  :: apf(:,:,:,:),curr(:,:,:,:)
 
- integer,intent(in) :: nbf,i1,n1p,j1,n2p,k1,n3p
+ integer,intent(in):: ic1,ic2,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: dhx,dhy,dhz
- integer :: i,j,k,ic,ic0,d2_ord,st_ind,j01,j02,k01,k02
+ integer :: i,j,k,ic,d2_ord,j01,j02,k01,k02
  real(dp) :: dx2,dy2,dz2
- !================== ordering apf(1:5)=(Ax,Ay,Az,phi,f_gauge)
+ !Computes the Laplacian(apf) and accumulates on the source array curr
+ !                 curr=(Laplacian(apf)+curr)
+ !========================================
+ 
 
  d2_ord=2
  dx2=dhx*dhx
  dy2=dhy*dhy
  dz2=dhz*dhz
- ic0=0
  j01=j1
  j02=n2p
  k01=k1
  k02=n3p
  d2_ord=2
- !================
- if(nbf==0)then
-  ic=5
-  ic0=1
-  if(pex0)then
-   do k=k1,n3p
-    do j=j1,n2p
-     apf(i1-1,j,k,ic)=2.*apf(i1,j,k,ic)-apf(i1+1,j,k,ic)
-    enddo
-   end do
-  endif
-  if(pex1)then
-   do k=k1,n3p
-    do j=j1,n2p
-     apf(n1p+1,j,k,ic)=apf(n1p-1,j,k,ic)
-    enddo
-   end do
-  endif
-  do k=k1,n2p
-   do j=j1,n2p
-    do i=i1,n1p
-     curr(i,j,k,ic0)=curr(i,j,k,ic0)+dx2*(apf(i+1,j,k,ic)-&
-      2.*apf(i,j,k,ic)+apf(i-1,j,k,ic))
-    end do
-   end do
-  end do
-  if(pe0y)then
-   do k=k1,n3p
-    j=j1
-    do i=i1,n1p
-     apf(i,j-1,k,ic)=3.*(apf(i,j,k,ic)-apf(i,j+1,k,ic))+apf(i,j+2,k,ic)
-    end do
-   end do
-   j01=j1+1
-  endif
-  if(pe1y)then
-   j=n2p
-   do k=k1,n3p
-    do i=i1,n1p
-     apf(i,j+1,k,ic)=3.*(apf(i,j,k,ic)-apf(i,j-1,k,ic))+apf(i,j-2,k,ic)
-    end do
-   end do
-   j02=n2p-1
-  endif
-  do k=k1,n3p
-   do j=j01,j02
-    do i=i1,n1p
-     curr(i,j,k,ic0)=curr(i,j,k,ic0)+dy2*(&
-      apf(i,j+1,k,ic)-2.*apf(i,j,k,ic)+apf(i,j-1,k,ic))
-    end do
-   end do
-  end do
-  if(pe0z)then
-   k=k1
-   do j=j1,n2p
-    do i=i1,n1p
-     apf(i,j,k-1,ic)=3.*(apf(i,j,k,ic)-apf(i,j,k+1,ic))+apf(i,j,k+2,ic)
-    end do
-   end do
-   k01=k1+1
-  endif
-  if(pe1z)then
-   k=n3p
-   do j=j1,n2p
-    do i=i1,n1p
-     apf(i,j,k+1,ic)=3.*(apf(i,j,k,ic)-apf(i,j,k-1,ic))+apf(i,j,k-2,ic)
-    end do
-   end do
-   k02=n3p-1
-  endif
-  do k=k01,k02
-   do j=j01,j02
-    do i=i1,n1p
-     curr(i,j,k,ic0)=curr(i,j,k,ic0)+dz2*(&
-      apf(i,j,k+1,ic)-2.*apf(i,j,k,ic)+apf(i,j,k-1,ic))
-    end do
-   end do
-  end do
-  return
- endif
- !============= ALL FIELDS
+ !============= ALL FIELDS ic=ic1,ic2
  if(pex0)then
-  do ic=1,nbf
+  do ic=ic1,ic2
    do k=k1,n3p
     do j=j1,n2p
      apf(i1-1,j,k,ic)=2.*apf(i1,j,k,ic)-apf(i1+1,j,k,ic)
@@ -3644,7 +3317,7 @@
   end do
  endif
  if(pex1)then
-  do ic=1,nbf
+  do ic=ic1,ic2
    do k=k1,n3p
     do j=j1,n2p
      apf(n1p+1,j,k,ic)=apf(n1p-1,j,k,ic)
@@ -3652,8 +3325,8 @@
    end do
   end do
  endif
- do ic=1,nbf
-  do k=k1,n2p
+ do ic=ic1,ic2
+  do k=k1,n3p
    do j=j1,n2p
     do i=i1,n1p
      curr(i,j,k,ic)=curr(i,j,k,ic)+dx2*(apf(i+1,j,k,ic)-&
@@ -3663,7 +3336,7 @@
   end do
  end do
  if(ndim >1)call pp_lapl(&
-  apf,curr,st_ind,nbf,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
+                           apf,curr,ic1,ic2,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  end subroutine potential_lapl
  !===========================
  subroutine rotE(ef,i1,n1p,j1,j2,k1,k2,aphx,aphy,aphz)

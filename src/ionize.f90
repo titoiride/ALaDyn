@@ -43,6 +43,40 @@
  real(dp) :: dgi,d2gi,dei_inv
 
  contains
+ subroutine set_atomic_weight(At_number,W_number)
+ integer,intent(in) :: At_number
+ real,intent(out) :: W_number
+
+
+ select case(At_number)
+ case(1)                    !H
+  W_number=1.
+ case(2)                    !He
+  W_number=4.
+ case(3)                    !Li
+  W_number=6.
+ case(6)                    !C
+  W_number=12.
+ case(7)                   !N
+  W_number=14.
+ case(8)                   !O
+  W_number=16.
+ case(10)                  !Ne
+  W_number= 20.
+ case(13)               !Al
+  W_number =26.98
+ case(14)              !Si
+  W_number =28.09
+ case(18)   !Ar
+  W_number =39.948
+ case(22)              !Ti
+  W_number =47.8
+ case(28)              !Ni
+  W_number =58.7
+ case(29)              !Cu
+  W_number =63.54      
+ end select
+ end subroutine set_atomic_weight
  !================================
  subroutine set_ionization_coeff(An,sp_ionz)
  integer,intent(in) :: An(:),sp_ionz
@@ -749,7 +783,22 @@
     Wi(i,j,ic)=w_adk
    end do
   end do
- case(2)              !BSI +adk (Posthumus)
+ case(2)                  !Cycle averaged ADK 
+  do k=z0+1,zm
+   j=k-z0
+   ns=2.*nstar(k,ic)-1.
+   do i=1,N_ge
+    Ei=dge*float(i)         !The gridded field intensity
+    fact2=(2.*Vfact(k,ic)/Ei)
+    fact1=(fact2)**ns
+    fact1=fact1*sqrt(3.*Ei/(pig*Vfact(k,ic)))
+    w_adk=C_nstar(k,ic)*fact1*exp(-fact2/3.)
+    !=============
+    if(w_adk < tiny)w_adk=0.0
+    Wi(i,j,ic)=w_adk
+   end do
+  end do
+ case(3)              !BSI +adk (Posthumus)
   do k=z0+1,zm
    j=k-z0
    ns=2.*nstar(k,ic)-1.
@@ -769,8 +818,8 @@
      Wi(i,j,ic)=w_bsi+w_adk
     endif
    end do
-  end do
- case(3)            ! Epoch version Min(adk-BSI)
+   end do
+ case(4)            ! Epoch version Min(adk-BSI)
   do k=z0+1,zm
    j=k-z0
    ns=2.*nstar(k,ic)-1.
@@ -785,20 +834,6 @@
     Wi(i,j,ic)=w_adk
     if(Ei > E_c(k,ic))Wi(i,j,ic)=min(w_bsi,w_adk)
     if(Ei > E_b(k,ic))Wi(i,j,ic)=w_bsi
-   end do
-  end do
- case(4)                  !Only cycle averaged ADK (no BSI)
-  do k=z0+1,zm
-   j=k-z0
-   ns=2.*nstar(k,ic)-1.
-   do i=1,N_ge
-    Ei=dge*real(i,dp)         !The gridded field intensity
-    fact2=(2.*Vfact(k,ic)/Ei)
-    fact1=sqrt(3.*Ei/(pig*Vfact(k,ic)))*(fact2)**ns
-    w_adk=C_nstar(k,ic)*fact1*exp(-fact2/3.)
-    !=============
-    if(w_adk < tiny)w_adk=0.0
-    Wi(i,j,ic)=w_adk
    end do
   end do
  case(5)              !cycle averaged BSI +adk (Posthumus)
@@ -836,7 +871,7 @@
  Wi=omega_a*Wi
  ic=loc_ion-1
  zm_loc=zm-z0
- if(nz_lev==1)then               !only adk model
+ if(nz_lev==1)then               ! one level ionization
   W_one_lev(0:N_ge,zm,ic)=0.0
   do z=0,zm_loc-1
    zk=z+1

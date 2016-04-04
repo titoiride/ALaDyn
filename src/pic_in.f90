@@ -626,7 +626,7 @@
  !===================================
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
  !===========================
  last_particle_index=0
  !============
@@ -954,7 +954,7 @@
  !======================
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
  !===========================
  ip_el=0
  ip_pr=0
@@ -1314,7 +1314,7 @@
  !======================
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
  !===========================
  ip_el=0
  ip_pr=0
@@ -1370,7 +1370,7 @@
  real(dp) :: uu,yy,dxip,dpy,np1,np2
  real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
  real(dp) :: xfsh,dlpy,tot_lpy,loc_ymp
- integer :: z2,nxl(6),nyl1,nlpy
+ integer :: z2,nxl(6),nyl1,nlpy,nholes
  integer :: ip_ion,ip_el,ip_pr,npyc(4),nwires
  real(dp),allocatable :: wy(:,:),wz(:,:)
  !=================
@@ -1398,6 +1398,7 @@
  tot_lpy=dlpy+lpy(2)     !distance among elements (void+nanowire)`
  nwires=nint((yp_max-yp_min)/tot_lpy)    !numbers of lpy elements
  nlpy=nint(dy_inv*dlpy) ! cell numbers in dlpy
+ nholes=nint(dy_inv*lpy(2))  ! cell number in
  if(pe0)then
   write(6,'(a18,i6)')' Nanowires number ',nwires
   write(6,'(a23,i6)')' Grid-points per nanow ',nlpy
@@ -1433,7 +1434,7 @@
  !===============
  npyc(1:2)=np_per_yc(1:2)  !layer of nano_wires
  nptz_ne=1
- if(nwires >1)then
+ if(nwires >2)then
   do ic=1,2
    npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
    i2=0
@@ -1448,21 +1449,33 @@
    end do
    npty_layer(ic)=i2
   end do
- else
+ else                  !two nanowires filled with n1_over_nc (el+Z1) plasma
   do ic=1,2
-   npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy/2 layer
+   npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
    i2=0
-   loc_ymp=yp_min
+   loc_ymp= -0.5*tot_lpy
    dpy=dlpy/real(npty_ne,dp)
-   do i=1,npty_ne/2
-    ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.4)
-   enddo
-   i2=i2+npty_ne/2
-   loc_ymp=loc_ymp+0.5*dlpy+lpy(2)
-   do i=1,npty_ne/2
+   do i=1,npty_ne
     ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
    enddo
-   i2=i2+npty_ne/2
+   loc_ymp=loc_ymp+dlpy       !first layer
+   i2=i2+npty_ne
+!===========================
+   npty_ne=nholes*npyc(ic)    !number of yp points in a hole
+   dpy=lpy(2)/real(npty_ne,dp)
+   do i=1,npty_ne
+    ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+    wy(i+i2,ic)=np1
+   enddo
+   loc_ymp=loc_ymp+lpy(2)
+   i2=i2+npty_ne
+!====================
+   npty_ne=nlpy*npyc(ic)    !number of yp points in the second dlpy layer
+   dpy=dlpy/real(npty_ne,dp)
+   do i=1,npty_ne
+    ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+   enddo
+   i2=i2+npty_ne
    npty_layer(ic)=i2
   end do
  endif
@@ -1522,10 +1535,10 @@
  targ_end=targ_in+xtot
  ! Input particles
  !========= np_per_xc(1:2) electrons and Z1 ions in the nanowires target
- !========= np_per_xc(3:4) electrons and ions in bulk layer
- ! Particles grid ordering
- ! only nxl(3) and nxl(4) layers activated
- nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !nanowires electrons+Z1-ions density
+ !========= np_per_xc(3:4) electrons and Z2 ions in bulk layer
+ !  Particles grid ordering
+ !  only nxl(3) and nxl(4) layers activated
+ nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !nanowires  electrons+Z1-ions density
  nptx_loc(3:4)=nxl(4)*np_per_xc(3:4) !bulk layer electrons +Z2 ions
 
  nptx_max=maxval(nptx_loc(1:4))
@@ -1647,7 +1660,7 @@
  !==============
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
  !===========================
  ip_el=0
  ip_pr=0
@@ -1697,7 +1710,7 @@
  real(dp),allocatable :: wy(:,:),wz(:,:)
  !=================
  !++++++++++++++++ WARNING
- ! ONLY layers (3) n_over_nc and (4) n2_over_nc activated
+ !    ONLY in layer (3) n_over_nc and layer (4) n2_over_nc  activated
  !============================
  xp_min=xmin
  xp_max=xmax
@@ -1767,7 +1780,7 @@
  ! Layers space ordering(1:4)
  ! [1:2 electon-Z1-ions inanowires,3:6 electron-Z1-ions embedded preplasma]
  !===============
- npyc(1:4)=np_per_yc(1:4)  !layer of nano_wires =>      in nxl(3) and nxl(2)
+ npyc(1:4)=np_per_yc(1:4)  !layer of nano_wires =>in nxl(2) and nxl(3)
  nptz_ne=1
  do ic=1,4
   npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
@@ -1821,12 +1834,12 @@
  xfsh=xf0+lpx(7)
  targ_in=xfsh
  targ_end=targ_in+xtot
- ! Input particles
- !========= np_per_xc(1:2) electrons and Z1 ions in the lpx(3) nanowires target
- !========= np_per_xc(3:4) electrons and Z2 ions in the lpx(2) nanowires+filled holes target
- ! Particles grid ordering
- ! only inxl(2) nxl(3) layers activated
- nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !nanowires electrons+Z1-ions density
+ !  Input particles
+ !========= np_per_xc(1:2) electrons and Z1 ions in the lpx(3) nanowires target 
+ !========= np_per_xc(3:4) electrons and Z2 ions in the lpx(2) nanowires+filled holes target 
+ !  Particles grid ordering
+ !  only nxl(2) nxl(3) layers activated
+ nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !nanowires  electrons+Z1-ions density
  nptx_loc(3:6)=nxl(2)*np_per_xc(3:6) ! electron,Z1-ions preplasma filling the nlx(2) layer of nanowires
 
  nptx_max=maxval(nptx_loc(1:6))
@@ -1965,7 +1978,7 @@
  !==============
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
  !===========================
  ip_el=0
  ip_ion=0
@@ -2275,7 +2288,7 @@
  loc_npart(imody,imodz,imodx,1:nsp)=nps_loc(1:nsp)
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
  !===========================
  call init_random_seed(mype)
  !============
@@ -2375,7 +2388,7 @@
  subroutine LP_pulse(lp_mod)
 
  integer,intent(in) :: lp_mod
- integer :: i1,i2,lp_ind
+ integer :: i1,i2,j1,j2,k1,k2,lp_ind
  real(dp) :: angle,shx_lp,sigm,eps,xm,tt,tau,lp_end
 
  lp_amp=oml*a0
@@ -2389,6 +2402,10 @@
  i1=loc_xgrid(imodx)%p_ind(1)
  i2=loc_xgrid(imodx)%p_ind(2)
  xm=loc_xgrid(imodx)%gmin  ! => field index i1
+ j1=loc_ygrid(imody)%p_ind(1)
+ j2=loc_ygrid(imody)%p_ind(2)
+ k1=loc_zgrid(imodz)%p_ind(1)
+ k2=loc_zgrid(imodz)%p_ind(2)
 
  tt=0.0
  tau=0.5*w0_x
@@ -2404,11 +2421,12 @@
   shx_lp=0.0
   if(angle >0.0)shx_lp=lpx(7)
   if(Plane_wave)lp_ind=0
-  call init_lp_fields(ebf,lp_amp,tt,t0_lp,tau,w0_y,xf,&
-   angle,shx_lp,lp_ind,i1,i2)
-  !+++++++++++++++
-  ! Holds a Plane wave pulse (lp_mod=0) and LP Gaussian pulses
-  !=======================
+   call init_lp_fields(ebf,lp_amp,tt,t0_lp,tau,w0_y,xf,&
+                      angle,shx_lp,lp_ind,i1,i2)
+  !call divA(ebf,jc,i1,i2,j1,j2,k1,k2,1,1,dx_inv,dy_inv,dz_inv)
+ !+++++++++++++++
+ !  Holds a Plane wave pulse (lp_mod=0) and LP Gaussian pulses
+ !=======================
   if(pe0)then
    write(6,*)'LP injected '
    write(6,'(a21,e11.4)')' Focal x-position xf=',xf
@@ -2698,9 +2716,9 @@
  ! The local MPI task
  nps_loc(1:nsb)=loc_nbpart(imody,imodz,imodx,1:nsb)
  npmax=maxval(nps_loc(1:nsb))
- !++++++++++++++++++++++++++++++++++++++
- if(npmax >0)call p_alloc(npmax,nps_loc,nsb,LPf_ord,1,nd2+1,2,mem_psize)
- !=================================
+!++++++++++++++++++++++++++++++++++++++
+ if(npmax >0)call p_alloc(npmax,nps_loc,nsb,LPf_ord,1,2,mem_psize)
+!=================================
  nb_loc=nps_loc(1)
  p=imodx
  ip=imodz
@@ -2941,7 +2959,7 @@
  n_st=0
  do ic= 1,nsb
   np=loc_nbpart(imody,imodz,imodx,ic)
-  call set_grid_charge(bunch(ic),ebfb,np,ndim,n_st,1,xm,ym,zm)
+  call set_grid_charge(bunch(ic),ebfb,jc,np,ndim,n_st,1,xm,ym,zm)
  end do
  !generates ebf_bunc(1)=den(i,j,k)
  !on local MPI computational grid[i2,nyp,nzb]
@@ -3049,7 +3067,7 @@
  n_st=0
  ic=1
  np=loc_nbpart(imody,imodz,imodx,ic)
- call set_grid_charge(bunch(ic),ebfb,np,ndim,n_st,1,xm,ym,zm)
+ call set_grid_charge(bunch(ic),ebfb,jc,np,ndim,n_st,1,xm,ym,zm)
  !=========== extend uniform x-distribution
  !on extended computational grid[i2b,nyp,nzb]
  if(prl)call fill_curr_yzxbdsdata(jc,i1,i2b,j1,nyp,k1,nzp,1)
@@ -3131,7 +3149,10 @@
   case(5)
    !Plasma Wakefield Acceleration
    !Comb: nsb-1 equal driving buches +witness
-   call Bpulse                      !3D-cartesian PWFA
+   call Bpulse                      !3D-cartesian PBWA
+  case(6)
+   ! Proton bunch propagation in uniform plasma
+   call Prbeam                      !3D-cartesian PBWA
   end select
  endif
  end subroutine init

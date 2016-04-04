@@ -32,7 +32,7 @@
  real(dp),allocatable :: jc_gammarange(:,:,:,:)
 
  real(dp),allocatable :: ebf(:,:,:,:),ebf_bunch(:,:,:,:),jc(:,:,:,:)
- real(dp),allocatable :: pot(:,:,:,:),pot0(:,:,:,:)
+ real(dp),allocatable :: pot(:,:,:,:)
  real(dp),allocatable :: ebf0(:,:,:,:),ebf1(:,:,:,:)
  real(dp),allocatable :: ebf0_bunch(:,:,:,:),ebf1_bunch(:,:,:,:)
  integer,allocatable :: sp_count(:,:)
@@ -45,9 +45,9 @@
 
  !--------------------------
 
- subroutine v_alloc(n1,n2,n3,ncomp,njc,ndm,ns,lp,envlp,fsize)
+ subroutine v_alloc(n1,n2,n3,ncomp,njc,ndm,ns,ipot,lp,envlp,fsize)
 
- integer,intent(in) ::n1,n2,n3,ncomp,njc,ndm,ns,lp
+ integer,intent(in) ::n1,n2,n3,ncomp,njc,ndm,ns,lp,ipot
  logical,intent(in) :: envlp
  integer,intent(inout) ::fsize
  integer :: njdim,ng,ng0,n1p,n2p,n3p,shx,AllocStatus,fsize_loc
@@ -77,6 +77,11 @@
  fsize_loc=fsize_loc+ng*ncomp+ng*njc+ns*ng0
  ebf=0.0
  jc=0.0
+ if(ipot> 1)then
+  allocate(pot(n1p,n2p,n3p,2),STAT=AllocStatus)
+  pot=0.0
+  fsize_loc=fsize_loc+2*ng
+ endif
  if(lp>2)then
   allocate(ebf0(n1p,n2p,n3p,ncomp),STAT=AllocStatus)
   ebf0=0.0

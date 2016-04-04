@@ -204,7 +204,7 @@
  subroutine set_grid_charge_gammarange(sp_loc,gamma_min,gamma_max,part,np,ndm,n_st,ic,xmn,ymn,zmn)
 
  type(species),intent(in) :: sp_loc
- real(dp),intent(out) :: part(:,:)
+ type(species),intent(out) :: part
  integer,intent(in) :: np,ndm,n_st,ic
  real(dp),intent(in) :: xmn,ymn,zmn,gamma_min,gamma_max
  real(dp) :: xx,sx,sx2,dvol,wgh
@@ -212,6 +212,8 @@
  integer :: i,j,k,i1,j1,k1,i2,j2,k2,n,ch,spl
  real(sp) :: charge(2)
  equivalence(charge,wgh)
+
+#if 0
  !======================
  ax0(0:3)=0.0;ay0(0:3)=0.0
  az0(0:3)=0.0
@@ -373,6 +375,9 @@
   ! particles on[1:n1,1:n2,1:n3]===> data on [0:n1+1,0:n2+1,0:n3+1,1:4]
  end select
  !+++++++++++++++++++++++++++++++
+
+#endif
+
  end subroutine set_grid_charge_gammarange
 
 

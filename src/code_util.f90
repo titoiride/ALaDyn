@@ -26,10 +26,11 @@
  implicit none
 
  integer,parameter :: major_version = 5
- integer,parameter :: minor_version = 01
+ integer,parameter :: minor_version = 2
  integer,parameter :: MAXV=1,SUMV=0,MINV=-1
  integer,parameter :: LEFT=-1,RIGHT=1
  integer,parameter :: FIELD=0,CURR=1
+ integer,parameter :: sh_ix=3
  integer :: mem_size,mem_psize
  integer :: time2dump(1)=0
  real(dp) :: dump_t0,dump_t1

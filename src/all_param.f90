@@ -26,7 +26,6 @@
  use phys_param
  use grid_and_particles
  use code_util
- use fftg_param
  use grid_param
  use control_bunch_input
  use ionize
@@ -187,7 +186,10 @@
   if(ion_min(i)< ion_max(i))nsp_ionz=i+1
  enddo
  nsp_ionz=min(nsp_ionz,nsp)
- if(ionz_lev >0) Ionization=.true.
+ do i=1,3
+  if(mass_number(i)< 1.)call set_atomic_weight(atomic_number(i),mass_number(i))
+ end do
+ if(ionz_lev >0)Ionization=.true.
  if(Ionization) call set_ionization_coeff(atomic_number,nsp_ionz)
  !==========================
  Wake=.false.
@@ -198,15 +200,15 @@
  PML=.false. ! FIX SERVE O LO RIMUOVIAMO?
  Stretch=.false.
  pml_size=0
- n_stretch=0
+ ny_stretch=0
  nx_stretch=0
  if(str_flag==1)then
   Stretch=.true.
-  n_stretch=nint(real(ny,dp)*size_of_stretch_along_y)
+  ny_stretch=nint(real(ny,dp)*size_of_stretch_along_y)
  endif
  if(str_flag==2)then
   Stretch=.true.
-  n_stretch=nint(real(ny,dp)*size_of_stretch_along_y)
+  ny_stretch=nint(real(ny,dp)*size_of_stretch_along_y)
   nx_stretch=nint(real(nx,dp)*size_of_stretch_along_x)
  endif
  call grid_alloc(nx,nx_loc,ny,ny_loc,nz,nz_loc,ny_targ,&
@@ -300,7 +302,7 @@
    curr_ndim=ndim
   endif
   dx=1./k0
-  call set_grid(nx,ny,nz)
+  call set_grid(nx,ny,nz,nx_stretch,ny_stretch,k0,yx_rat,zx_rat)
   dt=cfl*dx
   select case(ndim)
   case(1)
@@ -412,7 +414,7 @@
    dx=1./k0
    jb_norm=1.
    bvol=1.
-   call set_grid(nx,ny,nz)
+   call set_grid(nx,ny,nz,nx_stretch,ny_stretch,k0,yx_rat,zx_rat)
    dt=cfl/sqrt(dx_inv*dx_inv+dy_inv*dy_inv+dz_inv*dz_inv)
    do i=1,nsb
     bvol(i)=pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i)    !the bunch volume (mu^3)
@@ -432,8 +434,69 @@
    end do
    b_charge=bcharge(1)
 
-   !==================
-  end select
+ case(6) !  Proton one-beam section
+  ! uses l0=1mm 
+  ! for fields E_u=GV/m = mc^2/(l0*e*E0) 
+  ! n0= 10^11/cc =10^8/mm^3
+  !==============================
+  !  n_over_nc = initial plasma density/n0= ne/n0
+  !=======================
+  lam0=1.             !n [mm] is the unit of length
+  nm_fact=1.e+08      !electron density[mm^{-3}]
+  nc=1.0              !the plasma ref density is n0=10^11/cm^3=10^8/mm^3
+  nc0=2.*pi2*rc0*1.e-03    
+  Wake=.true.
+  Solid_target=.false.
+!=============================
+  !the squared adimensional plasma frequency on n0 density 
+  ! the electron radius r_c=rc0*10^{-11}mm
+  !   r_c*l0*l0*n0= 10^{-3}*rc0
+  !omp^2=   4*pi*l0*l0*rc*n0=4*pi*rc0*10^{-3}
+!=======================
+  omega_p=n_over_nc*nc0
+  ompe=E0*omega_p        ! the source term in Maxw.eqs: E0*omega_p^2
+  omega_p=sqrt(omega_p)
+!======================
+!============================
+  el_lp=1./omega_p    !skin depth in l0[mm] unit
+  lambda_p=pi2*el_lp  ! the plasma wavelength in l0 unit
+  lpvol=el_lp*el_lp*el_lp
+  gam0=gam(1)
+  u0_b=sqrt(gam0*gam0-1.)   !the beam x-momentum
+  bet0=u0_b/gam0            !the beam v_b/c norm velocity
+  w_speed=bet0
+  vbeam=0.0
+  Beam=.true.
+  Pbeam=.true.
+  Lorentz_fact(1)=Lorentz_fact(1)/E0
+  Lorentz_bfact(1)=Lorentz_fact(1)/proton_mass_norm
+  !==================================
+  nfield=6
+  nbfield=nfield
+  curr_ndim=ndim
+  mod_ord=4
+  dx=1./k0
+  jb_norm=1.
+  call set_grid(nx,ny,nz,nx_stretch,ny_stretch,k0,yx_rat,zx_rat)
+  dt=cfl/sqrt(dx_inv*dx_inv+dy_inv*dy_inv+dz_inv*dz_inv)
+  !====================
+  ! i=1 only one beam: enters rhob= bunch number density/np
+  i=1
+  bvol(i)=pi2*syb(i)*syb(i)    !the volume (mm^3) 
+  b_charge_den=rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mm^3
+  bcharge(i)=b_charge_den*bvol(i)  !unit length bunch charge in [pC]
+  Qbch(i)=rhob(i)*bvol(i)/lpvol
+  gvol_inv=dx_inv*dy_inv*dz_inv
+  gvol=1./gvol_inv
+  nb_over_np=rhob(1)
+!========== Normalization
+  jb_norm(i)=rhob(i)*gvol_inv*bvol(i)*sxb(i)/real(nb_tot(i),dp)
+!====bvol*gvol_inv/nb_tot = the beam cell number/beam macroparticles number
+! jb_norm = weight= 1/beam macroparticles per cell        
+! j0_norm = 1/plasma macroparticles per cell        
+  b_charge=b_charge_den
+  !==================
+ end select
  endif
  if(Wake)nsp_run=1  !only electrons running
  !============================
@@ -451,6 +514,8 @@
   nmacro=nref*real(nx*ny*nz,dp)
   ! here the total initial nmacro particles
  endif
+!================================
+!  SET PARAM all cases
 
  !===============================================================
  !charge per macroparticle: np_per_nmacro=nm_fact*n_over_nc/nmacro
@@ -465,12 +530,12 @@
  pot_ndim=0
  nd2=2*curr_ndim
  nj_dim=curr_ndim
- if(Envelope)nj_dim=nj_dim+1
+ if(Envelope)nj_dim=curr_ndim+1
  if(ibeam==2)then
-  pot_ndim=4
-  if(curr_ndim >2)pot_ndim=5
-  nj_dim=nj_dim+1
+  nj_dim=curr_ndim+1
+  pot_ndim=nj_dim+1
  endif
+ 
 
  djc(1)=dx
  djc(2:3)=0.0
@@ -497,293 +562,6 @@
  endif
  end subroutine param
  !--------------------------
- subroutine set_grid(n1,n2,n3)
- integer,intent(in) :: n1,n2,n3
- integer :: i,ns1
- real(dp) :: yy,yyh,sm,spec
-
- aph=pi*0.4
- dxi=1.
- dyi=1.
- dzi=1.
- sx_rat=1.
- sy_rat=1.
- sz_rat=1.
- sm=0.0
- spec=0.0
- dx_inv=1.0/dx
- do i=1,n1+1
-  x(i)=dx*real(i-1,dp)    !xminx(1)=0,.....,xmax-dx=x(nx)
-  xh(i)=x(i)+0.5*dx
-  dx1(i)=1.
-  dx1h(i)=1.
- end do
- dxi=dx
- dxi_inv=dx_inv
- ns1=n1+1-nx_stretch
- if(nx_stretch >0)then
-  dxi=aph/real(nx_stretch,dp)
-  dxi_inv=1./dxi
-  Lx_s=dx*dxi_inv
-  sx_rat=dxi*dx_inv
-  spec=x(ns1)
-  do i=ns1,n1+1
-   yy=dxi*real(i-ns1,dp)
-   yyh=yy+dxi*0.5
-   x(i)=spec+Lx_s*tan(yy)
-   xh(i)=spec+Lx_s*tan(yyh)
-   dx1h(i)=cos(yyh)*cos(yyh)
-   dx1(i)=cos(yy)*cos(yy)
-  end do
- endif
- str_xgrid%sind(1)=nx_stretch
- str_xgrid%sind(2)=ns1
- str_xgrid%smin=x(1)
- str_xgrid%smax=x(ns1)
- xw=x
- xmax=x(n1)
- if(ibx==2)xmax=x(n1+1)
- xmin=x(1)
-
- dy=1.
- dy_inv=1./dy
- dyi=dy
- dyi_inv=1./dy
- ymin=0.0
- ymax=0.0
- y=0.0
- yh=0.0
- dy1=1.
- dy1h=1.
- Ly_box=1.
- if(n2 > 1)then
-  dy=yx_rat*dx
-  dy_inv=1./dy
-  dyi=dy
-  dyi_inv=dy_inv
-  do i=1,n2+1
-   y(i)=dy*real(i-1-n2/2,dp)
-   yh(i)=y(i)+0.5*dy
-   dy1(i)=1.
-   dy1h(i)=1.
-  end do
-  ns1=n2+1-n_stretch
-  if(Stretch)then
-   dyi=aph/real(n_stretch,dp)
-   dyi_inv=1./dyi
-   L_s=dy*dyi_inv
-   sy_rat=dyi*dy_inv
-   sm=y(n_stretch+1)
-   spec=y(ns1)
-   do i=1,n_stretch
-    yy=dyi*real(i-1-n_stretch,dp)
-    yyh=yy+0.5*dyi
-    y(i)=sm+L_s*tan(yy)
-    yh(i)=sm+L_s*tan(yyh)
-    dy1h(i)=cos(yyh)*cos(yyh)
-    dy1(i)=cos(yy)*cos(yy)
-   end do
-   do i=ns1,n2+1
-    yy=dyi*real(i-ns1,dp)
-    yyh=yy+dyi*0.5
-    y(i)=spec+L_s*tan(yy)
-    yh(i)=spec+L_s*tan(yyh)
-    dy1h(i)=cos(yyh)*cos(yyh)
-    dy1(i)=cos(yy)*cos(yy)
-   end do
-  endif
-  str_ygrid%sind(1)=n_stretch
-  str_ygrid%sind(2)=ns1
-  str_ygrid%smin=y(n_stretch+1)
-  str_ygrid%smax=y(ns1)
-  ymin=y(1)
-  ymax=y(n2+1)
-  Ly_box=ymax-ymin
-
-  r=y
-  rh=yh
-  dr1=dy1
-  dr1h=dy1h
-  if(Cyl_coord)then
-   do i=1,n2+1
-    r(i)=dy*real(i-1,dp)
-    rh(i)=r(i)+0.5*dy
-    dr1(i)=1.
-    dr1h(i)=1.
-   end do
-  endif
- endif
-
- dz=1.
- dz_inv=1./dz
- dzi=dz
- dzi_inv=1./dz
- zmin=0.0
- zmax=0.0
- z=0.0
- zh=0.0
- dz1=1.
- dz1h=1.
- Lz_box=1.
- if(n3 > 1)then
-  dz=yx_rat*dx
-  dz_inv=1./dz
-  do i=1,n3+1
-   z(i)=dz*real(i-1-n3/2,dp)
-   zh(i)=z(i)+0.5*dz
-   dz1(i)=1.
-   dz1h(i)=1.
-  end do
-  ns1=n3+1-n_stretch
-  if(Stretch)then
-   dzi=aph/real(n_stretch,dp)
-   dzi_inv=1./dzi
-   L_s=dz*dzi_inv
-   sz_rat=dzi*dz_inv
-   sm=z(n_stretch+1)
-   spec=z(ns1)
-   do i=1,n_stretch
-    yy=dzi*real(i-1-n_stretch,dp)
-    yyh=yy+0.5*dzi
-    z(i)=sm+L_s*tan(yy)
-    zh(i)=sm+L_s*tan(yyh)
-    dz1h(i)=cos(yyh)*cos(yyh)
-    dz1(i)=cos(yy)*cos(yy)
-   end do
-   do i=ns1,n3+1
-    yy=dzi*real(i-ns1,dp)
-    yyh=yy+dzi*0.5
-    z(i)=spec+L_s*tan(yy)
-    zh(i)=spec+L_s*tan(yyh)
-    dz1h(i)=cos(yyh)*cos(yyh)
-    dz1(i)=cos(yy)*cos(yy)
-   end do
-  endif
-  str_zgrid%sind(1)=n_stretch
-  str_zgrid%sind(2)=ns1
-  str_zgrid%smin=sm
-  str_zgrid%smax=spec
-  zmin=z(1)
-  zmax=z(n3+1)
-  Lz_box=zmax-zmin
- endif
- !================
- end subroutine set_grid
-
- !--------------------------
-
- subroutine set_ftgrid(n1,n2,n3,ksh,lxbox,lybox)
- integer,intent(in) :: n1,n2,n3,ksh
- real(dp),intent(in) :: lxbox,lybox
- integer :: i
- real(dp) :: wkx,wky,wkz
-
- wkx=2.*acos(-1.)/lxbox !lxbox=x(n1+1)-x(1)
- wky=2.*acos(-1.)/lybox !lybox=y(n2+1)-y(1)
-
- wkz=wky
-
- allocate(aky(n2+2),akz(n3+2))
- allocate(sky(n2+2),skz(n3+2))
- allocate(ak2y(n2+2),ak2z(n3+2),ak2x(n1+1))
- allocate(akx(1:n1+1),skx(1:n1+1))
-
- ak2x=0.0
- select case(ksh)
- case(0)  ! staggered k-grid
-  akx=0.0
-  do i=1,n1/2
-   akx(i)=wkx*(real(i,dp)-0.5)
-   skx(i)=2.*sin(0.5*dx*akx(i))/dx
-  end do
-  aky=0.0
-  ak2y=0.0
-  if(n2>1)then
-   do i=1,n2/2
-    aky(i)=wky*(real(i,dp)-0.5)
-    aky(n2+1-i)=-aky(i)
-   end do
-   do i=1,n2
-    sky(i)=2.*sin(0.5*dy*aky(i))/dy
-   end do
-   ak2y=aky*aky
-  endif
-  akz=0.0
-  ak2z=0.0
-  if(n3 >1)then
-   do i=1,n3/2
-    akz(i)=wkz*(real(i,dp)-0.5)
-    akz(n3+1-i)=-akz(i)
-   end do
-   do i=1,n3
-    skz(i)=2.*sin(0.5*dz*akz(i))/dz
-   end do
-   ak2z=akz*akz
-  endif
-
- case(1)    !standard FT k-grid
-  do i=1,n1/2
-   akx(i)=wkx*real(i-1,dp)
-   akx(n1+2-i)=-akx(i)
-  end do
-  do i=1,n1+1
-   skx(i)=2.*sin(0.5*dx*akx(i))/dx
-  end do
-  aky=0.0
-  ak2y=0.0
-  if(n2 > 1)then
-   do i=1,n2/2
-    aky(i)=wky*real(i-1,dp)
-    aky(n2+2-i)=-aky(i)
-    sky(i)=2.*sin(0.5*dy*aky(i))/dy
-   end do
-   ak2y=aky*aky
-  endif
-  akz=0.0
-  ak2z=0.0
-  if(n3 > 1)then
-   do i=1,n3/2
-    akz(i)=wkz*real(i-1,dp)
-    akz(n3+2-i)=-akz(i)
-   end do
-   do i=1,n3
-    skz(i)=2.*sin(0.5*dz*akz(i))/dz
-   end do
-   ak2z=akz*akz
-  endif
-
- case(2)  ! for the sine/cosine transform
-  wkx=acos(-1.0)/lxbox
-  wky=acos(-1.0)/lybox
-  wkz=wky
-  do i=1,n1+1
-   akx(i)=wkx*real(i-1,dp)
-   skx(i)=2.*sin(0.5*dx*akx(i))/dx
-  end do
-  aky=0.0
-  ak2y=0.0
-  if(n2>1)then
-   do i=1,n2+1
-    aky(i)=wky*real(i-1,dp)
-    sky(i)=2.*sin(0.5*dy*aky(i))/dy
-   end do
-   ak2y=aky*aky
-  endif
-  akz=0.0
-  ak2z=0.0
-  if(n3 >1)then
-   do i=1,n3+1
-    akz(i)=wkz*real(i-1,dp)
-    skz(i)=2.*sin(0.5*dz*akz(i))/dz
-   end do
-   ak2z=akz*akz
-  endif
- end select
- end subroutine set_ftgrid
-
- !--------------------------
-
-
  end module all_param
 
 

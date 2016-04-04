@@ -30,12 +30,12 @@
  integer :: nxcell,nycell,nzcell,ny_targ,npty,nptz,nptx_max
  integer :: ibx,iby,ibz
  integer :: loc_npty(6),loc_nptz(6),nptx(6),loc_nptx(6)
- integer :: pml_size,n_stretch,nx_stretch
+ integer :: pml_size,nx_stretch,ny_stretch,nz_stretch
  integer :: mp_per_cell(6),nref
  integer :: np_per_xc(Ref_nlayer),np_per_yc(Ref_nlayer),np_per_zc(Ref_nlayer),ppc(Ref_nlayer)
  integer :: ion_min(3),ion_max(3),atomic_number(3),ionz_lev,ionz_model
  integer :: loc_nyc_max,loc_nzc_max,loc_nxc_max,ndim_max
- real(dp) :: k0,yx_rat,zx_rat
+ real(dp) :: k0,yx_rat,zx_rat,djc(3)
  real(dp) :: ratio_mpc(6),pavg_npart(4),mem_psize_max
  real(dp) :: mass(4),mass_rat(4),charge_to_mass(4),unit_charge(4),Lorentz_fact(4)
  real(dp) :: mass_number(3)
@@ -48,5 +48,4 @@
  real(dp) :: lp_amp,lp_max,eb_max,lp_energy
  real(dp) :: lpx(7),lpy(3),targ_in,targ_end,alp_HM,lx_FWHM,tau_FWHM,a0
  real(dp) :: lp_in,lp_end,ymin_t,ymax_t,zmin_t,zmax_t,rmin_t,rmax_t
- real(dp) :: Ly_box,Lz_box
  end module grid_and_particles

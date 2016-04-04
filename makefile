@@ -23,9 +23,9 @@ FILES       = ALaDyn.F90 \
               code_util.f90 \
               control_bunch_input.f90 \
               cpp_folder_tree.cpp \
+              find_last_addr.c \
               der_lib.f90 \
               fft_lib.f90 \
-              fftg_param.f90 \
               fstruct_data.f90 \
               grid_and_particles.f90 \
               grid_fields.f90 \
@@ -33,7 +33,7 @@ FILES       = ALaDyn.F90 \
               ionize.f90 \
               mpi_var.f90 \
               parallel.F90 \
-              particles.f90 \
+              particles.F90 \
               pdf_moments.f90 \
               phys_param.f90 \
               pic_dump.f90 \
@@ -43,7 +43,7 @@ FILES       = ALaDyn.F90 \
               pic_rutil.f90 \
               precision_def.F90 \
               pstruct_data.f90 \
-              pwfa_bunch_field_calculation.f90 \
+              pwfa_bunch_field_calculation.F90 \
               pwfa_output_addons.f90 \
               read_input.f90 \
               struct_def.f90 \
@@ -70,6 +70,10 @@ perf: OPTFC += -march=native
 perf: OPTCC += -march=native
 perf: all
 
+profiling: OPTFC += -pg
+profiling: OPTCC += -pg
+profiling: all
+
 debug: OPTFC = -fdefault-real-8 -Og -g -Wall -Wextra -fbacktrace -fbounds-check
 debug: OPTCC = -Og -g -Wall -Wextra -fbounds-check
 debug: all
@@ -81,6 +85,11 @@ intel: FFTW =
 intel: MATH_LIB = -limf
 intel: OTHER_LINKS = -mkl
 intel: all
+
+profiling_intel: intel
+profiling_intel: OPTFC += -p
+profiling_intel: OPTCC += -p
+profiling_intel: all
 
 cnaf_intel: intel
 cnaf_intel: OPTFC += -vec-report4
@@ -223,6 +232,11 @@ $(OBJ_FOLDER)/cpp_folder_tree.o: $(SRC_FOLDER)/cpp_folder_tree.cpp
 $(OBJ_FOLDER)/cpp_folder_tree.mod: $(SRC_FOLDER)/cpp_folder_tree.cpp $(OBJ_FOLDER)/cpp_folder_tree.o
 	@true
 
+$(OBJ_FOLDER)/find_last_addr.o: $(SRC_FOLDER)/find_last_addr.c
+	$(CC) $(OPTCC) -I$(BOOST_INC) -c -o $@ $< $(REDIRECT)
+$(OBJ_FOLDER)/find_last_addr.mod: $(SRC_FOLDER)/find_last_addr.c $(OBJ_FOLDER)/find_last_addr.o
+	@true
+
 $(OBJ_FOLDER)/system_utilities.o: $(SRC_FOLDER)/system_utilities.f90 $(OBJ_FOLDER)/mpi_var.mod
 	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/system_utilities.mod: $(SRC_FOLDER)/system_utilities.f90 $(OBJ_FOLDER)/system_utilities.o
@@ -243,11 +257,6 @@ $(OBJ_FOLDER)/fft_lib.mod: $(SRC_FOLDER)/fft_lib.F90 $(OBJ_FOLDER)/fft_lib.o
 $(OBJ_FOLDER)/struct_def.o: $(SRC_FOLDER)/struct_def.f90 $(OBJ_FOLDER)/precision_def.mod
 	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
 $(OBJ_FOLDER)/struct_def.mod: $(SRC_FOLDER)/struct_def.f90 $(OBJ_FOLDER)/struct_def.o
-	@true
-
-$(OBJ_FOLDER)/fftg_param.o: $(SRC_FOLDER)/fftg_param.f90 $(OBJ_FOLDER)/precision_def.mod
-	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/fftg_param.mod: $(SRC_FOLDER)/fftg_param.f90 $(OBJ_FOLDER)/fftg_param.o
 	@true
 
 $(OBJ_FOLDER)/grid_param.o: $(SRC_FOLDER)/grid_param.f90 $(OBJ_FOLDER)/struct_def.mod $(OBJ_FOLDER)/precision_def.mod
@@ -276,7 +285,7 @@ $(OBJ_FOLDER)/fstruct_data.o: $(SRC_FOLDER)/fstruct_data.f90 $(OBJ_FOLDER)/preci
 $(OBJ_FOLDER)/fstruct_data.mod: $(SRC_FOLDER)/fstruct_data.f90 $(OBJ_FOLDER)/fstruct_data.o
 	@true
 
-$(OBJ_FOLDER)/all_param.o: $(SRC_FOLDER)/all_param.f90 $(OBJ_FOLDER)/fftg_param.mod \
+$(OBJ_FOLDER)/all_param.o: $(SRC_FOLDER)/all_param.f90 \
                            $(OBJ_FOLDER)/control_bunch_input.mod $(OBJ_FOLDER)/precision_def.mod \
                            $(OBJ_FOLDER)/ionize.mod $(OBJ_FOLDER)/mpi_var.mod \
                            $(OBJ_FOLDER)/phys_param.mod $(OBJ_FOLDER)/grid_and_particles.mod \
@@ -287,10 +296,10 @@ $(OBJ_FOLDER)/all_param.mod: $(SRC_FOLDER)/all_param.f90 $(OBJ_FOLDER)/all_param
 #common_param_and_fields end
 #pic_mod end
 
-$(OBJ_FOLDER)/particles.o: $(SRC_FOLDER)/particles.f90 $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/precision_def.mod \
+$(OBJ_FOLDER)/particles.o: $(SRC_FOLDER)/particles.F90 $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/precision_def.mod \
                            $(OBJ_FOLDER)/pstruct_data.mod $(OBJ_FOLDER)/fstruct_data.mod $(OBJ_FOLDER)/precision_def.mod
 	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/particles.mod: $(SRC_FOLDER)/particles.f90 $(OBJ_FOLDER)/particles.o
+$(OBJ_FOLDER)/particles.mod: $(SRC_FOLDER)/particles.F90 $(OBJ_FOLDER)/particles.o
 	@true
 
 $(OBJ_FOLDER)/parallel.o: $(SRC_FOLDER)/parallel.F90 $(OBJ_FOLDER)/all_param.mod $(OBJ_FOLDER)/pstruct_data.mod \
@@ -350,7 +359,7 @@ $(OBJ_FOLDER)/pic_evolve_in_time.o: $(SRC_FOLDER)/pic_evolve_in_time.f90 $(OBJ_F
 $(OBJ_FOLDER)/pic_evolve_in_time.mod: $(SRC_FOLDER)/pic_evolve_in_time.f90 $(OBJ_FOLDER)/pic_evolve_in_time.o
 	@true
 
-$(OBJ_FOLDER)/pwfa_bunch_field_calculation.o: $(SRC_FOLDER)/pwfa_bunch_field_calculation.f90 \
+$(OBJ_FOLDER)/pwfa_bunch_field_calculation.o: $(SRC_FOLDER)/pwfa_bunch_field_calculation.F90 \
                                               $(OBJ_FOLDER)/pic_in.mod \
                                               $(OBJ_FOLDER)/pic_evolve_in_time.mod \
                                               $(OBJ_FOLDER)/particles.mod \
@@ -362,7 +371,7 @@ $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o: $(SRC_FOLDER)/pwfa_bunch_field_cal
                                               $(OBJ_FOLDER)/fstruct_data.mod \
                                               $(OBJ_FOLDER)/precision_def.mod
 	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/pwfa_bunch_field_calculation.mod: $(SRC_FOLDER)/pwfa_bunch_field_calculation.f90 \
+$(OBJ_FOLDER)/pwfa_bunch_field_calculation.mod: $(SRC_FOLDER)/pwfa_bunch_field_calculation.F90 \
                                               $(OBJ_FOLDER)/pwfa_bunch_field_calculation.o
 	@true
 

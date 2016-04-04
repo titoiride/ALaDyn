@@ -23,10 +23,17 @@
 
  use precision_def
  use struct_def
-
+ use grid_and_particles
+ 
  implicit none
 
+!=======================
  type(grid),allocatable :: loc_rgrid(:),loc_ygrid(:),loc_zgrid(:),loc_xgrid(:)
+ type(sgrid) :: str_xgrid,str_ygrid,str_zgrid
+!fft grid
+ real(dp),allocatable :: akx(:),aky(:),akz(:),sty(:)
+ real(dp),allocatable :: ak2x(:),ak2y(:),ak2z(:),kern(:),kern2(:,:)
+ real(dp),allocatable :: skx(:),sky(:),skz(:)
  real(dp),allocatable :: loc_yg(:,:,:),loc_zg(:,:,:),loc_xg(:,:,:)
  real(dp),allocatable :: x(:),xw(:),y(:),z(:),dx1(:),dy1(:),dz1(:)
  real(dp),allocatable :: xh(:),yh(:),zh(:),dx1h(:),dy1h(:),dz1h(:)
@@ -34,12 +41,10 @@
  integer,allocatable :: str_indx(:,:)
  real(dp),allocatable :: rpt(:),wgp(:)
  real(dp) :: xtot,xmax,xmin,ymax,ymin,zmax,zmin
+ real(dp) :: Lx_box,Ly_box,Lz_box
  real(dp) :: dx,dx_inv,dxi_inv,dy,dz,dy_inv,dyi_inv,dz_inv,dzi_inv
- real(dp) :: djc(3)
  real(dp) :: aph,L_s,Lx_s,dxi,dyi,dzi,sy_rat,sz_rat,sx_rat
- type(sgrid) :: str_xgrid,str_ygrid,str_zgrid
  integer :: loc_ygr_max,loc_zgr_max,loc_xgr_max
- integer,parameter :: sh_ix=3
 
  !--------------------------
 
@@ -441,217 +446,283 @@
   end do
  end do
  end subroutine set_str_ind
+ !--------------------------
+ subroutine set_grid(n1,n2,n3,x_stretch,y_stretch,xres,yxres,zxres)
+ integer,intent(in) :: n1,n2,n3,x_stretch,y_stretch
+ real,intent(in) :: xres,yxres,zxres
+ integer :: i,ns1
+ real :: yy,yyh,sm,sp
+
+ aph=acos(-1.0)*0.4
+ dxi=1.
+ dyi=1.
+ dzi=1.
+ sx_rat=1.
+ sy_rat=1.
+ sz_rat=1.
+ sm=0.0
+ sp=0.0
+ dx=1.
+ if(xres>0.0)dx=1./xres
+ dx_inv=1.0/dx
+ do i=1,n1+1
+  x(i)=dx*float(i-1)    !xminx(1)=0,.....,xmax-dx=x(nx)
+  xh(i)=x(i)+0.5*dx
+  dx1(i)=1.
+  dx1h(i)=1.
+ end do
+ dxi=dx
+ dxi_inv=dx_inv
+ ns1=n1+1-x_stretch
+ if(x_stretch >0)then
+  dxi=aph/float(x_stretch)
+  dxi_inv=1./dxi
+  Lx_s=dx*dxi_inv
+  sx_rat=dxi*dx_inv
+  sp=x(ns1)
+  do i=ns1,n1+1
+   yy=dxi*float(i-ns1)
+   yyh=yy+dxi*0.5
+   x(i)=sp+Lx_s*tan(yy)
+   xh(i)=sp+Lx_s*tan(yyh)
+   dx1h(i)=cos(yyh)*cos(yyh)
+   dx1(i)=cos(yy)*cos(yy)
+  end do
+ endif
+ str_xgrid%sind(1)=x_stretch
+ str_xgrid%sind(2)=ns1
+ str_xgrid%smin=x(1)
+ str_xgrid%smax=x(ns1)
+ xw=x
+ xmax=x(n1+1)
+ xmin=x(1)
+ Lx_box=xmax-xmin
+
+ dy=1.
+ dy_inv=1./dy
+ dyi=dy
+ dyi_inv=1./dy
+ ymin=0.0
+ ymax=0.0
+ y=0.0
+ yh=0.0
+ dy1=1.
+ dy1h=1.
+ Ly_box=1.
+ if(n2 > 1)then
+  dy=yxres*dx
+  dy_inv=1./dy
+  dyi=dy
+  dyi_inv=dy_inv
+  do i=1,n2+1
+   y(i)=dy*float(i-1-n2/2)
+   yh(i)=y(i)+0.5*dy
+   dy1(i)=1.
+   dy1h(i)=1.
+  end do
+  ns1=n2+1-y_stretch
+  if(y_stretch>0)then
+   dyi=aph/float(y_stretch)
+   dyi_inv=1./dyi
+   L_s=dy*dyi_inv
+   sy_rat=dyi*dy_inv
+   sm=y(y_stretch+1)
+   sp=y(ns1)
+   do i=1,y_stretch
+    yy=dyi*float(i-1-y_stretch)
+    yyh=yy+0.5*dyi
+    y(i)=sm+L_s*tan(yy)
+    yh(i)=sm+L_s*tan(yyh)
+    dy1h(i)=cos(yyh)*cos(yyh)
+    dy1(i)=cos(yy)*cos(yy)
+   end do
+   do i=ns1,n2+1
+    yy=dyi*float(i-ns1)
+    yyh=yy+dyi*0.5
+    y(i)=sp+L_s*tan(yy)
+    yh(i)=sp+L_s*tan(yyh)
+    dy1h(i)=cos(yyh)*cos(yyh)
+    dy1(i)=cos(yy)*cos(yy)
+   end do
+  endif
+  str_ygrid%sind(1)=y_stretch
+  str_ygrid%sind(2)=ns1
+  str_ygrid%smin=y(y_stretch+1)
+  str_ygrid%smax=y(ns1)
+  ymin=y(1)
+  ymax=y(n2+1)
+  Ly_box=ymax-ymin
+
+  r=y
+  rh=yh
+  dr1=dy1
+  dr1h=dy1h
+ endif
+ dz=1.
+ dz_inv=1./dz
+ dzi=dz
+ dzi_inv=1./dz
+ zmin=0.0
+ zmax=0.0
+ z=0.0
+ zh=0.0
+ dz1=1.
+ dz1h=1.
+ Lz_box=1.
+ if(n3 > 1)then
+  dz=zxres*dx
+  dz_inv=1./dz
+  do i=1,n3+1
+   z(i)=dz*float(i-1-n3/2)
+   zh(i)=z(i)+0.5*dz
+   dz1(i)=1.
+   dz1h(i)=1.
+  end do
+  ns1=n3+1-y_stretch
+  if(y_stretch>0)then
+   dzi=aph/float(y_stretch)
+   dzi_inv=1./dzi
+   L_s=dz*dzi_inv
+   sz_rat=dzi*dz_inv
+   sm=z(y_stretch+1)
+   sp=z(ns1)
+   do i=1,y_stretch
+    yy=dzi*float(i-1-y_stretch)
+    yyh=yy+0.5*dzi
+    z(i)=sm+L_s*tan(yy)
+    zh(i)=sm+L_s*tan(yyh)
+    dz1h(i)=cos(yyh)*cos(yyh)
+    dz1(i)=cos(yy)*cos(yy)
+   end do
+   do i=ns1,n3+1
+    yy=dzi*float(i-ns1)
+    yyh=yy+dzi*0.5
+    z(i)=sp+L_s*tan(yy)
+    zh(i)=sp+L_s*tan(yyh)
+    dz1h(i)=cos(yyh)*cos(yyh)
+    dz1(i)=cos(yy)*cos(yy)
+   end do
+  endif
+  str_zgrid%sind(1)=y_stretch
+  str_zgrid%sind(2)=ns1
+  str_zgrid%smin=sm
+  str_zgrid%smax=sp
+  zmin=z(1)
+  zmax=z(n3+1)
+  Lz_box=zmax-zmin
+ endif
+ !================
+ end subroutine set_grid
 
  !--------------------------
 
- subroutine map2dy_part_sind(np,sind,ic1,ym,pt)
- integer,intent(in) :: np,sind,ic1
- real(dp),intent(in) :: ym
- real(dp),intent(inout) :: pt(:,:)
- real(dp) :: yp,ys,ximn
- integer :: n
- !========================
- !  enter the y=part(ic1,n) particle position in stretched grid
- !            y=y(xi)
- !  exit      xi=part(ic1,n) the  particle position in uniform grid
- !               normalized to the Dxi cell size
- !==========================================
- select case(sind)
- case(1)       !y<0
-  ys=str_ygrid%smin
-  ximn=-dyi_inv*atan(sy_rat*(ym-ys))
-  do n=1,np
-   yp=pt(ic1,n)
-   pt(ic1,n)=ximn+dy_inv*(yp-ys)
-   if(yp <= ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
+ subroutine set_ftgrid(n1,n2,n3,ksh,lxbox,lybox)
+ integer,intent(in) :: n1,n2,n3,ksh
+ real,intent(in) :: lxbox,lybox
+ integer :: i
+ real :: wkx,wky,wkz
+
+ wkx=2.*acos(-1.)/lxbox !lxbox=x(n1+1)-x(1)
+ wky=2.*acos(-1.)/lybox !lybox=y(n2+1)-y(1)
+
+ wkz=wky
+
+ allocate(aky(n2+2),akz(n3+2))
+ allocate(sky(n2+2),skz(n3+2))
+ allocate(ak2y(n2+2),ak2z(n3+2),ak2x(n1+1))
+ allocate(akx(1:n1+1),skx(1:n1+1))
+
+ ak2x=0.0
+ select case(ksh)
+ case(0)  ! staggered k-grid
+  akx=0.0
+  do i=1,n1/2
+   akx(i)=wkx*(float(i)-0.5)
+   skx(i)=2.*sin(0.5*dx*akx(i))/dx
   end do
- case(2)       !y>0
-  ys=str_ygrid%smax
-  if(ym>ys)then
-   ximn=dyi_inv*atan(sy_rat*(ys-ym))
-  else
-   ximn=dy_inv*(ys-ym)
+  aky=0.0
+  ak2y=0.0
+  if(n2>1)then
+   do i=1,n2/2
+    aky(i)=wky*(float(i)-0.5)
+    aky(n2+1-i)=-aky(i)
+   end do
+   do i=1,n2
+    sky(i)=2.*sin(0.5*dy*aky(i))/dy
+   end do
+   ak2y=aky*aky
   endif
-  do n=1,np
-   yp=pt(ic1,n)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   if(yp > ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
+  akz=0.0
+  ak2z=0.0
+  if(n3 >1)then
+   do i=1,n3/2
+    akz(i)=wkz*(float(i)-0.5)
+    akz(n3+1-i)=-akz(i)
+   end do
+   do i=1,n3
+    skz(i)=2.*sin(0.5*dz*akz(i))/dz
+   end do
+   ak2z=akz*akz
+  endif
+
+ case(1)    !standard FT k-grid
+  do i=1,n1/2
+   akx(i)=wkx*float(i-1)
+   akx(n1+2-i)=-akx(i)
   end do
+  do i=1,n1+1
+   skx(i)=2.*sin(0.5*dx*akx(i))/dx
+  end do
+  aky=0.0
+  ak2y=0.0
+  if(n2 > 1)then
+   do i=1,n2/2
+    aky(i)=wky*float(i-1)
+    aky(n2+2-i)=-aky(i)
+    sky(i)=2.*sin(0.5*dy*aky(i))/dy
+   end do
+   ak2y=aky*aky
+  endif
+  akz=0.0
+  ak2z=0.0
+  if(n3 > 1)then
+   do i=1,n3/2
+    akz(i)=wkz*float(i-1)
+    akz(n3+2-i)=-akz(i)
+   end do
+   do i=1,n3
+    skz(i)=2.*sin(0.5*dz*akz(i))/dz
+   end do
+   ak2z=akz*akz
+  endif
+
+ case(2)  ! for the sine/cosine transform
+  wkx=acos(-1.0)/lxbox
+  wky=acos(-1.0)/lybox
+  wkz=wky
+  do i=1,n1+1
+   akx(i)=wkx*float(i-1)
+   skx(i)=2.*sin(0.5*dx*akx(i))/dx
+  end do
+  aky=0.0
+  ak2y=0.0
+  if(n2>1)then
+   do i=1,n2+1
+    aky(i)=wky*float(i-1)
+    sky(i)=2.*sin(0.5*dy*aky(i))/dy
+   end do
+   ak2y=aky*aky
+  endif
+  akz=0.0
+  ak2z=0.0
+  if(n3 >1)then
+   do i=1,n3+1
+    akz(i)=wkz*float(i-1)
+    skz(i)=2.*sin(0.5*dz*akz(i))/dz
+   end do
+   ak2z=akz*akz
+  endif
  end select
- end subroutine map2dy_part_sind
-
- subroutine map2dz_part_sind(np,sind,ic1,zm,pt)
- integer,intent(in) :: np,sind,ic1
- real(dp),intent(in) :: zm
- real(dp),intent(inout) :: pt(:,:)
- real(dp) :: zp,zs,zimn
- integer :: n
- !========================
- !  enter the y=part(ic1,n) particle position in stretched grid
- !            y=y(xi)
- !  exit      xi=part(ic1,n) the  particle position in uniform grid
- !               normalized to the Dxi cell size
- !==========================================
- select case(sind)
- case(1)       !z<0
-  zs=str_zgrid%smin
-  zimn=-dzi_inv*atan(sz_rat*(zm-zs))
-  do n=1,np
-   zp=pt(ic1,n)
-   pt(ic1,n)=zimn+dz_inv*(zp-zs)
-   if(zp <= zs)pt(ic1,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- case(2)       !z>0
-  zs=str_zgrid%smax
-  if(zm>zs)then
-   zimn=dzi_inv*atan(sz_rat*(zs-zm))
-  else
-   zimn=dz_inv*(zs-zm)
-  endif
-  do n=1,np
-   zp=pt(ic1,n)
-   pt(ic1,n)=dz_inv*(zp-zm)
-   if(zp > zs)pt(ic1,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- end select
- end subroutine map2dz_part_sind
-
- !--------------------------
-
- subroutine map3d_part_sind(pt,np,sind,ic1,ic2,ym,zm)
- integer,intent(in) :: np,sind,ic1,ic2
- real(dp),intent(in) :: ym,zm
- real(dp),intent(inout) :: pt(:,:)
- real(dp) :: yp,zp,ys,zs,ximn,zimn
- integer :: n
- !========================
- !  enter the y=part(ic1,n) z=part(ic2,n) particle positions
- !        in stretched grids    y=y(xi), z(zi)
- !  exit   xi=part(ic1,n) zi=part(ic2,n)
- !    particle positions in uniform grid
- !    normalized to the (Dxi Dzi) cell sizes
- !==========================================
-
- select case(sind)
- case(1)       !y<0 z<0 corner ys>ymn
-  ys=str_ygrid%smin
-  ximn=-dyi_inv*atan(sy_rat*(ym-ys))
-  zs=str_zgrid%smin
-  zimn=-dzi_inv*atan(sz_rat*(zm-zs))
-  do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
-   pt(ic1,n)=ximn+dy_inv*(yp-ys)
-   pt(ic2,n)=zimn+dz_inv*(zp-zs)
-   if(yp < ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   if(zp < zs)pt(ic2,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- case(2)       !z<0
-  zs=str_zgrid%smin
-  zimn=-dzi_inv*atan(sz_rat*(zm-zs))
-  do n=1,np
-   yp=pt(ic1,n)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   zp=pt(ic2,n)
-   pt(ic2,n)=zimn+dz_inv*(zp-zs)
-   if(zp < zs)pt(ic2,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- case(3)       !y>0 z<0 corner
-  ys=str_ygrid%smax
-  if(ym>ys)then
-   ximn=dyi_inv*atan(sy_rat*(ys-ym))
-  else
-   ximn=dy_inv*(ys-ym)
-  endif
-  zs=str_zgrid%smin
-  zimn=-dzi_inv*atan(sz_rat*(zm-zs))
-  do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   pt(ic2,n)=zimn+dz_inv*(zp-zs)
-   if(yp > ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   if(zp < zs)pt(ic2,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- case(4)       !y>0
-  ys=str_ygrid%smax
-  if(ym>ys)then
-   ximn=dyi_inv*atan(sy_rat*(ys-ym))
-  else
-   ximn=dy_inv*(ys-ym)
-  endif
-  do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
-   pt(ic2,n)=dz_inv*(zp-zm)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   if(yp > ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-  end do
- case(5)       !y>0 z>0 corner
-  ys=str_ygrid%smax
-  if(ym>ys)then
-   ximn=dyi_inv*atan(sy_rat*(ys-ym))
-  else
-   ximn=dy_inv*(ys-ym)
-  endif
-  zs=str_zgrid%smax
-  if(zm>zs)then
-   zimn=dzi_inv*atan(sz_rat*(zs-zm))
-  else
-   zimn=dz_inv*(zs-zm)
-  endif
-  do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   pt(ic2,n)=dz_inv*(zp-zm)
-   if(yp > ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   if(zp > zs)pt(ic2,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- case(6)       !z>0
-  zs=str_zgrid%smax
-  if(zm>zs)then
-   zimn=dzi_inv*atan(sz_rat*(zs-zm))
-  else
-   zimn=dz_inv*(zs-zm)
-  endif
-  do n=1,np
-   yp=pt(ic1,n)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   zp=pt(ic2,n)
-   pt(ic2,n)=dz_inv*(zp-zm)
-   if(zp > zs)pt(ic2,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- case(7)       !y<0 z>0 corner
-  ys=str_ygrid%smin
-  ximn=-dyi_inv*atan(sy_rat*(ym-ys))
-  zs=str_zgrid%smax
-  if(zm>zs)then
-   zimn=dzi_inv*atan(sz_rat*(zs-zm))
-  else
-   zimn=dz_inv*(zs-zm)
-  endif
-  do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
-   pt(ic1,n)=ximn+dy_inv*(yp-ys)
-   pt(ic2,n)=dz_inv*(zp-zm)
-   if(yp < ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   if(zp > zs)pt(ic2,n)=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-  end do
- case(8)       !y<0
-  ys=str_ygrid%smin
-  ximn=-dyi_inv*atan(sy_rat*(ym-ys))
-  do n=1,np
-   zp=pt(ic2,n)
-   pt(ic2,n)=dz_inv*(zp-zm)
-   yp=pt(ic1,n)
-   pt(ic1,n)=ximn+dy_inv*(yp-ys)
-   if(yp < ys)pt(ic1,n)=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-  end do
- end select
- end subroutine map3d_part_sind
-
- !--------------------------
+ end subroutine set_ftgrid
 
  end module grid_param

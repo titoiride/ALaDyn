@@ -196,7 +196,7 @@
  integer :: ic,ix,npt_inj,np_old,np_new
  integer :: i1,i2,n,q
  integer :: j2,k2
- integer :: j,k
+ integer :: j,k,DeallocStatus,AllocStatus
 
  !========== inject particles from the right x_p >= x(nx)
  ! xmx is the box xmax
@@ -237,26 +237,22 @@
   !=========================
   if(npt_inj >0)then
    if(np_old==0)then
-    deallocate(spec(ic)%part)
-    allocate(spec(ic)%part(np_new))
+    deallocate(spec(ic)%part,STAT=DeallocStatus)
+    if(DeallocStatus==0)allocate(spec(ic)%part(np_new),STAT=AllocStatus)
     if(ic==1)then
-     deallocate(ebfp)
-     allocate(ebfp(ndv,np_new))
+     deallocate(ebfp%part,STAT=DeallocStatus)
+     if(DeallocStatus==0)allocate(ebfp%part(np_new),STAT=AllocStatus)
     endif
    else
     if(size(spec(ic)%part) <np_new)then
      do n=1,np_old
-      ebfp(1:ndv,n)=spec(ic)%part(n)%cmp(1:ndv)
+      ebfp%part(n)%cmp(1:ndv)=spec(ic)%part(n)%cmp(1:ndv)
      end do
-     deallocate(spec(ic)%part)
-     allocate(spec(ic)%part(np_new))
+     call p_realloc(spec(ic),np_new)
      do n=1,np_old
-      spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+      spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
      end do
-     if(size(ebfp,2) < np_new)then
-      deallocate(ebfp)
-      allocate(ebfp(ndv,np_new))
-     endif
+     call p_realloc(ebfp,np_new)
     endif
    endif
    q=np_old
@@ -285,16 +281,16 @@
  np_el=loc_npart(imody,imodz,imodx,1)
  if(np_el >0)then
   do n=1,np_el
-   ebfp(1:id_ch,n)=spec(1)%part(n)%cmp(1:id_ch)
+   ebfp%part(n)%cmp(1:id_ch)=spec(1)%part(n)%cmp(1:id_ch)
   end do
-  deallocate(spec(1)%part)
-  allocate(spec(1)%part(np_el+new_np_el))
+  call p_realloc(spec(1),np_el+new_np_el)
   do n=1,np_el
-   spec(1)%part(n)%cmp(1:id_ch)=ebfp(1:id_ch,n)
+   spec(1)%part(n)%cmp(1:id_ch)=ebfp%part(n)%cmp(1:id_ch)
   end do
  else
-  deallocate(spec(1)%part)
-  allocate(spec(1)%part(new_np_el))
+  if(.not.allocated(spec(1)%part))then
+   allocate(spec(1)%part(new_np_el))
+  endif
  endif
  ii=np_el
  do n=1,np
@@ -310,10 +306,7 @@
    np_el=np_el+inc
   endif
  end do
- if(size(ebfp,2) < np_el)then
-  deallocate(ebfp)
-  allocate(ebfp(id_ch,np_el))
- endif
+ call p_realloc(ebfp,np_el)
  loc_npart(imody,imodz,imodx,1)=np_el
  !============ Now create new_np_el electrons
  end subroutine ionization_electrons_inject
@@ -322,7 +315,7 @@
   np,ic,kk,new_np_el,ion_ch_inc)
 
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: sp_aux(:,:)
+ type(species),intent(inout) :: sp_aux
 
  integer,intent(in) :: np,ic
  integer,intent(inout) :: kk,new_np_el
@@ -366,9 +359,9 @@
     sp_loc%part(n)%cmp(id_ch)=ion_wch
     kk=kk+1
     ef2_ion=V_norm(z0,sp_ion)
-    sp_aux(id_ch,kk)=ch(1)*ef2_ion*energy_norm
-    !sp_aux(1:kf,kk)=ep(1:kf)
-    !to be multiplied by E_i/E^2 on a grid at ion position
+    sp_aux%part(kk)%cmp(id_ch)=ch(1)*ef2_ion*energy_norm
+                     !sp_aux(1:kf,kk)=ep(1:kf)
+                     !to be multiplied by E_i/E^2 on a grid at ion position
    endif
   end do
   new_np_el=kk
@@ -396,8 +389,8 @@
      new_np_el=new_np_el+inc
      if(inc >0)then
       kk=kk+1
-      sp_aux(id_ch,kk)=ch(1)*ef2_ion*energy_norm
-      sp_aux(1:kf,kk)=ep(1:kf)
+      sp_aux%part(kk)%cmp(id_ch)=ch(1)*ef2_ion*energy_norm
+      sp_aux%part(kk)%cmp(1:kf)=ep(1:kf)
      endif
      !to be multiplied by E_i/E^2 on a grid
     endif
@@ -445,7 +438,7 @@
  !
  subroutine ionization_cycle(sp_loc,sp_aux,np,ic,itloc,def_inv)
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: sp_aux(:,:)
+ type(species),intent(inout) :: sp_aux
  integer,intent(in) :: np,ic,itloc
  real(dp),intent(in) :: def_inv
  integer :: id_ch,new_np_el,ionz_count,n,nk
@@ -466,7 +459,7 @@
   ion_z_inc(:)=0
 
   do n=1,np
-   ef2_ion=sp_aux(id_ch,n)   !the interpolated E^2 field
+   ef2_ion=sp_aux%part(n)%cmp(id_ch)   !the interpolated E^2 field
    if(ef2_ion >0.)then
     nk=nint(def_inv*sqrt(ef2_ion))
     ion_z_inc(n)=nk
@@ -530,29 +523,23 @@
    if(old_np >0)then
     npmax=old_np+npt_inj
     loc_npart(imody,imodz,imodx,ic)=npmax
-    if(allocated(ebfp))then
-     if(size(ebfp,2)< npmax)then
-      deallocate(ebfp)
-      allocate(ebfp(ndv,npmax))
-     endif
+    if(allocated(ebfp%part))then
+     call p_realloc(ebfp,npmax)
+     do n=1,old_np
+      ebfp%part(n)%cmp(1:ndv)=spec(ic)%part(n)%cmp(1:ndv)
+     end do
+     call p_realloc(spec(ic),npmax)
+     do n=1,old_np
+      spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
+     end do
+     q=old_np
+    else
+     if(ic==1)allocate(ebfp%part(npt_inj))
+     allocate(spec(ic)%part(npt_inj))
+     q=npt_inj
     endif
-    do n=1,old_np
-     ebfp(1:ndv,n)=spec(ic)%part(n)%cmp(1:ndv)
-    end do
-    if(size(spec(ic)%part) <npmax)then
-     deallocate(spec(ic)%part)
-     allocate(spec(ic)%part(npmax))
-    endif
-    do n=1,old_np
-     spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
-    end do
-    q=old_np
-   else
-    if(ic==1)allocate(ebfp(ndv,npt_inj))
-    allocate(spec(ic)%part(npt_inj))
-    q=npt_inj
+    call add_particles(q,i1,i2,ic)
    endif
-   call add_particles(q,i1,i2,ic)
   endif
  end do
  !=======================
@@ -652,6 +639,7 @@
  endif
  !===========================
  call fields_left_xshift(ebf,i1,wi2,j1,nyp,k1,nzp,1,nfield,shx)
+ if(ibeam==2)call fields_left_xshift(pot,i1,wi2,j1,nyp,k1,nzp,1,2,shx)
  if(Envelope)then
   call fields_left_xshift(env,i1,wi2,j1,nyp,k1,nzp,1,2,shx)
   call fields_left_xshift(env0,i1,wi2,j1,nyp,k1,nzp,1,2,shx)
@@ -774,7 +762,7 @@
    nb=loc_nbpart(imody,imodz,imodx,ik)
    if(nb>0)then
     call set_grid_charge(&
-     bunch(ik),ebfb,nb,ndim,nst,1,xm,ym,zm)
+                         bunch(ik),ebfb,jc,nb,ndim,nst,1,xm,ym,zm)
    endif
   enddo
  else
@@ -782,14 +770,14 @@
   nb=loc_nbpart(imody,imodz,imodx,ik)
   if(nb>0)then
    call set_grid_charge(&
-    bunch(ik),ebfb,nb,ndim,nst,1,xm,ym,zm)
+                        bunch(ik),ebfb,jc,nb,ndim,nst,1,xm,ym,zm)
   endif
  endif
  !=========== bunch data on jc(1)
  !=====================
  if(np>0)then
-  !==================== data of isp species on jc(2)
-  call set_grid_charge(spec(isp),ebfp,np,ndim,nst,2,xm,ym,zm)
+!==================== data of isp species on jc(2)
+  call set_grid_charge(spec(isp),ebfp,jc,np,ndim,nst,2,xm,ym,zm)
  endif
  if(prl)then
   do i=1,2
@@ -851,7 +839,7 @@
    np=loc_nbpart(imody,imodz,imodx,ik)
    if(np>0)then
     call set_grid_den_energy(&
-     bunch(ik),ebfb,np,ndim,curr_ndim,nst,xm,ym,zm)
+                             bunch(ik),ebfb,jc,np,ndim,curr_ndim,nst,xm,ym,zm)
    endif
   end do
  else
@@ -859,7 +847,7 @@
   np=loc_nbpart(imody,imodz,imodx,ik)
   if(np>0)then
    call set_grid_den_energy(&
-    bunch(ik),ebfb,np,ndim,curr_ndim,nst,xm,ym,zm)
+    bunch(ik),ebfb,jc,np,ndim,curr_ndim,nst,xm,ym,zm)
   endif
  endif
  !========= den on [i1-1:i2+2,j1-1:nyp+2,k1-1:nzp+2]
@@ -936,7 +924,7 @@
  !curr_clean
  np=loc_npart(imody,imodz,imodx,ic)
  if(np>0)call set_grid_den_energy(&
-  spec(ic),ebfp,np,ndim,curr_ndim,n_str,xm,ym,zm)
+                       spec(ic),ebfp,jc,np,ndim,curr_ndim,n_str,xm,ym,zm)
  !========= den on [i1-1:i2+2,j1-1:nyp+2,k1-1:nzp+2]
  if(prl)then
   call fill_curr_yzxbdsdata(jc,i1,i2,j1,nyf,k1,nzf,2)
@@ -1238,7 +1226,7 @@
  !==============================
  subroutine curr_accumulate(sp_loc,pdata,npt0,npt,f_ch,n_st,xb,yb,zb)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pdata(:,:)
+ type(species),intent(inout) :: pdata
  integer,intent(in) :: npt0,npt,f_ch,n_st
  ! real(dp),intent(in) :: dtloc
  real(dp),intent(in) :: xb,yb,zb
@@ -1254,7 +1242,7 @@
    case(0)
     call esirkepov_3d_curr(sp_loc,pdata,npt0,npt,n_st,xb,yb,zb)
    case(1)
-    call pdef_3d_curr(sp_loc,pdata,npt0,npt,n_st,xb,yb,zb)
+    call esirkepov_3d_curr(sp_loc,pdata,npt0,npt,n_st,xb,yb,zb)
    case(2)
     call ncdef_3d_curr(sp_loc,pdata,npt0,npt,n_st,xb,yb,zb)
    end select
@@ -1263,7 +1251,7 @@
    case(0)
     call esirkepov_2d_curr(sp_loc,pdata,npt0,npt,n_st,curr_ndim,ndim,xb,yb)
    case(1)
-    call pdef_2d_curr(sp_loc,pdata,npt0,npt,n_st,curr_ndim,ndim,xb,yb)
+    call esirkepov_2d_curr(sp_loc,pdata,npt0,npt,n_st,curr_ndim,ndim,xb,yb)
    case(2)
     call ncdef_2d_curr(sp_loc,pdata,npt0,npt,n_st,curr_ndim,ndim,xb,yb)
    end select
@@ -1281,15 +1269,14 @@
  real(dp) :: dery,derhy,derz,derhz
  !============sums daata on ghost points
  if(prl)then
-  call fill_curr_yzxbdsdata(jc,i1,n1p,j1,n2p,k1,n3p,curr_ndim)
+  call fill_curr_yzxbdsdata(jc,i1,n1p,j1,n2p,k1,n3p,nj_dim)
  endif
- call jc_xyzbd(i1,n1p,j1,n2p,k1,n3p,curr_ndim)
+ call jc_xyzbd(i1,n1p,j1,n2p,k1,n3p,nj_dim)
  !=================
  if(iform < 2)then
   do i=1,ndim
    jc(i1:n1p,j1:n2p,k1:n3p,i)=djc(i)*jc(i1:n1p,j1:n2p,k1:n3p,i)
   end do
-  if(iform==1)call divcurr_inv(jc,i1,n1p,j1,n2p,k1,n3p)
  endif
  if(ndim <2)return
  if(Stretch)then
@@ -1440,14 +1427,14 @@
  !==================================================
  end subroutine pfields_prepare
  !==================================
- subroutine advance_lpf_fields(ef,dt_lp,v_b,&
-  i1,i2,j1,j2,k1,k2,ibd)
+ subroutine advance_lpf_fields(ef,curr,dt_lp,v_b,&
+                            i1,i2,j1,j2,k1,k2,ibd)
 
  real(dp),intent(inout) :: ef(:,:,:,:)
+ real(dp),intent(in) :: curr(:,:,:,:)
  real(dp),intent(in) :: dt_lp,v_b
  integer,intent(in) :: i1,i2,j1,j2,k1,k2,ibd
- integer :: ix,iy,iz,ik
- integer :: str,stl
+ integer :: str,stl,ik
  real(dp) :: dtx,dty,dtz,dth_lp,dthx,dthy,dthz
 
  dth_lp=0.5*dt_lp
@@ -1501,14 +1488,8 @@
  !===================
  ! adds currents
  do ik=1,curr_ndim
-  do iz=k1,k2
-   do iy=j1,j2
-    do ix=i1,i2
-     ef(ix,iy,iz,ik)=ef(ix,iy,iz,ik)-&
-      ompe*jc(ix,iy,iz,ik)
-    end do
-   end do
-  end do
+  ef(i1:i2,j1:j2,k1:k2,ik)=ef(i1:i2,j1:j2,k1:k2,ik)-&
+                           ompe*curr(i1:i2,j1:j2,k1:k2,ik)
  end do
  !============== second substep dt/2 advance of B-field
  if(prl)then
@@ -1647,18 +1628,11 @@
    end do
   end do
  end do
- ! jc(1:2)=omp2*rho/<gamp>*env(1:2) the source term
+ !  jc(1:2)=ompe*rho/<gamp>*env(1:2)  the source term
  call env0_field(jc,nst,cind,ib,i1,nxp,j1,nyp,k1,nzp,ap,&
   dtx,dty,dtz,dt_loc)
  do ic=1,2
-  do k=k1,nzp
-   do j=j1,nyp
-    do i=i1,nxp
-     jc(i,j,k,ic)=0.0
-    end do
-   end do
-  end do
-
+  jc(:,:,:,ic)=0.0
  end do
  !====== exit env0(n+1/2) and env(n+1)
  !=============
@@ -1777,92 +1751,6 @@
   end do
  end do
  end subroutine advect_bunch_fields
- !==============================
- subroutine lpf_aphi_fields(ef,apf,apf0,&
-  dt_lp,i1,i2,j1,j2,k1,k2)
-
- real(dp),intent(inout) :: ef(:,:,:,:),apf(:,:,:,:),apf0(:,:,:,:)
- real(dp),intent(in) :: dt_lp
- integer,intent(in) :: i1,i2,j1,j2,k1,k2
- integer :: i,j,k,ik,ic
- integer :: str,stl
- real(dp) :: dt2
-
- str=1
- stl=1
- dt2=dt_lp*dt_lp
- !======================
- !pot_ndim=5 (A,phi,f_g)
- !======================
- if(prl)then
-  call fill_ebfield_yzxbdsdata(apf,i1,i2,j1,j2,k1,k2,1,pot_ndim,str,stl)
- endif
- !==============
- !=======================
- ! ordering jc(1:4)=[Jx,Jy,Jz,rho] J^{n+1/2}, rho^n
- do ik=1,curr_ndim+1
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,i2
-     jc(i,j,k,ik)=ompe*jc(i,j,k,ik)
-    end do
-   end do
-  end do
- end do
- ! Laplacian for (Ax,Ay,Az,phi)
- !================================
- call potential_lapl(apf,jc,pot_ndim-1,i1,i2,j1,j2,k1,k2,&
-  dx_inv,dy_inv,dz_inv)
-
- do ik=1,pot_ndim-1
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,i2
-     jc(i,j,k,ik)=2.*apf(i,j,k,ik)-apf0(i,j,k,ik)+dt2*jc(i,j,k,ik)
-     apf0(i,j,k,ik)=apf(i,j,k,ik)
-     apf(i,j,k,ik)=jc(i,j,k,ik)
-    end do
-   end do
-  end do
- end do
- !======== exit (Ax,Ay,Az)^{n+3/2} phi^{n+1}
- if(prl)then
-  call fill_ebfield_yzxbdsdata(apf,i1,i2,j1,j2,k1,k2,1,pot_ndim,str,stl)
- endif
- !================= stores in curr(1) the gauge div(A)+D_t[phi] at t^{n+1/2}
- ik=1
- call divA(apf0,jc,i1,i2,j1,j2,k1,k2,ik,dx_inv,dy_inv,dz_inv)
- !================= in jc(ik) the div(A) term at t^{n+1/2}
- do k=k1,k2
-  do j=j1,j2
-   do i=i1,i2
-    jc(i,j,k,ik)=dt2*jc(i,j,k,ik)+dt_lp*(apf(i,j,k,4)-apf0(i,j,k,4))
-   end do
-  end do
- end do
- call potential_lapl(apf,jc,0,i1,i2,j1,j2,k1,k2,&
-  dx_inv,dy_inv,dz_inv)
- ik=pot_ndim
- ic=1
- do k=k1,k2
-  do j=j1,j2
-   do i=i1,i2
-    jc(i,j,k,ic)=2.*apf(i,j,k,ik)-apf0(i,j,k,ik)+dt2*jc(i,j,k,ic)
-    apf0(i,j,k,ik)=apf(i,j,k,ik)
-    apf(i,j,k,ik)=jc(i,j,k,ic)
-   end do
-  end do
- end do
- !=============== f_g at n+1/2 and n+3/2
- if(prl)then
-  call fill_ebfield_yzxbdsdata(apf,i1,i2,j1,j2,k1,k2,ik,ik,str,stl)
- endif
- call set_eb_fields(apf,apf0,ef,pot_ndim,i1,i2,j1,j2,k1,k2,&
-  dt_lp,dx_inv,dy_inv,dz_inv)
- !========== exit (E,B)^{n+1}
- !=================================
- end subroutine lpf_aphi_fields
- !==================
  !==================================
 
  ! END SECTION for TIME INTEGRATION OF EM fields
@@ -1872,7 +1760,7 @@
  subroutine set_lpf_acc(ef,sp_loc,apt,np,ndm,nf,nst,xmn,ymn,zmn)
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(out) :: apt(:,:)
+ type(species),intent(inout) :: apt
  integer,intent(in) :: np,ndm,nf,nst
  real(dp),intent(in) :: xmn,ymn,zmn
  ! Uses alternating order quadratic or linear shapes
@@ -1890,7 +1778,7 @@
  !==========================
  subroutine init_lpf_momenta(sp_loc,pt,n0,np,dt_lp,Lfact)
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ type(species),intent(in) :: pt
  integer,intent(in) :: n0,np
  real(dp),intent(in) :: dt_lp,Lfact
  integer :: p
@@ -1909,7 +1797,7 @@
  case(2)
   do p=n0,np
    wgh=sp_loc%part(p)%cmp(5)  !weight-charge
-   efp(1:3)=-wch(2)*alp*pt(1:3,p)   !-DT/2*charge*(Ex,Ey,Bz)^n
+   efp(1:3)=-wch(2)*alp*pt%part(p)%cmp(1:3)   !-DT/2*charge*(Ex,Ey,Bz)^n
    pp(1:2)=sp_loc%part(p)%cmp(3:4)  !p_{n}
    gam2=1.+dot_product(pp(1:2),pp(1:2))
    gam_inv=1./sqrt(gam2)
@@ -1921,7 +1809,7 @@
   do p=n0,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
    wgh=sp_loc%part(p)%cmp(7)  !weight-charge
-   efp(1:6)=-wch(2)*alp*pt(1:6,p)
+   efp(1:6)=-wch(2)*alp*pt%part(p)%cmp(1:6)
    gam2=1.+dot_product(pp(1:3),pp(1:3))
    gam_inv=1./sqrt(gam2)         !1/gamma
    vp(1:3)=gam_inv*pp(1:3)
@@ -1938,7 +1826,7 @@
  subroutine lpf_momenta_and_positions(sp_loc,pt,n0,np,dt_lp,vb,Lfact)
 
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ type(species),intent(inout) :: pt
 
  integer,intent(in) :: n0,np
  real(dp),intent(in) :: dt_lp,vb,Lfact
@@ -1954,14 +1842,14 @@
  !========================================
  dth_lp=0.5*dt_lp
  alp=dth_lp*Lfact
- ch=5
  !==========================
  select case(curr_ndim)
  case(2)
+  ch=5
   do p=n0,np
    pp(1:2)=sp_loc%part(p)%cmp(3:4) !p_{n-1/2}
    wgh=sp_loc%part(p)%cmp(ch)
-   efp(1:3)=wch(2)*alp*pt(1:3,p)         !charge*Lfact*(Ex,Ey,Bz)*Dt/2
+   efp(1:3)=wch(2)*alp*pt%part(p)%cmp(1:3)         !charge*Lfact*(Ex,Ey,Bz)*Dt/2
    vp(1:2)=pp(1:2)+efp(1:2)   !u^{-} in Boris push
    vp(3)=efp(3)               !b_z
    gam02=1.+dot_product(vp(1:2),vp(1:2))  !gam in Boris push
@@ -1975,12 +1863,12 @@
    vph(2)=gam2*vp(2)-gam*vp(1)*vp(3)
    vph(1:2)=vph(1:2)/(gam2+b2)
    sp_loc%part(p)%cmp(3:4)=2.*vph(1:2)-pp(1:2)
-   ! the final step
-   pt(3:4,p)=sp_loc%part(p)%cmp(1:2) !old positions stored
+!  the final step
+   pt%part(p)%cmp(3:4)=sp_loc%part(p)%cmp(1:2)  !old positions stored
    pp(1:2)=sp_loc%part(p)%cmp(3:4)
    gam2=1.+dot_product(pp(1:2),pp(1:2))
-   pt(5,p)=dt_lp/sqrt(gam2)
-   vp(1:2)=pt(5,p)*pp(1:2)
+   pt%part(p)%cmp(5)=dt_lp/sqrt(gam2)
+   vp(1:2)=pt%part(p)%cmp(5)*pp(1:2)
    sp_loc%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)+vp(1:2) !new positions
   end do
  case(3)
@@ -1988,7 +1876,7 @@
   do p=n0,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
    wgh=sp_loc%part(p)%cmp(ch)
-   efp(1:6)=wch(2)*alp*pt(1:6,p)      !charge*Lfact*(E,B) on p-th-particle
+   efp(1:6)=wch(2)*alp*pt%part(p)%cmp(1:6)      !charge*Lfact*(E,B) on p-th-particle
    vp(1:3)=pp(1:3)+efp(1:3)           !p^{-} in Boris push
    bb(1:3)=efp(4:6)
    gam02=1.+dot_product(vp(1:3),vp(1:3)) !the lower order gamma in Boris scheme
@@ -2007,20 +1895,20 @@
    !======== advance momenta
    sp_loc%part(p)%cmp(4:6)=2.*vph(1:3)-pp(1:3)
    !==========
-   pt(4:6,p)=sp_loc%part(p)%cmp(1:3)  !stores old positions
+   pt%part(p)%cmp(4:6)=sp_loc%part(p)%cmp(1:3)  !stores old positions
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
    gam2=1.+dot_product(pp(1:3),pp(1:3))
-   pt(7,p)= dt_lp/sqrt(gam2)
-   vp(1:3)=pt(7,p)*pp(1:3)
+   pt%part(p)%cmp(7)= dt_lp/sqrt(gam2)
+   vp(1:3)=pt%part(p)%cmp(7)*pp(1:3)
    sp_loc%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)+vp(1:3) !new positions
   end do
   !pt(1:3)=(Ex,Ey,Ez) preserved
  end select
  !====================
  if(iform <2)then
+  !old charge stored for charge preserving schemes
   do p=n0,np
-   pt(ch,p)=sp_loc%part(p)%cmp(ch)
-   !old charge stored for charge preserving schemes
+   pt%part(p)%cmp(ch)=sp_loc%part(p)%cmp(ch)
   end do
  endif
  if(int(vb) /= 0)then
@@ -2052,7 +1940,6 @@
  jc(:,:,:,:)=0.0
  !curr_clean
  if(Part)then
-  ! SORTING NOT ACTIVATED
   !if(mod(iter_loc,1000)==0)then
   ! do ic=1,nsp_run
   !  np=loc_npart(imody,imodz,imodx,ic)
@@ -2060,10 +1947,6 @@
   !                              np,i2,j2,k2,xm,ym,zm)
   ! end do
   !endif
-  !===================END IONIZATION MODULE============
-  ! ions enter with new ionization levels and new electrons
-  ! are injected
-  !=============================================
   call pfields_prepare(ebf,i1,i2,j1,j2,k1,k2,nfield,2,2)
   do ic=1,nsp_run
    np=loc_npart(imody,imodz,imodx,ic)
@@ -2088,8 +1971,8 @@
     np=loc_npart(imody,imodz,imodx,ic)
     if(np>0)then
      call set_ion_Efield(ebf,spec(ic),ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
-     if(mod(iter_loc,100)==0)then     !refresh ionization tables
-      loc_ef2_ion(1)=maxval(ebfp(id_ch,1:np))
+     if(mod(iter_loc,100)==0)then     !refresh ionization tables, if needed
+      loc_ef2_ion(1)=maxval(ebfp%part(1:np)%cmp(id_ch))
       loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
       ef2_ion(1)=loc_ef2_ion(1)
       !if(prl)call allreduce_dpreal(MAXV,loc_ef2_ion,ef2_ion,1)
@@ -2104,14 +1987,16 @@
     !======== injects electrons and adds ionization energy
    end do
   endif
+  !===================END IONIZATION MODULE============
+  !    ions enter with new ionization levels and new electrons
+  !                   are injected
+  !=============================================
   !==========================================
   call curr_mpi_collect(i1,i2,j1,j2,k1,k2)
   !================ sums and normalize currents
 
  endif        !end particle section
  !=======================
- select case(ibeam)
- case(1)                  !(Maxwell equations using (E,B) fields
   ! Inject fields at i=i1-1
   Lp_inject=.false.
   if(pex0)then
@@ -2120,16 +2005,9 @@
     call wave_field_left_inject  !(Bz=Ey By=Ez are injected at i1-1 point
    endif
   endif
-  call advance_lpf_fields(ebf,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
+  call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
   lp_in=lp_in+dt_loc
   !============================
- case(2)     !(Maxwell equations using (A,phi) potentials
-  !ENTER pot=(A,phi)^n, pot0=(A,phi)^{n-1}
-  !EXIT (A,phi)^{n+1} =>>> (E,B) fields
-
-  call lpf_aphi_fields(ebf,pot,pot0,&
-   dt_loc,i1,i2,j1,j2,k1,k2)
- end select
  contains
  subroutine wave_field_left_inject
 
@@ -2156,7 +2034,7 @@
  !==============================
  subroutine set_rk_acc(sp_loc,apt,np,ndm,nf,nst,xmn,ymn,zmn)
  type(species),intent(in) :: sp_loc
- real(dp),intent(out) :: apt(:,:)
+ type(species),intent(inout) :: apt
  integer,intent(in) :: np,ndm,nf,nst
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -2173,14 +2051,13 @@
  !===============================
  subroutine advance_rk4_part(F_pt,F_pt0,F_pt1,sp_loc,np,dtloc,Lfact,lp)
 
- type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: F_pt(:,:)
- real(dp),intent(out) :: F_pt0(:,:),F_pt1(:,:)
+ type(species),intent(inout) :: sp_loc,F_pt
+ type(species),intent(out) :: F_pt0,F_pt1
 
  integer,intent(in) :: np,lp
  real(dp),intent(in) :: dtloc,Lfact
  integer :: p,ndv
- real(dp) :: wgh,alp,afact,dt_lp,gam,vp(3),efp(3)
+ real(dp) :: wgh,alp,afact,dt_lp,gam,vp(3),efp(3),fploc(6)
  real(sp) :: wch(2)
  equivalence(wgh,wch)
 
@@ -2191,8 +2068,8 @@
  ! Enter F_pt(1:3)=[Ex,Ey,Bz]
  if(lp==1)then
   do p=1,np
-   F_pt0(1:ndv,p)=sp_loc%part(p)%cmp(1:ndv)
-   F_pt1(1:ndv,p)=c_rk(0)*F_pt0(1:ndv,p)
+   F_pt0%part(p)%cmp(1:ndv)=sp_loc%part(p)%cmp(1:ndv)
+   F_pt1%part(p)%cmp(1:ndv)=c_rk(0)*F_pt0%part(p)%cmp(1:ndv)
   end do
  endif
  select case(curr_ndim)
@@ -2201,19 +2078,21 @@
   do p=1,np
    wgh=sp_loc%part(p)%cmp(5)         !stores p-weight and charge
    alp=wch(2)*afact
+   fploc(1:4)=F_pt%part(p)%cmp(1:4)
+
    vp(1:2)=sp_loc%part(p)%cmp(3:4)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2))
    vp(1:2)=vp(1:2)/gam                     !p velocities
 
-   efp(1)=alp*(F_pt(1,p)+vp(2)*F_pt(3,p))
-   efp(2)=alp*(F_pt(2,p)-vp(1)*F_pt(3,p))
-   F_pt(3:4,p)=dt_lp*vp(1:2)             !dt_rk*V^{k-1}
+   efp(1)=alp*(fploc(1)+vp(2)*fploc(3))
+   efp(2)=alp*(fploc(2)-vp(1)*fploc(3))
+   F_pt%part(p)%cmp(3:4)=dt_lp*vp(1:2)             !dt_rk*V^{k-1}
 
-   sp_loc%part(p)%cmp(3:4)=F_pt0(3:4,p)+efp(1:2)
+   sp_loc%part(p)%cmp(3:4)=F_pt0%part(p)%cmp(3:4)+efp(1:2)
 
-   F_pt(1:2,p)=sp_loc%part(p)%cmp(1:2)     !current positions
-   sp_loc%part(p)%cmp(1:2)=F_pt0(1:2,p)+F_pt(3:4,p) !advances positions
-   F_pt(3:4,p)=wch(1)*wch(2)*F_pt(3:4,p)     !q*wgh*dt_rk*V^{k-1} => curr}
+   F_pt%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)     !current positions
+   sp_loc%part(p)%cmp(1:2)=F_pt0%part(p)%cmp(1:2)+F_pt%part(p)%cmp(3:4) !advances positions
+   F_pt%part(p)%cmp(3:4)=wch(1)*wch(2)*F_pt%part(p)%cmp(3:4)     !q*wgh*dt_rk*V^{k-1} => curr}
   end do
  case(3)
   !in F_pt(1:6) the (E,B) fields on a particle
@@ -2225,26 +2104,26 @@
    vp(1:3)=sp_loc%part(p)%cmp(4:6)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2)+vp(3)*vp(3))
    vp(1:3)=vp(1:3)/gam
+   fploc(1:6)=F_pt%part(p)%cmp(1:6)
 
-   efp(1)=alp*(F_pt(1,p)+vp(2)*F_pt(6,p)-vp(3)*F_pt(5,p))
-   efp(2)=alp*(F_pt(2,p)+vp(3)*F_pt(4,p)-vp(1)*F_pt(6,p))
-   efp(3)=alp*(F_pt(3,p)+vp(1)*F_pt(5,p)-vp(2)*F_pt(4,p))
+   efp(1)=alp*(fploc(1)+vp(2)*fploc(6)-vp(3)*fploc(5))
+   efp(2)=alp*(fploc(2)+vp(3)*fploc(4)-vp(1)*fploc(6))
+   efp(3)=alp*(fploc(3)+vp(1)*fploc(5)-vp(2)*fploc(4))
 
-   F_pt(4:6,p)=dt_lp*vp(1:3)             !b_rk*dt*v^{i-1}
+   F_pt%part(p)%cmp(4:6)=dt_lp*vp(1:3)             !dt_rk*V^{k-1}
+   sp_loc%part(p)%cmp(4:6)=F_pt0%part(p)%cmp(4:6)+efp(1:3)
 
-   sp_loc%part(p)%cmp(4:6)=F_pt0(4:6,p)+efp(1:3)
-
-   F_pt(1:3,p)=sp_loc%part(p)%cmp(1:3)     !current positions x^{i-1}
-   sp_loc%part(p)%cmp(1:3)=F_pt0(1:3,p)+F_pt(4:6,p)
-   F_pt(4:6,p)=wch(1)*wch(2)*F_pt(4:6,p)               !wgh*dt_rk*V^{k-1} => curr}
+   F_pt%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)     !current positions
+   sp_loc%part(p)%cmp(1:3)=F_pt0%part(p)%cmp(1:3)+F_pt%part(p)%cmp(4:6) !advances positions
+   F_pt%part(p)%cmp(4:6)=wch(1)*wch(2)*F_pt%part(p)%cmp(4:6)     !q*wgh*dt_rk*V^{k-1} => curr}
   end do
  end select
  do p=1,np
-  F_pt1(1:ndv,p)=F_pt1(1:ndv,p)+c_rk(lp)*sp_loc%part(p)%cmp(1:ndv)
+  F_pt1%part(p)%cmp(1:ndv)=F_pt1%part(p)%cmp(1:ndv)+c_rk(lp)*sp_loc%part(p)%cmp(1:ndv)
  enddo
  if(lp==4)then
   do p=1,np
-   sp_loc%part(p)%cmp(1:ndv)=F_pt1(1:ndv,p)
+   sp_loc%part(p)%cmp(1:ndv)=F_pt1%part(p)%cmp(1:ndv)
   end do
  endif
  end subroutine advance_rk4_part
@@ -2276,14 +2155,8 @@
  if(Part)then
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)then
-   if(size(ebfp0,2)<np)then
-    deallocate(ebfp0)
-    allocate(ebfp0(ndv,np))
-    if(allocated(ebfp1))then
-     deallocate(ebfp1)
-     allocate(ebfp1(ndv,np))
-    endif
-   endif
+   call p_realloc(ebfp0,np)
+   call p_realloc(ebfp1,np)
   endif
  endif
  !== particles number np does no change dunring rk-iterations
@@ -2356,7 +2229,7 @@
  subroutine lpf_env_momenta(sp_loc,F_pt,np,dtloc,Lz_fact)
 
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: F_pt(:,:)
+ type(species),intent(inout) :: F_pt
 
  integer,intent(in) :: np
  real(dp),intent(in) :: dtloc,Lz_fact
@@ -2374,7 +2247,7 @@
   !F_pt(5)=wgh/gamp
   do p=1,np
    pp(1:2)=sp_loc%part(p)%cmp(3:4)  !p_{n-1/2}
-   efp(1:3)=alp*F_pt(1:3,p)         !charge/mass*(Ex,Ey,Bz)*Dt/2
+   efp(1:3)=alp*F_pt%part(p)%cmp(1:3)         !charge/mass*(Ex,Ey,Bz)*Dt/2
    vp(1:2)=pp(1:2)+efp(1:2)   !u^{-}
    bb(1)=efp(3)
    !==============================
@@ -2383,14 +2256,14 @@
    vph(2)=vp(2)-vp(1)*bb(1)
    vph(1:2)=vph(1:2)/b2       !p_n=(p_{n+1/2)+p_{n-1/2})/2
    sp_loc%part(p)%cmp(3:4)=2.*vph(1:2)-pp(1:2)
-   F_pt(1:2,p)=sp_loc%part(p)%cmp(1:2)
+   F_pt%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)
   end do
  case(3)
   !============  enter F_pt(1:6)=>(E+F/gam_p)^n  (B/gamp)^n
   !F_pt(7)=wgh/gamp
   do p=1,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
-   efp(1:6)=alp*F_pt(1:6,p)   !charge/mass * (E+F/gamm,B/gam)*Dt/2
+   efp(1:6)=alp*F_pt%part(p)%cmp(1:6)   !charge/mass * (E+F/gamm,B/gam)*Dt/2
    vp(1:3)=efp(1:3)+pp(1:3)          !p_{n-1/2}+alp*DT/2(E+F/gamp)
    bb(1:3)=efp(4:6)
    !=============================
@@ -2404,7 +2277,7 @@
    vph(1:3)=vph(1:3)/b2       !p_n=(p_{n+1/2)+p_{n-1/2})/2
    !======== advance momenta
    sp_loc%part(p)%cmp(4:6)=2.*vph(1:3)-pp(1:3)
-   F_pt(1:3,p)=sp_loc%part(p)%cmp(1:3)         !stores old positions
+   F_pt%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3) !stores old positions
   end do
  end select
  end subroutine lpf_env_momenta
@@ -2412,7 +2285,7 @@
  subroutine lpf_env_positions(sp_loc,F_pt,np,dtloc,vb)
 
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: F_pt(:,:)
+ type(species),intent(inout) :: F_pt
 
  integer,intent(in) :: np
  real(dp),intent(in) :: dtloc,vb
@@ -2430,18 +2303,18 @@
  case(2)
   do p=1,np
    pp(1:2)=sp_loc%part(p)%cmp(3:4)  !p^{n+1/2}
-   vp(1:2)=F_pt(1:2,p)              !grad[F]
+   vp(1:2)=F_pt%part(p)%cmp(1:2)              !grad[F]
    !=============================
-   gam2=1.+dot_product(pp(1:2),pp(1:2))+F_pt(3,p)
+   gam2=1.+dot_product(pp(1:2),pp(1:2))+F_pt%part(p)%cmp(3)
    b2=0.25*dot_product(pp(1:2),vp(1:2))
    !--------------------
    gam_new=sqrt(gam2)+dt_lp*b2/gam2
    gam_inv=1./gam_new
    vp(1:2)=dt_lp*gam_inv*pp(1:2)
-   F_pt(3:4,p)=sp_loc%part(p)%cmp(1:2) !old (z,r) positions
-   F_pt(5,p)=dt_lp*gam_inv                   ! 1/gamma
+   F_pt%part(p)%cmp(3:4)=sp_loc%part(p)%cmp(1:2) !old (z,r) positions
+   F_pt%part(p)%cmp(5)=dt_lp*gam_inv                   ! 1/gamma
    sp_loc%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)+vp(1:2)
-   F_pt(1:2,p)=sp_loc%part(p)%cmp(1:2)   !(z,r) new positions
+   F_pt%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)   !(z,r) new positions
   end do
  case(3)
   !============enter F_pt(4)=F, F_pt (1:3) Grad[F] where F=|A|^2/2 at t^{n+1/2}
@@ -2449,30 +2322,30 @@
   ch=7
   do p=1,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)  !p^{n+1/2}
-   vp(1:3)=F_pt(1:3,p)              !grad[F]
+   vp(1:3)=F_pt%part(p)%cmp(1:3)              !grad[F]
    !=============================
-   gam2=1.+dot_product(pp(1:3),pp(1:3))+F_pt(4,p)
+   gam2=1.+dot_product(pp(1:3),pp(1:3))+F_pt%part(p)%cmp(4)
    b2=0.25*dot_product(pp(1:3),vp(1:3))
    !--------------------
    gam_new=sqrt(gam2)+dt_lp*b2/gam2
    gam_inv=1./gam_new
    vp(1:3)=dt_lp*gam_inv*pp(1:3)
-   F_pt(4:6,p)=sp_loc%part(p)%cmp(1:3) !old positions
-   F_pt(7,p)=dt_lp*gam_inv             ! dt*gam_inv
+   F_pt%part(p)%cmp(4:6)=sp_loc%part(p)%cmp(1:3) !old positions
+   F_pt%part(p)%cmp(7)=dt_lp*gam_inv             ! dt*gam_inv
    sp_loc%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)+vp(1:3)
-   F_pt(1:3,p)=sp_loc%part(p)%cmp(1:3) !new positions
+   F_pt%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)   ! new positions
   end do
  end select
  if(iform <2)then
   do p=1,np
-   F_pt(ch,p)=sp_loc%part(p)%cmp(ch)
+   F_pt%part(p)%cmp(ch)=sp_loc%part(p)%cmp(ch)
   end do
  endif
  !====================== vb < 0 in comoving x-coordinate
  if(Comoving)then
   do p=1,np
    sp_loc%part(p)%cmp(1)=sp_loc%part(p)%cmp(1)+dt_lp*vb
-   F_pt(1,p)=sp_loc%part(p)%cmp(1)   !new positions
+   F_pt%part(p)%cmp(1)=sp_loc%part(p)%cmp(1)   !new x-position
   end do
  endif
  end subroutine lpf_env_positions
@@ -2558,8 +2431,9 @@
  end subroutine env_pfields_prepare
  !=======================================
 
- subroutine env_lpf2_evolve(dt_loc)
+ subroutine env_lpf2_evolve(dt_loc,it_loc)
  real(dp),intent(in) :: dt_loc
+ integer,intent(in) :: it_loc
  integer :: np,ic,nyf,nzf,n_st
  integer :: i1,j1,k1,i2
  real(dp) :: Ltz,xm,ym,zm
@@ -2632,160 +2506,12 @@
   call advance_lpf_envelope(dt_loc,i1,i2,j1,nyf,k1,nzf)
  endif
  lp_in=lp_in+dt_loc
- call advance_lpf_fields(ebf,dt_loc,vbeam,&
+ call advance_lpf_fields(ebf,jc,dt_loc,vbeam,&
   i1,i2,j1,nyf,k1,nzf,1)
  ! (E,B) fields at time t^{n+1}
  !-----------------------------
  end subroutine env_lpf2_evolve
  !=====================================
- subroutine advance_rk4_env_part(F_pt,F_pt0,F_pt1,sp_loc,np,v_b,dtloc,ic,lp)
-
- type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: F_pt(:,:),F_pt0(:,:),F_pt1(:,:)
-
- integer,intent(in) :: np,ic,lp
- real(dp),intent(in) :: v_b,dtloc
- integer :: p,ndv
- real(dp) :: alp,dt_lp,wgh
-
- dt_lp=dtloc*b_rk(lp)
- alp=dt_lp*Lorentz_fact(ic)
- ndv=2*curr_ndim
- !==========================
- if(lp==1)then
-  do p=1,np
-   F_pt0(1:ndv,p)=sp_loc%part(p)%cmp(1:ndv)
-   F_pt1(1:ndv,p)=c_rk(0)*F_pt0(1:ndv,p)
-  end do
- endif
- select case(curr_ndim)
- case(2)
-  if(int(v_b) /= 0)then
-   do p=1,np
-    F_pt(3,p)=F_pt(3,p)+v_b
-   end do
-  end if
-
-  do p=1,np
-   wgh=sp_loc%part(p)%cmp(5)
-   F_pt(3:4,p)=dt_lp*F_pt(3:4,p)         !dt_rk*v^{i-1}
-
-   sp_loc%part(p)%cmp(3:4)=F_pt0(3:4,p)+alp*F_pt(1:2,p)
-
-   F_pt(1:2,p)=sp_loc%part(p)%cmp(1:2)     !current positions
-   sp_loc%part(p)%cmp(1:2)=F_pt0(1:2,p)+F_pt(3:4,p) !advances positions
-   F_pt(3:4,p)=wgh*F_pt(3:4,p)           !v*dt*weights==> currents
-   F_pt1(1:ndv,p)=F_pt1(1:ndv,p)+c_rk(lp)*sp_loc%part(p)%cmp(1:ndv)
-  end do
- case(3)
-  !in F_pt(1:3) the complete lorentz force on a particle
-  !in F_pt(4:6) the current particle velocity*dt_rk*weights
-  !==================================
-  ! RK4 integration scheme p^i=p_0+Dt*b_i*F^{i-1},i=1,2,3,4
-  !==================================
-  if(int(v_b) /= 0)then
-   do p=1,np
-    F_pt(4,p)=F_pt(4,p)+v_b
-   end do
-  end if
-  do p=1,np
-   wgh=sp_loc%part(p)%cmp(7)
-   F_pt(4:6,p)=dt_lp*F_pt(4:6,p)           !b_rk*dt*v^{i-1}
-
-   sp_loc%part(p)%cmp(4:6)=F_pt0(4:6,p)+alp*F_pt(1:3,p) !p^{i-1}=>` p^i
-
-   F_pt(1:3,p)=sp_loc%part(p)%cmp(1:3)     !current positions x^{i-1}
-   sp_loc%part(p)%cmp(1:3)=F_pt0(1:3,p)+F_pt(4:6,p) !x^{i-1}=>x^i
-   F_pt(4:6,p)=wgh*F_pt(4:6,p)           ! dt_rk*v*weights => J
-   F_pt1(1:ndv,p)=F_pt1(1:ndv,p)+c_rk(lp)*sp_loc%part(p)%cmp(1:ndv)
-  end do
-  ! F_pt(1:6) to currents dt*J=<vn>^{i-1}
-  ! F_pt(1:3),F_pt(7)==> to env current j=<w*n/gam_p>^{i-1}
- end select
- if(lp==4)then
-  do p=1,np
-   sp_loc%part(p)%cmp(1:ndv)=F_pt1(1:ndv,p)
-  end do
- endif
- end subroutine advance_rk4_env_part
-
- subroutine env_rk4_evolve(dt_loc,rk)
- ! subroutine env_rk4_evolve(dt_loc,rk,it_loc)
- real(dp),intent(in) :: dt_loc
- integer,intent(in) :: rk
- ! integer,intent(in) :: it_loc
- integer :: np,ic,lps,nyf,nzf
- integer :: i1,j1,k1,i2,ndv,nst
- real(dp) :: xm,ym,zm
- !============================
- ! Implements RK4 schemes
- !===========================================
- xm=loc_xgrid(imodx)%gmin
- ym=loc_ygrid(imody)%gmin
- zm=loc_zgrid(imodz)%gmin
-
- i1=loc_xgrid(imodx)%p_ind(1)
- i2=loc_xgrid(imodx)%p_ind(2)
- j1=loc_ygrid(imody)%p_ind(1)
- nyf=loc_ygrid(imody)%p_ind(2)
- k1=loc_zgrid(imodz)%p_ind(1)
- nzf=loc_zgrid(imodz)%p_ind(2)
- if(Cyl_coord)then
-  ym=loc_rgrid(imody)%gmin
-  j1=loc_rgrid(imody)%p_ind(1)
-  nyf=loc_rgrid(imody)%p_ind(2)
- endif
- nst=0
- if(Stretch)nst=str_indx(imody,imodz)
- !====================
- ic=1
- ndv=nd2
- !==========Reallocates aux fields for particles data==========
- if(Part)then
-  np=loc_npart(imody,imodz,imodx,ic)
-  if(np>0)then
-   if(allocated(ebfp0))deallocate(ebfp0)
-   if(allocated(ebfp1))deallocate(ebfp1)
-   allocate(ebfp0(ndv,np))
-   allocate(ebfp1(ndv,np))
-  endif
- endif
- !== particles number np does no change dunring rk-iterations
- !==========================
- do lps=1,rk
-  jc(:,:,:,:)=0.0
-  if(Part)then
-   call pfields_prepare(ebf,i1,i2,j1,nyf,k1,nzf,nfield,2,2)
-   call env_pfields_prepare(env,env0,jc,i1,i2,j1,nyf,k1,nzf,2,2,2)
-   !===================================
-   !exit jc(1)=|a|^2/2 at t^n jc(2:4)=grad|a|^2/2
-   np=loc_npart(imody,imodz,imodx,ic)
-   if(np >0)then
-    call set_env_rk_acc(ebf,jc,spec(ic),ebfp,np,curr_ndim,xm,ym,zm)
-    !Exit the complete Lorentz force ebfp(1:3),part velocities ebfp(4:6)
-    !===========================
-    call advance_rk4_env_part(ebfp,ebfp0,ebfp1,spec(ic),np,-vbeam,dt_loc,ic,lps)
-    !=========================
-    !old positions at ebfp(1:3) dt*velocities*weigths in ebfp(4:6)
-    ! NOT to be modified=============
-    ! the w/gam_p factor ebfp(7) at current t_k step
-    jc(:,:,:,1)=0.0
-    call set_env_density(ebfp,jc,np,curr_ndim,xm,ym,zm)
-   endif
-   call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
-   call advance_rk4_env_field(jc,dt_loc,i1,i2,j1,nyf,k1,nzf,lps,rk)
-   jc(:,:,:,:)=0.0
-   if(np>0)call ncdef_rk_curr(ebfp,jc,nst,np,ndim,xm,ym,zm)
-   !uses old positions at ebfp(1:3) and velocities*weights at ebfp(4:6)
-   call curr_mpi_collect(i1,i2,j1,nyf,k1,nzf)
-  else
-   call advance_rk4_env_field(jc,dt_loc,i1,i2,j1,nyf,k1,nzf,lps,rk)
-   jc(:,:,:,:)=0.0
-  endif
-  call advance_rk4_fields(vbeam,dt_loc,i1,i2,j1,nyf,k1,nzf,lps)
- end do
- !-----------------------------
- end subroutine env_rk4_evolve
  !=======================
  subroutine ENV_run(t_loc,dt_loc,iter_loc,t_ord)
 
@@ -2807,12 +2533,8 @@
   if(iter_loc>0)call coordinate_xshift(vbeam,dt_loc)
  endif
  !=========================
- if(t_ord<3)then
-  call env_lpf2_evolve(dt_loc)
- else
-  call env_rk4_evolve(dt_loc,t_ord)
- endif
- if(Part)call cell_part_dist(mw)
+  call env_lpf2_evolve(dt_loc,iter_loc)
+  if(Part)call cell_part_dist(mw)
  !
  end subroutine ENV_run
  !============================
@@ -2882,7 +2604,7 @@
     if(ibmod==1)call set_ion_two_Ebfield(ebf,ebf_bunch,ebf1_bunch,spec(ic),&
      ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(mod(iter_loc,100)==0)then     !refresh ionization tables
-     loc_ef2_ion(1)=maxval(ebfp(id_ch,1:np))
+     loc_ef2_ion(1)=maxval(ebfp%part(1:np)%cmp(id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.
      if(prl)call allreduce_dpreal(MAXV,loc_ef2_ion,ef2_ion,1)
      if(ef2_ion(1) > eb_max)then
@@ -2898,7 +2620,7 @@
  endif
  if(ibmod==1)then
   call curr_mpi_collect(i1,i2,j1,j2,k1,k2)
-  call advance_lpf_fields(ebf,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
+  call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
   jc(:,:,:,:)=0.0
   ! time step advance for plasma particles completed
  endif
@@ -2926,9 +2648,9 @@
   bet0,dt_loc,i1,i2,j1,j2,k1,k2,initial_time)
  select case(ibmod)
  case(0)
-  call advance_lpf_fields(ebf,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
+  call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
  case(1)
-  call advance_lpf_fields(ebf1_bunch,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
+  call advance_lpf_fields(ebf1_bunch,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
  end select
  !=========================
  end subroutine lpf2_eb_evolve
@@ -2965,5 +2687,138 @@
  ts=ts+dt_loc
  end subroutine BUNCH_run
  !================================
+ subroutine bpart_ordering(pb_loc,pt,np,xbd,np0,np1)
+  type(species),intent(inout) :: pb_loc
+  type(species),intent(inout) :: pt
+  integer,intent(in) :: np 
+  real(dp),intent(in) :: xbd 
+  integer,intent(out) :: np0,np1 
+  integer :: i1,ndv
+
+  ndv=nd2+1
+  do i1=1,np
+   pt%part(i1)%cmp(1:ndv)=pb_loc%part(i1)%cmp(1:ndv)
+  end do
+  np0=0
+  do i1=1,np
+   if(pt%part(i1)%cmp(1) < xbd)then
+    np0=np0+1
+    pb_loc%part(np0)%cmp(1:ndv)=pt%part(i1)%cmp(1:ndv)
+   endif
+  end do
+  np1=np0
+  do i1=1,np
+   if(pt%part(i1)%cmp(1) >= xbd)then
+    np1=np1+1
+    pb_loc%part(np1)%cmp(1:ndv)=pt%part(i1)%cmp(1:ndv)
+   endif
+  end do
+  do i1=1,np
+   pt%part(i1)%cmp(1:ndv)=0.0
+  end do
+ end subroutine bpart_ordering
+!=============================
+ subroutine  lpf_advect_positions(pb_loc,nb0,nb,vbx)
+  type(species),intent(inout) :: pb_loc
+  integer,intent(in) :: nb0,nb
+  real(dp),intent(in) :: vbx
+  integer :: n
+
+  do n=nb0,nb
+   pb_loc%part(n)%cmp(1)=pb_loc%part(n)%cmp(1)+vbx
+  end do
+ end subroutine  lpf_advect_positions
+   
+
+ subroutine lpf2_pb_evolve(dt_loc,iter_loc,pb_mod,initial_time)
+
+ real,intent(in) :: dt_loc
+ integer,intent(in) :: iter_loc,pb_mod
+ logical,intent(in) :: initial_time
+ integer :: np,ic
+ integer :: i1,i2,i1b,i2b,j1,j2,k1,k2,n_st,nbr,nbl
+ real :: xm,xb,ym,zm,Ltz
+ !============================
+ !  Fields are in ebf() (wake) and ebf_bunch() bunches
+ !  particles are in sp(1)+ebfp plasma bunch(1:2)+ebfb (drive and witness)
+ !==============================
+ xm=loc_xgrid(imodx)%gmin
+ ym=loc_ygrid(imody)%gmin
+ zm=loc_zgrid(imodz)%gmin
+ i1=loc_xgrid(imodx)%p_ind(1)
+ i2=loc_xgrid(imodx)%p_ind(2)
+ i2b=nx+2
+ i1b=i2b/2
+ xb=x(i1b)
+ j1=loc_ygrid(imody)%p_ind(1)
+ j2=loc_ygrid(imody)%p_ind(2)
+ k1=loc_zgrid(imodz)%p_ind(1)
+ k2=loc_zgrid(imodz)%p_ind(2)
+ n_st=0
+ !====================
+ call pfields_prepare(ebf0_bunch,i1,i2,j1,j2,k1,k2,1,1,1)
+ call pfields_prepare(ebf,i1,i2,j1,j2,k1,k2,nfield,1,1)
+ call pfields_prepare(ebf_bunch,i1,i2b,j1,j2,k1,k2,nfield,1,1)
+ !=================== prepares ebf and ebf_bunch for
+ !                     particle acceleration
+ jc(:,:,:,:)=0.0
+ !curr_clean
+ ic=1
+ if(pb_mod >0)then
+  np=loc_npart(imody,imodz,imodx,ic)
+  Ltz=Lorentz_fact(ic)
+  if(np >0)then
+   call set_part3d_twofield_acc(ebf,ebf_bunch,spec(ic),ebfp,&
+                                1,np,n_st,xm,ym,zm)
+   if(initial_time)call init_lpf_momenta(spec(ic),ebfp,1,np,dt_loc,Ltz)
+   call lpf_momenta_and_positions(spec(ic),ebfp,1,np,dt_loc,vbeam,Ltz)
+   call curr_accumulate(spec(ic),ebfp,1,np,iform,n_st,xm,ym,zm)
+  endif
+ endif
+ !============ advances a uniform proton bunch
+ np=loc_nbpart(imody,imodz,imodx,ic)
+ Ltz=Lorentz_bfact(ic)
+ if(np>0)then
+  call bpart_ordering(bunch(ic),ebfb,np,xb,nbl,nbr)
+  if(np /= nbr)write(6,'(a23,2i8)')'error in particle count',mype,np,nbr
+  call lpf_advect_positions(bunch(ic),1,nbl,bet0*dt_loc)
+  if(np > nbl)then
+!====================
+   call set_part3d_threefield_acc(ebf,ebf_bunch,ebf0_bunch,bunch(ic),&
+                                  ebfb,nbl+1,np,xm,ym,zm)
+   call lpf_momenta_and_positions(bunch(ic),ebfb,nbl+1,np,dt_loc,vbeam,Ltz)
+   call curr_accumulate(bunch(ic),ebfb,nbl+1,np,iform,n_st,xm,ym,zm)
+  endif
+ endif
+ !================ sums total currents
+ call curr_mpi_collect(i1,i2,j1,j2,k1,k2)
+ ! current residuals are stored only for x > x(i1b)
+ call advect_bunch_fields(ebf_bunch,jc,&
+                          bet0,dt_loc,i1,i2,j1,j2,k1,k2,initial_time)
+ call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1b,i2,j1,j2,k1,k2,1)
+ !=========================
+ end subroutine lpf2_pb_evolve
+
+ subroutine PBUNCH_run(t_loc,dt_loc,iter_loc)
+
+ real,intent(in) :: t_loc,dt_loc
+ integer,intent(in) :: iter_loc
+ real :: ts
+ logical :: init_time
+ logical,parameter :: mw=.false.
+ !+++++++++++++++++++++++++++++++++
+ !for vbeam >0 uses the xw=(x+vbeam*t)
+ !x=xi=(xw-vbeam*t)  fixed
+ ts=t_loc
+ init_time=.false.
+ if(t_loc==0.0)init_time=.true.
+ !=========================
+ call lpf2_pb_evolve(dt_loc,iter_loc,ibeam,init_time)
+ !
+ if(ibeam >0)call cell_part_dist(mw)
+ call cell_bpart_dist(mw)
+ ts=ts+dt_loc
+ end subroutine PBUNCH_run
+
  end module pic_evolve_in_time
  !==================================
