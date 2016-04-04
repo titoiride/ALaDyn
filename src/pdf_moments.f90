@@ -40,6 +40,7 @@
 
  SUBROUTINE bunch_diagnostics(bunch_number)
  integer, intent(in) :: bunch_number
+ integer :: i
  real(dp) :: moments(2,6)
 
  !--- general diagnostic function
@@ -47,7 +48,9 @@
  CALL bunch_moments_diagnostic(bunch_number)
  CALL bunch_integrated_diagnostics(bunch_number,moments)
  CALL bunch_truncated_diagnostics(bunch_number,moments)
- CALL bunch_sliced_diagnostics(bunch_number,moments)
+ DO i=1,4
+   if(number_of_slices(i)>0) CALL bunch_sliced_diagnostics(bunch_number,moments,number_of_slices(i))
+ ENDDO
 
  if(bunch_number.eq.1) call lineout_Ex(0.0,0.0) !lineout E-field total
 
@@ -467,8 +470,8 @@
 
  !--- --- ---!
 
- SUBROUTINE bunch_sliced_diagnostics(bunch_number,moments)
- integer, intent(in) :: bunch_number
+ SUBROUTINE bunch_sliced_diagnostics(bunch_number,moments,number_slices)
+ integer, intent(in) :: bunch_number,number_slices
  integer :: np_local,np
  real(dp),intent(in) :: moments(2,6)
  real(dp) :: mu_x_local(1), mu_y_local(1), mu_z_local(1) !spatial meam
@@ -484,11 +487,12 @@
  real(dp) :: corr_y_py_local(1), corr_z_pz_local(1), corr_x_px_local(1) !correlation transverse plane
  real(dp) :: corr_y_py(1), corr_z_pz(1), corr_x_px(1) !correlation transverse plane
  real(dp) :: emittance_y(1), emittance_z(1) !emittance variables
- real(dp) :: nSigmaCut
+ real(dp) :: nSigmaCut,delta_cut
  real(dp) :: np_inv
  integer :: ip,nInside_loc,islice
  logical, allocatable :: mask(:)
- character(1) :: b2str,s2str
+ character(1) :: b2str
+ character(3) :: nslices2str,islice2str
 
  !---!
  np_local=loc_nbpart(imody,imodz,imodx,bunch_number)
@@ -501,13 +505,14 @@
  !---  -5sigma   -4sigma   -3sigma   -2sigma  -1sigma     0sigma   +1sigma   +2sigma    +3sigma   +4sigma   +5sigma
  !---  | slice 0  |    1     |    2    |     3   |     4    |    5    |     6   |     7    |   8    |     9    |   ----!
 
- do islice=0,9 ! change string format in output file for more than 9 slices
+ do islice=0,number_slices-1 ! change string format in output file for more than 9 slices
 
   nSigmaCut = 5.0
+  delta_cut=2.D0*nSigmaCut/number_slices
   nInside_loc=0
   do ip=1,np_local
-   mask(ip)=( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )>( real(islice)-nSigmaCut)*moments(2,1)  ) &
-    .and.( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )<(real(islice+1)-nSigmaCut)*moments(2,1) )
+   mask(ip)=( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )>( real(islice-number_slices/2)*delta_cut )*moments(2,1)  ) &
+    .and.( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )   <( real(islice-number_slices/2+1)*delta_cut)*moments(2,1) )
    if (mask(ip)) nInside_loc=nInside_loc+1
   enddo
 
@@ -609,8 +614,10 @@
   !--- output ---!
   if(pe0) then
    write(b2str,'(I1.1)') bunch_number
-   write(s2str,'(I1.1)') islice
-   open(11,file='diagnostics/bunch_sliced_quantity_'//b2str//'_'//s2str//'.dat',form='formatted', position='append')
+   write(nslices2str,'(I3.3)') number_slices
+   write(islice2str, '(I3.3)') islice
+   open(11,file='diagnostics/bunch_sliced_quantity_'//b2str//'_'//nslices2str//'_'//islice2str//'.dat', &
+                                                                   form='formatted', position='append')
    !1  2   3   4   5    6    7     8      9      10     11      12      13     14    15    16     17       18       19       20
    !t,<X>,<Y>,<Z>,<Px>,<Py>,<Pz>,<rmsX>,<rmsY>,<rmsZ>,<rmsPx>,<rmsPy>,<rmsPz>,<Emy>,<Emz>,<Gam>,DGam/Gam,cov<xPx>,cov<yPy>,cov<zPz>
    write(11,'(100e14.5)') tnow,mu_x,mu_y,mu_z,mu_px,mu_py,mu_pz,s_x,s_y,s_z,s_px,s_py, &
@@ -621,7 +628,6 @@
  enddo ! end loop on slices
 
  !--- deallocate memory ----!
-
  deallocate (mask)
 
  END SUBROUTINE bunch_sliced_diagnostics

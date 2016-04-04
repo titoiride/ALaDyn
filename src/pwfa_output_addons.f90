@@ -54,7 +54,7 @@
  if(time_interval_dumps <= 0.) then !original output 3D+dumpdata
   if (tnow>=tout) then
    call create_timestep_folder(iout)
-   call bunch_3D_output
+   !call bunch_3D_output
    if(dump>0 .and. iter>0) call dump_data(iter,tnow)
    tout=tout+dtout
   endif
