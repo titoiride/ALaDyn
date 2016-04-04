@@ -511,8 +511,8 @@
   delta_cut=2.D0*nSigmaCut/number_slices
   nInside_loc=0
   do ip=1,np_local
-   mask(ip)=( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )>( real(islice)*delta_cut )*moments(2,1)  ) &
-    .and.( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )   <( real(islice+1)*delta_cut)*moments(2,1) )
+   mask(ip)=( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )>( real(islice-number_slices/2)*delta_cut )*moments(2,1)  ) &
+    .and.( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )   <( real(islice-number_slices/2+1)*delta_cut)*moments(2,1) )
    if (mask(ip)) nInside_loc=nInside_loc+1
   enddo
 
