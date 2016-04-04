@@ -32,7 +32,6 @@
  use pwfa_output_addons
  use system_utilities
 
-
  implicit none
 
  integer :: last_iter,ngout
