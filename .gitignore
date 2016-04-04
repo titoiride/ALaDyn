@@ -43,6 +43,7 @@ cnaf.debug_ifort
 cnaf.perf_gnu
 cnaf.perf_gnu_avx
 cnaf.perf_ifort
+cnaf.perf_scal
 cineca.debug_gnu
 cineca.debug_xl
 cineca.perf

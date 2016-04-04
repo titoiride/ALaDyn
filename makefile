@@ -114,7 +114,7 @@ cnaf_intel_perf: OPTFC += -ipo
 cnaf_intel_perf: all
 
 cnaf_intel_debug: cnaf_intel
-cnaf_intel_debug: EXEC = ALaDyn.debug
+cnaf_intel_debug: EXE = ALaDyn.debug
 cnaf_intel_debug: OPTFC = -real-size 64 -g -check all -fpe0 -warn -traceback -debug extended
 cnaf_intel_debug: OPTCC = -g
 cnaf_intel_debug: all
@@ -123,7 +123,7 @@ cnaf_gnu_perf: cnaf_gnu
 cnaf_gnu_perf: all
 
 cnaf_gnu_debug: cnaf_gnu
-cnaf_gnu_debug: EXEC = ALaDyn.debug
+cnaf_gnu_debug: EXE = ALaDyn.debug
 cnaf_gnu_debug: OPTFC = -fdefault-real-8 -O0 -g -Wall -Wextra -fbacktrace -fbounds-check
 cnaf_gnu_debug: OPTCC = -O0 -g
 cnaf_gnu_debug: all
@@ -131,7 +131,7 @@ cnaf_gnu_debug: all
 cnaf_scal: cnaf_gnu
 cnaf_scal: FC = scalasca -instrument mpif90
 cnaf_scal: CC = scalasca -instrument mpic++
-cnaf_scal: EXEC = ALaDyn.scal
+cnaf_scal: EXE = ALaDyn.scal
 cnaf_scal: all
 
 fermi: FC = mpixlf90
@@ -152,19 +152,19 @@ fermi_gnu: BOOST_INC = /cineca/prod/libraries/boost/1.51.0/bgq-xl--1.0/include/
 fermi_gnu: all
 
 fermi_debug: fermi
-fermi_debug: EXEC = ALaDyn.debug
+fermi_debug: EXE = ALaDyn.debug
 fermi_debug: OPTFC = -qrealsize=8 -qipa=partition=large -g -qcheck -qflttrap -qfullpath -qarch=qp -qtune=qp -qmaxmem=-1 -qinitauto=FF
 fermi_debug: OPTCC = -g
 fermi_debug: all
 
 fermi_debug_slow: fermi
-fermi_debug_slow: EXEC = ALaDyn.debug
+fermi_debug_slow: EXE = ALaDyn.debug
 fermi_debug_slow: OPTFC = -g -qrealsize=8 -qcheck -qflttrap -qfullpath -qmaxmem=-1 -qinitauto=FF
 fermi_debug_slow: OPTCC = -g
 fermi_debug_slow: all
 
 fermi_debug_gnu: fermi_gnu
-fermi_debug_gnu: EXEC = ALaDyn.debug
+fermi_debug_gnu: EXE = ALaDyn.debug
 fermi_debug_gnu: OPTFC = -fdefault-real-8 -O0 -g -Wall -Wextra -fbacktrace -fbounds-check
 fermi_debug_gnu: OPTCC = -O0 -g
 fermi_debug_gnu: all
@@ -176,7 +176,7 @@ fermi_perf: all
 fermi_scal: fermi
 fermi_scal: FC = scalasca -instrument mpixlf90
 fermi_scal: CC = scalasca -instrument mpixlcxx
-fermi_scal: EXEC = ALaDyn.scal
+fermi_scal: EXE = ALaDyn.scal
 fermi_scal: OPTFC = -qrealsize=8 -qipa=partition=large -qarch=qp -qtune=qp -qmaxmem=-1
 fermi_scal: all
 
@@ -190,7 +190,7 @@ galileo_intel: FFTW_INC = /cineca/prod/compilers/intel/pe-xe-2016/binary/compile
 galileo_intel: all
 
 galileo_debug_gnu: galileo_gnu
-galileo_debug_gnu: EXEC = ALaDyn.debug
+galileo_debug_gnu: EXE = ALaDyn.debug
 galileo_debug_gnu: OPTFC = -D_GALILEO -fdefault-real-8 -O0 -g -Wall -Wextra -fbacktrace -fbounds-check
 galileo_debug_gnu: OPTCC = -O0 -g
 galileo_debug_gnu: all
