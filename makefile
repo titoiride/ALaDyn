@@ -56,6 +56,7 @@ OBJECTS     = $(addsuffix .o, $(addprefix $(OBJ_FOLDER)/, $(basename $(FILES))))
 MODULES     = $(addsuffix .mod, $(addprefix $(OBJ_FOLDER)/, $(basename $(FILES))))
 EXECUTABLE  = $(addprefix $(EXE_FOLDER)/, $(EXE))
 
+
 all: $(OBJECTS) $(MODULES)
 	$(FC) $(OPTFC) -L$(FFTW_LIB) -L$(BOOST_LIB) -L$(OTHER_LIB) $(OBJECTS) -o $(EXECUTABLE) $(OTHER_LINKS) $(STDCPP_LINK) $(FFTW) $(BOOST_FS) $(BOOST_S) $(MATH_LIB) $(REDIRECT)
 
