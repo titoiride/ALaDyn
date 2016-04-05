@@ -54,7 +54,6 @@
 		<File RelativePath=".\control_bunch_input.f90"/>
 		<File RelativePath=".\der_lib.f90"/>
 		<File RelativePath=".\fft_lib.F90"/>
-		<File RelativePath=".\fftg_param.f90"/>
 		<File RelativePath=".\fstruct_data.f90"/>
 		<File RelativePath=".\ft_param.f90"/>
 		<File RelativePath=".\grid_and_particles.f90"/>
