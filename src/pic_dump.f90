@@ -246,7 +246,7 @@
   nps_loc(1:nsp)=loc_npart(imody,imodz,imodx,1:nsp)
   np_max=maxval(nps_loc(1:nsp))
   np_max=max(np_max,1)
-  call p_alloc(np_max,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+  call p_alloc(np_max,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
   !=========================
   do ic=1,nsp
    np=loc_npart(imody,imodz,imodx,ic)
@@ -260,7 +260,7 @@
    read(10)loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsb)
    nps_loc(1:nsb)=loc_nbpart(imody,imodz,imodx,1:nsb)
    np_max=maxval(nps_loc(1:nsb))
-   if(np_max >0)call p_alloc(np_max,nps_loc,nsb,LPf_ord,1,2,mem_psize)
+   if(np_max >0)call p_alloc(np_max,nps_loc,nsb,LPf_ord,1,nd2+1,2,mem_psize)
    !========================
    do ic=1,nsb
     np=loc_nbpart(imody,imodz,imodx,ic)

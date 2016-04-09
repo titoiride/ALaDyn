@@ -739,8 +739,8 @@
  integer :: i,ic,k,zmax,zm_loc
  if(zlev==1)open(10,file='diag_one_level_ionz.dat')
  if(zlev==2)open(10,file='diag_multi_level_ionz.dat')
- write(10,*)'nsp_ionz,ionz_lev,ionz_mod, N_ge '
- write(10,'(4i8)')nsp_ionz-1,zlev,zmod,N_ge
+ write(10,*)'nsp_ionz,zlev,zmod,N_ge '
+ write(10,'(4i8)')nsp_ionz,zlev,zmod,N_ge
  write(10,*)'  Max Ef       dt      Omega_au  '
  write(10,'(3E11.4)')Ef_max,dt,omega_a
  do ic=1,nsp_ionz-1
@@ -1186,23 +1186,23 @@ end subroutine submem
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)mem_loc(1)=mem_loc(1)+real(ndv*size(spec(ic)%part),dp)
  end do
- if(allocated(ebfp%part))then
-  mem_loc(1)=mem_loc(1)+real(ndv*size(ebfp%part),dp)
+ if(allocated(ebfp))then
+  mem_loc(1)=mem_loc(1)+real(size(ebfp,1)*size(ebfp,2),dp)
  endif
  if(Beam)then
   do ic=1,nsb
    np=loc_nbpart(imody,imodz,imodx,ic)
    if(np>0)mem_loc(1)=mem_loc(1)+real(ndv*size(bunch(ic)%part),dp)
   end do
-  if(allocated(ebfb%part))then
-   mem_loc(1)=mem_loc(1)+real(ndv*size(ebfb%part),dp)
+  if(allocated(ebfb))then
+   mem_loc(1)=mem_loc(1)+real(size(ebfb,1)*size(ebfb,2),dp)
   endif
  endif
- if(allocated(ebfp0%part))then
-  mem_loc(1)=mem_loc(1)+real(ndv*size(ebfp0%part),dp)
+ if(allocated(ebfp0))then
+  mem_loc(1)=mem_loc(1)+real(size(ebfp0,1)*size(ebfp0,2),dp)
  endif
- if(allocated(ebfp1%part))then
-  mem_loc(1)=mem_loc(1)+real(ndv*size(ebfp1%part),dp)
+ if(allocated(ebfp1))then
+  mem_loc(1)=mem_loc(1)+real(size(ebfp1,1)*size(ebfp1,2),dp)
  endif
  call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
  mem_psize_max=kind(electron_charge_norm)*1.e-06*max_mem(1)

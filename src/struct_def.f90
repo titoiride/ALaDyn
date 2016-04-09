@@ -45,12 +45,12 @@
 
  type grid
   integer :: ng,p_ind(2)
-  real :: gmin,gmax
+  real(dp) :: gmin,gmax
  end type grid
 
  type sgrid
   integer :: sind(2)
-  real :: smin,smax
+  real(dp) :: smin,smax
  end type sgrid
 
  end module struct_def

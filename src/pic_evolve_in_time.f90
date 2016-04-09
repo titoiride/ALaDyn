@@ -237,22 +237,26 @@
   !=========================
   if(npt_inj >0)then
    if(np_old==0)then
-    deallocate(spec(ic)%part,STAT=DeallocStatus)
-    if(DeallocStatus==0)allocate(spec(ic)%part(np_new),STAT=AllocStatus)
+    deallocate(spec(ic)%part)
+    allocate(spec(ic)%part(np_new))
     if(ic==1)then
-     deallocate(ebfp%part,STAT=DeallocStatus)
-     if(DeallocStatus==0)allocate(ebfp%part(np_new),STAT=AllocStatus)
+     deallocate(ebfp)
+     allocate(ebfp(ndv,np_new))
     endif
    else
     if(size(spec(ic)%part) <np_new)then
      do n=1,np_old
-      ebfp%part(n)%cmp(1:ndv)=spec(ic)%part(n)%cmp(1:ndv)
+      ebfp(1:ndv,n)=spec(ic)%part(n)%cmp(1:ndv)
      end do
-     call p_realloc(spec(ic),np_new)
+     deallocate(spec(ic)%part)
+     allocate(spec(ic)%part(np_new))
      do n=1,np_old
-      spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
+      spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
      end do
-     call p_realloc(ebfp,np_new)
+     if(size(ebfp,2) < np_new)then
+      deallocate(ebfp)
+      allocate(ebfp(ndv,np_new))
+     endif
     endif
    endif
    q=np_old
@@ -281,11 +285,11 @@
  np_el=loc_npart(imody,imodz,imodx,1)
  if(np_el >0)then
   do n=1,np_el
-   ebfp%part(n)%cmp(1:id_ch)=spec(1)%part(n)%cmp(1:id_ch)
+   ebfp(1:id_ch,n)=spec(1)%part(n)%cmp(1:id_ch)
   end do
-  call p_realloc(spec(1),np_el+new_np_el)
+  call p_realloc_sp(spec(1),np_el+new_np_el)
   do n=1,np_el
-   spec(1)%part(n)%cmp(1:id_ch)=ebfp%part(n)%cmp(1:id_ch)
+   spec(1)%part(n)%cmp(1:id_ch)=ebfp(1:id_ch,n)
   end do
  else
   if(.not.allocated(spec(1)%part))then
@@ -306,7 +310,7 @@
    np_el=np_el+inc
   endif
  end do
- call p_realloc(ebfp,np_el)
+ call p_realloc(ebfp,id_ch,np_el)
  loc_npart(imody,imodz,imodx,1)=np_el
  !============ Now create new_np_el electrons
  end subroutine ionization_electrons_inject
@@ -315,7 +319,7 @@
   np,ic,kk,new_np_el,ion_ch_inc)
 
  type(species),intent(inout) :: sp_loc
- type(species),intent(inout) :: sp_aux
+ real(dp),intent(inout) :: sp_aux(:,:)
 
  integer,intent(in) :: np,ic
  integer,intent(inout) :: kk,new_np_el
@@ -359,9 +363,9 @@
     sp_loc%part(n)%cmp(id_ch)=ion_wch
     kk=kk+1
     ef2_ion=V_norm(z0,sp_ion)
-    sp_aux%part(kk)%cmp(id_ch)=ch(1)*ef2_ion*energy_norm
-                     !sp_aux(1:kf,kk)=ep(1:kf)
-                     !to be multiplied by E_i/E^2 on a grid at ion position
+    sp_aux(id_ch,kk)=ch(1)*ef2_ion*energy_norm
+    !sp_aux(1:kf,kk)=ep(1:kf)
+    !to be multiplied by E_i/E^2 on a grid at ion position
    endif
   end do
   new_np_el=kk
@@ -389,8 +393,8 @@
      new_np_el=new_np_el+inc
      if(inc >0)then
       kk=kk+1
-      sp_aux%part(kk)%cmp(id_ch)=ch(1)*ef2_ion*energy_norm
-      sp_aux%part(kk)%cmp(1:kf)=ep(1:kf)
+      sp_aux(id_ch,kk)=ch(1)*ef2_ion*energy_norm
+      sp_aux(1:kf,kk)=ep(1:kf)
      endif
      !to be multiplied by E_i/E^2 on a grid
     endif
@@ -438,7 +442,7 @@
  !
  subroutine ionization_cycle(sp_loc,sp_aux,np,ic,itloc,def_inv)
  type(species),intent(inout) :: sp_loc
- type(species),intent(inout) :: sp_aux
+ real(dp),intent(inout) :: sp_aux(:,:)
  integer,intent(in) :: np,ic,itloc
  real(dp),intent(in) :: def_inv
  integer :: id_ch,new_np_el,ionz_count,n,nk
@@ -459,7 +463,7 @@
   ion_z_inc(:)=0
 
   do n=1,np
-   ef2_ion=sp_aux%part(n)%cmp(id_ch)   !the interpolated E^2 field
+   ef2_ion=sp_aux(id_ch,n)   !the interpolated E^2 field
    if(ef2_ion >0.)then
     nk=nint(def_inv*sqrt(ef2_ion))
     ion_z_inc(n)=nk
@@ -523,23 +527,26 @@
    if(old_np >0)then
     npmax=old_np+npt_inj
     loc_npart(imody,imodz,imodx,ic)=npmax
-    if(allocated(ebfp%part))then
-     call p_realloc(ebfp,npmax)
-     do n=1,old_np
-      ebfp%part(n)%cmp(1:ndv)=spec(ic)%part(n)%cmp(1:ndv)
-     end do
-     call p_realloc(spec(ic),npmax)
-     do n=1,old_np
-      spec(ic)%part(n)%cmp(1:ndv)=ebfp%part(n)%cmp(1:ndv)
-     end do
-     q=old_np
-    else
-     if(ic==1)allocate(ebfp%part(npt_inj))
-     allocate(spec(ic)%part(npt_inj))
-     q=npt_inj
+    if(allocated(ebfp))then
+     if(size(ebfp,2)< npmax)then
+      deallocate(ebfp)
+      allocate(ebfp(ndv,npmax))
+     endif
     endif
-    call add_particles(q,i1,i2,ic)
+    do n=1,old_np
+     ebfp(1:ndv,n)=spec(ic)%part(n)%cmp(1:ndv)
+    end do
+     call p_realloc_sp(spec(ic),npmax)
+    do n=1,old_np
+     spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+    end do
+    q=old_np
+   else
+    if(ic==1)allocate(ebfp(ndv,npt_inj))
+    allocate(spec(ic)%part(npt_inj))
+    q=npt_inj
    endif
+   call add_particles(q,i1,i2,ic)
   endif
  end do
  !=======================
@@ -1226,7 +1233,7 @@
  !==============================
  subroutine curr_accumulate(sp_loc,pdata,npt0,npt,f_ch,n_st,xb,yb,zb)
  type(species),intent(in) :: sp_loc
- type(species),intent(inout) :: pdata
+ real(dp),intent(inout) :: pdata(:,:)
  integer,intent(in) :: npt0,npt,f_ch,n_st
  ! real(dp),intent(in) :: dtloc
  real(dp),intent(in) :: xb,yb,zb
@@ -1760,7 +1767,7 @@
  subroutine set_lpf_acc(ef,sp_loc,apt,np,ndm,nf,nst,xmn,ymn,zmn)
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- type(species),intent(inout) :: apt
+ real(dp),intent(inout) :: apt(:,:)
  integer,intent(in) :: np,ndm,nf,nst
  real(dp),intent(in) :: xmn,ymn,zmn
  ! Uses alternating order quadratic or linear shapes
@@ -1778,7 +1785,7 @@
  !==========================
  subroutine init_lpf_momenta(sp_loc,pt,n0,np,dt_lp,Lfact)
  type(species),intent(inout) :: sp_loc
- type(species),intent(in) :: pt
+ real(dp),intent(in) :: pt(:,:)
  integer,intent(in) :: n0,np
  real(dp),intent(in) :: dt_lp,Lfact
  integer :: p
@@ -1797,7 +1804,7 @@
  case(2)
   do p=n0,np
    wgh=sp_loc%part(p)%cmp(5)  !weight-charge
-   efp(1:3)=-wch(2)*alp*pt%part(p)%cmp(1:3)   !-DT/2*charge*(Ex,Ey,Bz)^n
+   efp(1:3)=-wch(2)*alp*pt(1:3,p)   !-DT/2*charge*(Ex,Ey,Bz)^n
    pp(1:2)=sp_loc%part(p)%cmp(3:4)  !p_{n}
    gam2=1.+dot_product(pp(1:2),pp(1:2))
    gam_inv=1./sqrt(gam2)
@@ -1809,7 +1816,7 @@
   do p=n0,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
    wgh=sp_loc%part(p)%cmp(7)  !weight-charge
-   efp(1:6)=-wch(2)*alp*pt%part(p)%cmp(1:6)
+   efp(1:6)=-wch(2)*alp*pt(1:6,p)
    gam2=1.+dot_product(pp(1:3),pp(1:3))
    gam_inv=1./sqrt(gam2)         !1/gamma
    vp(1:3)=gam_inv*pp(1:3)
@@ -1826,7 +1833,7 @@
  subroutine lpf_momenta_and_positions(sp_loc,pt,n0,np,dt_lp,vb,Lfact)
 
  type(species),intent(inout) :: sp_loc
- type(species),intent(inout) :: pt
+ real(dp),intent(inout) :: pt(:,:)
 
  integer,intent(in) :: n0,np
  real(dp),intent(in) :: dt_lp,vb,Lfact
@@ -1849,7 +1856,7 @@
   do p=n0,np
    pp(1:2)=sp_loc%part(p)%cmp(3:4) !p_{n-1/2}
    wgh=sp_loc%part(p)%cmp(ch)
-   efp(1:3)=wch(2)*alp*pt%part(p)%cmp(1:3)         !charge*Lfact*(Ex,Ey,Bz)*Dt/2
+   efp(1:3)=wch(2)*alp*pt(1:3,p)         !charge*Lfact*(Ex,Ey,Bz)*Dt/2
    vp(1:2)=pp(1:2)+efp(1:2)   !u^{-} in Boris push
    vp(3)=efp(3)               !b_z
    gam02=1.+dot_product(vp(1:2),vp(1:2))  !gam in Boris push
@@ -1863,12 +1870,12 @@
    vph(2)=gam2*vp(2)-gam*vp(1)*vp(3)
    vph(1:2)=vph(1:2)/(gam2+b2)
    sp_loc%part(p)%cmp(3:4)=2.*vph(1:2)-pp(1:2)
-!  the final step
-   pt%part(p)%cmp(3:4)=sp_loc%part(p)%cmp(1:2)  !old positions stored
+   ! the final step
+   pt(3:4,p)=sp_loc%part(p)%cmp(1:2) !old positions stored
    pp(1:2)=sp_loc%part(p)%cmp(3:4)
    gam2=1.+dot_product(pp(1:2),pp(1:2))
-   pt%part(p)%cmp(5)=dt_lp/sqrt(gam2)
-   vp(1:2)=pt%part(p)%cmp(5)*pp(1:2)
+   pt(5,p)=dt_lp/sqrt(gam2)
+   vp(1:2)=pt(5,p)*pp(1:2)
    sp_loc%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)+vp(1:2) !new positions
   end do
  case(3)
@@ -1876,7 +1883,7 @@
   do p=n0,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
    wgh=sp_loc%part(p)%cmp(ch)
-   efp(1:6)=wch(2)*alp*pt%part(p)%cmp(1:6)      !charge*Lfact*(E,B) on p-th-particle
+   efp(1:6)=wch(2)*alp*pt(1:6,p)      !charge*Lfact*(E,B) on p-th-particle
    vp(1:3)=pp(1:3)+efp(1:3)           !p^{-} in Boris push
    bb(1:3)=efp(4:6)
    gam02=1.+dot_product(vp(1:3),vp(1:3)) !the lower order gamma in Boris scheme
@@ -1895,11 +1902,11 @@
    !======== advance momenta
    sp_loc%part(p)%cmp(4:6)=2.*vph(1:3)-pp(1:3)
    !==========
-   pt%part(p)%cmp(4:6)=sp_loc%part(p)%cmp(1:3)  !stores old positions
+   pt(4:6,p)=sp_loc%part(p)%cmp(1:3)  !stores old positions
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
    gam2=1.+dot_product(pp(1:3),pp(1:3))
-   pt%part(p)%cmp(7)= dt_lp/sqrt(gam2)
-   vp(1:3)=pt%part(p)%cmp(7)*pp(1:3)
+   pt(7,p)= dt_lp/sqrt(gam2)
+   vp(1:3)=pt(7,p)*pp(1:3)
    sp_loc%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)+vp(1:3) !new positions
   end do
   !pt(1:3)=(Ex,Ey,Ez) preserved
@@ -1908,7 +1915,8 @@
  if(iform <2)then
   !old charge stored for charge preserving schemes
   do p=n0,np
-   pt%part(p)%cmp(ch)=sp_loc%part(p)%cmp(ch)
+   pt(ch,p)=sp_loc%part(p)%cmp(ch)
+   !old charge stored for charge preserving schemes
   end do
  endif
  if(int(vb) /= 0)then
@@ -1971,8 +1979,8 @@
     np=loc_npart(imody,imodz,imodx,ic)
     if(np>0)then
      call set_ion_Efield(ebf,spec(ic),ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
-     if(mod(iter_loc,100)==0)then     !refresh ionization tables, if needed
-      loc_ef2_ion(1)=maxval(ebfp%part(1:np)%cmp(id_ch))
+     if(mod(iter_loc,100)==0)then     !refresh ionization tables
+      loc_ef2_ion(1)=maxval(ebfp(id_ch,1:np))
       loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
       ef2_ion(1)=loc_ef2_ion(1)
       !if(prl)call allreduce_dpreal(MAXV,loc_ef2_ion,ef2_ion,1)
@@ -2034,7 +2042,7 @@
  !==============================
  subroutine set_rk_acc(sp_loc,apt,np,ndm,nf,nst,xmn,ymn,zmn)
  type(species),intent(in) :: sp_loc
- type(species),intent(inout) :: apt
+ real(dp),intent(inout) :: apt(:,:)
  integer,intent(in) :: np,ndm,nf,nst
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -2051,13 +2059,14 @@
  !===============================
  subroutine advance_rk4_part(F_pt,F_pt0,F_pt1,sp_loc,np,dtloc,Lfact,lp)
 
- type(species),intent(inout) :: sp_loc,F_pt
- type(species),intent(out) :: F_pt0,F_pt1
+ type(species),intent(inout) :: sp_loc
+ real(dp),intent(inout) :: F_pt(:,:)
+ real(dp),intent(out) :: F_pt0(:,:),F_pt1(:,:)
 
  integer,intent(in) :: np,lp
  real(dp),intent(in) :: dtloc,Lfact
  integer :: p,ndv
- real(dp) :: wgh,alp,afact,dt_lp,gam,vp(3),efp(3),fploc(6)
+ real(dp) :: wgh,alp,afact,dt_lp,gam,vp(3),efp(3)
  real(sp) :: wch(2)
  equivalence(wgh,wch)
 
@@ -2068,8 +2077,8 @@
  ! Enter F_pt(1:3)=[Ex,Ey,Bz]
  if(lp==1)then
   do p=1,np
-   F_pt0%part(p)%cmp(1:ndv)=sp_loc%part(p)%cmp(1:ndv)
-   F_pt1%part(p)%cmp(1:ndv)=c_rk(0)*F_pt0%part(p)%cmp(1:ndv)
+   F_pt0(1:ndv,p)=sp_loc%part(p)%cmp(1:ndv)
+   F_pt1(1:ndv,p)=c_rk(0)*F_pt0(1:ndv,p)
   end do
  endif
  select case(curr_ndim)
@@ -2078,21 +2087,19 @@
   do p=1,np
    wgh=sp_loc%part(p)%cmp(5)         !stores p-weight and charge
    alp=wch(2)*afact
-   fploc(1:4)=F_pt%part(p)%cmp(1:4)
-
    vp(1:2)=sp_loc%part(p)%cmp(3:4)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2))
    vp(1:2)=vp(1:2)/gam                     !p velocities
 
-   efp(1)=alp*(fploc(1)+vp(2)*fploc(3))
-   efp(2)=alp*(fploc(2)-vp(1)*fploc(3))
-   F_pt%part(p)%cmp(3:4)=dt_lp*vp(1:2)             !dt_rk*V^{k-1}
+   efp(1)=alp*(F_pt(1,p)+vp(2)*F_pt(3,p))
+   efp(2)=alp*(F_pt(2,p)-vp(1)*F_pt(3,p))
+   F_pt(3:4,p)=dt_lp*vp(1:2)             !dt_rk*V^{k-1}
 
-   sp_loc%part(p)%cmp(3:4)=F_pt0%part(p)%cmp(3:4)+efp(1:2)
+   sp_loc%part(p)%cmp(3:4)=F_pt0(3:4,p)+efp(1:2)
 
-   F_pt%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)     !current positions
-   sp_loc%part(p)%cmp(1:2)=F_pt0%part(p)%cmp(1:2)+F_pt%part(p)%cmp(3:4) !advances positions
-   F_pt%part(p)%cmp(3:4)=wch(1)*wch(2)*F_pt%part(p)%cmp(3:4)     !q*wgh*dt_rk*V^{k-1} => curr}
+   F_pt(1:2,p)=sp_loc%part(p)%cmp(1:2)     !current positions
+   sp_loc%part(p)%cmp(1:2)=F_pt0(1:2,p)+F_pt(3:4,p) !advances positions
+   F_pt(3:4,p)=wch(1)*wch(2)*F_pt(3:4,p)     !q*wgh*dt_rk*V^{k-1} => curr}
   end do
  case(3)
   !in F_pt(1:6) the (E,B) fields on a particle
@@ -2104,26 +2111,26 @@
    vp(1:3)=sp_loc%part(p)%cmp(4:6)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2)+vp(3)*vp(3))
    vp(1:3)=vp(1:3)/gam
-   fploc(1:6)=F_pt%part(p)%cmp(1:6)
 
-   efp(1)=alp*(fploc(1)+vp(2)*fploc(6)-vp(3)*fploc(5))
-   efp(2)=alp*(fploc(2)+vp(3)*fploc(4)-vp(1)*fploc(6))
-   efp(3)=alp*(fploc(3)+vp(1)*fploc(5)-vp(2)*fploc(4))
+   efp(1)=alp*(F_pt(1,p)+vp(2)*F_pt(6,p)-vp(3)*F_pt(5,p))
+   efp(2)=alp*(F_pt(2,p)+vp(3)*F_pt(4,p)-vp(1)*F_pt(6,p))
+   efp(3)=alp*(F_pt(3,p)+vp(1)*F_pt(5,p)-vp(2)*F_pt(4,p))
 
-   F_pt%part(p)%cmp(4:6)=dt_lp*vp(1:3)             !dt_rk*V^{k-1}
-   sp_loc%part(p)%cmp(4:6)=F_pt0%part(p)%cmp(4:6)+efp(1:3)
+   F_pt(4:6,p)=dt_lp*vp(1:3)             !b_rk*dt*v^{i-1}
 
-   F_pt%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)     !current positions
-   sp_loc%part(p)%cmp(1:3)=F_pt0%part(p)%cmp(1:3)+F_pt%part(p)%cmp(4:6) !advances positions
-   F_pt%part(p)%cmp(4:6)=wch(1)*wch(2)*F_pt%part(p)%cmp(4:6)     !q*wgh*dt_rk*V^{k-1} => curr}
+   sp_loc%part(p)%cmp(4:6)=F_pt0(4:6,p)+efp(1:3)
+
+   F_pt(1:3,p)=sp_loc%part(p)%cmp(1:3)     !current positions x^{i-1}
+   sp_loc%part(p)%cmp(1:3)=F_pt0(1:3,p)+F_pt(4:6,p)
+   F_pt(4:6,p)=wch(1)*wch(2)*F_pt(4:6,p)               !wgh*dt_rk*V^{k-1} => curr}
   end do
  end select
  do p=1,np
-  F_pt1%part(p)%cmp(1:ndv)=F_pt1%part(p)%cmp(1:ndv)+c_rk(lp)*sp_loc%part(p)%cmp(1:ndv)
+  F_pt1(1:ndv,p)=F_pt1(1:ndv,p)+c_rk(lp)*sp_loc%part(p)%cmp(1:ndv)
  enddo
  if(lp==4)then
   do p=1,np
-   sp_loc%part(p)%cmp(1:ndv)=F_pt1%part(p)%cmp(1:ndv)
+   sp_loc%part(p)%cmp(1:ndv)=F_pt1(1:ndv,p)
   end do
  endif
  end subroutine advance_rk4_part
@@ -2155,8 +2162,14 @@
  if(Part)then
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)then
-   call p_realloc(ebfp0,np)
-   call p_realloc(ebfp1,np)
+   if(size(ebfp0,2)<np)then
+    deallocate(ebfp0)
+    allocate(ebfp0(ndv,np))
+    if(allocated(ebfp1))then
+     deallocate(ebfp1)
+     allocate(ebfp1(ndv,np))
+    endif
+   endif
   endif
  endif
  !== particles number np does no change dunring rk-iterations
@@ -2229,7 +2242,7 @@
  subroutine lpf_env_momenta(sp_loc,F_pt,np,dtloc,Lz_fact)
 
  type(species),intent(inout) :: sp_loc
- type(species),intent(inout) :: F_pt
+ real(dp),intent(inout) :: F_pt(:,:)
 
  integer,intent(in) :: np
  real(dp),intent(in) :: dtloc,Lz_fact
@@ -2247,7 +2260,7 @@
   !F_pt(5)=wgh/gamp
   do p=1,np
    pp(1:2)=sp_loc%part(p)%cmp(3:4)  !p_{n-1/2}
-   efp(1:3)=alp*F_pt%part(p)%cmp(1:3)         !charge/mass*(Ex,Ey,Bz)*Dt/2
+   efp(1:3)=alp*F_pt(1:3,p)         !charge/mass*(Ex,Ey,Bz)*Dt/2
    vp(1:2)=pp(1:2)+efp(1:2)   !u^{-}
    bb(1)=efp(3)
    !==============================
@@ -2256,14 +2269,14 @@
    vph(2)=vp(2)-vp(1)*bb(1)
    vph(1:2)=vph(1:2)/b2       !p_n=(p_{n+1/2)+p_{n-1/2})/2
    sp_loc%part(p)%cmp(3:4)=2.*vph(1:2)-pp(1:2)
-   F_pt%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)
+   F_pt(1:2,p)=sp_loc%part(p)%cmp(1:2)
   end do
  case(3)
   !============  enter F_pt(1:6)=>(E+F/gam_p)^n  (B/gamp)^n
   !F_pt(7)=wgh/gamp
   do p=1,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)
-   efp(1:6)=alp*F_pt%part(p)%cmp(1:6)   !charge/mass * (E+F/gamm,B/gam)*Dt/2
+   efp(1:6)=alp*F_pt(1:6,p)   !charge/mass * (E+F/gamm,B/gam)*Dt/2
    vp(1:3)=efp(1:3)+pp(1:3)          !p_{n-1/2}+alp*DT/2(E+F/gamp)
    bb(1:3)=efp(4:6)
    !=============================
@@ -2277,7 +2290,7 @@
    vph(1:3)=vph(1:3)/b2       !p_n=(p_{n+1/2)+p_{n-1/2})/2
    !======== advance momenta
    sp_loc%part(p)%cmp(4:6)=2.*vph(1:3)-pp(1:3)
-   F_pt%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3) !stores old positions
+   F_pt(1:3,p)=sp_loc%part(p)%cmp(1:3)         !stores old positions
   end do
  end select
  end subroutine lpf_env_momenta
@@ -2285,7 +2298,7 @@
  subroutine lpf_env_positions(sp_loc,F_pt,np,dtloc,vb)
 
  type(species),intent(inout) :: sp_loc
- type(species),intent(inout) :: F_pt
+ real(dp),intent(inout) :: F_pt(:,:)
 
  integer,intent(in) :: np
  real(dp),intent(in) :: dtloc,vb
@@ -2303,18 +2316,18 @@
  case(2)
   do p=1,np
    pp(1:2)=sp_loc%part(p)%cmp(3:4)  !p^{n+1/2}
-   vp(1:2)=F_pt%part(p)%cmp(1:2)              !grad[F]
+   vp(1:2)=F_pt(1:2,p)              !grad[F]
    !=============================
-   gam2=1.+dot_product(pp(1:2),pp(1:2))+F_pt%part(p)%cmp(3)
+   gam2=1.+dot_product(pp(1:2),pp(1:2))+F_pt(3,p)
    b2=0.25*dot_product(pp(1:2),vp(1:2))
    !--------------------
    gam_new=sqrt(gam2)+dt_lp*b2/gam2
    gam_inv=1./gam_new
    vp(1:2)=dt_lp*gam_inv*pp(1:2)
-   F_pt%part(p)%cmp(3:4)=sp_loc%part(p)%cmp(1:2) !old (z,r) positions
-   F_pt%part(p)%cmp(5)=dt_lp*gam_inv                   ! 1/gamma
+   F_pt(3:4,p)=sp_loc%part(p)%cmp(1:2) !old (z,r) positions
+   F_pt(5,p)=dt_lp*gam_inv                   ! 1/gamma
    sp_loc%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)+vp(1:2)
-   F_pt%part(p)%cmp(1:2)=sp_loc%part(p)%cmp(1:2)   !(z,r) new positions
+   F_pt(1:2,p)=sp_loc%part(p)%cmp(1:2)   !(z,r) new positions
   end do
  case(3)
   !============enter F_pt(4)=F, F_pt (1:3) Grad[F] where F=|A|^2/2 at t^{n+1/2}
@@ -2322,30 +2335,30 @@
   ch=7
   do p=1,np
    pp(1:3)=sp_loc%part(p)%cmp(4:6)  !p^{n+1/2}
-   vp(1:3)=F_pt%part(p)%cmp(1:3)              !grad[F]
+   vp(1:3)=F_pt(1:3,p)              !grad[F]
    !=============================
-   gam2=1.+dot_product(pp(1:3),pp(1:3))+F_pt%part(p)%cmp(4)
+   gam2=1.+dot_product(pp(1:3),pp(1:3))+F_pt(4,p)
    b2=0.25*dot_product(pp(1:3),vp(1:3))
    !--------------------
    gam_new=sqrt(gam2)+dt_lp*b2/gam2
    gam_inv=1./gam_new
    vp(1:3)=dt_lp*gam_inv*pp(1:3)
-   F_pt%part(p)%cmp(4:6)=sp_loc%part(p)%cmp(1:3) !old positions
-   F_pt%part(p)%cmp(7)=dt_lp*gam_inv             ! dt*gam_inv
+   F_pt(4:6,p)=sp_loc%part(p)%cmp(1:3) !old positions
+   F_pt(7,p)=dt_lp*gam_inv             ! dt*gam_inv
    sp_loc%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)+vp(1:3)
-   F_pt%part(p)%cmp(1:3)=sp_loc%part(p)%cmp(1:3)   ! new positions
+   F_pt(1:3,p)=sp_loc%part(p)%cmp(1:3) !new positions
   end do
  end select
  if(iform <2)then
   do p=1,np
-   F_pt%part(p)%cmp(ch)=sp_loc%part(p)%cmp(ch)
+   F_pt(ch,p)=sp_loc%part(p)%cmp(ch)
   end do
  endif
  !====================== vb < 0 in comoving x-coordinate
  if(Comoving)then
   do p=1,np
    sp_loc%part(p)%cmp(1)=sp_loc%part(p)%cmp(1)+dt_lp*vb
-   F_pt%part(p)%cmp(1)=sp_loc%part(p)%cmp(1)   !new x-position
+   F_pt(1,p)=sp_loc%part(p)%cmp(1)   !new positions
   end do
  endif
  end subroutine lpf_env_positions
@@ -2604,7 +2617,7 @@
     if(ibmod==1)call set_ion_two_Ebfield(ebf,ebf_bunch,ebf1_bunch,spec(ic),&
      ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(mod(iter_loc,100)==0)then     !refresh ionization tables
-     loc_ef2_ion(1)=maxval(ebfp%part(1:np)%cmp(id_ch))
+     loc_ef2_ion(1)=maxval(ebfp(id_ch,1:np))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.
      if(prl)call allreduce_dpreal(MAXV,loc_ef2_ion,ef2_ion,1)
      if(ef2_ion(1) > eb_max)then
@@ -2689,7 +2702,7 @@
  !================================
  subroutine bpart_ordering(pb_loc,pt,np,xbd,np0,np1)
   type(species),intent(inout) :: pb_loc
-  type(species),intent(inout) :: pt
+  real(dp),intent(inout) :: pt(:,:)
   integer,intent(in) :: np 
   real(dp),intent(in) :: xbd 
   integer,intent(out) :: np0,np1 
@@ -2697,24 +2710,24 @@
 
   ndv=nd2+1
   do i1=1,np
-   pt%part(i1)%cmp(1:ndv)=pb_loc%part(i1)%cmp(1:ndv)
+   pt(1:ndv,i1)=pb_loc%part(i1)%cmp(1:ndv)
   end do
   np0=0
   do i1=1,np
-   if(pt%part(i1)%cmp(1) < xbd)then
+   if(pt(1,i1) < xbd)then
     np0=np0+1
-    pb_loc%part(np0)%cmp(1:ndv)=pt%part(i1)%cmp(1:ndv)
+    pb_loc%part(np0)%cmp(1:ndv)=pt(1:ndv,i1)
    endif
   end do
   np1=np0
   do i1=1,np
-   if(pt%part(i1)%cmp(1) >= xbd)then
+   if(pt(1,i1) >= xbd)then
     np1=np1+1
-    pb_loc%part(np1)%cmp(1:ndv)=pt%part(i1)%cmp(1:ndv)
+    pb_loc%part(np1)%cmp(1:ndv)=pt(1:ndv,i1)
    endif
   end do
   do i1=1,np
-   pt%part(i1)%cmp(1:ndv)=0.0
+   pt(1:ndv,i1)=0.0
   end do
  end subroutine bpart_ordering
 !=============================
