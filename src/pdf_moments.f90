@@ -114,12 +114,12 @@
  if (nb_tot(number_bunch)>0) nb_tot_inv = 1./real(nb_tot(number_bunch),dp)
 
  !--- mean calculation
- mu_mean_local  = sum( bunch(number_bunch)%part(1:np)%cmp(component) )
+ mu_mean_local  = sum( bunch(number_bunch)%part(1:np,component) )
  call allreduce_dpreal(0,mu_mean_local,mu_mean,1)
  mu_mean        = mu_mean * nb_tot_inv
 
  !--- moment calculation
- moment_local   = sum( ( bunch(number_bunch)%part(1:np)%cmp(component) - mu_mean(1) )**nth )
+ moment_local   = sum( ( bunch(number_bunch)%part(1:np,component) - mu_mean(1) )**nth )
  call allreduce_dpreal(0,moment_local,moment,1)
  moment         = moment * nb_tot_inv
 
@@ -154,12 +154,12 @@
  np_local=loc_nbpart(imody,imodz,imodx,bunch_number)
 
  !--- mean calculation ---!
- mu_x_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(1) )
- mu_y_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(2) )
- mu_z_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(3) )
- mu_px_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(4) )
- mu_py_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(5) )
- mu_pz_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(6) )
+ mu_x_local   = sum( bunch(bunch_number)%part(1:np_local,1) )
+ mu_y_local   = sum( bunch(bunch_number)%part(1:np_local,2) )
+ mu_z_local   = sum( bunch(bunch_number)%part(1:np_local,3) )
+ mu_px_local  = sum( bunch(bunch_number)%part(1:np_local,4) )
+ mu_py_local  = sum( bunch(bunch_number)%part(1:np_local,5) )
+ mu_pz_local  = sum( bunch(bunch_number)%part(1:np_local,6) )
  !---
  call allreduce_dpreal(0,mu_x_local,mu_x,1)
  call allreduce_dpreal(0,mu_y_local,mu_y,1)
@@ -181,12 +181,12 @@
 
 
  !--- variance calculation ---!
- s_x_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(1)-mu_x(1)  )**2 )
- s_y_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(2)-mu_y(1)  )**2 )
- s_z_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(3)-mu_z(1)  )**2 )
- s_px_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(4)-mu_px(1) )**2 )
- s_py_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(5)-mu_py(1) )**2 )
- s_pz_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(6)-mu_pz(1) )**2 )
+ s_x_local   = sum( ( bunch(bunch_number)%part(1:np_local,1)-mu_x(1)  )**2 )
+ s_y_local   = sum( ( bunch(bunch_number)%part(1:np_local,2)-mu_y(1)  )**2 )
+ s_z_local   = sum( ( bunch(bunch_number)%part(1:np_local,3)-mu_z(1)  )**2 )
+ s_px_local  = sum( ( bunch(bunch_number)%part(1:np_local,4)-mu_px(1) )**2 )
+ s_py_local  = sum( ( bunch(bunch_number)%part(1:np_local,5)-mu_py(1) )**2 )
+ s_pz_local  = sum( ( bunch(bunch_number)%part(1:np_local,6)-mu_pz(1) )**2 )
  !---
  call allreduce_dpreal(0,s_x_local,s_x,1)
  call allreduce_dpreal(0,s_y_local,s_y,1)
@@ -219,17 +219,17 @@
 
 
  !--- gamma diagnostic calculation ---!
- mu_gamma_local  = sum(  sqrt(   1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ) )
+ mu_gamma_local  = sum(  sqrt(   1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+  bunch(bunch_number)%part(1:np_local,5)**2 + &
+  bunch(bunch_number)%part(1:np_local,6)**2 ) )
  !---
  call allreduce_dpreal(0,mu_gamma_local,mu_gamma,1)
  !---
  mu_gamma  = mu_gamma * np_inv
  !--- --- ---!
- s_gamma_local  = sum(  (1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ) )
+ s_gamma_local  = sum(  (1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+  bunch(bunch_number)%part(1:np_local,5)**2 + &
+  bunch(bunch_number)%part(1:np_local,6)**2 ) )
  !---
  call allreduce_dpreal(0,s_gamma_local,s_gamma,1)
  !---
@@ -240,12 +240,12 @@
 
 
  !--- emittance calculation ---!
- corr_x_px_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(1)-mu_x(1)) &
-  * (bunch(bunch_number)%part(1:np_local)%cmp(4)-mu_px(1)) )
- corr_y_py_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(2)-mu_y(1)) &
-  * (bunch(bunch_number)%part(1:np_local)%cmp(5)-mu_py(1)) )
- corr_z_pz_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(3)-mu_z(1)) &
-  * (bunch(bunch_number)%part(1:np_local)%cmp(6)-mu_pz(1)) )
+ corr_x_px_local = sum(  (bunch(bunch_number)%part(1:np_local,1)-mu_x(1)) &
+  * (bunch(bunch_number)%part(1:np_local,4)-mu_px(1)) )
+ corr_y_py_local = sum(  (bunch(bunch_number)%part(1:np_local,2)-mu_y(1)) &
+  * (bunch(bunch_number)%part(1:np_local,5)-mu_py(1)) )
+ corr_z_pz_local = sum(  (bunch(bunch_number)%part(1:np_local,3)-mu_z(1)) &
+  * (bunch(bunch_number)%part(1:np_local,6)-mu_pz(1)) )
  !---
  call allreduce_dpreal(0,corr_x_px_local,corr_x_px,1)
  call allreduce_dpreal(0,corr_y_py_local,corr_y_py,1)
@@ -336,9 +336,9 @@
  nSigmaCut = 5.0
  nInside_loc=0
  do ip=1,np_local
-  mask(ip)=( abs(bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1))<nSigmaCut*moments(2,1) )&
-   .and.(abs(bunch(bunch_number)%part(ip)%cmp(2)-moments(1,2))<nSigmaCut*moments(2,2) )&
-   .and.(abs(bunch(bunch_number)%part(ip)%cmp(3)-moments(1,3))<nSigmaCut*moments(2,3) )
+  mask(ip)=( abs(bunch(bunch_number)%part(ip,1)-moments(1,1))<nSigmaCut*moments(2,1) )&
+   .and.(abs(bunch(bunch_number)%part(ip,2)-moments(1,2))<nSigmaCut*moments(2,2) )&
+   .and.(abs(bunch(bunch_number)%part(ip,3)-moments(1,3))<nSigmaCut*moments(2,3) )
   if (mask(ip)) nInside_loc=nInside_loc+1
  enddo
 
@@ -346,12 +346,12 @@
  !--- mean calculation ---!
  !--- SUM(x, MASK=MOD(x, 2)==1)   odd elements, sum = 9 ---!
 
- mu_x_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(1), MASK=mask(1:np_local) )
- mu_y_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(2), MASK=mask(1:np_local) )
- mu_z_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(3), MASK=mask(1:np_local) )
- mu_px_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(4), MASK=mask(1:np_local) )
- mu_py_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(5), MASK=mask(1:np_local) )
- mu_pz_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(6), MASK=mask(1:np_local) )
+ mu_x_local   = sum( bunch(bunch_number)%part(1:np_local,1), MASK=mask(1:np_local) )
+ mu_y_local   = sum( bunch(bunch_number)%part(1:np_local,2), MASK=mask(1:np_local) )
+ mu_z_local   = sum( bunch(bunch_number)%part(1:np_local,3), MASK=mask(1:np_local) )
+ mu_px_local  = sum( bunch(bunch_number)%part(1:np_local,4), MASK=mask(1:np_local) )
+ mu_py_local  = sum( bunch(bunch_number)%part(1:np_local,5), MASK=mask(1:np_local) )
+ mu_pz_local  = sum( bunch(bunch_number)%part(1:np_local,6), MASK=mask(1:np_local) )
  !---
  call allreduce_dpreal(0,mu_x_local,mu_x,1)
  call allreduce_dpreal(0,mu_y_local,mu_y,1)
@@ -373,12 +373,12 @@
 
 
  !--- variance calculation ---!
- s_x_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(1)-mu_x(1)  )**2, MASK=mask(1:np_local) )
- s_y_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(2)-mu_y(1)  )**2, MASK=mask(1:np_local) )
- s_z_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(3)-mu_z(1)  )**2, MASK=mask(1:np_local) )
- s_px_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(4)-mu_px(1) )**2, MASK=mask(1:np_local) )
- s_py_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(5)-mu_py(1) )**2, MASK=mask(1:np_local) )
- s_pz_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(6)-mu_pz(1) )**2, MASK=mask(1:np_local) )
+ s_x_local   = sum( ( bunch(bunch_number)%part(1:np_local,1)-mu_x(1)  )**2, MASK=mask(1:np_local) )
+ s_y_local   = sum( ( bunch(bunch_number)%part(1:np_local,2)-mu_y(1)  )**2, MASK=mask(1:np_local) )
+ s_z_local   = sum( ( bunch(bunch_number)%part(1:np_local,3)-mu_z(1)  )**2, MASK=mask(1:np_local) )
+ s_px_local  = sum( ( bunch(bunch_number)%part(1:np_local,4)-mu_px(1) )**2, MASK=mask(1:np_local) )
+ s_py_local  = sum( ( bunch(bunch_number)%part(1:np_local,5)-mu_py(1) )**2, MASK=mask(1:np_local) )
+ s_pz_local  = sum( ( bunch(bunch_number)%part(1:np_local,6)-mu_pz(1) )**2, MASK=mask(1:np_local) )
  !---
  call allreduce_dpreal(0,s_x_local,s_x,1)
  call allreduce_dpreal(0,s_y_local,s_y,1)
@@ -410,17 +410,17 @@
 
 
  !--- gamma diagnostic calculation ---!
- mu_gamma_local  = sum(  sqrt(   1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ), MASK=mask(1:np_local)  )
+ mu_gamma_local  = sum(  sqrt(   1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+  bunch(bunch_number)%part(1:np_local,5)**2 + &
+  bunch(bunch_number)%part(1:np_local,6)**2 ), MASK=mask(1:np_local)  )
  !---
  call allreduce_dpreal(0,mu_gamma_local,mu_gamma,1)
  !---
  mu_gamma  = mu_gamma * np_inv
  !--- --- ---!
- s_gamma_local  = sum(  (1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ), MASK=mask(1:np_local)  )
+ s_gamma_local  = sum(  (1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+  bunch(bunch_number)%part(1:np_local,5)**2 + &
+  bunch(bunch_number)%part(1:np_local,6)**2 ), MASK=mask(1:np_local)  )
  !---
  call allreduce_dpreal(0,s_gamma_local,s_gamma,1)
  !---
@@ -431,12 +431,12 @@
 
 
  !--- emittance calculation ---!
- corr_x_px_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(1)-mu_x(1)) &
-  * (bunch(bunch_number)%part(1:np_local)%cmp(4)-mu_px(1)), MASK=mask(1:np_local)  )
- corr_y_py_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(2)-mu_y(1)) &
-  * (bunch(bunch_number)%part(1:np_local)%cmp(5)-mu_py(1)), MASK=mask(1:np_local)  )
- corr_z_pz_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(3)-mu_z(1)) &
-  * (bunch(bunch_number)%part(1:np_local)%cmp(6)-mu_pz(1)), MASK=mask(1:np_local)  )
+ corr_x_px_local = sum(  (bunch(bunch_number)%part(1:np_local,1)-mu_x(1)) &
+  * (bunch(bunch_number)%part(1:np_local,4)-mu_px(1)), MASK=mask(1:np_local)  )
+ corr_y_py_local = sum(  (bunch(bunch_number)%part(1:np_local,2)-mu_y(1)) &
+  * (bunch(bunch_number)%part(1:np_local,5)-mu_py(1)), MASK=mask(1:np_local)  )
+ corr_z_pz_local = sum(  (bunch(bunch_number)%part(1:np_local,3)-mu_z(1)) &
+  * (bunch(bunch_number)%part(1:np_local,6)-mu_pz(1)), MASK=mask(1:np_local)  )
  !---
  call allreduce_dpreal(0,corr_x_px_local,corr_x_px,1)
  call allreduce_dpreal(0,corr_y_py_local,corr_y_py,1)
@@ -511,8 +511,8 @@
   delta_cut=2.D0*nSigmaCut/number_slices
   nInside_loc=0
   do ip=1,np_local
-   mask(ip)=( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )>( real(islice-number_slices/2)*delta_cut )*moments(2,1)  ) &
-    .and.( (bunch(bunch_number)%part(ip)%cmp(1)-moments(1,1) )   <( real(islice-number_slices/2+1)*delta_cut)*moments(2,1) )
+   mask(ip)=( (bunch(bunch_number)%part(ip,1)-moments(1,1) )>( real(islice-number_slices/2)*delta_cut )*moments(2,1)  ) &
+    .and.( (bunch(bunch_number)%part(ip,1)-moments(1,1) )   <( real(islice-number_slices/2+1)*delta_cut)*moments(2,1) )
    if (mask(ip)) nInside_loc=nInside_loc+1
   enddo
 
@@ -520,12 +520,12 @@
   !--- mean calculation ---!
   !--- SUM(x, MASK=MOD(x, 2)==1)   odd elements, sum = 9 ---!
 
-  mu_x_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(1), MASK=mask(1:np_local) )
-  mu_y_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(2), MASK=mask(1:np_local) )
-  mu_z_local   = sum( bunch(bunch_number)%part(1:np_local)%cmp(3), MASK=mask(1:np_local) )
-  mu_px_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(4), MASK=mask(1:np_local) )
-  mu_py_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(5), MASK=mask(1:np_local) )
-  mu_pz_local  = sum( bunch(bunch_number)%part(1:np_local)%cmp(6), MASK=mask(1:np_local) )
+  mu_x_local   = sum( bunch(bunch_number)%part(1:np_local,1), MASK=mask(1:np_local) )
+  mu_y_local   = sum( bunch(bunch_number)%part(1:np_local,2), MASK=mask(1:np_local) )
+  mu_z_local   = sum( bunch(bunch_number)%part(1:np_local,3), MASK=mask(1:np_local) )
+  mu_px_local  = sum( bunch(bunch_number)%part(1:np_local,4), MASK=mask(1:np_local) )
+  mu_py_local  = sum( bunch(bunch_number)%part(1:np_local,5), MASK=mask(1:np_local) )
+  mu_pz_local  = sum( bunch(bunch_number)%part(1:np_local,6), MASK=mask(1:np_local) )
   !---
   call allreduce_dpreal(0,mu_x_local,mu_x,1)
   call allreduce_dpreal(0,mu_y_local,mu_y,1)
@@ -546,12 +546,12 @@
 
 
   !--- variance calculation ---!
-  s_x_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(1)-mu_x(1)  )**2, MASK=mask(1:np_local) )
-  s_y_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(2)-mu_y(1)  )**2, MASK=mask(1:np_local) )
-  s_z_local   = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(3)-mu_z(1)  )**2, MASK=mask(1:np_local) )
-  s_px_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(4)-mu_px(1) )**2, MASK=mask(1:np_local) )
-  s_py_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(5)-mu_py(1) )**2, MASK=mask(1:np_local) )
-  s_pz_local  = sum( ( bunch(bunch_number)%part(1:np_local)%cmp(6)-mu_pz(1) )**2, MASK=mask(1:np_local) )
+  s_x_local   = sum( ( bunch(bunch_number)%part(1:np_local,1)-mu_x(1)  )**2, MASK=mask(1:np_local) )
+  s_y_local   = sum( ( bunch(bunch_number)%part(1:np_local,2)-mu_y(1)  )**2, MASK=mask(1:np_local) )
+  s_z_local   = sum( ( bunch(bunch_number)%part(1:np_local,3)-mu_z(1)  )**2, MASK=mask(1:np_local) )
+  s_px_local  = sum( ( bunch(bunch_number)%part(1:np_local,4)-mu_px(1) )**2, MASK=mask(1:np_local) )
+  s_py_local  = sum( ( bunch(bunch_number)%part(1:np_local,5)-mu_py(1) )**2, MASK=mask(1:np_local) )
+  s_pz_local  = sum( ( bunch(bunch_number)%part(1:np_local,6)-mu_pz(1) )**2, MASK=mask(1:np_local) )
   !---
   call allreduce_dpreal(0,s_x_local,s_x,1)
   call allreduce_dpreal(0,s_y_local,s_y,1)
@@ -570,17 +570,17 @@
 
 
   !--- gamma diagnostic calculation ---!
-  mu_gamma_local  = sum(  sqrt(   1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-   bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-   bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ), MASK=mask(1:np_local)  )
+  mu_gamma_local  = sum(  sqrt(   1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+   bunch(bunch_number)%part(1:np_local,5)**2 + &
+   bunch(bunch_number)%part(1:np_local,6)**2 ), MASK=mask(1:np_local)  )
   !---
   call allreduce_dpreal(0,mu_gamma_local,mu_gamma,1)
   !---
   mu_gamma  = mu_gamma * np_inv
   !--- --- ---!
-  s_gamma_local  = sum(  (1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-   bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-   bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ), MASK=mask(1:np_local)  )
+  s_gamma_local  = sum(  (1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+   bunch(bunch_number)%part(1:np_local,5)**2 + &
+   bunch(bunch_number)%part(1:np_local,6)**2 ), MASK=mask(1:np_local)  )
   !---
   call allreduce_dpreal(0,s_gamma_local,s_gamma,1)
   !---
@@ -591,12 +591,12 @@
 
 
   !--- emittance calculation ---!
-  corr_x_px_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(1)-mu_x(1)) &
-   * (bunch(bunch_number)%part(1:np_local)%cmp(4)-mu_px(1)), MASK=mask(1:np_local)  )
-  corr_y_py_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(2)-mu_y(1)) &
-   * (bunch(bunch_number)%part(1:np_local)%cmp(5)-mu_py(1)), MASK=mask(1:np_local)  )
-  corr_z_pz_local = sum(  (bunch(bunch_number)%part(1:np_local)%cmp(3)-mu_z(1)) &
-   * (bunch(bunch_number)%part(1:np_local)%cmp(6)-mu_pz(1)), MASK=mask(1:np_local)  )
+  corr_x_px_local = sum(  (bunch(bunch_number)%part(1:np_local,1)-mu_x(1)) &
+   * (bunch(bunch_number)%part(1:np_local,4)-mu_px(1)), MASK=mask(1:np_local)  )
+  corr_y_py_local = sum(  (bunch(bunch_number)%part(1:np_local,2)-mu_y(1)) &
+   * (bunch(bunch_number)%part(1:np_local,5)-mu_py(1)), MASK=mask(1:np_local)  )
+  corr_z_pz_local = sum(  (bunch(bunch_number)%part(1:np_local,3)-mu_z(1)) &
+   * (bunch(bunch_number)%part(1:np_local,6)-mu_pz(1)), MASK=mask(1:np_local)  )
 
   !---
   call allreduce_dpreal(0,corr_x_px_local,corr_x_px,1)

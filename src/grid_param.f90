@@ -494,7 +494,7 @@
  str_xgrid%smin=x(1)
  str_xgrid%smax=x(ns1)
  xw=x
- xmax=x(n1+1)
+ xmax=x(n1)
  xmin=x(1)
  Lx_box=xmax-xmin
 

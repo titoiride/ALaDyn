@@ -1552,7 +1552,7 @@
  ! Computes the Laplacian
  !======== in jc(1:2)= <n/gam_p> density *env(1:2)
  ic=2
- call pp_lapl(env,curr,st_ind,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
+ call pp_lapl(env,curr,1,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  do ic=1,2
   do k=k1,n3p
    do j=j1,n2p

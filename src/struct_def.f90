@@ -40,7 +40,7 @@
  end type particle
 
  type species
-  type(particle),allocatable :: part(:)
+  real(dp),allocatable :: part(:,:)
  end type species
 
  type grid

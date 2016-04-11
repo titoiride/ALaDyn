@@ -133,9 +133,7 @@
  fsize=fsize+ng*bcomp
  if(ibch>0)then
   allocate(ebf1_bunch(n1p,n2p,n3p,bcomp),STAT=AllocStatus)
-  allocate(ebf0_bunch(n1p,n2p,n3p,3),STAT=AllocStatus)
   ebf1_bunch=0.0
-  ebf0_bunch=0.0
   fsize=fsize+ng*bcomp
  endif
  end subroutine bv_alloc
@@ -155,7 +153,9 @@
  allocate(ebf_bunch(n1p,n2p,n3p,bcomp),STAT=AllocStatus)
  ebf_bunch=0.0
  fsize=fsize+ng*bcomp
-
+!============ external B-field allocated
+ allocate(ebf0_bunch(n1p,n2p,n3p,3),STAT=AllocStatus)
+ ebf0_bunch=0.0
  fsize=fsize+3*ng
  end subroutine pbv_alloc
 

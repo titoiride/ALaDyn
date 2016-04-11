@@ -154,9 +154,9 @@
 
  np_local=loc_nbpart(imody,imodz,imodx,bunch_number)
  !---
- mu_gamma_local = minval( sqrt( 1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ) )
+ mu_gamma_local = minval( sqrt( 1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+  bunch(bunch_number)%part(1:np_local,5)**2 + &
+  bunch(bunch_number)%part(1:np_local,6)**2 ) )
  !---
  call allreduce_dpreal(-1,mu_gamma_local,mu_gamma,1)
  !---
@@ -173,9 +173,9 @@
 
  np_local=loc_nbpart(imody,imodz,imodx,bunch_number)
  !---
- mu_gamma_local = maxval( sqrt( 1.0 + bunch(bunch_number)%part(1:np_local)%cmp(4)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(5)**2 + &
-  bunch(bunch_number)%part(1:np_local)%cmp(6)**2 ) )
+ mu_gamma_local = maxval( sqrt( 1.0 + bunch(bunch_number)%part(1:np_local,4)**2 + &
+  bunch(bunch_number)%part(1:np_local,5)**2 + &
+  bunch(bunch_number)%part(1:np_local,6)**2 ) )
  !---
  call allreduce_dpreal(1,mu_gamma_local,mu_gamma,1)
  !---
@@ -220,11 +220,11 @@
  case(1)
   j2=1
   do n=1,np
-   gamma_particle=sqrt(1.0+sp_loc%part(n)%cmp(4)**2+&
-    sp_loc%part(n)%cmp(5)**2+sp_loc%part(n)%cmp(6)**2)
+   gamma_particle=sqrt(1.0+sp_loc%part(n,4)**2+&
+    sp_loc%part(n,5)**2+sp_loc%part(n,6)**2)
    if(gamma_particle.gt.gamma_min .and. gamma_particle.lt.gamma_max) then
-    xp(1)=dx_inv*(sp_loc%part(n)%cmp(1)-xmn)
-    wgh=sp_loc%part(n)%cmp(5)
+    xp(1)=dx_inv*(sp_loc%part(n,1)-xmn)
+    wgh=sp_loc%part(n,5)
     wgh=charge(1)*charge(2)
     xx=shx+xp(1)
     i=int(xx+0.5)
@@ -243,17 +243,17 @@
   end do
  case(2)
   do n=1,np
-   gamma_particle=sqrt(1.0+sp_loc%part(n)%cmp(4)**2+&
-    sp_loc%part(n)%cmp(5)**2+sp_loc%part(n)%cmp(6)**2)
+   gamma_particle=sqrt(1.0+sp_loc%part(n,4)**2+&
+    sp_loc%part(n,5)**2+sp_loc%part(n,6)**2)
    if(gamma_particle.gt.gamma_min .and. gamma_particle.lt.gamma_max) then
-    part(1,n)=dx_inv*(sp_loc%part(n)%cmp(1)-xmn)
-    part(2,n)=sp_loc%part(n)%cmp(2)
+    part(1,n)=dx_inv*(sp_loc%part(n,1)-xmn)
+    part(2,n)=sp_loc%part(n,2)
    end if
   end do
   if(n_st==0)then
    do n=1,np
-    gamma_particle=sqrt(1.0+sp_loc%part(n)%cmp(4)**2+&
-     sp_loc%part(n)%cmp(5)**2+sp_loc%part(n)%cmp(6)**2)
+    gamma_particle=sqrt(1.0+sp_loc%part(n,4)**2+&
+     sp_loc%part(n,5)**2+sp_loc%part(n,6)**2)
     if(gamma_particle.gt.gamma_min .and. gamma_particle.lt.gamma_max) then
      xp(2)=part(2,n)
      part(2,n)=dy_inv*(xp(2)-ymn)
@@ -264,11 +264,11 @@
   endif
   ch=5
   do n=1,np
-   gamma_particle=sqrt(1.0+sp_loc%part(n)%cmp(4)**2+&
-    sp_loc%part(n)%cmp(5)**2+sp_loc%part(n)%cmp(6)**2)
+   gamma_particle=sqrt(1.0+sp_loc%part(n,4)**2+&
+    sp_loc%part(n,5)**2+sp_loc%part(n,6)**2)
    if(gamma_particle.gt.gamma_min .and. gamma_particle.lt.gamma_max) then
     xp(1:2)=part(1:2,n)
-    wgh=sp_loc%part(n)%cmp(ch)
+    wgh=sp_loc%part(n,ch)
     wgh=charge(1)*charge(2)
     xx=shx+xp(1)
     i=int(xx+0.5)
@@ -301,18 +301,18 @@
  case(3)
   ch=7
   do n=1,np
-   gamma_particle=sqrt(1.0+sp_loc%part(n)%cmp(4)**2+&
-    sp_loc%part(n)%cmp(5)**2+sp_loc%part(n)%cmp(6)**2)
+   gamma_particle=sqrt(1.0+sp_loc%part(n,4)**2+&
+    sp_loc%part(n,5)**2+sp_loc%part(n,6)**2)
    if(gamma_particle.gt.gamma_min .and. gamma_particle.lt.gamma_max) then
-    xp(1)=sp_loc%part(n)%cmp(1)
+    xp(1)=sp_loc%part(n,1)
     part(1,n)=dx_inv*(xp(1)-xmn)
-    part(2:3,n)=sp_loc%part(n)%cmp(2:3) ! current y-z positions
+    part(2:3,n)=sp_loc%part(n,2:3) ! current y-z positions
    end if
   end do
   if(n_st==0)then
    do n=1,np
-    gamma_particle=sqrt(1.0+sp_loc%part(n)%cmp(4)**2+&
-     sp_loc%part(n)%cmp(5)**2+sp_loc%part(n)%cmp(6)**2)
+    gamma_particle=sqrt(1.0+sp_loc%part(n,4)**2+&
+     sp_loc%part(n,5)**2+sp_loc%part(n,6)**2)
     if(gamma_particle.gt.gamma_min .and. gamma_particle.lt.gamma_max) then
      xp(2:3)=part(2:3,n)
      part(2,n)=dy_inv*(xp(2)-ymn)
@@ -323,11 +323,11 @@
    call map3d_part_sind(part,np,n_st,2,3,ymn,zmn)
   endif
   do n=1,np
-   gamma_particle = sqrt(1.0+sp_loc%part(n)%cmp(4)**2+&
-    sp_loc%part(n)%cmp(5)**2+sp_loc%part(n)%cmp(6)**2)
+   gamma_particle = sqrt(1.0+sp_loc%part(n,4)**2+&
+    sp_loc%part(n,5)**2+sp_loc%part(n,6)**2)
    if(gamma_particle.gt.gamma_min .and. gamma_particle.lt.gamma_max) then
     xp(1:3)=part(1:3,n)
-    wgh=sp_loc%part(n)%cmp(ch)
+    wgh=sp_loc%part(n,ch)
     wgh=charge(1)*charge(2)
     xx=shx+xp(1)
     i=int(xx+0.5)
