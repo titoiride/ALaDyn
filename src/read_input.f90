@@ -60,10 +60,13 @@
  close(1)
 
  !--- reading grid parameters ---!
+ yx_rat=-1.
+ zx_rat=-1.
  open(1,file='input.nml', status='old')
  read(1,GRID,ERR=17,END=17)
 17 continue
  close(1)
+ call nml_consistency_check_grid
 
  !--- reading sim parameters ---!
  open(1,file='input.nml', status='old')
@@ -445,6 +448,23 @@
    np_per_zc=np_per_yc
   endif
  end subroutine nml_consistency_check_number_of_particles_comp
+
+
+ subroutine nml_consistency_check_grid
+  if( zx_rat < 0. .and. yx_rat > 0. ) then
+    zx_rat = yx_rat
+    write(6,'(A)') "force zx_rat equal to yx_rat"
+  else if ( zx_rat > 0. .and. yx_rat < 0. ) then
+    yx_rat = zx_rat
+    write(6,'(A)') "force yx_rat equal to zx_rat"
+  else if ( zx_rat < 0. .and. yx_rat < 0. ) then
+  	yx_rat = 1.
+  	zx_rat = 1.
+  	write(6,'(A)') "force yx_rat=1 and zx_rat=1"
+  endif
+ end subroutine nml_consistency_check_grid
+
+
 
 
 
