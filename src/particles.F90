@@ -34,10 +34,10 @@
  contains
 !============== Mapping for stretched grids==========
 
- subroutine map2dy_part_sind(np,sind,ic1,ym,pt)
+ subroutine map2dy_part_sind(np,sind,ic1,ym,part)
  integer,intent(in) :: np,sind,ic1
  real,intent(in) :: ym
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  real :: yp,ys,ximn, yp_loc
  integer :: n
  !========================
@@ -51,10 +51,10 @@
   ys=str_ygrid%smin
   ximn=-dyi_inv*atan(sy_rat*(ym-ys))
   do n=1,np
-   yp=pt(ic1,n)
+   yp=part(ic1,n)
    yp_loc=ximn+dy_inv*(yp-ys)
    if(yp <= ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   pt(ic1,n)= yp_loc
+   part(ic1,n)= yp_loc
   end do
  case(2)       !y>0
   ys=str_ygrid%smax
@@ -64,18 +64,18 @@
    ximn=dy_inv*(ys-ym)
   endif
   do n=1,np
-   yp=pt(ic1,n)
+   yp=part(ic1,n)
    yp_loc=ximn+dy_inv*(yp-ys)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   pt(ic1,n)= yp_loc
+   part(ic1,n)= yp_loc
   end do
  end select
  end subroutine map2dy_part_sind
 
- subroutine map2dz_part_sind(np,sind,ic1,zm,pt)
+ subroutine map2dz_part_sind(np,sind,ic1,zm,part)
  integer,intent(in) :: np,sind,ic1
  real,intent(in) :: zm
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  real :: zp,zs,zimn,zp_loc
  integer :: n
  !========================
@@ -89,10 +89,10 @@
   zs=str_zgrid%smin
   zimn=-dzi_inv*atan(sz_rat*(zm-zs))
   do n=1,np
-   zp=pt(ic1,n)
+   zp=part(ic1,n)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(zp <= zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic1,n)= zp_loc
+   part(ic1,n)= zp_loc
   end do
  case(2)       !z>0
   zs=str_zgrid%smax
@@ -102,19 +102,19 @@
    zimn=dz_inv*(zs-zm)
   endif
   do n=1,np
-   zp=pt(ic1,n)
+   zp=part(ic1,n)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic1,n)= zp_loc
+   part(ic1,n)= zp_loc
   end do
  end select
  end subroutine map2dz_part_sind
  !--------------------------
 
- subroutine map3d_part_sind(pt,np,sind,ic1,ic2,ym,zm)
+ subroutine map3d_part_sind(part,np,sind,ic1,ic2,ym,zm)
  integer,intent(in) :: np,sind,ic1,ic2
  real,intent(in) :: ym,zm
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  real :: yp,zp,yp_loc,zp_loc,ys,zs,ximn,zimn
  integer :: n
  !========================
@@ -132,25 +132,25 @@
   zs=str_zgrid%smin
   zimn=-dzi_inv*atan(sz_rat*(zm-zs))
   do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   zp=part(ic2,n)
    yp_loc=ximn+dy_inv*(yp-ys)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(yp < ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    if(zp < zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic1,n)=yp_loc
-   pt(ic2,n)=zp_loc
+   part(ic1,n)=yp_loc
+   part(ic2,n)=zp_loc
   end do
  case(2)       !z<0
   zs=str_zgrid%smin
   zimn=-dzi_inv*atan(sz_rat*(zm-zs))
   do n=1,np
-   yp=pt(ic1,n)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   part(ic1,n)=dy_inv*(yp-ym)
+   zp=part(ic2,n)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(zp < zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic2,n)=zp_loc
+   part(ic2,n)=zp_loc
   end do
  case(3)       !y>0 z<0 corner
   ys=str_ygrid%smax
@@ -162,14 +162,14 @@
   zs=str_zgrid%smin
   zimn=-dzi_inv*atan(sz_rat*(zm-zs))
   do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   zp=part(ic2,n)
    yp_loc=dy_inv*(yp-ys)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    if(zp < zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic1,n)=yp_loc
-   pt(ic2,n)=zp_loc
+   part(ic1,n)=yp_loc
+   part(ic2,n)=zp_loc
   end do
  case(4)       !y>0
   ys=str_ygrid%smax
@@ -179,12 +179,12 @@
    ximn=dy_inv*(ys-ym)
   endif
   do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   zp=part(ic2,n)
    yp_loc=dy_inv*(yp-ys)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   pt(ic1,n)=yp_loc
-   pt(ic2,n)=dz_inv*(zp-zm)
+   part(ic1,n)=yp_loc
+   part(ic2,n)=dz_inv*(zp-zm)
   end do
  case(5)       !y>0 z>0 corner
   ys=str_ygrid%smax
@@ -200,14 +200,14 @@
    zimn=dz_inv*(zs-zm)
   endif
   do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   zp=part(ic2,n)
    yp_loc=ximn+dy_inv*(yp-ys)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic1,n)=yp_loc
-   pt(ic2,n)=zp_loc
+   part(ic1,n)=yp_loc
+   part(ic2,n)=zp_loc
   end do
  case(6)       !z>0
   zs=str_zgrid%smax
@@ -217,12 +217,12 @@
    zimn=dz_inv*(zs-zm)
   endif
   do n=1,np
-   yp=pt(ic1,n)
-   pt(ic1,n)=dy_inv*(yp-ym)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   part(ic1,n)=dy_inv*(yp-ym)
+   zp=part(ic2,n)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic2,n)=zp_loc
+   part(ic2,n)=zp_loc
   end do
  case(7)       !y<0 z>0 corner
   ys=str_ygrid%smin
@@ -234,25 +234,25 @@
    zimn=dz_inv*(zs-zm)
   endif
   do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   zp=part(ic2,n)
    yp_loc=ximn+dy_inv*(yp-ys)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(yp < ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
-   pt(ic1,n)=yp_loc
-   pt(ic2,n)=zp_loc
+   part(ic1,n)=yp_loc
+   part(ic2,n)=zp_loc
   end do
  case(8)       !y<0
   ys=str_ygrid%smin
   ximn=-dyi_inv*atan(sy_rat*(ym-ys))
   do n=1,np
-   yp=pt(ic1,n)
-   zp=pt(ic2,n)
+   yp=part(ic1,n)
+   zp=part(ic2,n)
    yp_loc=dy_inv*(yp-ys)
    if(yp < ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
-   pt(ic1,n)=yp_loc
-   pt(ic2,n)=dz_inv*(zp-zm)
+   part(ic1,n)=yp_loc
+   part(ic2,n)=dz_inv*(zp-zm)
   end do
  end select
  end subroutine map3d_part_sind
@@ -443,10 +443,10 @@
   end select
  end subroutine set_local_positions
 !==========================
- subroutine set_grid_charge(sp_loc,pt,den,np,ndm,n_st,ic,xmn,ymn,zmn)
+ subroutine set_grid_charge(sp_loc,part,den,np,ndm,n_st,ic,xmn,ymn,zmn)
 
  type(species),intent(in) :: sp_loc
- real(dp),intent(out) :: pt(:,:)
+ real(dp),intent(out) :: part(:,:)
  real(dp),intent(inout) :: den(:,:,:,:)
  integer,intent(in) :: np,ndm,n_st,ic
  real(dp),intent(in) :: xmn,ymn,zmn
@@ -481,10 +481,10 @@
    end do
   end do
  case(2)
-  call set_local_positions(sp_loc,pt,1,np,n_st,2,xmn,ymn,zmn)
+  call set_local_positions(sp_loc,part,1,np,n_st,2,xmn,ymn,zmn)
   ch=5
   do n=1,np
-   xp(1:2)=pt(1:2,n)
+   xp(1:2)=part(1:2,n)
    wgh=sp_loc%part(n)%cmp(ch)
    wgh4=charge(1)*charge(2)
    xx=shx+xp(1)
@@ -515,10 +515,10 @@
    end do
   end do
  case(3)
-  call set_local_positions(sp_loc,pt,1,np,n_st,3,xmn,ymn,zmn)
+  call set_local_positions(sp_loc,part,1,np,n_st,3,xmn,ymn,zmn)
   ch=7
   do n=1,np
-   xp(1:3)=pt(1:3,n)
+   xp(1:3)=part(1:3,n)
    wgh=sp_loc%part(n)%cmp(ch)
    wgh4=charge(1)*charge(2)
    xx=shx+xp(1)
@@ -920,11 +920,11 @@
  !=============================
  !========= SECTION FOR ACCELERATION FIELDS ASSIGNEMENT
  !==========================================
- subroutine set_part1d_acc(ef,sp_loc,pt,np,ndf,xmn)
+ subroutine set_part1d_acc(ef,sp_loc,part,np,ndf,xmn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,ndf
  real(dp),intent(in) :: xmn
 
@@ -964,7 +964,7 @@
     i2=i+i1
     ap(2)=ap(2)+ax1(i1)*ef(i2,j2,1,2)      !Ey(i)
    end do
-   pt(1:3,n)=ap(1:3)
+   part(1:3,n)=ap(1:3)
   end do
   !========================
  case(6)
@@ -1004,16 +1004,16 @@
     ap(3)=ap(3)+ax1(i1)*ef(i2,j2,1,3) !Ez
     ap(4)=ap(4)+ax1(i1)*ef(i2,j2,1,4) !Bx
    end do
-   pt(1:6,n)=ap(1:6)
+   part(1:6,n)=ap(1:6)
   end do
  end select
  end subroutine set_part1d_acc
  !===========================
- subroutine set_part2d_acc(ef,sp_loc,pt,np,ndf,s_ind,xmn,ymn)
+ subroutine set_part2d_acc(ef,sp_loc,part,np,ndf,s_ind,xmn,ymn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,ndf,s_ind
  real(dp),intent(in) :: xmn,ymn
 
@@ -1030,12 +1030,12 @@
  axh=0.0;ayh=0.0
  dvol=0.0
 
- call set_local_positions(sp_loc,pt,1,np,s_ind,2,xmn,ymn,dvol)
+ call set_local_positions(sp_loc,part,1,np,s_ind,2,xmn,ymn,dvol)
  select case(ndf)
  case(3)
   do n=1,np
    ap(1:3)=0.0
-   xp1(1:2)=pt(1:2,n)
+   xp1(1:2)=part(1:2,n)
    call qq_interpolate(xp1,ax1,axh,ay1,ayh,i,j,ih,jh)
 
    do j1=1,3
@@ -1057,14 +1057,14 @@
      ap(3)=ap(3)+dvol1*ef(i2,j2,1,3) !Bz(i+1/2,j+1/2)
     end do
    end do
-   pt(1:3,n)=ap(1:3)
+   part(1:3,n)=ap(1:3)
   end do
   !==============
  case(6)
   !=====================
   do n=1,np
    ap(1:6)=0.0
-   xp1(1:2)=pt(1:2,n)
+   xp1(1:2)=part(1:2,n)
    call qq_interpolate(xp1,ax1,axh,ay1,ayh,i,j,ih,jh)
 
    do j1=1,3
@@ -1092,17 +1092,17 @@
      ap(6)=ap(6)+dvol1*ef(i2,j2,1,6) !Bz(i+1/2,j+1/2)
     end do
    end do
-   pt(1:6,n)=ap(1:6)
+   part(1:6,n)=ap(1:6)
   end do
  end select
  !=====================
  end subroutine set_part2d_acc
  !=============================
- subroutine set_part2d_hcell_acc(ef,sp_loc,pt,np,ndf,s_ind,xmn,ymn)
+ subroutine set_part2d_hcell_acc(ef,sp_loc,part,np,ndf,s_ind,xmn,ymn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,ndf,s_ind
  real(dp),intent(in) :: xmn,ymn
 
@@ -1117,13 +1117,13 @@
  axh=0.0;ayh=0.0
  xp1=0.0
  sx=0.0
- call set_local_positions(sp_loc,pt,1,np,s_ind,2,xmn,ymn,sx)
+ call set_local_positions(sp_loc,part,1,np,s_ind,2,xmn,ymn,sx)
 
  select case(ndf)     !Field components
  case(3)
   do n=1,np
    ap(1:3)=0.0
-   xp1(1:2)=pt(1:2,n)
+   xp1(1:2)=part(1:2,n)
    call ql_interpolate(xp1,ax1,axh,ay1,ayh,i,j,ih,jh)
 
    do j1=1,3
@@ -1149,14 +1149,14 @@
      ap(3)=ap(3)+dvol1*ef(i2,j2,1,3) !Bz(i+1/2,j+1/2)
     end do
    end do
-   pt(1:3,n)=ap(1:3)
+   part(1:3,n)=ap(1:3)
   end do
   !==============
  case(6)
   !=====================
   do n=1,np
    ap(1:6)=0.0
-   xp1(1:2)=pt(1:2,n)
+   xp1(1:2)=part(1:2,n)
    call ql_interpolate(xp1,ax1,axh,ay1,ayh,i,j,ih,jh)
 
    do j1=1,3
@@ -1189,17 +1189,17 @@
      ap(6)=ap(6)+dvol1*ef(i2,j2,1,6) !Bz(i+1/2,j+1/2)
     end do
    end do
-   pt(1:6,n)=ap(1:6)
+   part(1:6,n)=ap(1:6)
   end do
  end select
  !=====================
  end subroutine set_part2d_hcell_acc
  !====================================
- subroutine set_part3d_acc(ef,sp_loc,pt,np,s_ind,xmn,ymn,zmn)
+ subroutine set_part3d_acc(ef,sp_loc,part,np,s_ind,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,s_ind
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -1218,10 +1218,10 @@
  ax1(0:2)=0.0;ay1(0:2)=0.0
  az1(0:2)=0.0;azh(0:2)=0.0
  axh(0:2)=0.0;ayh(0:2)=0.0
- call set_local_positions(sp_loc,pt,1,np,s_ind,3,xmn,ymn,zmn)
+ call set_local_positions(sp_loc,part,1,np,s_ind,3,xmn,ymn,zmn)
  do n=1,np
   ap(1:6)=0.0
-  xp1(1:3)=pt(1:3,n)    !the current particle positions
+  xp1(1:3)=part(1:3,n)    !the current particle positions
   xx=shx+xp1(1)
   i=int(xx+0.5)
   sx=xx-real(i,dp)
@@ -1338,16 +1338,16 @@
     end do
    end do
   end do
-  pt(1:6,n)=ap(1:6)
+  part(1:6,n)=ap(1:6)
  end do
  !================================
  end subroutine set_part3d_acc
  !================================
- subroutine set_ion_Efield(ef,sp_loc,pt,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
+ subroutine set_ion_Efield(ef,sp_loc,part,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,s_ind,ndm,rionz
  real(dp),intent(in) :: dt_loc,xmn,ymn,zmn
 
@@ -1372,26 +1372,26 @@
     pp(1:2)=sp_loc%part(n)%cmp(3:4)
     gam=1.+pp(1)*pp(1)+pp(2)*pp(2)
     pp(1:2)=pp(1:2)/sqrt(gam)
-    pt(1:2,n)=sp_loc%part(n)%cmp(1:2)-dt_loc*pp(1:2) ! stores t^n part positions
-    pt(1,n)=dx_inv*(pt(1,n)-xmn)
+    part(1:2,n)=sp_loc%part(n)%cmp(1:2)-dt_loc*pp(1:2) ! stores t^n part positions
+    part(1,n)=dx_inv*(part(1,n)-xmn)
    end do
   else
    do n=1,np
-    pt(1:2,n)=sp_loc%part(n)%cmp(1:2)
-    pt(1,n)=dx_inv*(pt(1,n)-xmn)
+    part(1:2,n)=sp_loc%part(n)%cmp(1:2)
+    part(1,n)=dx_inv*(part(1,n)-xmn)
    end do
   endif
   if(s_ind==0)then
    do n=1,np
-    pt(2,n)=dy_inv*(pt(2,n)-ymn)
+    part(2,n)=dy_inv*(part(2,n)-ymn)
    end do
   else
-   call map2dy_part_sind(np,s_ind,2,ymn,pt)
+   call map2dy_part_sind(np,s_ind,2,ymn,part)
   endif
   !==========================
   do n=1,np
    ap(1:2)=0.0
-   xp1(1:2)=pt(1:2,n)
+   xp1(1:2)=part(1:2,n)
    xx=shx+xp1(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -1453,7 +1453,7 @@
     end do
    end do
    !==============
-   pt(5,n)=ap(1)
+   part(5,n)=ap(1)
   end do
 
  case(3)
@@ -1462,30 +1462,30 @@
     pp(1:3)=sp_loc%part(n)%cmp(4:6)
     gam=1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3)
     pp(1:3)=pp(1:3)/sqrt(gam)
-    pt(1:3,n)=sp_loc%part(n)%cmp(1:3) -dt_loc*pp(1:3) ! the part positions
-    xp1(1)=pt(1,n)
-    pt(1,n)=dx_inv*(xp1(1)-xmn)
+    part(1:3,n)=sp_loc%part(n)%cmp(1:3) -dt_loc*pp(1:3) ! the part positions
+    xp1(1)=part(1,n)
+    part(1,n)=dx_inv*(xp1(1)-xmn)
    end do
   else
    do n=1,np
-    pt(1:3,n)=sp_loc%part(n)%cmp(1:3)
-    xp1(1)=pt(1,n)
-    pt(1,n)=dx_inv*(xp1(1)-xmn)
+    part(1:3,n)=sp_loc%part(n)%cmp(1:3)
+    xp1(1)=part(1,n)
+    part(1,n)=dx_inv*(xp1(1)-xmn)
    end do
   endif
   if(s_ind==0)then
    do n=1,np
-    xp1(2:3)=pt(2:3,n)
-    pt(2,n)=dy_inv*(xp1(2)-ymn)
-    pt(3,n)=dz_inv*(xp1(3)-zmn)
+    xp1(2:3)=part(2:3,n)
+    part(2,n)=dy_inv*(xp1(2)-ymn)
+    part(3,n)=dz_inv*(xp1(3)-zmn)
    end do
   else
-   call map3d_part_sind(pt,np,s_ind,2,3,ymn,zmn)
+   call map3d_part_sind(part,np,s_ind,2,3,ymn,zmn)
   endif
   !==========================
   do n=1,np
    ap(1:3)=0.0
-   xp1(1:3)=pt(1:3,n)
+   xp1(1:3)=part(1:3,n)
    xx=shx+xp1(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -1571,17 +1571,17 @@
      end do
     end do
    end do
-   pt(7,n)=ap(1)
+   part(7,n)=ap(1)
   end do
  end select
  !================================
  end subroutine set_ion_Efield
 
- subroutine set_ion_Ebfield(ef,ef1,sp_loc,pt,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
+ subroutine set_ion_Ebfield(ef,ef1,sp_loc,part,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:),ef1(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,s_ind,ndm,rionz
  real(dp),intent(in) :: dt_loc,xmn,ymn,zmn
 
@@ -1606,26 +1606,26 @@
     pp(1:2)=sp_loc%part(n)%cmp(3:4)
     gam=1.+pp(1)*pp(1)+pp(2)*pp(2)
     pp(1:2)=pp(1:2)/sqrt(gam)
-    pt(1:2,n)=sp_loc%part(n)%cmp(1:2)-dt_loc*pp(1:2) ! stores t^n part positions
-    pt(1,n)=dx_inv*(pt(1,n)-xmn)
+    part(1:2,n)=sp_loc%part(n)%cmp(1:2)-dt_loc*pp(1:2) ! stores t^n part positions
+    part(1,n)=dx_inv*(part(1,n)-xmn)
    end do
   else
    do n=1,np
-    pt(1:2,n)=sp_loc%part(n)%cmp(1:2)
-    pt(1,n)=dx_inv*(pt(3,n)-xmn)
+    part(1:2,n)=sp_loc%part(n)%cmp(1:2)
+    part(1,n)=dx_inv*(part(3,n)-xmn)
    end do
   endif
   if(s_ind==0)then
    do n=1,np
-    pt(2,n)=dy_inv*(pt(4,n)-ymn)
+    part(2,n)=dy_inv*(part(4,n)-ymn)
    end do
   else
-   call map2dy_part_sind(np,s_ind,2,ymn,pt)
+   call map2dy_part_sind(np,s_ind,2,ymn,part)
   endif
   !==========================
   do n=1,np
    ap(1:2)=0.0
-   xp1(1:2)=pt(1:2,n)
+   xp1(1:2)=part(1:2,n)
    xx=shx+xp1(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -1689,7 +1689,7 @@
     end do
    end do
    !==============
-   pt(5,n)=ap(1)+ap(2)
+   part(5,n)=ap(1)+ap(2)
   end do
 
  case(3)
@@ -1698,29 +1698,29 @@
     pp(1:3)=sp_loc%part(n)%cmp(4:6)
     gam=1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3)
     pp(1:3)=pp(1:3)/sqrt(gam)
-    pt(1:3,n)=sp_loc%part(n)%cmp(1:3) -dt_loc*pp(1:3) ! the part positions
-    xp1(1)=pt(1,n)
-    pt(1,n)=dx_inv*(xp1(1)-xmn)
+    part(1:3,n)=sp_loc%part(n)%cmp(1:3) -dt_loc*pp(1:3) ! the part positions
+    xp1(1)=part(1,n)
+    part(1,n)=dx_inv*(xp1(1)-xmn)
    end do
   else
    do n=1,np
-    pt(1:3,n)=sp_loc%part(n)%cmp(1:3)
-    pt(1,n)=dx_inv*(pt(1,n)-xmn)
+    part(1:3,n)=sp_loc%part(n)%cmp(1:3)
+    part(1,n)=dx_inv*(part(1,n)-xmn)
    end do
   endif
   if(s_ind==0)then
    do n=1,np
-    xp1(2:3)=pt(2:3,n)
-    pt(2,n)=dy_inv*(xp1(2)-ymn)
-    pt(3,n)=dz_inv*(xp1(3)-zmn)
+    xp1(2:3)=part(2:3,n)
+    part(2,n)=dy_inv*(xp1(2)-ymn)
+    part(3,n)=dz_inv*(xp1(3)-zmn)
    end do
   else
-   call map3d_part_sind(pt,np,s_ind,2,3,ymn,zmn)
+   call map3d_part_sind(part,np,s_ind,2,3,ymn,zmn)
   endif
   !==========================
   do n=1,np
    ap(1:3)=0.0
-   xp1(1:3)=pt(1:3,n)
+   xp1(1:3)=part(1:3,n)
    xx=shx+xp1(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -1809,18 +1809,18 @@
      end do
     end do
    end do
-   pt(7,n)=ap(1)+ap(2)+ap(3)
+   part(7,n)=ap(1)+ap(2)+ap(3)
   end do
  end select
  !================================
  end subroutine set_ion_Ebfield
 
  subroutine set_ion_two_Ebfield(&
-  ef,ef1,ef2,sp_loc,pt,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
+  ef,ef1,ef2,sp_loc,part,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:),ef1(:,:,:,:),ef2(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,s_ind,ndm,rionz
  real(dp),intent(in) :: dt_loc,xmn,ymn,zmn
 
@@ -1845,26 +1845,26 @@
     pp(1:2)=sp_loc%part(n)%cmp(3:4)
     gam=1.+pp(1)*pp(1)+pp(2)*pp(2)
     pp(1:2)=pp(1:2)/sqrt(gam)
-    pt(3:4,n)=sp_loc%part(n)%cmp(1:2)-dt_loc*pp(1:2) ! stores t^n part positions
-    pt(1,n)=dx_inv*(pt(3,n)-xmn)
+    part(3:4,n)=sp_loc%part(n)%cmp(1:2)-dt_loc*pp(1:2) ! stores t^n part positions
+    part(1,n)=dx_inv*(part(3,n)-xmn)
    end do
   else
    do n=1,np
-    pt(3:4,n)=sp_loc%part(n)%cmp(1:2)
-    pt(1,n)=dx_inv*(pt(3,n)-xmn)
+    part(3:4,n)=sp_loc%part(n)%cmp(1:2)
+    part(1,n)=dx_inv*(part(3,n)-xmn)
    end do
   endif
   if(s_ind==0)then
    do n=1,np
-    pt(2,n)=dy_inv*(pt(4,n)-ymn)
+    part(2,n)=dy_inv*(part(4,n)-ymn)
    end do
   else
-   call map2dy_part_sind(np,s_ind,2,ymn,pt)
+   call map2dy_part_sind(np,s_ind,2,ymn,part)
   endif
   !==========================
   do n=1,np
    ap(1:2)=0.0
-   xp1(1:2)=pt(1:2,n)
+   xp1(1:2)=part(1:2,n)
    xx=shx+xp1(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -1928,7 +1928,7 @@
     end do
    end do
    !==============
-   pt(5,n)=ap(1)+ap(2)
+   part(5,n)=ap(1)+ap(2)
   end do
 
  case(3)
@@ -1937,28 +1937,28 @@
     pp(1:3)=sp_loc%part(n)%cmp(4:6)
     gam=1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3)
     pp(1:3)=pp(1:3)/sqrt(gam)
-    pt(1:3,n)=sp_loc%part(n)%cmp(1:3) -dt_loc*pp(1:3) ! the part positions
-    pt(1,n)=dx_inv*(pt(1,n)-xmn)
+    part(1:3,n)=sp_loc%part(n)%cmp(1:3) -dt_loc*pp(1:3) ! the part positions
+    part(1,n)=dx_inv*(part(1,n)-xmn)
    end do
   else
    do n=1,np
-    pt(1:3,n)=sp_loc%part(n)%cmp(1:3)
-    pt(1,n)=dx_inv*(pt(1,n)-xmn)
+    part(1:3,n)=sp_loc%part(n)%cmp(1:3)
+    part(1,n)=dx_inv*(part(1,n)-xmn)
    end do
   endif
   if(s_ind==0)then
    do n=1,np
-    xp1(2:3)=pt(2:3,n)
-    pt(2,n)=dy_inv*(xp1(2)-ymn)
-    pt(3,n)=dz_inv*(xp1(3)-zmn)
+    xp1(2:3)=part(2:3,n)
+    part(2,n)=dy_inv*(xp1(2)-ymn)
+    part(3,n)=dz_inv*(xp1(3)-zmn)
    end do
   else
-   call map3d_part_sind(pt,np,s_ind,2,3,ymn,zmn)
+   call map3d_part_sind(part,np,s_ind,2,3,ymn,zmn)
   endif
   !==========================
   do n=1,np
    ap(1:3)=0.0
-   xp1(1:3)=pt(1:3,n)
+   xp1(1:3)=part(1:3,n)
    xx=shx+xp1(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -2047,17 +2047,17 @@
      end do
     end do
    end do
-   pt(7,n)=ap(1)+ap(2)+ap(3)
+   part(7,n)=ap(1)+ap(2)+ap(3)
   end do
  end select
  !================================
  end subroutine set_ion_two_Ebfield
  !==================
- subroutine set_part3d_hcell_acc(ef,sp_loc,pt,np,s_ind,xmn,ymn,zmn)
+ subroutine set_part3d_hcell_acc(ef,sp_loc,part,np,s_ind,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,s_ind
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -2076,11 +2076,11 @@
  az1(0:2)=0.0;azh(0:2)=0.0
  axh(0:2)=0.0;ayh(0:2)=0.0
 
- call set_local_positions(sp_loc,pt,1,np,s_ind,3,xmn,ymn,zmn)
+ call set_local_positions(sp_loc,part,1,np,s_ind,3,xmn,ymn,zmn)
  !==========================
  do n=1,np
   ap(1:6)=0.0
-  xp1(1:3)=pt(1:3,n)
+  xp1(1:3)=part(1:3,n)
   xx=shx+xp1(1)
   i=int(xx+0.5)
   sx=xx-real(i,dp)
@@ -2185,16 +2185,16 @@
     end do
    end do
   end do
-  pt(1:6,n)=ap(1:6)
+  part(1:6,n)=ap(1:6)
  end do
  !================================
  end subroutine set_part3d_hcell_acc
  !=================================
- subroutine set_env_interp(av,sp_loc,pt,np,ndm,xmn,ymn,zmn)
+ subroutine set_env_interp(av,sp_loc,part,np,ndm,xmn,ymn,zmn)
 
  type(species),intent(in) :: sp_loc
  real(dp),intent(in) :: av(:,:,:,:)
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,ndm
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -2280,7 +2280,7 @@
    !=========================
    ap(1)=dxe*ap(1)   !p-assigned grad_x
    ap(2)=dye*ap(2)   !p-assigned grad_y
-   pt(1:3,n)=ap(1:3)
+   part(1:3,n)=ap(1:3)
   end do
   !========================
  case(3)
@@ -2384,17 +2384,17 @@
    ap(2)=dye*ap(2)
    ap(3)=dze*ap(3)
    !=================================
-   pt(1:4,n)=ap(1:4)
+   part(1:4,n)=ap(1:4)
   end do
  end select
  end subroutine set_env_interp
 
- subroutine set_env_acc(ef,av,sp_loc,pt,np,ndm,dt_loc,xmn,ymn,zmn)
+ subroutine set_env_acc(ef,av,sp_loc,part,np,ndm,dt_loc,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
  real(dp),intent(inout) :: av(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,ndm
  real(dp),intent(in) :: dt_loc,xmn,ymn,zmn
 
@@ -2512,11 +2512,11 @@
    gamp_new=gam+dth*(gam*a1+b1)/gam2
 
    ap(3:5)=ap(3:5)/gamp_new
-   pt(1,n)=ap(1)+0.5*ap(4)
-   pt(2,n)=ap(2)+0.5*ap(5)
-   pt(3,n)=ap(3)            !E+F_{env}
-   pt(1:3,n)=charge(2)*pt(1:3,n)
-   pt(5,n)=charge(1)/gamp_new
+   part(1,n)=ap(1)+0.5*ap(4)
+   part(2,n)=ap(2)+0.5*ap(5)
+   part(3,n)=ap(3)            !E+F_{env}
+   part(1:3,n)=charge(2)*part(1:3,n)
+   part(5,n)=charge(1)/gamp_new
   end do
   !========================
  case(3)
@@ -2641,11 +2641,11 @@
    gamp_new=gam+dth*(gam*a1+b1)/gam2
    ap(4:9)=ap(4:9)/gamp_new          !ap(4:6)=B/gamp
 
-   pt(1,n)=ap(1)+0.5*ap(7)
-   pt(2,n)=ap(2)+0.5*ap(8)
-   pt(3,n)=ap(3)+0.5*ap(9)        !E+F_{env}
-   pt(1:6,n)=charge(2)*pt(1:6,n)  !F_Lorentz*q
-   pt(7,n)=charge(1)*charge(2)/gamp_new     !weight*q/gamp
+   part(1,n)=ap(1)+0.5*ap(7)
+   part(2,n)=ap(2)+0.5*ap(8)
+   part(3,n)=ap(3)+0.5*ap(9)        !E+F_{env}
+   part(1:6,n)=charge(2)*part(1:6,n)  !F_Lorentz*q
+   part(7,n)=charge(1)*charge(2)/gamp_new     !weight*q/gamp
   end do
  end select
  end subroutine set_env_acc
@@ -2758,11 +2758,11 @@
  end subroutine set_env_density
  !=============================
 
- subroutine set_part2d_twofield_acc(ef1,ef2,sp_loc,pt,np,sind,xmn,ymn)
+ subroutine set_part2d_twofield_acc(ef1,ef2,sp_loc,part,np,sind,xmn,ymn)
 
  real(dp),intent(in) :: ef1(:,:,:,:),ef2(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np,sind
  real(dp),intent(in) :: xmn,ymn
  real(dp) :: zmn
@@ -2785,11 +2785,11 @@
  axh(0:2)=0.0;ayh(0:2)=0.0
  k2=1
  zmn=0.0
- call set_local_positions(sp_loc,pt,1,np,sind,2,xmn,ymn,zmn)
+ call set_local_positions(sp_loc,part,1,np,sind,2,xmn,ymn,zmn)
  do n=1,np
   ap(1:3)=0.0
   wgh=sp_loc%part(n)%cmp(5) ! the particle charge
-  xp1(1:2)=pt(1:2,n)    !the current particle positions
+  xp1(1:2)=part(1:2,n)    !the current particle positions
   xx=shx+xp1(1)
   i=int(xx+0.5)
   sx=xx-real(i,dp)
@@ -2846,17 +2846,17 @@
    end do
   end do
   wgh=charge(2)
-  pt(1:3,n)=wgh*ap(1:3)
+  part(1:3,n)=wgh*ap(1:3)
  end do
  !================================
  end subroutine set_part2d_twofield_acc
 
  subroutine set_part3d_two_bfield_acc(ef1,ef2,ef3,&
-  sp_loc,pt,n0,np,sind,xmn,ymn,zmn)
+  sp_loc,part,n0,np,sind,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef1(:,:,:,:),ef2(:,:,:,:),ef3(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: n0,np,sind
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -2875,10 +2875,10 @@
  ! ef1 plasma wakefield
  ! ef2 bunch self-fields
  !====================
- call set_local_positions(sp_loc,pt,n0,np,sind,3,xmn,ymn,zmn)
+ call set_local_positions(sp_loc,part,n0,np,sind,3,xmn,ymn,zmn)
  do n=n0,np
   ap(1:6)=0.0
-  xp1(1:3)=pt(1:3,n)    !the current particle positions
+  xp1(1:3)=part(1:3,n)    !the current particle positions
   xx=shx+xp1(1)
   i=int(xx+0.5)
   sx=xx-real(i,dp)
@@ -2989,16 +2989,16 @@
     end do
    end do
   end do
-  pt(1:6,n)=ap(1:6)
+  part(1:6,n)=ap(1:6)
  end do
  !================================
  end subroutine set_part3d_two_bfield_acc
 
- subroutine set_part3d_twofield_acc(ef1,ef2,sp_loc,pt,n0,np,sind,xmn,ymn,zmn)
+ subroutine set_part3d_twofield_acc(ef1,ef2,sp_loc,part,n0,np,sind,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef1(:,:,:,:),ef2(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: n0,np,sind
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -3017,10 +3017,10 @@
  ! ef1 plasma wakefield
  ! ef2 bunch self-fields
  !====================
- call set_local_positions(sp_loc,pt,n0,np,sind,3,xmn,ymn,zmn)
+ call set_local_positions(sp_loc,part,n0,np,sind,3,xmn,ymn,zmn)
  do n=n0,np
   ap(1:6)=0.0
-  xp1(1:3)=pt(1:3,n)    !the current particle positions
+  xp1(1:3)=part(1:3,n)    !the current particle positions
   xx=shx+xp1(1)
   i=int(xx+0.5)
   sx=xx-real(i,dp)
@@ -3125,17 +3125,17 @@
     end do
    end do
   end do
-  pt(1:6,n)=ap(1:6)
+  part(1:6,n)=ap(1:6)
  end do
  !================================
  end subroutine set_part3d_twofield_acc
  !==================================
 
- subroutine set_part3d_three_bfield_acc(ef1,ef2,ef3,ef4,sp_loc,pt,n0,np,sind,xmn,ymn,zmn)
+ subroutine set_part3d_three_bfield_acc(ef1,ef2,ef3,ef4,sp_loc,part,n0,np,sind,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef1(:,:,:,:),ef2(:,:,:,:),ef3(:,:,:,:),ef4(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: n0,np,sind
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -3156,21 +3156,21 @@
  ! ef4 poloidal external field
  !====================
  do n=n0,np
-  pt(1:3,n)=sp_loc%part(n)%cmp(1:3) ! the current part positions
-  pt(1,n)=dx_inv*(pt(1,n)-xmn)
+  part(1:3,n)=sp_loc%part(n)%cmp(1:3) ! the current part positions
+  part(1,n)=dx_inv*(part(1,n)-xmn)
  end do
  if(sind==0)then
   do n=n0,np
-   xp1(2:3)=pt(2:3,n)
-   pt(2,n)=dy_inv*(xp1(2)-ymn)
-   pt(3,n)=dz_inv*(xp1(3)-zmn)
+   xp1(2:3)=part(2:3,n)
+   part(2,n)=dy_inv*(xp1(2)-ymn)
+   part(3,n)=dz_inv*(xp1(3)-zmn)
   end do
  else
-  call map3d_part_sind(pt,np,sind,2,3,ymn,zmn)
+  call map3d_part_sind(part,np,sind,2,3,ymn,zmn)
  endif
  do n=n0,np
   ap(1:6)=0.0
-  xp1(1:3)=pt(1:3,n)    !the current particle positions
+  xp1(1:3)=part(1:3,n)    !the current particle positions
   xx=shx+xp1(1)
   i=int(xx+0.5)
   sx=xx-real(i,dp)
@@ -3281,18 +3281,18 @@
     end do
    end do
   end do
-  pt(1:6,n)=ap(1:6)
+  part(1:6,n)=ap(1:6)
  end do
  !================================
  end subroutine set_part3d_three_bfield_acc
 
 
  subroutine set_part3d_threefield_acc(&
-  ef1,ef2,ef3,sp_loc,pt,np1,np,xmn,ymn,zmn)
+  ef1,ef2,ef3,sp_loc,part,np1,np,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef1(:,:,:,:),ef2(:,:,:,:), ef3(:,:,:,:)
  type(species),intent(in) :: sp_loc
- real(dp),intent(inout) :: pt(:,:)
+ real(dp),intent(inout) :: part(:,:)
  integer,intent(in) :: np1,np
  real(dp),intent(in) :: xmn,ymn,zmn
 
@@ -3311,10 +3311,10 @@
  ! ef1 plasma wakefield
  ! ef2 bunch self-fields
  !====================
- call set_local_positions(sp_loc,pt,np1,np,0,3,xmn,ymn,zmn)
+ call set_local_positions(sp_loc,part,np1,np,0,3,xmn,ymn,zmn)
  do n=np1,np
   ap(1:6)=0.0
-  xp1(1:3)=pt(1:3,n)    !the current particle positions
+  xp1(1:3)=part(1:3,n)    !the current particle positions
   xx=shx+xp1(1)
   i=int(xx+0.5)
   sx=xx-real(i,dp)
@@ -3421,7 +3421,7 @@
     end do
    end do
   end do
-  pt(1:6,n)=ap(1:6)
+  part(1:6,n)=ap(1:6)
  end do
  !================================
  end subroutine set_part3d_threefield_acc

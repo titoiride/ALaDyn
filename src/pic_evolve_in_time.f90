@@ -237,26 +237,20 @@
   !=========================
   if(npt_inj >0)then
    if(np_old==0)then
-    deallocate(spec(ic)%part)
-    allocate(spec(ic)%part(np_new))
+    call p_realloc_sp(spec(ic),np_new)
     if(ic==1)then
-     deallocate(ebfp)
-     allocate(ebfp(ndv,np_new))
+     call p_realloc(ebfp,ndv,np_new)
     endif
    else
     if(size(spec(ic)%part) <np_new)then
      do n=1,np_old
       ebfp(1:ndv,n)=spec(ic)%part(n)%cmp(1:ndv)
      end do
-     deallocate(spec(ic)%part)
-     allocate(spec(ic)%part(np_new))
+     call p_realloc_sp(spec(ic),np_new)
      do n=1,np_old
       spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
      end do
-     if(size(ebfp,2) < np_new)then
-      deallocate(ebfp)
-      allocate(ebfp(ndv,np_new))
-     endif
+     call p_realloc(ebfp,ndv,np_new)
     endif
    endif
    q=np_old
@@ -528,25 +522,22 @@
     npmax=old_np+npt_inj
     loc_npart(imody,imodz,imodx,ic)=npmax
     if(allocated(ebfp))then
-     if(size(ebfp,2)< npmax)then
-      deallocate(ebfp)
-      allocate(ebfp(ndv,npmax))
-     endif
+      call p_realloc(ebfp,ndv,npmax)
+      do n=1,old_np
+      ebfp(1:ndv,n)=spec(ic)%part(n)%cmp(1:ndv)
+     end do
+      call p_realloc_sp(spec(ic),npmax)
+     do n=1,old_np
+      spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
+     end do
+     q=old_np
+    else
+     if(ic==1)allocate(ebfp(ndv,npt_inj))
+     allocate(spec(ic)%part(npt_inj))
+     q=npt_inj
     endif
-    do n=1,old_np
-     ebfp(1:ndv,n)=spec(ic)%part(n)%cmp(1:ndv)
-    end do
-     call p_realloc_sp(spec(ic),npmax)
-    do n=1,old_np
-     spec(ic)%part(n)%cmp(1:ndv)=ebfp(1:ndv,n)
-    end do
-    q=old_np
-   else
-    if(ic==1)allocate(ebfp(ndv,npt_inj))
-    allocate(spec(ic)%part(npt_inj))
-    q=npt_inj
+    call add_particles(q,i1,i2,ic)
    endif
-   call add_particles(q,i1,i2,ic)
   endif
  end do
  !=======================
@@ -2162,14 +2153,8 @@
  if(Part)then
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)then
-   if(size(ebfp0,2)<np)then
-    deallocate(ebfp0)
-    allocate(ebfp0(ndv,np))
-    if(allocated(ebfp1))then
-     deallocate(ebfp1)
-     allocate(ebfp1(ndv,np))
-    endif
-   endif
+   call p_realloc(ebfp0,ndv,np)
+   call p_realloc(ebfp1,ndv,np)
   endif
  endif
  !== particles number np does no change dunring rk-iterations

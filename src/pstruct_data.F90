@@ -116,5 +116,68 @@
  end select
  end subroutine p_alloc
  !--------------------------
+#if 0
+  subroutine p_alloc_sp(npt_max,np_s,ns,lp,mid,r_type,msize)
+
+  integer,intent(in) :: npt_max,np_s(:),ns,lp,mid,r_type
+  integer,intent(inout) :: msize
+  integer :: nsize,ic,npt,AllocStatus
+  integer :: i
+
+ select case(r_type)
+ case(1)             !Plasma particles
+  nsize=0
+  do ic=1,ns
+   npt=max(np_s(ic),1)
+   allocate(spec(ic)%part(npt),STAT=AllocStatus)
+   nsize=nsize+P_ncmp*npt
+   do i=1,npt
+    spec(ic)%part(i)%cmp(:)=0.0
+   end do
+  enddo
+  if(mid>0)then
+   allocate(ebfp%part(npt_max),STAT=AllocStatus)
+   nsize=nsize+P_ncmp*npt_max
+   do i=1,npt_max
+    ebfp%part(i)%cmp(:)=0.0
+   end do
+  endif
+  if(lp>2)then
+   allocate(ebfp0%part(npt),STAT=AllocStatus)
+   nsize=nsize+P_ncmp*npt
+   do i=1,npt
+    ebfp0%part(i)%cmp(1:P_ncmp)=0.0
+   end do
+   if(lp ==4)then
+    allocate(ebfp1%part(npt),STAT=AllocStatus)
+    nsize=nsize+P_ncmp*npt
+    do i=1,npt
+     ebfp1%part(i)%cmp(1:P_ncmp)=0.0
+    end do
+   endif
+  endif
+  msize=msize+nsize
+ case(2)             !bunch particles
+  nsize=0
+  do ic=1,ns
+   npt=np_s(ic)
+   if(npt>0)allocate(bunch(ic)%part(npt),STAT=AllocStatus)
+   nsize=nsize+P_ncmp*npt
+   do i=1,npt
+    bunch(ic)%part(i)%cmp(:)=0.0
+   end do
+  enddo
+  if(mid>0)then
+   allocate(ebfb%part(npt_max),STAT=AllocStatus)
+   nsize=nsize+P_ncmp*npt_max
+   do i=1,npt_max
+    ebfb%part(i)%cmp(1:P_ncmp)=0.0
+   end do
+  endif
+  msize=msize+nsize
+ end select
+ end subroutine p_alloc_sp
+#endif
+ !--------------------------
  end module pstruct_data
 
