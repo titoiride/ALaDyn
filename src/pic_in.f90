@@ -626,7 +626,7 @@
  !===================================
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
  !===========================
  last_particle_index=0
  !============
@@ -954,7 +954,7 @@
  !======================
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
  !===========================
  ip_el=0
  ip_pr=0
@@ -1314,7 +1314,7 @@
  !======================
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
  !===========================
  ip_el=0
  ip_pr=0
@@ -1660,7 +1660,7 @@
  !==============
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
  !===========================
  ip_el=0
  ip_pr=0
@@ -1978,7 +1978,7 @@
  !==============
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
  !===========================
  ip_el=0
  ip_ion=0
@@ -2288,7 +2288,7 @@
  loc_npart(imody,imodz,imodx,1:nsp)=nps_loc(1:nsp)
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
- call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+ call p_alloc(npmax,nps_loc,nsp,LPf_ord,1,nd2+1,1,mem_psize)
  !===========================
  call init_random_seed(mype)
  !============
@@ -2716,9 +2716,9 @@
  ! The local MPI task
  nps_loc(1:nsb)=loc_nbpart(imody,imodz,imodx,1:nsb)
  npmax=maxval(nps_loc(1:nsb))
-!++++++++++++++++++++++++++++++++++++++
- if(npmax >0)call p_alloc(npmax,nps_loc,nsb,LPf_ord,1,2,mem_psize)
-!=================================
+ !++++++++++++++++++++++++++++++++++++++
+ if(npmax >0)call p_alloc(npmax,nps_loc,nsb,LPf_ord,1,nd2+1,2,mem_psize)
+ !=================================
  nb_loc=nps_loc(1)
  p=imodx
  ip=imodz

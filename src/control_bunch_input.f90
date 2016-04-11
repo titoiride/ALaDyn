@@ -26,7 +26,7 @@
 
  implicit none
 
- integer :: n_bunches,bunch_type(5),nb_tot(5)
+ integer :: n_bunches,bunch_type(5),nb_tot(5),number_of_slices(4)
 
  integer :: np_1,np_2,np_3,np_4,np_5
  integer :: bunch_type_1,bunch_type_2,bunch_type_3,bunch_type_4,bunch_type_5

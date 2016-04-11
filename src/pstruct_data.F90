@@ -26,7 +26,7 @@
  implicit none
 
  type(species) :: spec(4),bunch(4)
- type(species) :: ebfp,ebfb,ebfp0,ebfp1
+ real(dp),allocatable :: ebfp(:,:),ebfb(:,:),ebfp0(:,:),ebfp1(:,:)
  real(dp),allocatable :: rho_0(:),xpt(:,:),ypt(:,:),zpt(:,:),wghpt(:,:)
  real(dp),allocatable :: loc_ypt(:,:),loc_zpt(:,:),loc_wghy(:,:),loc_wghz(:,:)
  real(dp),allocatable :: loc_xpt(:,:),loc_wghx(:,:)
@@ -37,8 +37,19 @@
 
  !--------------------------
 !DIR$ ATTRIBUTES INLINE :: p_realloc
- subroutine p_realloc(pdata,npt_new)
-  type(species),intent(inout)  :: pdata
+ subroutine p_realloc(pdata,ndv,npt_new)
+  real(dp),intent(inout),allocatable  :: pdata(:,:)
+  integer,intent(in) :: ndv,npt_new
+
+  if(size(pdata,2) < npt_new) then
+   deallocate(pdata)
+   allocate(pdata(ndv,npt_new))
+  endif
+ end subroutine p_realloc
+!===========================
+!DIR$ ATTRIBUTES INLINE :: p_realloc_sp
+ subroutine p_realloc_sp(pdata,npt_new)
+  type(species),intent(inout) :: pdata
   integer,intent(in) :: npt_new
   integer :: i,AllocStatus, DeallocStatus
 
@@ -53,9 +64,60 @@
   do i=1,npt_new
    pdata%part(i)%cmp(:)=0.0
   end do
- end subroutine p_realloc
+ end subroutine p_realloc_sp
 !===========================
- subroutine p_alloc(npt_max,np_s,ns,lp,mid,r_type,msize)
+ subroutine p_alloc(npt_max,np_s,ns,lp,mid,ebfp_size,r_type,msize)
+ integer,intent(in) :: npt_max,np_s(:),ns,lp,mid,ebfp_size,r_type
+ integer,intent(inout) :: msize
+ integer :: nsize,ic,npt,ndm_loc,AllocStatus
+ integer :: i
+
+ ndm_loc=ebfp_size-1
+ select case(r_type)
+ case(1)             !Plasma particles
+  nsize=0
+  do ic=1,ns
+   npt=max(np_s(ic),1)
+   allocate(spec(ic)%part(npt),STAT=AllocStatus)
+   nsize=nsize+P_ncmp*npt
+   do i=1,npt
+    spec(ic)%part(i)%cmp(:)=0.0
+   end do
+  enddo
+  if(mid>0)then
+   allocate(ebfp(ebfp_size,npt_max),STAT=AllocStatus)
+   nsize=nsize+ebfp_size*npt_max
+   ebfp=0.0
+  endif
+  if(lp>2)then
+   ic=1
+   npt=max(np_s(ic),1)
+   allocate(ebfp0(ndm_loc,npt),STAT=AllocStatus)
+   nsize=nsize+ndm_loc*npt
+   if(lp ==4)then
+    allocate(ebfp1(ndm_loc,npt),STAT=AllocStatus)
+    nsize=nsize+ndm_loc*npt
+   endif
+  endif
+  msize=msize+nsize
+ case(2)             !bunch particles
+  nsize=0
+  do ic=1,ns
+   npt=np_s(ic)
+   if(npt>0)allocate(bunch(ic)%part(npt),STAT=AllocStatus)
+   nsize=nsize+P_ncmp*npt
+  enddo
+  if(mid>0)then
+   allocate(ebfb(ebfp_size,npt_max),STAT=AllocStatus)
+   nsize=nsize+ebfp_size*npt_max
+   ebfb=0.0
+  endif
+  msize=msize+nsize
+ end select
+ end subroutine p_alloc
+ !--------------------------
+#if 0
+  subroutine p_alloc_sp(npt_max,np_s,ns,lp,mid,r_type,msize)
 
   integer,intent(in) :: npt_max,np_s(:),ns,lp,mid,r_type
   integer,intent(inout) :: msize
@@ -114,7 +176,8 @@
   endif
   msize=msize+nsize
  end select
- end subroutine p_alloc
+ end subroutine p_alloc_sp
+#endif
  !--------------------------
  end module pstruct_data
 

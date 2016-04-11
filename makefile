@@ -42,7 +42,7 @@ FILES       = ALaDyn.F90 \
               pic_out.f90 \
               pic_rutil.f90 \
               precision_def.F90 \
-              pstruct_data.f90 \
+              pstruct_data.F90 \
               pwfa_bunch_field_calculation.F90 \
               pwfa_output_addons.f90 \
               read_input.f90 \
@@ -276,9 +276,9 @@ $(OBJ_FOLDER)/ionize.mod: $(SRC_FOLDER)/ionize.f90 $(OBJ_FOLDER)/ionize.o
 	@true
 
 #common_param_and_fields start
-$(OBJ_FOLDER)/pstruct_data.o: $(SRC_FOLDER)/pstruct_data.f90 $(OBJ_FOLDER)/struct_def.mod $(OBJ_FOLDER)/precision_def.mod
+$(OBJ_FOLDER)/pstruct_data.o: $(SRC_FOLDER)/pstruct_data.F90 $(OBJ_FOLDER)/struct_def.mod $(OBJ_FOLDER)/precision_def.mod
 	$(FC) $(OPTFC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/pstruct_data.mod: $(SRC_FOLDER)/pstruct_data.f90 $(OBJ_FOLDER)/pstruct_data.o
+$(OBJ_FOLDER)/pstruct_data.mod: $(SRC_FOLDER)/pstruct_data.F90 $(OBJ_FOLDER)/pstruct_data.o
 	@true
 
 $(OBJ_FOLDER)/fstruct_data.o: $(SRC_FOLDER)/fstruct_data.f90 $(OBJ_FOLDER)/precision_def.mod

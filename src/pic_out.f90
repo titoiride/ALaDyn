@@ -1074,7 +1074,7 @@
     if(xx>=x0.and.xx <=x1)then
      ip=ip+1
      do q=1,nd2+1
-      ebfp%part(ip)%cmp(q)=spec(pid)%part(p)%cmp(q)
+      ebfp(q,ip)=spec(pid)%part(p)%cmp(q)
      end do
     endif
    endif
@@ -1087,7 +1087,7 @@
     if(xx>=x0.and.xx<=x1)then
      ip=ip+1
      do q=1,nd2+1
-      ebfp%part(ip)%cmp(q)=spec(pid)%part(p)%cmp(q)
+      ebfp(q,ip)=spec(pid)%part(p)%cmp(q)
      end do
     endif
    endif
@@ -1122,9 +1122,9 @@
  do p=1,ip
   do q=1,nd2
    ik=ik+1
-   pdata(ik)=real(ebfp%part(p)%cmp(q),sp)
+   pdata(ik)=real(ebfp(q,p),sp)
   end do
-  wgh=ebfp%part(p)%cmp(nd2+1)
+  wgh=ebfp(nd2+1,p)
   ik=ik+1
   pdata(ik)=ch(1)
   ik=ik+1
@@ -1213,7 +1213,7 @@
  do p=1,np,jmp
   ip=ip+1
   do q=1,nd2+1
-   ebfb%part(ip)%cmp(q)=bunch(pid)%part(p)%cmp(q)
+   ebfb(q,ip)=bunch(pid)%part(p)%cmp(q)
   end do
  end do
  ip_loc(mype+1)=ip
@@ -1229,9 +1229,9 @@
  do p=1,ip
   do q=1,nd2
    ik=ik+1
-   pdata(ik)=real(ebfb%part(p)%cmp(q),sp)
+   pdata(ik)=real(ebfb(q,p),sp)
   end do
-  wgh=ebfb%part(p)%cmp(nd2+1)
+  wgh=ebfb(nd2+1,p)
   ik=ik+1
   pdata(ik)=ch(1)
   ik=ik+1
@@ -1285,7 +1285,7 @@
  subroutine energy_spect(np,ekem,gfield)
  integer,intent(in) :: np
  real(dp),intent(in) :: ekem
- type(species),intent(in) :: gfield
+ real(dp),intent(in) :: gfield(:,:)
  integer :: p,ix,ne
  real(dp) :: xx,de,wgh
  ! activated only for np>0
@@ -1294,8 +1294,8 @@
  de=ekem/real(ne,dp)
  if(ekem < 1.e-06)return
  do p=1,np
-  xx=gfield%part(p)%cmp(1)/de           !0.5*mc^2*(gamma-1) energy in MeV
-  wgh=gfield%part(p)%cmp(2)          !weight >0 to be multiplied by np_per_cell
+  xx=gfield(1,p)/de           !0.5*mc^2*(gamma-1) energy in MeV
+  wgh=gfield(2,p)          !weight >0 to be multiplied by np_per_cell
   ix=nint(xx)
   ix=min(ix+1,ne)
   nde0(ix)=nde0(ix)+wgh
@@ -1305,7 +1305,7 @@
  subroutine select_energy_spect(np,ekem,xl,xr,gfield)
  integer,intent(in) :: np
  real(dp),intent(in) :: ekem,xl,xr
- type(species),intent(in) :: gfield
+ real(dp),intent(in) :: gfield(:,:)
  integer :: p,ix,ne
  real(dp) :: xx,de,wgh
  ! activated only for np>0
@@ -1314,14 +1314,14 @@
  de=ekem/real(ne,dp)
  if(ekem < 1.e-06)return
  do p=1,np
-  xx=gfield%part(p)%cmp(1)/de           !0.5*mc^2*(gamma-1) energy in MeV
-  wgh=gfield%part(p)%cmp(2)          !weight >0
+  xx=gfield(1,p)/de           !0.5*mc^2*(gamma-1) energy in MeV
+  wgh=gfield(2,p)          !weight >0
   ix=nint(xx)
   ix=min(ix+1,ne)
-  if(gfield%part(p)%cmp(4)< xl)then
+  if(gfield(4,p)< xl)then
    nde0(ix)=nde0(ix)+wgh
   endif
-  if(gfield%part(p)%cmp(4)> xr)then
+  if(gfield(4,p) > xr)then
    nde1(ix)=nde1(ix)+wgh
   endif
  end do
@@ -1332,7 +1332,7 @@
 
  subroutine energy_momenta(sp_loc,gfield,np,pmass,ek,ekmax)
  type(species),intent(in) :: sp_loc
- type(species),intent(inout) :: gfield
+ real(dp),intent(out) :: gfield(:,:)
  integer,intent(in) :: np
  real(dp),intent(in) :: pmass
  real(dp),intent(out) :: ek(:),ekmax
@@ -1347,11 +1347,11 @@
   do ip=1,np
    vp(1:2)=sp_loc%part(ip)%cmp(3:4)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2))
-   gfield%part(ip)%cmp(1)=pmass*(gam-1.)
+   gfield(1,ip)=pmass*(gam-1.)
    wgh=sp_loc%part(ip)%cmp(5)
-   gfield%part(ip)%cmp(2)=charge(1)
-   gfield%part(ip)%cmp(3)=vp(1)
-   gfield%part(ip)%cmp(4)=sp_loc%part(ip)%cmp(1)
+   gfield(2,ip)=charge(1)
+   gfield(3,ip)=vp(1)
+   gfield(4,ip)=sp_loc%part(ip)%cmp(1)
    gam1=gam-1.
    do ik=1,curr_ndim
     ek(ik)=ek(ik)+charge(1)*vp(ik)
@@ -1365,11 +1365,11 @@
    xp(1:3)=sp_loc%part(ip)%cmp(1:3)
    vp(1:3)=sp_loc%part(ip)%cmp(4:6)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2)+vp(3)*vp(3))
-   gfield%part(ip)%cmp(1)=pmass*(gam-1.)
+   gfield(1,ip)=pmass*(gam-1.)
    wgh=sp_loc%part(ip)%cmp(7)
-   gfield%part(ip)%cmp(2)=charge(1)
-   gfield%part(ip)%cmp(3)=vp(1)
-   gfield%part(ip)%cmp(4)=sp_loc%part(ip)%cmp(1)
+   gfield(2,ip)=charge(1)
+   gfield(3,ip)=vp(1)
+   gfield(4,ip)=sp_loc%part(ip)%cmp(1)
    gam1=gam-1.
    do ik=1,curr_ndim
     ek(ik)=ek(ik)+vp(ik)       !momenta
