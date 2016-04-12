@@ -74,7 +74,7 @@
  case(28)              !Ni
   W_number =58.7
  case(29)              !Cu
-  W_number =63.54      
+  W_number =63.54
  end select
  end subroutine set_atomic_weight
  !================================
@@ -783,7 +783,7 @@
     Wi(i,j,ic)=w_adk
    end do
   end do
- case(2)                  !Cycle averaged ADK 
+ case(2)                  !Cycle averaged ADK
   do k=z0+1,zm
    j=k-z0
    ns=2.*nstar(k,ic)-1.
@@ -818,7 +818,7 @@
      Wi(i,j,ic)=w_bsi+w_adk
     endif
    end do
-   end do
+  end do
  case(4)            ! Epoch version Min(adk-BSI)
   do k=z0+1,zm
    j=k-z0

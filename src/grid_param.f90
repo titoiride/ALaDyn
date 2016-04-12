@@ -24,17 +24,17 @@
  use precision_def
  use struct_def
  use grid_and_particles
- 
+
  implicit none
 
-!=======================
+ !=======================
  type(grid),allocatable :: loc_rgrid(:),loc_ygrid(:),loc_zgrid(:),loc_xgrid(:)
  type(sgrid) :: str_xgrid,str_ygrid,str_zgrid
-!fft grid
+ !fft grid
  real(dp),allocatable :: akx(:),aky(:),akz(:),sty(:)
  real(dp),allocatable :: ak2x(:),ak2y(:),ak2z(:),kern(:),kern2(:,:)
  real(dp),allocatable :: skx(:),sky(:),skz(:)
-!==================
+ !==================
  real(dp),allocatable :: loc_yg(:,:,:),loc_zg(:,:,:),loc_xg(:,:,:)
  real(dp),allocatable :: x(:),xw(:),y(:),z(:),dx1(:),dy1(:),dz1(:)
  real(dp),allocatable :: xh(:),yh(:),zh(:),dx1h(:),dy1h(:),dz1h(:)

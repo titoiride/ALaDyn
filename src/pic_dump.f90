@@ -58,7 +58,7 @@
   nbf=size(ebf_bunch,4)
  endif
  if(allocated(pot))nd_pot=size(pot,4)
-!=========================
+ !=========================
  ndata=0
  rdata=0.0
  rdata(1)=tloc

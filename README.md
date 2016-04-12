@@ -7,6 +7,7 @@ This newer version, in part rewritten from scratch, is released as an alpha vers
 latest release:  [![DOI](https://zenodo.org/badge/4711/ALaDyn/ALaDyn.svg)](https://zenodo.org/badge/latestdoi/4711/ALaDyn/ALaDyn)
 
 OLD releases:  
+v1.0.0-alpha2: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.48933.svg)](http://dx.doi.org/10.5281/zenodo.48933)   
 v1.0.0-alpha: [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.47467.svg)](http://dx.doi.org/10.5281/zenodo.47467)
 
 Copyright on the code is by P. Londrillo, A. Sgattoni, S. Sinigardi, A. Marocchino.   

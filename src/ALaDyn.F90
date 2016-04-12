@@ -346,7 +346,7 @@
    ic=0
    call prl_bden_energy_interp(ic)
    call bden_ene_mom_out(tnow,1,jump)
-!============= bunch density
+   !============= bunch density
    do i=1,nsp
     call prl_den_energy_interp(i)
     ic=1
@@ -651,7 +651,7 @@
  !====== Fields and current arrays allocated on [1: N_loc+5]
  !==========================
  call v_alloc(nxp,nyp,nzp,nfield,nj_dim,&
-          ndim,ns_ioniz,ibeam,LPf_ord,Envelope,mem_size)
+  ndim,ns_ioniz,ibeam,LPf_ord,Envelope,mem_size)
  if (Beam) then
   if(Pbeam)then
    call pbv_alloc(nx+2,nyp,nzp,nbfield,ndim,mem_size)
@@ -1162,15 +1162,15 @@
 
  !---------------------------
  subroutine submem(rmem)
-  real(dp),intent(out) :: rmem
-  integer(kind=8) :: addr
-  real(dp), allocatable :: am(:)
+ real(dp),intent(out) :: rmem
+ integer(kind=8) :: addr
+ real(dp), allocatable :: am(:)
 
-   allocate( am(100) )
-   !call memaddr( am, addr )
-   deallocate(am)
-   rmem=addr
-end subroutine submem
+ allocate( am(100) )
+ !call memaddr( am, addr )
+ deallocate(am)
+ rmem=addr
+ end subroutine submem
  !---------------------------
 
  subroutine max_pmemory_check()
@@ -1221,11 +1221,11 @@ end subroutine submem
  call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
  mem_psize_max=kind(electron_charge_norm)*1.e-06*max_mem(1)
 
- !call submem(adr) 
+ !call submem(adr)
  !mem_loc(1)=adr
  !call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
  !mem_max_addr=1.e-06*max_mem(1)
- 
+
  end subroutine max_pmemory_check
 
 
