@@ -303,7 +303,6 @@
  loc_nptx=0
  loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5))*np_per_xc(1:nsp)
 
-
  nptx_max=maxval(loc_nptx(1:nsp))
  allocate(xpt(nptx_max,nsp))
  allocate(wghpt(nptx_max,nsp))
@@ -312,15 +311,14 @@
  ! mulltispecies y-z distribution in a uniform target
  yp_min=ymin_t
  yp_max=ymax_t
- !------------------------
+ zp_min=zmin_t
+ zp_max=zmax_t
  !----------------------
  npty=maxval(np_per_yc(1:nsp))
  npty=nyh*npty
  nptz=1
  if(ndim==3)then
   np_per_zcell(1:nsp)=np_per_zc(1:nsp)
-  zp_min=zmin_t    !-Lz
-  zp_max=zmax_t    !+Lz
   nptz=maxval(np_per_zc(1:nsp))
   nptz=nyh*nptz
  endif

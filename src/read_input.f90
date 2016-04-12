@@ -458,9 +458,9 @@
     yx_rat = zx_rat
     write(6,'(A)') "force yx_rat equal to zx_rat"
   else if ( zx_rat < 0. .and. yx_rat < 0. ) then
-  	yx_rat = 1.
-  	zx_rat = 1.
-  	write(6,'(A)') "force yx_rat=1 and zx_rat=1"
+    yx_rat = 1.
+    zx_rat = 1.
+    write(6,'(A)') "force yx_rat=1 and zx_rat=1"
   endif
  end subroutine nml_consistency_check_grid
 
