@@ -638,14 +638,14 @@
  case(0)  ! staggered k-grid
   akx=0.0
   do i=1,n1/2
-   akx(i)=wkx*(real(i)-0.5,dp)
+   akx(i)=wkx*(real(i,dp)-0.5)
    skx(i)=2.*sin(0.5*dx*akx(i))/dx
   end do
   aky=0.0
   ak2y=0.0
   if(n2>1)then
    do i=1,n2/2
-    aky(i)=wky*(real(i)-0.5,dp)
+    aky(i)=wky*(real(i,dp)-0.5)
     aky(n2+1-i)=-aky(i)
    end do
    do i=1,n2
@@ -657,7 +657,7 @@
   ak2z=0.0
   if(n3 >1)then
    do i=1,n3/2
-    akz(i)=wkz*(real(i)-0.5,dp)
+    akz(i)=wkz*(real(i,dp)-0.5)
     akz(n3+1-i)=-akz(i)
    end do
    do i=1,n3
