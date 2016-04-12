@@ -23,7 +23,7 @@ FILES       = ALaDyn.F90 \
               code_util.f90 \
               control_bunch_input.f90 \
               cpp_folder_tree.cpp \
-              find_last_addr.c \
+              find_last_addr.cpp \
               der_lib.f90 \
               fft_lib.f90 \
               fstruct_data.f90 \
@@ -233,9 +233,9 @@ $(OBJ_FOLDER)/cpp_folder_tree.o: $(SRC_FOLDER)/cpp_folder_tree.cpp
 $(OBJ_FOLDER)/cpp_folder_tree.mod: $(SRC_FOLDER)/cpp_folder_tree.cpp $(OBJ_FOLDER)/cpp_folder_tree.o
 	@true
 
-$(OBJ_FOLDER)/find_last_addr.o: $(SRC_FOLDER)/find_last_addr.c
+$(OBJ_FOLDER)/find_last_addr.o: $(SRC_FOLDER)/find_last_addr.cpp
 	$(CC) $(OPTCC) -I$(BOOST_INC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/find_last_addr.mod: $(SRC_FOLDER)/find_last_addr.c $(OBJ_FOLDER)/find_last_addr.o
+$(OBJ_FOLDER)/find_last_addr.mod: $(SRC_FOLDER)/find_last_addr.cpp $(OBJ_FOLDER)/find_last_addr.o
 	@true
 
 $(OBJ_FOLDER)/system_utilities.o: $(SRC_FOLDER)/system_utilities.f90 $(OBJ_FOLDER)/mpi_var.mod
