@@ -602,7 +602,7 @@
  integer :: ix,iy,iz,iq
  integer :: lenw,kk,nx1,ny1,nz1
  integer :: i1,j1,k1,nxp,nyp,nzp,i_end
- integer(dp) :: disp,disp_col
+ integer(offset_kind) :: disp,disp_col
  integer :: num_header_int,gr_dim(3),header(3)
  real(dp),allocatable :: ascii_grid(:)
  integer :: gridsize_x,gridsize_y,gridsize_z
@@ -1050,7 +1050,7 @@
  integer(dp) :: nptot_global_reduced
  integer :: ik,p,q,np,ip,ip_max,nptot
  integer :: lenp,ip_loc(npe),ndv,i_end
- integer(dp) :: disp,disp_col
+ integer(offset_kind) :: disp,disp_col
  real(dp) :: xx,yy,zz
  real(dp) :: wgh
  real(sp) :: ch(2)
@@ -1199,7 +1199,7 @@
  integer :: ik,p,q,np,ip,ip_max,nptot
  integer :: lenp,ip_loc(npe),ndv,i_end
  real(dp) :: wgh
- integer(dp) :: disp
+ integer(offset_kind) :: disp
  real(sp) :: ch(2)
  character(4) :: folderName
  integer,parameter :: file_version = 4
