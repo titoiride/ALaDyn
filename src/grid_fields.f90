@@ -529,10 +529,8 @@
  integer :: i,j,k,ii,jj,kk
  real(dp) :: f1,f2,fd1,fd2,xx,yy,zz
 
- ! Enter
- ! in ef1(1) enters pot_b(i,j,k) => (Ex,Ey, Ez)
- ! in ef1(3) enters Jxb(i,j,k) = ef1(4)=Jxb[i+1/2,j,k]
- ! => ef1(2) pot_b(i+1/2,j,k)==> By, Bz
+ ! Enter parameters B0= B size  L_s geometrical sizes, x0 initial point
+ ! in ef1(3) the (Bx,By,Bz) components of two solenoinds
 
  !------------------------------------
  ! First element

@@ -788,7 +788,7 @@
    j=k-z0
    ns=2.*nstar(k,ic)-1.
    do i=1,N_ge
-    Ei=dge*float(i)         !The gridded field intensity
+    Ei=dge*real(i,dp)         !The field intensity on grid
     fact2=(2.*Vfact(k,ic)/Ei)
     fact1=(fact2)**ns
     fact1=fact1*sqrt(3.*Ei/(pig*Vfact(k,ic)))

@@ -31,8 +31,7 @@
  real(dp),allocatable :: rho_0(:),xpt(:,:),ypt(:,:),zpt(:,:),wghpt(:,:)
  real(dp),allocatable :: loc_ypt(:,:),loc_zpt(:,:),loc_wghy(:,:),loc_wghz(:,:)
  real(dp),allocatable :: loc_xpt(:,:),loc_wghx(:,:)
-
- !--------------------------
+!=====================
 
  contains
  !--------------------------
@@ -54,7 +53,7 @@
  end subroutine p_realloc
 !========================
  subroutine v_realloc(vdata,npt_new,ndv)
-  real,allocatable,intent(inout)  :: vdata(:,:)
+  real(dp),allocatable,intent(inout) :: vdata(:,:)
   integer,intent(in) :: npt_new,ndv
   integer :: i,AllocStatus, DeallocStatus
 

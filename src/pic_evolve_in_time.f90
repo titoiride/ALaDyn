@@ -34,10 +34,10 @@
  ! MOVING WINDOW SECTION
  !=============================
  contains
- subroutine sort_particles(sp_loc,part,&
+ subroutine sort_particles(sp_loc,pt,&
   np,i2,j2,k2,xm,ym,zm)
  type(species),intent(inout) :: sp_loc
- real(dp),intent(inout) :: part(:,:)
+ real(dp),intent(inout) :: pt(:,:)
  integer,intent(in) :: np,i2,j2,k2
  real(dp),intent(in) :: xm,ym,zm
  integer :: j,k,n,n1,n2,n3
@@ -54,10 +54,10 @@
   nk=n12
   allocate(p_count(nk))
   p_count=0
+  pt(1:np,1:ndv)=sp_loc%part(1:np,1:ndv)
   do n=1,np
-   part(1:ndv,n)=sp_loc%part(n,1:ndv)
-   ip=1+int(dx_inv*(part(1,n)-xm))
-   jp=1+int(dy_inv*(part(2,n)-ym))
+   ip=1+int(dx_inv*(pt(n,1)-xm))
+   jp=1+int(dy_inv*(pt(n,2)-ym))
    kk=1+ip+(jp-1)*n1
    p_count(kk)=p_count(kk)+1
   end do
@@ -72,13 +72,13 @@
    endif
   end do
   do n=1,np
-   ip=1+int(dx_inv*(part(1,n)-xm))
-   jp=1+int(dy_inv*(part(2,n)-ym))
+   ip=1+int(dx_inv*(pt(n,1)-xm))
+   jp=1+int(dy_inv*(pt(n,2)-ym))
    kk=1+ip+(jp-1)*n1
    j=p_count(kk)
    if(j >0)then
     p_count(kk)=p_count(kk)+1
-    sp_loc%part(j,1:ndv)=part(1:ndv,n)
+    sp_loc%part(j,1:ndv)=pt(n,1:ndv)
    endif
   end do
  case(3)
@@ -86,11 +86,11 @@
   nk=n3*n12
   allocate(p_count(nk))
   p_count=0
+  pt(1:np,1:ndv)=sp_loc%part(1:np,1:ndv)
   do n=1,np
-   part(1:ndv,n)=sp_loc%part(n,1:ndv)
-   ip=1+int(dx_inv*(part(1,n)-xm))
-   jp=1+int(dy_inv*(part(2,n)-ym))
-   kp=1+int(dz_inv*(part(3,n)-zm))
+   ip=1+int(dx_inv*(pt(n,1)-xm))
+   jp=1+int(dy_inv*(pt(n,2)-ym))
+   kp=1+int(dz_inv*(pt(n,3)-zm))
    kk=1+ip+(jp-1)*n1+(kp-1)*n12
    p_count(kk)=p_count(kk)+1
   end do
@@ -104,14 +104,14 @@
    endif
   end do
   do n=1,np
-   ip=1+int(dx_inv*(part(1,n)-xm))
-   jp=1+int(dy_inv*(part(2,n)-ym))
-   kp=1+int(dz_inv*(part(3,n)-zm))
+   ip=1+int(dx_inv*(pt(n,1)-xm))
+   jp=1+int(dy_inv*(pt(n,2)-ym))
+   kp=1+int(dz_inv*(pt(n,3)-zm))
    kk=1+ip+(jp-1)*n1+(kp-1)*n1*n2
    j=p_count(kk)
    if(j >0)then
     p_count(kk)=p_count(kk)+1
-    sp_loc%part(j,1:ndv)=part(1:ndv,n)
+    sp_loc%part(j,1:ndv)=pt(n,1:ndv)
    endif
   end do
  end select
@@ -601,7 +601,7 @@
  real(dp),intent(in) :: dt_loc
  integer,intent(in) :: witr,wt
  integer :: i1,n1p,j1,nyp,k1,nzp
- integer :: ix,shx,wi2,ndv
+ integer :: ix,shx,wi2
  real(dp),save :: xlapse
  integer,save :: wi1
  logical,parameter :: mw=.true.
@@ -1939,13 +1939,6 @@
  jc(:,:,:,:)=0.0
  !curr_clean
  if(Part)then
-  !if(mod(iter_loc,1000)==0)then
-  ! do ic=1,nsp_run
-  !  np=loc_npart(imody,imodz,imodx,ic)
-  !  if(np>0)call sort_particles(spec(ic),ebfp,&
-  !                              np,i2,j2,k2,xm,ym,zm)
-  ! end do
-  !endif
   call pfields_prepare(ebf,i1,i2,j1,j2,k1,k2,nfield,2,2)
   do ic=1,nsp_run
    np=loc_npart(imody,imodz,imodx,ic)
@@ -1963,14 +1956,13 @@
     !================= only old ion charge saved
    endif
   enddo
-  !==========================================
   if(Ionization)then
    id_ch=nd2+1
    do ic=2,nsp_ionz
     np=loc_npart(imody,imodz,imodx,ic)
     if(np>0)then
      call set_ion_Efield(ebf,spec(ic),ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
-     if(mod(iter_loc,100)==0)then     !refresh ionization tables
+     if(mod(iter_loc,100)==0)then     !refresh ionization tables, if needed
      loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
       loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
       ef2_ion(1)=loc_ef2_ion(1)
@@ -2604,7 +2596,7 @@
     if(ibmod==1)call set_ion_two_Ebfield(ebf,ebf_bunch,ebf1_bunch,spec(ic),&
      ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(mod(iter_loc,100)==0)then     !refresh ionization tables
-     loc_ef2_ion(1)=maxval(ebfp(id_ch,1:np))
+     loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.
      if(prl)call allreduce_dpreal(MAXV,loc_ef2_ion,ef2_ion,1)
      if(ef2_ion(1) > eb_max)then

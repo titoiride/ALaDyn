@@ -334,14 +334,14 @@
 
    xx=shx+xp(1)
    ix=int(xx+0.5)
-   sx=xx-float(ix)
+   sx=xx-real(ix,dp)
    sx2=sx*sx
    ax1(2)=0.75-sx2
    ax1(3)=0.5*(0.25+sx2+sx)
    ax1(1)=1.-ax1(2)-ax1(3)
 
    ixh=int(xx)
-   sx=xx-0.5-float(ixh)
+   sx=xx-0.5-real(ixh,dp)
    sx2=sx*sx
    axh(2)=0.75-sx2
    axh(3)=0.5*(0.25+sx2+sx)
@@ -350,14 +350,14 @@
    xx=shy+xp(2)
 
    iy=int(xx+0.5)
-   sx=xx-float(iy)
+   sx=xx-real(iy,dp)
    sx2=sx*sx
    ay1(2)=0.75-sx2
    ay1(3)=0.5*(0.25+sx2+sx)
    ay1(1)=1.-ay1(3)-ay1(2)
 
    iyh=int(xx)
-   sx=xx-0.5-float(iyh)
+   sx=xx-0.5-real(iyh,dp)
    sx2=sx*sx
    ayh(2)=0.75-sx2
    ayh(3)=0.5*(0.25+sx2+sx)
@@ -378,7 +378,7 @@
 
    xx=shx+xp(1)
    ix=int(xx+0.5)
-   sx=xx-float(ix)
+   sx=xx-real(ix,dp)
    sx2=sx*sx
    ax1(2)=0.75-sx2
    ax1(3)=0.5*(0.25+sx2+sx)
@@ -390,7 +390,7 @@
    xx=shy+xp(2)
 
    iy=int(xx+0.5)
-   sx=xx-float(iy)
+   sx=xx-real(iy,dp)
    sx2=sx*sx
    ay1(2)=0.75-sx2
    ay1(3)=0.5*(0.25+sx2+sx)

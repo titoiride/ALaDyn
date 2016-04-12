@@ -1294,8 +1294,8 @@
  de=ekem/real(ne,dp)
  if(ekem < 1.e-06)return
  do p=1,np
-  xx=gfield(1,p)/de           !0.5*mc^2*(gamma-1) energy in MeV
-  wgh=gfield(2,p)          !weight >0 to be multiplied by np_per_cell
+  xx=gfield(p,1)/de           !0.5*mc^2*(gamma-1) energy in MeV
+  wgh=gfield(p,2)          !weight >0 to be multiplied by np_per_cell
   ix=nint(xx)
   ix=min(ix+1,ne)
   nde0(ix)=nde0(ix)+wgh
@@ -1332,7 +1332,7 @@
 
  subroutine energy_momenta(sp_loc,gfield,np,pmass,ek,ekmax)
  type(species),intent(in) :: sp_loc
- real(dp),intent(out) :: gfield(:,:)
+ real(dp),intent(inout) :: gfield(:,:)
  integer,intent(in) :: np
  real(dp),intent(in) :: pmass
  real(dp),intent(out) :: ek(:),ekmax

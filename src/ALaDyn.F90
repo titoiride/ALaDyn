@@ -224,7 +224,7 @@
    endif
    do i=1,nvout
     if(L_force_singlefile_output) then
-     call fields_out(ebf,tnow,i,i,jump)    ! second index to label field
+     call fields_out(ebf,tnow,i,i,jump)      !i to label field name
     else
      call fields_out_new(ebf,tnow,i,i,jump)
     endif
@@ -233,7 +233,7 @@
     if(L_force_singlefile_output) then
      call fields_out(jc,tnow,1,0,jump)       !0 for Jx current
     else
-     call fields_out_new(jc,tnow,1,0,jump) ! 0  to label Jx field
+     call fields_out_new(jc,tnow,1,0,jump)
     endif
    endif
   endif
@@ -1167,7 +1167,7 @@
   real(dp), allocatable :: am(:)
 
    allocate( am(100) )
-   call memaddr( am, addr )
+   !call memaddr( am, addr )
    deallocate(am)
    rmem=addr
 end subroutine submem
@@ -1184,37 +1184,37 @@ end subroutine submem
   if(allocated(spec(ic)%part))then
    ndv1=size(spec(ic)%part,1)
    ndv2=size(spec(ic)%part,2)
-   mem_loc(1)=mem_loc(1)+float(ndv1*ndv2)
+   mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
   endif
  end do
  if(allocated(ebfp))then
   ndv1=size(ebfp,1)
   ndv2=size(ebfp,2)
-  mem_loc(1)=mem_loc(1)+float(ndv1*ndv2)
+  mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
  endif
  if(Beam)then
   do ic=1,nsb
    if(allocated(bunch(ic)%part))then
     ndv1=size(spec(ic)%part,1)
     ndv2=size(spec(ic)%part,2)
-    mem_loc(1)=mem_loc(1)+float(ndv1*ndv2)
+    mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
    endif
   end do
   if(allocated(ebfb))then
    ndv1=size(ebfb,1)
    ndv2=size(ebfb,2)
-   mem_loc(1)=mem_loc(1)+float(ndv1*ndv2)
+   mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
   endif
  endif
  if(allocated(ebfp0))then
   ndv1=size(ebfp0,1)
   ndv2=size(ebfp0,2)
-  mem_loc(1)=mem_loc(1)+float(ndv1*ndv2)
+  mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
  endif
  if(allocated(ebfp1))then
   ndv1=size(ebfp1,1)
   ndv2=size(ebfp1,2)
-  mem_loc(1)=mem_loc(1)+float(ndv1*ndv2)
+  mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
  endif
  call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
  mem_psize_max=kind(electron_charge_norm)*1.e-06*max_mem(1)
