@@ -118,7 +118,7 @@
  dt_loc=dt
  t_ind=0
  do while (tnow < tmax)
-  call ENV_run(tnow,dt_loc,iter,LPf_ord)
+  call ENV_run(tnow,dt_loc,iter)
 
   call timing
   call data_out(jump)
@@ -176,7 +176,7 @@
  t_ind=0
 
  do while (tnow < tmax)
-  call PBUNCH_run(tnow,dt_loc,iter)
+  call PBUNCH_run(tnow,dt_loc)
 
   call timing
   call pbdata_out(jump)
@@ -1175,8 +1175,10 @@ end subroutine submem
 
  subroutine max_pmemory_check()
 
- integer :: ndv1,ndv2,np
- real(dp) :: mem_loc(1),max_mem(1),adr
+ integer :: ndv1,ndv2
+ !integer :: np
+ real(dp) :: mem_loc(1),max_mem(1)
+ !real(dp) :: adr
 
  mem_loc=0.
  max_mem=0.

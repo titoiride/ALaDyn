@@ -39,7 +39,7 @@
  subroutine p_realloc(pdata,npt_new,ndv)
   type(species),intent(inout)  :: pdata
   integer,intent(in) :: npt_new,ndv
-  integer :: i,AllocStatus, DeallocStatus
+  integer :: AllocStatus, DeallocStatus
 
   if(allocated(pdata%part))then
    if(size(pdata%part,1) < npt_new)then
@@ -55,7 +55,7 @@
  subroutine v_realloc(vdata,npt_new,ndv)
   real(dp),allocatable,intent(inout) :: vdata(:,:)
   integer,intent(in) :: npt_new,ndv
-  integer :: i,AllocStatus, DeallocStatus
+  integer :: AllocStatus, DeallocStatus
 
   if(allocated(vdata))then
    if(size(vdata,1) < npt_new)then
@@ -73,8 +73,8 @@
   integer,intent(in) :: npt_max,ncmp,np_s(:),ns,lp,mid,r_type
   integer,intent(inout) :: msize
   integer :: nsize,ic,npt,AllocStatus
-  integer :: i
 
+ npt=1
  select case(r_type)
  case(1)             !Plasma particles
   nsize=0

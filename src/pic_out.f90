@@ -1565,7 +1565,7 @@
  real(dp),intent(in) :: tnow
 
  integer :: np,ik,ix,iy,iz,ic,i1,i2,i2b,ndv
- integer :: j1,k1,nyp,nzp,ii,jj,kk,j,k,l,i0_lp
+ integer :: j1,k1,nyp,nzp,ii,jj,kk,j,k,l
  real(dp) :: ek_max(1),ekt(7),ekm(7),ekmax(1)
  real(dp) :: pmass,dvol,dgvol,sgz,sg,ef2
  real(dp) :: np_norm,p_energy_norm
@@ -1615,7 +1615,7 @@
    ekt(1)=real(np,dp)
    call allreduce_dpreal(SUMV,ekt,ekm,1)
    np_norm=1.
-   if(ekm(1)>0.0)np_norm=1.d0/ekm(1)
+   if(ekm(1)>0.0)np_norm=1.0/ekm(1)
    pmass=electron_mass*mass(ic)    !In MeV
    ekt(1)=0.0
    ekm(1)=0.0

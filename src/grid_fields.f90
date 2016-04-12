@@ -938,9 +938,8 @@
 
  integer,intent(in) :: ic1,ic2,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: dhy,dhz
- integer :: i,j,k,jj,kk,ic,jj0,j01,j02,kk0,k01,k02
+ integer :: i,j,k,ic,j01,j02,k01,k02
  real(dp) :: dy2_inv,dz2_inv
- real(dp) :: sdy,sdz,sdym,sdzm
  !==========================
  dy2_inv=dhy*dhy
  dz2_inv=dhz*dhz
@@ -1352,14 +1351,14 @@
  endif
  end subroutine env_grad
  !==============================
- subroutine env0_field(curr,st_ind,cmp,ib,i1,n1p,j1,n2p,k1,n3p,&
+ subroutine env0_field(curr,ib,i1,n1p,j1,n2p,k1,n3p,&
   om0,dhx,dhy,dhz,dt_loc)
  real(dp),intent(inout) :: curr(:,:,:,:)
- integer,intent(in) :: st_ind,cmp,ib,i1,n1p,j1,n2p,k1,n3p
+ integer,intent(in) :: ib,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: om0,dhx,dhy,dhz,dt_loc
  integer :: i,j,k,ii,ic,n1
  real(dp) :: dx1_inv,om2,aph1
- real(dp) :: adv,a,c,b1,c1,an,bn,der2_norm,kern
+ real(dp) :: adv,a,c,b1,c1,an,bn,der2_norm
  !==========================
  ! EXPLICIT INTEGRATION of ENVELOPE EVOLUTION OPERATOR
  !============================
@@ -1512,13 +1511,13 @@
  end subroutine env0_field
 
  subroutine env0_rk_field(&
-  curr,st_ind,cmp,d2_ord,ib,i1,n1p,j1,n2p,k1,n3p,om0,dhx,dhy,dhz)
+  curr,d2_ord,ib,i1,n1p,j1,n2p,k1,n3p,om0,dhx,dhy,dhz)
  real(dp),intent(inout) :: curr(:,:,:,:)
- integer,intent(in) :: st_ind,cmp,d2_ord,ib,i1,n1p,j1,n2p,k1,n3p
+ integer,intent(in) :: d2_ord,ib,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: om0,dhx,dhy,dhz
  integer :: n1,i,j,k,ii,ic
  real(dp) :: dx1_inv,om2,aph1,aph2
- real(dp) :: alp2,b2,a,adv,c,c1,b1,an,bn,kern
+ real(dp) :: alp2,b2,a,adv,c,c1,b1,an,bn
  real(dp),parameter :: alp=0.25, a1=0.75
  !==========================
 
@@ -3018,6 +3017,9 @@
  integer :: i,j,k,ii
  real(dp) :: aphx,aphy,aphz
 
+ aphx=1
+ aphy=1
+ aphz=1
 
  ! Enter ebf(1:3)=[Ex,Ey,Ez]
  ! DATA: ef[1:n1p][1:n2p+1][1:n3p+1] bds are on the right

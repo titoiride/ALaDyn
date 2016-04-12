@@ -1120,7 +1120,7 @@
  integer,intent(in) :: np,ndf,s_ind
  real(dp),intent(in) :: xmn,ymn
 
- real(dp) :: xx,sx,sx2,dvol,dvol1
+ real(dp) :: sx,dvol,dvol1
  real(dp) :: axh(3),ayh(3),xp1(3)
  real(dp) :: ax1(3),ay1(3),ap(6)
  integer :: i,ih,j,jh,i1,j1,i2,j2,n
@@ -4185,7 +4185,7 @@
  real(dp) :: ax,sx,sx2,wgh,gam_inv
  real(dp) :: axh0(2),axh1(2),ayh0(2),ayh1(2)
  real(dp) :: ax0(3),ay0(3),xp1(3),xp0(3)
- real(dp) :: ax1(3),ay1(3),vp(3),dvolh,dvol(3)
+ real(dp) :: ax1(3),ay1(3),vp(3),dvol(3)
  integer :: i,j,i0,j0,i1,j1,i2,j2,n
  integer :: ih0,jh0,ih,jh
  logical :: set_den

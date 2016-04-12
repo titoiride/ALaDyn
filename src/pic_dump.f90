@@ -34,7 +34,7 @@
  integer,intent(in) :: it_loc
  real(dp),intent(in) :: tloc
  character(13) :: fname='             '
- integer :: np,i,ic
+ integer :: np,ic
  integer :: nxf,nyf,nzf,nf
  integer :: i2b,j2b,k2b,nbf,nd_pot
  real(dp) :: rdata(10)
@@ -140,7 +140,7 @@
  real(dp),intent(out) :: tloc
  character(13) :: fname='             '
  integer :: np,nps_loc(4),np_max,ic
- integer :: ix,n1_old
+ integer :: n1_old
  integer :: nxf,nyf,nzf,nf
  integer :: i2b,j2b,k2b,nbf,nd_pot
  integer :: n1_loc,n2_loc,n3_loc,nf_loc

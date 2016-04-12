@@ -48,7 +48,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\lib\native\src\boost_system.error_code.cpp">
       <Filter>Source Files\boost</Filter>
     </ClCompile>
-    <ClCompile Include="find_last_addr.c">
+    <ClCompile Include="find_last_addr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

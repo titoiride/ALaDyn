@@ -508,7 +508,7 @@
  do islice=0,number_slices-1 ! change string format in output file for more than 9 slices
 
   nSigmaCut = 5.0
-  delta_cut=2.D0*nSigmaCut/number_slices
+  delta_cut=2.0*nSigmaCut/number_slices
   nInside_loc=0
   do ip=1,np_local
    mask(ip)=( (bunch(bunch_number)%part(ip,1)-moments(1,1) )>( real(islice-number_slices/2)*delta_cut )*moments(2,1)  ) &

@@ -150,7 +150,7 @@
  else
   do ix=i1,i2
    do j=1,j2
-    wch(1)=loc_wghy(j,ic)*wghpt(ix,ic)
+    wch(1)=real(loc_wghy(j,ic)*wghpt(ix,ic),sp)
     n=n+1
     spec(ic)%part(n,1)=xpt(ix,ic)
     spec(ic)%part(n,2)=loc_ypt(j,ic)
@@ -1627,7 +1627,7 @@
   end do
  end do
  !  jc(1:2)=ompe*rho/<gamp>*env(1:2)  the source term
- call env0_field(jc,nst,cind,ib,i1,nxp,j1,nyp,k1,nzp,ap,&
+ call env0_field(jc,ib,i1,nxp,j1,nyp,k1,nzp,ap,&
   dtx,dty,dtz,dt_loc)
  do ic=1,2
   jc(:,:,:,ic)=0.0
@@ -1690,7 +1690,7 @@
   end do
  end do
  cind=1    !cind=0 FFT  =1 grid matrix inversion
- call env0_rk_field(curr,nst,cind,ord,ib,i1,nxp,j1,nyp,k1,nzp,oml,dtx,dty,dtz)
+ call env0_rk_field(curr,ord,ib,i1,nxp,j1,nyp,k1,nzp,oml,dtx,dty,dtz)
  !=============
  do ik=1,nc
   do iz=k1,nzp
@@ -1840,10 +1840,10 @@
  !========================================
  dth_lp=0.5*dt_lp
  alp=dth_lp*Lfact
+ ch=5
  !==========================
  select case(curr_ndim)
  case(2)
-  ch=5
   do p=n0,np
    pp(1:2)=sp_loc%part(p,3:4)  !p_{n-1/2}
    wgh=sp_loc%part(p,ch)
@@ -2423,9 +2423,8 @@
  end subroutine env_pfields_prepare
  !=======================================
 
- subroutine env_lpf2_evolve(dt_loc,it_loc)
+ subroutine env_lpf2_evolve(dt_loc)
  real(dp),intent(in) :: dt_loc
- integer,intent(in) :: it_loc
  integer :: np,ic,nyf,nzf,n_st
  integer :: i1,j1,k1,i2
  real(dp) :: Ltz,xm,ym,zm
@@ -2505,10 +2504,10 @@
  end subroutine env_lpf2_evolve
  !=====================================
  !=======================
- subroutine ENV_run(t_loc,dt_loc,iter_loc,t_ord)
+ subroutine ENV_run(t_loc,dt_loc,iter_loc)
 
  real(dp),intent(in) :: t_loc,dt_loc
- integer,intent(in) :: iter_loc,t_ord
+ integer,intent(in) :: iter_loc
  logical,parameter :: mw=.false.
  !+++++++++++++++++++++++++++++++++
  !for vbeam >0 uses the xw=(x+vbeam*t)
@@ -2525,7 +2524,7 @@
   if(iter_loc>0)call coordinate_xshift(vbeam,dt_loc)
  endif
  !=========================
-  call env_lpf2_evolve(dt_loc,iter_loc)
+  call env_lpf2_evolve(dt_loc)
   if(Part)call cell_part_dist(mw)
  !
  end subroutine ENV_run
@@ -2718,10 +2717,10 @@
  end subroutine  lpf_advect_positions
    
 
- subroutine lpf2_pb_evolve(dt_loc,iter_loc,pb_mod,initial_time)
+ subroutine lpf2_pb_evolve(dt_loc,pb_mod,initial_time)
 
  real,intent(in) :: dt_loc
- integer,intent(in) :: iter_loc,pb_mod
+ integer,intent(in) :: pb_mod
  logical,intent(in) :: initial_time
  integer :: np,ic
  integer :: i1,i2,i1b,i2b,j1,j2,k1,k2,n_st,nbr,nbl
@@ -2787,10 +2786,9 @@
  !=========================
  end subroutine lpf2_pb_evolve
 
- subroutine PBUNCH_run(t_loc,dt_loc,iter_loc)
+ subroutine PBUNCH_run(t_loc,dt_loc)
 
  real,intent(in) :: t_loc,dt_loc
- integer,intent(in) :: iter_loc
  real :: ts
  logical :: init_time
  logical,parameter :: mw=.false.
@@ -2799,9 +2797,9 @@
  !x=xi=(xw-vbeam*t)  fixed
  ts=t_loc
  init_time=.false.
- if(t_loc==0.0)init_time=.true.
+ if(t_loc<EPSILON)init_time=.true.
  !=========================
- call lpf2_pb_evolve(dt_loc,iter_loc,ibeam,init_time)
+ call lpf2_pb_evolve(dt_loc,ibeam,init_time)
  !
  if(ibeam >0)call cell_part_dist(mw)
  call cell_bpart_dist(mw)
