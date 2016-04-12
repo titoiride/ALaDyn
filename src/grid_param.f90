@@ -34,6 +34,7 @@
  real(dp),allocatable :: akx(:),aky(:),akz(:),sty(:)
  real(dp),allocatable :: ak2x(:),ak2y(:),ak2z(:),kern(:),kern2(:,:)
  real(dp),allocatable :: skx(:),sky(:),skz(:)
+!==================
  real(dp),allocatable :: loc_yg(:,:,:),loc_zg(:,:,:),loc_xg(:,:,:)
  real(dp),allocatable :: x(:),xw(:),y(:),z(:),dx1(:),dy1(:),dz1(:)
  real(dp),allocatable :: xh(:),yh(:),zh(:),dx1h(:),dy1h(:),dz1h(:)
@@ -466,7 +467,7 @@
  if(xres>0.0)dx=1./xres
  dx_inv=1.0/dx
  do i=1,n1+1
-  x(i)=dx*float(i-1)    !xminx(1)=0,.....,xmax-dx=x(nx)
+  x(i)=dx*real(i-1,dp)    !xminx(1)=0,.....,xmax-dx=x(nx)
   xh(i)=x(i)+0.5*dx
   dx1(i)=1.
   dx1h(i)=1.
@@ -475,13 +476,13 @@
  dxi_inv=dx_inv
  ns1=n1+1-x_stretch
  if(x_stretch >0)then
-  dxi=aph/float(x_stretch)
+  dxi=aph/real(x_stretch,dp)
   dxi_inv=1./dxi
   Lx_s=dx*dxi_inv
   sx_rat=dxi*dx_inv
   sp=x(ns1)
   do i=ns1,n1+1
-   yy=dxi*float(i-ns1)
+   yy=dxi*real(i-ns1,dp)
    yyh=yy+dxi*0.5
    x(i)=sp+Lx_s*tan(yy)
    xh(i)=sp+Lx_s*tan(yyh)
@@ -494,7 +495,7 @@
  str_xgrid%smin=x(1)
  str_xgrid%smax=x(ns1)
  xw=x
- xmax=x(n1+1)
+ xmax=x(n1)
  xmin=x(1)
  Lx_box=xmax-xmin
 
@@ -515,21 +516,21 @@
   dyi=dy
   dyi_inv=dy_inv
   do i=1,n2+1
-   y(i)=dy*float(i-1-n2/2)
+   y(i)=dy*real(i-1-n2/2,dp)
    yh(i)=y(i)+0.5*dy
    dy1(i)=1.
    dy1h(i)=1.
   end do
   ns1=n2+1-y_stretch
   if(y_stretch>0)then
-   dyi=aph/float(y_stretch)
+   dyi=aph/real(y_stretch,dp)
    dyi_inv=1./dyi
    L_s=dy*dyi_inv
    sy_rat=dyi*dy_inv
    sm=y(y_stretch+1)
    sp=y(ns1)
    do i=1,y_stretch
-    yy=dyi*float(i-1-y_stretch)
+    yy=dyi*real(i-1-y_stretch,dp)
     yyh=yy+0.5*dyi
     y(i)=sm+L_s*tan(yy)
     yh(i)=sm+L_s*tan(yyh)
@@ -537,7 +538,7 @@
     dy1(i)=cos(yy)*cos(yy)
    end do
    do i=ns1,n2+1
-    yy=dyi*float(i-ns1)
+    yy=dyi*real(i-ns1,dp)
     yyh=yy+dyi*0.5
     y(i)=sp+L_s*tan(yy)
     yh(i)=sp+L_s*tan(yyh)
@@ -573,21 +574,21 @@
   dz=zxres*dx
   dz_inv=1./dz
   do i=1,n3+1
-   z(i)=dz*float(i-1-n3/2)
+   z(i)=dz*real(i-1-n3/2,dp)
    zh(i)=z(i)+0.5*dz
    dz1(i)=1.
    dz1h(i)=1.
   end do
   ns1=n3+1-y_stretch
   if(y_stretch>0)then
-   dzi=aph/float(y_stretch)
+   dzi=aph/real(y_stretch,dp)
    dzi_inv=1./dzi
    L_s=dz*dzi_inv
    sz_rat=dzi*dz_inv
    sm=z(y_stretch+1)
    sp=z(ns1)
    do i=1,y_stretch
-    yy=dzi*float(i-1-y_stretch)
+    yy=dzi*real(i-1-y_stretch,dp)
     yyh=yy+0.5*dzi
     z(i)=sm+L_s*tan(yy)
     zh(i)=sm+L_s*tan(yyh)
@@ -595,7 +596,7 @@
     dz1(i)=cos(yy)*cos(yy)
    end do
    do i=ns1,n3+1
-    yy=dzi*float(i-ns1)
+    yy=dzi*real(i-ns1,dp)
     yyh=yy+dzi*0.5
     z(i)=sp+L_s*tan(yy)
     zh(i)=sp+L_s*tan(yyh)
@@ -637,14 +638,14 @@
  case(0)  ! staggered k-grid
   akx=0.0
   do i=1,n1/2
-   akx(i)=wkx*(float(i)-0.5)
+   akx(i)=wkx*(real(i,dp)-0.5)
    skx(i)=2.*sin(0.5*dx*akx(i))/dx
   end do
   aky=0.0
   ak2y=0.0
   if(n2>1)then
    do i=1,n2/2
-    aky(i)=wky*(float(i)-0.5)
+    aky(i)=wky*(real(i,dp)-0.5)
     aky(n2+1-i)=-aky(i)
    end do
    do i=1,n2
@@ -656,7 +657,7 @@
   ak2z=0.0
   if(n3 >1)then
    do i=1,n3/2
-    akz(i)=wkz*(float(i)-0.5)
+    akz(i)=wkz*(real(i,dp)-0.5)
     akz(n3+1-i)=-akz(i)
    end do
    do i=1,n3
@@ -667,7 +668,7 @@
 
  case(1)    !standard FT k-grid
   do i=1,n1/2
-   akx(i)=wkx*float(i-1)
+   akx(i)=wkx*real(i-1,dp)
    akx(n1+2-i)=-akx(i)
   end do
   do i=1,n1+1
@@ -677,7 +678,7 @@
   ak2y=0.0
   if(n2 > 1)then
    do i=1,n2/2
-    aky(i)=wky*float(i-1)
+    aky(i)=wky*real(i-1,dp)
     aky(n2+2-i)=-aky(i)
     sky(i)=2.*sin(0.5*dy*aky(i))/dy
    end do
@@ -687,7 +688,7 @@
   ak2z=0.0
   if(n3 > 1)then
    do i=1,n3/2
-    akz(i)=wkz*float(i-1)
+    akz(i)=wkz*real(i-1,dp)
     akz(n3+2-i)=-akz(i)
    end do
    do i=1,n3
@@ -701,14 +702,14 @@
   wky=acos(-1.0)/lybox
   wkz=wky
   do i=1,n1+1
-   akx(i)=wkx*float(i-1)
+   akx(i)=wkx*real(i-1,dp)
    skx(i)=2.*sin(0.5*dx*akx(i))/dx
   end do
   aky=0.0
   ak2y=0.0
   if(n2>1)then
    do i=1,n2+1
-    aky(i)=wky*float(i-1)
+    aky(i)=wky*real(i-1,dp)
     sky(i)=2.*sin(0.5*dy*aky(i))/dy
    end do
    ak2y=aky*aky
@@ -717,7 +718,7 @@
   ak2z=0.0
   if(n3 >1)then
    do i=1,n3+1
-    akz(i)=wkz*float(i-1)
+    akz(i)=wkz*real(i-1,dp)
     skz(i)=2.*sin(0.5*dz*akz(i))/dz
    end do
    ak2z=akz*akz

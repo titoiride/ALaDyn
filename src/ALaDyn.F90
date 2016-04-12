@@ -224,7 +224,7 @@
    endif
    do i=1,nvout
     if(L_force_singlefile_output) then
-     call fields_out(ebf,tnow,i,i,jump)    ! second index to label field
+     call fields_out(ebf,tnow,i,i,jump)      !i to label field name
     else
      call fields_out_new(ebf,tnow,i,i,jump)
     endif
@@ -233,7 +233,7 @@
     if(L_force_singlefile_output) then
      call fields_out(jc,tnow,1,0,jump)       !0 for Jx current
     else
-     call fields_out_new(jc,tnow,1,0,jump) ! 0  to label Jx field
+     call fields_out_new(jc,tnow,1,0,jump)
     endif
    endif
   endif
@@ -272,7 +272,6 @@
  call cpu_time(unix_time_now)
 
  if((unix_time_now - unix_time_last_dump) > time_interval_dumps .and. time_interval_dumps > 0.0) then
-  if(pe0) write(6,*) '3D dump data being written'
   call dump_data(iter,tnow)
  endif
 
@@ -739,8 +738,8 @@
  integer :: i,ic,k,zmax,zm_loc
  if(zlev==1)open(10,file='diag_one_level_ionz.dat')
  if(zlev==2)open(10,file='diag_multi_level_ionz.dat')
- write(10,*)'nsp_ionz,zlev,zmod,N_ge '
- write(10,'(4i8)')nsp_ionz,zlev,zmod,N_ge
+ write(10,*)'nsp_ionz-1,zlev,zmod,N_ge '
+ write(10,'(4i8)')nsp_ionz-1,zlev,zmod,N_ge
  write(10,*)'  Max Ef       dt      Omega_au  '
  write(10,'(3E11.4)')Ef_max,dt,omega_a
  do ic=1,nsp_ionz-1
@@ -805,7 +804,7 @@
  !  open(10,file='ionization_probability.dat')
  !   write(10,2001) ('Z_',i,i=z0,zmax) !header
  !    DO i=1,N_ge
- !     write(10,'(6e12.4)') wsp(i,0,z0:zmax-1)
+ !     write(10,'(6e12.4)') wspec(i,0,z0:zmax-1)
  !    ENDDO
  !  close(10)
  ! else if(ionz_sch==2) then
@@ -815,7 +814,7 @@
  !    write(10,*)i
  !     do k=0,zm_loc-i
  !      write(10,*)k
- !      write(10,'(6e12.4)')wsp(1:N_ge,k,i+z0)
+ !      write(10,'(6e12.4)')wspec(1:N_ge,k,i+z0)
  !     end do
  !   end do
  !  close(10)
@@ -1053,7 +1052,7 @@
    if(Ionization)then
     if(ionz_model==1)write(6,*)' ADK field ionization active '
     if(ionz_model > 1)write(6,*)' ADK+BSI field ionization active '
-    write(6,*)'active ion species ',nsp_ionz-1
+    write(6,*)'ionization active in ion species ',nsp_ionz-1
     write(6,*)' Z_in,  A_numb,  Mass_numb '
     do i=1,nsp_ionz-1
      write(6,'(3i6)')ion_min(i),atomic_number(i),mass_number(i)
@@ -1168,7 +1167,7 @@
   real(dp), allocatable :: am(:)
 
    allocate( am(100) )
-   call memaddr( am, addr )
+   !call memaddr( am, addr )
    deallocate(am)
    rmem=addr
 end subroutine submem
@@ -1176,40 +1175,54 @@ end subroutine submem
 
  subroutine max_pmemory_check()
 
- integer :: ndv,np
+ integer :: ndv1,ndv2,np
  real(dp) :: mem_loc(1),max_mem(1),adr
 
  mem_loc=0.
  max_mem=0.
- ndv=P_ncmp
  do ic=1,nsp
-  np=loc_npart(imody,imodz,imodx,ic)
-  if(np>0)mem_loc(1)=mem_loc(1)+real(ndv*size(spec(ic)%part),dp)
+  if(allocated(spec(ic)%part))then
+   ndv1=size(spec(ic)%part,1)
+   ndv2=size(spec(ic)%part,2)
+   mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
+  endif
  end do
  if(allocated(ebfp))then
-  mem_loc(1)=mem_loc(1)+real(size(ebfp,1)*size(ebfp,2),dp)
+  ndv1=size(ebfp,1)
+  ndv2=size(ebfp,2)
+  mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
  endif
  if(Beam)then
   do ic=1,nsb
-   np=loc_nbpart(imody,imodz,imodx,ic)
-   if(np>0)mem_loc(1)=mem_loc(1)+real(ndv*size(bunch(ic)%part),dp)
+   if(allocated(bunch(ic)%part))then
+    ndv1=size(spec(ic)%part,1)
+    ndv2=size(spec(ic)%part,2)
+    mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
+   endif
   end do
   if(allocated(ebfb))then
-   mem_loc(1)=mem_loc(1)+real(size(ebfb,1)*size(ebfb,2),dp)
+   ndv1=size(ebfb,1)
+   ndv2=size(ebfb,2)
+   mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
   endif
  endif
  if(allocated(ebfp0))then
-  mem_loc(1)=mem_loc(1)+real(size(ebfp0,1)*size(ebfp0,2),dp)
+  ndv1=size(ebfp0,1)
+  ndv2=size(ebfp0,2)
+  mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
  endif
  if(allocated(ebfp1))then
-  mem_loc(1)=mem_loc(1)+real(size(ebfp1,1)*size(ebfp1,2),dp)
+  ndv1=size(ebfp1,1)
+  ndv2=size(ebfp1,2)
+  mem_loc(1)=mem_loc(1)+real(ndv1*ndv2,dp)
  endif
  call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
  mem_psize_max=kind(electron_charge_norm)*1.e-06*max_mem(1)
 
- call submem(adr) 
- mem_loc(1)=adr
- call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
+ !call submem(adr) 
+ !mem_loc(1)=adr
+ !call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
+ !mem_max_addr=1.e-06*max_mem(1)
  
  end subroutine max_pmemory_check
 

@@ -34,6 +34,7 @@
  include 'mpif.h'
 #endif
 
+ integer, parameter :: offset_kind = MPI_OFFSET_KIND
 
  integer :: mpi_err
  integer,allocatable :: loc_npart(:,:,:,:),loc_nbpart(:,:,:,:)
@@ -230,7 +231,7 @@
 
  real(sp),intent(in) :: buf(:)
  integer,intent(in) :: bufsize,loc_np,nchar
- integer(dp),intent(in) :: disp
+ integer(offset_kind),intent(in) :: disp
  character(nchar),intent(in) :: fout
 
  integer :: ierr,thefile
@@ -254,7 +255,7 @@
 
  real(sp),intent(in) :: buf(:)
  integer,intent(in) :: bufsize,nchar
- integer(dp),intent(in) :: disp
+ integer(offset_kind),intent(in) :: disp
  character(nchar),intent(in) :: fout
 
  integer :: ierr,thefile
@@ -278,7 +279,7 @@
 
  real(sp),intent(in) :: buf(:)
  integer,intent(in) :: bufsize,nchar,header_size,header(:)
- integer(dp),intent(in) :: disp
+ integer(offset_kind),intent(in) :: disp
  character(nchar),intent(in) :: fout
 
  integer :: ierr,thefile
@@ -306,7 +307,7 @@
 
  real(sp),intent(in) :: buf(:)
  integer,intent(in) :: bufsize,nchar,header_size,header(:)
- integer(dp),intent(in) :: disp
+ integer(offset_kind),intent(in) :: disp
  character(nchar),intent(in) :: fout
 
  integer :: ierr,thefile

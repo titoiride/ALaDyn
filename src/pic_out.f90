@@ -602,7 +602,7 @@
  integer :: ix,iy,iz,iq
  integer :: lenw,kk,nx1,ny1,nz1
  integer :: i1,j1,k1,nxp,nyp,nzp,i_end
- integer(dp) :: disp,disp_col
+ integer(offset_kind) :: disp,disp_col
  integer :: num_header_int,gr_dim(3),header(3)
  real(dp),allocatable :: ascii_grid(:)
  integer :: gridsize_x,gridsize_y,gridsize_z
@@ -1050,7 +1050,7 @@
  integer(dp) :: nptot_global_reduced
  integer :: ik,p,q,np,ip,ip_max,nptot
  integer :: lenp,ip_loc(npe),ndv,i_end
- integer(dp) :: disp,disp_col
+ integer(offset_kind) :: disp,disp_col
  real(dp) :: xx,yy,zz
  real(dp) :: wgh
  real(sp) :: ch(2)
@@ -1067,27 +1067,27 @@
  ip=0
  if(ndim >2)then
   do p=1,np,jmp
-   yy=spec(pid)%part(p)%cmp(2)
-   zz=spec(pid)%part(p)%cmp(3)
+   yy=spec(pid)%part(p,2)
+   zz=spec(pid)%part(p,3)
    if(abs(yy)<=ym.and.abs(zz)<=ym)then
-    xx=spec(pid)%part(p)%cmp(1)
+    xx=spec(pid)%part(p,1)
     if(xx>=x0.and.xx <=x1)then
      ip=ip+1
      do q=1,nd2+1
-      ebfp(q,ip)=spec(pid)%part(p)%cmp(q)
+      ebfp(ip,q)=spec(pid)%part(p,q)
      end do
     endif
    endif
   end do
  else
   do p=1,np,jmp
-   yy=spec(pid)%part(p)%cmp(2)
+   yy=spec(pid)%part(p,2)
    if(abs(yy)<=ym)then
-    xx=spec(pid)%part(p)%cmp(1)
+    xx=spec(pid)%part(p,1)
     if(xx>=x0.and.xx<=x1)then
      ip=ip+1
      do q=1,nd2+1
-      ebfp(q,ip)=spec(pid)%part(p)%cmp(q)
+      ebfp(ip,q)=spec(pid)%part(p,q)
      end do
     endif
    endif
@@ -1122,9 +1122,9 @@
  do p=1,ip
   do q=1,nd2
    ik=ik+1
-   pdata(ik)=real(ebfp(q,p),sp)
+   pdata(ik)=real(ebfp(p,q),sp)
   end do
-  wgh=ebfp(nd2+1,p)
+  wgh=ebfp(p,nd2+1)
   ik=ik+1
   pdata(ik)=ch(1)
   ik=ik+1
@@ -1199,7 +1199,7 @@
  integer :: ik,p,q,np,ip,ip_max,nptot
  integer :: lenp,ip_loc(npe),ndv,i_end
  real(dp) :: wgh
- integer(dp) :: disp
+ integer(offset_kind) :: disp
  real(sp) :: ch(2)
  character(4) :: folderName
  integer,parameter :: file_version = 4
@@ -1213,7 +1213,7 @@
  do p=1,np,jmp
   ip=ip+1
   do q=1,nd2+1
-   ebfb(q,ip)=bunch(pid)%part(p)%cmp(q)
+   ebfb(ip,q)=bunch(pid)%part(p,q)
   end do
  end do
  ip_loc(mype+1)=ip
@@ -1229,9 +1229,9 @@
  do p=1,ip
   do q=1,nd2
    ik=ik+1
-   pdata(ik)=real(ebfb(q,p),sp)
+   pdata(ik)=real(ebfb(p,q),sp)
   end do
-  wgh=ebfb(nd2+1,p)
+  wgh=ebfb(p,nd2+1)
   ik=ik+1
   pdata(ik)=ch(1)
   ik=ik+1
@@ -1294,8 +1294,8 @@
  de=ekem/real(ne,dp)
  if(ekem < 1.e-06)return
  do p=1,np
-  xx=gfield(1,p)/de           !0.5*mc^2*(gamma-1) energy in MeV
-  wgh=gfield(2,p)          !weight >0 to be multiplied by np_per_cell
+  xx=gfield(p,1)/de           !0.5*mc^2*(gamma-1) energy in MeV
+  wgh=gfield(p,2)          !weight >0 to be multiplied by np_per_cell
   ix=nint(xx)
   ix=min(ix+1,ne)
   nde0(ix)=nde0(ix)+wgh
@@ -1314,14 +1314,14 @@
  de=ekem/real(ne,dp)
  if(ekem < 1.e-06)return
  do p=1,np
-  xx=gfield(1,p)/de           !0.5*mc^2*(gamma-1) energy in MeV
-  wgh=gfield(2,p)          !weight >0
+  xx=gfield(p,1)/de           !0.5*mc^2*(gamma-1) energy in MeV
+  wgh=gfield(p,2)          !weight >0
   ix=nint(xx)
   ix=min(ix+1,ne)
-  if(gfield(4,p)< xl)then
+  if(gfield(p,4)< xl)then
    nde0(ix)=nde0(ix)+wgh
   endif
-  if(gfield(4,p) > xr)then
+  if(gfield(p,4)> xr)then
    nde1(ix)=nde1(ix)+wgh
   endif
  end do
@@ -1332,7 +1332,7 @@
 
  subroutine energy_momenta(sp_loc,gfield,np,pmass,ek,ekmax)
  type(species),intent(in) :: sp_loc
- real(dp),intent(out) :: gfield(:,:)
+ real(dp),intent(inout) :: gfield(:,:)
  integer,intent(in) :: np
  real(dp),intent(in) :: pmass
  real(dp),intent(out) :: ek(:),ekmax
@@ -1345,13 +1345,13 @@
  ekmax=0.0
  if(curr_ndim <3)then
   do ip=1,np
-   vp(1:2)=sp_loc%part(ip)%cmp(3:4)
+   vp(1:2)=sp_loc%part(ip,3:4)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2))
-   gfield(1,ip)=pmass*(gam-1.)
-   wgh=sp_loc%part(ip)%cmp(5)
-   gfield(2,ip)=charge(1)
-   gfield(3,ip)=vp(1)
-   gfield(4,ip)=sp_loc%part(ip)%cmp(1)
+   gfield(ip,1)=pmass*(gam-1.)
+   wgh=sp_loc%part(ip,5)
+   gfield(ip,2)=charge(1)
+   gfield(ip,3)=vp(1)
+   gfield(ip,4)=sp_loc%part(ip,1)
    gam1=gam-1.
    do ik=1,curr_ndim
     ek(ik)=ek(ik)+charge(1)*vp(ik)
@@ -1362,14 +1362,14 @@
   end do
  else
   do ip=1,np
-   xp(1:3)=sp_loc%part(ip)%cmp(1:3)
-   vp(1:3)=sp_loc%part(ip)%cmp(4:6)
+   xp(1:3)=sp_loc%part(ip,1:3)
+   vp(1:3)=sp_loc%part(ip,4:6)
    gam=sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2)+vp(3)*vp(3))
-   gfield(1,ip)=pmass*(gam-1.)
-   wgh=sp_loc%part(ip)%cmp(7)
-   gfield(2,ip)=charge(1)
-   gfield(3,ip)=vp(1)
-   gfield(4,ip)=sp_loc%part(ip)%cmp(1)
+   gfield(ip,1)=pmass*(gam-1.)
+   wgh=sp_loc%part(ip,7)
+   gfield(ip,2)=charge(1)
+   gfield(ip,3)=vp(1)
+   gfield(ip,4)=sp_loc%part(ip,1)
    gam1=gam-1.
    do ik=1,curr_ndim
     ek(ik)=ek(ik)+vp(ik)       !momenta
@@ -1565,7 +1565,7 @@
  real(dp),intent(in) :: tnow
 
  integer :: np,ik,ix,iy,iz,ic,i1,i2,i2b,ndv
- integer :: j1,k1,nyp,nzp,ii,jj,kk,j,k,l
+ integer :: j1,k1,nyp,nzp,ii,jj,kk,j,k,l,i0_lp
  real(dp) :: ek_max(1),ekt(7),ekm(7),ekmax(1)
  real(dp) :: pmass,dvol,dgvol,sgz,sg,ef2
  real(dp) :: np_norm,p_energy_norm
@@ -1667,7 +1667,7 @@
     do ik=1,curr_ndim
      kk=ik+curr_ndim
      do ix=1,np
-      sg=spec(ic)%part(ix)%cmp(kk)-ekm(ik)
+      sg=spec(ic)%part(ix,kk)-ekm(ik)
       ekt(ik)=ekt(ik)+sg*sg              !<[p -<p>]^2>, p=gamma*v/c
      end do
     end do
@@ -1736,7 +1736,7 @@
  endif
  ekt(1:nfield)=dgvol*ekt(1:nfield)
  call allreduce_dpreal(SUMV,ekt,ekm,nfield)
- favg(1:3,nst)=field_energy*ekm(1:3)
+ favg(1:3,nst)=field_energy*ekm(1:3)        !field itotal energy (in Joule)
  favg(7:9,nst)=field_energy*ekm(4:6)
 
  ekt=0.0
@@ -2145,10 +2145,10 @@
   !USES real to sum big integers
   if(np>0)then
    do ik=1,6
-    ekt(ik)=sum(bunch(ic)%part(1:np)%cmp(ik))
+    ekt(ik)=sum(bunch(ic)%part(1:np,ik))
    enddo
    do kk=1,np
-    pp(1:3)=bunch(ic)%part(kk)%cmp(4:6)
+    pp(1:3)=bunch(ic)%part(kk,4:6)
     gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
     ekt(7)=ekt(7)+gmb
    end do
@@ -2161,14 +2161,14 @@
   if(np>0)then
    do ik=1,6
     do kk=1,np
-     ekt(ik)=ekt(ik)+(bunch(ic)%part(kk)%cmp(ik)-mu(ik,ic))**2
+     ekt(ik)=ekt(ik)+(bunch(ic)%part(kk,ik)-mu(ik,ic))**2
     end do
    enddo
    !================mixed corr
    do kk=1,np
-    ekt(7)=ekt(7)+bunch(ic)%part(kk)%cmp(5)*bunch(ic)%part(kk)%cmp(2)
-    ekt(8)=ekt(8)+bunch(ic)%part(kk)%cmp(6)*bunch(ic)%part(kk)%cmp(3)
-    pp(1:3)=bunch(ic)%part(kk)%cmp(4:6)
+    ekt(7)=ekt(7)+bunch(ic)%part(kk,5)*bunch(ic)%part(kk,2)
+    ekt(8)=ekt(8)+bunch(ic)%part(kk,6)*bunch(ic)%part(kk,3)
+    pp(1:3)=bunch(ic)%part(kk,4:6)
     gmb=1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3)
     ekt(9)=ekt(9)+gmb       !<(gam**2>
    end do
@@ -2176,8 +2176,10 @@
   call allreduce_dpreal(SUMV,ekt,ekm,9)
   corr2(1:8,ic)=np_norm*ekm(1:8)
   ekm(9)=np_norm*ekm(9)
-  ! corr2_y*corr2_py -mixed
-  ! corr2_z*corr2_pz -mixed
+!    emy^2= corr2_y*corr2_py -mixed 
+                              !<yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
+!    emz^2= corr2_z*corr2_pz -mixed
+                              !<zz><p_zp_z>-(<zp_z>-<z><p_z>)^2
   emy(ic)=corr2(2,ic)*corr2(5,ic)-(corr2(7,ic)-mu(2,ic)*mu(5,ic))**2
   emz(ic)=corr2(3,ic)*corr2(6,ic)-(corr2(8,ic)-mu(3,ic)*mu(6,ic))**2
   if(emy(ic)>0.0)emy(ic)=sqrt(emy(ic))
