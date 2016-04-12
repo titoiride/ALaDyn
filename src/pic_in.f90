@@ -1458,24 +1458,24 @@
    enddo
    loc_ymp=loc_ymp+lpy(2)       !first layer
    i2=i2+npty_ne
-!===========================
+   !===========================
    do i=1,npty_ne
     ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
    enddo
    i2=i2+npty_ne
-!====================
+   !====================
    npty_layer(ic)=i2
   end do
  endif
  do ic=3,4
   npty_ne=nholes*npyc(ic)    !number of yp points in a lpy(2) layer
   loc_ymp= -0.5*lpy(2)
-   dpy=lpy(2)/real(npty_ne,dp)
-   do i=1,npty_ne
-    ypt(i,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
-   enddo
+  dpy=lpy(2)/real(npty_ne,dp)
+  do i=1,npty_ne
+   ypt(i,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+  enddo
   npty_layer(ic)=npty_ne
-!===========================
+  !===========================
  end do
  !============= Uniform y-z distribution
  npyc(5:6)=np_per_yc(3:4)  ! bulk target
@@ -1487,7 +1487,7 @@
    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
   enddo
  end do
-!========= For all (y,z) coordinates
+ !========= For all (y,z) coordinates
  do ic=1,6
   npty_ne=npty_layer(ic)
   if(Stretch)then
@@ -1567,7 +1567,7 @@
   loc_zpt=0.0
  endif
  call mpi_yz_part_distrib(6,loc_npty,loc_nptz,npty_layer,npty_layer,&
-                            ymin_t,zmin_t,wy,wz)
+  ymin_t,zmin_t,wy,wz)
  !=======================
  !========================
  loc_imax(imodx,1:6)=nptx_loc(1:6)
@@ -1601,11 +1601,11 @@
    do i=1,nptx_loc(ic)
     if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
      .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
-     i1=i1+1
-     loc_xpt(i1,ic)=xpt(i,ic)
-     loc_wghx(i1,ic)=wghpt(i,ic)
-     loc_xpt(i1,ic+2)=xpt(i,ic+2)
-     loc_wghx(i1,ic+2)=wghpt(i,ic+2)
+    i1=i1+1
+    loc_xpt(i1,ic)=xpt(i,ic)
+    loc_wghx(i1,ic)=wghpt(i,ic)
+    loc_xpt(i1,ic+2)=xpt(i,ic+2)
+    loc_wghx(i1,ic+2)=wghpt(i,ic+2)
     endif
    end do
    loc_imax(imodx,ic)=i1
@@ -1635,7 +1635,7 @@
  !     x distribution
  !====================
  if(nxl(4) >0)then
- do ic=5,6
+  do ic=5,6
    n_peak=nptx_loc(ic)
    do i=1,n_peak
     xpt(i,ic)=xfsh+lpx(4)*(real(i,dp)-0.5)/real(n_peak,dp)
@@ -1856,8 +1856,8 @@
  targ_in=xfsh
  targ_end=targ_in+xtot
  !  Input particles
- !========= np_per_xc(1:2) electrons and Z1 ions in the lpx(3) nanowires target 
- !========= np_per_xc(3:4) electrons and Z2 ions in the lpx(2) nanowires+filled holes target 
+ !========= np_per_xc(1:2) electrons and Z1 ions in the lpx(3) nanowires target
+ !========= np_per_xc(3:4) electrons and Z2 ions in the lpx(2) nanowires+filled holes target
  !  Particles grid ordering
  !  only nxl(2) nxl(3) layers activated
  nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !nanowires  electrons+Z1-ions density
@@ -2442,12 +2442,12 @@
   shx_lp=0.0
   if(angle >0.0)shx_lp=lpx(7)
   if(Plane_wave)lp_ind=0
-   call init_lp_fields(ebf,lp_amp,tt,t0_lp,tau,w0_y,xf,&
-                      angle,shx_lp,lp_ind,i1,i2)
+  call init_lp_fields(ebf,lp_amp,tt,t0_lp,tau,w0_y,xf,&
+   angle,shx_lp,lp_ind,i1,i2)
   !call divA(ebf,jc,i1,i2,j1,j2,k1,k2,1,1,dx_inv,dy_inv,dz_inv)
- !+++++++++++++++
- !  Holds a Plane wave pulse (lp_mod=0) and LP Gaussian pulses
- !=======================
+  !+++++++++++++++
+  !  Holds a Plane wave pulse (lp_mod=0) and LP Gaussian pulses
+  !=======================
   if(pe0)then
    write(6,*)'LP injected '
    write(6,'(a21,e11.4)')' Focal x-position xf=',xf
@@ -2737,9 +2737,9 @@
  ! The local MPI task
  nps_loc(1:nsb)=loc_nbpart(imody,imodz,imodx,1:nsb)
  npmax=maxval(nps_loc(1:nsb))
-!++++++++++++++++++++++++++++++++++++++
+ !++++++++++++++++++++++++++++++++++++++
  if(npmax >0)call p_alloc(npmax,nd2+1,nps_loc,nsb,LPf_ord,1,2,mem_psize)
-!=================================
+ !=================================
  nb_loc=nps_loc(1)
  p=imodx
  ip=imodz

@@ -434,69 +434,69 @@
    end do
    b_charge=bcharge(1)
 
- case(6) !  Proton one-beam section
-  ! uses l0=1mm 
-  ! for fields E_u=GV/m = mc^2/(l0*e*E0) 
-  ! n0= 10^11/cc =10^8/mm^3
-  !==============================
-  !  n_over_nc = initial plasma density/n0= ne/n0
-  !=======================
-  lam0=1.             !n [mm] is the unit of length
-  nm_fact=1.e+08      !electron density[mm^{-3}]
-  nc=1.0              !the plasma ref density is n0=10^11/cm^3=10^8/mm^3
-  nc0=2.*pi2*rc0*1.e-03    
-  Wake=.true.
-  Solid_target=.false.
-!=============================
-  !the squared adimensional plasma frequency on n0 density 
-  ! the electron radius r_c=rc0*10^{-11}mm
-  !   r_c*l0*l0*n0= 10^{-3}*rc0
-  !omp^2=   4*pi*l0*l0*rc*n0=4*pi*rc0*10^{-3}
-!=======================
-  omega_p=n_over_nc*nc0
-  ompe=E0*omega_p        ! the source term in Maxw.eqs: E0*omega_p^2
-  omega_p=sqrt(omega_p)
-!======================
-!============================
-  el_lp=1./omega_p    !skin depth in l0[mm] unit
-  lambda_p=pi2*el_lp  ! the plasma wavelength in l0 unit
-  lpvol=el_lp*el_lp*el_lp
-  gam0=gam(1)
-  u0_b=sqrt(gam0*gam0-1.)   !the beam x-momentum
-  bet0=u0_b/gam0            !the beam v_b/c norm velocity
-  w_speed=bet0
-  vbeam=0.0
-  Beam=.true.
-  Pbeam=.true.
-  Lorentz_fact(1)=Lorentz_fact(1)/E0
-  Lorentz_bfact(1)=Lorentz_fact(1)/proton_mass_norm
-  !==================================
-  nfield=6
-  nbfield=nfield
-  curr_ndim=ndim
-  mod_ord=4
-  dx=1./k0
-  jb_norm=1.
-  call set_grid(nx,ny,nz,nx_stretch,ny_stretch,k0,yx_rat,zx_rat)
-  dt=cfl/sqrt(dx_inv*dx_inv+dy_inv*dy_inv+dz_inv*dz_inv)
-  !====================
-  ! i=1 only one beam: enters rhob= bunch number density/np
-  i=1
-  bvol(i)=pi2*syb(i)*syb(i)    !the volume (mm^3) 
-  b_charge_den=rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mm^3
-  bcharge(i)=b_charge_den*bvol(i)  !unit length bunch charge in [pC]
-  Qbch(i)=rhob(i)*bvol(i)/lpvol
-  gvol_inv=dx_inv*dy_inv*dz_inv
-  gvol=1./gvol_inv
-  nb_over_np=rhob(1)
-!========== Normalization
-  jb_norm(i)=rhob(i)*gvol_inv*bvol(i)*sxb(i)/real(nb_tot(i),dp)
-!====bvol*gvol_inv/nb_tot = the beam cell number/beam macroparticles number
-! jb_norm = weight= 1/beam macroparticles per cell        
-! j0_norm = 1/plasma macroparticles per cell        
-  b_charge=b_charge_den
-  !==================
- end select
+  case(6) !  Proton one-beam section
+   ! uses l0=1mm
+   ! for fields E_u=GV/m = mc^2/(l0*e*E0)
+   ! n0= 10^11/cc =10^8/mm^3
+   !==============================
+   !  n_over_nc = initial plasma density/n0= ne/n0
+   !=======================
+   lam0=1.             !n [mm] is the unit of length
+   nm_fact=1.e+08      !electron density[mm^{-3}]
+   nc=1.0              !the plasma ref density is n0=10^11/cm^3=10^8/mm^3
+   nc0=2.*pi2*rc0*1.e-03
+   Wake=.true.
+   Solid_target=.false.
+   !=============================
+   !the squared adimensional plasma frequency on n0 density
+   ! the electron radius r_c=rc0*10^{-11}mm
+   !   r_c*l0*l0*n0= 10^{-3}*rc0
+   !omp^2=   4*pi*l0*l0*rc*n0=4*pi*rc0*10^{-3}
+   !=======================
+   omega_p=n_over_nc*nc0
+   ompe=E0*omega_p        ! the source term in Maxw.eqs: E0*omega_p^2
+   omega_p=sqrt(omega_p)
+   !======================
+   !============================
+   el_lp=1./omega_p    !skin depth in l0[mm] unit
+   lambda_p=pi2*el_lp  ! the plasma wavelength in l0 unit
+   lpvol=el_lp*el_lp*el_lp
+   gam0=gam(1)
+   u0_b=sqrt(gam0*gam0-1.)   !the beam x-momentum
+   bet0=u0_b/gam0            !the beam v_b/c norm velocity
+   w_speed=bet0
+   vbeam=0.0
+   Beam=.true.
+   Pbeam=.true.
+   Lorentz_fact(1)=Lorentz_fact(1)/E0
+   Lorentz_bfact(1)=Lorentz_fact(1)/proton_mass_norm
+   !==================================
+   nfield=6
+   nbfield=nfield
+   curr_ndim=ndim
+   mod_ord=4
+   dx=1./k0
+   jb_norm=1.
+   call set_grid(nx,ny,nz,nx_stretch,ny_stretch,k0,yx_rat,zx_rat)
+   dt=cfl/sqrt(dx_inv*dx_inv+dy_inv*dy_inv+dz_inv*dz_inv)
+   !====================
+   ! i=1 only one beam: enters rhob= bunch number density/np
+   i=1
+   bvol(i)=pi2*syb(i)*syb(i)    !the volume (mm^3)
+   b_charge_den=rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mm^3
+   bcharge(i)=b_charge_den*bvol(i)  !unit length bunch charge in [pC]
+   Qbch(i)=rhob(i)*bvol(i)/lpvol
+   gvol_inv=dx_inv*dy_inv*dz_inv
+   gvol=1./gvol_inv
+   nb_over_np=rhob(1)
+   !========== Normalization
+   jb_norm(i)=rhob(i)*gvol_inv*bvol(i)*sxb(i)/real(nb_tot(i),dp)
+   !====bvol*gvol_inv/nb_tot = the beam cell number/beam macroparticles number
+   ! jb_norm = weight= 1/beam macroparticles per cell
+   ! j0_norm = 1/plasma macroparticles per cell
+   b_charge=b_charge_den
+   !==================
+  end select
  endif
  if(Wake)nsp_run=1  !only electrons running
  !============================
@@ -514,8 +514,8 @@
   nmacro=nref*real(nx*ny*nz,dp)
   ! here the total initial nmacro particles
  endif
-!================================
-!  SET PARAM all cases
+ !================================
+ !  SET PARAM all cases
 
  !===============================================================
  !charge per macroparticle: np_per_nmacro=nm_fact*n_over_nc/nmacro
@@ -535,7 +535,7 @@
   nj_dim=curr_ndim+1
   pot_ndim=nj_dim+1
  endif
- 
+
 
  djc(1)=dx
  djc(2:3)=0.0

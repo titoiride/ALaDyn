@@ -153,7 +153,7 @@
  allocate(ebf_bunch(n1p,n2p,n3p,bcomp),STAT=AllocStatus)
  ebf_bunch=0.0
  fsize=fsize+ng*bcomp
-!============ external B-field allocated
+ !============ external B-field allocated
  allocate(ebf0_bunch(n1p,n2p,n3p,3),STAT=AllocStatus)
  ebf0_bunch=0.0
  fsize=fsize+3*ng

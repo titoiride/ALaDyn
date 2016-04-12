@@ -2176,10 +2176,10 @@
   call allreduce_dpreal(SUMV,ekt,ekm,9)
   corr2(1:8,ic)=np_norm*ekm(1:8)
   ekm(9)=np_norm*ekm(9)
-!    emy^2= corr2_y*corr2_py -mixed 
-                              !<yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
-!    emz^2= corr2_z*corr2_pz -mixed
-                              !<zz><p_zp_z>-(<zp_z>-<z><p_z>)^2
+  !    emy^2= corr2_y*corr2_py -mixed
+  !<yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
+  !    emz^2= corr2_z*corr2_pz -mixed
+  !<zz><p_zp_z>-(<zp_z>-<z><p_z>)^2
   emy(ic)=corr2(2,ic)*corr2(5,ic)-(corr2(7,ic)-mu(2,ic)*mu(5,ic))**2
   emz(ic)=corr2(3,ic)*corr2(6,ic)-(corr2(8,ic)-mu(3,ic)*mu(6,ic))**2
   if(emy(ic)>0.0)emy(ic)=sqrt(emy(ic))

@@ -31,48 +31,48 @@
  real(dp),allocatable :: rho_0(:),xpt(:,:),ypt(:,:),zpt(:,:),wghpt(:,:)
  real(dp),allocatable :: loc_ypt(:,:),loc_zpt(:,:),loc_wghy(:,:),loc_wghz(:,:)
  real(dp),allocatable :: loc_xpt(:,:),loc_wghx(:,:)
-!=====================
+ !=====================
 
  contains
  !--------------------------
-!DIR$ ATTRIBUTES INLINE :: p_realloc
+ !DIR$ ATTRIBUTES INLINE :: p_realloc
  subroutine p_realloc(pdata,npt_new,ndv)
-  type(species),intent(inout)  :: pdata
-  integer,intent(in) :: npt_new,ndv
-  integer :: AllocStatus, DeallocStatus
+ type(species),intent(inout)  :: pdata
+ integer,intent(in) :: npt_new,ndv
+ integer :: AllocStatus, DeallocStatus
 
-  if(allocated(pdata%part))then
-   if(size(pdata%part,1) < npt_new)then
-    deallocate(pdata%part,STAT=DeallocStatus)
-    if(DeallocStatus==0)allocate(pdata%part(1:npt_new,1:ndv),STAT=AllocStatus)
-   endif
-  else
-    allocate(pdata%part(1:npt_new,1:ndv),STAT=AllocStatus)
+ if(allocated(pdata%part))then
+  if(size(pdata%part,1) < npt_new)then
+   deallocate(pdata%part,STAT=DeallocStatus)
+   if(DeallocStatus==0)allocate(pdata%part(1:npt_new,1:ndv),STAT=AllocStatus)
   endif
-  pdata%part(:,:)=0.0
+ else
+  allocate(pdata%part(1:npt_new,1:ndv),STAT=AllocStatus)
+ endif
+ pdata%part(:,:)=0.0
  end subroutine p_realloc
-!========================
+ !========================
  subroutine v_realloc(vdata,npt_new,ndv)
-  real(dp),allocatable,intent(inout) :: vdata(:,:)
-  integer,intent(in) :: npt_new,ndv
-  integer :: AllocStatus, DeallocStatus
+ real(dp),allocatable,intent(inout) :: vdata(:,:)
+ integer,intent(in) :: npt_new,ndv
+ integer :: AllocStatus, DeallocStatus
 
-  if(allocated(vdata))then
-   if(size(vdata,1) < npt_new)then
-    deallocate(vdata,STAT=DeallocStatus)
-    allocate(vdata(1:npt_new,1:ndv),STAT=AllocStatus)
-   endif
-  else
-    allocate(vdata(1:npt_new,1:ndv),STAT=AllocStatus)
+ if(allocated(vdata))then
+  if(size(vdata,1) < npt_new)then
+   deallocate(vdata,STAT=DeallocStatus)
+   allocate(vdata(1:npt_new,1:ndv),STAT=AllocStatus)
   endif
-  vdata(:,:)=0.0
+ else
+  allocate(vdata(1:npt_new,1:ndv),STAT=AllocStatus)
+ endif
+ vdata(:,:)=0.0
  end subroutine v_realloc
-!===========================
+ !===========================
  subroutine p_alloc(npt_max,ncmp,np_s,ns,lp,mid,r_type,msize)
 
-  integer,intent(in) :: npt_max,ncmp,np_s(:),ns,lp,mid,r_type
-  integer,intent(inout) :: msize
-  integer :: nsize,ic,npt,AllocStatus
+ integer,intent(in) :: npt_max,ncmp,np_s(:),ns,lp,mid,r_type
+ integer,intent(inout) :: msize
+ integer :: nsize,ic,npt,AllocStatus
 
  npt=1
  select case(r_type)

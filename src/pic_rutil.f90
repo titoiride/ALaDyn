@@ -1138,7 +1138,7 @@
  !nsr(3)=nl_recv
  !nsr(4)=nr_recv
  ! ==> new particle number np_new= nl_recv-nl_send+ nr_recv-nr_send
-!      In part_prl_exchange()    exchanges particle data by mpi_send_recv
+ !      In part_prl_exchange()    exchanges particle data by mpi_send_recv
  !=====================================
  if(.not.moving_wind)then
   ymm=loc_ygrid(imody)%gmin
@@ -1151,13 +1151,13 @@
     np=loc_npart(imody,imodz,imodx,ic)
     np_new=np
     call traffic_size_eval(spec(ic),ymm,ymx,&
-    pe0y,pe1y,iby,2,np,n_sr,np_new)
+     pe0y,pe1y,iby,2,np,n_sr,np_new)
     np_new_allocate=max(1,np_new)
     np_rs=maxval(n_sr(1:4))
     if(np_rs >0)then
      call v_realloc(ebfp, np_new,ndv)
      call part_prl_exchange(spec(ic),ebfp,ymm,ymx,lbd_min,rbd_max,&
-                           pe0y,pe1y,iby,2,ndv,np,n_sr,npout)
+      pe0y,pe1y,iby,2,ndv,np,n_sr,npout)
      if(npout/=np_new)then
       write(6,*)'error in y-part count',mype,npout,np_new
       ier=99
@@ -1199,7 +1199,7 @@
      if(np_rs >0)then
       call v_realloc(ebfp, np_new,ndv)
       call part_prl_exchange(spec(ic),ebfp,zmm,zmx,lbd_min,rbd_max,&
-                              pe0z,pe1z,ibz,3,ndv,np,n_sr,npout)
+       pe0z,pe1z,ibz,3,ndv,np,n_sr,npout)
       if(npout/=np_new)then
        write(6,*)'error in x-part count',mype,npout,np_new
        ier=99
@@ -1245,7 +1245,7 @@
    if(np_rs >0)then
     call v_realloc(ebfp, np_new,ndv)
     call part_prl_exchange(spec(ic),ebfp,xmm,xmx,lbd_min,rbd_max,&
-                              pex0,pex1,ibx,1,ndv,np,n_sr,npout)
+     pex0,pex1,ibx,1,ndv,np,n_sr,npout)
     if(npout/=np_new)then
      write(6,*)'error in x-part count',mype,npout,np_new
      ier=99

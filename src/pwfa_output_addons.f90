@@ -33,13 +33,13 @@
 
  implicit none
  contains
- 
- 
- 
+
+
+
  !--- --- ---!
- 
- 
- 
+
+
+
  subroutine bunch_output_struct(tdia,dtdia,tout,dtout)
  real(dp),intent(inout) :: tdia,dtdia,tout,dtout
  dump_t1=MPI_Wtime()

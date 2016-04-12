@@ -442,26 +442,26 @@
 
 
  subroutine nml_consistency_check_number_of_particles_comp
-  if(all(ppc>=1)) then
-   call from_ppc_to_npx_npy_npz
-  else
-   np_per_zc=np_per_yc
-  endif
+ if(all(ppc>=1)) then
+  call from_ppc_to_npx_npy_npz
+ else
+  np_per_zc=np_per_yc
+ endif
  end subroutine nml_consistency_check_number_of_particles_comp
 
 
  subroutine nml_consistency_check_grid
-  if( zx_rat < 0. .and. yx_rat > 0. ) then
-    zx_rat = yx_rat
-    write(6,'(A)') "force zx_rat equal to yx_rat"
-  else if ( zx_rat > 0. .and. yx_rat < 0. ) then
-    yx_rat = zx_rat
-    write(6,'(A)') "force yx_rat equal to zx_rat"
-  else if ( zx_rat < 0. .and. yx_rat < 0. ) then
-    yx_rat = 1.
-    zx_rat = 1.
-    write(6,'(A)') "force yx_rat=1 and zx_rat=1"
-  endif
+ if( zx_rat < 0. .and. yx_rat > 0. ) then
+  zx_rat = yx_rat
+  write(6,'(A)') "force zx_rat equal to yx_rat"
+ else if ( zx_rat > 0. .and. yx_rat < 0. ) then
+  yx_rat = zx_rat
+  write(6,'(A)') "force yx_rat equal to zx_rat"
+ else if ( zx_rat < 0. .and. yx_rat < 0. ) then
+  yx_rat = 1.
+  zx_rat = 1.
+  write(6,'(A)') "force yx_rat=1 and zx_rat=1"
+ endif
  end subroutine nml_consistency_check_grid
 
 
@@ -473,20 +473,20 @@
 
  !--->case 0: ppc is the only defined (new nml)
  if(all(ppc>=1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1 ) ) then
-   call from_ppc_to_npx_npy_npz
+  call from_ppc_to_npx_npy_npz
 
- !--->case 1: np_per_zc not defined: copy from np_per_yc
+  !--->case 1: np_per_zc not defined: copy from np_per_yc
  elseif( all(ppc==-1) .and. all(np_per_xc>=0) .and. all(np_per_yc>=0) .and. all(np_per_zc==-1) ) then
   np_per_zc=np_per_yc
 
- !--->case 3: new and old methods both defined
+  !--->case 3: new and old methods both defined
  elseif( all(ppc>=1) .and. ( all(np_per_xc>=1) .or. all(np_per_yc>=1) .or. all(np_per_zc>=1) ) ) then
   np_per_xc=-1
   np_per_yc=-1
   np_per_zc=-1
   call from_ppc_to_npx_npy_npz
 
- !--->case default
+  !--->case default
  else
   ppc=8
   call from_ppc_to_npx_npy_npz
