@@ -1055,7 +1055,7 @@
     write(6,*)'ionization active in ion species ',nsp_ionz-1
     write(6,*)' Z_in,  A_numb,  Mass_numb '
     do i=1,nsp_ionz-1
-     write(6,'(3i6)')ion_min(i),atomic_number(i),mass_number(i)
+     write(6,'(2i6,e11.4)')ion_min(i),atomic_number(i),mass_number(i)
     end do
    end if
    select case(dmodel_id)
