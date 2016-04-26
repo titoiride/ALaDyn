@@ -1354,6 +1354,345 @@
 
  !============
  end subroutine multi_layer_multisp
+!=======================
+ subroutine multisp_target(nyh,xf0)
+
+ integer,intent(in) :: nyh
+ real(dp),intent(in) :: xf0
+ integer :: p,ip
+ integer :: l,i,i1,i2,ic
+ integer :: np_per_zcell(6),n_peak
+ integer :: nptx_loc(7)
+ integer :: npty_layer(7),npty_ne,nptz_ne
+ integer :: npmax,nps_loc(4)
+ real(dp) :: uu,yy,dxip,dpy,np1,np2,np1_loc
+ real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
+ real(dp) :: xfsh,l_inv
+ integer :: nxl(6),nyl1
+ integer :: ip_ion,ip_el,ip_pr,npyc(7)
+ real(dp),allocatable :: wy(:,:),wz(:,:)
+ !=================
+ xp_min=xmin
+ xp_max=xmax
+ np_per_zcell(1:6)=1
+ !!+++++++++++++++++++++++++++++++
+ nxl=0
+ np1=n1_over_n
+ np2=n2_over_n
+ if(n_over_nc >0.0)then
+  np1=np1/n_over_nc
+  np2=np2/n_over_nc
+ endif
+ !========= gridding the transverese target size
+ nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
+ yp_min=ymin_t
+ yp_max=ymax_t
+ !=============================
+ ! Multispecies     nsp=4 required
+ ! Particles distribution np_per_yc(1:3) and np_per_xc(1:3) central target
+ ! (El+Z1+ Z3)
+ !                        np_per_yc(5:6) and np_per_xc(5:6) 
+ !                        contaminants (El+Z2) in front and rear layers                        
+ !=============================================
+ !WARNING  nm_per_cell(1:3) and mp_per_cell(5:6) have to be set in a way global
+ !zero charge per cell is assured
+ ! In central layer:
+ ! Electron number mp_per_cell(1)= Z1*mp_per_cell(2) +Z3*mp_per_cell(3)
+ !=============================
+ npty=maxval(np_per_yc(1:6))
+ npty=nyh*npty
+ nptz=1
+ if(ndim==3)then
+  np_per_zcell(1:6)=np_per_zc(1:6)
+  zp_min=zmin_t    !-Lz
+  zp_max=zmax_t    !+Lz
+  nptz=maxval(np_per_zc(1:6))
+  nptz=nyh*nptz
+ endif
+ allocate(ypt(npty+1,7))
+ allocate(zpt(nptz+1,7))
+ allocate(wy(npty+1,7))
+ allocate(wz(nptz+1,7))
+ ypt=0.
+ zpt=0.
+ wy=1.
+ wz=1.
+ !==================
+ allocate(loc_jmax(0:npe_yloc-1,1:7))
+ allocate(loc_kmax(0:npe_zloc-1,1:7))
+ allocate(loc_imax(0:npe_xloc-1,1:7))
+ !====================
+ npyc(1:2)=np_per_yc(5:6)       !contaminants
+ npyc(3:5)=np_per_yc(1:3)  ! central target (El + two(Z1-Z3) ion species 
+ npyc(6:7)=npyc(1:2)
+ do ic=1,7
+  npty_layer(ic)=nyh*npyc(ic)
+ end do
+ nptz_ne=1
+ do ic=1,7
+  npty_ne=npty_layer(ic)
+  dpy=(yp_max-yp_min)/real(npty_ne,dp)
+  do i=1,npty_ne
+   ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
+  enddo
+  if(Stretch)then
+   yy=str_ygrid%smin
+   if(yy >yp_min)then
+    dpy=dyi/real(npyc(ic),dp)
+    i1=(str_ygrid%sind(1)-nyl1+1)*npyc(ic)
+    i2=npty_ne-i1
+    do i=1,i1
+     dxip=dpy*(real(i-i1,dp)-0.5)
+     ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
+     wy(i,ic)=1./(cos(dxip)*cos(dxip))
+    enddo
+    dxip=dy/real(npyc(ic),dp)
+    do i=i1+1,i2
+     ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
+    end do
+    do i=i2+1,npty_ne
+     dxip=dpy*(real(i-i2,dp)-0.5)
+     ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
+     wy(i,ic)=1./(cos(dxip)*cos(dxip))
+    enddo
+   endif
+  endif
+  nptz_ne=1
+  if(ndim==3)then
+   zpt(1:npty_ne,ic)=ypt(1:npty_ne,ic)
+   wz(1:npty_ne,ic)=wy(1:npty_ne,ic)
+   nptz_ne=npty_ne
+  endif
+  call set_pgrid_ind(npty_ne,nptz_ne,ic)
+ end do
+ !===========================
+ xtot=0.0
+ do i=1,5
+  nxl(i)=nint(dx_inv*lpx(i))
+  lpx(i)=nxl(i)*dx
+  xtot=xtot+lpx(i)
+ end do
+ xfsh=xf0+lpx(7)
+ targ_in=xfsh
+ targ_end=targ_in+xtot
+ ! Species x-distribution
+ !=  np_per_xc(1:3) electrons and Z1-Z3 ions in central layer 
+ !=  np_per_xc(5:6) electrons and Z2-ions front and rear side contaminants (same
+ !composition)
+!======================================
+ nptx_loc(1:2)=nxl(1)*np_per_xc(5:6)
+ nptx_loc(3:5)=nxl(3)*np_per_xc(1:3)
+ nptx_loc(6:7)=nxl(5)*np_per_xc(5:6)
+!============ nptx(nsp)  distribution
+ nptx(1)=nptx_loc(1)+nptx_loc(3)+nptx_loc(6)  !electrons
+ nptx(2)=nptx_loc(4)                          !Z1-A1 species
+ nptx(3)=nptx_loc(2)+nptx_loc(6)              !Z2-A2  species in nxl(1) and nxl(5) layer
+ nptx(4)=nptx_loc(5)                          !Z3-A3 species (for nsp=4)
+ nptx_max=maxval(nptx_loc(1:7))
+ !=======================
+ allocate(xpt(nptx_max,7))
+ allocate(wghpt(nptx_max,7))
+
+ allocate(loc_xpt(nptx_max,7))
+ allocate(loc_wghx(nptx_max,7))
+ wghpt(1:nptx_max,1:7)=1.
+ !================ local y-z part coordinates==========
+ loc_npty(1:7)=loc_jmax(imody,1:7)
+ loc_nptz(1:7)=loc_kmax(imodz,1:7)
+ !=============================
+ npty_ne=maxval(loc_npty(1:7))
+ nptz_ne=maxval(loc_nptz(1:7))
+ if(npty_ne >0)then
+  allocate(loc_wghy(npty_ne,7))
+  allocate(loc_ypt(npty_ne,7))
+  loc_wghy=1.
+  loc_ypt=0.
+ endif
+ if(nptz_ne >0)then
+  allocate(loc_wghz(nptz_ne,7))
+  allocate(loc_zpt(nptz_ne,7))
+  loc_wghz=1.
+  loc_zpt=0.0
+ endif
+ call mpi_yz_part_distrib(7,loc_npty,loc_nptz,npty_layer,npty_layer,&
+                          ymin_t,zmin_t,wy,wz)
+ !==================
+ ! nsp ordering: electrons+ Z1 ions + Z2 ions 
+ ! first and last layers: electrons and Z3 (protons) ions
+ loc_imax(imodx,1:7)=nptx_loc(1:7)
+ nps_loc=0
+!==========================================
+ if(nxl(1) >0)then                  !first contaminant layer
+  do ic=1,2
+   n_peak=nptx_loc(ic)
+   do i=1,n_peak
+    uu=(real(i,dp)-0.5)/real(n_peak,dp)
+    xpt(i,ic)=xfsh+lpx(1)*uu
+   end do
+  end do
+  wghpt(1:nptx_loc(1),1)=np1*j0_norm    !El
+  wghpt(1:nptx_loc(2),2)=np1*j0_norm    !Z2-A2
+  if(mp_per_cell(5) >0)then
+   uu=ratio_mpc(5)   !float(mp_per_cell(1))/float(mp_per_cell(5))
+   wghpt(1:nptx_loc(1),1)=wghpt(1:nptx_loc(1),1)*uu
+   uu=ratio_mpc(6)/real(ion_min(2),dp)    !float(mp_per_cell(1))/Z2*float(mp_per_cell(6))
+   wghpt(1:nptx_loc(2),2)=wghpt(1:nptx_loc(2),2)*uu
+  endif
+  xfsh=xfsh+lpx(1)
+  !=========== Distributes on x-MPI tasks
+  do ic=1,2
+   i1=0
+   do i=1,nptx_loc(ic)
+    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
+     .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
+    i1=i1+1
+    loc_xpt(i1,ic)=xpt(i,ic)
+    loc_wghx(i1,ic)=wghpt(i,ic)
+    endif
+   end do
+   loc_imax(imodx,ic)=i1
+  enddo
+  !========================
+  !========================
+  p=imodx
+  l=imody
+  ip=imodz
+  ! Counts particles (e+Z2 ions)
+
+  nps_loc(1)=nps_loc(1)+&
+   loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
+  nps_loc(3)=nps_loc(3)+&
+   loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
+
+ endif
+ !------------------------------
+ ! Electrons and (Z1+Z3)_ions : central layer
+ ! x distribution
+ !====================
+ do ic=3,5
+  n_peak=nptx_loc(ic)
+  do i=1,n_peak
+   xpt(i,ic)=xfsh+(lpx(2)+lpx(3))*(real(i,dp)-0.5)/real(n_peak,dp)
+   wghpt(i,ic)=j0_norm
+  end do
+ end do
+!=============================
+! Charge equilibria mp_per_cell(4)*Z1 +mp_per_cell(5)*Z3= mp_per_cell(1)
+!==========================
+ xfsh=xfsh+lpx(3)+lpx(2)
+ !=========== Distributes on x-MPI tasks
+ do ic=3,5
+  i1=0
+  do i=1,nptx_loc(ic)
+   if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
+    .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
+   i1=i1+1
+   loc_xpt(i1,ic)=xpt(i,ic)
+   loc_wghx(i1,ic)=wghpt(i,ic)
+   endif
+  end do
+  loc_imax(imodx,ic)=i1
+ end do
+ p=imodx
+ l=imody
+ ip=imodz
+
+ nps_loc(1)=nps_loc(1)+&
+  loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
+ nps_loc(2)=nps_loc(2)+&
+  loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
+ if(nsp >3)then
+  nps_loc(4)=nps_loc(4)+&
+   loc_imax(p,5)*loc_jmax(l,5)*loc_kmax(ip,5)
+ endif
+ !============================
+ if(lpx(5) >0.0)then
+  do ic=6,7
+   n_peak=nptx_loc(ic)
+   do i=1,n_peak
+    xpt(i,ic)=xfsh+lpx(5)*(real(i,dp)-0.5)/real(n_peak,dp)
+   end do
+   wghpt(1:n_peak,ic)=np2*j0_norm
+  end do
+  if(mp_per_cell(5) >0)then
+   uu=ratio_mpc(5)   !float(mp_per_cell(1))/float(mp_per_cell(5))
+   wghpt(1:nptx_loc(6),6)=wghpt(1:nptx_loc(6),6)*uu
+   uu=ratio_mpc(6)/real(ion_min(2),dp)         !float(mp_per_cell(1))/(Z2*float(mp_per_cell(6))
+   wghpt(1:nptx_loc(7),7)=wghpt(1:nptx_loc(7),7)*uu
+  endif
+  xfsh=xfsh+lpx(5)
+  !===============================
+  do ic=6,7
+   i1=0
+   do i=1,nptx_loc(ic)
+    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
+     .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
+    i1=i1+1
+    loc_xpt(i1,ic)=xpt(i,ic)
+    loc_wghx(i1,ic)=wghpt(i,ic)
+    endif
+   end do
+   loc_imax(imodx,ic)=i1
+  end do
+  p=imodx
+  l=imody
+  ip=imodz
+
+  nps_loc(1)=nps_loc(1)+&
+   loc_imax(p,6)*loc_jmax(l,6)*loc_kmax(ip,6)
+  nps_loc(3)=nps_loc(3)+&
+   loc_imax(p,7)*loc_jmax(l,7)*loc_kmax(ip,7)
+
+ endif
+ !======================
+ npmax=maxval(nps_loc(1:nsp))
+ npmax=max(npmax,1)
+ call p_alloc(npmax,nd2+1,nps_loc,nsp,LPf_ord,1,1,mem_psize)
+ !===========================
+ ip_el=0
+ ip_pr=0
+ ip_ion=0
+ !============
+ ! The first electron-H1 layer
+ if(nxl(1) >0)then
+  p=0
+  i2=loc_imax(imodx,1)
+  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
+  p=0
+  i2=loc_imax(imodx,2)
+  call pspecies_distribute(spec(3),t0_pl(3),unit_charge(3),p,2,i2,ip_pr)
+ endif
+ !=========================
+ ! The second solid electron-Z1-Z3 layer
+ p=ip_el
+ i2=loc_imax(imodx,3)
+ call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,3,i2,ip_el)
+ p=0
+ i2=loc_imax(imodx,4)
+ call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,4,i2,ip_ion)
+ if(nsp >3)then
+  p=0
+  i2=loc_imax(imodx,5)
+  call pspecies_distribute(spec(4),t0_pl(4),unit_charge(4),p,5,i2,ip_ion)
+ endif
+ !============
+ ! The third electron-proton layer
+ !=========================
+ if(nxl(5) >0.0)then
+  p=ip_el
+  i2=loc_imax(imodx,6)
+  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,6,i2,ip)
+  p=ip_pr
+  i2=loc_imax(imodx,7)
+  call pspecies_distribute(spec(3),t0_pl(3),unit_charge(3),p,7,i2,ip)
+ endif
+
+ do ic=1,nsp
+  loc_npart(imody,imodz,imodx,ic)=nps_loc(ic)
+ end do
+
+ !============
+ end subroutine multisp_target
  !=====================
  subroutine one_layer_nano_wires(nyh,xf0)
 
@@ -1714,326 +2053,6 @@
  end do
 
  end subroutine one_layer_nano_wires
- subroutine preplasma_nano_wires(nyh,xf0)
- integer,intent(in) :: nyh
- real(dp),intent(in) :: xf0
- integer :: p,ip
- integer :: l,i,i1,i2,ic
- integer :: np_per_zcell(6),n_peak
- integer :: nptx_loc(6)
- integer :: nlhy,npty_layer(6),npty_ne,nptz_ne
- integer :: npmax,nps_loc(4)
- real(dp) :: n_pp,uu,dpy,np1,np2,rat
- real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
- real(dp) :: loc_ymp,xfsh,dlpy,tot_lpy
- integer :: z2,nxl(6),nyl1,nlpy
- integer :: ip_ion,ip_el,npyc(6),nwires
- real(dp),allocatable :: wy(:,:),wz(:,:)
- !=================
- !++++++++++++++++ WARNING
- !    ONLY in layer (3) n_over_nc and layer (4) n2_over_nc  activated
- !============================
- xp_min=xmin
- xp_max=xmax
- np_per_zcell(1:6)=1
- !!+++++++++++++++++++++++++++++++
- nxl=0
- z2=ion_min(1)
- if(nsp==3)z2=ion_min(2)
- np1=n1_over_n
- np2=n2_over_n
- if(n_over_nc >0.0)then
-  np1=np1/n_over_nc
-  np2=np2/n_over_nc
- endif
- !========= gridding the transverese target size
- nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
- yp_min=ymin_t
- yp_max=ymax_t
- !================================
- tot_lpy=lpy(1)+lpy(2)     !distance among elements (holes+nanowire)`
- nwires=nint((yp_max-yp_min)/tot_lpy)    !numbers of lpy+dlpy elements
- nlpy=nint(dy_inv*lpy(1)) ! cell numbers in dlpy
- nlhy=nint(dy_inv*lpy(2)) ! cell numbers in filled holes
- lpy(1)=dy*nlpy
- lpy(2)=dy*nlhy
- tot_lpy=lpy(1)+lpy(2)     !distance among elements (holes+nanowire)`
- dlpy=lpy(1)             !nanowire (y,z) thickness
- nwires=int(real(nyh,dp)/real(nlhy+nlpy,dp))
- !======================
- rat=lpy(2)/lpy(1)
- if(ndim==3)rat=rat*rat
- n_pp=1.-rat*np1     !the nanowire residual density/n_c in presence of filled gaps
- !with np1 density
- if(pe0)write(6,*)'nwires with pp density',n_pp
- !================================
- if(pe0)then
-  write(6,'(a22,i6)')' Nano-element total number ',nwires
-  write(6,'(a23,i6)')' Grid-points per nanowire ',nlpy
-  write(6,'(a26,i6)')' G-points per filled hole ',nlhy
- endif
- !=============================
- ! Multispecies
- !=============================
- npty=maxval(np_per_yc(1:6))
- npty=nyh*npty
- nptz=1
- if(ndim==3)then
-  np_per_zcell(1:6)=np_per_zc(1:6)
-  zp_min=zmin_t    !-Lz
-  zp_max=zmax_t    !+Lz
-  nptz=maxval(np_per_zc(1:6))
-  nptz=nyh*nptz
- endif
- allocate(ypt(npty+1,6))
- allocate(zpt(nptz+1,6))
- allocate(wy(npty+1,6))
- allocate(wz(nptz+1,6))
- ypt=0.
- zpt=0.
- wy=1.
- wz=1.
- !==================
- allocate(loc_jmax(0:npe_yloc-1,1:6))
- allocate(loc_kmax(0:npe_zloc-1,1:6))
- allocate(loc_imax(0:npe_xloc-1,1:6))
- !====================
- ! Layers space ordering(1:4)
- ! [1:2 electon-Z1-ions inanowires,3:6 electron-Z1-ions embedded preplasma]
- !===============
- npyc(1:4)=np_per_yc(1:4)  !layer of nano_wires =>in nxl(2) and nxl(3)
- nptz_ne=1
- do ic=1,4
-  npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
-  i2=0
-  loc_ymp=yp_min+lpy(2)
-  do i1=1,nwires                     !layers of lpy(2)+dlpy element
-   dpy=dlpy/real(npty_ne,dp)
-   do i=1,npty_ne
-    ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.5)
-    wy(i+i2,ic)=1.
-   enddo
-   i2=i2+npty_ne
-   loc_ymp=loc_ymp+tot_lpy
-  end do
-  npty_layer(ic)=i2
- end do
- !===========================
- npyc(5:6)=np_per_yc(5:6)  !layer of  filled holes => nxl(2)
- do ic=5,6
-  i2=0
-  loc_ymp=yp_min
-  npty_ne=nlhy*npyc(ic)            !number of yp points in the hole
-  do i1=1,nwires                     !layers of lpy(2)+dlpy element
-   dpy=lpy(2)/real(npty_ne,dp)        !dyp spacing in lpy(2) hole layer
-   do i=1,npty_ne
-    ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.5)
-    wy(i+i2,ic)=1.
-   enddo
-   i2=i2+npty_ne
-   loc_ymp=loc_ymp+tot_lpy
-  enddo
-  npty_layer(ic)=i2
-  !========================
- end do
- do ic=1,6
-  npty_ne=npty_layer(ic)
-  if(ndim==3)then
-   zpt(1:npty_ne,ic)=ypt(1:npty_ne,ic)
-   wz(1:npty_ne,ic)=wy(1:npty_ne,ic)
-   nptz_ne=npty_ne
-  endif
-  call set_pgrid_ind(npty_ne,nptz_ne,ic)
- enddo
- !===========================
- xtot=0.0
- do i=2,3
-  nxl(i)=nint(dx_inv*lpx(i))
-  lpx(i)=nxl(i)*dx
-  xtot=xtot+lpx(i)
- end do
- xfsh=xf0+lpx(7)
- targ_in=xfsh
- targ_end=targ_in+xtot
- !  Input particles
- !========= np_per_xc(1:2) electrons and Z1 ions in the lpx(3) nanowires target
- !========= np_per_xc(3:4) electrons and Z2 ions in the lpx(2) nanowires+filled holes target
- !  Particles grid ordering
- !  only nxl(2) nxl(3) layers activated
- nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !nanowires  electrons+Z1-ions density
- nptx_loc(3:6)=nxl(2)*np_per_xc(3:6) ! electron,Z1-ions preplasma filling the nlx(2) layer of nanowires
-
- nptx_max=maxval(nptx_loc(1:6))
- !=======================
- allocate(xpt(nptx_max,6))
- allocate(wghpt(nptx_max,6))
-
- allocate(loc_xpt(nptx_max,6))
- allocate(loc_wghx(nptx_max,6))
- wghpt(1:nptx_max,1:6)=1.
- !================ local y-z part coordinates==========
- loc_npty(1:6)=loc_jmax(imody,1:6)
- loc_nptz(1:6)=loc_kmax(imodz,1:6)
- !=============================
- npty_ne=maxval(loc_npty(1:6))
- nptz_ne=maxval(loc_nptz(1:6))
- if(npty_ne >0)then
-  allocate(loc_wghy(npty_ne,6))
-  allocate(loc_ypt(npty_ne,6))
-  loc_wghy=1.
-  loc_ypt=0.0
- endif
- if(nptz_ne >0)then
-  allocate(loc_wghz(nptz_ne,6))
-  allocate(loc_zpt(nptz_ne,6))
-  loc_wghz=1.
-  loc_zpt=0.0
- endif
-
- call mpi_yz_part_distrib(6,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wy,wz)
- !========================
- loc_imax(imodx,1:6)=nptx_loc(1:6)
- nps_loc(1:nsp)=0
- !========== nwires + filled gaps (el+Z_nsp ion)
-
- if(nxl(2) >0)then
-  do ic=3,4               !nanowires
-   n_peak=nptx_loc(ic)
-   do i=1,n_peak
-    xpt(i,ic)=xfsh+lpx(2)*(real(i,dp)-0.5)/real(n_peak,dp)
-    wghpt(i,ic)=n_pp/real(mp_per_cell(ic),dp)
-   end do
-   if(ic==4)then
-    wghpt(1:n_peak,ic)=wghpt(1:n_peak,ic)/real(z2,dp)
-   endif
-  end do
-  do ic=5,6               !filled gaps
-   n_peak=nptx_loc(ic)
-   do i=1,n_peak
-    xpt(i,ic)=xfsh+lpx(2)*(real(i,dp)-0.5)/real(n_peak,dp)
-    wghpt(i,ic)=np1/real(mp_per_cell(ic),dp)
-   end do
-   if(ic==6)then
-    wghpt(1:n_peak,ic)=wghpt(1:n_peak,ic)/real(z2,dp)
-   endif
-  end do
-  if(pe0)then
-   write(6,'(a9,4e11.4)')'weightsi',wghpt(1,3:6)
-  endif
-  xfsh=xfsh+lpx(2)
-  !===============
-  do ic=3,6
-   i1=0
-   do i=1,nptx_loc(ic)
-    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
-     .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
-    i1=i1+1
-    loc_xpt(i1,ic)=xpt(i,ic)
-    loc_wghx(i1,ic)=wghpt(i,ic)
-    endif
-   end do
-   loc_imax(imodx,ic)=i1
-  end do
-  p=imodx
-  l=imody
-  ip=imodz
-
-  nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
-  nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,5)*loc_jmax(l,5)*loc_kmax(ip,5)
-  nps_loc(2)=nps_loc(2)+&
-   loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
-  nps_loc(2)=nps_loc(2)+&
-   loc_imax(p,6)*loc_jmax(l,6)*loc_kmax(ip,6)
- endif
-
- ! Nanowires x-layer: electrons and Z1-ions
- if(nxl(3) >0)then
-  do ic=1,2
-   n_peak=nptx_loc(ic)
-   do i=1,n_peak
-    uu=(real(i,dp)-0.5)/real(n_peak,dp)
-    xpt(i,ic)=xfsh+lpx(3)*uu
-    wghpt(i,ic)=j0_norm          !1/mp_per_cell(1)
-   end do
-  end do
-  ic=2
-  n_peak=nptx_loc(ic)
-  if(mp_per_cell(ic) >0)then
-   uu=ratio_mpc(ic)/real(ion_min(1),dp) !float(mp_per_cell(1))/float(mp_per_cell(ic))
-   wghpt(1:n_peak,ic)=wghpt(1:n_peak,ic)*uu
-  endif
-  xfsh=xfsh+lpx(3)
-  !============= first x-layer distributed on locx mpi tasks
-  do ic=1,2
-   i1=0
-   do i=1,nptx_loc(ic)
-    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
-     .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
-    i1=i1+1
-    loc_xpt(i1,ic)=xpt(i,ic)
-    loc_wghx(i1,ic)=wghpt(i,ic)
-    endif
-   end do
-   loc_imax(imodx,ic)=i1
-  enddo
-  !========================
-  !========================
-  p=imodx
-  l=imody
-  ip=imodz
-  ! Counts particles in lx3 layer (el+Z1) nanowires
-
-  nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
-  nps_loc(2)=nps_loc(2)+&
-   loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
-
- endif
- !------------------------------
- ! only nanowires Electrons and Z1_ions
- ! x distribution
- !====================
- !==============
- npmax=maxval(nps_loc(1:nsp))
- npmax=max(npmax,1)
- call p_alloc(npmax,nd2+1,nps_loc,nsp,LPf_ord,1,1,mem_psize)
- !===========================
- ip_el=0
- ip_ion=0
- ! The first electron-Z2-ion solid layer
- if(nxl(2) >0)then
-  p=ip_el
-  i2=loc_imax(imodx,3)
-  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,3,i2,ip_el)
-  i2=loc_imax(imodx,5)
-  p=ip_el
-  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,5,i2,ip_el)
-
-  p=0
-  i2=loc_imax(imodx,4)
-  call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,4,i2,ip_ion)
-  i2=loc_imax(imodx,6)
-  p=ip_ion
-  call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,6,i2,ip_ion)
-  ! if nsp=2 the same as nanowire layer
- endif
- !============
- ! The central electron-Z1-ions nanowires layer
- p=ip_el
- i2=loc_imax(imodx,1)
- call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
- p=ip_ion
- i2=loc_imax(imodx,2)
- call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,2,i2,ip_ion)
- !=========================
- do ic=1,nsp
-  loc_npart(imody,imodz,imodx,ic)=nps_loc(ic)
- end do
-
- end subroutine preplasma_nano_wires
  !============
  subroutine one_layer_nano_tubes(nyh,xf0)
 
@@ -2349,20 +2368,25 @@
  integer :: tot_nploc(npe)
  !=================
  if(id < 3)then
-  call one_layer_multisp(id,ny_targ,xf0)  !e+Z1+Z2
+  call one_layer_multisp(id,ny_targ,xf0)  !e+Z1+Z2 distributed along the x-layer
  endif
  select case(id)
  case(3)
   call preplasma_multisp(ny_targ,xf0) ! (e+Z1) preplasma and central target
  case(4)
-  call multi_layer_multisp(ny_targ,xf0) !(e+Z2) foam+
+  call multi_layer_multisp(ny_targ,xf0) 
+  !(e+Z2) foam
   !(e+Z1+Z3) central layer
   !+ (e+Z2)coating
   !============warning exponential ramp (in layer 2) always using (e+Z1) species
  case(5)
-  call one_layer_nano_wires(ny_targ,xf0)
+  call multisp_target(ny_targ,xf0) 
+  !(e+Z2) coating
+  !(e+Z1+Z3) central layer
+  !+ (e+Z2)coating
  case(6)
-  call preplasma_nano_wires(ny_targ,xf0)
+  call one_layer_nano_wires(ny_targ,xf0)  
+           !e+Z1 wires, e+Z2 bulk. interwire low density (e+Z1) plasma allowed
  case(7)
   call one_layer_nano_tubes(ny_targ,xf0)
  end select

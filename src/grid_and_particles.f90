@@ -29,7 +29,7 @@
  integer :: nx,ny,nz,nx_loc,nx1_loc,ny_loc,nz_loc
  integer :: nxcell,nycell,nzcell,ny_targ,npty,nptz,nptx_max
  integer :: ibx,iby,ibz
- integer :: loc_npty(6),loc_nptz(6),nptx(6),loc_nptx(6)
+ integer :: loc_npty(8),loc_nptz(8),nptx(8),loc_nptx(8)
  integer :: pml_size,nx_stretch,ny_stretch,nz_stretch
  integer :: mp_per_cell(6),nref
  integer :: np_per_xc(Ref_nlayer),np_per_yc(Ref_nlayer),np_per_zc(Ref_nlayer),ppc(Ref_nlayer)

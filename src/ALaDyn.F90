@@ -1055,7 +1055,7 @@
     write(6,*)'ionization active in ion species ',nsp_ionz-1
     write(6,*)' Z_in,  A_numb,  Mass_numb '
     do i=1,nsp_ionz-1
-     write(6,'(2i6,e11.4)')ion_min(i),atomic_number(i),mass_number(i)
+     write(6,'(2i6,f4.1)')ion_min(i),atomic_number(i),mass_number(i)
     end do
    end if
    select case(dmodel_id)
@@ -1076,6 +1076,12 @@
     if(lpx(2)>0.0)write(6,'(a21,e11.4)')' Ramp size ',lpx(2)
     if(lpx(5)>0.0)write(6,*)' post-layer H contaminants attached'
    case(5)
+    write(6,*)' Three species [El,Z1,Z3] target +[El,Z2] contaminants '
+    write(6,*)'x-layer sizes'
+    write(6,'(3e11.4)')lpx(1),lpx(3),lpx(5)
+    write(6,*)'Layer density'
+    write(6,'(3e11.4)')n1_over_n,n_over_nc,n2_over_n
+   case(6)
     write(6,*)' Three species [El,Z]nanowires+ bulk '
     write(6,*)'wire size,interwire distance filling fact'
     if(ndim <3)then
@@ -1084,7 +1090,7 @@
      write(6,'(3e11.4)')lpy(1),lpy(2),(lpy(1)/(lpy(1)+lpy(2)))**2
     endif
     write(6,*)'Boundaries',ibx,iby
-   case(6)
+   case(7)
     write(6,*)' One layer [El,Z] nano-tubes'
     write(6,*)' 2R_ext    2dr       filling fact '
     write(6,'(3e11.4)')lpy(1)+lpy(2),lpy(1),lpy(3)

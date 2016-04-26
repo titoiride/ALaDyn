@@ -1,4 +1,4 @@
- !*****************************************************************************************************!
+ !4*****************************************************************************************************!
  !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
  !*****************************************************************************************************!
 
@@ -65,7 +65,7 @@
   endif
   do n=1,np
    yp=pt(n,ic1)
-   yp_loc=ximn+dy_inv*(yp-ys)
+   yp_loc=dy_inv*(yp-ym)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    pt(n,ic1)= yp_loc
   end do
@@ -103,7 +103,7 @@
   endif
   do n=1,np
    zp=pt(n,ic1)
-   zp_loc=zimn+dz_inv*(zp-zs)
+   zp_loc=dz_inv*(zp-zm)
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
    pt(n,ic1)= zp_loc
   end do
@@ -164,7 +164,7 @@
   do n=1,np
    yp=pt(n,ic1)
    zp=pt(n,ic2)
-   yp_loc=dy_inv*(yp-ys)
+   yp_loc=dy_inv*(yp-ym)
    zp_loc=zimn+dz_inv*(zp-zs)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    if(zp < zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
@@ -181,7 +181,7 @@
   do n=1,np
    yp=pt(n,ic1)
    zp=pt(n,ic2)
-   yp_loc=dy_inv*(yp-ys)
+   yp_loc=dy_inv*(yp-ym)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    pt(n,ic1)=yp_loc
    pt(n,ic2)=dz_inv*(zp-zm)
@@ -202,8 +202,8 @@
   do n=1,np
    yp=pt(n,ic1)
    zp=pt(n,ic2)
-   yp_loc=ximn+dy_inv*(yp-ys)
-   zp_loc=zimn+dz_inv*(zp-zs)
+   yp_loc=dy_inv*(yp-ym)
+   zp_loc=dz_inv*(zp-zm)
    if(yp > ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
    pt(n,ic1)=yp_loc
@@ -220,7 +220,7 @@
    yp=pt(n,ic1)
    pt(n,ic1)=dy_inv*(yp-ym)
    zp=pt(n,ic2)
-   zp_loc=zimn+dz_inv*(zp-zs)
+   zp_loc=dz_inv*(zp-zm)
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
    pt(n,ic2)=zp_loc
   end do
@@ -237,7 +237,7 @@
    yp=pt(n,ic1)
    zp=pt(n,ic2)
    yp_loc=ximn+dy_inv*(yp-ys)
-   zp_loc=zimn+dz_inv*(zp-zs)
+   zp_loc=dz_inv*(zp-zm)
    if(yp < ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    if(zp > zs)zp_loc=zimn+dzi_inv*atan(sz_rat*(zp-zs))
    pt(n,ic1)=yp_loc
@@ -249,7 +249,7 @@
   do n=1,np
    yp=pt(n,ic1)
    zp=pt(n,ic2)
-   yp_loc=dy_inv*(yp-ys)
+   yp_loc=ximn+dy_inv*(yp-ys)
    if(yp < ys)yp_loc=ximn+dyi_inv*atan(sy_rat*(yp-ys))
    pt(n,ic1)=yp_loc
    pt(n,ic2)=dz_inv*(zp-zm)
@@ -2224,6 +2224,14 @@
  !===============================================
  ! enters av(1)=|a|^2 envelope at integer grid nodes
  ! exit |a|^2/2 and grad[|a|^2]/2 at the particle positions
+ !=========================
+! Particle positions assigned using quadratic splines
+!  F=|a|^2/2
+!  ap(1)= [D_x(F)](i+1/2,j,k)
+!  ap(2)= [D_y(F)](i,j+1/2,k)
+!  ap(3)= [D_z(F)](i,j,k+1/2)
+!  ap(4)= [F](i,j,k)
+ !===========================================
  ax1(0:2)=0.0;ay1(0:2)=0.0
  az1(0:2)=0.0
  axh(0:2)=0.0;ayh(0:2)=0.0
@@ -2305,7 +2313,6 @@
   dxe=dx_inv
   dye=dy_inv
   dze=dz_inv
-  !==========================
   do n=1,np
    ap=0.0
    xp1(1)=dx_inv*(sp_loc%part(n,1)-xmn) !loc x position
@@ -2376,7 +2383,7 @@
       dvol1=dvol*axh(i1)
       ap(1)=ap(1)+dvol1*(av(i2+1,j2,k2,1)-av(i2,j2,k2,1))
       i2=i1+i
-      ap(4)=ap(4)+ax1(i1)*dvol*av(i2,j2,k2,1)!t^n p-assigned env field
+      ap(4)=ap(4)+ax1(i1)*dvol*av(i2,j2,k2,1)
      end do
     end do
     do j1=0,2
@@ -2385,7 +2392,7 @@
      do i1=0,2
       i2=i+i1
       dvol1=dvol*ax1(i1)
-      ap(2)=ap(2)+dvol1*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))
+      ap(2)=ap(2)+dvol1*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))  
      end do
     end do
     k2=kh+k1
@@ -2394,7 +2401,7 @@
      dvol=ay1(j1)*azh(k1)
      do i1=0,2
       dvol1=dvol*ax1(i1)
-      ap(3)=ap(3)+dvol1*(av(i2,j2,k2+1,1)-av(i2,j2,k2,1))
+      ap(3)=ap(3)+dvol1*(av(i2,j2,k2+1,1)-av(i2,j2,k2,1)) 
      end do
     end do
    end do

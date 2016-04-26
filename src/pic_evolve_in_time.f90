@@ -1615,9 +1615,9 @@
   str=1
   stl=1
   call fill_ebfield_yzxbdsdata(&
-   env,i1,nxp,j1,nyp,k1,nzp,1,2,str,stl)
+                               env,i1,nxp,j1,nyp,k1,nzp,1,2,str,stl)
  endif
- ! enters jc(1)=rho/<gamp> < 0
+ ! enters jc(1)=<rho/gamp> < 0
  do k=k1,nzp
   do j=j1,nyp
    do i=i1,nxp
@@ -1628,7 +1628,7 @@
  end do
  !  jc(1:2)=ompe*rho/<gamp>*env(1:2)  the source term
  call env0_field(jc,ib,i1,nxp,j1,nyp,k1,nzp,ap,&
-  dtx,dty,dtz,dt_loc)
+                       dtx,dty,dtz,dt_loc)
  do ic=1,2
   jc(:,:,:,ic)=0.0
  end do
@@ -2316,14 +2316,14 @@
    pp(1:3)=sp_loc%part(p,4:6)  !p^{n+1/2}
    vp(1:3)=F_pt(p,1:3)              !grad[F]
    !=============================
-   gam2=1.+dot_product(pp(1:3),pp(1:3))+F_pt(p,4)
+   gam2=1.+dot_product(pp(1:3),pp(1:3))+F_pt(p,4)  !gam^2= 1+p^2 +|A|^2/2 
    b2=0.25*dot_product(pp(1:3),vp(1:3))
    !--------------------
    gam_new=sqrt(gam2)+dt_lp*b2/gam2
    gam_inv=1./gam_new
    vp(1:3)=dt_lp*gam_inv*pp(1:3)
    F_pt(p,4:6)=sp_loc%part(p,1:3) !old positions
-   F_pt(p,7)=dt_lp*gam_inv             ! dt*gam_inv
+   F_pt(p,7)=dt_lp*gam_inv             ! dt/gam
    sp_loc%part(p,1:3)=sp_loc%part(p,1:3)+vp(1:3)
    F_pt(p,1:3)=sp_loc%part(p,1:3)   ! new positions
   end do
@@ -2354,7 +2354,7 @@
   call fill_curr_yzxbdsdata(eden,i1,n1p,j1,n2p,k1,n3p,ic)
  endif
  call den_zyxbd(eden,i1,n1p,j1,n2p,k1,n3p,ic)
- !=======Enters normalized <w*q*n/gam> < 0
+ !=======Enters normalized <w*q*n/gam> < 0 to compute
  ! Jc(1:2)=ompe<w*q*n/gam>*env(1:2) the source in env equation
  !==================================
  if(Stretch)then
@@ -2465,12 +2465,12 @@
    ! stores in ebfp(1:3)=(x,y,z)^n ebfp(7)=wgh*q/gamp
    !======================
    jc(:,:,:,1)=0.0
-   call set_env_density(ebfp,jc,np,curr_ndim,xm,ym,zm)
-
+   call set_env_density(ebfp,jc,np,curr_ndim,xm,ym,zm) 
+   ! jc(1)=<w*q*n/gamp> at level t^n 
   endif
-  ! Jc(1:2)=ompe*<qn/gamp>*A at level t^n
   ! in the envelope equation (A^{n-1},A^n)==> (A^n,A^{n+1})
   call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
+  ! enters jc(1)=<w*q*n/gamp> at level t^n 
   call advance_lpf_envelope(dt_loc,i1,i2,j1,nyf,k1,nzf)
   !(A^n, J^n) => A^{n+1}, A^{n-1}=> A^n
   call env_pfields_prepare(env,env0,jc,i1,i2,j1,nyf,k1,nzf,1,1,1)
@@ -2480,7 +2480,7 @@
    !=============================
    ! exit ebfp(1:3)=grad|A|^2/2 ebfp(4)=|A|^2/2 in 3D
    ! exit ebfp(1:2)=grad|A|^2/2 ebfp(3)=|A|^2/2 in 2D
-   ! at time level t^{n+1/2} and positions at time t^n
+   ! at time level t^{n+1/2} and positions at time t^n=> A(t^{n+1/2},x^n)
    !=====================================
    call lpf_env_positions(spec(ic),ebfp,np,dt_loc,-vbeam)
    !===========================
@@ -2498,7 +2498,7 @@
  endif
  lp_in=lp_in+dt_loc
  call advance_lpf_fields(ebf,jc,dt_loc,vbeam,&
-  i1,i2,j1,nyf,k1,nzf,1)
+                                       i1,i2,j1,nyf,k1,nzf,1)
  ! (E,B) fields at time t^{n+1}
  !-----------------------------
  end subroutine env_lpf2_evolve
