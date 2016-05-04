@@ -65,6 +65,12 @@ dirtree:
 	mkdir -p $(EXE_FOLDER)
 	mkdir -p $(OBJ_FOLDER)
 
+osminopedrillo: FFTW_LIB = .
+osminopedrillo: FFTW_INC = .
+osminopedrillo: BOOST_LIB = /disk01/boost/boost_1.60_gcc_5.1/lib/
+osminopedrillo: BOOST_INC = /disk01/boost/boost_1.60_gcc_5.1/include/
+osminopedrillo: all
+
 brew: FFTW_LIB = /usr/local/Cellar/fftw/3.3.4_1/lib
 brew: FFTW_INC = /usr/local/Cellar/fftw/3.3.4_1/include
 brew: BOOST_LIB = /usr/local/Cellar/boost/1.59.0/lib
