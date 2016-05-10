@@ -453,14 +453,14 @@
  subroutine nml_consistency_check_grid
  if( zx_rat < 0. .and. yx_rat > 0. ) then
   zx_rat = yx_rat
-  write(6,'(A)') "force zx_rat equal to yx_rat"
+  !write(6,'(A)') "force zx_rat equal to yx_rat"
  else if ( zx_rat > 0. .and. yx_rat < 0. ) then
   yx_rat = zx_rat
-  write(6,'(A)') "force yx_rat equal to zx_rat"
+  !write(6,'(A)') "force yx_rat equal to zx_rat"
  else if ( zx_rat < 0. .and. yx_rat < 0. ) then
   yx_rat = 1.
   zx_rat = 1.
-  write(6,'(A)') "force yx_rat=1 and zx_rat=1"
+  !write(6,'(A)') "force yx_rat=1 and zx_rat=1"
  endif
  end subroutine nml_consistency_check_grid
 
@@ -504,7 +504,7 @@
  !verify input 'ppc' are not prime numbers
  do i=1,6
   do while(ISPRIME(ppc(i)))
-   if(pe0) write(6,'(A,I1,A,I3)')'The input parameter ppc(',i,') is prime - corrected to >',ppc(i)+1
+   !if(pe0) write(6,'(A,I1,A,I3)')'The input parameter ppc(',i,') is prime - corrected to >',ppc(i)+1
    ppc(i)=ppc(i)+1
   enddo
  enddo
@@ -516,7 +516,7 @@
   if(ndim==2) then
    np_per_xc(i)  = factors(1)
    np_per_yc(i)  = PRODUCT(factors(2:number_of_factors))
-   if(pe0) write(6,'(A,I2,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),' particles'
+   !if(pe0) write(6,'(A,I2,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),' particles'
   elseif(ndim==3) then
    if(number_of_factors>2) then
     np_per_xc(i)  = factors(1)
@@ -527,7 +527,7 @@
     np_per_yc(i)  = factors(1)
     np_per_zc(i)  = factors(2)
    endif
-   if(pe0) write(6,'(A,I2,A,I3,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),'*',np_per_zc(i),' particles'
+   !if(pe0) write(6,'(A,I2,A,I3,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),'*',np_per_zc(i),' particles'
   endif
   deallocate(factors)
  enddo
