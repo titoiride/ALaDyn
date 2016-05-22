@@ -170,6 +170,8 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 + `lpy(1)` defines the wire size
 + `lpy(2)` defines the distance between wires (interwire size)
 + `n_over_nc` is the density in the central layer (bulk)
+  - *LWFA* case: density is in units of critical density
+  - *PWFA* case: the density is in units of (a nominal value) nc=1e18 cm-3
 + `n1_over_n` is the density in the upstream layer (foam/preplasma)
 + `n2_over_n` is the density in the downstream layer (contaminants)
 + `ionz_lev`: if set to 0, we disable ionization; if 1, only one electron can be extracted per ion, if accessible, per timestep; if 2, it ionizes all the accessible levels in a single timestep
