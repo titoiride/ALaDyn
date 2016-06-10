@@ -54,7 +54,7 @@ opt_report.txt
 *.optrpt
 *epic.txt
 *opic.txt
-src/input.nml
+src/*.nml
 packages
 *.opendb
 *.pdb
