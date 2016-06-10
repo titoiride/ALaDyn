@@ -259,7 +259,8 @@
   charge_to_mass(i)=unit_charge(i)*mass_rat(i)
  end do
  !======================================
- Lorentz_fact(1:4)=mass_rat(1:4)  !to be multiplied by the particle charge
+ Lorentz_fact(1:4)=mass_rat(1:4)  
+!to be multiplied by the particle charge in the equation of motion
  !==========================================
  nm_fact=1.
  gvol_inv=1.

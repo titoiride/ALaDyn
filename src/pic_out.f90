@@ -1963,7 +1963,7 @@
   write(lun,'(4e12.4)')a0,lp_intensity,lp_pow, energy_in_targ
   write(lun,*)' targ_x1  targ_x2     n/nc       el_lp        '
   write(lun,'(4e12.4)')targ_in,targ_end,n_over_nc,el_lp
-  if(dmodel_id > 4)then
+  if(dmodel_id > 5)then
    write(lun,*)'  lx2        lx3        lx4         dw         lw '
    write(lun,'(5e12.4)')lpx(2:4),lpy(1:2)
   else
