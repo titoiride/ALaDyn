@@ -63,5 +63,6 @@
  logical :: L_read_input_data
  logical :: L_first_output_on_restart
  logical :: L_use_unique_dumps
+ logical :: L_disable_rng_seed
 
  end module code_util
