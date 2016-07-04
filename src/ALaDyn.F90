@@ -371,10 +371,10 @@
   if(Part)then
    if(npout> 0)then
     if(npout<=nsp)then
-     call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,npout,pjump)
+     call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,npout,pjump)
     else
      do i=1,nsp
-      call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,i,pjump)
+      call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,i,pjump)
      end do
     endif
    endif
