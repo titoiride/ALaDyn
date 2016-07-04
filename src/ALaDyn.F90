@@ -347,12 +347,15 @@
    ic=0
    call prl_bden_energy_interp(ic)
    call bden_ene_mom_out(tnow,1,jump)
-   !============= bunch density
    do i=1,nsp
     call prl_den_energy_interp(i)
     ic=1
     call den_ene_mom_out(tnow,i,ic,ic,jump)
-    if(nden >1)then
+    if (nden>1) then
+     ic=2
+     call den_ene_mom_out(tnow,i,ic,ic,jump)
+    endif   
+    if (nden>2) then
      call prl_momenta_interp(i)
      do ic=1,curr_ndim
       call den_ene_mom_out(tnow,i,ic+2,ic,jump)
@@ -368,10 +371,10 @@
   if(Part)then
    if(npout> 0)then
     if(npout<=nsp)then
-     call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,npout,pjump)
+     call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,npout,pjump)
     else
      do i=1,nsp
-      call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,i,pjump)
+      call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,i,pjump)
      end do
     endif
    endif
