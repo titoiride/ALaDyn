@@ -43,7 +43,6 @@
  mem_psize_max=0.0
  mem_max_addr=0.0
 
- call create_initial_folders
 
  call start
 
@@ -604,7 +603,6 @@
   call read_poloidal_field_namelist
   nsb=n_bunches
  endif
- call write_read_nml
  ns_ioniz=0
  spl_ord=2
  RK_ord=0
@@ -629,6 +627,8 @@
   write(6,'(a14,i1,a1,i2,a23)') ' =  ALaDyn v. ',major_version,'.',minor_version,'                      ='
   write(6,*)                    '========================================'
  endif
+ call create_initial_folders
+ call write_read_nml
  call param
  !=========================
  if(ndim==1) Stretch=.false.
