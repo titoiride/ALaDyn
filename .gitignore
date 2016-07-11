@@ -50,6 +50,7 @@ plx.perf
 cygwin.perf
 galileo.ifort
 marconi.perf
+marconi.gnu
 *~
 opt_report.txt
 *.optrpt
