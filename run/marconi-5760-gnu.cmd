@@ -12,17 +12,16 @@ cd ${PBS_O_WORKDIR}
 
 module purge
 
-module load gnu
-module load intel
-module load intelmpi
-module load boost
-#module load fftw
-module load mkl
+module load profile/advanced
+module load gnu/6.1.0
+module load openmpi/1-10.3--gnu--6.1.0
+module load boost/1.61.0--gnu--6.1.0
+module load fftw/3.3.4--openmpi--1-10.3--gnu--6.1.0
 
 
-export FOR_PRINT="./opic.txt"
-mpirun ./ALaDyn
+## export FOR_PRINT="./opic.txt"
+## mpirun ./ALaDyn
 
-## mpirun ./ALaDyn >> opic.txt 2>> epic.txt
+mpirun ./ALaDyn >> opic.txt 2>> epic.txt
 
 
