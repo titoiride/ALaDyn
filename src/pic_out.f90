@@ -1188,8 +1188,10 @@
   write(10,'(4i14)')int_par
   write(10,*)' Real parameters'
   write(10,'(4e14.5)')real_par
-  write(10,*)' Number of particles'
+  write(10,*)' Number of particles in the output box'
   write(10,'(4i20)')nptot_global_reduced
+  write(10,'(A)')' Particle output box size (x_min,x_max,y_max)' 
+  write(10,'(3e14.5)') x0,x1,ym
   close(10)
   write(6,*)'Particles param written on file: '//foldername//'/'//fname//'.dat'
  else

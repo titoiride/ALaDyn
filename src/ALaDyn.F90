@@ -31,6 +31,7 @@
  use pdf_moments
  use pwfa_output_addons
  use system_utilities
+ use code_util
 
  implicit none
 
@@ -118,7 +119,7 @@
  dt_loc=dt
  t_ind=0
  do while (tnow < tmax)
-  call ENV_run(tnow,dt_loc,iter)
+  call ENV_run(tnow,dt_loc,iter,LPf_ord)
 
   call timing
   call data_out(jump)
@@ -346,20 +347,21 @@
    ic=0
    call prl_bden_energy_interp(ic)
    call bden_ene_mom_out(tnow,1,jump)
+   !============= bunch density
    do i=1,nsp
     call prl_den_energy_interp(i)
     ic=1
     call den_ene_mom_out(tnow,i,ic,ic,jump)
     if (nden>1) then
      ic=2
-     call den_ene_mom_out(tnow,i,ic,ic,jump)
-    endif   
-    if (nden>2) then
-     call prl_momenta_interp(i)
-     do ic=1,curr_ndim
-      call den_ene_mom_out(tnow,i,ic+2,ic,jump)
-     end do
-    endif
+     call den_ene_mom_out(tnow,i,ic,ic,jump) 
+     if (nden>2) then
+      call prl_momenta_interp(i)
+      do ic=1,curr_ndim
+       call den_ene_mom_out(tnow,i,ic+2,ic,jump)
+      end do
+     endif
+    endif 
    enddo
   endif
   if(nbout> 0)then
@@ -370,10 +372,18 @@
   if(Part)then
    if(npout> 0)then
     if(npout<=nsp)then
-     call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,npout,pjump)
+     if (L_follow_mw_coords) then
+      call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,npout,pjump)
+     else
+      call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,npout,pjump)
+     endif
     else
      do i=1,nsp
-      call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,i,pjump)
+      if (L_follow_mw_coords) then
+       call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,i,pjump)
+      else
+       call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,i,pjump)
+      endif
      end do
     endif
    endif
@@ -627,8 +637,8 @@
   write(6,'(a14,i1,a1,i2,a23)') ' =  ALaDyn v. ',major_version,'.',minor_version,'                      ='
   write(6,*)                    '========================================'
  endif
- call create_initial_folders
- call write_read_nml
+ if (pe0) call create_initial_folders
+ if (pe0) call write_read_nml
  call param
  !=========================
  if(ndim==1) Stretch=.false.
@@ -712,6 +722,10 @@
    ienout=0
   endif
   call restart(last_iter,tstart)
+  call mpi_barrier(comm,error)
+  if(pe0)then
+   write(6,*)' Dump data read completed'
+  endif
   call set_fxgrid(npe_xloc,sh_ix)
   tmax=tmax+tstart
   dtout=(tmax-tstart)/nouts

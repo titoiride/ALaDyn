@@ -2510,7 +2510,7 @@
      i2=i1+ih
      dvol1=dvol*axh(i1)
      ap(1)=ap(1)+dvol1*ef(i2,j2,k2,1)
-     ap(4)=ap(4)+dvol1*av(i2,j2,k2,2)   !D_x|A|^2/4
+     ap(4)=ap(4)+dvol1*av(i2,j2,k2,2)   !D_xF
     end do
     do i1=0,2
      i2=i1+i
@@ -2655,28 +2655,281 @@
      do i1=0,2
       i2=i1+i
       dvol1=dvol*ax1(i1)
-      ap(3)=ap(3)+dvol1*ef(i2,j2,k2,3)      !Ez and Dz[F} (i,j,k=1/2) 
+      ap(3)=ap(3)+dvol1*ef(i2,j2,k2,3)      !Ez and Dz[F] (i,j,k=1/2) 
       ap(9)=ap(9)+dvol1*av(i2,j2,k2,4)
      end do
     end do
    end do
    !=================================
    gam2=1.+up(1)*up(1)+up(2)*up(2)+up(3)*up(3)+ap(10)   !gamma^{n-1/2}
-!  ap(1:3)=(Ex,ey,Ez)   ap(7:9)=[Dx,Dy,Dz]F
+!  ap(1:3)=(Ex,Ey,Ez)   ap(4:6)=(Bx,By,Bz),ap(7:9)=[Dx,Dy,Dz]F
    !==================== solves a cubic equation x^3=A*x+B
    a1=-dot_product(ap(1:3),up(1:3))
    b1=-dot_product(ap(7:9),up(1:3))
    gam=sqrt(gam2)
    gamp_new=gam+dth*(gam*a1+b1)/gam2
-   ap(4:9)=ap(4:9)/gamp_new          !ap(4:6)=B/gamp
+   ap(4:9)=ap(4:9)/gamp_new          !ap(4:6)=B/gamp, ap(7:9)= Grad[F]/gamp
 
    pt(n,1:3)=ap(1:3)+0.5*ap(7:9)
    pt(n,4:6)=ap(4:6)
-   pt(n,1:6)=charge(2)*pt(n,1:6)  !F_Lorentz*q
-   pt(n,7)=charge(1)*charge(2)/gamp_new     !weight*q/gamp
+   pt(n,1:6)=charge(2)*pt(n,1:6)  !q*F_Lorentz
+   pt(n,7)=charge(1)/gamp_new     !weight/gamp
   end do
  end select
  end subroutine set_env_acc
+!===========================
+ subroutine set_env_rk_acc(ef,av,sp_loc,pt,np,ndm,xmn,ymn,zmn)
+
+ real(dp),intent(in) :: ef(:,:,:,:)
+ real(dp),intent(inout) :: av(:,:,:,:)
+ type(species),intent(in) :: sp_loc
+ real(dp),intent(inout) :: pt(:,:)
+ integer,intent(in) :: np,ndm
+ real(dp),intent(in) :: xmn,ymn,zmn
+
+ real(dp) :: xx,sx,sx2,dvol,dvol1,gam2,wgh
+ real(dp) :: axh(0:2),ayh(0:2),up(3),xp1(3)
+ real(dp) :: ax1(0:2),ay1(0:2),azh(0:2),az1(0:2),ap(12)
+ integer :: i,ih,j,jh,i1,j1,i2,j2,k,kh,k1,k2,n
+ real(dp) :: gam,gam_inv
+ !===============================================
+ real(sp) :: charge(2)
+ equivalence(charge,wgh)
+ !===============================================
+ ! Linear shape for fields at half-index quadratic shape for fields
+ !                         at integer index
+ !====================================
+ !=============================================================
+ !   particle  indexing : i=1,....,nx => weights 1,.....nx+2
+ !   Fields data[1:n1+2,1:n2+2,1:n3+2] ax(0)=> data(i), ax(1)=> data(i+1)
+ !                                     ax(2)=>data(i+2)
+ !===================================================
+ ! enter ef(1:6) wake fields
+ ! enters av(1)=F=|a|^2/2 envelope at integer grid nodes 
+ ! and av(2:4)=grad[F] at staggered points
+ ! exit total Lorentz force and velocities at particle positions
+ !========================================
+ ax1(0:2)=0.0;ay1(0:2)=0.0
+ az1(0:2)=0.0
+ axh(0:2)=0.0;ayh(0:2)=0.0
+ azh(0:2)=0.0
+
+ k2=1
+ select case(ndm)
+ case(2)
+  !================== Works also for (z,r) Pz,Pr cylindrical coordinates
+
+  do n=1,np
+   ap=0.0
+   xp1(1:2)=sp_loc%part(n,1:2)    !the t^{k-1} particle positions, momenta and weight
+   up(1:2)=sp_loc%part(n,3:4)
+   wgh=sp_loc%part(n,5)  
+   xx=shx+dx_inv*(xp1(1)-xmn)
+   i=int(xx+0.5)
+   sx=xx-real(i,dp)
+   sx2=sx*sx
+   ax1(1)=0.75-sx2
+   ax1(2)=0.5*(0.25+sx2+sx)
+   ax1(0)=1.-ax1(1)-ax1(2)
+
+   ih=int(xx)
+   sx=xx-0.5-real(ih,dp)
+   sx2=sx*sx
+   axh(1)=0.75-sx2
+   axh(2)=0.5*(0.25+sx2+sx)
+   axh(0)=1.-axh(1)-axh(2)
+
+   !axh(1)=sx+0.5
+   !axh(0)=1.-axh(1)
+
+   xx=shy+dy_inv*(xp1(2)-ymn)
+   j=int(xx+0.5)
+   sx=xx-real(j,dp)
+   sx2=sx*sx
+   ay1(1)=0.75-sx2
+   ay1(2)=0.5*(0.25+sx2+sx)
+   ay1(0)=1.-ay1(1)-ay1(2)
+
+   jh=int(xx)
+   sx=xx-0.5-real(jh,dp)
+   sx2=sx*sx
+   ayh(1)=0.75-sx2
+   ayh(2)=0.5*(0.25+sx2+sx)
+   ayh(0)=1.-ayh(1)-ayh(2)
+
+   !ayh(1)=sx+0.5
+   !ayh(0)=1.-ayh(1)
+
+   i=i-1
+   j=j-1
+
+   ih=ih-1
+   jh=jh-1
+   !==========================
+   do j1=0,2
+    j2=j+j1
+    dvol=ay1(j1)
+    do i1=0,2
+     i2=i1+ih
+     dvol1=dvol*axh(i1)
+     ap(1)=ap(1)+dvol1*ef(i2,j2,k2,1)
+     ap(4)=ap(4)+dvol1*av(i2,j2,k2,2)   !D_xF
+    end do
+    do i1=0,2
+     i2=i1+i
+     ap(6)=ap(6)+ax1(i1)*dvol*av(i2,j2,k2,1)!the p-assigned |A|^2/2 env field
+    end do
+   end do
+   do j1=0,2
+    j2=jh+j1
+    dvol=ayh(j1)
+    do i1=0,2
+     i2=i+i1
+     dvol1=dvol*ax1(i1)
+     ap(2)=ap(2)+dvol1*ef(i2,j2,k2,2)
+     ap(5)=ap(5)+dvol1*av(i2,j2,k2,3)
+    end do
+    do i1=0,2
+     i2=i1+ih
+     ap(3)=ap(3)+axh(i1)*dvol*ef(i2,j2,k2,3)
+    end do
+   end do
+   !=========================
+   gam2=1.+up(1)*up(1)+up(2)*up(2)+ap(6)  !(gam_p)^{k-1}
+   gam_inv=1./sqrt(gam2)
+
+   ap(3:5)=ap(3:5)*gam_inv
+   pt(n,1)=ap(1)+0.5*ap(4)
+   pt(n,2)=ap(2)+0.5*ap(5)  !E+F_env
+   pt(n,3)=ap(3)            !B_z/gam_p
+   pt(n,5)=charge(1)*gam_inv  !wgh/gam_p
+  end do
+  !========================
+ case(3)
+  do n=1,np
+   ap=0.0
+   xp1(1:3)=sp_loc%part(n,1:3)   !the current t^{k-1} particle positions, momenta and weights
+   up(1:3)=sp_loc%part(n,4:6)  
+   wgh=sp_loc%part(n,7)  
+   xx=shx+dx_inv*(xp1(1)-xmn)
+   i=int(xx+0.5)
+   sx=xx-real(i,dp)
+   sx2=sx*sx
+   ax1(1)=0.75-sx2
+   ax1(2)=0.5*(0.25+sx2+sx)
+   ax1(0)=1.-ax1(1)-ax1(2)
+
+   !ih=int(xx)
+   !sx=xx-0.5-real(ih,dp)
+   !sx2=sx*sx
+   !axh(1)=0.75-sx2
+   !axh(2)=0.5*(0.25+sx2+sx)
+   !axh(0)=1.-axh(1)-axh(2)
+
+   axh(1)=sx+0.5
+   axh(0)=1.-axh(1)
+
+   xx=shy+dy_inv*(xp1(2)-ymn)
+   j=int(xx+0.5)
+   sx=xx-real(j,dp)
+   sx2=sx*sx
+   ay1(1)=0.75-sx2
+   ay1(2)=0.5*(0.25+sx2+sx)
+   ay1(0)=1.-ay1(1)-ay1(2)
+
+
+   ayh(1)=sx+0.5
+   ayh(0)=1.-ayh(1)
+
+   xx=shz+dz_inv*(xp1(3)-zmn)
+   k=int(xx+0.5)
+   sx=xx-real(k,dp)
+   sx2=sx*sx
+   az1(1)=0.75-sx2
+   az1(2)=0.5*(0.25+sx2+sx)
+   az1(0)=1.-az1(1)-az1(2)
+
+
+   azh(1)=sx+0.5
+   azh(0)=1.-azh(1)
+
+   i=i-1
+   j=j-1
+   k=k-1
+
+   ih=i
+   jh=j
+   kh=k
+   !==========================
+   do k1=0,2
+    k2=k+k1
+    do j1=0,2
+     j2=j+j1
+     dvol=ay1(j1)*az1(k1)
+     do i1=0,2
+      i2=i1+i
+      ap(10)=ap(10)+ax1(i1)*dvol*av(i2,j2,k2,1)!t^n p-assigned F=a^2/2 field
+     end do
+     do i1=0,1
+      i2=i1+ih
+      dvol1=dvol*axh(i1)
+      ap(1)=ap(1)+dvol1*ef(i2,j2,k2,1)    !Ex and Dx[F] (i+1/2,j,k))
+      ap(7)=ap(7)+dvol1*av(i2,j2,k2,2)  
+     end do
+    end do
+    do j1=0,1
+     j2=jh+j1
+     dvol=ayh(j1)*az1(k1)
+     do i1=0,2
+      i2=i+i1
+      dvol1=dvol*ax1(i1)
+      ap(2)=ap(2)+dvol1*ef(i2,j2,k2,2)  !Ey and Dy[F] (i,j+1/2,k)
+      ap(8)=ap(8)+dvol1*av(i2,j2,k2,3)
+     end do
+     do i1=0,1
+      i2=i1+ih
+      ap(6)=ap(6)+axh(i1)*dvol*ef(i2,j2,k2,6)   !Bz(i+1/2,j+1/2,k)
+     end do
+    end do
+   end do
+   !=========================
+   do k1=0,1
+    k2=kh+k1
+    do j1=0,1
+     j2=jh+j1
+     dvol=ayh(j1)*azh(k1)
+     do i1=0,2
+      i2=i1+i
+      ap(4)=ap(4)+ax1(i1)*dvol*ef(i2,j2,k2,4) !Bx(i,j+1/2,k+1/2)
+     end do
+    end do
+    do j1=0,2
+     j2=j+j1
+     dvol=ay1(j1)*azh(k1)
+     do i1=0,1
+      i2=ih+i1
+      ap(5)=ap(5)+axh(i1)*dvol*ef(i2,j2,k2,5)  !By(i+1/2,j,k+1/2)
+     end do
+     do i1=0,2
+      i2=i1+i
+      dvol1=dvol*ax1(i1)
+      ap(3)=ap(3)+dvol1*ef(i2,j2,k2,3)      !Ez and Dz[F] (i,j,k=1/2) 
+      ap(9)=ap(9)+dvol1*av(i2,j2,k2,4)
+     end do
+    end do
+   end do
+   !=================================
+   gam2=1.+up(1)*up(1)+up(2)*up(2)+up(3)*up(3)+ap(10)   !gamma^{k-1}
+!  ap(1:3)=(Ex,Ey,Ez)   ap(4:6)=(Bx,By,Bz),ap(7:9)=[Dx,Dy,Dz]F
+   gam_inv=1./sqrt(gam2)
+   ap(4:9)=ap(4:9)*gam_inv          !ap(4:6)=B/gamp, ap(7:9)= Grad[F]/gamp
+
+   pt(n,1:3)=ap(1:3)+0.5*ap(7:9)
+   pt(n,4:6)=ap(4:6)
+   pt(n,7)=charge(1)*gam_inv  !wgh/gam_p
+  end do
+ end select
+ end subroutine set_env_rk_acc
  !-------------------------
  !=============================
  subroutine set_env_density(efp,av,np,ndm,ic,xmn,ymn,zmn)
@@ -2691,8 +2944,8 @@
  real(dp) :: ax1(0:2),ay1(0:2),az1(0:2)
  integer :: i,j,i1,j1,i2,j2,k,k1,k2,n
  !===============================================
- ! enter efp(1:4) positions and wgh*q/gamp at time level n
- ! exit av(:,:,:,ic) the envelope induced <q*n*wgh/gamp> density source
+ ! enter efp(1:4) positions and wgh/gamp at time level n
+ ! exit av(:,:,:,ic) the den source in envelope equation :  <n*wgh/gamp> > 0 
  ax1(0:2)=0.0;ay1(0:2)=0.0
  az1(0:2)=0.0
 
@@ -2738,7 +2991,7 @@
    xp1(1)=dx_inv*(efp(n,1)-xmn)                ! local x
    xp1(2)=dy_inv*(efp(n,2)-ymn)                ! local y
    xp1(3)=dz_inv*(efp(n,3)-zmn)                ! local z
-   wgh=efp(n,7)          !the particle  q*w/gamp at t^n
+   wgh=efp(n,7)          !the particle  w/gamp at current time
 
    xx=shx+xp1(1)
    i=int(xx+0.5)

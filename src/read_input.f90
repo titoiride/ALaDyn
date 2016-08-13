@@ -49,7 +49,7 @@
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,xp0_out,xp1_out,yp_out,tmax,cfl, &
   new_sim,id_new,dump,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
-  L_first_output_on_restart
+  L_first_output_on_restart,L_follow_mw_coords
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
 
  !--- reading OLD_INPUT ---!
@@ -105,6 +105,7 @@
  L_force_singlefile_output = .true.
  L_first_output_on_restart = .false.
  L_print_J_on_grid = .true.
+ L_follow_mw_coords = .false.
  open(1,file='input.nml', status='old')
  read(1,OUTPUT,ERR=22,END=22)
 22 continue
@@ -342,7 +343,7 @@
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,xp0_out,xp1_out,yp_out,tmax,cfl, &
   new_sim,id_new,dump,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
-  L_first_output_on_restart
+  L_first_output_on_restart,L_follow_mw_coords
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
  NAMELIST/NUMBER_BUNCHES/ n_bunches, L_particles, L_intdiagnostics_pwfa, &
   L_intdiagnostics_classic,number_of_slices

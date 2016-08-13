@@ -34,9 +34,9 @@
  real(dp),allocatable :: ebf(:,:,:,:),ebf_bunch(:,:,:,:),jc(:,:,:,:)
  real(dp),allocatable :: pot(:,:,:,:)
  real(dp),allocatable :: ebf0(:,:,:,:),ebf1(:,:,:,:)
- real(dp),allocatable :: ebf0_bunch(:,:,:,:),ebf1_bunch(:,:,:,:)
+ real(dp),allocatable :: ebf0_bunch(:,:,:,:),ebf1_bunch(:,:,:,:),jb0(:,:,:,:)
  integer,allocatable :: sp_count(:,:)
- real(dp),allocatable :: env(:,:,:,:),env0(:,:,:,:),env1(:,:,:,:),jb0(:,:,:,:)
+ real(dp),allocatable :: env(:,:,:,:)
  real(dp),allocatable :: up(:,:,:,:),up0(:,:,:,:),up1(:,:,:,:)
  real(dp),allocatable :: ub(:,:,:,:),ub0(:,:,:,:),ub1(:,:,:,:)
  !--------------------------
@@ -93,17 +93,11 @@
   endif
  endif
  if(envlp)then
-  njdim=2
+  njdim=4
+  if(lp >3) njdim=6
   allocate(env(n1p,n2p,n3p,njdim),STAT=AllocStatus)
-  allocate(env0(n1p,n2p,n3p,njdim),STAT=AllocStatus)
   env=0.0
-  env0=0.0
-  fsize_loc=fsize_loc+2*njdim*ng
-  if(lp >3)then
-   allocate(env1(n1p,n2p,n3p,njdim),STAT=AllocStatus)
-   env1=0.0
-   fsize_loc=fsize_loc+njdim*ng
-  endif
+  fsize_loc=fsize_loc+njdim*ng
  endif
  fsize=fsize+fsize_loc  !sums all over memory alloc
  end subroutine v_alloc

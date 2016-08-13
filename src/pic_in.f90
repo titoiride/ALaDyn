@@ -168,9 +168,9 @@
  k2=loc_nptz(ic)
  j2=loc_npty(ic)
  if(curr_ndim >2 )then
-  do i=1,i2
-   do k=1,k2
-    do j=1,j2
+  do k=1,k2
+   do j=1,j2
+    do i=1,i2
      whz=loc_wghx(i,ic)*loc_wghz(k,ic)*loc_wghy(j,ic)
      charge(1)=real(whz,sp)
      p=p+1
@@ -190,8 +190,8 @@
   return
  endif
 
- do i=1,i2
-  do j=1,j2
+ do j=1,j2
+  do i=1,i2
    whz=loc_wghx(i,ic)*loc_wghy(j,ic)
    charge(1)=real(whz,sp)
    p=p+1
@@ -258,7 +258,7 @@
  integer :: npmax
  real(dp) :: uu,yy,zz,dxip,dpy,dpz,np1,np2
  real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
- real(dp) :: xfsh,un(3)
+ real(dp) :: xfsh,un(3),j1_norm,j2_norm
  integer :: nxl(5)
  real(dp),allocatable :: wy(:,:),wz(:,:)
  integer :: loc_nptx(4),nps_loc(4),np_per_zcell(4),last_particle_index(4)
@@ -418,15 +418,17 @@
  ! Z1*mp_per_cell(Z1)+Z2*mp_per_cell(Z2)=mp_per_cell(El)
  !====================
  nptx=0
+ un(1:nsp)=1.
+ if(nsp==2)then
+  ic=2
+  un(2)=ratio_mpc(ic)/real(ion_min(1),dp)!float(mp_per_cell(1))/float(mp_per_cell(ic))
+                                      !for charge normaliz.
+ endif
+ j1_norm=np1*j0_norm
+ j2_norm=np2*j0_norm
  select case(layer_mod)
+  !================ first uniform layer np1=================
  case(1)
-  !================ first linear ramp =================
-  un(1:nsp)=1.
-  if(nsp==2)then
-   ic=2
-   un(2)=ratio_mpc(ic)/real(ion_min(1),dp) !float(mp_per_cell(1))/float(mp_per_cell(ic))
-                                        !for charge normaliz.
-  endif
   if(nxl(1)>0)then
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
@@ -434,13 +436,14 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(1)*uu
-     wghpt(i1,ic)=np1*j0_norm
-     if(ic==2)wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+     wghpt(i1,ic)=j1_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(1)
   endif
+  !================ first linear ramp np1 => 1 =================
   if(nxl(2)>0)then
    do ic=1,nsp
     n_peak=nxl(2)*np_per_xc(ic)
@@ -449,7 +452,7 @@
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(2)*uu
      wghpt(i1,ic)=(np1+uu*(1.-np1))*j0_norm
-     if(ic==2)wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -464,7 +467,7 @@
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(3)*uu
      wghpt(i1,ic)=j0_norm
-     if(ic==2)wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -479,7 +482,7 @@
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(4)*uu
      wghpt(i1,ic)=(1.-uu*(1.-np2))*j0_norm
-     if(ic==2)wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -493,15 +496,20 @@
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(5)*uu
      wghpt(i1,ic)=np2*j0_norm
-     if(ic==2)wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(5)
   endif
   !=========================================
- case(2)            ! two bumps  (n/n_c, n2/n_c)
-  !================ first linear ramp to first plateau n/n_c =================
+ case(2)            
+!                 two bumps  (n1/n_c, n2/n_c) of length x_1 and x_2
+!                 n_over_nc enters as average n_over nc= (n1* x_1+n2*x_2)/(x_1+x_2)
+!                 weight j0_norm =>> j0_norm*np1 in x_1       =>> j0_norm*np2 in x_2
+!                 particle per cell uniform
+!================================================
+!================ first linear ramp to first plateau n1/n_c =================
   if(nxl(1)>0)then
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
@@ -509,7 +517,8 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(1)*uu
-     wghpt(i1,ic)=uu*j0_norm
+     wghpt(i1,ic)=uu*j1_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -522,13 +531,14 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(2)*uu
-     wghpt(i1,ic)=j0_norm
+     wghpt(i1,ic)=j1_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(2)
   endif
-  !================ first down-ramp =================
+  !================ np1 => np2 down-ramp =================
   if(nxl(3)>0)then
    do ic=1,nsp
     n_peak=nxl(3)*np_per_xc(ic)
@@ -536,13 +546,14 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(3)*uu
-     wghpt(i1,ic)=(1.-uu*(1.-np2))*j0_norm
+     wghpt(i1,ic)=j1_norm+uu*(j2_norm-j1_norm)
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    enddo
    xfsh=xfsh+lpx(3)
   endif
-  !================ second plateau n2/n_c < n/n_c =================
+  !================ second plateau n2/n_c < n1/n_c =================
   if(nxl(4)>0)then
    do ic=1,nsp
     n_peak=nxl(4)*np_per_xc(ic)
@@ -550,7 +561,8 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(4)*uu
-     wghpt(i1,ic)=np2*j0_norm
+     wghpt(i1,ic)=j2_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -563,7 +575,8 @@
      uu=(real(i)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(5)*uu
-     wghpt(i1,ic)=np2*(1.-uu)*j0_norm
+     wghpt(i1,ic)=(1.-uu)*j2_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -2633,7 +2646,7 @@
  !=======================
  if(lp_end >xm)then
   call init_envelope_field(&
-   env,env0,lp_amp,dt,tt,ts,tau,w0_y,xf,i1,i2)
+                         env,lp_amp,dt,tt,ts,tau,w0_y,xf,i1,i2)
  endif
  !==========================
  ebf=0.0

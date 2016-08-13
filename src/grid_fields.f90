@@ -785,10 +785,10 @@
  !==================================
  ! SECTION for initial fields in ENVELOPE MODEL
  !======================================
- subroutine init_envelope_field(ef,ef0,e0,dt_loc,t_loc,tf,tau,&
+ subroutine init_envelope_field(ef,e0,dt_loc,t_loc,tf,tau,&
   wy,xf0,i1,i2)
 
- real(dp),intent(inout) :: ef(:,:,:,:),ef0(:,:,:,:)
+ real(dp),intent(inout) :: ef(:,:,:,:)
  real(dp),intent(in) :: e0,dt_loc,t_loc,tf,tau,wy,xf0
  integer,intent(in) :: i1,i2
  integer :: j1,j2,k1,k2
@@ -836,8 +836,8 @@
     ef(i,j,k,1)=A0*Ar    !Re[Ay](t_loc)
     ef(i,j,k,2)=A0*Ai    !Im[Ay]
     A0=cos(phi0)*cos(phi0)   !t_0-Dt
-    ef0(i,j,k,1)=A0*Ar
-    ef0(i,j,k,2)=A0*Ai
+    ef(i,j,k,3)=A0*Ar
+    ef(i,j,k,4)=A0*Ai
    end do
   end do
   return
@@ -875,8 +875,8 @@
     ef(i,j,k,1)=A0*Ar    !Re[Ay](t_loc)
     ef(i,j,k,2)=A0*Ai    !Im[Ay]
     A0=cos(phi0)*cos(phi0)
-    ef0(i,j,k,1)=A0*Ar   !Re[Ay](tloc-Dt)
-    ef0(i,j,k,2)=A0*Ai    !Im[Ay]
+    ef(i,j,k,3)=A0*Ar   !Re[Ay](tloc-Dt)
+    ef(i,j,k,4)=A0*Ai    !Im[Ay]
    end do
   end do
  end do
@@ -1216,7 +1216,7 @@
  !===========fourth order central flux derivatives
 
  !==========================
- ! Enters envg(1)= |A|^2/2 exit grad|A|^2/4
+ ! Enters envg(1)= |A|^2/2 exit grad|A|^2/2
 
  n1=n1p+1-i1
  ax2=dhx*b_hcd
@@ -1376,22 +1376,23 @@
  an=a
  bn=adv+c          !symm BC
  !================
- ! Computes the transverse Laplacian of A^{0}=env(3:4) components
- !======== in jc(1:2)= <n/gam_p> density *env(1:2) or *env(3,4)
+ ! Computes the transverse Laplacian of A^{n}=env(1:2) components
+ !========and adds to  jc(1:2)= -om2*<q^2*wgh*n/gam_p>*env(1:2) => jc(1:2) 
  ic=2
  call pp_lapl(evf,curr,1,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  !=====================
- ! jc(1:2)= F(A)=[D^2_{pp}+omp^2*chi]A chi=<rho/gam_p> <0 for electrons
- !=================
  do ic=1,2
   do k=k1,n3p
    do j=j1,n2p
     do i=i1,n1p
-     curr(i,j,k,ic)=dt_loc*curr(i,j,k,ic)
+     curr(i,j,k,ic)=-dt_loc*curr(i,j,k,ic)
     end do
    end do
   end do
  end do
+ ! jc(1:2)=S(A)=dt*[D^2_{pp}-omp^2*chi]A;  chi=<q^2*wgh*n/gam_p> >0
+ !=================
+!  Computes D_{xi} centered first derivatives of S(A)
  do ic=1,2
   do k=k1,n3p
    do j=j1,n2p
@@ -1402,16 +1403,18 @@
    end do
   end do
  end do
+!      ww0(1)= k0*S(A_I) + D_xi[A_R]= F_R
+!      ww0(2)= -k0*S(A_R) + D_xi[A_I]= F_I
  do k=k1,n3p
   do j=j1,n2p
    do i=i1,n1p
     ii=i-2
-    ww0(ii,1)=-om0*curr(i,j,k,2)-dx1_inv*(&
+    ww0(ii,1)=om0*curr(i,j,k,2)+dx1_inv*(&
      curr(i+1,j,k,1)-curr(i-1,j,k,1))
-    ww0(ii,2)= om0*curr(i,j,k,1)-dx1_inv*(&
+    ww0(ii,2)= -om0*curr(i,j,k,1)+dx1_inv*(&
      curr(i+1,j,k,2)-curr(i-1,j,k,2))
    end do
-   call trid_odd_even_inv(a,adv,c,b1,an,bn,n1,1,2)
+   !call trid_odd_even_inv(a,adv,c,b1,an,bn,n1,1,2)  !Inversion of [a,adv,c] M trid matrix
    do i=i1,n1p
     ii=i-2
     curr(i,j,k,1)=ww0(ii,1)/om2
@@ -1419,6 +1422,7 @@
    end do
   end do
  end do
+ ! curr(1:2_= iD_{tau}=[D_t+D_xi]A
  if(ib>0)then     !fixed coordinate system
   !=======================
   !==================================
@@ -1434,9 +1438,9 @@
     do k=k1,n3p
      do j=j1,n2p
       i=i1
-      curr(i-1,j,k,ic)=2.*curr(i,j,k,ic)-curr(i+1,j,k,ic)
+      evf(i-1,j,k,ic)=2.*evf(i,j,k,ic)-evf(i+1,j,k,ic)
       i=n1p
-      curr(i+1,j,k,ic)=curr(i,j,k,ic)
+      evf(i+1,j,k,ic)=evf(i,j,k,ic)
      end do
     end do
    end do
@@ -1444,16 +1448,16 @@
     do j=j1,n2p
      do i=i1,n1p
       ii=i-2
-      ww0(ii,1)=curr(i,j,k,1)+curr(i,j,k,3)-adv*(&
-       curr(i+1,j,k,3)-curr(i-1,j,k,3))
-      ww0(ii,2)=curr(i,j,k,2)+curr(i,j,k,4)-adv*(&
-       curr(i+1,j,k,4)-curr(i-1,j,k,4))
+      ww0(ii,1)=curr(i,j,k,1)+evf(i,j,k,3)-adv*(&
+       evf(i+1,j,k,3)-evf(i-1,j,k,3))
+      ww0(ii,2)=curr(i,j,k,2)+evf(i,j,k,4)-adv*(&
+       evf(i+1,j,k,4)-evf(i-1,j,k,4))
      end do
      call trid_der1(adv,b1,c1,an,bn,n1,1,2,0)
      do i=i1,n1p
       ii=i-2
-      curr(i,j,k,3)=evf(i,j,k,1)
-      curr(i,j,k,4)=evf(i,j,k,2)
+      evf(i,j,k,3)=evf(i,j,k,1)
+      evf(i,j,k,4)=evf(i,j,k,2)
       evf(i,j,k,1)=ww0(ii,1)
       evf(i,j,k,2)=ww0(ii,2)
      end do
@@ -1472,23 +1476,23 @@
       i=i1
       evf(i-1,j,k,ic)=2.*evf(i,j,k,ic)-evf(i+1,j,k,ic)
       ii=i-2
-      ww0(ii,1)=curr(i,j,k,ic)+curr(i,j,k,ic1)-adv*(&
+      ww0(ii,1)=curr(i,j,k,ic)+evf(i,j,k,ic1)-adv*(&
                 evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
       i=n1p
       evf(i+1,j,k,ic)=evf(i,j,k,ic)
       do i=i1+1,n1p-1
        ii=i-2
-       ww0(ii,1)=curr(i,j,k,ic)+curr(i,j,k,ic1)-an*(&
+       ww0(ii,1)=curr(i,j,k,ic)+evf(i,j,k,ic1)-an*(&
         evf(i+1,j,k,ic)-evf(i-1,j,k,ic))-bn*(&
         evf(i+2,j,k,ic)-evf(i-2,j,k,ic))
       end do
       i=n1p
       ii=i-2
-      ww0(ii,1)=curr(i,j,k,ic)+curr(i,j,k,ic1)-adv*(&
+      ww0(ii,1)=curr(i,j,k,ic)+evf(i,j,k,ic1)-adv*(&
        evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
       do i=i1,n1p
        ii=i-2
-       curr(i,j,k,ic1)=evf(i,j,k,ic)
+       evf(i,j,k,ic1)=evf(i,j,k,ic)
        evf(i,j,k,ic)=ww0(ii,1)
       end do
      end do
@@ -1501,8 +1505,8 @@
    do k=k1,n3p
     do j=j1,n2p
      do i=i1,n1p
-      curr(i,j,k,ic)=curr(i,j,k,ic)+curr(i,j,k,ic1)
-      curr(i,j,k,ic1)=evf(i,j,k,ic)
+      curr(i,j,k,ic)=curr(i,j,k,ic)+evf(i,j,k,ic1)
+      evf(i,j,k,ic1)=evf(i,j,k,ic)
       evf(i,j,k,ic)=curr(i,j,k,ic)
      end do
     end do
@@ -1513,8 +1517,8 @@
  end subroutine env_lpf_solve
 
  subroutine env0_rk_field(&
-  curr,d2_ord,ib,i1,n1p,j1,n2p,k1,n3p,om0,dhx,dhy,dhz)
- real(dp),intent(inout) :: curr(:,:,:,:)
+                       curr,evf,d2_ord,ib,i1,n1p,j1,n2p,k1,n3p,om0,dhx,dhy,dhz)
+ real(dp),intent(inout) :: curr(:,:,:,:), evf(:,:,:,:)
  integer,intent(in) :: d2_ord,ib,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: om0,dhx,dhy,dhz
  integer :: n1,i,j,k,ii,ic
@@ -1527,6 +1531,7 @@
  om2=om0*om0
  dx1_inv=a1*dhx
  if(der_ord==2)dx1_inv=0.5*dhx
+ !==============================================
  !Compact Fourth order derivatieve
  ! (alp,1,alp)D_x[f]=(a/dhx)[f_{i+1}-f_{i-1}]
  ! a=3/4 alp=1/4
@@ -1549,21 +1554,20 @@
  bn=adv+c
  !================
  ! Computes the Laplacian
- !======== in jc(1:2)= <n/gam_p> density *env(1:2)
+ !======== in jc(1:2)= -omp2*<w*n/gam_p>*env(1:2)=> -omp2*chi*A 
  ic=2
- call pp_lapl(env,curr,1,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
+ call pp_lapl(evf,curr,1,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  do ic=1,2
   do k=k1,n3p
    do j=j1,n2p
     do i=i1,n1p
-     curr(i,j,k,ic)=0.5*curr(i,j,k,ic)
+     curr(i,j,k,ic)=-0.5*curr(i,j,k,ic)
     end do
    end do
   end do
  end do
- ! curr=> S[A]=[D^2_{perp}+omp2*chi]A
+ ! IN curr(1:2) the sotrce term S[A]=-1/2[D^2_{perp}-omp2*chi]A
  !=====================
- ! F(A)=[D^2_{pp}+omp^2*chi]A chi=<rho/gam_p> <0 for electrons
  !=================
  do ic=1,2
   do k=k1,n3p
@@ -1590,6 +1594,9 @@
     ww0(ii,2)=ww0(ii,2)+a1*dhx*(alp*(curr(i+2,j,k,2)-curr(i-2,j,k,2))+&
      curr(i+1,j,k,2)-curr(i-1,j,k,2))
    end do
+!============= in ww0(1:2) 
+!==== F_R=D_{xi}S(A_R)+k0*S(A_I)
+!==== F_I=D_{xi}S(A_I)-k0*S(A_R)
    !=============================
    call matenv_inv(n1,2)
    do i=i1,n1p
@@ -1608,21 +1615,21 @@
   do k=k1,n3p
    do j=j1,n2p
     i=i1
-    env(i-1,j,k,ic)=2.*env(i,j,k,ic)-env(i+1,j,k,ic)
+    evf(i-1,j,k,ic)=2.*evf(i,j,k,ic)-evf(i+1,j,k,ic)
     curr(i,j,k,ic)=curr(i,j,k,ic)-&
-     dx1_inv*(env(i+1,j,k,ic)-env(i-1,j,k,ic))
+     dx1_inv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
     i=i1+1
     curr(i,j,k,ic)=curr(i,j,k,ic)-&
-     dx1_inv*(env(i+1,j,k,ic)-env(i-1,j,k,ic))
+     dx1_inv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
     do i=i1+2,n1p-1
      curr(i,j,k,ic)=curr(i,j,k,ic)-&
-      aph1*(env(i+1,j,k,ic)-env(i-1,j,k,ic))-&
-      aph2*(env(i+2,j,k,ic)-env(i-2,j,k,ic))
+      aph1*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))-&
+      aph2*(evf(i+2,j,k,ic)-evf(i-2,j,k,ic))
     end do
     i=n1p
-    env(i+1,j,k,ic)=env(i,j,k,ic)
+    evf(i+1,j,k,ic)=evf(i,j,k,ic)
     curr(i,j,k,ic)=curr(i,j,k,ic)-&
-     dx1_inv*(env(i+1,j,k,ic)-env(i-1,j,k,ic))
+                       dx1_inv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
    end do
   end do
  end do
