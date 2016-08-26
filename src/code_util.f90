@@ -64,6 +64,5 @@
  logical :: L_first_output_on_restart
  logical :: L_use_unique_dumps
  logical :: L_disable_rng_seed
- logical :: L_follow_mw_coords
 
  end module code_util

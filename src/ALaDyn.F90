@@ -372,18 +372,10 @@
   if(Part)then
    if(npout> 0)then
     if(npout<=nsp)then
-     if (L_follow_mw_coords) then
-      call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,npout,pjump)
-     else
       call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,npout,pjump)
-     endif
     else
      do i=1,nsp
-      if (L_follow_mw_coords) then
-       call part_pdata_out(tnow,xp0_out+tnow*w_speed,xp1_out+tnow*w_speed,yp_out,i,pjump)
-      else
        call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,i,pjump)
-      endif
      end do
     endif
    endif
