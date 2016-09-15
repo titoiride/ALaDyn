@@ -44,7 +44,8 @@
  else if (exist_data) then
   call read_input_data
  else
-
+  write(6,*) 'No usable input file (.nml or .data) has been found'
+  EXIT
  endif
  END SUBROUTINE
 

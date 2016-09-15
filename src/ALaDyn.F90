@@ -593,7 +593,7 @@
 
  integer :: nxp,nyp,nzp,ns_ioniz
 
- !Read parameters from input_namelist_filename file
+ !Read parameters from input.nml file
  call read_main_input
  if (model_id > 4) then
   call read_bunch_namelist
