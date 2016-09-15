@@ -59,7 +59,11 @@
  subroutine check_decomposition
  if (npe_yz>0) then
   nprocy=npe_yz
-  nprocz=npe_yz
+  if (nz>1) then
+   nprocz=npe_yz
+  else
+   nprocz=1
+  endif
   nprocx=mpi_size/nprocy/nprocz
  endif
  if (nprocx < 0 .or. nprocy < 0 .or. nprocz < 0 .or. nprocx*nprocy*nprocz /= mpi_size) then
