@@ -45,7 +45,7 @@
   call read_input_data
  else
   write(6,*) 'No usable input file (.nml or .data) has been found'
-  EXIT
+  stop 5
  endif
  END SUBROUTINE
 
