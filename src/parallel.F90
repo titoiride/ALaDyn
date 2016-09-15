@@ -22,6 +22,7 @@
  module parallel
  use precision_def
  use mpi_var
+ use grid_and_particles
 
 #if !defined (_MSC_VER) && !defined (__INTEL_COMPILER)
  use mpi
