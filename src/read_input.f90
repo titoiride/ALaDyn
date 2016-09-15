@@ -76,7 +76,7 @@
  read(1,GRID,ERR=17,END=17)
 17 continue
  close(1)
- call nml_consistency_check_grid
+ call consistency_check_grid
 
  !--- reading sim parameters ---!
  open(1,file=input_namelist_filename, status='old')
@@ -95,8 +95,8 @@
  read(1,TARGET_DESCRIPTION,ERR=19,END=19)
 19 continue
  close(1)
- !call nml_consistency_check_number_of_particles
- call nml_consistency_check_number_of_particles_comp
+ !call consistency_check_number_of_particles
+ call consistency_check_number_of_particles_comp
 
  !--- reading laser parameters ---!
  open(1,file=input_namelist_filename, status='old')
@@ -393,6 +393,24 @@
  !C
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  subroutine read_input_data
+ !Default initialization like in input.nml
+ yx_rat=-1.
+ zx_rat=-1.
+ mass_number(1:3) = 1.0
+ ppc=-1
+ np_per_xc=-1
+ np_per_yc=-1
+ np_per_zc=-1
+ L_disable_rng_seed = .false.
+ time_interval_dumps = -1. !if -1 use classical output
+ L_force_singlefile_output = .true.
+ L_first_output_on_restart = .false.
+ L_print_J_on_grid = .true.
+ nprocx=-1
+ nprocy=-1
+ nprocz=-1
+ npe_yz=-1
+
  open (10,file=input_data_filename)
  read (10,*)nx,ny,nz,ny_targ
  read (10,*)
@@ -439,26 +457,23 @@
  close(10)
  !the following parameters were not used in original input.data and, for compatibility reasons,
  !have not been added since input.data is deprecated in favour of the input.nml
- !Default initialization
- L_force_singlefile_output=.true.
- L_first_output_on_restart=.false.
- time_interval_dumps=-1
- nprocx=-1
- nprocy=-1
- nprocz=-1
+ zx_rat=yx_rat
+ call consistency_check_grid
+ call consistency_check_number_of_particles_comp
+
  end subroutine read_input_data
 
 
- subroutine nml_consistency_check_number_of_particles_comp
+ subroutine consistency_check_number_of_particles_comp
  if(all(ppc>=1)) then
   call from_ppc_to_npx_npy_npz
  else
   np_per_zc=np_per_yc
  endif
- end subroutine nml_consistency_check_number_of_particles_comp
+ end subroutine consistency_check_number_of_particles_comp
 
 
- subroutine nml_consistency_check_grid
+ subroutine consistency_check_grid
  if( zx_rat < 0. .and. yx_rat > 0. ) then
   zx_rat = yx_rat
   !write(6,'(A)') "force zx_rat equal to yx_rat"
@@ -470,14 +485,14 @@
   zx_rat = 1.
   !write(6,'(A)') "force yx_rat=1 and zx_rat=1"
  endif
- end subroutine nml_consistency_check_grid
+ end subroutine consistency_check_grid
 
 
 
 
 
  !------------------------------------------------------!
- subroutine nml_consistency_check_number_of_particles !excluded temporarily because it doesn't deal with few cases, most of all np_per_xc=0
+ subroutine consistency_check_number_of_particles !excluded temporarily because it doesn't deal with few cases, most of all np_per_xc=0
 
  !--->case 0: ppc is the only defined (new nml)
  if(all(ppc>=1) .and. all(np_per_xc==-1) .and. all(np_per_yc==-1) .and. all(np_per_zc==-1 ) ) then
@@ -500,7 +515,7 @@
   call from_ppc_to_npx_npy_npz
  endif
 
- end subroutine nml_consistency_check_number_of_particles
+ end subroutine consistency_check_number_of_particles
 
  !------> Particle organisation
  subroutine from_ppc_to_npx_npy_npz
