@@ -593,12 +593,8 @@
 
  integer :: nxp,nyp,nzp,ns_ioniz
 
- !Read parameters from 'input.nml' file
+ !Read parameters from input_namelist_filename file
  call read_main_input
- !If namelists defines an OLD_INPUT namelist block, with L_read_input_data set to true, , we read a file named input.data
- if(L_read_input_data) then
-  call read_input_data
- endif
  if (model_id > 4) then
   call read_bunch_namelist
   call read_bunch_TWISS_namelist
@@ -626,7 +622,7 @@
  endif
  if(pe0)then
   write(6,*)                    '========================================'
-  write(6,'(a14,i1,a1,i2,a23)') ' =  ALaDyn v. ',major_version,'.',minor_version,'                      ='
+  write(6,'(a4,a6,a4,i1,a1,i2,a23)') ' =  ',sw_name,' v. ',major_version,'.',minor_version,'                      ='
   write(6,*)                    '========================================'
  endif
  if (pe0) call create_initial_folders

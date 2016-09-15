@@ -26,7 +26,10 @@
  implicit none
 
  integer,parameter :: major_version = 5
- integer,parameter :: minor_version = 8
+ integer,parameter :: minor_version = 9
+ character(6) :: sw_name='ALaDyn'
+ character(9) :: input_namelist_filename='input.nml'
+ character(10) :: input_data_filename='input.data'
  integer,parameter :: MAXV=1,SUMV=0,MINV=-1
  integer,parameter :: LEFT=-1,RIGHT=1
  integer,parameter :: FIELD=0,CURR=1
@@ -60,7 +63,6 @@
  logical :: L_intdiagnostics_pwfa,L_intdiagnostics_classic
  logical :: L_force_singlefile_output
  logical :: L_print_J_on_grid
- logical :: L_read_input_data
  logical :: L_first_output_on_restart
  logical :: L_use_unique_dumps
  logical :: L_disable_rng_seed

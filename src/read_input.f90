@@ -33,12 +33,28 @@
 
 
  subroutine read_main_input
+ logical exist_nml
+ logical exist_data
+
+ inquire(file=input_namelist_filename, exist=exist_nml) 
+ inquire(file=input_data_filename, exist=exist_data) 
+
+ if (exist_nml) then
+  call read_input_nml
+ else if (exist_data) then
+  call read_input_data
+ else
+
+ endif
+ END SUBROUTINE
+
+
+ subroutine read_input_nml
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  !C
  !C Reads the input namelist
  !C
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
- NAMELIST/OLD_INPUT/L_read_input_data
  NAMELIST/GRID/nx,ny,nz,ny_targ,k0,yx_rat,zx_rat
  NAMELIST/SIMULATION/LPf_ord,der_ord,str_flag,iform,model_id,&
   dmodel_id,ibx,iby,ibz,ibeam
@@ -52,24 +68,17 @@
   L_first_output_on_restart
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
 
- !--- reading OLD_INPUT ---!
- L_read_input_data = .false.
- open(1,file='input.nml', status='old')
- read(1,OLD_INPUT,ERR=16,END=16)
-16 continue
- close(1)
-
  !--- reading grid parameters ---!
  yx_rat=-1.
  zx_rat=-1.
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  read(1,GRID,ERR=17,END=17)
 17 continue
  close(1)
  call nml_consistency_check_grid
 
  !--- reading sim parameters ---!
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  read(1,SIMULATION,ERR=18,END=18)
 18 continue
  close(1)
@@ -81,7 +90,7 @@
  np_per_yc=-1
  np_per_zc=-1
  L_disable_rng_seed = .false.
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  read(1,TARGET_DESCRIPTION,ERR=19,END=19)
 19 continue
  close(1)
@@ -89,13 +98,13 @@
  call nml_consistency_check_number_of_particles_comp
 
  !--- reading laser parameters ---!
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  read(1,LASER,ERR=20,END=20)
 20 continue
  close(1)
 
  !--- reading moving window parameters ---!
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  read(1,MOVING_WINDOW,ERR=21,END=21)
 21 continue
  close(1)
@@ -105,7 +114,7 @@
  L_force_singlefile_output = .true.
  L_first_output_on_restart = .false.
  L_print_J_on_grid = .true.
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  read(1,OUTPUT,ERR=22,END=22)
 22 continue
  close(1)
@@ -116,7 +125,7 @@
  nprocy=-1
  nprocz=-1
  npe_yz=-1
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  read(1,MPIPARAMS,ERR=23,END=23)
 23 continue
  close(1)
@@ -141,7 +150,7 @@
  NAMELIST/BUNCH5/rho_b_5,gamma_5,xb_5,yb_5,zb_5,sx_5,sy_5,epsy_5,epsz_5,dg_5,np_5,bunch_type_5
 
  !--- reading number of bunches ---!
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  L_particles = .false.
  L_intdiagnostics_pwfa=.false.
  L_intdiagnostics_classic=.true.
@@ -156,7 +165,7 @@
  zb_1 = 0.0
  !-->
  IF( 1 .le. n_bunches) then
-  open(1,file='input.nml', status='old')
+  open(1,file=input_namelist_filename, status='old')
   read(1,BUNCH1,ERR=11,END=11)
 11 continue
   close(1)
@@ -183,7 +192,7 @@
  zb_2 = 0.0
  !-->
  IF( 2 .le. n_bunches) then
-  open(1,file='input.nml', status='old')
+  open(1,file=input_namelist_filename, status='old')
   read(1,BUNCH2,ERR=12,END=12)
 12 continue
   close(1)
@@ -210,7 +219,7 @@
  zb_3 = 0.0
  !-->
  IF( 3 .le. n_bunches) then
-  open(1,file='input.nml', status='old')
+  open(1,file=input_namelist_filename, status='old')
   read(1,BUNCH3,ERR=13,END=13)
 13 continue
   close(1)
@@ -237,7 +246,7 @@
  zb_4 = 0.0
  !-->
  IF( 4 .le. n_bunches) then
-  open(1,file='input.nml', status='old')
+  open(1,file=input_namelist_filename, status='old')
   read(1,BUNCH4,ERR=14,END=14)
 14 continue
   close(1)
@@ -264,7 +273,7 @@
  zb_5 = 0.0
  !-->
  IF( 5 .le. n_bunches) then
-  open(1,file='input.nml', status='old')
+  open(1,file=input_namelist_filename, status='old')
   read(1,BUNCH5,ERR=15,END=15)
 15 continue
   close(1)
@@ -296,7 +305,7 @@
 
  NAMELIST/TWISS/L_TWISS,alpha_twiss,beta_twiss
 
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  L_TWISS = .false. !bunch at waist
  read(1,TWISS,ERR=16,END=16)
 16 continue
@@ -313,7 +322,7 @@
 
  NAMELIST/BPOLOIDAL/L_Bpoloidal,B_ex_poloidal,radius_poloidal
 
- open(1,file='input.nml', status='old')
+ open(1,file=input_namelist_filename, status='old')
  L_Bpoloidal = .false.
  B_ex_poloidal=0.0
  radius_poloidal=1.0
@@ -331,7 +340,6 @@
  !C write namelist on a file 'input_  .nml'
  !C
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
- NAMELIST/OLD_INPUT/L_read_input_data
  NAMELIST/GRID/nx,ny,nz,ny_targ,k0,yx_rat,zx_rat
  NAMELIST/SIMULATION/LPf_ord,der_ord,str_flag,iform,model_id,&
   dmodel_id,ibx,iby,ibz,ibeam
@@ -356,9 +364,7 @@
 
  write(output_filename,29)'input_',id_new,'.nml'
 29 format(a6,i2.2,a4)
- !todo: modify input_read.nml using id_new
  open(1,file=output_filename)
- write(1,nml=OLD_INPUT,ERR=30)
  write(1,nml=GRID,ERR=30)
  write(1,nml=SIMULATION,ERR=30)
  write(1,nml=TARGET_DESCRIPTION,ERR=30)
@@ -386,7 +392,7 @@
  !C
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  subroutine read_input_data
- open (10,file='input.data')
+ open (10,file=input_data_filename)
  read (10,*)nx,ny,nz,ny_targ
  read (10,*)
  read (10,*)k0, yx_rat
@@ -431,7 +437,7 @@
  read (10,*)
  close(10)
  !the following parameters were not used in original input.data and, for compatibility reasons,
- !have not been added since input.data is deprecated in favour of the input namelist
+ !have not been added since input.data is deprecated in favour of the input.nml
  !Default initialization
  L_force_singlefile_output=.true.
  L_first_output_on_restart=.false.
