@@ -194,8 +194,11 @@
  !==========================
  Wake=.false.
  Solid_target=.false.
- if(n_over_nc < 0.5)Wake=.true.
- if(n_over_nc >1.)Solid_target=.true.
+ if(n_over_nc >1.)then
+  Solid_target=.true.
+ else
+  Wake=.true.
+ endif
  !=================================
  Stretch=.false.
  pml_size=0
@@ -251,9 +254,6 @@
  mass(2)=mass_number(1)*proton_mass_norm
  mass(3)=mass_number(2)*proton_mass_norm
  mass(4)=mass_number(3)*proton_mass_norm
- if(dmodel_id==0)then
-  mass(2)=mass(1)
- endif
  do i=1,4
   mass_rat(i)=1./mass(i)
   charge_to_mass(i)=unit_charge(i)*mass_rat(i)
@@ -294,6 +294,12 @@
   Comoving=.false.
   vbeam=0.0
  endif
+ if(model_id < 3) Lin_lp = .true.
+ if(model_id == 3) Circ_lp = .true.
+ if(model_id ==4) then
+  mod_ord=2
+  Envelope=.true.
+ endif
 
  if(model_id < 5)then
   mod_ord=1
@@ -306,6 +312,11 @@
    nfield=6
    curr_ndim=ndim
   endif
+  if(Circ_lp)then
+   nfield=6
+   curr_ndim=3
+  endif
+
   dx=1./k0
   call set_grid(nx,ny,nz,ibx,nx_stretch,ny_stretch,k0,yx_rat,zx_rat)
   dt=cfl*dx
@@ -323,12 +334,6 @@
   gvol=1./gvol_inv
   Lp_active=.true.
 
-  if(model_id < 3) Lin_lp = .true.
-  if(model_id == 3) Circ_lp = .true.
-  if(model_id ==4) then
-   mod_ord=2
-   Envelope=.true.
-  endif
   !=======================
   ! Code Units for laser fields
   nc=pi/(rc0*lam0*lam0)    !critical density in units n0=10^21/cm^3=10^9/mu^3
@@ -376,8 +381,6 @@
  npt_buffer=npt_buffer+npt_buffer/8
  if(Ionization)allocate(el_ionz_count(npt_buffer))
 !===================================
-
-
  if(model_id> 4)then !  e-Beams section
   select case(model_id)
    !========================================
