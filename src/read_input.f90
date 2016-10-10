@@ -29,6 +29,11 @@
  use code_util
 
  implicit none
+ !--- ---!
+ integer, public :: iounit,ierr
+ character(100), public :: nml_error_message
+ data iounit,ierr,nml_error_message /1,0,''/
+ !--- ---!
  contains
 
 
@@ -36,8 +41,8 @@
  logical exist_nml
  logical exist_data
 
- inquire(file=input_namelist_filename, exist=exist_nml) 
- inquire(file=input_data_filename, exist=exist_data) 
+ inquire(file=input_namelist_filename, exist=exist_nml)
+ inquire(file=input_data_filename, exist=exist_data)
 
  if (exist_nml) then
   call read_input_nml
@@ -72,17 +77,19 @@
  !--- reading grid parameters ---!
  yx_rat=-1.
  zx_rat=-1.
- open(1,file=input_namelist_filename, status='old')
- read(1,GRID,ERR=17,END=17)
-17 continue
- close(1)
+ open (iounit,file=input_namelist_filename, status='old')
+ read (iounit,GRID,iostat=ierr)
+ nml_error_message='GRID'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
  call consistency_check_grid
 
  !--- reading sim parameters ---!
- open(1,file=input_namelist_filename, status='old')
- read(1,SIMULATION,ERR=18,END=18)
-18 continue
- close(1)
+ open(iounit,file=input_namelist_filename, status='old')
+ read(iounit,SIMULATION,iostat=ierr)
+ nml_error_message='SIMULATION'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
 
  !--- reading target parameters ---!
  mass_number(1:3) = 1.0
@@ -91,34 +98,40 @@
  np_per_yc=-1
  np_per_zc=-1
  L_disable_rng_seed = .false.
- open(1,file=input_namelist_filename, status='old')
- read(1,TARGET_DESCRIPTION,ERR=19,END=19)
-19 continue
- close(1)
+ open(iounit,file=input_namelist_filename, status='old')
+ read(iounit,TARGET_DESCRIPTION,iostat=ierr)
+ nml_error_message='TARGET_DESCRIPTION'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
  !call consistency_check_number_of_particles
  call consistency_check_number_of_particles_comp
 
  !--- reading laser parameters ---!
- open(1,file=input_namelist_filename, status='old')
- read(1,LASER,ERR=20,END=20)
-20 continue
- close(1)
+ open(iounit,file=input_namelist_filename, status='old')
+ read(iounit,LASER,iostat=ierr)
+ nml_error_message='LASER'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
+
 
  !--- reading moving window parameters ---!
- open(1,file=input_namelist_filename, status='old')
- read(1,MOVING_WINDOW,ERR=21,END=21)
-21 continue
- close(1)
+ open(iounit,file=input_namelist_filename, status='old')
+ read(iounit,MOVING_WINDOW,iostat=ierr)
+ nml_error_message='MOVING_WINDOW'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
+
 
  !--- reading output parameters ---!
  time_interval_dumps = -1. !if -1 use classical output
  L_force_singlefile_output = .true.
  L_first_output_on_restart = .false.
  L_print_J_on_grid = .true.
- open(1,file=input_namelist_filename, status='old')
- read(1,OUTPUT,ERR=22,END=22)
-22 continue
- close(1)
+ open(iounit,file=input_namelist_filename, status='old')
+ read(iounit,OUTPUT,iostat=ierr)
+ nml_error_message='OUTPUT'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
 
 
  !--- reading mpi decomposition ---!
@@ -126,10 +139,12 @@
  nprocy=-1
  nprocz=-1
  npe_yz=-1
- open(1,file=input_namelist_filename, status='old')
- read(1,MPIPARAMS,ERR=23,END=23)
-23 continue
- close(1)
+ open(iounit,file=input_namelist_filename, status='old')
+ read(iounit,MPIPARAMS,iostat=ierr)
+ nml_error_message='MPIPARAMS'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
+
 
  END SUBROUTINE
 
@@ -151,14 +166,16 @@
  NAMELIST/BUNCH5/rho_b_5,gamma_5,xb_5,yb_5,zb_5,sx_5,sy_5,epsy_5,epsz_5,dg_5,np_5,bunch_type_5
 
  !--- reading number of bunches ---!
- open(1,file=input_namelist_filename, status='old')
+ open(iounit,file=input_namelist_filename, status='old')
  L_particles = .false.
  L_intdiagnostics_pwfa=.false.
  L_intdiagnostics_classic=.true.
  number_of_slices = (/10,0,0,0/)
- read(1,NUMBER_BUNCHES,ERR=10,END=10)
-10 continue
- close(1)
+ read(iounit,NUMBER_BUNCHES,iostat=ierr)
+ nml_error_message='NUMBER_BUNCHES'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
+
 
  !--- reading BUNCH1 ---!
  !--> initialization
@@ -166,10 +183,11 @@
  zb_1 = 0.0
  !-->
  IF( 1 .le. n_bunches) then
-  open(1,file=input_namelist_filename, status='old')
-  read(1,BUNCH1,ERR=11,END=11)
-11 continue
-  close(1)
+  open(iounit,file=input_namelist_filename, status='old')
+  read(iounit,BUNCH1,iostat=ierr)
+  nml_error_message='BUNCH1'
+  close(iounit)
+  if(ierr>0) call print_at_screen_nml_error
   !passing values to ALaDyn's parameter
   nb_tot(1)     = np_1
   bunch_type(1) = bunch_type_1
@@ -193,10 +211,11 @@
  zb_2 = 0.0
  !-->
  IF( 2 .le. n_bunches) then
-  open(1,file=input_namelist_filename, status='old')
-  read(1,BUNCH2,ERR=12,END=12)
-12 continue
-  close(1)
+  open(iounit,file=input_namelist_filename, status='old')
+  read(iounit,BUNCH2,iostat=ierr)
+  nml_error_message='BUNCH2'
+  close(iounit)
+  if(ierr>0) call print_at_screen_nml_error
   !passing values to ALaDyn's parameter
   nb_tot(2)     = np_2
   bunch_type(2) = bunch_type_2
@@ -220,10 +239,11 @@
  zb_3 = 0.0
  !-->
  IF( 3 .le. n_bunches) then
-  open(1,file=input_namelist_filename, status='old')
-  read(1,BUNCH3,ERR=13,END=13)
-13 continue
-  close(1)
+  open(iounit,file=input_namelist_filename, status='old')
+  read(iounit,BUNCH3,iostat=ierr)
+  nml_error_message='BUNCH3'
+  close(iounit)
+  if(ierr>0) call print_at_screen_nml_error
   !passing values to ALaDyn's parameter
   nb_tot(3)     = np_3
   bunch_type(3) = bunch_type_3
@@ -247,10 +267,11 @@
  zb_4 = 0.0
  !-->
  IF( 4 .le. n_bunches) then
-  open(1,file=input_namelist_filename, status='old')
-  read(1,BUNCH4,ERR=14,END=14)
-14 continue
-  close(1)
+  open(iounit,file=input_namelist_filename, status='old')
+  read(iounit,BUNCH4,iostat=ierr)
+  nml_error_message='BUNCH4'
+  close(iounit)
+  if(ierr>0) call print_at_screen_nml_error
   !passing values to ALaDyn's parameter
   nb_tot(4)     = np_4
   bunch_type(4) = bunch_type_4
@@ -274,10 +295,11 @@
  zb_5 = 0.0
  !-->
  IF( 5 .le. n_bunches) then
-  open(1,file=input_namelist_filename, status='old')
-  read(1,BUNCH5,ERR=15,END=15)
-15 continue
-  close(1)
+  open(iounit,file=input_namelist_filename, status='old')
+  read(iounit,BUNCH5,iostat=ierr)
+  nml_error_message='BUNCH5'
+  close(iounit)
+  if(ierr>0) call print_at_screen_nml_error
   !passing values to ALaDyn's parameter
   nb_tot(5)     = np_5
   bunch_type(5) = bunch_type_5
@@ -306,11 +328,12 @@
 
  NAMELIST/TWISS/L_TWISS,alpha_twiss,beta_twiss
 
- open(1,file=input_namelist_filename, status='old')
+ open(iounit,file=input_namelist_filename, status='old')
  L_TWISS = .false. !bunch at waist
- read(1,TWISS,ERR=16,END=16)
-16 continue
- close(1)
+ read(iounit,TWISS,iostat=ierr)
+ nml_error_message='TWISS'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
  end subroutine read_bunch_TWISS_namelist
 
 
@@ -323,13 +346,14 @@
 
  NAMELIST/BPOLOIDAL/L_Bpoloidal,B_ex_poloidal,radius_poloidal
 
- open(1,file=input_namelist_filename, status='old')
+ open(iounit,file=input_namelist_filename, status='old')
  L_Bpoloidal = .false.
  B_ex_poloidal=0.0
  radius_poloidal=1.0
- read(1,BPOLOIDAL,ERR=17,END=17)
-17 continue
- close(1)
+ read(iounit,BPOLOIDAL,iostat=ierr)
+ nml_error_message='BPOLOIDAL'
+ close(iounit)
+ if(ierr>0) call print_at_screen_nml_error
  end subroutine read_poloidal_field_namelist
 
 
@@ -365,24 +389,24 @@
 
  write(output_filename,29)'input_',id_new,'.nml'
 29 format(a6,i2.2,a4)
- open(1,file=output_filename)
- write(1,nml=GRID,ERR=30)
- write(1,nml=SIMULATION,ERR=30)
- write(1,nml=TARGET_DESCRIPTION,ERR=30)
- write(1,nml=LASER,ERR=30)
- write(1,nml=MOVING_WINDOW,ERR=30)
- write(1,nml=OUTPUT,ERR=30)
- write(1,nml=MPIPARAMS,ERR=30)
- write(1,nml=NUMBER_BUNCHES,ERR=30)
- write(1,nml=BUNCH1,ERR=30)
- write(1,nml=BUNCH2,ERR=30)
- write(1,nml=BUNCH3,ERR=30)
- write(1,nml=BUNCH4,ERR=30)
- write(1,nml=BUNCH5,ERR=30)
- write(1,nml=TWISS,ERR=30)
- write(1,nml=BPOLOIDAL,ERR=30)
+ open(iounit,file=output_filename)
+ write(iounit,nml=GRID,ERR=30)
+ write(iounit,nml=SIMULATION,ERR=30)
+ write(iounit,nml=TARGET_DESCRIPTION,ERR=30)
+ write(iounit,nml=LASER,ERR=30)
+ write(iounit,nml=MOVING_WINDOW,ERR=30)
+ write(iounit,nml=OUTPUT,ERR=30)
+ write(iounit,nml=MPIPARAMS,ERR=30)
+ write(iounit,nml=NUMBER_BUNCHES,ERR=30)
+ write(iounit,nml=BUNCH1,ERR=30)
+ write(iounit,nml=BUNCH2,ERR=30)
+ write(iounit,nml=BUNCH3,ERR=30)
+ write(iounit,nml=BUNCH4,ERR=30)
+ write(iounit,nml=BUNCH5,ERR=30)
+ write(iounit,nml=TWISS,ERR=30)
+ write(iounit,nml=BPOLOIDAL,ERR=30)
 30 continue
- close(1)
+ close(iounit)
  END SUBROUTINE
 
 
@@ -595,6 +619,19 @@
   END IF
  END DO
  END SUBROUTINE PRIMEFACTORS
+
+!--- *** *** *** ---!
+ subroutine print_at_screen_nml_error
+   character(100) :: line
+   !backspace(iounit)
+   !read(iounit,fmt='(A)') line
+   write(*,'(A)')    '*** *** *** *** *** *** *** *** *** *** *** ***'
+   write(*,'(A)')    'Error in namelist:      '//trim(nml_error_message)
+   !write(*,'(A)')    'Invalid namelist entry: '//trim(line)
+   write(*,'(A,I5)') 'iostat type of error:   ',ierr
+   write(*,'(A)')    '*** *** *** *** *** *** *** *** *** *** *** ***'
+   !stop
+ end subroutine print_at_screen_nml_error
 
 
  end module read_input
