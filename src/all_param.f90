@@ -259,7 +259,7 @@
   charge_to_mass(i)=unit_charge(i)*mass_rat(i)
  end do
  !======================================
- Lorentz_fact(1:4)=mass_rat(1:4)  
+ Lorentz_fact(1:4)=mass_rat(1:4)
 !to be multiplied by the particle charge in the equation of motion
  !==========================================
  nm_fact=1.
@@ -268,12 +268,12 @@
  j0_norm=1.
  jb_norm=1.
  E0=electron_mass !E=in unit mc^2/(e*l0)=[TV/m]/E0; E0*E in [TV/m]=[MV/mu] unit
- 
+
  !do not remove following initialization, not required outside of PWFA but needed to avoid NaN ops
  nb_over_np=1.
  b_charge=1.
  gam0=1.
- 
+
 
  do i=1,6
   mp_per_cell(i)=np_per_xc(i)*np_per_yc(i)
