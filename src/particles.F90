@@ -3734,10 +3734,7 @@
  real(sp) :: charge(2)
  equivalence(charge,wgh)
  !==========================
- !Iform==1 IMPLEMENTS the ESIRKEPOV SCHEME for QUADRATIC SHAPE
- ! The Jx current density component is obtained later by
- ! inversion of the D_x[J_x]=D_t[rho] finite difference equation
- ! on the x-grid
+ !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for QUADRATIC SHAPE
  !==========================================
  ax1=0.0
  ay1=0.0
@@ -3801,7 +3798,7 @@
   end do
   !======================
  case(2)
-  if(njc==2)then
+  if(njc==2)then            !Two currents components
    do n=1,np
     pt(n,1:2)=sp_loc%part(n,1:2) !x-y-new  t^(n+1)
     pt(n,1)=dx_inv*(pt(n,1)-xmn)
@@ -3913,7 +3910,7 @@
     end do
    end do
   endif
-  if(njc==3)then
+  if(njc==3)then  !Three currents conditions in 2D grid
    do n=n0,np
     pt(n,1:3)=sp_loc%part(n,1:3) !x-y-z -new  t^(n+1)
     pt(n,1)=dx_inv*(pt(n,1)-xmn)

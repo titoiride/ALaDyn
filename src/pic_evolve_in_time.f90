@@ -1309,7 +1309,7 @@
  endif
  call jc_xyzbd(i1,n1p,j1,n2p,k1,n3p,nj_dim)
  !=================
- if(iform < 2)then
+ if(iform < 2)then   !iform=0=iform=1  use Esisrkepov scheme
   do i=1,ndim
    curr(i1:n1p,j1:n2p,k1:n3p,i)=djc(i)*curr(i1:n1p,j1:n2p,k1:n3p,i)
   end do

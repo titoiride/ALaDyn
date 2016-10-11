@@ -99,6 +99,9 @@
  P_nl(1:10,1:An_max)=0.0
  !Ne_shell(nl,z)= electrons in suborbitals s,p,d of shell n=1,2,3
  !=================================
+ ! Potentials V(i) to ionize from state Z=i-1 to Z= i
+ !            V(i) from i=1, atomic number = Z_max
+ !==========================================================
  do j=1,sp_ionz-1
   !=========== cycles over all ion species to be ionized sp_ionz=2,3,4
   select case(An(j))            !The atomic number

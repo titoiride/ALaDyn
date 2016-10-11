@@ -667,10 +667,7 @@
  if (Stretch) then
   if (pe0) call str_grid_data
  endif
-
- if (prlx) then
-  if (iform<2) iform=0    !only esirkepov schemes used
- endif
+ if (iform==1) iform=0    !only esirkepov schemes used
  call mpi_valloc(loc_nxc_max,loc_nyc_max,loc_nzc_max,nfield,iform,mem_size)
  call set_output_grid(jump)   !allocates wdata(); counts nhx,nhy,nhz local grid points
  if(pe0)then
@@ -1067,14 +1064,42 @@
      write(6,'(2i6,f4.1)')ion_min(i),atomic_number(i),mass_number(i)
     end do
    end if
-   select case(dmodel_id)
-   case(1)
-    write(6,*)' One H1-H2 ions +electrons plasma '
+   write(6,*)'Target configuration'
+   write(6,'(a16,i4)')'Running species ',nsp_run
+   if(Wake)then
+    select case(dmodel_id)
+    case(1)
+    write(6,*)' Five layer x-profile with one central lpx(3) plateau '
     write(6,*)' Initial electron-ion thermal speed V_T/c'
     write(6,'(3E12.4)')t0_pl(1:3)
-    write(6,*)'electron/ion ratio per cell'
-    write(6,'(3i6)')mp_per_cell(1:3)
-   case(3)
+    if(nsp >1)then
+     write(6,*)'ratio of electron/ion numbers per cell'
+     write(6,'(3i6)')mp_per_cell(1:3)
+    endif
+    case(2)
+    write(6,*)' Five layer x-profile with two lpx(2) lpx(4) plateau '
+    write(6,*)' Initial electron-ion thermal speed V_T/c'
+    write(6,'(3E12.4)')t0_pl(1:3)
+    if(nsp >1)then
+     write(6,*)'ratio of electron/ion numbers per cell'
+     if(nsp==2)write(6,'(i6)')ratio_mpc(1)
+     if(nsp==3)write(6,'(2i6)')ratio_mpc(1:2)
+     if(nsp==4)write(6,'(3i6)')ratio_mpc(1:3)
+    endif
+    case(3)
+    write(6,*)' Five layer x-profile with two lpx(2) lpx(4) plateau '
+    write(6,*)' Ionizing dopant added in ramp[lpx(1)]+plateau[lpx(2)]'
+    write(6,*)' Initial electron-ion thermal speed V_T/c'
+    write(6,'(3E12.4)')t0_pl(1:3)
+    if(nsp >1)then
+     write(6,*)'ratio of electron/ion numbers per cell'
+     write(6,'(3i6)')mp_per_cell(1:3)
+    endif
+    end select
+   endif
+   if(Solid_target)then
+    select case(dmodel_id)
+    case(3)
     write(6,*)' Target Preplasma-enabled '
     if(lpx(1)>0.0)write(6,'(a21,e11.4)')' Preplasma size ',lpx(1)
     if(lpx(2)>0.0)write(6,'(a21,e11.4)')' Ramp size ',lpx(2)
@@ -1104,7 +1129,8 @@
     write(6,*)' 2R_ext    2dr       filling fact '
     write(6,'(3e11.4)')lpy(1)+lpy(2),lpy(1),lpy(3)
     write(6,*)'Boundaries',ibx,iby
-   end select
+    end select
+   endif
    write(6,*)'============================'
    write(6,*)' n/n_c density distribution'
    write(6,'(3e11.4)')n_over_nc,n1_over_n,n2_over_n

@@ -175,14 +175,15 @@
  Ionization=.false.
  Impact_ioniz=.false.
  !===============================
- ! Multispecies target with max 3 ionic species
+ ! Multispecies target with max 3 ionic species (nsp=4)
  !=================
  Charge_cons=.true.
  if(iform>1)Charge_cons=.false.
- !==========================
- nsp_run=nsp
  !===============================
- do i=1, nsp-1                  !ion species
+ ! Set ionization param
+ ! WARNING  ion ordering in input data must set ionizing species first
+ !==========================================================
+ do i=1, nsp-1          !index of ionizing ion species 1,2,.. nsp_ionz <= nsp
   if(ion_min(i)< ion_max(i))nsp_ionz=i+1
  enddo
  nsp_ionz=min(nsp_ionz,nsp)
@@ -199,6 +200,9 @@
  else
   Wake=.true.
  endif
+ !==========================
+ nsp_run=nsp
+ if(Wake)nsp_run=1  !only electrons running
  !=================================
  Stretch=.false.
  pml_size=0
@@ -244,7 +248,7 @@
  Lp_active=.false.
 
  ! mass-charge parameters four species: three ion species+ electrons
- ! Ions charges defined by initial conditions
+ ! Ions charges defined by initial conditions. ion_min=0 allowed
  unit_charge(1)=electron_charge_norm
  unit_charge(2)=ion_min(1)*proton_charge_norm
  unit_charge(3)=ion_min(2)*proton_charge_norm
@@ -513,7 +517,6 @@
    !==================
   end select
  endif
- if(Wake)nsp_run=1  !only electrons running
  !============================
  !==============  in 2D dz=dy mp_per_cell =mp_x*mp_y,  mp_z=1
  if(mp_per_cell(1) >0)then

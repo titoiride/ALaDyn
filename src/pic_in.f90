@@ -247,7 +247,7 @@
  !--------------------------
  !============================
 
- subroutine one_layer_multisp(layer_mod,nyh,xf0)
+ subroutine multi_layer_gas_target(layer_mod,nyh,xf0)
 
  integer,intent(in) :: layer_mod,nyh
  real(dp),intent(in) :: xf0
@@ -258,7 +258,7 @@
  integer :: npmax
  real(dp) :: uu,yy,zz,dxip,dpy,dpz,np1,np2
  real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
- real(dp) :: xfsh,un(3),j1_norm,j2_norm
+ real(dp) :: xfsh,un(4),j1_norm,j2_norm
  integer :: nxl(5)
  real(dp),allocatable :: wy(:,:),wz(:,:)
  integer :: loc_nptx(4),nps_loc(4),np_per_zcell(4),last_particle_index(4)
@@ -414,18 +414,12 @@
  ! Longitudinal distribution
  ! All particles have the same weight
  ! w=1/mp_per_cell(1)
+ ! For nsp >1) electron density
  ! mp_per_cell have to be set in a way total charge is zero:
  ! Z1*mp_per_cell(Z1)+Z2*mp_per_cell(Z2)=mp_per_cell(El)
  !====================
  nptx=0
  un(1:nsp)=1.
- if(nsp==2)then
-  ic=2
-  un(2)=ratio_mpc(ic)/real(ion_min(1),dp)!float(mp_per_cell(1))/float(mp_per_cell(ic))
-                                      !for charge normaliz.
- endif
- j1_norm=np1*j0_norm
- j2_norm=np2*j0_norm
  select case(layer_mod)
   !================ first uniform layer np1=================
  case(1)
@@ -510,6 +504,8 @@
 !                 particle per cell uniform
 !================================================
 !================ first linear ramp to first plateau n1/n_c =================
+  j1_norm=np1*j0_norm
+  j2_norm=np2*j0_norm
   if(nxl(1)>0)then
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
@@ -581,6 +577,88 @@
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(5)
+  endif
+ case(3)            
+!                 three layer
+!                 lpx(1)[ramp]+lpx(2)[plateau]  with a (A1-Z1) dopant with % density
+!                 n_ion/n_0=mp_per_cell(2)/mp_per_cell(1)
+!                 and electronic density n_e=n_0+Z1*n_ion  n0=n_H(+)
+!---------------  
+!                 lpx(4)[plateau +lpx(5)[downramp] with mp_per_cell(1) electrons
+!                 of density n_e/n_0=1
+!================================================
+  un(2)=1.
+  !Z1 electrons are accounted for by a larger electron weight
+  un(1)=1.+ion_min(1)*real(mp_per_cell(2),dp)/real(mp_per_cell(1),dp)
+  if(nxl(1)>0)then
+   do ic=1,nsp
+    n_peak=nxl(1)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(1)*uu
+     wghpt(i1,ic)=uu*j0_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+   end do
+   xfsh=xfsh+lpx(1)
+  endif
+  if(nxl(2)>0)then              !first plateau
+   do ic=1,nsp
+    n_peak=nxl(2)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(2)*uu
+     wghpt(i1,ic)=j0_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+   end do
+   xfsh=xfsh+lpx(2)
+  endif
+  !================
+  if(nxl(3)>0)then
+   do ic=1, nsp_run
+    n_peak=nxl(3)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(3)*uu
+     wghpt(i1,ic)=j1_norm+uu*(j2_norm-j1_norm)
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+    xfsh=xfsh+lpx(3)
+   enddo
+  endif
+  !================ second plateau only electrons =================
+  if(nxl(4)>0)then
+   do ic=1,nsp_run
+    n_peak=nxl(4)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(4)*uu
+     wghpt(i1,ic)=j0_norm
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+    xfsh=xfsh+lpx(4)
+   enddo
+  endif
+  if(nxl(5)>0)then     !second down-ramp ==> 0
+   do ic=1,nsp_run
+    n_peak=nxl(5)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(5)*uu
+     wghpt(i1,ic)=(1.-uu)*j0_norm
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+    xfsh=xfsh+lpx(5)
+   end do
   endif
  end select
  !================================
@@ -663,7 +741,7 @@
                p,ic,i2,last_particle_index(ic))
  enddo
 
- end subroutine one_layer_multisp
+ end subroutine multi_layer_gas_target
  !=============================
  !===============================
  subroutine preplasma_multisp(nyh,xf0)
@@ -2420,29 +2498,71 @@
  integer :: ip,pp,l,p
  integer :: tot_nploc(npe)
  !=================
- if(id < 3)then
-  call one_layer_multisp(id,ny_targ,xf0)  !e+Z1+Z2 distributed along the x-layer
- endif
- select case(id)
- case(3)
-  call preplasma_multisp(ny_targ,xf0) ! (e+Z1) preplasma and central target
- case(4)
-  call multi_layer_multisp(ny_targ,xf0) 
-  !(e+Z2) foam
-  !(e+Z1+Z3) central layer
-  !+ (e+Z2)coating
-  !============warning exponential ramp (in layer 2) always using (e+Z1) species
- case(5)
-  call multisp_target(ny_targ,xf0) 
-  !(e+Z2) coating
-  !(e+Z1+Z3) central layer with lpx(2) preplasma
-  !+ (e+Z2)coating
- case(6)
-  call one_layer_nano_wires(ny_targ,xf0)  
+ if(Wake)then
+               !nps_run =1
+               !if nsp > 1 ions active only for ionization
+  call multi_layer_gas_target(id,ny_targ,xf0) 
+!======================  
+  !id=1  
+   !lpx(1) first plateau np1 density 
+   !ramp lpx(2)+ plateau lpx(3) + downramp lpx(4)] density 1
+   !lpx(5) last plateau np2 density 
+   !all densities normalized to n_0=n_over_nc
+  !====================================
+  !id=2  target with two central plateau (for shocked gas-jet)
+   !lpx(1) first ramp up to lpx(2) first plateau density np1
+   !lpx(3) downramp to 
+   !lpx(4) second plateau density np2 and to final downramp lpx(5)
+   !n_0=n_over_nc can be an average, or n1_over_nc or n2_over_nc
+  !====================================
+  !id=3 as id=2, but multispecies is allowed:
+  ! The layer 1):
+  ! of length [lpx(1) a ramp +lpx(2) a plateau] contain a dopant (A1,Z1) with
+  ! density n_ion=w_ion*mp_per_cell(2), background (H+) electrons with density
+  ! n_0=w_el*mp_per_cell(1) and Z1 electrons of ions. The total electron density
+  ! is then: 
+  ! n_e=n_0+Z1*n_ion=w_el*(mp_per_cell(1)+Z1*mp_per_cell(2)), and normalized
+  ! density:
+  ! n_e/n_0=(1+Z1*mp_per_cell(2)/mp_per_cell(2))
+  !----------
+  ! Layer 3) of length [lpx(4) a plateau lpx(5) a downramp] has density n_e=n_0
+  !------------------
+  ! layer 2) of length lpx(3) is a transition between layer 1) and 3).
+  !
+  ! In layer 2): 
+  ![lpx(4) a plateau lpx(5) a downramp] contains only electrons with reference density n_e
+  ! (n_e/n_0=1)
+  !===================================
+  !id=4 as  id=1 along the x-coordinate but (y-z profile is a matched parabolic
+  !channel defined by lpy(1) and lpy(2) scale length parameters.
+  !======================================
+
+ else
+                 !SOLID MULTISPECIES TARGETS
+                 !flag id=1,2 allowed not even implemented
+  select case(id)
+  case(3)
+   call preplasma_multisp(ny_targ,xf0) 
+   ! (e+Z1) preplasma and central target
+   !+ (e+Z2)coating
+  case(4)
+   call multi_layer_multisp(ny_targ,xf0) 
+   !(e+Z2) foam
+   !(e+Z1) central layer
+   !(e+Z2)coating
+   !============warning exponential ramp (in layer 2) always using (e+Z1) species
+  case(5)
+   call multisp_target(ny_targ,xf0) 
+   !(e+Z2) coating
+   !(e+Z1+Z3) central layer with lpx(2) preplasma
+   !+ (e+Z2)coating
+  case(6)
+   call one_layer_nano_wires(ny_targ,xf0)  
            !e+Z1 wires, e+Z2 bulk. interwire low density (e+Z1) plasma allowed
- case(7)
-  call one_layer_nano_tubes(ny_targ,xf0)
- end select
+  case(7)
+   call one_layer_nano_tubes(ny_targ,xf0)
+  end select
+ endif
  !===================Data for all models===============
  tot_nploc=0
  pp=0
@@ -2531,7 +2651,7 @@
    write(6,'(a21,e11.4)')' Centr x-position xc=',xc_lp
    write(6,'(a20,e11.4)')' FWHM (microns) lsz=',lx_FWHM
    write(6,'(a14,e11.4)')' FWHM (fs) lx=',tau_FWHM
-   write(6,'(a17,e11.4)')' Max Ey field  = ',lp_amp
+   write(6,'(a23,e11.4)')' Max Ey field(TV/m)  = ',E0*lp_amp
    if(Plane_wave)then
     write(6,'(a12)')' Plane wave '
     if(angle >0.0)write(6,'(a17,e11.4)')' Polarization angle ',angle
@@ -2584,7 +2704,7 @@
   if(Plane_wave)cp_ind=0
   !=======================
   call init_cp_fields(ebf,lp_amp,tt,t0_lp,tau,w0_y,xf,&
-   angle,shx_cp,cp_ind,i1,i2)
+                     angle,shx_cp,cp_ind,i1,i2)
   !=================def part distr points
   if(pe0)then
    write(6,*)'CP injected '
@@ -2592,7 +2712,7 @@
    write(6,'(a21,e11.4)')' Pulse centroid xc = ',xc_lp
    write(6,'(a20,e11.4)')' Size (microns) lsz=',lp_xsize
    write(6,'(a14,e11.4)')' FWHM (fs) lx=',tau_FWHM
-   write(6,'(a17,e11.4)')' Max Ey field  = ',lp_amp
+   write(6,'(a23,e11.4)')' Max Ey field(TV/m)  = ',E0*lp_amp
    write(6,'(a17,2e11.4)')'pulse x_in x_end ',lp_in,lp_end
    if(Plane_wave)then
     write(6,*)' Plane wave  '
