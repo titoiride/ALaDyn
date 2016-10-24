@@ -191,7 +191,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 ```
 + `xc_lp` is the position (in μm) along *x* of the central point of the laser envelope
 + `t0_lp` is the distance (in μm) after which the laser is focused; so the focus is at `xf = xc_lp + t0_lp`
-+ `w0_x` is twice the longitudinal waist, corresponding to the total laser length, which is twice the FWHM. For example, if we have a 40 fs FWHM Ti:Sa laser, we should write for `wx=33 μm` because:
++ `w0_x` is twice the longitudinal waist, corresponding to the total laser length, which is twice the FWHM. For example, if we have a 40 fs FWHM Ti:Sa laser, we should write for `w0_x=33 μm` because:
 ```
     (40 fs/3.333)*2*1.37 = 33 μm
     40/3.3333 is done to convert fs to μm
@@ -257,7 +257,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 + `jump`: jump on grid points; if `jump=2`, it means that each processor is going to write only one point every two. Mind that it's extremely important that `jump` is a divisor of the number of grid points *per processor*, otherwise the grid output will be corrupted
 + `pjump`: jump on particles; if `pjump=2`, it means that each processor is going to write the phase space of just one particle every two.
 + `xp0_out`, `xp1_out` and `yp_out` only particles contained inside the box defined by `xp0 < x < xp1`, `|y| < yp_out` will be printed in the output
-+ `tmax` is the relative time (in fs) that the simulation is going to be evolved. Being relative, it's going to be added to the time eventually already reached before the restart. In case of a PWFA simulation, `tmax` is a distance (in μm), not a time.
++ `tmax` is the relative time (in μm, because it is multiplied by *c*) that the simulation is going to be evolved. Being relative, it's going to be added to the time eventually already reached before the restart. To obtain the time in fs, you have to divide it by 0.299792458 [speed of light in μm/fs]
 + `cfl` is the Courant–Friedrichs–Lewy parameter ( [Wikipedia CFL-parameter page](http://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition) )
 + `new_sim`: identifies if a simulation is new `new=0` (data is recreated from initial conditions) or if it is a restart `new=1` (dump are going to be read)
 + `id_new` identifies the starting number of the output files (if `new=0`) or the last one written in the previous step (if `new=1`)

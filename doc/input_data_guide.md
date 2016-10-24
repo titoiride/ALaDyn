@@ -220,7 +220,7 @@ jmp, pjmp
 100.0,  0.8
  tmax,  cfl
 ```
-+ `tmax` is the relative time (in fs) that the simulation is going to be evolved. Being relative, it's going to be added to the time eventually already reached before the restart. In case of a PWFA simulation, `tmax` is a distance (in μm), not a time.
++ `tmax` is the relative time (in μm, because it is multiplied by *c*) that the simulation is going to be evolved. Being relative, it's going to be added to the time eventually already reached before the restart. To obtain the time in fs, you have to divide it by 0.299792458 [speed of light in μm/fs]
 + `cfl` is the Courant–Friedrichs–Lewy parameter ( [Wikipedia CFL-parameter page](http://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition) )
 
 
