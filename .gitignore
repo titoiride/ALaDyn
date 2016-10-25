@@ -63,4 +63,4 @@ packages
 bin/
 obj/
 *.VC.db
-
+*.db3

@@ -354,14 +354,14 @@
     call den_ene_mom_out(tnow,i,ic,ic,jump)
     if (nden>1) then
      ic=2
-     call den_ene_mom_out(tnow,i,ic,ic,jump)
+     call den_ene_mom_out(tnow,i,ic,ic,jump) 
      if (nden>2) then
       call prl_momenta_interp(i)
       do ic=1,curr_ndim
        call den_ene_mom_out(tnow,i,ic+2,ic,jump)
       end do
      endif
-    endif
+    endif 
    enddo
   endif
   if(nbout> 0)then
@@ -959,7 +959,7 @@
  write(6,'(a26,i3)')' Cartesian grid dimension ',ndim
  write(6,'(a18,i3)')' Field components ',nfield
  write(6,'(a20,i3)')' Current components ',curr_ndim
- write(6,'(a42,3i4)')' Species numbers (tot, running, ionized): ',nsp,nsp_run,nsp_ionz
+ write(6,'(a42,3i4)')' Species numbers (tot, running): ',nsp,nsp_run
  write(6,*)' charge       charge_tomass'
  do i=1,nsp
   write(6,'(a2,2e11.4)')' ',unit_charge(i),charge_to_mass(i)

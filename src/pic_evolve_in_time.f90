@@ -733,6 +733,8 @@
  xmax=xmax+dx*shx
  loc_xgrid(imodx)%gmin=loc_xgrid(imodx)%gmin+dx*shx
  loc_xgrid(imodx)%gmax=loc_xgrid(imodx)%gmax+dx*shx
+ xp0_out=xp0_out+dx*shx
+ xp1_out=xp1_out+dx*shx
  !====================
  w2f=n1p-shx
  if(w2f<=0)then
@@ -2791,9 +2793,9 @@
    np=loc_npart(imody,imodz,imodx,ic)
    if(np>0)then
     if(ibmod==0)call set_ion_Ebfield(ebf,ebf_bunch,spec(ic),ebfp,np,&
-     n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
+                                     n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(ibmod==1)call set_ion_two_Ebfield(ebf,ebf_bunch,ebf1_bunch,spec(ic),&
-     ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
+                                        ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(mod(iter_loc,100)==0)then     !refresh ionization tables
      loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.

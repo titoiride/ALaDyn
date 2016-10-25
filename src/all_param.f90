@@ -201,9 +201,6 @@
   Wake=.true.
  endif
  !==========================
- nsp_run=nsp
- if(Wake)nsp_run=1  !only electrons running
- !=================================
  Stretch=.false.
  pml_size=0
  ny_stretch=0
@@ -552,6 +549,8 @@
   end select
  endif
  !============================
+ nsp_run=nsp
+ if(Wake)nsp_run=1  !only electrons running
  !==============  in 2D dz=dy mp_per_cell =mp_x*mp_y,  mp_z=1
  if(mp_per_cell(1) >0)then
   nmacro=nref*gvol_inv
