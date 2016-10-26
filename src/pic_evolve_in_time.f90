@@ -2796,7 +2796,7 @@
                                      n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(ibmod==1)call set_ion_two_Ebfield(ebf,ebf_bunch,ebf1_bunch,spec(ic),&
                                         ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
-    if(mod(iter_loc,100)==0)then     !refresh ionization tables
+    if(mod(iter_loc,20)==0)then     !refresh ionization tables
      loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.
      if(prl)call allreduce_dpreal(MAXV,loc_ef2_ion,ef2_ion,1)

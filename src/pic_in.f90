@@ -1948,7 +1948,7 @@
  end do
  endif
  !============= Uniform y-z distribution
- npyc(5:6)=np_per_yc(3:4)  ! bulk target + contaminants
+ npyc(5:8)=np_per_yc(3:6)  ! bulk target + contaminants
  do ic=5,8
   npty_layer(ic)=nyh*npyc(ic)
   npty_ne=npty_layer(ic)
@@ -2200,7 +2200,7 @@
 
   p=0
   i2=loc_imax(imodx,6)
-  call pspecies_distribute(spec(nsp),t0_pl(nps_bulk),unit_charge(nps_bulk),p,6,i2,ip_ion)
+  call pspecies_distribute(spec(nps_bulk),t0_pl(nps_bulk),unit_charge(nps_bulk),p,6,i2,ip_ion)
  endif
  !============
  ! The contaminant electron-ion solid layer Z3=proton ion element
