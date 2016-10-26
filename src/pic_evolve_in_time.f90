@@ -2449,7 +2449,7 @@
  real(dp),intent(out) :: av(:,:,:,:)
  integer,intent(in) :: i1,i2,j1,j2,k1,k2,spl_in,spr_in
  integer :: ix,iy,iz,spl,spr
- real(dp) :: ar,ai
+ !real(dp) :: ar,ai
  !===================
   do iz=k1,k2
    do iy=j1,j2
@@ -2562,7 +2562,7 @@
  integer,intent(in) :: np,lp
  real(dp),intent(in) :: dtloc,Lfact
  integer :: p,ndv
- real(dp) :: wgh,alp,afact,dt_lp,gam,vp(3),efp(3),fploc(6)
+ real(dp) :: wgh,alp,afact,dt_lp,vp(3),efp(3),fploc(6)
  real(sp) :: wch(2)
  equivalence(wgh,wch)
 

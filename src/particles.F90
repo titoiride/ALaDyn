@@ -2691,7 +2691,8 @@
  real(dp) :: axh(0:2),ayh(0:2),up(3),xp1(3)
  real(dp) :: ax1(0:2),ay1(0:2),azh(0:2),az1(0:2),ap(12)
  integer :: i,ih,j,jh,i1,j1,i2,j2,k,kh,k1,k2,n
- real(dp) :: gam,gam_inv
+ !real(dp) :: gam
+ real(dp) :: gam_inv
  !===============================================
  real(sp) :: charge(2)
  equivalence(charge,wgh)

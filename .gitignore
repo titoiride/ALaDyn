@@ -64,3 +64,6 @@ bin/
 obj/
 *.VC.db
 *.db3
+*.bin
+*.dat
+/src/My Advisor XE Results - ALaDyn
