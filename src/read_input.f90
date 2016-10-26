@@ -665,7 +665,7 @@ Charge_left_1  =-1.0
 
 !--- *** *** *** ---!
  subroutine print_at_screen_nml_error
-   character(100) :: line
+   !character(100) :: line
    !backspace(nml_iounit)
    !read(nml_iounit,fmt='(A)') line
    write(*,'(A)')    '*** *** *** *** *** *** *** *** *** *** *** ***'

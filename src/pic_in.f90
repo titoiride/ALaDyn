@@ -2824,7 +2824,7 @@
  integer,intent(in) :: ic,btype
  integer,intent(out) :: np_tot
  integer :: i,i1,i2,ip
- real(dp) :: cut,xh(5),bch,temporary
+ real(dp) :: cut,xh(5),bch
  real(sp) :: ch(2)
  equivalence(bch,ch)
  integer :: nch

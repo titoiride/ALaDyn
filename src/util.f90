@@ -939,7 +939,8 @@
   real(dp),intent(inout)   :: generated_bunch(:,:)
   real(dp) :: rnumber(n2-n1+1)
   integer :: i
-  real(dp) :: z,y,x,a,intercept,slope
+  real(dp) :: x,a,intercept,slope
+  !real(dp) :: z,y
 
   do i=n1,n2+1
     call random_number(x)
@@ -974,11 +975,13 @@
  integer,intent(in)   :: n1,n2
  real(dp),intent(in)    :: x_cm,y_cm,z_cm
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
- real(dp),intent(in)    :: Charge_right,Charge_left,weight
+ real(dp),intent(in)    :: weight
+ real(dp),intent(in)    :: Charge_right,Charge_left
  real(dp),intent(inout)   :: generated_bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
  integer :: i
- real(dp) :: z,y,x,a,intercept,slope
+ real(dp) :: x,y,z
+ !real(dp) :: a,intercept,slope
 
   do i=n1,n2+1
     x=random_number_range( 0.0,1.0)
