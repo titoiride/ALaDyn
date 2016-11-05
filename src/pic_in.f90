@@ -580,16 +580,95 @@
   endif
  case(3)            
 !                 three layers
-!                 lpx(1)[ramp]+lpx(2)[plateau]  with a (A1-Z1) dopant with % density
-!                 n_ion/n_0=mp_per_cell(2)/mp_per_cell(1)
+!                 lpx(1)[ramp]+lpx(2)[plateau]  and lpx(4) plateu lpx(5) downramp n_ion=0 n_e=n_0
+!                 lpx(3)[plateau]  with a (A1-Z1) dopant with % density np1=n1_per_nc/n_per_nc
+!                 and electronic density n_e=n_0+Z1*n_ion  n0=n_H(+)
+!---------------  
+!================================================
+  un(2)=np1*ratio_mpc(2)                     !float(mp_per_cell(1))/float(mp_per_cell(ic))
+  if(ion_min(2)>1)un(2)=un(2)/real(ion_min(1),dp) !float(mp_per_cell(1))/Z1*float(mp_per_cell(ic))
+  !Z1 electrons are accounted for by a larger electron weight
+  un(1)=1.+ion_min(1)*np1
+  if(nxl(1)>0)then
+   do ic=1,nsp_run
+    n_peak=nxl(1)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(1)*uu
+     wghpt(i1,ic)=uu*j0_norm
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+   end do
+   xfsh=xfsh+lpx(1)
+  endif
+  if(nxl(2)>0)then              !first plateau
+   do ic=1,nsp
+    n_peak=nxl(2)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(2)*uu
+     wghpt(i1,ic)=j0_norm
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+   end do
+   xfsh=xfsh+lpx(2)
+  endif
+  !================
+  if(nxl(3)>0)then              !H(+) + dopant
+   do ic=1,nsp
+    n_peak=nxl(2)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(3)*uu
+     wghpt(i1,ic)=j0_norm
+     wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+   end do
+   xfsh=xfsh+lpx(3)
+  endif
+  !================ second plateau only electrons =================
+  if(nxl(4)>0)then
+   do ic=1,nsp_run
+    n_peak=nxl(4)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(4)*uu
+     wghpt(i1,ic)=j0_norm
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+    xfsh=xfsh+lpx(4)
+   enddo
+  endif
+  if(nxl(5)>0)then     !second down-ramp ==> 0
+   do ic=1,nsp_run
+    n_peak=nxl(5)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(5)*uu
+     wghpt(i1,ic)=(1.-uu)*j0_norm
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+    xfsh=xfsh+lpx(5)
+   end do
+  endif
+ case(5)            
+!                 three layers: dopant in first layer
+!                 lpx(1)[ramp]+lpx(2)[plateau]  with a (A1-Z1) dopant with % density np1=n1_per_nc/n_per_nc
 !                 and electronic density n_e=n_0+Z1*n_ion  n0=n_H(+)
 !---------------  
 !                 lpx(4)[plateau +lpx(5)[downramp] with mp_per_cell(1) electrons
 !                 of density n_e/n_0=1
 !================================================
-  un(2)=1.
+  un(2)=np1*ratio_mpc(2)                     !float(mp_per_cell(1))/float(mp_per_cell(ic))
+  if(ion_min(2)>1)un(2)=un(2)/real(ion_min(1),dp) !float(mp_per_cell(1))/Z1*float(mp_per_cell(ic))
   !Z1 electrons are accounted for by a larger electron weight
-  un(1)=1.+ion_min(1)*real(mp_per_cell(2),dp)/real(mp_per_cell(1),dp)
+  un(1)=1.+ion_min(1)*np1
   if(nxl(1)>0)then
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
@@ -729,7 +808,7 @@
  
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npt_buffer,npmax)
- nps_loc(1:nsp)=npmax
+ nps_loc(1)=npmax
  call p_alloc(npmax,nd2+1,nps_loc,nsp,LPf_ord,1,1,mem_psize)
  !===========================
  last_particle_index=0

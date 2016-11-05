@@ -290,7 +290,7 @@
   endif
  else 
   allocate(spec(1)%part(new_np_alloc,id_ch))
-  write(6,'(a37,2I6)')'warning, electron array not allocated',imody,imodz
+  write(6,'(a37,2I6)')'warning, electron array not previously allocated',imody,imodz
  endif
  call v_realloc(ebfp,new_np_alloc,id_ch)
  !call p_realloc(spec(1),np_el+new_np_el,id_ch)
