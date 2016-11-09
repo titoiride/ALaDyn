@@ -1,15 +1,6 @@
     Following here is a brief description of the new `input.nml` file required for the simulation parameters definition, through an example.
 
 
-### OLD_INPUT namelist block (optional, to use old input files)
-```
-&OLD_INPUT
- L_read_input_data = .false.
-/
-```
-If you define this block, with the `L_read_input_data` set to true, the program will try to open an old input.data files, properly formatted as the old standard described in the other guide. Usually this block should not be defined, so that `L_read_input_data` gets the default value of `false` and the new namelist method is used.
-
-
 ### GRID namelist block
 ```
 &GRID
@@ -136,7 +127,7 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yxra
 ```
 + `nsp` is the number of species (be careful and coherent with `dmodel_id`)
 + `nsb`
-+ `atomic_number(i)` are the atomic number (Z) that define each element species. Mind that even if it is called A, it is the typical Z in chemistry
++ `atomic_number(i)` are the atomic number (Z) that define each element species
 + `ion_min(i)` are the initial ionization status of the element species
 + `ion_max(i)` are the maximum ionization status of the element species
 + `mass_number(i)` are the mass number (A) that define the exact isotope of a given `atomic_number(i)`. Here following you can find the only elements known by ALaDyn
@@ -160,15 +151,15 @@ Copper    (atomic_number = 29) - mass_number = 63.54
     - `dmodel_id=1` : i=1 indicates the number of electrons, i=2 the number of macroparticles of Z_1 species, i=3 the number of macroparticles of Z_2 species and i=4 the number of macroparticles of Z_3 species.
     - `dmodel_id=3,4` : i=1,2 are the number of electrons and ions per cell along x/y in the bulk, i=3,4 refer to the front layer and i=5,6 to the contaminants.  
 + `np_per_yc(i)`: the same as `np_per_xc`, this describes the number of particles per cell along transverse directions (valid also for *z* for 3D simulations)
-+ `lpx(1)` is the length of the upstream layer (foam or preplasma), having density `n1/nc`
-+ `lpx(2)` is the length of the ramp (linear or exponential depending on the `mdl`) connecting the upstream layer with the central one (made with bulk particles)
-+ `lpx(3)` is the length of the central layer (bulk), having density `n2/nc`
-+ `lpx(4)` is the length of the ramp (linear), connecting the bulk with the contaminants (made with bulk particles)
-+ `lpx(5)` is the length of the downstream layer (contaminants), having density `n3/nc`
++ `lpx(1)` is the length [μm] of the upstream layer (foam or preplasma), having density `n1/nc`
++ `lpx(2)` is the length [μm] of the ramp (linear or exponential depending on the `mdl`) connecting the upstream layer with the central one (made with bulk particles)
++ `lpx(3)` is the length [μm] of the central layer (bulk), having density `n2/nc`
++ `lpx(4)` is the length [μm] of the ramp (linear), connecting the bulk with the contaminants (made with bulk particles)
++ `lpx(5)` is the length [μm] of the downstream layer (contaminants), having density `n3/nc`
 + `lpx(6)` is the angle *α* of incidence, between the laser axis and the target plane
-+ `lpx(7)` is the offset between the end of the laser and the beginning of the target (if zero, the target starts right at the end of the laser pulse). The offset is calculated *before* laser rotation, so mind the transverse size if `lx(6) ≠ 0`, in order to avoid laser initialization *inside the target*.
-+ `lpy(1)` defines the wire size
-+ `lpy(2)` defines the distance between wires (interwire size)
++ `lpx(7)` is the offset [μm] between the end of the laser and the beginning of the target (if zero, the target starts right at the end of the laser pulse). The offset is calculated *before* laser rotation, so mind the transverse size if `lx(6) ≠ 0`, in order to avoid laser initialization *inside the target*.
++ `lpy(1)` defines the wire size [μm]
++ `lpy(2)` defines the distance [μm] between wires (interwire size)
 + `n_over_nc` is the density in the central layer (bulk)
   - *LWFA* case: density is in units of critical density
   - *PWFA* case: the density is in units of (a nominal value) nc=1e18 cm-3
@@ -241,7 +232,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 ```
 + `nouts` is the number of binary outputs during the relative time of the simulation
 + `iene` is the number of text outputs during the relative time of the simulation
-+ `nvout` is the number of *fields* written. For a 2D P-polarized case, we have just 3 fields, *E<sub>x</sub>*, *E<sub>y</sub>* and *B<sub>z</sub>*; in all the other cases there are 6 fields with these IDs: 1=*E<sub>x</sub>*, 2=*E<sub>y</sub>*, 3=*E<sub>z</sub>*, 4=*B<sub>x</sub>*, 5=*B<sub>y</sub>*, 6=*B<sub>z</sub>*. At each `nout` step, every field with `ID ≤ nf` will be dumped.
++ `nvout` is the number of *fields* written. For a 2D P-polarized case, we have just 3 fields, *E<sub>x</sub>*, *E<sub>y</sub>* and *B<sub>z</sub>*; in all the other cases there are 6 fields with these IDs: 1=*E<sub>x</sub>*, 2=*E<sub>y</sub>*, 3=*E<sub>z</sub>*, 4=*B<sub>x</sub>*, 5=*B<sub>y</sub>*, 6=*B<sub>z</sub>*. At each `nouts` step, every field with `ID ≤ nvout` will be dumped.
 + `nden` can have three different values; every output is divided by species on different files:
     - `1`: writes *only* the particle density *n* on the grid
     - `2`: writes *also* the energy density * n*gamma * on the grid
@@ -250,7 +241,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
     - `1`: writes *only* the electron phase space
     - `2`: writes *only* the proton phase space
     - in general it writes *only* the phase space of the *n-th* species, with `n=npv`; if `n=npv>nps`, it writes the phase spaces of all the particle species
-+ `nbout`
++ `nbout` (only for PWFA)
     - `1`: writes *only* the electron phase space
     - `2`: writes *only* the proton phase space
     - in general it writes *only* the phase space of the *n-th* species, with `n=npv`; if `n=npv>nps`, it writes the phase spaces of all the particle species
