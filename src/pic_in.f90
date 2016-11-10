@@ -411,15 +411,23 @@
   call set_pgrid_ind(npyc(ic),npzc(ic),ic)
  enddo
  !===========================
- ! Longitudinal distribution
- ! All particles have the same weight
- ! w=1/mp_per_cell(1)
- ! For nsp >1) electron density
+ ! WARNING for charge distribution
+ !====================================
+ ! wgh(1)=1/mp_per_cell(1) for electron
+ ! For nsp =2):
+   ! if mp_per_cell(2)=mp_per_cell(1)/ion_min(1)  => wgh(2)=wgh(1)  same weight
+   ! otherwise  if mp_per_cell(2)*ion_min(1) < mp_per_cell(1) : 
+   !           wgh(2)=1/(ion_min(1)*mp_per_cell(2)) > wgh(1)
  ! mp_per_cell have to be set in a way total charge is zero:
+ ! For nsp > 2 mp_per_cell(2:nsp) have to be set in a way
  ! Z1*mp_per_cell(Z1)+Z2*mp_per_cell(Z2)=mp_per_cell(El)
  !====================
+ ! Longitudinal distribution
  nptx=0
  un(1:nsp)=1.
+ if(nsp==2)then
+  if(ion_min(2)>0)un(2)=ratio_mpc(2)/real(ion_min(1),dp)   !float(mp_per_cell(1))/float(mp_per_cell(2))
+ endif
  select case(layer_mod)
   !================ first uniform layer np1=================
  case(1)
@@ -585,7 +593,7 @@
 !                 and electronic density n_e=n_0+Z1*n_ion  n0=n_H(+)
 !---------------  
 !================================================
-  un(2)=np1*ratio_mpc(2)                     !float(mp_per_cell(1))/float(mp_per_cell(ic))
+  un(2)=np1*ratio_mpc(2)          !float(mp_per_cell(1))/float(mp_per_cell(ic))
   if(ion_min(2)>1)un(2)=un(2)/real(ion_min(1),dp) !float(mp_per_cell(1))/Z1*float(mp_per_cell(ic))
   !Z1 electrons are accounted for by a larger electron weight
   un(1)=1.+ion_min(1)*np1
@@ -603,7 +611,7 @@
    xfsh=xfsh+lpx(1)
   endif
   if(nxl(2)>0)then              !first plateau
-   do ic=1,nsp
+   do ic=1,nsp_run
     n_peak=nxl(2)*np_per_xc(ic)
     do i=1,n_peak
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
@@ -618,7 +626,7 @@
   !================
   if(nxl(3)>0)then              !H(+) + dopant
    do ic=1,nsp
-    n_peak=nxl(2)*np_per_xc(ic)
+    n_peak=nxl(3)*np_per_xc(ic)
     do i=1,n_peak
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i

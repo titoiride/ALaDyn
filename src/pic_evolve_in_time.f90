@@ -264,9 +264,10 @@
  integer,intent(in) :: ic,np,new_np_el
  integer :: np_el
  integer(sp) :: inc,id_ch,ndp
- real(sp) :: ch(2)
- real(dp) :: wgh
+ real(sp) :: ch(2),che(2)
+ real(dp) :: wgh,wghe
  equivalence(wgh,ch)
+ equivalence(wghe,che)
  real :: u,temp
 
  integer :: n,i,ii,new_np_alloc
@@ -295,18 +296,16 @@
  call v_realloc(ebfp,new_np_alloc,id_ch)
  !call p_realloc(spec(1),np_el+new_np_el,id_ch)
  ii=np_el
- if(ii>0)then
-  wgh=spec(1)%part(ii,id_ch)
- else
-  ch(1)=j0_norm
-  ch(2)=-1
-  write(6,'(a33,2I6)')'warning, no electrons before ionz',imody,imodz
- endif
+ 
+ if(ii==0)write(6,'(a33,2I6)')'warning, no electrons before ionz',imody,imodz
+ che(2)=-1
  select case(curr_ndim)
  case(2)
   do n=1,np
    inc=ion_ch_inc(n)
    if(inc>0)then
+    wgh=spec(ic)%part(n,id_ch)
+    che(1)=ch(1)
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:2)=spec(ic)%part(n,1:2)
@@ -316,7 +315,7 @@
      call random_number(u)
      u=2.*u-1.
      spec(1)%part(ii,4)=temp*u
-     spec(1)%part(ii,id_ch)=wgh
+     spec(1)%part(ii,id_ch)=wghe
     end do
     np_el=np_el+inc
    endif
@@ -325,6 +324,8 @@
   do n=1,np
    inc=ion_ch_inc(n)
    if(inc>0)then
+   wgh=spec(ic)%part(n,id_ch)
+   che(1)=ch(1)
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
@@ -337,7 +338,7 @@
      call random_number(u)
      u=2.*u-1.
      spec(1)%part(ii,6)=temp*u
-     spec(1)%part(ii,id_ch)=wgh
+     spec(1)%part(ii,id_ch)=wghe
     end do
     np_el=np_el+inc
    endif
@@ -357,7 +358,7 @@
  integer,intent(inout) :: new_np_el
  integer,intent(inout) :: ion_ch_inc(:)
  real(dp),allocatable :: wpr(:)
- real(sp) :: ch(2)
+ real(sp) :: ch(2),che(2)
  real(dp) :: ion_wch,p, p1,p2,ep(3)
  equivalence (ion_wch,ch)
  integer :: n,nk,kk
@@ -371,10 +372,12 @@
  ! V(i) are the ionization energies (eV) and
  ! Vfact(i)=(V/V_H)^(3/2) where V_H is the Hydrogen ionization energy
  !===============================
+ ! enters ion_ch_inc(i)= the index of field modulus on ion i=1,np
+ ! exit  ion_ch_inc(i)= the number(0,1, ionz_lev) of ionization electrons of ion i=1,np
+ !=======================
 
  energy_norm=1./energy_unit
- id_ch=7
- if(ndim < 3)id_ch=5
+ id_ch=nd2+1
  kf=curr_ndim
  sp_ion=ic-1
  kk=0
@@ -400,6 +403,7 @@
     !sp_aux(1:kf,kk)=ep(1:kf)
     !to be multiplied by E_i/E^2 on a grid at ion position
    endif
+   !ion_ch_inc(n)=0 or 1
   end do
   new_np_el=kk
   !============= old ion charge stored in ebfp(id_ch)
@@ -488,6 +492,7 @@
  endif
  !==================
  ! Assigns the |E| field on each ion
+ ! np is the number of ions
  if(np >0)then
   if(size(el_ionz_count,1)< np)then
    deallocate(el_ionz_count)

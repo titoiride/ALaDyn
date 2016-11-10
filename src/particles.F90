@@ -1592,6 +1592,230 @@
  end select
  !================================
  end subroutine set_ion_Efield
+!=======================================
+ subroutine set_ion_env_field(ef,sp_loc,pt,np,ndm,rionz,dt_loc,xmn,ymn,zmn)
+
+ real(dp),intent(in) :: ef(:,:,:,:)
+ type(species),intent(in) :: sp_loc
+ real(dp),intent(inout) :: pt(:,:)
+ integer,intent(in) :: np,ndm,rionz
+ real(dp),intent(in) :: dt_loc,xmn,ymn,zmn
+
+ real(dp) :: xx,sx,sx2,dvol, gam
+ real(dp) :: axh(0:2),ayh(0:2),xp1(3),pp(3)
+ real(dp) :: ax1(0:2),ay1(0:2),azh(0:2),az1(0:2),ap(6)
+ integer :: i,ih,j,jh,i1,j1,i2,j2,k,kh,k1,k2,n
+!==============================
+! Enter env(1:2)<=  A=(A_R,A_I)
+! Exit interpolated |E|^2= |E_y|^2 + |E_x|^2
+!===========================
+!  Up to O(eplidon)^2:
+! |E_y|= k_0^2*|A|^2+2*k_0*[A_RD_xA_I-A_ID_xA_R] +(D_x[A_r])^2 +D_x[A_I}^2)
+! |E_x|= (D_y[A_r])^2 +D_y[A_I}^2)
+!===============================================
+
+ !===============================================
+ ! Linear shape at half-index quadratic shape at integer index
+ !====================================
+ ax1(0:2)=0.0;ay1(0:2)=0.0
+ az1(0:2)=0.0;azh(0:2)=0.0
+ axh(0:2)=0.0;ayh(0:2)=0.0
+ !===== enter species positions at t^{n+1} level========
+ ! fields are at t^n
+ select case(ndm)
+ case(2)
+  k2=1
+  if(rionz >1)then       !all species running
+   do n=1,np
+    pp(1:2)=sp_loc%part(n,3:4)
+    gam=1.+pp(1)*pp(1)+pp(2)*pp(2)
+    pp(1:2)=pp(1:2)/sqrt(gam)
+    pt(n,1:2)=sp_loc%part(n,1:2)-dt_loc*pp(1:2) ! stores t^n part positions
+    pt(n,1)=dx_inv*(pt(n,1)-xmn)
+   end do
+  else
+   do n=1,np
+    pt(n,1:2)=sp_loc%part(n,1:2)
+    pt(n,1)=dx_inv*(pt(n,1)-xmn)
+   end do
+  endif
+  !==========================
+  do n=1,np
+   ap(1:2)=0.0
+   xp1(1:2)=pt(n,1:2)
+   xx=shx+xp1(1)
+   i=int(xx+0.5)
+   sx=xx-real(i,dp)
+   sx2=sx*sx
+   ax1(1)=0.75-sx2
+   ax1(2)=0.5*(0.25+sx2+sx)
+   ax1(0)=1.-ax1(1)-ax1(2)
+   ih=int(xx)
+   sx=xx-0.5-real(ih,dp)
+   sx2=sx*sx
+   axh(1)=0.75-sx2
+   axh(2)=0.5*(0.25+sx2+sx)
+   axh(0)=1.-axh(1)-axh(2)
+
+   !axh(1)=sx+0.5
+   !axh(0)=1.-axh(1)
+
+   xx=shy+xp1(2)
+   j=int(xx+0.5)
+   sx=xx-real(j,dp)
+   sx2=sx*sx
+   ay1(1)=0.75-sx2
+   ay1(2)=0.5*(0.25+sx2+sx)
+   ay1(0)=1.-ay1(1)-ay1(2)
+   jh=int(xx)
+   sx=xx-0.5-real(jh,dp)
+   sx2=sx*sx
+   ayh(1)=0.75-sx2
+   ayh(2)=0.5*(0.25+sx2+sx)
+   ayh(0)=1.-ayh(1)-ayh(2)
+
+   !ayh(1)=sx+0.5
+   !ayh(0)=1.-ayh(1)
+
+   i=i-1
+   j=j-1
+
+   ih=ih-1
+   jh=jh-1
+   ! Ex(i+1/2,j,k)
+   !==============
+   !==============
+   ! Ey(i,j+1/2,k)
+   !==============
+   do j1=0,2
+    j2=j+j1
+    dvol=ay1(j1)
+    do i1=0,2
+     i2=i1+ih
+     ap(1)=ap(1)+axh(i1)*dvol*ef(i2,j2,k2,1)*ef(i2,j2,k2,1)
+    end do
+   end do
+   do j1=0,2
+    j2=jh+j1
+    dvol=ayh(j1)
+    do i1=0,2
+     i2=i+i1
+     ap(1)=ap(1)+ax1(i1)*dvol*ef(i2,j2,k2,2)*ef(i2,j2,k2,2)
+    end do
+   end do
+   !==============
+   pt(n,5)=ap(1)               !Ex(p)^2 + Ey(p)^2
+  end do
+
+ case(3)
+  if(rionz >1)then
+   do n=1,np
+    pp(1:3)=sp_loc%part(n,4:6)
+    gam=1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3)
+    pt(n,1:3)=sp_loc%part(n,1:3)-dt_loc*pp(1:3) ! stores t^n part positions
+    pp(1:3)=pp(1:3)/sqrt(gam)
+    pt(n,1)=dx_inv*(pt(n,1)-xmn)
+   end do
+  else
+   do n=1,np
+    pt(n,1)=dx_inv*(sp_loc%part(n,1)-xmn)
+    pt(n,2:3)=sp_loc%part(n,2:3)
+   end do
+  endif
+  !==========================
+  do n=1,np
+   ap(1:3)=0.0
+   xp1(1:3)=pt(n,1:3)
+   xx=shx+xp1(1)
+   i=int(xx+0.5)
+   sx=xx-real(i,dp)
+   sx2=sx*sx
+   ax1(1)=0.75-sx2
+   ax1(2)=0.5*(0.25+sx2+sx)
+   ax1(0)=1.-ax1(1)-ax1(2)
+
+   axh(1)=sx+0.5
+   axh(0)=1.-axh(1)
+
+   xx=shy+xp1(2)
+   j=int(xx+0.5)
+   sx=xx-real(j,dp)
+   sx2=sx*sx
+   ay1(1)=0.75-sx2
+   ay1(2)=0.5*(0.25+sx2+sx)
+   ay1(0)=1.-ay1(1)-ay1(2)
+
+   ayh(1)=sx+0.5
+   ayh(0)=1.-ayh(1)
+
+   !kh=int(xx)
+   !sx=xx-0.5-real(kh,dp)
+   !sx2=sx*sx
+   !azh(1)=0.75-sx2
+   !azh(2)=0.5*(0.25+sx2+sx)
+   !azh(0)=1.-azh(1)-azh(2)
+   !kh=kh-1
+   xx=shz+xp1(3)
+   k=int(xx+0.5)
+   sx=xx-real(k,dp)
+   sx2=sx*sx
+   az1(1)=0.75-sx2
+   az1(2)=0.5*(0.25+sx2+sx)
+   az1(0)=1.-az1(1)-az1(2)
+
+   azh(1)=sx+0.5
+   azh(0)=1.-azh(1)
+
+   i=i-1
+   j=j-1
+   k=k-1
+
+   ih=i
+   jh=j
+   kh=k
+   ! Ex(i+1/2,j,k)
+   !==============
+   !==============
+   ! Ey(i,j+1/2,k)
+   !==============
+   do k1=0,2
+    k2=k+k1
+    do j1=0,2
+     j2=j+j1
+     dvol=ay1(j1)*az1(k1)
+     do i1=0,1
+      i2=i1+ih
+      ap(1)=ap(1)+axh(i1)*dvol*ef(i2,j2,k2,1)*ef(i2,j2,k2,1)
+     end do
+    end do
+    do j1=0,1
+     j2=jh+j1
+     dvol=ayh(j1)*az1(k1)
+     do i1=0,2
+      i2=i+i1
+      ap(1)=ap(1)+ax1(i1)*dvol*ef(i2,j2,k2,2)*ef(i2,j2,k2,2)
+     end do
+    end do
+   end do
+   !==============
+   ! Ez(i,j,k+1/2)
+   !==============
+   do k1=0,1
+    k2=kh+k1
+    do j1=0,2
+     j2=j+j1
+     dvol=ay1(j1)*azh(k1)
+     do i1=0,2
+      i2=i1+i
+      ap(1)=ap(1)+ax1(i1)*dvol*ef(i2,j2,k2,3)*ef(i2,j2,k2,3)
+     end do
+    end do
+   end do
+   pt(n,7)=ap(1)
+  end do
+ end select
+ !================================
+ end subroutine set_ion_env_field
 
  subroutine set_ion_Ebfield(ef,ef1,sp_loc,pt,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
 
@@ -1827,9 +2051,9 @@
    pt(n,7)=ap(1)+ap(2)+ap(3)
   end do
  end select
- !================================
- end subroutine set_ion_Ebfield
 
+ end subroutine set_ion_Ebfield
+ !================================
  subroutine set_ion_two_Ebfield(&
   ef,ef1,ef2,sp_loc,pt,np,s_ind,ndm,rionz,dt_loc,xmn,ymn,zmn)
 

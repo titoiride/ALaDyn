@@ -302,7 +302,7 @@
   Envelope=.true.
  endif
 
- if(model_id < 5)then
+ if(model_id < 4)then
   mod_ord=1
   ifilt=0
   Relativistic=.true.
