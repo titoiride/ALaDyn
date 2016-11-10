@@ -1377,7 +1377,7 @@
  bn=adv+c          !symm BC
  !================
  ! Computes the transverse Laplacian of A^{n}=env(1:2) components
- !========and adds to  jc(1:2)= -om2*<q^2*wgh*n/gam_p>*env(1:2) => jc(1:2) 
+ !========and adds to  jc(1:2)= -om2*<q^2*wgh*n/gam_p>*env(1:2) => jc(1:2)
  ic=2
  call pp_lapl(evf,curr,1,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  !=====================
@@ -1392,7 +1392,7 @@
  end do
  ! jc(1:2)=S(A)=dt*[D^2_{pp}-omp^2*chi]A;  chi=<q^2*wgh*n/gam_p> >0
  !=================
-!  Computes D_{xi} centered first derivatives of S(A)
+ !  Computes D_{xi} centered first derivatives of S(A)
  do ic=1,2
   do k=k1,n3p
    do j=j1,n2p
@@ -1403,8 +1403,8 @@
    end do
   end do
  end do
-!      ww0(1)= k0*S(A_I) + D_xi[A_R]= F_R
-!      ww0(2)= -k0*S(A_R) + D_xi[A_I]= F_I
+ !      ww0(1)= k0*S(A_I) + D_xi[A_R]= F_R
+ !      ww0(2)= -k0*S(A_R) + D_xi[A_I]= F_I
  do k=k1,n3p
   do j=j1,n2p
    do i=i1,n1p
@@ -1477,7 +1477,7 @@
       evf(i-1,j,k,ic)=2.*evf(i,j,k,ic)-evf(i+1,j,k,ic)
       ii=i-2
       ww0(ii,1)=curr(i,j,k,ic)+evf(i,j,k,ic1)-adv*(&
-                evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
+       evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
       i=n1p
       evf(i+1,j,k,ic)=evf(i,j,k,ic)
       do i=i1+1,n1p-1
@@ -1517,7 +1517,7 @@
  end subroutine env_lpf_solve
 
  subroutine env0_rk_field(&
-                       curr,evf,d2_ord,ib,i1,n1p,j1,n2p,k1,n3p,om0,dhx,dhy,dhz)
+  curr,evf,d2_ord,ib,i1,n1p,j1,n2p,k1,n3p,om0,dhx,dhy,dhz)
  real(dp),intent(inout) :: curr(:,:,:,:), evf(:,:,:,:)
  integer,intent(in) :: d2_ord,ib,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: om0,dhx,dhy,dhz
@@ -1554,7 +1554,7 @@
  bn=adv+c
  !================
  ! Computes the Laplacian
- !======== in jc(1:2)= -omp2*<w*n/gam_p>*env(1:2)=> -omp2*chi*A 
+ !======== in jc(1:2)= -omp2*<w*n/gam_p>*env(1:2)=> -omp2*chi*A
  ic=2
  call pp_lapl(evf,curr,1,ic,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  do ic=1,2
@@ -1594,9 +1594,9 @@
     ww0(ii,2)=ww0(ii,2)+a1*dhx*(alp*(curr(i+2,j,k,2)-curr(i-2,j,k,2))+&
      curr(i+1,j,k,2)-curr(i-1,j,k,2))
    end do
-!============= in ww0(1:2) 
-!==== F_R=D_{xi}S(A_R)+k0*S(A_I)
-!==== F_I=D_{xi}S(A_I)-k0*S(A_R)
+   !============= in ww0(1:2)
+   !==== F_R=D_{xi}S(A_R)+k0*S(A_I)
+   !==== F_I=D_{xi}S(A_I)-k0*S(A_R)
    !=============================
    call matenv_inv(n1,2)
    do i=i1,n1p
@@ -1629,7 +1629,7 @@
     i=n1p
     evf(i+1,j,k,ic)=evf(i,j,k,ic)
     curr(i,j,k,ic)=curr(i,j,k,ic)-&
-                       dx1_inv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
+     dx1_inv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
    end do
   end do
  end do

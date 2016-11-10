@@ -289,14 +289,14 @@
     spec(1)%part(n,1:id_ch)=ebfp(n,1:id_ch)
    end do
   endif
- else 
+ else
   allocate(spec(1)%part(new_np_alloc,id_ch))
   write(6,'(a37,2I6)')'warning, electron array not previously allocated',imody,imodz
  endif
  call v_realloc(ebfp,new_np_alloc,id_ch)
  !call p_realloc(spec(1),np_el+new_np_el,id_ch)
  ii=np_el
- 
+
  if(ii==0)write(6,'(a33,2I6)')'warning, no electrons before ionz',imody,imodz
  che(2)=-1
  select case(curr_ndim)
@@ -324,8 +324,8 @@
   do n=1,np
    inc=ion_ch_inc(n)
    if(inc>0)then
-   wgh=spec(ic)%part(n,id_ch)
-   che(1)=ch(1)
+    wgh=spec(ic)%part(n,id_ch)
+    che(1)=ch(1)
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
@@ -349,7 +349,7 @@
  end subroutine ionization_electrons_inject
  !===============================
  subroutine part_ionize(sp_loc,sp_aux,&
-                               np,ic,new_np_el,ion_ch_inc)
+  np,ic,new_np_el,ion_ch_inc)
 
  type(species),intent(inout) :: sp_loc
  real(dp),intent(inout) :: sp_aux(:,:)
@@ -508,7 +508,7 @@
    endif
   end do
   call part_ionize(&
-             sp_loc,sp_aux,np,ic,new_np_el,el_ionz_count)
+   sp_loc,sp_aux,np,ic,new_np_el,el_ionz_count)
   !if(ionz_count >0)call ionization_energy(ef,jc,sp_aux,ionz_count,ndim,xm,ym,zm)
   !===========
   if(new_np_el >0)then
@@ -1656,7 +1656,7 @@
   str=1
   stl=1
   call fill_ebfield_yzxbdsdata(&
-                              evf,i1,nxp,j1,nyp,k1,nzp,1,2,str,stl)
+   evf,i1,nxp,j1,nyp,k1,nzp,1,2,str,stl)
  endif
  ! enters jc(1)=rho/<gamp> < 0
  do k=k1,nzp
@@ -1668,9 +1668,9 @@
   end do
  end do
  !  jc(1:2)=-ompe*rho/<gamp>*env(1:2)  the J_{env} source term
-   call env_lpf_solve(jc,evf,ib,i1,nxp,j1,nyp,k1,nzp,oml,&
-                      dx_inv,dy_inv,dz_inv,dt_loc)
-!===================
+ call env_lpf_solve(jc,evf,ib,i1,nxp,j1,nyp,k1,nzp,oml,&
+  dx_inv,dy_inv,dz_inv,dt_loc)
+ !===================
  do ic=1,2
   jc(:,:,:,ic)=0.0
  end do
@@ -1680,7 +1680,7 @@
  end subroutine advance_lpf_envelope
  ! =================================
  subroutine advance_env_rk4_field(&
-           curr,envf,dt_loc,i1,nxp,j1,nyp,k1,nzp,lp,rko)
+  curr,envf,dt_loc,i1,nxp,j1,nyp,k1,nzp,lp,rko)
 
  real(dp),intent(inout) :: curr(:,:,:,:),envf(:,:,:,:)
  real(dp),intent(in) :: dt_loc
@@ -1723,7 +1723,7 @@
   str=2
   stl=2
   call fill_ebfield_yzxbdsdata(&
-                               envf,i1,nxp,j1,nyp,k1,nzp,1,nc,str,stl)
+   envf,i1,nxp,j1,nyp,k1,nzp,1,nc,str,stl)
  endif
  do iz=k1,nzp
   do iy=j1,nyp
@@ -2217,7 +2217,7 @@
   endif
   call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
   call advance_rk4_fields(&
-                          vbeam,dt_loc,i1,i2,j1,nyf,k1,nzf,lps)
+   vbeam,dt_loc,i1,i2,j1,nyf,k1,nzf,lps)
  end do
  !-----------------------------
  end subroutine rk_evolve
@@ -2299,7 +2299,7 @@
   end do
  case(3)
   !============  enter F_pt(1:6)=>q*(E+F/gam_p)^n  q*(B/gamp)^n
-                       !F_pt(7)=q*wgh/gamp
+  !F_pt(7)=q*wgh/gamp
   do p=1,np
    pp(1:3)=sp_loc%part(p,4:6)
    efp(1:6)=alp*F_pt(p,1:6)   !charge/mass * (E+F/gamm,B/gam)*Dt/2
@@ -2318,7 +2318,7 @@
    sp_loc%part(p,4:6)=2.*vph(1:3)-pp(1:3)
    F_pt(p,1:3)=sp_loc%part(p,1:3) !stores old positions
   end do
-                       !F_pt(7)=wgh/gamp unchanged
+  !F_pt(7)=wgh/gamp unchanged
  end select
  end subroutine lpf_env_momenta
  !======================
@@ -2431,24 +2431,24 @@
  integer :: ix,iy,iz,spl,spr
  real(dp) :: ar,ai
  !===================
-  do iz=k1,k2
-   do iy=j1,j2
-    do ix=i1,i2
-     ar=0.5*(evf(ix,iy,iz,1)+evf(ix,iy,iz,3))   !A^{n+1/2}=(A^n+1+A^n)/2
-     ai=0.5*(evf(ix,iy,iz,2)+evf(ix,iy,iz,4))
-     av(ix,iy,iz,1)=0.5*(ar*ar+ai*ai)
-     ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
-    end do
+ do iz=k1,k2
+  do iy=j1,j2
+   do ix=i1,i2
+    ar=0.5*(evf(ix,iy,iz,1)+evf(ix,iy,iz,3))   !A^{n+1/2}=(A^n+1+A^n)/2
+    ai=0.5*(evf(ix,iy,iz,2)+evf(ix,iy,iz,4))
+    av(ix,iy,iz,1)=0.5*(ar*ar+ai*ai)
+    ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
    end do
   end do
-  if(spr >2)spr=2
-  if(spl >2)spl=2
+ end do
+ if(spr >2)spr=2
+ if(spl >2)spl=2
 
-  if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,1,spr,spl)
-  call field_xyzbd(av,i1,i2,j1,j2,k1,k2,nj_dim,spr,spl)
+ if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,1,spr,spl)
+ call field_xyzbd(av,i1,i2,j1,j2,k1,k2,nj_dim,spr,spl)
  !=====================
  end subroutine env_fields_average
-!===========================
+ !===========================
  subroutine env_pfields_prepare(envf,av,i1,i2,j1,j2,k1,k2,spl_in,spr_in)
  real(dp),intent(in) :: envf(:,:,:,:)
  real(dp),intent(out) :: av(:,:,:,:)
@@ -2456,15 +2456,15 @@
  integer :: ix,iy,iz,spl,spr
  !real(dp) :: ar,ai
  !===================
-  do iz=k1,k2
-   do iy=j1,j2
-    do ix=i1,i2
-     av(ix,iy,iz,1)=0.5*(envf(ix,iy,iz,1)*envf(ix,iy,iz,1)+&
-                         envf(ix,iy,iz,2)*envf(ix,iy,iz,2))
-     !|A|^2/2 at current t^n time level
-    end do
+ do iz=k1,k2
+  do iy=j1,j2
+   do ix=i1,i2
+    av(ix,iy,iz,1)=0.5*(envf(ix,iy,iz,1)*envf(ix,iy,iz,1)+&
+     envf(ix,iy,iz,2)*envf(ix,iy,iz,2))
+    !|A|^2/2 at current t^n time level
    end do
   end do
+ end do
  spl=spl_in
  spr=spr_in
  if(spl >2)spl=2
@@ -2514,46 +2514,46 @@
   ! exit jc(1)=|a|^2/2 at t^n
   ! exit jc(2:4)=grad|a|^2/2 at t^n
   !======================================
-   call set_env_acc(ebf,jc,spec(ic),ebfp,np,curr_ndim,dt_loc,xm,ym,zm)
-   !exit ebfp(1:3)=[E+F] ebfp(4:6)=B/gamp, ebfp(7)=wgh*q/gamp at t^n
-   !Fields already multiplied by particle charge
-   !====================
-   call lpf_env_momenta(spec(ic),ebfp,np,dt_loc,Ltz)
-   ! P^{n-1/2} => P^{n+1/2}
-   ! stores in ebfp(1:3)=(x,y,z)^n ebfp(7)=wgh/gamp >0 
-   !======================
-   jc(:,:,:,1)=0.0
-   call set_env_density(ebfp,jc,np,curr_ndim,1,xm,ym,zm)
+  call set_env_acc(ebf,jc,spec(ic),ebfp,np,curr_ndim,dt_loc,xm,ym,zm)
+  !exit ebfp(1:3)=[E+F] ebfp(4:6)=B/gamp, ebfp(7)=wgh*q/gamp at t^n
+  !Fields already multiplied by particle charge
+  !====================
+  call lpf_env_momenta(spec(ic),ebfp,np,dt_loc,Ltz)
+  ! P^{n-1/2} => P^{n+1/2}
+  ! stores in ebfp(1:3)=(x,y,z)^n ebfp(7)=wgh/gamp >0
+  !======================
+  jc(:,:,:,1)=0.0
+  call set_env_density(ebfp,jc,np,curr_ndim,1,xm,ym,zm)
 
-  endif
-  call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
-  ! in the envelope equation (A^{n-1},A^n)==> (A^n,A^{n+1})
-  ! Jc(1:2)=ompe*<qn/gamp>*A at level t^n
-  call advance_lpf_envelope(jc,env,dt_loc,i1,i2,j1,nyf,k1,nzf)
-  !(A^n, J^n) => A^{n+1}, A^{n-1}=> A^n
-  call env_fields_average(env,jc,i1,i2,j1,nyf,k1,nzf,1,1)
-  !exit jc(1)=|A|^2/2 at t^{n+1/2}
-  if(np >0)then
-   call set_env_interp(jc,spec(ic),ebfp,np,curr_ndim,xm,ym,zm)
-   !=============================
-   ! exit ebfp(1:3)=grad|A|^2/2 ebfp(4)=|A|^2/2 in 3D
-   ! exit ebfp(1:2)=grad|A|^2/2 ebfp(3)=|A|^2/2 in 2D
-   ! at time level t^{n+1/2} and positions at time t^n
-   !=====================================
-   call lpf_env_positions(spec(ic),ebfp,np,dt_loc,-vbeam)
-   !===========================
-   ! ebfp(1:6) new and old positions for curr J^{n+1/2}
-   ! ebfp(7)=dt*wgh*gam_inv
-   !==============================
-   jc(:,:,:,:)=0.0
-   call curr_accumulate(spec(ic),ebfp,1,np,iform,n_st,xm,ym,zm)
-  endif
+ endif
+ call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
+ ! in the envelope equation (A^{n-1},A^n)==> (A^n,A^{n+1})
+ ! Jc(1:2)=ompe*<qn/gamp>*A at level t^n
+ call advance_lpf_envelope(jc,env,dt_loc,i1,i2,j1,nyf,k1,nzf)
+ !(A^n, J^n) => A^{n+1}, A^{n-1}=> A^n
+ call env_fields_average(env,jc,i1,i2,j1,nyf,k1,nzf,1,1)
+ !exit jc(1)=|A|^2/2 at t^{n+1/2}
+ if(np >0)then
+  call set_env_interp(jc,spec(ic),ebfp,np,curr_ndim,xm,ym,zm)
+  !=============================
+  ! exit ebfp(1:3)=grad|A|^2/2 ebfp(4)=|A|^2/2 in 3D
+  ! exit ebfp(1:2)=grad|A|^2/2 ebfp(3)=|A|^2/2 in 2D
+  ! at time level t^{n+1/2} and positions at time t^n
+  !=====================================
+  call lpf_env_positions(spec(ic),ebfp,np,dt_loc,-vbeam)
   !===========================
-  call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
-  ! Jc(1:3) for curr J^{n+1/2}
-  lp_in=lp_in+dt_loc
-  call advance_lpf_fields(ebf,jc,dt_loc,vbeam,&
-                          i1,i2,j1,nyf,k1,nzf,1)
+  ! ebfp(1:6) new and old positions for curr J^{n+1/2}
+  ! ebfp(7)=dt*wgh*gam_inv
+  !==============================
+  jc(:,:,:,:)=0.0
+  call curr_accumulate(spec(ic),ebfp,1,np,iform,n_st,xm,ym,zm)
+ endif
+ !===========================
+ call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
+ ! Jc(1:3) for curr J^{n+1/2}
+ lp_in=lp_in+dt_loc
+ call advance_lpf_fields(ebf,jc,dt_loc,vbeam,&
+  i1,i2,j1,nyf,k1,nzf,1)
  ! (E,B) fields at time t^{n+1}
  !-----------------------------
  end subroutine env_lpf2_evolve
@@ -2574,7 +2574,7 @@
  dt_lp=dtloc*b_rk(lp)
  afact=dt_lp*Lfact
  ndv=2*curr_ndim
-!===========================
+ !===========================
  !in F_pt(1:2) the [E+F_env],F_pt(3)=B_z/gam_p F_pt(5)= q*wgh*v fields on a particle at t^{k-1}
  if(lp==1)then
   do p=1,np
@@ -2604,9 +2604,9 @@
    F_pt(p,5)=wch(1)*wch(2)*F_pt(p,5)     !q*wgh/gamp => curr_env
   end do
  case(3)
-!===========================
+  !===========================
   !in F_pt(1:3) the [E+F_env],F_pt(4:6)=B/gam_p F_pt(7)= q*wgh*v fields on a particle at t^{k-1}
-!========================
+  !========================
   ! RK4 integration scheme p^k=p_0+Dt*b_k*F^{k-1},k=1,2,3,4
   do p=1,np
    wgh=sp_loc%part(p,7)         !stores part(weight-charge)
@@ -2687,21 +2687,21 @@
    call advance_env_rk4_part(ebfp,ebfp0,ebfp1,spec(ic),np,dt_loc,Ltz,lps)
    !====================
    ! stores in ebfp(1:3)=(x,y,z)^{k-1}; in ebf(4:6)=dt_rk*q*wgh*(v_x,v_y,v_z)^{k-1}; in ebfp(7)=wgh*q/gamp
-    jc(:,:,:,1)=0.0    !enters ebf(7) = wgh/gam_p at t^{k-1}
-    call set_env_density(ebfp,jc,np,curr_ndim,1,xm,ym,zm)
-   endif
-   call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
-   call advance_env_rk4_field(&
-                             jc,env,dt_loc,i1,i2,j1,nyf,k1,nzf,lps,rk)
- !======================
-   if(np>0)then
-    jc(:,:,:,:)=0.0
-    ! in ebfp(1:6)[x,v*dt_k] at time (lps-1)
-    call ncdef_rk_curr(ebfp,jc,nst,np,ndim,xm,ym,zm)
-   endif
-   call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
-   call advance_rk4_fields(&
-                          vbeam,dt_loc,i1,i2,j1,nyf,k1,nzf,lps)
+   jc(:,:,:,1)=0.0    !enters ebf(7) = wgh/gam_p at t^{k-1}
+   call set_env_density(ebfp,jc,np,curr_ndim,1,xm,ym,zm)
+  endif
+  call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
+  call advance_env_rk4_field(&
+   jc,env,dt_loc,i1,i2,j1,nyf,k1,nzf,lps,rk)
+  !======================
+  if(np>0)then
+   jc(:,:,:,:)=0.0
+   ! in ebfp(1:6)[x,v*dt_k] at time (lps-1)
+   call ncdef_rk_curr(ebfp,jc,nst,np,ndim,xm,ym,zm)
+  endif
+  call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
+  call advance_rk4_fields(&
+   vbeam,dt_loc,i1,i2,j1,nyf,k1,nzf,lps)
  end do
  !-----------------------------
  end subroutine env_rk_evolve
@@ -2726,7 +2726,7 @@
   if(iter_loc>0)call coordinate_xshift(vbeam,dt_loc)
  endif
  select case(t_ord)
- !=========================
+  !=========================
  case(2)
   call env_lpf2_evolve(dt_loc)
  case(4)
@@ -2798,9 +2798,9 @@
    np=loc_npart(imody,imodz,imodx,ic)
    if(np>0)then
     if(ibmod==0)call set_ion_Ebfield(ebf,ebf_bunch,spec(ic),ebfp,np,&
-                                     n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
+     n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(ibmod==1)call set_ion_two_Ebfield(ebf,ebf_bunch,ebf1_bunch,spec(ic),&
-                                        ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
+     ebfp,np,n_st,ndim,nsp_run,dt_loc,xm,ym,zm)
     if(mod(iter_loc,20)==0)then     !refresh ionization tables
      loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.
@@ -2812,7 +2812,7 @@
     endif
    endif
    call ionization_cycle(&
-                     spec(ic),ebfp,np,ic,iter_loc,deb_inv)
+    spec(ic),ebfp,np,ic,iter_loc,deb_inv)
   end do
   !======== injects electrons and adds ionization energy
  endif

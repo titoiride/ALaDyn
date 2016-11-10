@@ -215,7 +215,7 @@
   nx_stretch=nint(real(nx,dp)*size_of_stretch_along_x)
  endif
  call grid_alloc(nx,nx_loc,ny,ny_loc,nz,nz_loc,ny_targ,&
-                               pml_size,nprocy,nprocz,nprocx)
+  pml_size,nprocy,nprocz,nprocx)
  loc_nyc_max=loc_ygr_max
  loc_nzc_max=loc_zgr_max
  loc_nxc_max=loc_xgr_max
@@ -261,7 +261,7 @@
  end do
  !======================================
  Lorentz_fact(1:4)=mass_rat(1:4)
-!to be multiplied by the particle charge in the equation of motion
+ !to be multiplied by the particle charge in the equation of motion
  !==========================================
  nm_fact=1.
  gvol_inv=1.
@@ -285,7 +285,8 @@
  if(mp_per_cell(1) >0)then
   j0_norm=1./real(nref,dp)
   do i=1,6
-   ratio_mpc(i)=real(mp_per_cell(1),dp)/real(mp_per_cell(i),dp)
+   ratio_mpc(i)=0.0
+   if (mp_per_cell(i) > 0) ratio_mpc(i)=real(mp_per_cell(1),dp)/real(mp_per_cell(i),dp)
   enddo
  endif
  if(w_speed < 0.0)then
@@ -295,15 +296,15 @@
   Comoving=.false.
   vbeam=0.0
  endif
+ mod_ord=1
  if(model_id < 3) Lin_lp = .true.
  if(model_id == 3) Circ_lp = .true.
- if(model_id ==4) then
+ if(model_id == 4) then
   mod_ord=2
   Envelope=.true.
  endif
 
- if(model_id < 4)then
-  mod_ord=1
+ if(model_id < 5)then
   ifilt=0
   Relativistic=.true.
   part_dcmp=.false.
@@ -373,15 +374,15 @@
   bet0=0.0
   lambda_p=pi2*el_lp
   lpvol=el_lp*el_lp*el_lp
-
  endif
-!=============================
+
+ !=============================
  nx_alloc=nint(dx_inv*sum(lpx(1:5)))
  nx_alloc=min(nx_loc,nx_alloc)
  npt_buffer=nx_alloc*ny_loc*nz_loc*nref
  npt_buffer=npt_buffer+npt_buffer/8
  if(Ionization)allocate(el_ionz_count(npt_buffer))
-!===================================
+ !===================================
  if(model_id> 4)then !  e-Beams section
   select case(model_id)
    !========================================
@@ -440,31 +441,31 @@
 
     !---------------------------!
     if(bunch_shape(i)==1) then !--- nomi da verificare e aggiungere
-      bunch_volume(i) = pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i) !the bunch volume (mu^3)
-      bunch_charge_density   = rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i)=rhob(i)*bunch_volume(i)/lpvol
+     bunch_volume(i) = pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i) !the bunch volume (mu^3)
+     bunch_charge_density   = rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mu^3
+     bunch_charge(i) = bunch_charge_density*bunch_volume(i)
+     reduced_charge(i)=rhob(i)*bunch_volume(i)/lpvol
     endif
 
     if(bunch_shape(i)==2) then
-      bunch_volume(i) = pi*syb(i)*syb(i) * sxb(i)
-      bunch_charge_density   = (Charge_left(i)+Charge_right(i))/2.0*n_over_nc*nm_fact*e_charge  !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i)=(Charge_left(i)+Charge_right(i))/2.0*bunch_volume(i)/lpvol
+     bunch_volume(i) = pi*syb(i)*syb(i) * sxb(i)
+     bunch_charge_density   = (Charge_left(i)+Charge_right(i))/2.0*n_over_nc*nm_fact*e_charge  !pC/mu^3
+     bunch_charge(i) = bunch_charge_density*bunch_volume(i)
+     reduced_charge(i)=(Charge_left(i)+Charge_right(i))/2.0*bunch_volume(i)/lpvol
     endif
 
     if(bunch_shape(i)==3) then
-      bunch_volume(i) = pi2*syb(i)*syb(i) * sxb(i)
-      bunch_charge_density   = (Charge_left(i)+Charge_right(i))/2.0*n_over_nc*nm_fact*e_charge  !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i)=(Charge_left(i)+Charge_right(i))/2.0*bunch_volume(i)/lpvol
+     bunch_volume(i) = pi2*syb(i)*syb(i) * sxb(i)
+     bunch_charge_density   = (Charge_left(i)+Charge_right(i))/2.0*n_over_nc*nm_fact*e_charge  !pC/mu^3
+     bunch_charge(i) = bunch_charge_density*bunch_volume(i)
+     reduced_charge(i)=(Charge_left(i)+Charge_right(i))/2.0*bunch_volume(i)/lpvol
     endif
 
     if(bunch_shape(i)==4) then
-      bunch_volume(i) = pi*syb(i)*syb(i) * sxb(i)
-      bunch_charge_density   = rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i)=rhob(i)*bunch_volume(i)/lpvol
+     bunch_volume(i) = pi*syb(i)*syb(i) * sxb(i)
+     bunch_charge_density   = rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mu^3
+     bunch_charge(i) = bunch_charge_density*bunch_volume(i)
+     reduced_charge(i)=rhob(i)*bunch_volume(i)/lpvol
     endif
 
    enddo
@@ -477,10 +478,10 @@
     end do
    endif
    do i=1,nsb
-      if(bunch_shape(i)==1) jb_norm(i)=rhob(i)*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
-      if(bunch_shape(i)==2) jb_norm(i)=(Charge_left(i)+Charge_right(i))/2.0*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
-      if(bunch_shape(i)==3) jb_norm(i)=(Charge_left(i)+Charge_right(i))/2.0*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
-      if(bunch_shape(i)==4) jb_norm(i)=rhob(i)*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
+    if(bunch_shape(i)==1) jb_norm(i)=rhob(i)*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
+    if(bunch_shape(i)==2) jb_norm(i)=(Charge_left(i)+Charge_right(i))/2.0*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
+    if(bunch_shape(i)==3) jb_norm(i)=(Charge_left(i)+Charge_right(i))/2.0*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
+    if(bunch_shape(i)==4) jb_norm(i)=rhob(i)*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
    end do
    b_charge=bunch_charge(1)
 

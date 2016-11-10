@@ -354,14 +354,14 @@
     call den_ene_mom_out(tnow,i,ic,ic,jump)
     if (nden>1) then
      ic=2
-     call den_ene_mom_out(tnow,i,ic,ic,jump) 
+     call den_ene_mom_out(tnow,i,ic,ic,jump)
      if (nden>2) then
       call prl_momenta_interp(i)
       do ic=1,curr_ndim
        call den_ene_mom_out(tnow,i,ic+2,ic,jump)
       end do
      endif
-    endif 
+    endif
    enddo
   endif
   if(nbout> 0)then
@@ -372,10 +372,10 @@
   if(Part)then
    if(npout> 0)then
     if(npout<=nsp)then
-      call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,npout,pjump)
+     call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,npout,pjump)
     else
      do i=1,nsp
-       call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,i,pjump)
+      call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,i,pjump)
      end do
     endif
    endif
@@ -1069,66 +1069,66 @@
    if(Wake)then
     select case(dmodel_id)
     case(1)
-    write(6,*)' Five layer x-profile with one central lpx(3) plateau '
-    write(6,*)' Initial electron-ion thermal speed V_T/c'
-    write(6,'(3E12.4)')t0_pl(1:3)
-    if(nsp >1)then
-     write(6,*)'ratio of electron/ion numbers per cell'
-     write(6,'(3i6)')mp_per_cell(1:3)
-    endif
+     write(6,*)' Five layer x-profile with one central lpx(3) plateau '
+     write(6,*)' Initial electron-ion thermal speed V_T/c'
+     write(6,'(3E12.4)')t0_pl(1:3)
+     if(nsp >1)then
+      write(6,*)'ratio of electron/ion numbers per cell'
+      write(6,'(3i6)')mp_per_cell(1:3)
+     endif
     case(2)
-    write(6,*)' Five layer x-profile with two lpx(2) lpx(4) plateau '
-    write(6,*)' Initial electron-ion thermal speed V_T/c'
-    write(6,'(3E12.4)')t0_pl(1:3)
-    if(nsp >1)then
-     write(6,*)'ratio of electron/ion numbers per cell'
-     if(nsp==2)write(6,'(i6)')ratio_mpc(1)
-     if(nsp==3)write(6,'(2i6)')ratio_mpc(1:2)
-     if(nsp==4)write(6,'(3i6)')ratio_mpc(1:3)
-    endif
+     write(6,*)' Five layer x-profile with two lpx(2) lpx(4) plateau '
+     write(6,*)' Initial electron-ion thermal speed V_T/c'
+     write(6,'(3E12.4)')t0_pl(1:3)
+     if(nsp >1)then
+      write(6,*)'ratio of electron/ion numbers per cell'
+      if(nsp==2)write(6,'(i6)')ratio_mpc(1)
+      if(nsp==3)write(6,'(2i6)')ratio_mpc(1:2)
+      if(nsp==4)write(6,'(3i6)')ratio_mpc(1:3)
+     endif
     case(3)
-    write(6,*)' Five layer x-profile with two lpx(2) lpx(4) plateau '
-    write(6,*)' Ionizing dopant added in ramp[lpx(1)]+plateau[lpx(2)]'
-    write(6,*)' Initial electron-ion thermal speed V_T/c'
-    write(6,'(3E12.4)')t0_pl(1:3)
-    if(nsp >1)then
-     write(6,*)'ratio of electron/ion numbers per cell'
-     write(6,'(3i6)')mp_per_cell(1:3)
-    endif
+     write(6,*)' Five layer x-profile with two lpx(2) lpx(4) plateau '
+     write(6,*)' Ionizing dopant added in ramp[lpx(1)]+plateau[lpx(2)]'
+     write(6,*)' Initial electron-ion thermal speed V_T/c'
+     write(6,'(3E12.4)')t0_pl(1:3)
+     if(nsp >1)then
+      write(6,*)'ratio of electron/ion numbers per cell'
+      write(6,'(3i6)')mp_per_cell(1:3)
+     endif
     end select
    endif
    if(Solid_target)then
     select case(dmodel_id)
     case(3)
-    write(6,*)' Target Preplasma-enabled '
-    if(lpx(1)>0.0)write(6,'(a21,e11.4)')' Preplasma size ',lpx(1)
-    if(lpx(2)>0.0)write(6,'(a21,e11.4)')' Ramp size ',lpx(2)
-    if(lpx(5)>0.0)write(6,*)' post-layer H contaminants attached'
-   case(4)
-    write(6,*)' Target H-foam-enabled '
-    if(lpx(1)>0.0)write(6,'(a21,e11.4)')' Foam size ',lpx(1)
-    if(lpx(2)>0.0)write(6,'(a21,e11.4)')' Ramp size ',lpx(2)
-    if(lpx(5)>0.0)write(6,*)' post-layer H contaminants attached'
-   case(5)
-    write(6,*)' Three species [El,Z1,Z3] target +[El,Z2] contaminants '
-    write(6,*)'x-layer sizes'
-    write(6,'(3e11.4)')lpx(1),lpx(3),lpx(5)
-    write(6,*)'Layer density'
-    write(6,'(3e11.4)')n1_over_n,n_over_nc,n2_over_n
-   case(6)
-    write(6,*)' Three species [El,Z]nanowires+ bulk '
-    write(6,*)'wire size,interwire distance filling fact'
-    if(ndim <3)then
-     write(6,'(3e11.4)')lpy(1),lpy(2),(lpy(1)/(lpy(1)+lpy(2)))
-    else
-     write(6,'(3e11.4)')lpy(1),lpy(2),(lpy(1)/(lpy(1)+lpy(2)))**2
-    endif
-    write(6,*)'Boundaries',ibx,iby
-   case(7)
-    write(6,*)' One layer [El,Z] nano-tubes'
-    write(6,*)' 2R_ext    2dr       filling fact '
-    write(6,'(3e11.4)')lpy(1)+lpy(2),lpy(1),lpy(3)
-    write(6,*)'Boundaries',ibx,iby
+     write(6,*)' Target Preplasma-enabled '
+     if(lpx(1)>0.0)write(6,'(a21,e11.4)')' Preplasma size ',lpx(1)
+     if(lpx(2)>0.0)write(6,'(a21,e11.4)')' Ramp size ',lpx(2)
+     if(lpx(5)>0.0)write(6,*)' post-layer H contaminants attached'
+    case(4)
+     write(6,*)' Target H-foam-enabled '
+     if(lpx(1)>0.0)write(6,'(a21,e11.4)')' Foam size ',lpx(1)
+     if(lpx(2)>0.0)write(6,'(a21,e11.4)')' Ramp size ',lpx(2)
+     if(lpx(5)>0.0)write(6,*)' post-layer H contaminants attached'
+    case(5)
+     write(6,*)' Three species [El,Z1,Z3] target +[El,Z2] contaminants '
+     write(6,*)'x-layer sizes'
+     write(6,'(3e11.4)')lpx(1),lpx(3),lpx(5)
+     write(6,*)'Layer density'
+     write(6,'(3e11.4)')n1_over_n,n_over_nc,n2_over_n
+    case(6)
+     write(6,*)' Three species [El,Z]nanowires+ bulk '
+     write(6,*)'wire size,interwire distance filling fact'
+     if(ndim <3)then
+      write(6,'(3e11.4)')lpy(1),lpy(2),(lpy(1)/(lpy(1)+lpy(2)))
+     else
+      write(6,'(3e11.4)')lpy(1),lpy(2),(lpy(1)/(lpy(1)+lpy(2)))**2
+     endif
+     write(6,*)'Boundaries',ibx,iby
+    case(7)
+     write(6,*)' One layer [El,Z] nano-tubes'
+     write(6,*)' 2R_ext    2dr       filling fact '
+     write(6,'(3e11.4)')lpy(1)+lpy(2),lpy(1),lpy(3)
+     write(6,*)'Boundaries',ibx,iby
     end select
    endif
    write(6,*)'============================'

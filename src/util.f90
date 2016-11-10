@@ -888,90 +888,90 @@
  end subroutine bunch_gen_alternative
 
 
-  subroutine generate_triangularZ_uniformR_bunch(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-    gamma_m,eps_y,eps_z,dgamma,generated_bunch,Charge_right,Charge_left,weight)
-  integer,intent(in)   :: n1,n2
-  real(dp),intent(in)    :: x_cm,y_cm,z_cm
-  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
-  real(dp),intent(in)    :: Charge_right,Charge_left,weight
-  real(dp),intent(inout)   :: generated_bunch(:,:)
-  real(dp) :: rnumber(n2-n1+1)
-  integer :: i
-  real(dp) :: z,y,x,a,intercept,slope
+ subroutine generate_triangularZ_uniformR_bunch(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
+  gamma_m,eps_y,eps_z,dgamma,generated_bunch,Charge_right,Charge_left,weight)
+ integer,intent(in)   :: n1,n2
+ real(dp),intent(in)    :: x_cm,y_cm,z_cm
+ real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
+ real(dp),intent(in)    :: Charge_right,Charge_left,weight
+ real(dp),intent(inout)   :: generated_bunch(:,:)
+ real(dp) :: rnumber(n2-n1+1)
+ integer :: i
+ real(dp) :: z,y,x,a,intercept,slope
 
-   do i=n1,n2+1
-     call random_number(x)
-     call random_number(a)
-     intercept=Charge_left
-     slope=(Charge_right-Charge_left)
-     Do while(a*max(Charge_right,Charge_left)>intercept+slope*x)
-       call random_number(x)
-       call random_number(a)
-     enddo
-
-     y=random_number_range(-1.0,1.0)
-     z=random_number_range(-1.0,1.0)
-     Do while(sqrt(y**2+z**2)>1.0)
-       y=random_number_range(-1.0,1.0)
-       z=random_number_range(-1.0,1.0)
-     enddo
-     generated_bunch(1,i)=x*s_x+x_cm-s_x
-     generated_bunch(2,i)=y*s_y+y_cm
-     generated_bunch(3,i)=z*s_z+z_cm
-   enddo
-
-    call boxmuller_vector(rnumber,n2-n1+1)
-    generated_bunch(4,n1:n2)=rnumber*0.01*dgamma*gamma_m + gamma_m
-    call boxmuller_vector(rnumber,n2-n1+1)
-    generated_bunch(5,n1:n2)=rnumber*eps_y/s_y
-    call boxmuller_vector(rnumber,n2-n1+1)
-    generated_bunch(6,n1:n2)=rnumber*eps_z/s_z
-    generated_bunch(7,n1:n2)=weight
-  end subroutine generate_triangularZ_uniformR_bunch
-
-  !--- *** triangular in Z and normal-gaussian disttributed in the transverse directions *** ---!
-  subroutine generate_triangularZ_normalR_bunch(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-    gamma_m,eps_y,eps_z,dgamma,generated_bunch,Charge_right,Charge_left,weight)
-  integer,intent(in)   :: n1,n2
-  real(dp),intent(in)    :: x_cm,y_cm,z_cm
-  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
-  real(dp),intent(in)    :: Charge_right,Charge_left,weight
-  real(dp),intent(inout)   :: generated_bunch(:,:)
-  real(dp) :: rnumber(n2-n1+1)
-  integer :: i
-  real(dp) :: x,a,intercept,slope
-  !real(dp) :: z,y
-
-  do i=n1,n2+1
-    call random_number(x)
-    call random_number(a)
-    intercept=Charge_left
-    slope=(Charge_right-Charge_left)
-    Do while(a*max(Charge_right,Charge_left)>intercept+slope*x)
-      call random_number(x)
-      call random_number(a)
-    enddo
-    generated_bunch(1,i)=x*s_x+x_cm-s_x
+ do i=n1,n2+1
+  call random_number(x)
+  call random_number(a)
+  intercept=Charge_left
+  slope=(Charge_right-Charge_left)
+  Do while(a*max(Charge_right,Charge_left)>intercept+slope*x)
+   call random_number(x)
+   call random_number(a)
   enddo
 
-  call boxmuller_vector(rnumber,n2-n1+1)
-  generated_bunch(2,n1:n2)=rnumber*s_y + y_cm
-  call boxmuller_vector(rnumber,n2-n1+1)
-  generated_bunch(3,n1:n2)=rnumber*s_z + z_cm
-  call boxmuller_vector(rnumber,n2-n1+1)
-  generated_bunch(4,n1:n2)=rnumber*0.01*dgamma*gamma_m + gamma_m
-  call boxmuller_vector(rnumber,n2-n1+1)
-  generated_bunch(5,n1:n2)=rnumber*eps_y/s_y
-  call boxmuller_vector(rnumber,n2-n1+1)
-  generated_bunch(6,n1:n2)=rnumber*eps_z/s_z
-  generated_bunch(7,n1:n2)=weight
+  y=random_number_range(-1.0,1.0)
+  z=random_number_range(-1.0,1.0)
+  Do while(sqrt(y**2+z**2)>1.0)
+   y=random_number_range(-1.0,1.0)
+   z=random_number_range(-1.0,1.0)
+  enddo
+  generated_bunch(1,i)=x*s_x+x_cm-s_x
+  generated_bunch(2,i)=y*s_y+y_cm
+  generated_bunch(3,i)=z*s_z+z_cm
+ enddo
+
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(4,n1:n2)=rnumber*0.01*dgamma*gamma_m + gamma_m
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(5,n1:n2)=rnumber*eps_y/s_y
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(6,n1:n2)=rnumber*eps_z/s_z
+ generated_bunch(7,n1:n2)=weight
+ end subroutine generate_triangularZ_uniformR_bunch
+
+ !--- *** triangular in Z and normal-gaussian disttributed in the transverse directions *** ---!
+ subroutine generate_triangularZ_normalR_bunch(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
+  gamma_m,eps_y,eps_z,dgamma,generated_bunch,Charge_right,Charge_left,weight)
+ integer,intent(in)   :: n1,n2
+ real(dp),intent(in)    :: x_cm,y_cm,z_cm
+ real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
+ real(dp),intent(in)    :: Charge_right,Charge_left,weight
+ real(dp),intent(inout)   :: generated_bunch(:,:)
+ real(dp) :: rnumber(n2-n1+1)
+ integer :: i
+ real(dp) :: x,a,intercept,slope
+ !real(dp) :: z,y
+
+ do i=n1,n2+1
+  call random_number(x)
+  call random_number(a)
+  intercept=Charge_left
+  slope=(Charge_right-Charge_left)
+  Do while(a*max(Charge_right,Charge_left)>intercept+slope*x)
+   call random_number(x)
+   call random_number(a)
+  enddo
+  generated_bunch(1,i)=x*s_x+x_cm-s_x
+ enddo
+
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(2,n1:n2)=rnumber*s_y + y_cm
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(3,n1:n2)=rnumber*s_z + z_cm
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(4,n1:n2)=rnumber*0.01*dgamma*gamma_m + gamma_m
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(5,n1:n2)=rnumber*eps_y/s_y
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(6,n1:n2)=rnumber*eps_z/s_z
+ generated_bunch(7,n1:n2)=weight
  end subroutine generate_triangularZ_normalR_bunch
 
 
 
  !--- *** Cylindrical Bunch ***----!
  subroutine generate_cylindrical_bunch(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-   gamma_m,eps_y,eps_z,dgamma,generated_bunch,Charge_right,Charge_left,weight)
+  gamma_m,eps_y,eps_z,dgamma,generated_bunch,Charge_right,Charge_left,weight)
  integer,intent(in)   :: n1,n2
  real(dp),intent(in)    :: x_cm,y_cm,z_cm
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
@@ -983,26 +983,26 @@
  real(dp) :: x,y,z
  !real(dp) :: a,intercept,slope
 
-  do i=n1,n2+1
-    x=random_number_range( 0.0,1.0)
-    y=random_number_range(-1.0,1.0)
-    z=random_number_range(-1.0,1.0)
-    Do while(sqrt(y**2+z**2)>1.0)
-      y=random_number_range(-1.0,1.0)
-      z=random_number_range(-1.0,1.0)
-    enddo
-    generated_bunch(1,i)=x*s_x+x_cm-s_x
-    generated_bunch(2,i)=y*s_y+y_cm
-    generated_bunch(3,i)=z*s_z+z_cm
+ do i=n1,n2+1
+  x=random_number_range( 0.0,1.0)
+  y=random_number_range(-1.0,1.0)
+  z=random_number_range(-1.0,1.0)
+  Do while(sqrt(y**2+z**2)>1.0)
+   y=random_number_range(-1.0,1.0)
+   z=random_number_range(-1.0,1.0)
   enddo
+  generated_bunch(1,i)=x*s_x+x_cm-s_x
+  generated_bunch(2,i)=y*s_y+y_cm
+  generated_bunch(3,i)=z*s_z+z_cm
+ enddo
 
-   call boxmuller_vector(rnumber,n2-n1+1)
-   generated_bunch(4,n1:n2)=rnumber*0.01*dgamma*gamma_m + gamma_m
-   call boxmuller_vector(rnumber,n2-n1+1)
-   generated_bunch(5,n1:n2)=rnumber*eps_y/s_y
-   call boxmuller_vector(rnumber,n2-n1+1)
-   generated_bunch(6,n1:n2)=rnumber*eps_z/s_z
-   generated_bunch(7,n1:n2)=weight
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(4,n1:n2)=rnumber*0.01*dgamma*gamma_m + gamma_m
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(5,n1:n2)=rnumber*eps_y/s_y
+ call boxmuller_vector(rnumber,n2-n1+1)
+ generated_bunch(6,n1:n2)=rnumber*eps_z/s_z
+ generated_bunch(7,n1:n2)=weight
  end subroutine generate_cylindrical_bunch
 
 
@@ -1052,12 +1052,12 @@
 
 
  !--- function: uniform distribution between 'min' and 'max' ---!
-  real(dp) function random_number_range(minimum,maximum)
-  real(dp), intent(in) :: minimum,maximum
-  real(dp) :: x
-    call random_number(x)
-    random_number_range = (maximum-minimum)*x+minimum
-  end function random_number_range
+ real(dp) function random_number_range(minimum,maximum)
+ real(dp), intent(in) :: minimum,maximum
+ real(dp) :: x
+ call random_number(x)
+ random_number_range = (maximum-minimum)*x+minimum
+ end function random_number_range
 
 
 

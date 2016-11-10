@@ -107,7 +107,7 @@
   endif
  endif
  !-----------------------
-!========================
+ !========================
  write(lun)ebf(:,:,:,:)
  if(Envelope)then
   env_cp=size(env,4)
@@ -229,7 +229,7 @@
    end do
   endif
  endif
-!=========================
+ !=========================
  !=============== field dimensions
  nxf=size(ebf,1)
  nyf=size(ebf,2)

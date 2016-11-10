@@ -1592,7 +1592,7 @@
  end select
  !================================
  end subroutine set_ion_Efield
-!=======================================
+ !=======================================
  subroutine set_ion_env_field(ef,sp_loc,pt,np,ndm,rionz,dt_loc,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
@@ -1605,14 +1605,14 @@
  real(dp) :: axh(0:2),ayh(0:2),xp1(3),pp(3)
  real(dp) :: ax1(0:2),ay1(0:2),azh(0:2),az1(0:2),ap(6)
  integer :: i,ih,j,jh,i1,j1,i2,j2,k,kh,k1,k2,n
-!==============================
-! Enter env(1:2)<=  A=(A_R,A_I)
-! Exit interpolated |E|^2= |E_y|^2 + |E_x|^2
-!===========================
-!  Up to O(eplidon)^2:
-! |E_y|= k_0^2*|A|^2+2*k_0*[A_RD_xA_I-A_ID_xA_R] +(D_x[A_r])^2 +D_x[A_I}^2)
-! |E_x|= (D_y[A_r])^2 +D_y[A_I}^2)
-!===============================================
+ !==============================
+ ! Enter env(1:2)<=  A=(A_R,A_I)
+ ! Exit interpolated |E|^2= |E_y|^2 + |E_x|^2
+ !===========================
+ !  Up to O(eplidon)^2:
+ ! |E_y|= k_0^2*|A|^2+2*k_0*[A_RD_xA_I-A_ID_xA_R] +(D_x[A_r])^2 +D_x[A_I}^2)
+ ! |E_x|= (D_y[A_r])^2 +D_y[A_I}^2)
+ !===============================================
 
  !===============================================
  ! Linear shape at half-index quadratic shape at integer index
@@ -2449,12 +2449,12 @@
  ! enters av(1)=|a|^2 envelope at integer grid nodes
  ! exit |a|^2/2 and grad[|a|^2]/2 at the particle positions
  !=========================
-! Particle positions assigned using quadratic splines
-!  F=|a|^2/2
-!  ap(1)= [D_x(F)](i+1/2,j,k)
-!  ap(2)= [D_y(F)](i,j+1/2,k)
-!  ap(3)= [D_z(F)](i,j,k+1/2)
-!  ap(4)= [F](i,j,k)
+ ! Particle positions assigned using quadratic splines
+ !  F=|a|^2/2
+ !  ap(1)= [D_x(F)](i+1/2,j,k)
+ !  ap(2)= [D_y(F)](i,j+1/2,k)
+ !  ap(3)= [D_z(F)](i,j,k+1/2)
+ !  ap(4)= [F](i,j,k)
  !===========================================
  ax1(0:2)=0.0;ay1(0:2)=0.0
  az1(0:2)=0.0
@@ -2616,7 +2616,7 @@
      do i1=0,2
       i2=i+i1
       dvol1=dvol*ax1(i1)
-      ap(2)=ap(2)+dvol1*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))  
+      ap(2)=ap(2)+dvol1*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))
      end do
     end do
     k2=kh+k1
@@ -2625,7 +2625,7 @@
      dvol=ay1(j1)*azh(k1)
      do i1=0,2
       dvol1=dvol*ax1(i1)
-      ap(3)=ap(3)+dvol1*(av(i2,j2,k2+1,1)-av(i2,j2,k2,1)) 
+      ap(3)=ap(3)+dvol1*(av(i2,j2,k2+1,1)-av(i2,j2,k2,1))
      end do
     end do
    end do
@@ -2665,7 +2665,7 @@
  !                                     ax(2)=>data(i+2)
  !===================================================
  ! enter ef(1:6) wake fields
- ! enters av(1)=F=|a|^2/2 envelope at integer grid nodes 
+ ! enters av(1)=F=|a|^2/2 envelope at integer grid nodes
  ! and av(2:4)=grad[F] at staggered points
  ! exit total Lorentz force and velocities at particle positions
  !========================================
@@ -2840,7 +2840,7 @@
       i2=i1+ih
       dvol1=dvol*axh(i1)
       ap(1)=ap(1)+dvol1*ef(i2,j2,k2,1)    !Ex and Dx[F] (i+1/2,j,k))
-      ap(7)=ap(7)+dvol1*av(i2,j2,k2,2)  
+      ap(7)=ap(7)+dvol1*av(i2,j2,k2,2)
      end do
     end do
     do j1=0,1
@@ -2879,14 +2879,14 @@
      do i1=0,2
       i2=i1+i
       dvol1=dvol*ax1(i1)
-      ap(3)=ap(3)+dvol1*ef(i2,j2,k2,3)      !Ez and Dz[F] (i,j,k=1/2) 
+      ap(3)=ap(3)+dvol1*ef(i2,j2,k2,3)      !Ez and Dz[F] (i,j,k=1/2)
       ap(9)=ap(9)+dvol1*av(i2,j2,k2,4)
      end do
     end do
    end do
    !=================================
    gam2=1.+up(1)*up(1)+up(2)*up(2)+up(3)*up(3)+ap(10)   !gamma^{n-1/2}
-!  ap(1:3)=(Ex,Ey,Ez)   ap(4:6)=(Bx,By,Bz),ap(7:9)=[Dx,Dy,Dz]F
+   !  ap(1:3)=(Ex,Ey,Ez)   ap(4:6)=(Bx,By,Bz),ap(7:9)=[Dx,Dy,Dz]F
    !==================== solves a cubic equation x^3=A*x+B
    a1=-dot_product(ap(1:3),up(1:3))
    b1=-dot_product(ap(7:9),up(1:3))
@@ -2901,7 +2901,7 @@
   end do
  end select
  end subroutine set_env_acc
-!===========================
+ !===========================
  subroutine set_env_rk_acc(ef,av,sp_loc,pt,np,ndm,xmn,ymn,zmn)
 
  real(dp),intent(in) :: ef(:,:,:,:)
@@ -2930,7 +2930,7 @@
  !                                     ax(2)=>data(i+2)
  !===================================================
  ! enter ef(1:6) wake fields
- ! enters av(1)=F=|a|^2/2 envelope at integer grid nodes 
+ ! enters av(1)=F=|a|^2/2 envelope at integer grid nodes
  ! and av(2:4)=grad[F] at staggered points
  ! exit total Lorentz force and velocities at particle positions
  !========================================
@@ -2948,7 +2948,7 @@
    ap=0.0
    xp1(1:2)=sp_loc%part(n,1:2)    !the t^{k-1} particle positions, momenta and weight
    up(1:2)=sp_loc%part(n,3:4)
-   wgh=sp_loc%part(n,5)  
+   wgh=sp_loc%part(n,5)
    xx=shx+dx_inv*(xp1(1)-xmn)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -3034,8 +3034,8 @@
   do n=1,np
    ap=0.0
    xp1(1:3)=sp_loc%part(n,1:3)   !the current t^{k-1} particle positions, momenta and weights
-   up(1:3)=sp_loc%part(n,4:6)  
-   wgh=sp_loc%part(n,7)  
+   up(1:3)=sp_loc%part(n,4:6)
+   wgh=sp_loc%part(n,7)
    xx=shx+dx_inv*(xp1(1)-xmn)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -3099,7 +3099,7 @@
       i2=i1+ih
       dvol1=dvol*axh(i1)
       ap(1)=ap(1)+dvol1*ef(i2,j2,k2,1)    !Ex and Dx[F] (i+1/2,j,k))
-      ap(7)=ap(7)+dvol1*av(i2,j2,k2,2)  
+      ap(7)=ap(7)+dvol1*av(i2,j2,k2,2)
      end do
     end do
     do j1=0,1
@@ -3138,14 +3138,14 @@
      do i1=0,2
       i2=i1+i
       dvol1=dvol*ax1(i1)
-      ap(3)=ap(3)+dvol1*ef(i2,j2,k2,3)      !Ez and Dz[F] (i,j,k=1/2) 
+      ap(3)=ap(3)+dvol1*ef(i2,j2,k2,3)      !Ez and Dz[F] (i,j,k=1/2)
       ap(9)=ap(9)+dvol1*av(i2,j2,k2,4)
      end do
     end do
    end do
    !=================================
    gam2=1.+up(1)*up(1)+up(2)*up(2)+up(3)*up(3)+ap(10)   !gamma^{k-1}
-!  ap(1:3)=(Ex,Ey,Ez)   ap(4:6)=(Bx,By,Bz),ap(7:9)=[Dx,Dy,Dz]F
+   !  ap(1:3)=(Ex,Ey,Ez)   ap(4:6)=(Bx,By,Bz),ap(7:9)=[Dx,Dy,Dz]F
    gam_inv=1./sqrt(gam2)
    ap(4:9)=ap(4:9)*gam_inv          !ap(4:6)=B/gamp, ap(7:9)= Grad[F]/gamp
 
@@ -3170,7 +3170,7 @@
  integer :: i,j,i1,j1,i2,j2,k,k1,k2,n
  !===============================================
  ! enter efp(1:4) positions and wgh/gamp at time level n
- ! exit av(:,:,:,ic) the den source in envelope equation :  <n*wgh/gamp> > 0 
+ ! exit av(:,:,:,ic) the den source in envelope equation :  <n*wgh/gamp> > 0
  ax1(0:2)=0.0;ay1(0:2)=0.0
  az1(0:2)=0.0
 
