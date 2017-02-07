@@ -226,6 +226,13 @@ galileo_perf: galileo_intel
 galileo_perf: all
 
 
+#puma: intel
+puma: FC        = mpif90
+puma: CC        = mpicxx
+puma: OPTFC     = -real-size 64 -O3
+puma: FFTW_LIB  = /usr/lib64/
+puma: all
+
 
 #shared_variables_and_params start
 $(OBJ_FOLDER)/precision_def.o: $(SRC_FOLDER)/precision_def.F90
