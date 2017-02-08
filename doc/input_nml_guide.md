@@ -1,4 +1,4 @@
-    Following here is a brief description of the new `input.nml` file required for the simulation parameters definition, through an example.
+Following here is a brief description of the new `input.nml` file required for the simulation parameters definition, through an example.
 
 
 ### GRID namelist block
@@ -13,16 +13,17 @@
 /
 ```
 + `nx` is the number of grid points in the *x* direction
-    - for PWFA simulations, it is required that this number contains the number of cpus of the *y* and *z* domains defined by `pey` in order to be sure that FFTs are working as expected
+    - for PWFA simulations, it is required that this number contains the number of cpus of the *y* and *z* domains defined by `nprocx`, `nprocy` and `nprocz` in order to be sure that FFTs are working as expected
 + `ny` is the number of points in the *y* direction
-    - in order to be sure that the simulation is working as expected, it is better to *always* use a number that contains `pey`
+    - in order to be sure that the simulation is working as expected, it is better to *always* use a number that contains `nprocx`, `nprocy` and `nprocz`
 + `nz` is the number of points in the *z* direction; for a 2D simulaton, use `nz = 1`
     - in order to be sure that the 3D simulation is working as expected, it is better to *always* use here a number that contains the number of cpu assigned to split the *z* domain (`mpi_ntot/pey`)
 + `ny_targ` is the transverse size of the target, expressed in number of grid cell filled with particles (if the simulation is a 3D one, the target is a square in the *xy* plane)
-+ `k0` defines the resolution, being the numbero of points per μm along *x*, so that Δx = 1/k0 [μm]; please remember to set a value small enough to solve the skin depth
-+ `yx_rat` is the ratio between the resolution along *x* and *y*: Δy = yxrat/k0 [μm]; the resolution along *z* is the same as for *y*.
++ `k0` defines the resolution, being the number of points per μm along *x*, so that Δx = 1/k0 [μm]; please remember to set a value small enough to solve the skin depth
++ `yx_rat` is the ratio between the resolution along *x* and *y*: Δy = yx_rat/k0 [μm].
++ `zx_rat` is the ratio between the resolution along *x* and *z*: Δz = zx_rat/k0 [μm]; the resolution along *z* is the same as for *y* if this parameter is not defined.
 
-With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yxrat * ny / k0`, `Lz = yxrat * nz / k0`
+With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_rat * ny / k0`, `Lz = zx_rat * nz / k0`
 
 
 ### SIMULATION namelist block
