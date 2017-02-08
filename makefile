@@ -226,7 +226,7 @@ galileo_perf: galileo_intel
 galileo_perf: all
 
 
-#puma: intel
+
 puma: FC        = mpif90
 puma: CC        = mpicxx
 puma: OPTFC     = -real-size 64 -O3
