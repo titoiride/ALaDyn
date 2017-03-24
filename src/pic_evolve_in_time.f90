@@ -1506,7 +1506,7 @@
   ! recvs stl points from right at (nyp+stl), (nzp+stl)
  endif
  !============== first substep dt/2 advance of B-field
- call ef_bds(ef,i1,i2,j1,j2,k1,k2,0.0d0,ibd)
+ call ef_bds(ef,i1,i2,j1,j2,k1,k2,zero_dp,ibd)
  ! Uses upper BCs of E fields: ibd=0 for inflow-outflow
  !                             ibd=1 for symmetric
  !  (B,E)_n => B_{n+1/2}
@@ -1584,8 +1584,8 @@
   call fill_ebfield_yzxbdsdata(&
    ebf,i1,nxp,j1,nyp,k1,nzp,1,nfield,str,stl)
  endif
- call ef_bds(ebf,i1,nxp,j1,nyp,k1,nzp,0.0d0,0)
- call bf_bds(ebf,i1,nxp,j1,nyp,k1,nzp,0.0d0,0)
+ call ef_bds(ebf,i1,nxp,j1,nyp,k1,nzp,zero_dp,0)
+ call bf_bds(ebf,i1,nxp,j1,nyp,k1,nzp,zero_dp,0)
  !=======================
  ! enters jc <=[dt*b^i]*J(x,v)^{i-1}
  !===============================

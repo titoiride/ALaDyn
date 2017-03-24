@@ -1,7 +1,6 @@
 cmake_minimum_required (VERSION 2.8.10)
 project (ALaDyn)
 enable_language (Fortran)
-enable_language (CXX)
 
 set (CMAKE_CXX_STANDARD 11)
 set (MAJOR_VERSION 1)
@@ -48,7 +47,7 @@ endif ()
 # build executables
 add_executable (ALaDyn "src/ALaDyn.F90")
 
-# Require Boost, MPI and FFTW3 for this project
+# Require Boost, libgfortran, MPI and FFTW3 for this project
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
@@ -59,6 +58,8 @@ set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
 set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS})
 set(CMAKE_Fortran_COMPILE_FLAGS ${CMAKE_Fortran_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS})
 set(CMAKE_Fortran_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS})
+#find_library(GFORTRAN_LIBRARY NAMES gfortran libgfortran)
+
 link_directories(${MPI_Fortran_LIBRARIES} ${FFTW_LIBRARIES} ${Boost_LIBRARY_DIR})
 include_directories(${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${Boost_INCLUDE_DIR} ${ALaDyn_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
 
@@ -83,7 +84,6 @@ target_link_libraries(ALaDyn
 	pic_rutil 
 	grid_fields 
 	der_lib 
-	pdf_moments 
 	pic_in 
 	fft_lib 
 	pic_out 
@@ -93,10 +93,12 @@ target_link_libraries(ALaDyn
 	pwfa_bunch_field_calculation 
 	read_input 
 	pwfa_output_addons
+	pdf_moments 
 	${MPI_Fortran_LIBRARIES} 
 	${MPI_LIBRARIES} 
 	${FFTW_LIBRARIES} 
 	${Boost_LIBRARIES}
+	${GFORTRAN_LIBRARY}
 ) 
 
 # install executables and scripts
@@ -160,3 +162,6 @@ add_dependencies(pic_evolve_in_time precision_def pic_rutil particles grid_field
 add_dependencies(pwfa_bunch_field_calculation precision_def pwfa_bunch_field_calculation pic_in pic_evolve_in_time particles pic_rutil fft_lib grid_fields all_param pstruct_data fstruct_data)
 add_dependencies(read_input precision_def control_bunch_input grid_and_particles phys_param code_util mpi_var)
 add_dependencies(pwfa_output_addons precision_def pic_in pic_evolve_in_time read_input pdf_moments system_utilities pic_out pic_dump)
+
+
+

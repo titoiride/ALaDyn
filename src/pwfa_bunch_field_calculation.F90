@@ -45,6 +45,7 @@
  real(dp) :: gam2,gammamin,gammamax,gammadelta,beta_eff
  real(dp) :: xm,ym,zm
  real(dp) :: lxb,lyb
+ real(dp), parameter :: twohundred_dp = 200.0
 
 
  !=============================
@@ -97,7 +98,7 @@
  if(allocated(bpart))deallocate(bpart)
  lxb=x(nx)-x(1)
  lyb=y(ny)-y(1)
- call FFT_Psolv(ebf_bunch_gammarange,(200.0d0)**2,lxb,lyb, &
+ call FFT_Psolv(ebf_bunch_gammarange,(twohundred_dp)**2,lxb,lyb, &
   nx,nx_loc,ny,ny_loc,nz,nz_loc,i1,i2b,j1,nyp,k1,nzp,1)
  call fill_ebfield_yzxbdsdata(ebf_bunch_gammarange,i1,i2b,j1,nyp,k1,nzp,1,2,1,1)
 

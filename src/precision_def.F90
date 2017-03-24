@@ -42,4 +42,8 @@
  integer, parameter :: qp = selected_real_kind(33, 4931)
 #endif
 
+ real(dp), parameter :: zero_dp = 0.0
+ real(dp), parameter :: one_dp = 1.0
+ integer, parameter :: zero = 0
+ integer, parameter :: one = 1
  end module precision_def
