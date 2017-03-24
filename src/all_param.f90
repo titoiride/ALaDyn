@@ -188,7 +188,7 @@
  enddo
  nsp_ionz=min(nsp_ionz,nsp)
  do i=1,3
-  if(mass_number(i)< 1.)call set_atomic_weight(atomic_number(i),mass_number(i))
+  if(mass_number(i)< 1.0d0)call set_atomic_weight(atomic_number(i),mass_number(i))
  end do
  if(ionz_lev >0)Ionization=.true.
  if(Ionization) call set_ionization_coeff(atomic_number,nsp_ionz)
@@ -319,7 +319,7 @@
    curr_ndim=3
   endif
 
-  dx=1./k0
+  dx=1.0d0/k0
   call set_grid(nx,ny,nz,ibx,nx_stretch,ny_stretch,k0,yx_rat,zx_rat)
   dt=cfl*dx
   select case(ndim)

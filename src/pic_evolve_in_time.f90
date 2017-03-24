@@ -1506,7 +1506,7 @@
   ! recvs stl points from right at (nyp+stl), (nzp+stl)
  endif
  !============== first substep dt/2 advance of B-field
- call ef_bds(ef,i1,i2,j1,j2,k1,k2,0.0,ibd)
+ call ef_bds(ef,i1,i2,j1,j2,k1,k2,0.0d0,ibd)
  ! Uses upper BCs of E fields: ibd=0 for inflow-outflow
  !                             ibd=1 for symmetric
  !  (B,E)_n => B_{n+1/2}
@@ -1584,8 +1584,8 @@
   call fill_ebfield_yzxbdsdata(&
    ebf,i1,nxp,j1,nyp,k1,nzp,1,nfield,str,stl)
  endif
- call ef_bds(ebf,i1,nxp,j1,nyp,k1,nzp,0.0,0)
- call bf_bds(ebf,i1,nxp,j1,nyp,k1,nzp,0.0,0)
+ call ef_bds(ebf,i1,nxp,j1,nyp,k1,nzp,0.0d0,0)
+ call bf_bds(ebf,i1,nxp,j1,nyp,k1,nzp,0.0d0,0)
  !=======================
  ! enters jc <=[dt*b^i]*J(x,v)^{i-1}
  !===============================
@@ -2926,12 +2926,12 @@
 
  subroutine lpf2_pb_evolve(dt_loc,pb_mod,initial_time)
 
- real,intent(in) :: dt_loc
+ real(dp),intent(in) :: dt_loc
  integer,intent(in) :: pb_mod
  logical,intent(in) :: initial_time
  integer :: np,ic
  integer :: i1,i2,i1b,i2b,j1,j2,k1,k2,n_st,nbr,nbl
- real :: xm,xb,ym,zm,Ltz
+ real(dp) :: xm,xb,ym,zm,Ltz
  !============================
  !  Fields are in ebf() (wake) and ebf_bunch() bunches
  !  particles are in spec(1)+ebfp plasma bunch(1:2)+ebfb (drive and witness)
@@ -2995,8 +2995,8 @@
 
  subroutine PBUNCH_run(t_loc,dt_loc)
 
- real,intent(in) :: t_loc,dt_loc
- real :: ts
+ real(dp),intent(in) :: t_loc,dt_loc
+ real(dp) :: ts
  logical :: init_time
  logical,parameter :: mw=.false.
  !+++++++++++++++++++++++++++++++++

@@ -327,10 +327,10 @@
  !==============================================
  !DIR$ ATTRIBUTES INLINE :: qq_interpolate
  subroutine qq_interpolate(xp,ax1,axh,ay1,ayh,ix,iy,ixh,iyh)
- real,intent(in)  :: xp(:)
- real,intent(inout) :: ax1(:),axh(:),ay1(:),ayh(:)
+ real(dp),intent(in)  :: xp(:)
+ real(dp),intent(inout) :: ax1(:),axh(:),ay1(:),ayh(:)
  integer, intent(out) :: ix,iy,ixh,iyh
- real :: xx,sx,sx2
+ real(dp) :: xx,sx,sx2
 
  xx=shx+xp(1)
  ix=int(xx+0.5)
@@ -371,10 +371,10 @@
 
  !DIR$ ATTRIBUTES INLINE :: ql_interpolate
  subroutine ql_interpolate(xp,ax1,axh,ay1,ayh,ix,iy,ixh,iyh)
- real,intent(in)  :: xp(:)
- real,intent(inout) :: ax1(:),axh(:),ay1(:),ayh(:)
+ real(dp),intent(in)  :: xp(:)
+ real(dp),intent(inout) :: ax1(:),axh(:),ay1(:),ayh(:)
  integer, intent(out) :: ix,iy,ixh,iyh
- real :: xx,sx,sx2
+ real(dp) :: xx,sx,sx2
 
  xx=shx+xp(1)
  ix=int(xx+0.5)
@@ -409,7 +409,7 @@
  subroutine set_local_positions(pt_loc,n1,np,ns,ndm,xmn,ymn,zmn)
  real(dp),intent(inout) :: pt_loc(:,:)
  integer,intent(in) :: n1,np,ns,ndm
- real,intent(in) :: xmn,ymn,zmn
+ real(dp),intent(in) :: xmn,ymn,zmn
  integer :: n
  !=========================
  do n=n1,np

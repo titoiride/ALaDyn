@@ -71,10 +71,10 @@ osminopedrillo: BOOST_LIB = /disk01/boost/boost_1.60_gcc_5.1/lib/
 osminopedrillo: BOOST_INC = /disk01/boost/boost_1.60_gcc_5.1/include/
 osminopedrillo: all
 
-brew: FFTW_LIB = /usr/local/Cellar/fftw/3.3.4_1/lib
-brew: FFTW_INC = /usr/local/Cellar/fftw/3.3.4_1/include
-brew: BOOST_LIB = /usr/local/Cellar/boost/1.59.0/lib
-brew: BOOST_INC = /usr/local/Cellar/boost/1.59.0/include
+brew: FFTW_LIB = /usr/local/Cellar/fftw/3.3.6-pl1/lib
+brew: FFTW_INC = /usr/local/Cellar/fftw/3.3.6-pl1/include
+brew: BOOST_LIB = /usr/local/Cellar/boost/1.63.0/lib
+brew: BOOST_INC = /usr/local/Cellar/boost/1.63.0/include
 brew: FFTW_DEF =
 brew: all
 
@@ -428,6 +428,5 @@ clean:
 	rm -f $(OBJECTS) $(MODULES)
 
 cleanall:
-	rm -f $(OBJECTS) $(MODULES) $(EXECUTABLE) opt_report.txt *.exe *~ .*~ log.txt *.optrpt bin/*.optrpt
-	rm -rf $(OBJ_FOLDER)
+	rm -rf $(OBJ_FOLDER) $(EXE_FOLDER)
 

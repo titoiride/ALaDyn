@@ -52,7 +52,7 @@
   if(number_of_slices(i)>0) CALL bunch_sliced_diagnostics(bunch_number,moments,number_of_slices(i))
  ENDDO
 
- if(bunch_number.eq.1) call lineout_Ex(0.0,0.0) !lineout E-field total
+ if(bunch_number.eq.1) call lineout_Ex(0.0d0,0.0d0) !lineout E-field total
 
  END SUBROUTINE bunch_diagnostics
 
@@ -851,7 +851,7 @@ nInside_loc=0
  call allreduce_dpreal(0,mu_pz_local,mu_pz,1)
  call allreduce_sint(0,nInside_loc,np)
  !---
- np_inv = 1.0/ max(1.0,real(np,dp)) !mimum 1 particle to avoid overflow
+ np_inv = 1.0d0/ max(1.0d0,real(np,dp)) !mimum 1 particle to avoid overflow
  mu_x  = mu_x * np_inv
  mu_y  = mu_y * np_inv
  mu_z  = mu_z * np_inv

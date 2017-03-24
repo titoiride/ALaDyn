@@ -450,9 +450,9 @@
  !--------------------------
  subroutine set_grid(n1,n2,n3,ib,x_stretch,y_stretch,xres,yxres,zxres)
  integer,intent(in) :: n1,n2,n3,ib,x_stretch,y_stretch
- real,intent(in) :: xres,yxres,zxres
+ real(dp),intent(in) :: xres,yxres,zxres
  integer :: i,ns1
- real :: yy,yyh,sm,sp
+ real(dp) :: yy,yyh,sm,sp
 
  aph=acos(-1.0)*0.4
  dxi=1.
@@ -620,9 +620,9 @@
 
  subroutine set_ftgrid(n1,n2,n3,ksh,lxbox,lybox)
  integer,intent(in) :: n1,n2,n3,ksh
- real,intent(in) :: lxbox,lybox
+ real(dp),intent(in) :: lxbox,lybox
  integer :: i
- real :: wkx,wky,wkz
+ real(dp) :: wkx,wky,wkz
 
  wkx=2.*acos(-1.)/lxbox !lxbox=x(n1+1)-x(1)
  wky=2.*acos(-1.)/lybox !lybox=y(n2+1)-y(1)
