@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.8.10)
 project (ALaDyn)
 enable_language (Fortran)
+enable_language (CXX)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 set (CMAKE_CXX_STANDARD 11)
@@ -116,8 +117,10 @@ set_target_properties(ALaDyn PROPERTIES LINKER_LANGUAGE Fortran)
 install (TARGETS ALaDyn DESTINATION ${CMAKE_SOURCE_DIR}/bin/)
 
 add_library(cpp_folder_tree src/cpp_folder_tree.cpp)
+set_target_properties(cpp_folder_tree PROPERTIES HAS_CXX TRUE)
 set_property(TARGET ${cpp_folder_tree} PROPERTY LINKER_LANGUAGE CXX)
 add_library(find_last_addr src/find_last_addr.cpp)
+set_target_properties(find_last_addr PROPERTIES HAS_CXX TRUE)
 set_property(TARGET ${find_last_addr} PROPERTY LINKER_LANGUAGE CXX)
 add_library(precision_def src/precision_def.F90)
 add_library(mpi_var src/mpi_var.f90)
