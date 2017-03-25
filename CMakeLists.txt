@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.8.10)
 project (ALaDyn)
 enable_language (Fortran)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 set (CMAKE_CXX_STANDARD 11)
 set (MAJOR_VERSION 1)
@@ -52,8 +53,10 @@ find_package(Boost COMPONENTS system filesystem REQUIRED)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(MPI REQUIRED)
-#find_package(FFTW REQUIRED)
-find_library(FFTW_LIBRARIES NAMES fftw3 libfftw3)
+set(LIBS ${LIBS} ${MPI_LIBRARIES})
+find_package(FFTW REQUIRED)
+set(LIBS ${LIBS} ${FFTW_LIBRARIES})
+#find_library(FFTW_LIBRARIES NAMES fftw3 libfftw3)
 set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
 set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS})
 set(CMAKE_Fortran_COMPILE_FLAGS ${CMAKE_Fortran_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS})
@@ -61,7 +64,7 @@ set(CMAKE_Fortran_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS} ${MPI_For
 #find_library(GFORTRAN_LIBRARY NAMES gfortran libgfortran)
 
 link_directories(${MPI_Fortran_LIBRARIES} ${FFTW_LIBRARIES} ${Boost_LIBRARY_DIR})
-include_directories(${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${Boost_INCLUDE_DIR} ${ALaDyn_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
+include_directories(${FFTW_INCLUDES} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${Boost_INCLUDE_DIR} ${ALaDyn_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
 
 target_link_libraries(ALaDyn 
 	precision_def 

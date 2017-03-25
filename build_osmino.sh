@@ -1,0 +1,1 @@
+mkdir build_gcc ; cd build_gcc ; cmake .. -DBoost_NO_BOOST_CMAKE=ON -DCMAKE_C_COMPILER=/disk01/gcc/gcc-5.1.0/bin/gcc -DCMAKE_CXX_COMPILER=/disk01/gcc/gcc-5.1.0/bin/g++ ; -DCMAKE_Fortran_COMPILER=/disk01/gcc/gcc-5.1.0/bin/gfortran ; cmake --build . --target install ; cd ..
