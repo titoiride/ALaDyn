@@ -35,7 +35,7 @@ if (Fortran_COMPILER_NAME MATCHES "gfortran*")
   set (CMAKE_Fortran_FLAGS_DEBUG   "-fdefault-real-8 -Wall -Wextra -fbacktrace -fbounds-check -Og -g")
 elseif (Fortran_COMPILER_NAME MATCHES "ifort*")
   # ifort (untested)
-  set (CMAKE_Fortran_FLAGS_RELEASE "-real-size 64 -axcore-avx-i,SSE4.2 -ipo -O3")
+  set (CMAKE_Fortran_FLAGS_RELEASE "-real-size 64 -axcore-avx-i,SSE4.2 -O3")
   set (CMAKE_Fortran_FLAGS_DEBUG   "-real-size 64 -O0 -g -real-size 64 -g -check all -fpe0 -warn -traceback -debug extended")
 else ()
   message ("CMAKE_Fortran_COMPILER found but unsupported")
@@ -44,27 +44,32 @@ else ()
   set (CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g")
 endif ()
 
+set(OTHER_INCLUDE_DIR "" CACHE FILEPATH "Path to other includes")
+set(OTHER_LIBRARY_DIR "" CACHE FILEPATH "Path to other libraries")
 
 # build executables
 add_executable (ALaDyn "src/ALaDyn.F90")
 
-# Require Boost, libgfortran, MPI and FFTW3 for this project
+# Require Boost, MPI and FFTW3 for this project
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(MPI REQUIRED)
 set(LIBS ${LIBS} ${MPI_LIBRARIES})
+#find_package(MKL)
+#set(LIBS ${LIBS} ${MKL_LIBRARIES})
 find_package(FFTW REQUIRED)
 set(LIBS ${LIBS} ${FFTW_LIBRARIES})
-#find_library(FFTW_LIBRARIES NAMES fftw3 libfftw3)
 set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS})
 set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS})
 set(CMAKE_Fortran_COMPILE_FLAGS ${CMAKE_Fortran_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS})
 set(CMAKE_Fortran_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS})
-#find_library(GFORTRAN_LIBRARY NAMES gfortran libgfortran)
+#if(NOT FFTW_FOUND AND NOT MKL_FOUND)
+#message("FFTW and MKL not found, unable to build reliably")
+#endif()
 
-link_directories(${MPI_Fortran_LIBRARIES} ${FFTW_LIBRARIES} ${Boost_LIBRARY_DIR})
-include_directories(${FFTW_INCLUDES} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${Boost_INCLUDE_DIR} ${ALaDyn_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
+link_directories(${OTHER_LIBRARY_DIR} ${MPI_Fortran_LIBRARIES} ${FFTW_LIBRARIES} ${MKL_LIBRARIES} ${Boost_LIBRARY_DIR})
+include_directories(${OTHER_INCLUDE_DIR} ${FFTW_INCLUDES} ${MKL_INCLUDE_DIRS} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${Boost_INCLUDE_DIR} ${ALaDyn_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
 
 target_link_libraries(ALaDyn 
 	precision_def 
@@ -101,8 +106,9 @@ target_link_libraries(ALaDyn
 	${MPI_LIBRARIES} 
 	${FFTW_LIBRARIES} 
 	${Boost_LIBRARIES}
-	${GFORTRAN_LIBRARY}
 ) 
+
+set_target_properties(ALaDyn PROPERTIES LINKER_LANGUAGE Fortran)
 
 # install executables and scripts
 install (TARGETS ALaDyn DESTINATION ${CMAKE_SOURCE_DIR}/bin/)
