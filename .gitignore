@@ -50,5 +50,8 @@ opt_report.txt
 src/My Advisor XE Results - ALaDyn/
 
 build_gcc/
+build/
 bin/
 
+.project
+*.nml
