@@ -1,8 +1,0 @@
-module purge
-
-module load bgq-gnu
-module load profile/advanced
-module load fftw/3.3.2--bgq-gnu--4.4.6
-module load boost/1.51.0--bgq-gnu--4.4.6
-
-make fermi_gnu_debug
