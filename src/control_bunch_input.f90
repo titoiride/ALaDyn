@@ -58,6 +58,6 @@
                   Charge_left_4,Charge_left_5
 
 
- logical :: L_particles,L_Twiss,L_Bpoloidal
+ logical :: L_particles,L_Twiss(5),L_Bpoloidal
 
  end module control_bunch_input
