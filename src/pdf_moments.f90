@@ -1187,6 +1187,9 @@ ENDDO
 
  !---!
  np_local=loc_npart(imody,imodz,imodx,1) !only electrons
+ xmin_out=xp0_out
+ xmax_out=xp1_out
+ ymax_out=yp_out
 
  !---- Mask Calculation ---------!
  allocate (mask(np_local))
