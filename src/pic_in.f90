@@ -747,6 +747,31 @@
     xfsh=xfsh+lpx(5)
    end do
   endif
+
+!---------------------------------------------------------------!
+!------ Cos-sinusoidal background modulation  ---!
+!---------------------------------------------------------------!
+case(6)
+ j1_norm=np1*j0_norm
+ j2_norm=np2*j0_norm
+ !================ Cos-sinusoidal background modulation =================
+ if(nxl(4)>0)then
+  do ic=1,nsp
+   n_peak=nxl(4)*np_per_xc(ic)
+   do i=1,n_peak
+    uu=(real(i,dp)-0.5)/real(n_peak,dp)
+    i1=nptx(ic)+i
+    xpt(i1,ic)=xfsh+lpx(4)*uu !lab-X position in um
+    wghpt(i1,ic)=j0_norm*(1.0+n1_over_n*cos(xpt(i1,ic)*2.*pi/lpx(2)))
+    wghpt(i1,ic)=wghpt(i1,ic)*un(ic)
+   end do
+   nptx(ic)=nptx(ic)+n_peak
+  end do
+  xfsh=xfsh+lpx(4)
+ endif
+!----------------------------!
+
+
  end select
  !================================
  ! END of section setting global coordinates
@@ -2910,7 +2935,8 @@
  subroutine beam_data(ic,btype,np_tot)  !generates bpart(7,np_tot)
  integer,intent(in) :: ic,btype
  integer,intent(out) :: np_tot
- integer :: i,i1,i2,ip
+ integer :: i,i1,i2,ip,ppcb,ix,iy,iz
+ integer(dp_int) :: effecitve_cell_number
  real(dp) :: cut,xh(5),bch
  real(sp) :: ch(2)
  equivalence(bch,ch)
@@ -2923,6 +2949,11 @@
  !=======================
  np_tot=0
  do i=1,nsb
+   effecitve_cell_number=bunch_volume_incellnumber(bunch_shape(i),sxb(i),syb(i),syb(i),dx,dy,dz)
+   ppcb=max(nb_tot(i)/effecitve_cell_number,1)
+   nb_tot(i)=ppcb*effecitve_cell_number
+   if(pe0) write(*,'(A)') 'changing total number of particles :: equidistibution'
+   if(pe0) write(*,'(A,1I3,A,1I10)') 'ppc per bunch ::',ppcb,'   ---   total number of bunch particles :: ',nb_tot(i)
   np_tot=np_tot+nb_tot(i)
  end do
  cut=3.
@@ -2938,38 +2969,50 @@
    xh(ip)=xc_bunch(ip)
    ch(1)=real(j0_norm*jb_norm(ip),sp) !the bunch particles weights
    i2=i1+nb_tot(ip)-1
-   !---Original Version---!
-   !   call bunch_gen(ic,i1,i2,sxb(ip),syb(ip),syb(ip),gam(ip),&
-   !    epsy(ip),epsz(ip),cut,dg(ip),bpart)
-   !   do i=i1,i2
-   !    bpart(1,i)=bpart(1,i)+xh(ip)       !x-shifting
-   !    bpart(2,i)=bpart(2,i)+yc_bunch(ip) !y-shifting
-   !    bpart(3,i)=bpart(3,i)+zc_bunch(ip) !z-shifting
-   !    bpart(nch,i)=bch
-   !   end do
-   !---Alternative simplified version---!
-   if(L_TWISS .and. bunch_shape(ip)==1)  call bunch_gen_twissshifting(i1,i2,&
+
+   if(bunch_shape(ip)==1)  call bunch_gen_alternative(i1,i2,&
     sxb(ip),xc_bunch(ip),&
     syb(ip),yc_bunch(ip),&
     syb(ip),zc_bunch(ip),&
     gam(ip),&
-    epsy(ip),epsz(ip),dg(ip),bpart,bch,&
-    alpha_twiss(ip),beta_twiss(ip))
-   if(.not. L_TWISS .and. bunch_shape(ip)==1)  call bunch_gen_alternative(ic,i1,i2,&
-    sxb(ip),xc_bunch(ip),&
-    syb(ip),yc_bunch(ip),&
-    syb(ip),zc_bunch(ip),&
-    gam(ip),&
-    epsy(ip),epsz(ip),cut,dg(ip),bpart,bch)
-   if(.not. L_TWISS .and. bunch_shape(ip)==2) call generate_triangularZ_uniformR_bunch(i1,i2,&
+    epsy(ip),epsz(ip),cut,dg(ip),bpart,bch,dx,dy,dz,rhob(ip))
+   if(bunch_shape(ip)==2) call generate_triangularZ_uniformR_bunch(i1,i2,&
     xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),sxb(ip),syb(ip),syb(ip),gam(ip),epsy(ip),epsz(ip),dg(ip),&
-    bpart,Charge_right(ip),Charge_left(ip),bch)
-   if(.not. L_TWISS .and. bunch_shape(ip)==3) call generate_triangularZ_normalR_bunch(i1,i2,&
+    bpart,Charge_right(ip),Charge_left(ip),bch,dx,dy,dz)
+   if(bunch_shape(ip)==3) call generate_triangularZ_normalR_bunch(i1,i2,&
     xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),sxb(ip),syb(ip),syb(ip),gam(ip),epsy(ip),epsz(ip),dg(ip),&
-    bpart,Charge_right(ip),Charge_left(ip),bch)
-   if(.not. L_TWISS .and. bunch_shape(ip)==4) call generate_cylindrical_bunch(i1,i2,&
+    bpart,Charge_right(ip),Charge_left(ip),bch,dx,dy,dz)
+   if(bunch_shape(ip)==4) call generate_cylindrical_bunch(i1,i2,&
     xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),sxb(ip),syb(ip),syb(ip),gam(ip),epsy(ip),epsz(ip),dg(ip),&
-    bpart,Charge_right(ip),Charge_left(ip),bch)
+    bpart,rhob(ip),bch,dx,dy,dz)
+
+    !--- Twiss Rotation ---!
+    if(L_TWISS(ip)) call bunch_twissrotation(i1,i2,bpart, &
+      alpha_twiss(ip),beta_twiss(ip),alpha_twiss(ip),beta_twiss(ip), &
+      syb(ip),syb(ip),epsy(ip),epsz(ip),xc_bunch(ip),yc_bunch(ip),zc_bunch(ip))
+
+  !  if(L_TWISS .and. bunch_shape(ip)==1)  call bunch_gen_twissshifting(i1,i2,&
+  !   sxb(ip),xc_bunch(ip),&
+  !   syb(ip),yc_bunch(ip),&
+  !   syb(ip),zc_bunch(ip),&
+  !   gam(ip),&
+  !   epsy(ip),epsz(ip),dg(ip),bpart,bch,&
+  !   alpha_twiss(ip),beta_twiss(ip))
+  !  if(.not. L_TWISS .and. bunch_shape(ip)==1)  call bunch_gen_alternative(i1,i2,&
+  !   sxb(ip),xc_bunch(ip),&
+  !   syb(ip),yc_bunch(ip),&
+  !   syb(ip),zc_bunch(ip),&
+  !   gam(ip),&
+  !   epsy(ip),epsz(ip),cut,dg(ip),bpart,bch,dx,dy,dz,rhob(ip))
+  !  if(.not. L_TWISS .and. bunch_shape(ip)==2) call generate_triangularZ_uniformR_bunch(i1,i2,&
+  !   xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),sxb(ip),syb(ip),syb(ip),gam(ip),epsy(ip),epsz(ip),dg(ip),&
+  !   bpart,Charge_right(ip),Charge_left(ip),bch,dx,dy,dz)
+  !  if(.not. L_TWISS .and. bunch_shape(ip)==3) call generate_triangularZ_normalR_bunch(i1,i2,&
+  !   xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),sxb(ip),syb(ip),syb(ip),gam(ip),epsy(ip),epsz(ip),dg(ip),&
+  !   bpart,Charge_right(ip),Charge_left(ip),bch,dx,dy,dz)
+  !  if(.not. L_TWISS .and. bunch_shape(ip)==4) call generate_cylindrical_bunch(i1,i2,&
+  !   xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),sxb(ip),syb(ip),syb(ip),gam(ip),epsy(ip),epsz(ip),dg(ip),&
+  !   bpart,Charge_right(ip),Charge_left(ip),bch)
    !---end simplified version---!
    i1=i2+1
   end do
