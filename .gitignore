@@ -31,6 +31,7 @@
 *.exe
 *.out
 *.app
+.DS_Store
 
 cnaf.debug_gnu
 cnaf.debug_ifort
