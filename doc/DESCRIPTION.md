@@ -1,6 +1,4 @@
-<!--
 # The `ALaDyn` PIC Code
--->
 
 #### P. Londrillo¹, A. Sgattoniº, S. Sinigardi², A. Marocchinoª, F. Mira^, D. Terzani³, D. Palla¤, J. Babaei˜, T. Rovelli², G. Turchetti²  
 ¹INAF, Osservatorio Astronomico Bologna  
