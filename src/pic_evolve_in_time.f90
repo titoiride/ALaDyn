@@ -2835,20 +2835,20 @@
     ebf1_bunch,ebf0_bunch,bunch(ic),ebfb,1,np,n_st,xm,ym,zm)
    if(initial_time)call init_lpf_momenta(bunch(ic),ebfb,1,np,dt_loc,Ltz)
    call lpf_momenta_and_positions(bunch(ic),ebfb,1,np,dt_loc,vb,Ltz)
-   if(ompe>0.0)call curr_accumulate(bunch(ic),ebfb,1,np,iform,n_st,xm,ym,zm)
+   if(L_EMBunchEvolution .and. ompe>0.0)call curr_accumulate(bunch(ic),ebfb,1,np,iform,n_st,xm,ym,zm)
   endif
-  !============ advances bunches
+ !================ advances bunches
  enddo
  !================ sums total currents
- call curr_mpi_collect(jc,i1,i2,j1,j2,k1,k2)
- !======================= boundary ibx as for Maxwell equation
+ if(L_EMBunchEvolution) call curr_mpi_collect(jc,i1,i2,j1,j2,k1,k2)
+ !================ boundary ibx as for Maxwell equation
  call advect_bunch_fields(ebf_bunch,jc,&
   bet0,dt_loc,i1,i2,j1,j2,k1,k2,initial_time)
  select case(ibmod)
  case(0)
   call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
  case(1)
-  call advance_lpf_fields(ebf1_bunch,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
+  if(L_EMBunchEvolution) call advance_lpf_fields(ebf1_bunch,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
  end select
  !=========================
  end subroutine lpf2_eb_evolve

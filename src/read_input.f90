@@ -158,23 +158,24 @@
 
  !--- *** namelist *** ---!
  NAMELIST/NUMBER_BUNCHES/ n_bunches, L_particles, L_intdiagnostics_pwfa, &
-  L_intdiagnostics_classic,number_of_slices
+  L_intdiagnostics_classic,L_EMBunchEvolution,number_of_slices
  NAMELIST/BUNCH1/rho_b_1,gamma_1,xb_1,yb_1,zb_1,sx_1,sy_1,epsy_1,epsz_1,dg_1,np_1,&
-  bunch_type_1,bunch_shape_1,Charge_right_1,Charge_left_1
+  bunch_type_1,bunch_shape_1,Charge_right_1,Charge_left_1,particle_weight_1
  NAMELIST/BUNCH2/rho_b_2,gamma_2,xb_2,yb_2,zb_2,sx_2,sy_2,epsy_2,epsz_2,dg_2,np_2,&
-  bunch_type_2,bunch_shape_2,Charge_right_2,Charge_left_2
+  bunch_type_2,bunch_shape_2,Charge_right_2,Charge_left_2,particle_weight_2
  NAMELIST/BUNCH3/rho_b_3,gamma_3,xb_3,yb_3,zb_3,sx_3,sy_3,epsy_3,epsz_3,dg_3,np_3,&
-  bunch_type_3,bunch_shape_3,Charge_right_3,Charge_left_3
+  bunch_type_3,bunch_shape_3,Charge_right_3,Charge_left_3,particle_weight_3
  NAMELIST/BUNCH4/rho_b_4,gamma_4,xb_4,yb_4,zb_4,sx_4,sy_4,epsy_4,epsz_4,dg_4,np_4,&
-  bunch_type_4,bunch_shape_4,Charge_right_4,Charge_left_4
+  bunch_type_4,bunch_shape_4,Charge_right_4,Charge_left_4,particle_weight_4
  NAMELIST/BUNCH5/rho_b_5,gamma_5,xb_5,yb_5,zb_5,sx_5,sy_5,epsy_5,epsz_5,dg_5,np_5,&
-  bunch_type_5,bunch_shape_5,Charge_right_5,Charge_left_5
+  bunch_type_5,bunch_shape_5,Charge_right_5,Charge_left_5,particle_weight_5
 
  !--- reading number of bunches ---!
  open(nml_iounit,file=input_namelist_filename, status='old')
  L_particles = .false.
  L_intdiagnostics_pwfa=.false.
  L_intdiagnostics_classic=.true.
+ L_EMBunchEvolution=.true.
  number_of_slices = (/10,0,0,0/)
  read(nml_iounit,NUMBER_BUNCHES,iostat=nml_ierr)
  nml_error_message='NUMBER_BUNCHES'
@@ -192,6 +193,7 @@
  !shape 4: cylinder
  Charge_right_1=-1.0
  Charge_left_1  =-1.0
+ particle_weight_1='weighted'
  !-->
  IF( 1 .le. n_bunches) then
   open(nml_iounit,file=input_namelist_filename, status='old')
@@ -215,6 +217,7 @@
   dg(1)         = dg_1
   Charge_right(1) = Charge_right_1
   Charge_left(1)=Charge_left_1
+  particle_weight(1)=particle_weight_1
  END IF
 
 
@@ -226,6 +229,7 @@
  bunch_shape_2=1 !bi-giassian
  Charge_right_2=-1.0
  Charge_left_2  =-1.0
+ particle_weight_2='weighted'
  !-->
  IF( 2 .le. n_bunches) then
   open(nml_iounit,file=input_namelist_filename, status='old')
@@ -249,6 +253,7 @@
   dg(2)         =dg_2
   Charge_right(2) = Charge_right_2
   Charge_left(2)=Charge_left_2
+  particle_weight(2)=particle_weight_2
  END IF
 
 
@@ -260,6 +265,7 @@
  bunch_shape_3=1 !bi-giassian
  Charge_right_3=-1.0
  Charge_left_3  =-1.0
+ !particle_weight_3='weighted'
  !-->
  IF( 3 .le. n_bunches) then
   open(nml_iounit,file=input_namelist_filename, status='old')
@@ -283,6 +289,7 @@
   dg(3)         = dg_3
   Charge_right(3) = Charge_right_3
   Charge_left(3)=Charge_left_3
+  particle_weight(4)=particle_weight_3
  END IF
 
 
@@ -294,6 +301,7 @@
  bunch_shape_4=1 !bi-giassian
  Charge_right_4=-1.0
  Charge_left_4  =-1.0
+ particle_weight_4='weighted'
  !-->
  IF( 4 .le. n_bunches) then
   open(nml_iounit,file=input_namelist_filename, status='old')
@@ -317,6 +325,7 @@
   dg(4)         = dg_4
   Charge_right(4) = Charge_right_4
   Charge_left(4)=Charge_left_4
+  particle_weight(4)=particle_weight_4
  END IF
 
 
@@ -328,6 +337,7 @@
  bunch_shape_5=1 !bi-giassian
  Charge_right_5=-1.0
  Charge_left_5  =-1.0
+ particle_weight_5='weighted'
  !-->
  IF( 5 .le. n_bunches) then
   open(nml_iounit,file=input_namelist_filename, status='old')
@@ -351,6 +361,7 @@
   dg(5)         = dg_5
   Charge_right(5) = Charge_right_5
   Charge_left(5)=Charge_left_5
+  particle_weight(5)=particle_weight_5
  END IF
 
  end subroutine read_bunch_namelist
@@ -442,17 +453,17 @@ end subroutine read_nml_integrated_background_diagnostic
   L_first_output_on_restart
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
  NAMELIST/NUMBER_BUNCHES/ n_bunches, L_particles, L_intdiagnostics_pwfa, &
-  L_intdiagnostics_classic,number_of_slices
+  L_intdiagnostics_classic,L_EMBunchEvolution,number_of_slices
  NAMELIST/BUNCH1/rho_b_1,gamma_1,xb_1,yb_1,zb_1,sx_1,sy_1,epsy_1,epsz_1,dg_1,np_1,&
-  bunch_type_1,bunch_shape_1,Charge_right_1,Charge_left_1
+  bunch_type_1,bunch_shape_1,Charge_right_1,Charge_left_1,particle_weight_1
  NAMELIST/BUNCH2/rho_b_2,gamma_2,xb_2,yb_2,zb_2,sx_2,sy_2,epsy_2,epsz_2,dg_2,np_2,&
-  bunch_type_2,bunch_shape_2,Charge_right_2,Charge_left_2
+  bunch_type_2,bunch_shape_2,Charge_right_2,Charge_left_2,particle_weight_2
  NAMELIST/BUNCH3/rho_b_3,gamma_3,xb_3,yb_3,zb_3,sx_3,sy_3,epsy_3,epsz_3,dg_3,np_3,&
-  bunch_type_3,bunch_shape_3,Charge_right_3,Charge_left_3
+  bunch_type_3,bunch_shape_3,Charge_right_3,Charge_left_3,particle_weight_3
  NAMELIST/BUNCH4/rho_b_4,gamma_4,xb_4,yb_4,zb_4,sx_4,sy_4,epsy_4,epsz_4,dg_4,np_4,&
-  bunch_type_4,bunch_shape_4,Charge_right_4,Charge_left_4
+  bunch_type_4,bunch_shape_4,Charge_right_4,Charge_left_4,particle_weight_4
  NAMELIST/BUNCH5/rho_b_5,gamma_5,xb_5,yb_5,zb_5,sx_5,sy_5,epsy_5,epsz_5,dg_5,np_5,&
-  bunch_type_5,bunch_shape_5,Charge_right_5,Charge_left_5
+  bunch_type_5,bunch_shape_5,Charge_right_5,Charge_left_5,particle_weight_5
  NAMELIST/TWISS/L_TWISS,alpha_twiss,beta_twiss
  NAMELIST/BPOLOIDAL/L_Bpoloidal,B_ex_poloidal,radius_poloidal
 

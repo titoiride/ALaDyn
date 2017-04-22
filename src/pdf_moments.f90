@@ -1179,6 +1179,7 @@ ENDDO
  real(dp) :: corr_y_py_local(1), corr_z_pz_local(1), corr_x_px_local(1) !correlation transverse plane
  real(dp) :: corr_y_py(1), corr_z_pz(1), corr_x_px(1) !correlation transverse plane
  real(dp) :: emittance_y(1), emittance_z(1) !emittance variables
+ real(dp) :: weights_local(1),weights(1)
  real(dp) :: np_inv
  real(sp) :: charge(2)
  equivalence(charge,wgh)
@@ -1190,7 +1191,6 @@ ENDDO
  xmin_out=xp0_out
  xmax_out=xp1_out
  ymax_out=yp_out
-
  !---- Mask Calculation ---------!
  allocate (mask(np_local))
 
@@ -1202,23 +1202,36 @@ nInside_loc=0
       if( abs(spec(1)%part(ip,3)) > ymax_out) mask(ip)=.false.
       if(spec(1)%part(ip,1) < xmin_out ) mask(ip)=.false.
       if(spec(1)%part(ip,1) > xmax_out) mask(ip)=.false.
-      !--- weight selection ---!
+      ! !--- weight selection ---!
       wgh=spec(1)%part(ip,7)
-      if(charge(2) < weights_cut_min) mask(ip)=.false.
-      if(charge(2) > weights_cut_max) mask(ip)=.false.
-      !--- gamma selection ---!
+      if(charge(1) < weights_cut_min) mask(ip)=.false.
+      if(charge(1) > weights_cut_max) mask(ip)=.false.
+      ! !--- gamma selection ---!
       if( sqrt(1.0+SUM(spec(1)%part(ip,4:6)**2)) < gamma_cut_min) mask(ip)=.false.
       !--- particle counter ---!
       if (mask(ip)) nInside_loc=nInside_loc+1
  enddo
 
  !--- mean calculation ---!
- mu_x_local   = sum( spec(1)%part(1:np_local,1), MASK=mask(1:np_local) )
- mu_y_local   = sum( spec(1)%part(1:np_local,2), MASK=mask(1:np_local) )
- mu_z_local   = sum( spec(1)%part(1:np_local,3), MASK=mask(1:np_local) )
- mu_px_local  = sum( spec(1)%part(1:np_local,4), MASK=mask(1:np_local) )
- mu_py_local  = sum( spec(1)%part(1:np_local,5), MASK=mask(1:np_local) )
- mu_pz_local  = sum( spec(1)%part(1:np_local,6), MASK=mask(1:np_local) )
+ weights_local=0.0
+ mu_x_local=0.0
+ mu_y_local=0.0
+ mu_z_local=0.0
+ mu_px_local=0.0
+ mu_py_local=0.0
+ mu_pz_local=0.0
+ do ip=1,np_local
+        if(mask(ip)) then
+         wgh=spec(1)%part(ip,7)
+         mu_x_local   = mu_x_local+spec(1)%part(ip,1) * charge(1)
+         mu_y_local   = mu_y_local+spec(1)%part(ip,2) * charge(1)
+         mu_z_local   = mu_z_local+spec(1)%part(ip,3) * charge(1)
+         mu_px_local  = mu_px_local+spec(1)%part(ip,4) * charge(1)
+         mu_py_local  = mu_py_local+spec(1)%part(ip,5) * charge(1)
+         mu_pz_local  = mu_pz_local+spec(1)%part(ip,6) * charge(1)
+         weights_local = weights_local+charge(1)
+       endif
+ enddo
  !---
  call allreduce_dpreal(0,mu_x_local,mu_x,1)
  call allreduce_dpreal(0,mu_y_local,mu_y,1)
@@ -1226,24 +1239,35 @@ nInside_loc=0
  call allreduce_dpreal(0,mu_px_local,mu_px,1)
  call allreduce_dpreal(0,mu_py_local,mu_py,1)
  call allreduce_dpreal(0,mu_pz_local,mu_pz,1)
- call allreduce_sint(0,nInside_loc,np)
+ call allreduce_dpreal(0,weights_local,weights,1)
+ if(weights(1)<=0.0) weights=1.0
  !---
- np_inv = 1.0/ max(1.0,real(np,dp)) !mimum 1 particle to avoid overflow
- mu_x  = mu_x * np_inv
- mu_y  = mu_y * np_inv
- mu_z  = mu_z * np_inv
- mu_px = mu_px * np_inv
- mu_py = mu_py * np_inv
- mu_pz = mu_pz * np_inv
+ mu_x  = mu_x / weights
+ mu_y  = mu_y / weights
+ mu_z  = mu_z / weights
+ mu_px = mu_px / weights
+ mu_py = mu_py / weights
+ mu_pz = mu_pz / weights
 
 
  !--- variance calculation ---!
- s_x_local   = sum( ( spec(1)%part(1:np_local,1)-mu_x(1)  )**2, MASK=mask(1:np_local) )
- s_y_local   = sum( ( spec(1)%part(1:np_local,2)-mu_y(1)  )**2, MASK=mask(1:np_local) )
- s_z_local   = sum( ( spec(1)%part(1:np_local,3)-mu_z(1)  )**2, MASK=mask(1:np_local) )
- s_px_local  = sum( ( spec(1)%part(1:np_local,4)-mu_px(1) )**2, MASK=mask(1:np_local) )
- s_py_local  = sum( ( spec(1)%part(1:np_local,5)-mu_py(1) )**2, MASK=mask(1:np_local) )
- s_pz_local  = sum( ( spec(1)%part(1:np_local,6)-mu_pz(1) )**2, MASK=mask(1:np_local) )
+ s_x_local=0.0
+ s_y_local=0.0
+ s_z_local=0.0
+ s_px_local=0.0
+ s_py_local=0.0
+ s_pz_local=0.0
+ do ip=1,np_local
+        if(mask(ip)) then
+               wgh=spec(1)%part(ip,7)
+               s_x_local   = s_x_local+( spec(1)%part(ip,1)-mu_x(1)  )**2 * charge(1)
+               s_y_local   = s_y_local+( spec(1)%part(ip,2)-mu_y(1)  )**2 * charge(1)
+               s_z_local   = s_z_local+( spec(1)%part(ip,3)-mu_z(1)  )**2 * charge(1)
+               s_px_local  = s_px_local+( spec(1)%part(ip,4)-mu_px(1) )**2 * charge(1)
+               s_py_local  = s_py_local+( spec(1)%part(ip,5)-mu_py(1) )**2 * charge(1)
+               s_pz_local  = s_pz_local+( spec(1)%part(ip,6)-mu_pz(1) )**2 * charge(1)
+        endif
+  enddo
  !---
  call allreduce_dpreal(0,s_x_local,s_x,1)
  call allreduce_dpreal(0,s_y_local,s_y,1)
@@ -1252,47 +1276,64 @@ nInside_loc=0
  call allreduce_dpreal(0,s_py_local,s_py,1)
  call allreduce_dpreal(0,s_pz_local,s_pz,1)
  !---
- s_x  = sqrt( s_x  * np_inv )
- s_y  = sqrt( s_y  * np_inv )
- s_z  = sqrt( s_z  * np_inv )
- s_px = sqrt( s_px * np_inv )
- s_py = sqrt( s_py * np_inv )
- s_pz = sqrt( s_pz * np_inv )
+ s_x  = sqrt( s_x  / weights )
+ s_y  = sqrt( s_y  / weights )
+ s_z  = sqrt( s_z  / weights )
+ s_px = sqrt( s_px / weights )
+ s_py = sqrt( s_py / weights )
+ s_pz = sqrt( s_pz / weights )
 
  !--- gamma diagnostic calculation ---!
- mu_gamma_local  = sum(  sqrt(   1.0 + spec(1)%part(1:np_local,4)**2 + &
-  spec(1)%part(1:np_local,5)**2 + &
-  spec(1)%part(1:np_local,6)**2 ), MASK=mask(1:np_local)  )
+ mu_gamma_local=0.0
+ do ip=1,np_local
+        if(mask(ip)) then
+               wgh=spec(1)%part(ip,7)
+                mu_gamma_local  = mu_gamma_local + sqrt(   1.0 + spec(1)%part(ip,4)**2 + &
+                                                  spec(1)%part(ip,5)**2 + &
+                                                  spec(1)%part(ip,6)**2 )*charge(1)
+        endif
+  enddo
  !---
  call allreduce_dpreal(0,mu_gamma_local,mu_gamma,1)
- !---
- mu_gamma  = mu_gamma * np_inv
+ mu_gamma  = mu_gamma / weights
  !--- --- ---!
- s_gamma_local  = sum(  (1.0 + spec(1)%part(1:np_local,4)**2 + &
-  spec(1)%part(1:np_local,5)**2 + &
-  spec(1)%part(1:np_local,6)**2 ), MASK=mask(1:np_local)  )
+ s_gamma_local=0.0
+ do ip=1,np_local
+        if(mask(ip)) then
+               wgh=spec(1)%part(ip,7)
+               s_gamma_local  = s_gamma_local+ (sqrt(1.0 + spec(1)%part(ip,4)**2 + &
+                                             spec(1)%part(ip,5)**2 + &
+                                             spec(1)%part(ip,6)**2 )-mu_gamma(1))**2
+         endif
+ enddo
  !---
  call allreduce_dpreal(0,s_gamma_local,s_gamma,1)
+ s_gamma  = sqrt(s_gamma / weights)
  !---
- s_gamma  = s_gamma * np_inv
- if (mu_gamma(1) > 0. .or. mu_gamma(1) < 0.) s_gamma  = s_gamma / mu_gamma(1)**2
- if (s_gamma(1) > 1.) s_gamma  = sqrt(s_gamma-1.)
 
  !--- emittance calculation ---!
- corr_x_px_local = sum(  (spec(1)%part(1:np_local,1)-mu_x(1)) &
-  * (spec(1)%part(1:np_local,4)-mu_px(1)), MASK=mask(1:np_local)  )
- corr_y_py_local = sum(  (spec(1)%part(1:np_local,2)-mu_y(1)) &
-  * (spec(1)%part(1:np_local,5)-mu_py(1)), MASK=mask(1:np_local)  )
- corr_z_pz_local = sum(  (spec(1)%part(1:np_local,3)-mu_z(1)) &
-  * (spec(1)%part(1:np_local,6)-mu_pz(1)), MASK=mask(1:np_local)  )
+ corr_x_px_local=0.0
+ corr_y_py_local=0.0
+ corr_z_pz_local=0.0
+ do ip=1,np_local
+        if(mask(ip)) then
+               wgh=spec(1)%part(ip,7)
+ corr_x_px_local = corr_x_px_local+ (spec(1)%part(ipl,1)-mu_x(1)) &
+  * (spec(1)%part(ip,4)-mu_px(1)) * charge(1)
+ corr_y_py_local =corr_y_py_local+ (spec(1)%part(ip,2)-mu_y(1)) &
+  * (spec(1)%part(ip,5)-mu_py(1)) * charge(1)
+ corr_z_pz_local = corr_z_pz_local+(spec(1)%part(ip,3)-mu_z(1)) &
+  * (spec(1)%part(ip,6)-mu_pz(1)) * charge(1)
+        endif
+enddo
  !---
  call allreduce_dpreal(0,corr_x_px_local,corr_x_px,1)
  call allreduce_dpreal(0,corr_y_py_local,corr_y_py,1)
  call allreduce_dpreal(0,corr_z_pz_local,corr_z_pz,1)
  !---
- corr_x_px  = corr_x_px * np_inv
- corr_y_py  = corr_y_py * np_inv
- corr_z_pz  = corr_z_pz * np_inv
+ corr_x_px  = corr_x_px / weights
+ corr_y_py  = corr_y_py / weights
+ corr_z_pz  = corr_z_pz / weights
  !---
  emittance_y = sqrt( s_y(1)**2 *s_py(1)**2 - corr_y_py(1)**2 )
  emittance_z = sqrt( s_z(1)**2 *s_pz(1)**2 - corr_z_pz(1)**2 )

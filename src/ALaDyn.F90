@@ -144,7 +144,7 @@
  dt_loc=dt
  t_ind=0
  if(Ionization)then
-  eb_max=0.8   !max beam field in atomic unit 514GV/m
+  eb_max=1.1*eb_max !0.8   !max beam field in atomic unit 514GV/m
   do ic=2,nsp_ionz
    call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,eb_max,dt)
   end do
