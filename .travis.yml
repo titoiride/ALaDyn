@@ -31,9 +31,9 @@ before_install:
 
 install:
   # OSX Setup
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CMAKE_Fortran_COMPILER=/usr/local/bin/gfortran                                     ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CMAKE_C_COMPILER=/usr/local/bin/gcc                                                ;fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CMAKE_CXX_COMPILER=/usr/local/bin/g++                                              ;fi 
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CMAKE_Fortran_COMPILER=/usr/local/bin/gfortran-7                                   ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CMAKE_C_COMPILER=/usr/local/bin/gcc-7                                              ;fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CMAKE_CXX_COMPILER=/usr/local/bin/g++-7                                            ;fi 
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CMAKE_LINKER=clang++                                                               ;fi 
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export FC=${CMAKE_Fortran_COMPILER}                                                       ;fi
   - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then export CC=${CMAKE_C_COMPILER}                                                             ;fi
