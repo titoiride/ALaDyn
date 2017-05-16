@@ -82,6 +82,7 @@ add_executable (ALaDyn
 target_link_libraries(ALaDyn 
 	cpp_folder_tree 
 	find_last_addr 
+	enable_gdb_attach 
 	${MPI_Fortran_LIBRARIES} 
 	${MPI_LIBRARIES} 
 	${FFTW_LIBRARIES} 
@@ -100,3 +101,7 @@ set_property(TARGET ${cpp_folder_tree} PROPERTY LINKER_LANGUAGE CXX)
 add_library(find_last_addr STATIC src/find_last_addr.cpp)
 set_target_properties(find_last_addr PROPERTIES HAS_CXX TRUE)
 set_property(TARGET ${find_last_addr} PROPERTY LINKER_LANGUAGE CXX)
+
+add_library(enable_gdb_attach STATIC src/enable_gdb_attach.cpp)
+set_target_properties(enable_gdb_attach PROPERTIES HAS_CXX TRUE)
+set_property(TARGET ${enable_gdb_attach} PROPERTY LINKER_LANGUAGE CXX)
