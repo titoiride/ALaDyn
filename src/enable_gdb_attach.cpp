@@ -32,10 +32,10 @@ along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.
 extern "C" {
 
   void gdbattach_() {
-    int waitloopindex = 0;
+    volatile int wli = 0;
     printf("PID %d ready for attach\n", _getpid());
     fflush(stdout);
-    while (waitloopindex == 0)
+    while (wli == 0)
         sleep(5);
     return;
   }
