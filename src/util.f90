@@ -807,22 +807,20 @@
 
  !---*** BIGAUSSIAN bunch, same number of particle per cell :: different weights ***---!
  subroutine generate_bunch_bigaussian_weighted( &
-  n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,cut,dg,bunch,weight,dx,dy,dz,alpha)
- integer,intent(in) :: n1,n2
+  n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,cut,dg,bunch,weight,dx,dy,dz,alpha,ppcb)
+ integer,intent(in) :: n1,n2,ppcb
  real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,cut,dg,weight,alpha
  real(dp),intent(in) :: x_cm,y_cm,z_cm,dx,dy,dz
  real(dp),intent(inout) :: bunch(:,:)
- integer :: i,j,np,effecitve_cell_number,npart,ppcb,idx,ix,iy,iz
+ integer :: i,j,np,effecitve_cell_number,npart,idx,ix,iy,iz
  real(dp) :: sigs(6),rnumber(n2-n1+1)
  real(dp) :: v1,rnd,a,xm,pxm,bch,x,y,z
- real(sp) :: ch(2)
+ real(sp) :: ch(2),sigma_cut
  equivalence(bch,ch)
  real(dp), allocatable :: ppcb_positions(:,:)
 
  bch=weight
-
-   effecitve_cell_number=bunch_volume_incellnumber(1,s_x,s_y,s_z,dx,dy,dz)
-   ppcb=max((n2-n1+1)/effecitve_cell_number,1)
+ sigma_cut=3.0
 
    allocate(ppcb_positions(ppcb,3))
    do npart=1,ppcb
@@ -832,10 +830,10 @@
     enddo
 
     idx=n1
-     do ix=-int(4.*s_x/dx),int(4.*s_x/dx)
-       do iy=-int(4.*s_y/dy),int(4.*s_y/dy)
-         do iz=-int(4.*s_z/dz),int(4.*s_z/dz)
-           if( (ix*dx/4./s_x)**2+(iy*dy/4./s_y)**2+(iz*dz/4./s_z)**2<1.) then
+     do ix=-int(sigma_cut*s_x/dx),int(sigma_cut*s_x/dx)
+       do iy=-int(sigma_cut*s_y/dy),int(sigma_cut*s_y/dy)
+         do iz=-int(sigma_cut*s_z/dz),int(sigma_cut*s_z/dz)
+           if( (ix*dx/sigma_cut/s_x)**2+(iy*dy/sigma_cut/s_y)**2+(iz*dz/sigma_cut/s_z)**2<1.) then
              do npart=1,ppcb
                x=ppcb_positions(npart,1)+(ix*dx)+x_cm
                y=ppcb_positions(npart,2)+(iy*dy)+y_cm
@@ -891,22 +889,20 @@ end subroutine generate_bunch_bigaussian_equal
 
  !---*** TRIANGULAR-UNIFORM_R bunch, same number of particle per cell :: different weights ***---!
  subroutine generate_bunch_triangularZ_uniformR_weighted(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-  gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight,dx,dy,dz)
- integer,intent(in)   :: n1,n2
+  gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight,dx,dy,dz,ppcb)
+ integer,intent(in)   :: n1,n2,ppcb
  real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
  real(dp),intent(in)    :: Charge_right,Charge_left,weight
  real(dp),intent(inout)   :: bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
- integer :: i,ppcb,cells,ix,iy,iz,idx,npart,effecitve_cell_number
+ integer :: i,cells,ix,iy,iz,idx,npart,effecitve_cell_number
  real(dp) :: z,y,x,a,intercept,slope,bch
  real(sp) :: ch(2)
  equivalence(bch,ch)
  real(dp), allocatable :: ppcb_positions(:,:)
  bch=weight
 
- effecitve_cell_number=bunch_volume_incellnumber(2,s_x,s_y,s_z,dx,dy,dz)
- ppcb=max((n2-n1+1)/effecitve_cell_number,1)
 
 allocate(ppcb_positions(ppcb,3))
 do npart=1,ppcb
@@ -992,22 +988,20 @@ idx=n1
  !--- *** triangular in Z and normal-gaussian disttributed in the transverse directions *** ---!
  !--- *** option with different WEIGHTS *** ---!
  subroutine generate_bunch_triangularZ_normalR_weighted(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-  gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight,dx,dy,dz)
- integer,intent(in)   :: n1,n2
+  gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight,dx,dy,dz,ppcb)
+ integer,intent(in)   :: n1,n2,ppcb
  real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
  real(dp),intent(in)    :: Charge_right,Charge_left,weight
  real(dp),intent(inout)   :: bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
- integer :: i,ix,iy,iz,effecitve_cell_number,idx,ppcb,npart
- real(dp) :: x,a,intercept,slope,y,z,bch
+ integer :: i,ix,iy,iz,effecitve_cell_number,idx,npart
+ real(dp) :: x,a,intercept,slope,y,z,bch,sigma_cut
  real(sp) :: ch(2)
  equivalence(bch,ch)
  real(dp), allocatable :: ppcb_positions(:,:)
  bch=weight
-
- effecitve_cell_number=bunch_volume_incellnumber(3,s_x,s_y,s_z,dx,dy,dz)
- ppcb=max((n2-n1+1)/effecitve_cell_number,1)
+ sigma_cut=3.0
 
 allocate(ppcb_positions(ppcb,3))
 do npart=1,ppcb
@@ -1018,9 +1012,9 @@ do npart=1,ppcb
 
  idx=n1
   do ix=1,int(s_x/dx)
-    do iy=-int(4.*s_y/dy),int(4.*s_y/dy)
-      do iz=-int(4.*s_z/dz),int(4.*s_z/dz)
-        if( (iy*dy)**2+(iz*dz)**2<(4.*s_y)**2 ) then
+    do iy=-int(sigma_cut*s_y/dy),int(sigma_cut*s_y/dy)
+      do iz=-int(sigma_cut*s_z/dz),int(sigma_cut*s_z/dz)
+        if( (iy*dy)**2+(iz*dz)**2<(sigma_cut*s_y)**2 ) then
           do npart=1,ppcb
             x=ppcb_positions(npart,1)+(ix-1)*dx+(x_cm-s_x)
             y=ppcb_positions(npart,2)+(iy*dy)+y_cm
