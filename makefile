@@ -59,7 +59,7 @@ MODULES     = $(addsuffix .mod, $(addprefix $(OBJ_FOLDER)/, $(basename $(FILES))
 EXECUTABLE  = $(addprefix $(EXE_FOLDER)/, $(EXE))
 
 
-all: dirtree $(OBJECTS) $(MODULES)
+all: dirtree $(OBJECTS)
 	$(FC) $(OPTFC) -L$(FFTW_LIB) -L$(BOOST_LIB) -L$(OTHER_LIB) $(OBJECTS) -o $(EXECUTABLE) $(OTHER_LINKS) $(STDCPP_LINK) $(FFTW) $(BOOST_FS) $(BOOST_S) $(MATH_LIB) $(REDIRECT)
 
 dirtree:
@@ -273,18 +273,12 @@ $(OBJ_FOLDER)/code_util.mod: $(SRC_FOLDER)/code_util.f90 $(OBJ_FOLDER)/code_util
 
 $(OBJ_FOLDER)/cpp_folder_tree.o: $(SRC_FOLDER)/cpp_folder_tree.cpp 
 	$(CC) $(OPTCC) -I$(BOOST_INC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/cpp_folder_tree.mod: $(SRC_FOLDER)/cpp_folder_tree.cpp $(OBJ_FOLDER)/cpp_folder_tree.o
-	@true
 
 $(OBJ_FOLDER)/find_last_addr.o: $(SRC_FOLDER)/find_last_addr.cpp
 	$(CC) $(OPTCC) -I$(BOOST_INC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/find_last_addr.mod: $(SRC_FOLDER)/find_last_addr.cpp $(OBJ_FOLDER)/find_last_addr.o
-	@true
 
 $(OBJ_FOLDER)/enable_gdb_attach.o: $(SRC_FOLDER)/enable_gdb_attach.cpp
 	$(CC) $(OPTCC) -I$(BOOST_INC) -c -o $@ $< $(REDIRECT)
-$(OBJ_FOLDER)/enable_gdb_attach.mod: $(SRC_FOLDER)/enable_gdb_attach.cpp $(OBJ_FOLDER)/enable_gdb_attach.o
-	@true
 
 $(OBJ_FOLDER)/system_utilities.o: $(SRC_FOLDER)/system_utilities.f90 $(OBJ_FOLDER)/mpi_var.mod
 	$(FC) $(OPTFC) $(MODULE_REDIRECT) -c -o $@ $< $(REDIRECT)
