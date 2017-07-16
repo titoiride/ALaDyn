@@ -29,7 +29,9 @@
  use fft_lib
  implicit none
 #else
+#if !defined (_CRESCO)
 #define ENABLE_MPI_LONG_INT
+#endif
  use fft_lib
  implicit none
  include 'mpif.h'
