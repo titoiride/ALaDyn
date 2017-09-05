@@ -20,11 +20,6 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE)
 endif()
 
-set (CMAKE_C_FLAGS_RELEASE "-O3")
-set (CMAKE_CXX_FLAGS_RELEASE "-O3")
-set (CMAKE_C_FLAGS_DEBUG "-O0 -g")
-set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if (Fortran_COMPILER_NAME MATCHES "gfortran*")
   set (CMAKE_Fortran_FLAGS_RELEASE "-fdefault-real-8 -funroll-all-loops -O3")
@@ -32,6 +27,7 @@ if (Fortran_COMPILER_NAME MATCHES "gfortran*")
 elseif (Fortran_COMPILER_NAME MATCHES "ifort*")
   set (CMAKE_Fortran_FLAGS_RELEASE "-real-size 64 -axcore-avx-i,SSE4.2 -O3")
   set (CMAKE_Fortran_FLAGS_DEBUG   "-real-size 64 -check all -fpe0 -warn -traceback -debug extended -O0 -g")
+  set (CMAKE_Fortran_LINK_FLAGS "${CMAKE_Fortran_LINK_FLAGS} -lstdc++")
 else ()
   message ("CMAKE_Fortran_COMPILER found but unsupported")
   message ("Let's try using it...")
@@ -42,7 +38,7 @@ endif ()
 set(CMAKE_CXX_COMPILE_FLAGS "${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS}")
 set(CMAKE_Fortran_COMPILE_FLAGS "${CMAKE_Fortran_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
-set(CMAKE_Fortran_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
+set(CMAKE_Fortran_LINK_FLAGS "${CMAKE_Fortran_LINK_FLAGS} ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
 
 include_directories(${OTHER_INCLUDE_DIR} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${FFTW_INCLUDES} ${MKL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 link_directories(${OTHER_LINK_DIR})
@@ -91,6 +87,7 @@ target_link_libraries(ALaDyn
 	${Boost_LIBRARIES}
 ) 
 
+#set_target_properties(ALaDyn PROPERTIES HAS_Fortran TRUE LINKER_LANGUAGE CXX)
 #set_target_properties(ALaDyn PROPERTIES HAS_CXX TRUE LINKER_LANGUAGE Fortran)
 set_target_properties(ALaDyn PROPERTIES LINKER_LANGUAGE Fortran)
 
