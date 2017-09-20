@@ -171,6 +171,20 @@ marconi: FFTW_LIB = /cineca/prod/opt/compilers/intel/pe-xe-2016/binary/mkl/lib/i
 marconi: FFTW_INC = /cineca/prod/opt/compilers/intel/pe-xe-2016/binary/mkl/include/fftw
 marconi: all
 
+marconi-knl: FC = mpiifort
+marconi-knl: CC = mpiicpc
+marconi-knl: FFTW =
+marconi-knl: MATH_LIB = -limf
+marconi-knl: OTHER_LINKS = -mkl
+marconi-knl: MODULE_REDIRECT = -I$(OBJ_FOLDER) -module $(OBJ_FOLDER)
+marconi-knl: OPTFC = -real-size 64 -O3 -axMIC-AVX512
+marconi-knl: OPTCC +=  -axMIC-AVX512
+marconi-knl: BOOST_LIB = /cineca/prod/opt/libraries/boost/1.61.0/intelmpi--2017--binary/lib
+marconi-knl: BOOST_INC = /cineca/prod/opt/libraries/boost/1.61.0/intelmpi--2017--binary/include
+marconi-knl: FFTW_LIB = /cineca/prod/opt/compilers/intel/pe-xe-2016/binary/mkl/lib/intel64_lin
+marconi-knl: FFTW_INC = /cineca/prod/opt/compilers/intel/pe-xe-2016/binary/mkl/include/fftw
+marconi-knl: all
+
 marconi_gnu: BOOST_LIB = /cineca/prod/opt/libraries/boost/1.61.0/gnu--6.1.0/lib
 marconi_gnu: BOOST_INC = /cineca/prod/opt/libraries/boost/1.61.0/gnu--6.1.0/include
 marconi_gnu: FFTW_LIB = /cineca/prod/opt/libraries/fftw/3.3.4/openmpi--1-10.3--gnu--6.1.0/lib
