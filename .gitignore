@@ -33,18 +33,19 @@
 *.app
 .DS_Store
 
-make.*
-cmake.*
-!scripts/make.*
-!scripts/cmake.*
-
 opt_report.txt
 *.optrpt
 
 [Bb]uild*/
+!scripts/build/
 [Bb]in/
 .vs/
 .vscode/
+
+cmake.*
+make.*
+!/scripts/build/cmake.*
+!/scripts/build/make.*
 
 .project
 *.nml
