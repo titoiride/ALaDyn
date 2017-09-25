@@ -1,1 +1,1 @@
-mkdir build_gcc ; cd build_gcc ; cmake .. -DCMAKE_Fortran_COMPILER=/usr/local/Cellar/gcc/6.3.0_1/bin/gfortran-6 -DCMAKE_C_COMPILER=/usr/local/Cellar/gcc/6.3.0_1/bin/gcc-6 -DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc/6.3.0_1/bin/g++-6 ; cmake --build . --target install ; cd ..
+mkdir build_gcc ; cd build_gcc ; cmake .. -DCMAKE_Fortran_COMPILER=/usr/local/bin/gfortran-7 -DCMAKE_C_COMPILER=/usr/local/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/local/bin/g++-7 ; cmake --build . --target install ; cd ..
