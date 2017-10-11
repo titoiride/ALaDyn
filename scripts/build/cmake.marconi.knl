@@ -7,5 +7,5 @@ module load boost
 module load mkl
 module load cmake
 
-mkdir -p build_knl ; cd build_knl ; cmake .. -DMARCONI_KNL:BOOL=TRUE -DCMAKE_LINKER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/icpc -DOTHER_INCLUDE_DIR=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/mkl/include/fftw/ -DBoost_NO_BOOST_CMAKE=ON -DCMAKE_C_COMPILER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/icc -DCMAKE_CXX_COMPILER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/icpc -DCMAKE_Fortran_COMPILER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/ifort ; cmake --build . --target install ; cd ..
+mkdir -p build_knl ; cd build_knl ; cmake .. -DINTELROOT=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary -DMARCONI_KNL:BOOL=TRUE -DCMAKE_LINKER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/icpc -DOTHER_INCLUDE_DIR=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/mkl/include/fftw/ -DBoost_NO_BOOST_CMAKE=ON -DCMAKE_C_COMPILER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/icc -DCMAKE_CXX_COMPILER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/icpc -DCMAKE_Fortran_COMPILER=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/ifort ; cmake --build . --target install ; cd ..
 
