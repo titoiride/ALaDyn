@@ -102,10 +102,19 @@ target_link_libraries(ALaDyn
 	enable_gdb_attach 
 	${MPI_Fortran_LIBRARIES} 
 	${MPI_LIBRARIES} 
-	${FFTW_LIBRARIES} 
-	${MKL_LIBRARIES} 
 	${Boost_LIBRARIES}
 ) 
+
+if(MKL_FOUND)
+target_link_libraries(ALaDyn 
+	${MKL_LIBRARIES} 
+) 
+else()
+	target_link_libraries(ALaDyn 
+	${FFTW_LIBRARIES} 
+) 
+endif()
+
 
 #set_target_properties(ALaDyn PROPERTIES HAS_Fortran TRUE LINKER_LANGUAGE CXX)
 #set_target_properties(ALaDyn PROPERTIES HAS_CXX TRUE LINKER_LANGUAGE Fortran)
