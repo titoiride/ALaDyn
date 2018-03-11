@@ -1,5 +1,5 @@
  !*****************************************************************************************************!
- !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !                            Copyright 2008-2018  The ALaDyn Collaboration                            !
  !*****************************************************************************************************!
 
  !*****************************************************************************************************!
@@ -21,29 +21,38 @@
 
  module precision_def
 
-
-#if defined (_MSC_VER)
- use, intrinsic :: iso_fortran_env
-#endif
-
  implicit none
 
-#if defined (_MSC_VER)
- !F2008 version
- integer, parameter :: sp = REAL32
- integer, parameter :: dp = REAL64
- integer, parameter :: dp_int = INT64
- integer, parameter :: qp = REAL128
-#else
- !F2003 version
  integer, parameter :: sp = selected_real_kind(6, 37)
  integer, parameter :: dp = selected_real_kind(15, 307)
  integer, parameter :: dp_int = selected_int_kind(16)
+ integer, parameter :: hp_int = selected_int_kind(4)
  integer, parameter :: qp = selected_real_kind(33, 4931)
-#endif
+
+ character, dimension(8) :: res_string
+ real(dp)                :: wgh_cmp
+ real(sp)                :: wgh
+ integer(hp_int)         :: charge
+ integer(hp_int)         :: part_ind
+
+ EQUIVALENCE(charge,res_string(1)),(part_ind,res_string(3)),(wgh,res_string(5)),(wgh_cmp,res_string(1))
 
  real(dp), parameter :: zero_dp = 0.0
+ real(sp), parameter :: zero_sp = real(0.0,sp)
  real(dp), parameter :: one_dp = 1.0
+ real(sp), parameter :: one_sp = real(1.0,sp)
  integer, parameter :: zero = 0
  integer, parameter :: one = 1
+
+ contains
+
+ function is_zero(value) result(check)
+ real(dp),intent(in) :: value
+ real(dp),parameter  :: small_value = 0.1
+ logical             :: check
+
+ check = (abs(value) < epsilon(small_value))
+
+ end function is_zero
+
  end module precision_def

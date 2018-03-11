@@ -2,6 +2,7 @@
 
 module purge
 
+module load env-knl
 module load intel
 module load intelmpi
 module load boost
@@ -14,6 +15,6 @@ export FC=/cineca/prod/opt/compilers/intel/pe-xe-2017/binary/bin/ifort
 export CLINKER=$CXX
 
 mkdir -p build ; cd build
-cmake .. -DCMAKE_LINKER=$CLINKER -DBoost_NO_BOOST_CMAKE=ON -DCMAKE_Fortran_COMPILER=$FC
+cmake .. -DCMAKE_BUILD_TYPE="Debug" -DMARCONI_KNL:BOOL=TRUE -DCMAKE_LINKER=$CLINKER -DBoost_NO_BOOST_CMAKE=ON -DCMAKE_Fortran_COMPILER=$FC
 cmake --build . --target install
 cd ..

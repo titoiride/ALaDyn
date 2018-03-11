@@ -1,5 +1,5 @@
  !*****************************************************************************************************!
- !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
+ !                            Copyright 2008-2018  The ALaDyn Collaboration                            !
  !*****************************************************************************************************!
 
  !*****************************************************************************************************!
@@ -25,12 +25,15 @@
 
  implicit none
 
- type(species) :: spec(4),bunch(4)
+ type(species) :: spec(4),bunch(5),electron_ionz
  real(dp),allocatable :: ebfp(:,:),ebfb(:,:)
  real(dp),allocatable :: ebfp0(:,:),ebfp1(:,:)
- real(dp),allocatable :: rho_0(:),xpt(:,:),ypt(:,:),zpt(:,:),wghpt(:,:)
+ real(dp),allocatable :: xpt(:,:),ypt(:,:),zpt(:,:),wghpt(:,:)
  real(dp),allocatable :: loc_ypt(:,:),loc_zpt(:,:),loc_wghy(:,:),loc_wghz(:,:)
  real(dp),allocatable :: loc_xpt(:,:),loc_wghx(:,:)
+ real(dp),allocatable :: track_aux(:)
+ real(sp),allocatable :: pdata_tracking(:,:,:)
+
  !=====================
 
  contains

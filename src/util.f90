@@ -1,6 +1,5 @@
  !*****************************************************************************************************!
- !             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni       !
- !                                                Alberto Marocchino                                   !
+ !                            Copyright 2008-2018  The ALaDyn Collaboration                            !
  !*****************************************************************************************************!
 
  !*****************************************************************************************************!
@@ -58,7 +57,7 @@
 
  integer,parameter :: im1=2147483563,im2=2147483399,ia1=40014, &
   ia2=40692,iq1=53668,iq2=52774,ir1=12211,&
-  ir2=3791,ntab=32,imm1=im1-1,ndiv=1+imm1/ntab
+  ir2=3791,ntab=32,imm1=im1-1,ndiv=1+int(imm1/ntab)
  real(dp),parameter :: am=1.0/im1,eps=1.2e-07,rnmx=1.0-eps
  integer :: j,k
  integer,save :: iv(32)=0,iy=0,idum2=123456789
@@ -99,7 +98,7 @@
  call random_seed(size = n)
  allocate(seed(n))
 
- if (L_disable_rng_seed .eqv. .false.) then
+ if (.not. L_disable_rng_seed) then
   un=123
   ! First try if the OS provides a random number generator
   open(unit=un, file="/dev/urandom", access="stream", &
@@ -530,8 +529,8 @@
  end subroutine vsort
 
  !--------------------------
- subroutine bunch_gen(stp,n1,n2,sx,sy,sz,gm,ey,ez,cut,dg,bunch)
- integer,intent(in) :: stp,n1,n2
+ subroutine bunch_gen(ndm,n1,n2,sx,sy,sz,gm,ey,ez,cut,dg,bunch)
+ integer,intent(in) :: ndm,n1,n2
  real(dp),intent(in) :: sx,sy,sz,gm,ey,ez,cut,dg
  real(dp),intent(inout) :: bunch(:,:)
  integer :: i,j,np
@@ -548,8 +547,66 @@
 
  !Distribute (x,y,z,px,py,pz) centered on 0; px=> px+gamma
 
- select case(stp)
- case(1)
+ select case(ndm)
+ case(2)
+  sigs(1)=sx
+  sigs(2)=sy
+  sigs(3)=sqrt(3.0)*0.01*dg*gm  !dpz
+  sigs(4)=ey/sy
+  do i=n1,n2
+   j=2
+   do
+    call random_number(v1)
+    call random_number(v2)
+    v1=2.0*v1-1.0
+    v2=2.0*v2-1.0
+    rnd=v1*v1+v2*v2
+    if(rnd < 1.0)exit
+   end do
+   rnd=sqrt(-2.0*log(rnd)/rnd)
+   bunch(j,i)=v1*rnd
+   bunch(j+2,i)=v2*rnd
+   j=1
+   call gasdev(rnd)
+   bunch(j,i)=rnd
+   j=3
+   do
+    call random_number(rnd)
+    rnd=2.*rnd-1.
+    a=cut*rnd
+    if(a*a < 1.)exit
+   end do
+   bunch(j,i)=a
+  end do
+  do i=n1,n2
+   do j=1,4
+    bunch(j,i)=sigs(j)*bunch(j,i)
+   end do
+  end do
+  bunch(3,n1:n2)=bunch(3,n1:n2)+gm
+  xm=0.0
+  ym=0.0
+  pxm=0.0
+  pym=0.0
+  ! Reset centering
+  do i=n1,n2
+   xm=xm+bunch(1,i)
+   ym=ym+bunch(2,i)
+   pxm=pxm+bunch(3,i)
+   pym=pym+bunch(4,i)
+  enddo
+  np=n2+1-n1
+  xm=xm/real(np,dp)
+  ym=ym/real(np,dp)
+  pxm=pxm/real(np,dp)
+  pym=pym/real(np,dp)
+  do i=n1,n2
+   bunch(1,i)=bunch(1,i)-xm
+   bunch(2,i)=bunch(2,i)-ym
+   bunch(3,i)=bunch(3,i)-(pxm-gm)
+   bunch(4,i)=bunch(4,i)-pym
+  enddo
+ case(3)
   sigs(1)=sx
   sigs(2)=sy
   sigs(3)=sz
@@ -619,50 +676,6 @@
    bunch(4,i)=bunch(4,i)-(pxm-gm)
    bunch(5,i)=bunch(5,i)-pym
    bunch(6,i)=bunch(6,i)-pzm
-  end do
- case(2)
-  sigs(1)=sx
-  sigs(2)=sy
-  sigs(3)=sqrt(3.0)*0.01*dg*gm  !dpz
-  sigs(4)=ey/sy
-  do i=n1,n2
-   do j=2,4,2
-    call random_number(v1)
-    rnd=sqrt(-2.0*log(v1))
-    bunch(j,i)=rnd
-   end do
-   j=1
-   call gasdev(rnd)
-   bunch(j,i)=rnd
-   j=3
-   do
-    call random_number(rnd)
-    rnd=2.*rnd-1.
-    a=cut*rnd
-    if(a*a < 1.)exit
-   end do
-   bunch(j,i)=a
-  end do
-  do i=n1,n2
-   do j=1,4
-    bunch(j,i)=sigs(j)*bunch(j,i)
-   end do
-  end do
-  bunch(3,n1:n2)=bunch(3,n1:n2)+gm
-  xm=0.0
-  pxm=0.0
-
-  ! Reset x-px centering
-  do i=n1,n2
-   xm=xm+bunch(1,i)
-   pxm=pxm+bunch(3,i)
-  enddo
-  np=n2+1-n1
-  xm=xm/real(np,dp)
-  pxm=pxm/real(np,dp)
-  do i=n1,n2
-   bunch(1,i)=bunch(1,i)-xm
-   bunch(3,i)=bunch(3,i)-(pxm-gm)
   end do
  end select
  end subroutine bunch_gen
@@ -758,95 +771,50 @@
  end do
  end subroutine pbunch_gen
 
- subroutine bunch_gen_twissshifting( &
-  n1,n2,sx,xcm,sy,ycm,sz,zcm,gm,ey,ez,dg,bunch,weight,ATwiss,BTwiss)
- integer,intent(in) :: n1,n2
- real(dp),intent(in) :: sx,sy,sz,gm,ey,ez,dg,weight
- real(dp),intent(in) :: xcm,ycm,zcm
- real(dp),intent(in) :: ATwiss,BTwiss
- real(dp),intent(inout) :: bunch(:,:)
- real(dp),allocatable :: bunch_utility(:,:)
- integer :: i
- real(dp) :: rnumber(n2-n1+1)
- real(dp) :: ay11,ay12,az11,az12
-
- allocate(bunch_utility(6,n2-n1+1))
-
- !twiss-matrix
- ay11=sqrt( ey*BTwiss/(sy**2+sy**2*ATwiss**2) )
- az11=sqrt( ez*BTwiss/(sz**2+sz**2*ATwiss**2) )
- ay12=-ay11*ATwiss*sy**2/ey
- az12=-az11*ATwiss*sz**2/ez
-
- call boxmuller_vector(rnumber,n2-n1+1)
- bunch_utility(1,:)=rnumber*sx + xcm
- call boxmuller_vector(rnumber,n2-n1+1)
- bunch_utility(2,:)=rnumber*sy
- call boxmuller_vector(rnumber,n2-n1+1)
- bunch_utility(3,:)=rnumber*sz
- call boxmuller_vector(rnumber,n2-n1+1)
- bunch_utility(4,:)=rnumber * sqrt(3.0)*0.01*dg*gm + gm
- call boxmuller_vector(rnumber,n2-n1+1)
- bunch_utility(5,:)=rnumber*ey/sy
- call boxmuller_vector(rnumber,n2-n1+1)
- bunch_utility(6,:)=rnumber*ez/sz
-
- bunch(7,n1:n2)=weight
-
- !twiss-shifting
- DO i=1,n2-n1+1
-  bunch(1,n1+i-1)=     bunch_utility(1,i)
-  bunch(2,n1+i-1)=ay11*bunch_utility(2,i)+ay12*bunch_utility(5,i) + ycm
-  bunch(3,n1+i-1)=az11*bunch_utility(3,i)+az12*bunch_utility(6,i) + zcm
-  bunch(4,n1+i-1)= bunch_utility(4,i)
-  bunch(5,n1+i-1)= bunch_utility(5,i)/ay11
-  bunch(6,n1+i-1)= bunch_utility(6,i)/az11
- ENDDO
- deallocate(bunch_utility)
- end subroutine bunch_gen_twissshifting
-
  !---*** BIGAUSSIAN bunch, same number of particle per cell :: different weights ***---!
  subroutine generate_bunch_bigaussian_weighted( &
-  n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,cut,dg,bunch,weight,dx,dy,dz,alpha,ppcb)
- integer,intent(in) :: n1,n2,ppcb
- real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,cut,dg,weight,alpha
+  n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,sigma_cut,dg,bunch,dx,dy,dz,alpha,ppcb)
+ integer,intent(in) :: n1,n2,ppcb(3)
+ real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,sigma_cut,dg,alpha
  real(dp),intent(in) :: x_cm,y_cm,z_cm,dx,dy,dz
  real(dp),intent(inout) :: bunch(:,:)
- integer :: i,j,np,effecitve_cell_number,npart,idx,ix,iy,iz
+ integer :: i,j,np,effecitve_cell_number,npart,npart_x,npart_y,npart_z,npart_tot,idx,ix,iy,iz
  real(dp) :: sigs(6),rnumber(n2-n1+1)
- real(dp) :: v1,rnd,a,xm,pxm,bch,x,y,z
- real(sp) :: ch(2),sigma_cut
- equivalence(bch,ch)
+ real(dp) :: v1,rnd,a,xm,pxm,x,y,z
  real(dp), allocatable :: ppcb_positions(:,:)
 
- bch=weight
- sigma_cut=4.0
-
-   allocate(ppcb_positions(ppcb,3))
-   do npart=1,ppcb
-     ppcb_positions(npart,1)=dx/real(ppcb+1,dp)*real(npart,dp)
-     ppcb_positions(npart,2)=dy/2.
-     ppcb_positions(npart,3)=dz/2.
-    enddo
+   allocate(ppcb_positions(PRODUCT(ppcb),3))
+   npart_tot=0
+   do npart_x=1,ppcb(1)
+     do npart_y=1,ppcb(2)
+       do npart_z=1,ppcb(3)
+         npart_tot=npart_tot+1
+         ppcb_positions(npart_tot,1)=dx/real(ppcb(1)+1,dp)*real(npart_x,dp)
+         ppcb_positions(npart_tot,2)=dy/real(ppcb(2)+1,dp)*real(npart_y,dp)
+         ppcb_positions(npart_tot,3)=dz/real(ppcb(3)+1,dp)*real(npart_z,dp)
+       enddo
+     enddo
+   enddo
 
     idx=n1
      do ix=-int(sigma_cut*s_x/dx),int(sigma_cut*s_x/dx)
        do iy=-int(sigma_cut*s_y/dy),int(sigma_cut*s_y/dy)
          do iz=-int(sigma_cut*s_z/dz),int(sigma_cut*s_z/dz)
            if( (ix*dx/sigma_cut/s_x)**2+(iy*dy/sigma_cut/s_y)**2+(iz*dz/sigma_cut/s_z)**2<1.) then
-             do npart=1,ppcb
+             do npart=1,npart_tot
                x=ppcb_positions(npart,1)+(ix*dx)+x_cm
                y=ppcb_positions(npart,2)+(iy*dy)+y_cm
                z=ppcb_positions(npart,3)+(iz*dz)+z_cm
                bunch(1,idx)=x
                bunch(2,idx)=y
                bunch(3,idx)=z
-               ch(1)= 1.0/ppcb
-               ch(1)= ch(1)*alpha
-               ch(1)= ch(1)*exp(-(x-x_cm)**2/2./s_x**2)
-               ch(1)= ch(1)*exp(-(y-y_cm)**2/2./s_y**2)
-               ch(1)= ch(1)*exp(-(z-z_cm)**2/2./s_z**2)
-               bunch(7,idx)=bch
+               wgh = 1.0/PRODUCT(ppcb)
+               wgh = wgh*alpha
+               wgh = wgh*exp(-(x-x_cm)**2/2./s_x**2)
+               wgh = wgh*exp(-(y-y_cm)**2/2./s_y**2)
+               wgh = wgh*exp(-(z-z_cm)**2/2./s_z**2)
+               charge = int(unit_charge(1), hp_int)
+               bunch(7,idx)=wgh_cmp
                idx=idx+1
              enddo
            endif
@@ -865,18 +833,18 @@
 
 !---*** BIGAUSSIAN bunch particle with the SAME WEIGHT ***---!
 subroutine generate_bunch_bigaussian_equal( &
- n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,cut,dg,bunch,weight,dx,dy,dz,alpha)
+ n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,sigma_cut,dg,bunch,dx,dy,dz,alpha)
 integer,intent(in) :: n1,n2
-real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,cut,dg,weight,alpha
+real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,dg,alpha,sigma_cut
 real(dp),intent(in) :: x_cm,y_cm,z_cm,dx,dy,dz
 real(dp),intent(inout) :: bunch(:,:)
 real(dp) :: rnumber(n2-n1+1)
 
-    call boxmuller_vector(rnumber,n2-n1+1)
+    call boxmuller_vector_cut(rnumber,n2-n1+1,sigma_cut)
     bunch(1,n1:n2)=rnumber*s_x + x_cm
-    call boxmuller_vector(rnumber,n2-n1+1)
+    call boxmuller_vector_cut(rnumber,n2-n1+1,sigma_cut)
     bunch(2,n1:n2)=rnumber*s_y + y_cm
-    call boxmuller_vector(rnumber,n2-n1+1)
+    call boxmuller_vector_cut(rnumber,n2-n1+1,sigma_cut)
     bunch(3,n1:n2)=rnumber*s_z + z_cm
     call boxmuller_vector(rnumber,n2-n1+1)
     bunch(4,n1:n2)=rnumber * 0.01*dg*gm + gm
@@ -884,31 +852,34 @@ real(dp) :: rnumber(n2-n1+1)
     bunch(5,n1:n2)=rnumber*eps_y/s_y
     call boxmuller_vector(rnumber,n2-n1+1)
     bunch(6,n1:n2)=rnumber*eps_z/s_z
-    bunch(7,n1:n2)=weight
+    bunch(7,n1:n2)=wgh_cmp
 end subroutine generate_bunch_bigaussian_equal
 
  !---*** TRIANGULAR-UNIFORM_R bunch, same number of particle per cell :: different weights ***---!
  subroutine generate_bunch_triangularZ_uniformR_weighted(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-  gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight,dx,dy,dz,ppcb)
- integer,intent(in)   :: n1,n2,ppcb
- real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz
+  gamma_m,eps_y,eps_z,sigma_cut,dgamma,bunch,Charge_right,Charge_left,dx,dy,dz,ppcb)
+ integer,intent(in)   :: n1,n2,ppcb(3)
+ real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz,sigma_cut
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
- real(dp),intent(in)    :: Charge_right,Charge_left,weight
+ real(dp),intent(in)    :: Charge_right,Charge_left
  real(dp),intent(inout)   :: bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
- integer :: i,cells,ix,iy,iz,idx,npart,effecitve_cell_number
- real(dp) :: z,y,x,a,intercept,slope,bch
- real(sp) :: ch(2)
- equivalence(bch,ch)
+ integer :: i,cells,ix,iy,iz,idx,npart,npart_x,npart_y,npart_z,npart_tot,effecitve_cell_number
+ real(dp) :: z,y,x,a,intercept,slope
  real(dp), allocatable :: ppcb_positions(:,:)
- bch=weight
 
 
-allocate(ppcb_positions(ppcb,3))
-do npart=1,ppcb
-    ppcb_positions(npart,1)=dx/real(ppcb+1,dp)*real(npart,dp)
-    ppcb_positions(npart,2)=dy/2.
-    ppcb_positions(npart,3)=dz/2.
+ allocate(ppcb_positions(PRODUCT(ppcb),3))
+ npart_tot=0
+ do npart_x=1,ppcb(1)
+   do npart_y=1,ppcb(2)
+     do npart_z=1,ppcb(3)
+       npart_tot=npart_tot+1
+       ppcb_positions(npart_tot,1)=dx/real(ppcb(1)+1,dp)*real(npart_x,dp)
+       ppcb_positions(npart_tot,2)=dy/real(ppcb(2)+1,dp)*real(npart_y,dp)
+       ppcb_positions(npart_tot,3)=dz/real(ppcb(3)+1,dp)*real(npart_z,dp)
+     enddo
+   enddo
  enddo
 
 idx=n1
@@ -916,15 +887,16 @@ idx=n1
    do iy=-int(s_y/dy),int(s_y/dy)
      do iz=-int(s_z/dz),int(s_z/dz)
        if( (iy*dy)**2+(iz*dz)**2<s_y**2 ) then
-         do npart=1,ppcb
+         do npart=1,npart_tot
            x=ppcb_positions(npart,1)+(ix-1)*dx+(x_cm-s_x)
            y=ppcb_positions(npart,2)+(iy*dy)+y_cm
            z=ppcb_positions(npart,3)+(iz*dz)+z_cm
            bunch(1,idx)=x
            bunch(2,idx)=y
            bunch(3,idx)=z
-           ch(1)=1./ppcb*(Charge_left+(Charge_right-Charge_left)/s_x*(x+s_x-x_cm))
-           bunch(7,idx)=bch
+           wgh=one_sp/real(PRODUCT(ppcb)*(Charge_left+(Charge_right-Charge_left)/s_x*(x+s_x-x_cm)),sp)
+           charge = int(unit_charge(1), hp_int)
+           bunch(7,idx)=wgh_cmp
            idx=idx+1
          enddo
        endif
@@ -944,11 +916,11 @@ idx=n1
  !---*** TRIANGULAR-UNIFORM_R bunch, all particle SAME WEIGHT ***---!
  subroutine generate_bunch_triangularZ_uniformR_equal( &
    n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-   gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight)
+   gamma_m,eps_y,eps_z,sigma_cut,dgamma,bunch,Charge_right,Charge_left)
  integer,intent(in)   :: n1,n2
- real(dp),intent(in)    :: x_cm,y_cm,z_cm
+ real(dp),intent(in)    :: x_cm,y_cm,z_cm,sigma_cut
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
- real(dp),intent(in)    :: Charge_right,Charge_left,weight
+ real(dp),intent(in)    :: Charge_right,Charge_left
  real(dp),intent(inout)   :: bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
  integer :: i
@@ -964,11 +936,11 @@ idx=n1
       call random_number(a)
     enddo
 
-    y=random_number_range(-1.0,1.0)
-    z=random_number_range(-1.0,1.0)
+    y=random_number_range(-one_dp,one_dp)
+    z=random_number_range(-one_dp,one_dp)
     Do while(sqrt(y**2+z**2)>1.0)
-      y=random_number_range(-1.0,1.0)
-      z=random_number_range(-1.0,1.0)
+      y=random_number_range(-one_dp,one_dp)
+      z=random_number_range(-one_dp,one_dp)
     enddo
     bunch(1,i)=x*s_x+x_cm-s_x
     bunch(2,i)=y*s_y+y_cm
@@ -981,33 +953,35 @@ idx=n1
    bunch(5,n1:n2)=rnumber*2.*eps_y/s_y
    call boxmuller_vector(rnumber,n2-n1+1)
    bunch(6,n1:n2)=rnumber*2.*eps_z/s_z
-   bunch(7,n1:n2)=weight
+   bunch(7,n1:n2)=wgh_cmp
  end subroutine generate_bunch_triangularZ_uniformR_equal
 
 
  !--- *** triangular in Z and normal-gaussian disttributed in the transverse directions *** ---!
  !--- *** option with different WEIGHTS *** ---!
  subroutine generate_bunch_triangularZ_normalR_weighted(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-  gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight,dx,dy,dz,ppcb)
- integer,intent(in)   :: n1,n2,ppcb
- real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz
+  gamma_m,eps_y,eps_z,sigma_cut,dgamma,bunch,Charge_right,Charge_left,dx,dy,dz,ppcb)
+ integer,intent(in)   :: n1,n2,ppcb(3)
+ real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz,sigma_cut
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
- real(dp),intent(in)    :: Charge_right,Charge_left,weight
+ real(dp),intent(in)    :: Charge_right,Charge_left
  real(dp),intent(inout)   :: bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
- integer :: i,ix,iy,iz,effecitve_cell_number,idx,npart
- real(dp) :: x,a,intercept,slope,y,z,bch,sigma_cut
- real(sp) :: ch(2)
- equivalence(bch,ch)
+ integer :: i,ix,iy,iz,effecitve_cell_number,idx,npart,npart_x,npart_y,npart_z,npart_tot
+ real(dp) :: x,a,intercept,slope,y,z
  real(dp), allocatable :: ppcb_positions(:,:)
- bch=weight
- sigma_cut=4.0
 
-allocate(ppcb_positions(ppcb,3))
-do npart=1,ppcb
-  ppcb_positions(npart,1)=dx/real(ppcb+1,dp)*real(npart,dp)
-  ppcb_positions(npart,2)=dy/2.
-  ppcb_positions(npart,3)=dz/2.
+ allocate(ppcb_positions(PRODUCT(ppcb),3))
+ npart_tot=0
+ do npart_x=1,ppcb(1)
+   do npart_y=1,ppcb(2)
+     do npart_z=1,ppcb(3)
+       npart_tot=npart_tot+1
+       ppcb_positions(npart_tot,1)=dx/real(ppcb(1)+1,dp)*real(npart_x,dp)
+       ppcb_positions(npart_tot,2)=dy/real(ppcb(2)+1,dp)*real(npart_y,dp)
+       ppcb_positions(npart_tot,3)=dz/real(ppcb(3)+1,dp)*real(npart_z,dp)
+     enddo
+   enddo
  enddo
 
  idx=n1
@@ -1015,17 +989,18 @@ do npart=1,ppcb
     do iy=-int(sigma_cut*s_y/dy),int(sigma_cut*s_y/dy)
       do iz=-int(sigma_cut*s_z/dz),int(sigma_cut*s_z/dz)
         if( (iy*dy)**2+(iz*dz)**2<(sigma_cut*s_y)**2 ) then
-          do npart=1,ppcb
+          do npart=1,npart_tot
             x=ppcb_positions(npart,1)+(ix-1)*dx+(x_cm-s_x)
             y=ppcb_positions(npart,2)+(iy*dy)+y_cm
             z=ppcb_positions(npart,3)+(iz*dz)+z_cm
             bunch(1,idx)=x
             bunch(2,idx)=y
             bunch(3,idx)=z
-            ch(1)= 1./ppcb
-            ch(1)= ch(1)*(Charge_left+(Charge_right-Charge_left)/s_x*(x+s_x-x_cm))
-            ch(1)= ch(1)*exp(-((y-y_cm)**2+(z-z_cm)**2)/2./s_y**2)
-            bunch(7,idx)=bch
+            wgh = one_sp/PRODUCT(ppcb)
+            wgh = wgh*real((Charge_left+(Charge_right-Charge_left)/s_x*(x+s_x-x_cm)),sp)
+            wgh = wgh*real(exp(-((y-y_cm)**2+(z-z_cm)**2)/2./s_y**2),sp)
+            charge = int(unit_charge(1), hp_int)
+            bunch(7,idx)=wgh_cmp
             idx=idx+1
           enddo
         endif
@@ -1045,11 +1020,11 @@ do npart=1,ppcb
 !--- *** triangular in Z and normal-gaussian disttributed in the transverse directions *** ---!
 !--- *** particle have the SAME WEIGHTS *** ---!
 subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-    gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,weight)
+    gamma_m,eps_y,eps_z,sigma_cut,dgamma,bunch,Charge_right,Charge_left)
   integer,intent(in)   :: n1,n2
-  real(dp),intent(in)  :: x_cm,y_cm,z_cm
+  real(dp),intent(in)  :: x_cm,y_cm,z_cm,sigma_cut
   real(dp),intent(in)  :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
-  real(dp),intent(in)  :: Charge_right,Charge_left,weight
+  real(dp),intent(in)  :: Charge_right,Charge_left
   real(dp),intent(inout) :: bunch(:,:)
   real(dp) :: rnumber(n2-n1+1)
   integer :: i
@@ -1067,9 +1042,9 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
     bunch(1,i)=x*s_x+x_cm-s_x
   enddo
 
-  call boxmuller_vector(rnumber,n2-n1+1)
+  call boxmuller_vector_cut(rnumber,n2-n1+1,sigma_cut)
   bunch(2,n1:n2)=rnumber*s_y + y_cm
-  call boxmuller_vector(rnumber,n2-n1+1)
+  call boxmuller_vector_cut(rnumber,n2-n1+1,sigma_cut)
   bunch(3,n1:n2)=rnumber*s_z + z_cm
   call boxmuller_vector(rnumber,n2-n1+1)
   bunch(4,n1:n2)=rnumber*0.01*dgamma*gamma_m + gamma_m
@@ -1077,7 +1052,7 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
   bunch(5,n1:n2)=rnumber*eps_y/s_y
   call boxmuller_vector(rnumber,n2-n1+1)
   bunch(6,n1:n2)=rnumber*eps_z/s_z
-  bunch(7,n1:n2)=weight
+  bunch(7,n1:n2)=wgh_cmp
  end subroutine generate_bunch_triangularZ_normalR_equal
 
 
@@ -1106,6 +1081,7 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
  integer, intent(in) :: len
  real(dp),intent(inout) :: randnormal(len)
  real(dp) :: x,y,s,r
+ real(dp) :: mu,std
  integer :: i
 
  do i=1,len
@@ -1120,8 +1096,36 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
   r=sqrt(-2.*log(s)/s)
   randnormal(i)=x*r
  enddo
- randnormal = randnormal-sum(randnormal)/(1.*max(1,size(randnormal)))
+ !--- convergence to N(0,1) ---!
+ mu=sum(randnormal)/(1.*len-1.)
+ std=sqrt( sum((randnormal-mu)**2) / (1.*len-1.) )
+ randnormal = (randnormal-mu)/std
  end subroutine boxmuller_vector
+
+ !Box-Muller with cut in the distribution
+ subroutine boxmuller_vector_cut(randnormal,len,cut)
+ integer, intent(in) :: len
+ real(8), intent(inout) :: randnormal(len)
+ real(8), intent(in) :: cut
+ real(8) :: x,y,s,r
+ integer :: i
+
+ do i=1,len
+112 continue !if the particle is cut :: recalculate particle position
+  s=10.
+  do while( s >= 1.)
+   call random_number(x)
+   call random_number(y)
+   x = 2.* x -1.
+   y = 2.* y -1.
+   s = x**2+y**2
+  end do
+  r=sqrt(-2.*log(s)/s)
+  randnormal(i)=x*r
+  if(abs(randnormal(i))>cut) goto 112
+ enddo
+ randnormal = randnormal-sum(randnormal)/(1.*max(1,size(randnormal)))
+ end subroutine boxmuller_vector_cut
 
 
  !--- function: uniform distribution between 'min' and 'max' ---!
@@ -1132,29 +1136,9 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
  random_number_range = (maximum-minimum)*x+minimum
  end function random_number_range
 
- !--- shape for triangular bunch shapes ---!
- real(dp) function shape(x,Charge_left,Charge_Right)
- real(dp), intent(in) :: x,Charge_left,Charge_right
- real(dp) :: intercept, slope, edge, sigma
- edge=0.0
- sigma=edge/3.0
-
- if( x>edge .and. x<1.0-edge) then
-   intercept=Charge_left
-   slope=(Charge_right-Charge_left)/(1.0-2.0*edge)
-   shape = intercept+slope*(x-edge)
- endif
- if( x<edge ) then
-   shape = Charge_left*exp(-(x-edge)**2/(2.0*sigma)**2)
- endif
- if( x>1.0-edge ) then
-   shape = Charge_right*exp(-(x-1.0+edge)**2/(2.0*sigma)**2)
- endif
-end function shape
 
 
-
- !--- MOVE IT TO A NEW SUBROUTINE DESIGNE TO PARTICLE HANDLING?
+ !--- MOVE IT TO A NEW SUBROUTINE DESIGNED TO PARTICLE HANDLING?
  !--- I am placing this subroutine here for the moment
  !--- it is the starting point to initialise particle
  !--- in a random way
@@ -1193,14 +1177,14 @@ end function shape
 
 
  !--- function: identify the number of cell volume occupied by a bunch ---!
- integer(dp_int) function bunch_volume_incellnumber(bunch_shape,s_x,s_y,s_z,dx,dy,dz)
+ integer(dp_int) function bunch_volume_incellnumber(bunch_shape,s_x,s_y,s_z,dx,dy,dz,sigma_cut)
    integer, intent(in) :: bunch_shape
-   real(dp),intent(in) :: s_x,s_y,s_z,dx,dy,dz
-   real(dp) :: sigma_cut
+   real(dp),intent(in) :: s_x,s_y,s_z,dx,dy,dz,sigma_cut
+   !real(dp) :: sigma_cut
    integer :: ix,iy,iz
 
    bunch_volume_incellnumber=0
-   sigma_cut=4.0
+   !sigma_cut=4.0
 
    if(bunch_shape==1) then
      do ix=-int(sigma_cut*s_x/dx),int(sigma_cut*s_x/dx)
@@ -1278,7 +1262,6 @@ DO i=n1,n2
   generated_bunch(6,i)= generated_bunch(6,i)/az11
 ENDDO
 end subroutine bunch_twissrotation
-
 
  !=====================
  end module util

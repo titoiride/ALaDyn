@@ -41,13 +41,15 @@ opt_report.txt
 [Bb]in/
 .vs/
 .vscode/
+*.Rapp.history
+log.*
 
 cmake.*
 make.*
 !/scripts/build/cmake.*
 !/scripts/build/make.*
+build.*
 
 .project
 *.nml
 index.md
-
