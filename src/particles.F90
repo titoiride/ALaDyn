@@ -2651,6 +2651,210 @@
  !================================
  end subroutine set_part3d_hcell_acc
  !=================================
+ subroutine set_env_grad_interp(av,sp_loc,pt,np,ndm,xmn,ymn,zmn)
+
+ type(species),intent(in) :: sp_loc
+ real(dp),intent(in) :: av(:,:,:,:)
+ real(dp),intent(inout) :: pt(:,:)
+ integer,intent(in) :: np,ndm
+ real(dp),intent(in) :: xmn,ymn,zmn
+
+ real(dp) :: xx,sx,sx2,dvol,dvol1,dxe,dye,dze
+ real(dp) :: axh(0:2),ayh(0:2),xp1(3)
+ real(dp) :: ax1(0:2),ay1(0:2),azh(0:2),az1(0:2),ap(4)
+ integer :: i,ih,j,jh,i1,j1,i2,j2,k,kh,k1,k2,n
+
+ !===============================================
+ ! enters av(1)=|a|^2 envelope at integer grid nodes
+ ! and av(2:4)=[Grad |a|2/2] at staggered grid points
+ ! exit |a|^2/2 and grad[|a|^2]/2 at the particle positions
+ !=========================
+ ! Particle positions assigned using quadratic splines
+ !  F=|a|^2/2
+ !  ap(1)= [D_x(F)](i+1/2,j,k)
+ !  ap(2)= [D_y(F)](i,j+1/2,k)
+ !  ap(3)= [D_z(F)](i,j,k+1/2)
+ !  ap(4)= [F](i,j,k)
+ !===========================================
+ ax1(0:2)=0.0;ay1(0:2)=0.0
+ az1(0:2)=0.0
+ axh(0:2)=0.0;ayh(0:2)=0.0
+ azh(0:2)=0.0
+
+ select case(ndm)
+ case(2)
+  dxe=dx_inv
+  dye=dy_inv
+  k2=1
+  do n=1,np
+   ap=0.0
+   xp1(1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
+   xp1(2)=dye*(sp_loc%part(n,2)-ymn) !loc y position
+
+   xx=shx+xp1(1)
+   i=int(xx+0.5)
+   sx=xx-real(i,dp)
+   sx2=sx*sx
+   ax1(1)=0.75-sx2
+   ax1(2)=0.5*(0.25+sx2+sx)
+   ax1(0)=1.-ax1(1)-ax1(2)
+
+   ih=int(xx)
+   sx=xx-0.5-real(ih,dp)
+   sx2=sx*sx
+   axh(1)=0.75-sx2
+   axh(2)=0.5*(0.25+sx2+sx)
+   axh(0)=1.-axh(1)-axh(2)
+
+   xx=shy+xp1(2)
+   j=int(xx+0.5)
+   sx=xx-real(j,dp)
+   sx2=sx*sx
+   ay1(1)=0.75-sx2
+   ay1(2)=0.5*(0.25+sx2+sx)
+   ay1(0)=1.-ay1(1)-ay1(2)
+
+   jh=int(xx)
+   sx=xx-0.5-real(jh,dp)
+   sx2=sx*sx
+   ayh(1)=0.75-sx2
+   ayh(2)=0.5*(0.25+sx2+sx)
+   ayh(0)=1.-ayh(1)-ayh(2)
+
+   i=i-1
+   j=j-1
+
+   ih=ih-1
+   jh=jh-1
+   !==========================
+   ap=0.0
+   do j1=0,2
+    j2=j+j1
+    dvol=ay1(j1)
+    do i1=0,2
+     i2=i1+ih
+     dvol1=dvol*axh(i1)
+     ap(1)=ap(1)+dvol1*av(i2,j2,k2,2)
+     i2=i1+i
+     ap(3)=ap(3)+ax1(i1)*dvol*av(i2,j2,k2,1)
+    end do
+   end do
+   do j1=0,2
+    j2=jh+j1
+    dvol=ayh(j1)
+    do i1=0,2
+     i2=i+i1
+     dvol1=dvol*ax1(i1)
+     ap(2)=ap(2)+dvol1*av(i2,j2,k2,3)
+    end do
+   end do
+   !pt(n,1)=dxe*ap(1)    !assigned grad[A^2/2]
+   !pt(n,2)=dye*ap(2)
+   pt(n,1:3)=ap(1:3)    !assigned A^2/2 and grad[A^2/2]
+  end do
+!=================================
+ case(3)
+  dxe=dx_inv
+  dye=dy_inv
+  dze=dz_inv
+  do n=1,np
+   ap=0.0
+   xp1(1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
+   xp1(2)=dye*(sp_loc%part(n,2)-ymn) !loc y position
+   xp1(3)=dze*(sp_loc%part(n,3)-zmn) !loc z position
+
+   xx=shx+xp1(1)
+   i=int(xx+0.5)
+   sx=xx-real(i,dp)
+   sx2=sx*sx
+   ax1(1)=0.75-sx2
+   ax1(2)=0.5*(0.25+sx2+sx)
+   ax1(0)=1.-ax1(1)-ax1(2)
+
+   ih=int(xx)
+   sx=xx-0.5-real(ih,dp)
+   sx2=sx*sx
+   axh(1)=0.75-sx2
+   axh(2)=0.5*(0.25+sx2+sx)
+   axh(0)=1.-axh(1)-axh(2)
+
+   xx=shy+xp1(2)
+   j=int(xx+0.5)
+   sx=xx-real(j,dp)
+   sx2=sx*sx
+   ay1(1)=0.75-sx2
+   ay1(2)=0.5*(0.25+sx2+sx)
+   ay1(0)=1.-ay1(1)-ay1(2)
+
+   jh=int(xx)
+   sx=xx-0.5-real(jh,dp)
+   sx2=sx*sx
+   ayh(1)=0.75-sx2
+   ayh(2)=0.5*(0.25+sx2+sx)
+   ayh(0)=1.-ayh(1)-ayh(2)
+
+   xx=shz+xp1(3)
+   k=int(xx+0.5)
+   sx=xx-real(k,dp)
+   sx2=sx*sx
+   az1(1)=0.75-sx2
+   az1(2)=0.5*(0.25+sx2+sx)
+   az1(0)=1.-az1(1)-az1(2)
+
+   kh=int(xx)
+   sx=xx-0.5-real(kh,dp)
+   sx2=sx*sx
+   azh(1)=0.75-sx2
+   azh(2)=0.5*(0.25+sx2+sx)
+   azh(0)=1.-azh(1)-azh(2)
+
+   i=i-1
+   j=j-1
+   k=k-1
+
+   ih=ih-1
+   jh=jh-1
+   kh=kh-1
+   !==========================
+   ap=0.0
+   do k1=0,2
+    k2=k+k1
+    do j1=0,2
+     j2=j+j1
+     dvol=ay1(j1)*az1(k1)
+     do i1=0,2
+      i2=i1+ih
+      dvol1=dvol*axh(i1)
+      ap(1)=ap(1)+dvol1*av(i2,j2,k2,2)   !Dx[F]
+      i2=i1+i
+      ap(4)=ap(4)+ax1(i1)*dvol*av(i2,j2,k2,1)  !F
+     end do
+    end do
+    do j1=0,2
+     j2=jh+j1
+     dvol=ayh(j1)*az1(k1)
+     do i1=0,2
+      i2=i+i1
+      dvol1=dvol*ax1(i1)
+      ap(2)=ap(2)+dvol1*av(i2,j2,k2,3) !Dy[F]
+     end do
+    end do
+    k2=kh+k1
+    do j1=0,2
+     j2=j+j1
+     dvol=ay1(j1)*azh(k1)
+     do i1=0,2
+      dvol1=dvol*ax1(i1)
+      ap(3)=ap(3)+dvol1*av(i2,j2,k2,4)   !Dz[F]
+     end do
+    end do
+   end do
+   pt(n,1:4)=ap(1:4)
+   !=================================
+  end do
+ end select
+ end subroutine set_env_grad_interp
+
  subroutine set_env_interp(av,sp_loc,pt,np,ndm,xmn,ymn,zmn)
 
  type(species),intent(in) :: sp_loc
@@ -2979,9 +3183,9 @@
    gam2=1.+up(1)*up(1)+up(2)*up(2)+ap(6)   !gamma^{n-1/2}
    ap(1:3)=charge*ap(1:3)
    ap(4:5)=0.5*charge*charge*ap(4:5)
-   !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*[Dx,Dy]F/2
-   a1=dth*dot_product(ap(1:2),up(1:2))
-   b1=dth*dot_product(ap(4:5),up(1:2))
+   !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
+   a1=dth*dot_product(ap(1:2),up(1:2))   !Dt*(qE_ip_i)/2 ==> a
+   b1=dth*dot_product(ap(4:5),up(1:2))   !Dt*(qD_iFp_i)/4 ===> c
    gam=sqrt(gam2)
    dgam=(a1*gam-b1)/gam2
    gam_inv=(gam-dgam)/gam2

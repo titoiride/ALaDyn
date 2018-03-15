@@ -172,7 +172,7 @@
   do k=1,k2
    do j=1,j2
     do i=1,i2
-     whz=loc_wghx(i,ic)*loc_wghz(k,ic)*loc_wghy(j,ic)
+     whz=loc_wghx(i,ic)*loc_wghyz(j,k,ic)
      wgh=real(whz,sp)
      p=p+1
      loc_sp%part(p,1)=loc_xpt(i,ic)
@@ -193,7 +193,7 @@
 
  do j=1,j2
   do i=1,i2
-   whz=loc_wghx(i,ic)*loc_wghy(j,ic)
+   whz=loc_wghx(i,ic)*loc_wghyz(j,1,ic)
    wgh=real(whz,sp)
    p=p+1
    loc_sp%part(p,1)=loc_xpt(i,ic)
@@ -207,14 +207,33 @@
  end do
  end subroutine pspecies_distribute
  !==============================
- subroutine mpi_yz_part_distrib(nc,ky2,kz2,nyc,nzc,ymt,zmt,why,whz)
+ subroutine mpi_yz_part_distrib(nc,ky2,kz2,nyc,nzc,ymt,zmt,whyz)
 
  integer,intent(in) :: nc,ky2(:),kz2(:),nyc(:),nzc(:)
- real(dp),intent(in) :: ymt,zmt,why(:,:),whz(:,:)
- integer :: ic,i2,k1
+ real(dp),intent(in) :: ymt,zmt,whyz(:,:,:)
+ integer :: ic,i2,k1,j1,j2
  real(dp) :: loc_ym
 
- if(ndim < 2)return
+ if(ndim < 3)then
+  loc_ym=loc_ygrid(imody)%gmin
+  if(imody==0)loc_ym=ymt
+  do ic=1,nc
+   k1=0
+   do i2=1,nyc(ic)
+    if(ypt(i2,ic)< loc_ym)k1=i2
+   end do
+   do i2=1,ky2(ic)
+    k1=k1+1
+    loc_ypt(i2,ic)=ypt(k1,ic)
+    loc_wghyz(i2,1,ic)=whyz(k1,1,ic)
+   end do
+  end do
+  zpt(1,1:nc)=0.0
+  return
+ endif
+ !==========================
+ loc_ym=loc_zgrid(imodz)%gmin
+ if(imodz==0)loc_ym=zmt
  loc_ym=loc_ygrid(imody)%gmin
  if(imody==0)loc_ym=ymt
  do ic=1,nc
@@ -225,23 +244,19 @@
   do i2=1,ky2(ic)
    k1=k1+1
    loc_ypt(i2,ic)=ypt(k1,ic)
-   loc_wghy(i2,ic)=why(k1,ic)
   end do
- end do
- if(ndim<3)return
- !==========================
- loc_ym=loc_zgrid(imodz)%gmin
- if(imodz==0)loc_ym=zmt
- !==========================
- do ic=1,nc
-  k1=0
   do i2=1,nzc(ic)
    if(zpt(i2,ic)< loc_ym)k1=i2
   end do
+  k1=0
   do i2=1,kz2(ic)
    k1=k1+1
    loc_zpt(i2,ic)=zpt(k1,ic)
-   loc_wghz(i2,ic)=whz(k1,ic)
+   j1=0
+   do j2=1,ky2(ic)
+    j1=j1+1
+    loc_wghyz(j2,i2,ic)=whyz(j1,k1,ic)
+   end do
   end do
  end do
  end subroutine mpi_yz_part_distrib
@@ -250,103 +265,105 @@
 
  subroutine multi_layer_gas_target(layer_mod,nyh,xf0)
 
-  integer,intent(in) :: layer_mod,nyh
-  real(dp),intent(in) :: xf0
-  integer :: p
-  integer :: i,j,i1,i2,ic
-  integer :: n_peak,nyl1,nzl1
-  integer :: npyc(4),npzc(4),npty_ne,nptz_ne
-  integer :: npmax,nxtot
-  real(dp) :: uu,yy,zz,dxip,dpy,dpz,u2,u3,ramp_prefactor
-  real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
-  real(dp) :: xfsh,un(2),wgh_sp(3)
-  integer :: nxl(5)
-  real(dp),allocatable :: wy(:,:),wz(:,:)
-  integer :: loc_nptx(4),nps_loc(4),np_per_zcell(4),last_particle_index(4),nptx_alloc(4)
-  !==========================
-  p=0
-  i=0
-  j=0
-  i1=0
-  i2=0
-  ic=0
-  ! the following variables are used only in Stretched mode, initialized anyway to zero
-  yy=0.0
-  dxip=0.0
-  !==========================
-  xp_min=xmin
-  xp_max=xmax
-  np_per_zcell(1:nsp)=1
-  !==========================
-  nxl=0
-  nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
-  nzl1=1+nz/2-nyh/2
-  !============================
-  ! Parameters for particle distribution along the x-coordinate
-  !============================
-  ! Layers nxl(1:5) all containing the same ion species
-  xtot=0.0
-  nxtot=0
-  do i=1,5
-   nxl(i)=nint(dx_inv*lpx(i))
-   lpx(i)=nxl(i)*dx
-   xtot=xtot+lpx(i)
-   nxtot=nxtot+nxl(i)
-  end do
-  xfsh=xf0+lpx(7)
-  targ_in=xfsh
-  targ_end=targ_in+xtot
-  !=============================
-  loc_nptx=0
-  loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5))*np_per_xc(1:nsp)
- 
-  nptx_max=maxval(loc_nptx(1:nsp))
-  allocate(xpt(nptx_max,nsp))
-  allocate(wghpt(nptx_max,nsp))
-  allocate(loc_xpt(nptx_max,nsp))
-  !=============================
-  ! mulltispecies y-z distribution in a uniform target
-  yp_min=ymin_t
-  yp_max=ymax_t
-  zp_min=zmin_t
-  zp_max=zmax_t
-  !----------------------
-  npty=maxval(np_per_yc(1:nsp))
-  npty=nyh*npty
-  nptz=1
-  if(ndim==3)then
-   np_per_zcell(1:nsp)=np_per_zc(1:nsp)
-   nptz=maxval(np_per_zc(1:nsp))
-   nptz=nyh*nptz
-  endif
-  allocate(ypt(npty,nsp))
-  allocate(zpt(nptz,nsp))
-  allocate(wy(npty,nsp))
-  allocate(wz(nptz,nsp))
-  ypt=0.
-  zpt=0.
-  wy=1.
-  wz=1.
-  !==================
-  allocate(loc_jmax(0:npe_yloc-1,nsp))
-  allocate(loc_kmax(0:npe_zloc-1,nsp))
-  allocate(loc_imax(0:npe_xloc-1,nsp))
-  !==================
-  !  UNIFORM y-z particle distribution for all models
-  !========================
-  wghpt=one_dp
-  un=one_dp
-  !===================================
-  ! Distributes particles on y-z coordinates
-  do ic=1,nsp
-   npyc(ic)=nyh*np_per_yc(ic)
-   npty_ne=npyc(ic)
-   npzc(ic)=1
-   if(ndim > 1 )then
-    dpy=(yp_max-yp_min)/real(npyc(ic),dp)
-    do i=1,npyc(ic)
-     ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
-    enddo
+ integer,intent(in) :: layer_mod,nyh
+ real(dp),intent(in) :: xf0
+ integer :: p
+ integer :: i,j,i1,i2,ic
+ integer :: n_peak,nyl1,nzl1
+ integer :: npyc(4),npzc(4),npty_ne,nptz_ne
+ integer :: npmax,nxtot
+ real(dp) :: uu,yy,zz,dxip,dpy,dpz,u2
+ real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
+ real(dp) :: xfsh,un(2),wgh_sp(3)
+ integer :: nxl(5)
+ real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
+ integer :: loc_nptx(4),nps_loc(4),np_per_zcell(4),last_particle_index(4),nptx_alloc(4)
+ !==========================
+ p=0
+ i=0
+ j=0
+ i1=0
+ i2=0
+ ic=0
+ ! the following variables are used only in Stretched mode, initialized anyway to zero
+ yy=0.0
+ dxip=0.0
+ !==========================
+ xp_min=xmin
+ xp_max=xmax
+ np_per_zcell(1:nsp)=1
+ !==========================
+ nxl=0
+ nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
+ nzl1=1+nz/2-nyh/2
+ !============================
+ ! Parameters for particle distribution along the x-coordinate
+ !============================
+ ! Layers nxl(1:5) all containing the same ion species
+ xtot=0.0
+ nxtot=0
+ do i=1,5
+  nxl(i)=nint(dx_inv*lpx(i))
+  lpx(i)=nxl(i)*dx
+  xtot=xtot+lpx(i)
+  nxtot=nxtot+nxl(i)
+ end do
+ xfsh=xf0+lpx(7)
+ targ_in=xfsh
+ targ_end=targ_in+xtot
+ !=============================
+ loc_nptx=0
+ loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5))*np_per_xc(1:nsp)
+
+ nptx_max=maxval(loc_nptx(1:nsp))
+ allocate(xpt(nptx_max,nsp))
+ allocate(wghpt(nptx_max,nsp))
+ allocate(loc_xpt(nptx_max,nsp))
+ !=============================
+ ! mulltispecies y-z distribution in a uniform target
+ yp_min=ymin_t
+ yp_max=ymax_t
+ zp_min=zmin_t
+ zp_max=zmax_t
+ !----------------------
+ npty=maxval(np_per_yc(1:nsp))
+ npty=nyh*npty
+ nptz=1
+ if(ndim==3)then
+  np_per_zcell(1:nsp)=np_per_zc(1:nsp)
+  nptz=maxval(np_per_zc(1:nsp))
+  nptz=nyh*nptz
+ endif
+ allocate(ypt(npty,nsp))
+ allocate(zpt(nptz,nsp))
+ allocate(wy(npty,nsp))
+ allocate(wz(nptz,nsp))
+ allocate(wyz(npty,nptz,nsp))
+ ypt=0.
+ zpt=0.
+ wy=1.
+ wz=1.
+ wyz=1.
+ !==================
+ allocate(loc_jmax(0:npe_yloc-1,nsp))
+ allocate(loc_kmax(0:npe_zloc-1,nsp))
+ allocate(loc_imax(0:npe_xloc-1,nsp))
+ !==================
+ !  UNIFORM y-z particle distribution for all models
+ !========================
+ wghpt=one_dp
+ un=one_dp
+ !===================================
+ ! Distributes particles on y-z coordinates
+ do ic=1,nsp
+  npyc(ic)=nyh*np_per_yc(ic)
+  npty_ne=npyc(ic)
+  npzc(ic)=1
+  if(ndim > 1 )then
+   dpy=(yp_max-yp_min)/real(npyc(ic),dp)
+   do i=1,npyc(ic)
+    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
+   enddo
     if(Stretch)then
      yy=str_ygrid%smin
      if(yy >yp_min)then
@@ -403,12 +420,40 @@
     endif
    enddo
   endif
+  do ic=1,nsp
+   do i=1,npzc(ic)
+    zz=zpt(i,ic)
+    do j=1,npyc(ic)
+     yy=ypt(j,ic)
+     wyz(j,i,ic)=1.+chann_fact*(yy*yy+zz*zz)/(w0_y*w0_y)
+    end do
+   end do
+  end do
   ! Now the y-z particle distribution are shared among mpi-tasks
   ! on output =>> loc_jmax, loc_kmax
   !=======================================
   do ic=1,nsp
    call set_pgrid_ind(npyc(ic),npzc(ic),ic)
   enddo
+  !=================================
+  ! LOCAL to mpi domains particle representation
+  ! NO dependence of (y,z) coordinates on x coordinate
+  !=====loc_npty,loc_nptz allocated to (nsp) yz-layers or components
+  !====================
+  loc_npty(1:nsp)=loc_jmax(imody,1:nsp)
+  loc_nptz(1:nsp)=loc_kmax(imodz,1:nsp)
+  npty_ne=1
+  nptz_ne=1
+  npty_ne=maxval(loc_npty(1:nsp))
+  nptz_ne=maxval(loc_nptz(1:nsp))
+! ======================
+  allocate(loc_wghyz(npty_ne,nptz_ne,nsp))
+  allocate(loc_ypt(npty_ne,nsp))
+  allocate(loc_zpt(nptz_ne,nsp))
+  loc_wghyz=1.
+  !===========================
+  call mpi_yz_part_distrib(nsp,loc_npty,loc_nptz,npyc,npzc,&
+                           ymin_t,zmin_t,wyz)
   !===========================
   ! WARNING for charge distribution
   !====================================
@@ -422,7 +467,6 @@
    wgh_sp(2)=1./(real(mp_per_cell(2),dp))
    if(ion_min(1)>1)wgh_sp(2)=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
   endif
-  ramp_prefactor=one_dp
   select case(layer_mod)
    !================ first uniform layer np1=================
   case(1)
@@ -572,7 +616,7 @@
       uu=(real(i)-0.5)/real(n_peak,dp)
       i1=nptx(ic)+i
       xpt(i1,ic)=xfsh+lpx(5)*uu
-      wghpt(i1,ic)=(1.-uu)*wgh_sp(ic)
+      wghpt(i1,ic)=(1.-uu)*np2*wgh_sp(ic)
      end do
      nptx(ic)=nptx(ic)+n_peak
     end do
@@ -748,32 +792,6 @@
   !================================
   ! END of section setting global coordinates
   !=================================
-  ! LOCAL to mpi domains particle representation
-  ! NO dependence of (y,z) coordinates on x coordinate
-  !=====loc_npty,loc_nptz allocated to (nsp) yz-layers or components
-  loc_npty(1:nsp)=loc_jmax(imody,1:nsp)
-  loc_nptz(1:nsp)=loc_kmax(imodz,1:nsp)
-  !===========================
-  npty_ne=maxval(loc_npty(1:nsp))
-  nptz_ne=maxval(loc_nptz(1:nsp))
-  !==========================
-  !====================
-  if(npty_ne >0)then
-   allocate(loc_wghy(npty_ne,nsp))
-   allocate(loc_ypt(npty_ne,nsp))
-   loc_ypt=0.0
-   loc_wghy=1.
-  endif
-  !==============
-  if(nptz_ne >0)then
-   allocate(loc_wghz(nptz_ne,nsp))
-   allocate(loc_zpt(nptz_ne,nsp))
-   loc_wghz=1.
-   loc_zpt=0.0
-  endif
-  !====================
-  call mpi_yz_part_distrib(nsp,loc_npty,loc_nptz,npyc,npzc,&
-                           ymin_t,zmin_t,wy,wz)
   ! Restricts to the computational box
   !=================================
   if(pe0)then
@@ -856,7 +874,7 @@
  real(dp) :: xfsh,l_inv
  integer :: nxl(6),nyl1
  integer :: ip_ion,ip_el,ip_pr,npyc(6)
- real(dp),allocatable :: wy(:,:),wz(:,:)
+ real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
  !=================
  xp_min=xmin
  xp_max=xmax
@@ -972,26 +990,21 @@
  allocate(loc_xpt(nptx_max,6))
  allocate(loc_wghx(nptx_max,6))
  wghpt(1:nptx_max,1:6)=1.
- !================ local y-z part coordinates==========
+ !=============================
  loc_npty(1:6)=loc_jmax(imody,1:6)
  loc_nptz(1:6)=loc_kmax(imodz,1:6)
  !=============================
+ npty_ne=1
+ nptz_ne=1
  npty_ne=maxval(loc_npty(1:6))
  nptz_ne=maxval(loc_nptz(1:6))
- if(npty_ne >0)then
-  allocate(loc_wghy(npty_ne,6))
-  allocate(loc_ypt(npty_ne,6))
-  loc_wghy=1.
-  loc_ypt=0.0
- endif
- if(nptz_ne >0)then
-  allocate(loc_wghz(nptz_ne,6))
-  allocate(loc_zpt(nptz_ne,6))
-  loc_wghz=1.
-  loc_zpt=0.0
- endif
+!======================
+ allocate(loc_wghyz(npty_ne,nptz_ne,6))
+ allocate(loc_ypt(npty_ne,6))
+ allocate(loc_zpt(nptz_ne,6))
+ loc_wghyz=1.
  call mpi_yz_part_distrib(6,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wy,wz)
+  ymin_t,zmin_t,wyz)
  !==================
  ! first layer: electrons and Z1 ions
  !x distribution
@@ -1205,7 +1218,7 @@
  real(dp) :: xfsh,l_inv,wgh_sp(6)
  integer :: nxl(6),nyl1
  integer :: ip_ion,ip_el,ip_pr,npyc(6)
- real(dp),allocatable :: wy(:,:),wz(:,:)
+ real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
  !=================
  xp_min=xmin
  xp_max=xmax
@@ -1328,22 +1341,17 @@
  loc_npty(1:6)=loc_jmax(imody,1:6)
  loc_nptz(1:6)=loc_kmax(imodz,1:6)
  !=============================
+ npty_ne=1
+ nptz_ne=1
  npty_ne=maxval(loc_npty(1:6))
  nptz_ne=maxval(loc_nptz(1:6))
- if(npty_ne >0)then
-  allocate(loc_wghy(npty_ne,6))
-  allocate(loc_ypt(npty_ne,6))
-  loc_wghy=1.
-  loc_ypt=0.
- endif
- if(nptz_ne >0)then
-  allocate(loc_wghz(nptz_ne,6))
-  allocate(loc_zpt(nptz_ne,6))
-  loc_wghz=1.
-  loc_zpt=0.0
- endif
+!======================
+ allocate(loc_wghyz(npty_ne,nptz_ne,6))
+ allocate(loc_ypt(npty_ne,6))
+ allocate(loc_zpt(nptz_ne,6))
+ loc_wghyz=1.
  call mpi_yz_part_distrib(6,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wy,wz)
+  ymin_t,zmin_t,wyz)
  !==================
  ! nsp ordering: electrons+ Z1 ions + Z2 ions +Z3 ions
  ! first layer: electrons and Z2 (protons) ions
@@ -1547,7 +1555,7 @@
  real(dp) :: xfsh,l_inv,wgh_sp(7)
  integer :: nxl(6),nyl1
  integer :: ip_ion,ip_el,ip_pr,npyc(7)
- real(dp),allocatable :: wy(:,:),wz(:,:)
+ real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
  !=================
  xp_min=xmin
  xp_max=xmax
@@ -1669,26 +1677,20 @@
  allocate(loc_xpt(nptx_max,7))
  allocate(loc_wghx(nptx_max,7))
  wghpt(1:nptx_max,1:7)=1.
- !================ local y-z part coordinates==========
+ !=============================
  loc_npty(1:7)=loc_jmax(imody,1:7)
  loc_nptz(1:7)=loc_kmax(imodz,1:7)
- !=============================
+ npty_ne=1
+ nptz_ne=1
  npty_ne=maxval(loc_npty(1:7))
  nptz_ne=maxval(loc_nptz(1:7))
- if(npty_ne >0)then
-  allocate(loc_wghy(npty_ne,7))
-  allocate(loc_ypt(npty_ne,7))
-  loc_wghy=1.
-  loc_ypt=0.
- endif
- if(nptz_ne >0)then
-  allocate(loc_wghz(nptz_ne,7))
-  allocate(loc_zpt(nptz_ne,7))
-  loc_wghz=1.
-  loc_zpt=0.0
- endif
+!======================
+ allocate(loc_wghyz(npty_ne,nptz_ne,7))
+ allocate(loc_ypt(npty_ne,7))
+ allocate(loc_zpt(nptz_ne,7))
+ loc_wghyz=1.
  call mpi_yz_part_distrib(7,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wy,wz)
+  ymin_t,zmin_t,wyz)
  !==================
  ! nsp ordering: electrons+ Z1 ions + Z2 ions
  ! first and last layers: electrons and Z3 (protons) ions
@@ -1883,7 +1885,7 @@
  real(dp) :: xfsh,dlpy,tot_lpy,loc_ymp
  integer :: z2,nxl(6),nyl1,nlpy,nholes
  integer :: ip_ion,ip_el,ip_pr,nwires
- real(dp),allocatable :: wy(:,:),wz(:,:)
+ real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
  !=================
  !++++++++++++++++ WARNING
  ! ONLY layers (3) n_over_nc, (4) and (5)
@@ -2075,26 +2077,20 @@
  allocate(loc_xpt(nptx_max,8))
  allocate(loc_wghx(nptx_max,8))
  wghpt(1:nptx_max,1:8)=1.
- !================ local y-z part coordinates==========
+!=================
  loc_npty(1:8)=loc_jmax(imody,1:8)
  loc_nptz(1:8)=loc_kmax(imodz,1:8)
- !=============================
+ npty_ne=1
+ nptz_ne=1
  npty_ne=maxval(loc_npty(1:8))
  nptz_ne=maxval(loc_nptz(1:8))
- if(npty_ne >0)then
-  allocate(loc_wghy(npty_ne,8))
-  allocate(loc_ypt(npty_ne,8))
-  loc_ypt=0.0
-  loc_wghy=1.
- endif
- if(nptz_ne >0)then
-  allocate(loc_wghz(nptz_ne,8))
-  allocate(loc_zpt(nptz_ne,8))
-  loc_wghz=1.
-  loc_zpt=0.0
- endif
+!======================
+ allocate(loc_wghyz(npty_ne,nptz_ne,8))
+ allocate(loc_ypt(npty_ne,8))
+ allocate(loc_zpt(nptz_ne,8))
+ loc_wghyz=1.
  call mpi_yz_part_distrib(8,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wy,wz)
+  ymin_t,zmin_t,wyz)
  !=======================
  !========================
  loc_imax(imodx,1:8)=nptx_loc(1:8)
@@ -2283,7 +2279,8 @@
  integer :: nxl(5),loc_nptx(4),npt_nano(4)
  integer :: nlpy,loc_npty(6)
  integer :: npty_layer(2),nptz_layer(2)
- real(dp),allocatable :: yc(:),wy(:,:),wz(:,:),ypt_nano(:,:),zpt_nano(:,:)
+ real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
+ real(dp),allocatable :: yc(:),ypt_nano(:,:),zpt_nano(:,:)
  real(dp),allocatable :: locy_nano(:,:),locz_nano(:,:)
  !=================
  xp_min=xmin
@@ -2458,20 +2455,20 @@
  end do
  !============================ Flat target
  !====================================
- npty_ne=maxval(npty_layer(1:nsp))
- if(npty_ne >0)then
-  allocate(loc_wghy(npty_ne,nsp))
-  allocate(loc_ypt(npty_ne,nsp))
-  loc_ypt=0.0
-  loc_wghy=1.
-  allocate(loc_wghz(nptz_ne,nsp))
-  allocate(loc_zpt(nptz_ne,nsp))
-  loc_zpt=0.0
-  loc_wghz=1.
- endif
+ loc_npty(1:nsp)=loc_jmax(imody,1:nsp)
+ loc_nptz(1:nsp)=loc_kmax(imodz,1:nsp)
+ npty_ne=1
+ nptz_ne=1
+ npty_ne=maxval(loc_npty(1:nsp))
+ nptz_ne=maxval(loc_nptz(1:nsp))
+!======================
+ allocate(loc_wghyz(npty_ne,nptz_ne,nsp))
+ allocate(loc_ypt(npty_ne,nsp))
+ allocate(loc_zpt(nptz_ne,nsp))
+ loc_wghyz=1.
  !============================= Uniform target
  call mpi_yz_part_distrib(2,loc_npty,loc_nptz,npty_layer,nptz_layer,&
-  ymin_t,zmin_t,wy,wz)
+  ymin_t,zmin_t,wyz)
  !==========================
  nptx(1:nsp)=0
  !========================
@@ -2682,7 +2679,9 @@
   real(dp),intent(in) :: xf0
   integer,intent(in) :: nfluid,dmodel,i1,i2,j1,j2,k1,k2
   integer :: i,i0,j,k,ic,nxl(5),i0_targ
-  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,u2,u3,ramp_prefactor
+  integer :: j01,j02,k01,k02,jj,kk
+  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,,u2,u3,ramp_prefactor
+  real(dp) :: yy,zz,r2
 
  do i=1,5
   nxl(i)=nint(dx_inv*lpx(i))
@@ -2696,12 +2695,54 @@
  !=============================
  nxf=i0_targ+nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5)
  allocate(fluid_x_profile(nxf))
+ allocate(fluid_yz_profile(j2,k2))
  fluid_x_profile(1:i0_targ)=0.0
+ fluid_yz_profile(:,:)=0.0
  i0=i0_targ
  np1_loc=0.005
  ramp_prefactor=one_dp
  if(np1>0.0)np1_loc=np1
  l_inv=log(1./np1_loc)
+!==============
+  j01=j1
+  k01=k1
+  j02=j2
+  k02=k2
+  if(pe0y)j01=sh_targ+1
+  if(pe1y)j02=j2-sh_targ
+  if(ndim >2)then
+   if(pe0z)k01=sh_targ+1
+   if(pe1z)k02=k2-sh_targ
+  endif
+  do k=k01,k02
+   do j=j01,j02
+     fluid_yz_profile(j,k)=1.0
+   end do
+  end do
+  if(Channel)then
+   if(ndim <3)then
+    k=k01
+    zz=0.0
+    do j=j01,j02
+     jj=j-2
+     yy=loc_yg(jj,1,imody)
+     r2=(yy*yy+zz*zz)/(w0_y*w0_y)
+     fluid_yz_profile(j,k)=1.0 +chann_fact*r2
+    end do
+   else
+    do k=k01,k02
+     kk=k-2
+     zz=loc_zg(kk,1,imodz)
+     do j=j01,j02
+      jj=j-2
+      yy=loc_yg(jj,1,imody)
+      r2=(yy*yy+zz*zz)/(w0_y*w0_y)
+      fluid_yz_profile(j,k)=1.0 +chann_fact*r2
+     end do
+    end do
+   endif
+   if(pe0)write(6,'(a15,e11.4)')'channel factor=',chann_fact
+  endif
  select case(dmodel)
   !initial plateau, cubic ramp (exponential still available but commented), central plateau and exit ramp
   case(1)
@@ -2741,6 +2782,45 @@
      fluid_x_profile(i0)=peak_fluid_density*np2
     end do
    endif
+  case(2)
+    if(nxl(1) >0)then            !a ramp 0==>np1
+     do i=1,nxl(1)
+      i0=i0+1
+      uu=(float(i)-float(nxl(1)))/float(nxl(1))
+      fluid_x_profile(i0)=np1*peak_fluid_density*exp(-4.5*uu*uu)
+     end do
+    endif
+    if(nxl(2) >0)then    ! np1 plateau
+     do i=1,nxl(2)
+      i0=i0+1
+      fluid_x_profile(i0)=np1*peak_fluid_density
+     end do
+    endif
+    if(nxl(3) >0)then  ! a down ramp np1=> np2
+     do i=1,nxl(3)
+      i0=i0+1
+      uu=peak_fluid_density*float(i)/nxl(3)
+      fluid_x_profile(i0)=np1*peak_fluid_density-uu*(np1-np2)
+     end do
+    endif
+    if(nxl(4) >0)then   !a np2 plateau
+     do i=1,nxl(4)
+      i0=i0+1
+      fluid_x_profile(i0)=np2*peak_fluid_density
+     end do
+    endif
+    if(nxl(5) >0)then
+     do i=1,nxl(5)
+      i0=i0+1
+      uu=peak_fluid_density*float(i)/nxl(5)
+      fluid_x_profile(i0)=peak_fluid_density*np2*(1.-uu)
+     end do
+    endif
+   case(3)
+    if(pe0)then
+     write(6,*)'dmodel_id =3 not activated for one-species fluid scheme'
+    endif
+   return
   !initial plateau, cos^2 bump, central plateau and exit ramp. 
   !See model_id=4 for pic case
   case(4)
@@ -2791,7 +2871,7 @@
   do k=k1,k2
    do j=j1,j2
     do i=i1,i2
-     uf(i,j,k,ic)=fluid_x_profile(i)
+     uf(i,j,k,ic)=fluid_x_profile(i)*fluid_yz_profile(j,k)
      uf0(i,j,k,ic)=uf(i,j,k,ic)
     end do
    end do
@@ -2878,12 +2958,7 @@
   
 !==================================
  !==================== inject particles
- if(Hybrid)then
-  call init_fluid_density_momenta(up,up0,lp_end(1),nfcomp,dmodel_id,i1,i2,j1,j2,k1,k2)
- endif
- if(Part)then
-  if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1))
- endif
+ if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1))
  !=================def part distr points
  end subroutine LP_pulse
  !===========================
@@ -3418,6 +3493,10 @@
   ebf0_bunch,i1,i2b,j1,nyp,k1,nzp,B_ex_poloidal*T_unit,radius_poloidal)
  !=====================================
  call part_distribute(dmodel_id,lp_end(1))
+ if(Hybrid)then
+  call init_fluid_density_momenta(up,up0,lp_end(1),nfcomp,dmodel_id,i1,i2,j1,nyp,k1,nzp)
+ endif
+ if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1))
  !============================
  !----------------------
  if(pe0)then
