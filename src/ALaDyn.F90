@@ -35,8 +35,8 @@
 
  implicit none
 
- integer  :: last_iter,ngout
- logical  :: Diag
+ integer :: last_iter,ngout,iter_max
+ logical :: Diag
  real(dp) :: tdia,dtdia,tout,dtout,tstart,mem_max_addr
  real(dp) :: dt_loc
  integer  :: t_ind,ic,tk_ind
@@ -65,7 +65,7 @@
   call BUNCH_cycle
  end select
 
- call timing
+ !call timing
  call mpi_barrier(comm,error)
  call final_run_info
  call end_parallel
@@ -132,7 +132,7 @@
   call t_particles_collect(spec(1),tk_ind)
  endif
  call data_out(jump)
- dt_loc=dt
+!================
  tk_ind=0
  if(Ionization)then
   !lp_max=1.2*oml*a0
@@ -151,7 +151,7 @@
    endif
   endif
 
-  call timing
+  call timing           !iter=iter+1  tnow=tnow+dt_loc
   call data_out(jump)
 
   if (ier /= 0) then
@@ -281,6 +281,10 @@
     end do
    endif
   endif
+  if (pe0) then
+   write(6,'(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
+   write(6,*)' END DATA WRITE'
+  endif
   if (dump>0 .and. time_interval_dumps < 0.0) then
    if (iter>0) call dump_data(iter,tnow)
   endif
@@ -360,6 +364,11 @@
    end do
   endif
   if(nden>0)then
+   if(Hybrid)then
+    do i=1,nfcomp
+     call fluid_den_mom_out(up,tnow,i,nfcomp,jump)
+    end do
+   endif
    ic=0
    call prl_bden_energy_interp(ic)
    call bden_energy_out(tnow,1,jump)
@@ -392,6 +401,10 @@
      end do
     endif
    endif
+  endif
+  if (pe0) then
+   write(6,'(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
+   write(6,*)' END B-DATA WRITE'
   endif
   if(dump>0 .and. time_interval_dumps < 0.)then
    if(iter>0)call dump_data(iter,tnow)
@@ -617,6 +630,8 @@
   ! in general data (nouts+1 times)
   dtout=(tmax-tstart)/nouts
   dtdia=(tmax-tstart)/iene
+  iter_max=tmax/dt
+  dt_loc=tmax/float(iter_max)
 
  case (1) ! reads from dump evolved data
   if (.not.L_first_output_on_restart) then
@@ -632,9 +647,11 @@
    write(6,*)' Dump data read completed'
   endif
   call set_fxgrid(npe_xloc,sh_ix)
+  iter_max=tmax/dt
+  dt_loc=tmax/float(iter_max)
+  dtout=tmax/nouts
+  dtdia=tmax/iene
   tmax=tmax+tstart
-  dtout=(tmax-tstart)/nouts
-  dtdia=(tmax-tstart)/iene
   if(.not.L_first_output_on_restart) then
    tdia=tstart+dtdia
    tout=tstart+dtout
@@ -644,6 +661,14 @@
   endif
 
  end select
+!===================
+  if(Pe0)then
+   write(6,*)'time step resetting:' 
+   write(6,*)'  new ',dt_loc,'  old ',dt
+   write(6,*)'tot iterations ',iter_max
+   write(6,*)'tot time ',iter_max*dt_loc
+  endif
+!========================
 
  if(Part)then
   if(prl)then
@@ -1076,9 +1101,10 @@
     end do
    end if
  write(60,*)'**********TARGET PLASMA PARAMETERS***********'
-  if(Part)then
+  if(n0_ref>0.)then
    write(60,'(a26,e11.4,a10)')'  Electron number density ',n0_ref,'[10^18/cc]'
    write(60,'(a21,f5.2)')'  Plasma wavelength= ',lambda_p
+   write(60,'(a20,e11.4)')' Chanelling fact  = ',chann_fact
    if(model_id < 5)then
     write(60,'(a20,f5.2,a10)')'  Critical density= ',ncrit,'[10^21/cc]'
     write(60,'(a18,e11.4,a4)')'  Critical power= ',P_c,'(TW)'
@@ -1160,8 +1186,8 @@
     write(60,'(3e11.4)')rhob(i),bunch_charge(i),reduced_charge(i)
    end do
   else
-   write(60,*)' unit length is 1mm, unit density is n0=10^14/cc'
-   write(60,*)'  Lambda , Omega_p    n_over_n0  '
+   write(60,*)' unit length is 1mm, unit density is nc'
+   write(60,*)'  Lambda , Omega_p    n_over_nc  '
    write(60,'(3e11.4)')lambda_p,omega_p,n_over_nc
    write(60,*)'  gamma   bet0        Lx       sigma_y,   eps_y       eps_z '
    i=1

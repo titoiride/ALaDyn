@@ -65,7 +65,7 @@
   dmodel_id,ibx,iby,ibz,ibeam,ch_opt,fl_opt
  NAMELIST/TARGET_DESCRIPTION/nsp,nsb,ionz_lev,ionz_model,ion_min,ion_max,atomic_number,&
   mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,&
-  n_over_nc,np1,np2,L_disable_rng_seed
+  n_over_nc,np1,np2,r_c,L_disable_rng_seed
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
  lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
@@ -78,6 +78,9 @@
  !--- reading grid parameters ---!
  yx_rat=-1.
  zx_rat=-1.
+ ch_opt=1.
+ fl_opt=0.5
+ r_c=0.0
  open (nml_iounit,file=input_namelist_filename, status='old')
  read (nml_iounit,GRID,iostat=nml_ierr)
  nml_error_message='GRID'
@@ -86,13 +89,12 @@
  call consistency_check_grid
 
  !--- reading sim parameters ---!
- ch_opt=1.
- fl_opt=0.5
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,SIMULATION,iostat=nml_ierr)
  nml_error_message='SIMULATION'
  close(nml_iounit)
  if(nml_ierr>0) call print_at_screen_nml_error
+
  !--- reading target parameters ---!
  mass_number(1:3) = 1.0
  ppc=-1
@@ -129,7 +131,7 @@
  L_force_singlefile_output = .true.
  L_first_output_on_restart = .false.
  L_print_J_on_grid = .true.
- L_env_modulus = .true.
+ L_env_modulus     = .false.
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,OUTPUT,iostat=nml_ierr)
  nml_error_message='OUTPUT'
@@ -297,7 +299,7 @@ end subroutine read_nml_integrated_background_diagnostic
   dmodel_id,ibx,iby,ibz,ibeam
  NAMELIST/TARGET_DESCRIPTION/nsp,nsb,ionz_lev,ionz_model,ion_min,ion_max,atomic_number,&
   mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,&
-  n_over_nc,np1,np2
+  n_over_nc,np1,np2,r_c
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
   lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed

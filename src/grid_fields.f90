@@ -1644,14 +1644,6 @@
      end do
     end do
    enddo
-    do k=k1,n3p
-     do j=j1,n2p
-      do i=i1,i1+1
-       evf(i,j,k,1)=zero_dp
-       evf(i,j,k,2)=zero_dp
-     end do
-    end do
-   enddo
  contains
  subroutine first_Ader
 !============
@@ -4418,8 +4410,9 @@
   do ic=ic1,ic2
    do k=k1,n3p
     do j=j1,n2p
-     curr(i,j,k,ic)=curr(i,j,k,ic)+dx2*(apf(i+2,j,k,ic)+apf(i,j,k,ic)-&
-                                        2.*apf(i+1,j,k,ic))
+     apf(i-1,j,k,ic)=apf(i,j,k,ic)
+     curr(i,j,k,ic)=curr(i,j,k,ic)+dx2*(apf(i+1,j,k,ic)+apf(i-1,j,k,ic)-&
+                                        2.*apf(i,j,k,ic))
     enddo
    end do
   end do
@@ -4443,6 +4436,8 @@
    do k=k1,n3p
     do j=j1,n2p
      apf(i+1,j,k,ic)=apf(i,j,k,ic)
+     curr(i,j,k,ic)=curr(i,j,k,ic)+dx2*(apf(i+1,j,k,ic)+apf(i-1,j,k,ic)-&
+                                        2.*apf(i,j,k,ic))
     enddo
    end do
   end do
