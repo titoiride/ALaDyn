@@ -1807,6 +1807,7 @@
  fname_out=foldername//'/'//fname//'.bin'
  fname_outl=foldername//'/'//fnamel//'.bin'
  disp=0
+ disp_col=0
  if(pe0)then
   open(10,file=foldername//'/'//fname//'.dat',form='formatted')
   write(10,*)' Real parameters'
@@ -1839,6 +1840,7 @@
  if(allocated(pdata))deallocate(pdata)
  if(pe0)then
   write(6,*)'Particles data written on file: '//foldername//'/'//fname//'.bin'
+  write(6,*)' Output logical flag ',L_force_singlefile_output
  endif
  end subroutine part_pdata_out
 

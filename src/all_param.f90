@@ -268,7 +268,7 @@
  Channel=.false.
  nm_fact=1.
  if(iform <2)Charge_cons=.true.
- if(np_per_xc(1) > 0)Part=.true.
+ if(np_per_xc(1) > 0 .and. np_per_yc(1)>0)Part=.true.
  if(nsp > 1)Part=.true.
  if(nsp >1)Ions=.true.
  if(model_id <5)then
