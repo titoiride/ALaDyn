@@ -11,7 +11,8 @@ Following here is a brief description of the new `input.nml` file required for t
  nz               = 1,
  ny_targ          = 3500,
  k0               = 100.0,
- yx_rat           = 2.0
+ yx_rat           = 2.0,
+ zx_rat           = 2.0,
 /
 ```
 
@@ -75,10 +76,9 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
   + `1` reflective
   + `2` periodic
 + `ibeam`:
-  for PWFA (model_id #5/#6):
   + `0`
   + `1`
-  + `2`
+  + `2` For Envelope-fluid LWFA model (model_id = 4). Code solves Euler equations for plasma density with the laser described as an envelope.
 
 ## TARGET_DESCRIPTION namelist block
 
@@ -127,7 +127,8 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
  lpy(2)           = 0.0,
  n_over_nc        = 100.0,
  np1              = 1.0,
- np2              = 10.0
+ np2              = 10.0,
+ r_c              = 0.0
 /
 ```
 
@@ -136,6 +137,12 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
 + `atomic_number(i)` are the atomic number (Z) that define each element species
 + `ion_min(i)` are the initial ionization status of the element species
 + `ion_max(i)` are the maximum ionization status of the element species
++ `ionz_lev`: if set to 0, we disable ionization; if 1, only one electron can be extracted per ion, if accessible, per timestep; if 2, it ionizes all the accessible levels in a single timestep
++ `ionz_model` describes the various ionization models:
+  + 1 (pure ADK as in chen et al (2013), the best one for wake sims)
+  + 2 (ADK averaged over cycles, as in chen et al (2013), `W_AC=<W_DC>`, best for envelope simulations)
+  + 3 (`W_AC+BSI`, added barrier suppression ionization)
+  + 4 (Minimum between ADK and BSI ionization values. Here the ADK value is computed averaging on `m`, the magnetic quantum number of the ionized electrons as in Alistair Lawrence-Douglas PhD thesis)
 + `mass_number(i)` are the mass number (A) that define the exact isotope of a given `atomic_number(i)`. Here following you can find the only elements known by ALaDyn
 
 ```fortran
@@ -155,7 +162,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 ```
 
 + `t0_pl(i)`, with `i` from 1 to 4, are the initial temperatures in MeV for the different species
-+ `np_per_xc(i)` **Please note that if `np_per_xc(1) =0`, it just means to ignore the plasma and simply do a laser propagation simulation.**
++ `np_per_xc(i)` **Please note that if `np_per_xc(1) =0`, it just means to ignore the plasma and simply do a laser propagation simulation.**. When in fluid model, particles can be activated anyway to obtain a Hybrid solver (particle + fluid).
   + `dmodel_id=1` : i=1 indicates the number of electrons, i=2 the number of macroparticles of Z_1 species, i=3 the number of macroparticles of Z_2 species and i=4 the number of macroparticles of Z_3 species.
   + `dmodel_id=3,4` : i=1,2 are the number of electrons and ions per cell along x/y in the bulk, i=3,4 refer to the front layer and i=5,6 to the contaminants.
 + `np_per_yc(i)`: the same as `np_per_xc`, this describes the number of particles per cell along transverse directions (valid also for *z* for 3D simulations)
@@ -173,12 +180,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
   + *PWFA* case: the density is in units of (a nominal value) nc=1e18 cm-3
 + `np1` is the density in the upstream layer (foam/preplasma)
 + `np2` is the density in the downstream layer (contaminants)
-+ `ionz_lev`: if set to 0, we disable ionization; if 1, only one electron can be extracted per ion, if accessible, per timestep; if 2, it ionizes all the accessible levels in a single timestep
-+ `ionz_model` describes the various ionization models:
-  + 1 (pure ADK as in chen et al (2013), the best one for wake sims)
-  + 2 (ADK averaged over cycles, as in chen et al (2013), `W_AC=<W_DC>`, best for envelope simulations)
-  + 3 (`W_AC+BSI`, added barrier suppression ionization)
-  + 4 (Minimum between ADK and BSI ionization values. Here the ADK value is computed averaging on `m`, the magnetic quantum number of the ionized electrons as in Alistair Lawrence-Douglas PhD thesis)
++ `r_c` is the plasma channel depth ==> `n/n_over_nc = 1 + w0_y^2*lambda_0^2/(r_c^2 *\pi ^2 *n_over_nc)(y^2+z^2)/w0_y^2`, where `w0_y` is the laser waist. If `r_c`=`w0_y` the channel is matched
 
 ## LASER namelist block (**only for `ibeam=1`**)
 
