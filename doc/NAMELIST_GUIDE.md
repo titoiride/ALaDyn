@@ -180,7 +180,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
   + *PWFA* case: the density is in units of (a nominal value) nc=1e18 cm-3
 + `np1` is the density in the upstream layer (foam/preplasma)
 + `np2` is the density in the downstream layer (contaminants)
-+ `r_c` is the plasma channel depth ==> $$\frac{n}{n_over_nc} = 1 + \frac{w0_y^2\lambda_0^2}{r_c^2 \pi ^2 n_over_nc}\frac{y^2+z^2}{w0_y^2}$$, where `w0_y` is the laser waist. If `r_c`=`w0_y` the channel is matched
++ `r_c` is the plasma channel depth ==> `n/n_over_nc = 1 + w0_y^2*lambda_0^2/(r_c^2 *\pi ^2 *n_over_nc)(y^2+z^2)/w0_y^2`, where `w0_y` is the laser waist. If `r_c`=`w0_y` the channel is matched
 
 ## LASER namelist block (**only for `ibeam=1`**)
 
