@@ -31,7 +31,7 @@
 
  real(sp),allocatable :: wdata(:),gwdata(:)
 
- real(dp) :: tloc(1000),tsp(1:1001),eavg(10,1001),eavg1(10,1001),&
+ real(dp) :: tloc(10000),tsp(1:1001),eavg(10,1001),eavg1(10,1001),&
   pavg(15,1001,4),favg(30,1001)
  integer,parameter :: par_dim=20,ne=100
  real(dp) :: nde0(ne),nde1(ne),nde2(ne)
@@ -2970,7 +2970,7 @@
  endif
  write(lun,*)'====================================='
  write(lun,*)'time'
- write(lun,'(5e11.4)')tloc(1:nst)
+ write(lun,'(5e18.10)')tloc(1:nst)
  if(Part)then
   write(lun,*)'========== Particle section======='
   do ic=1,nsp
@@ -3036,13 +3036,13 @@
    write(lun,*)'====  the leading pulse integrated variables'
    write(lun,'(5a14)')fenv(1:5)
    do ik=1,nst
-    write(lun,'(5e13.5)')eavg(1:5,ik)
+    write(lun,'(4e18.10)')eavg(1:4,ik)
    end do
    if(Two_color)then
     write(lun,*)'====  the injection pulse integrated variables'
     write(lun,'(4a14)')fenv(1:4)
     do ik=1,nst
-     write(lun,'(4e13.5)')eavg1(1:4,ik)
+     write(lun,'(4e18.10)')eavg1(1:4,ik)
     end do
    endif
   endif
@@ -3052,12 +3052,12 @@
   if(nfield==6)then
    write(lun,'(6a14)')flt(1:6)
    do ik=1,nst
-    write(lun,'(6e13.5)')eavg(1:6,ik)
+    write(lun,'(6e18.10)')eavg(1:6,ik)
    end do
   else
    write(lun,'(3a14)')flt(1:3)
    do ik=1,nst
-    write(lun,'(3e13.5)')eavg(1:3,ik)
+    write(lun,'(3e18.10)')eavg(1:3,ik)
    end do
   endif
  endif
