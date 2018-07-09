@@ -3036,7 +3036,7 @@
    write(lun,*)'====  the leading pulse integrated variables'
    write(lun,'(5a14)')fenv(1:5)
    do ik=1,nst
-    write(lun,'(4e18.10)')eavg(1:4,ik)
+    write(lun,'(5e18.10)')eavg(1:5,ik)
    end do
    if(Two_color)then
     write(lun,*)'====  the injection pulse integrated variables'
