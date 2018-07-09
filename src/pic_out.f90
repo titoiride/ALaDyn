@@ -2917,8 +2917,11 @@
  write (fname,'(a4,i2.2)') 'diag',idata
 
  open (lun,file='diagnostics/'//fname//'.dat',form='formatted')
- write(lun,*)'mod_id,dmodel_id LP_ord,der_ord, ibeam,  color'
- write(lun,'(6i6)')model_id,dmodel_id,LPf_ord,der_ord,ibeam,color
+ write(lun,*)'    mod_id, dmodel_id,    LP_ord,   der_ord,     ibeam,     color,   &
+ n_field'
+ write(lun,'(7i11)')model_id,dmodel_id,LPf_ord,der_ord,ibeam,color,nfield
+ write(lun,*)'        Part,        Beam,        Wake, Solid_Target'
+ write(lun,'(4L13)')Part,Beam,Wake,Solid_target
  write(lun,*)'Z1_i,  A1_i,   Z2_i,   A2_i,   iform,    str'
  write(lun,'(6i6)')ion_min(1),atomic_number(1),ion_min(2),atomic_number(2),iform,str_flag
  write(lun,*)' xmax       xmin       ymax      ymin      '
