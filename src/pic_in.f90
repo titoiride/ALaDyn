@@ -212,7 +212,7 @@
  integer,intent(in) :: nc,ky2(:),kz2(:),nyc(:),nzc(:)
  real(dp),intent(in) :: ymt,zmt,whyz(:,:,:)
  integer :: ic,i2,k1,j1,j2
- real(dp) :: loc_ym
+ real(dp) :: loc_ym, loc_zm
 
  if(ndim < 3)then
   loc_ym=loc_ygrid(imody)%gmin
@@ -232,52 +232,164 @@
   return
  endif
  !==========================
- loc_ym=loc_zgrid(imodz)%gmin
- if(imodz==0)loc_ym=zmt
+ loc_zm=loc_zgrid(imodz)%gmin
+ if(imodz==0)loc_zm=zmt
  loc_ym=loc_ygrid(imody)%gmin
  if(imody==0)loc_ym=ymt
+
  do ic=1,nc
   k1=0
-  do i2=1,nyc(ic)
-   if(ypt(i2,ic)< loc_ym)k1=i2
-  end do
-  do i2=1,ky2(ic)
-   k1=k1+1
-   loc_ypt(i2,ic)=ypt(k1,ic)
-  end do
   do i2=1,nzc(ic)
-   if(zpt(i2,ic)< loc_ym)k1=i2
+   if(zpt(i2,ic)< loc_zm)k1=i2
   end do
-  k1=0
   do i2=1,kz2(ic)
    k1=k1+1
    loc_zpt(i2,ic)=zpt(k1,ic)
    j1=0
+   do j2=1,nyc(ic)
+    if(ypt(j2,ic)< loc_ym)j1=j2
+   end do
    do j2=1,ky2(ic)
     j1=j1+1
+    loc_ypt(j2,ic)=ypt(j1,ic)
     loc_wghyz(j2,i2,ic)=whyz(j1,k1,ic)
    end do
   end do
  end do
  end subroutine mpi_yz_part_distrib
  !--------------------------
- !============================
+subroutine set_uniform_yz_distrib(nyh,nc)
 
+ integer,intent(in) :: nyh,nc
+ integer :: p,ip
+ integer :: j,i,i1,i2,ic
+ integer :: n_peak
+ integer :: npyc(6),npzc(6),npty_ne,nptz_ne
+ real(dp) :: yy,zz,dxip,dpy,np1_loc
+ real(dp) :: zp_min,zp_max,yp_min,yp_max
+ integer :: nyl1,nzl1
+ real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
+ !=================
+ !========= gridding the transverse target size
+ nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
+ nzl1=1+nz/2-nyh/2  !=1 if nyh=nz
+ yp_min=ymin_t
+ yp_max=ymax_t
+ !=============================
+ ! Multispecies
+ !=============================
+ do ic=1,nc
+  npyc(ic)=nyh*np_per_yc(ic)
+ end do
+ npty=maxval(npyc(1:nc))
+ nptz=1
+ if(ndim==3)then
+  npzc(1:nc)=nyh*np_per_zc(1:nc)
+  zp_min=zmin_t    !-Lz
+  zp_max=zmax_t    !+Lz
+  nptz=maxval(npzc(1:nc))
+ endif
+ allocate(ypt(npty,nc))
+ allocate(zpt(nptz,nc))
+ allocate(wy(npty,nc))
+ allocate(wz(nptz,nc))
+ allocate(wyz(npty,nptz,nc))
+ ypt=0.
+ zpt=0.
+ wyz=1.
+ wy=1.
+ wz=1.
+ !==================
+ allocate(loc_jmax(0:npe_yloc-1,1:nc))
+ allocate(loc_kmax(0:npe_zloc-1,1:nc))
+ allocate(loc_imax(0:npe_xloc-1,1:nc))
+ !====================
+ ! Uniform layers along y-z coordinates
+ !===============
+ do ic=1,nc
+  npty_ne=npyc(ic)
+  if(npty_ne >0)then
+   dpy=(yp_max-yp_min)/real(npty_ne,dp)
+   do i=1,npty_ne
+    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
+   enddo
+  endif
+  if(Stretch)then
+   yy=str_ygrid%smin
+   if(yy >yp_min)then
+    dpy=dyi/real(npyc(ic),dp)
+    i1=(str_ygrid%sind(1)-nyl1+1)*npyc(ic)
+    i2=npty_ne-i1
+    do i=1,i1
+     dxip=dpy*(real(i-i1,dp)-0.5)
+     ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
+     wy(i,ic)=1./(cos(dxip)*cos(dxip))
+    enddo
+    dxip=dy/real(npyc(ic),dp)
+    do i=i1+1,i2
+     ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
+    end do
+    do i=i2+1,npty_ne
+     dxip=dpy*(real(i-i2,dp)-0.5)
+     ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
+     wy(i,ic)=1./(cos(dxip)*cos(dxip))
+    enddo
+   endif
+  endif
+  nptz_ne=1
+  if(ndim==3)then
+   zpt(1:npty_ne,ic)=ypt(1:npty_ne,ic)
+   wz(1:npty_ne,ic)=wy(1:npty_ne,ic)
+   nptz_ne=npty_ne
+  endif
+  do i=1,npty_ne
+   wyz(i,1:nptz_ne,ic)=wy(i,ic)*wz(1:nptz_ne,ic)
+  end do
+  if(chann_fact >0.0)then
+   do i=1,npzc(ic)
+    zz=zpt(i,ic)
+    do j=1,npyc(ic)
+     yy=ypt(j,ic)
+     wyz(j,i,ic)=1.+chann_fact*(yy*yy+zz*zz)/(w0_y*w0_y)
+    end do
+   end do
+  endif
+  call set_pgrid_ind(npty_ne,nptz_ne,ic)  !exit loc_jmax,loc_kmax
+ end do
+ !===========================
+ loc_npty(1:nc)=loc_jmax(imody,1:nc)
+ loc_nptz(1:nc)=loc_kmax(imodz,1:nc)
+ !=============================
+ npty_ne=1
+ nptz_ne=1
+ npty_ne=maxval(loc_npty(1:nc))
+ nptz_ne=maxval(loc_nptz(1:nc))
+!======================
+ allocate(loc_wghyz(npty_ne,nptz_ne,nc))
+ allocate(loc_ypt(npty_ne,nc))
+ allocate(loc_zpt(nptz_ne,nc))
+ loc_wghyz=1.
+ call mpi_yz_part_distrib(nc,loc_npty,loc_nptz,npyc,npzc,&
+                          ymin_t,zmin_t,wyz)
+ !=EXIT local to mpi (imody,imodz) tasks (loc_ypt,loc_zpt), weights (loc_wghyz)
+ ! => set in common in pstruct_data.f90 file/
+ ! and particle numbers (loc_npty,loc_nptz)
+ ! => set in common in grid_and_partices.f90 file/
+ !=====================================
+ !==================
+ end subroutine set_uniform_yz_distrib
+ !============================
  subroutine multi_layer_gas_target(layer_mod,nyh,xf0)
 
  integer,intent(in) :: layer_mod,nyh
  real(dp),intent(in) :: xf0
- integer :: p
- integer :: i,j,i1,i2,ic
- integer :: n_peak,nyl1,nzl1
+ integer :: p,i,j,i1,i2,ic
+ integer :: n_peak,npmax,nxtot
  integer :: npyc(4),npzc(4),npty_ne,nptz_ne
- integer :: npmax,nxtot
- real(dp) :: uu,yy,zz,dxip,dpy,dpz,u2
- real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
+ real(dp) :: uu,u2,xp_min,xp_max
  real(dp) :: xfsh,un(2),wgh_sp(3)
  integer :: nxl(5)
- real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
- integer :: loc_nptx(4),nps_loc(4),np_per_zcell(4),last_particle_index(4),nptx_alloc(4)
+ integer :: loc_nptx(4),nps_loc(4),last_particle_index(4),nptx_alloc(4)
  !==========================
  p=0
  i=0
@@ -285,17 +397,12 @@
  i1=0
  i2=0
  ic=0
- ! the following variables are used only in Stretched mode, initialized anyway to zero
- yy=0.0
- dxip=0.0
+ call set_uniform_yz_distrib(nyh,nsp)
  !==========================
  xp_min=xmin
  xp_max=xmax
- np_per_zcell(1:nsp)=1
  !==========================
  nxl=0
- nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
- nzl1=1+nz/2-nyh/2
  !============================
  ! Parameters for particle distribution along the x-coordinate
  !============================
@@ -320,156 +427,24 @@
  allocate(wghpt(nptx_max,nsp))
  allocate(loc_xpt(nptx_max,nsp))
  !=============================
- ! mulltispecies y-z distribution in a uniform target
- yp_min=ymin_t
- yp_max=ymax_t
- zp_min=zmin_t
- zp_max=zmax_t
- !----------------------
- npty=maxval(np_per_yc(1:nsp))
- npty=nyh*npty
- nptz=1
- if(ndim==3)then
-  np_per_zcell(1:nsp)=np_per_zc(1:nsp)
-  nptz=maxval(np_per_zc(1:nsp))
-  nptz=nyh*nptz
- endif
- allocate(ypt(npty,nsp))
- allocate(zpt(nptz,nsp))
- allocate(wy(npty,nsp))
- allocate(wz(nptz,nsp))
- allocate(wyz(npty,nptz,nsp))
- ypt=0.
- zpt=0.
- wy=1.
- wz=1.
- wyz=1.
- !==================
- allocate(loc_jmax(0:npe_yloc-1,nsp))
- allocate(loc_kmax(0:npe_zloc-1,nsp))
- allocate(loc_imax(0:npe_xloc-1,nsp))
- !==================
- !  UNIFORM y-z particle distribution for all models
- !========================
  wghpt=one_dp
  un=one_dp
  !===================================
- ! Distributes particles on y-z coordinates
- do ic=1,nsp
-  npyc(ic)=nyh*np_per_yc(ic)
-  npty_ne=npyc(ic)
-  npzc(ic)=1
-  if(ndim > 1 )then
-   dpy=(yp_max-yp_min)/real(npyc(ic),dp)
-   do i=1,npyc(ic)
-    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
-   enddo
-    if(Stretch)then
-     yy=str_ygrid%smin
-     if(yy >yp_min)then
-      dpy=dyi/real(np_per_yc(ic),dp)
-      i1=(str_ygrid%sind(1)-nyl1+1)*np_per_yc(ic)
-      i2=npty_ne-i1
-      do i=1,i1
-       dxip=dpy*(real(i-i1,dp)-0.5)
-       ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
-       wy(i,ic)=1./(cos(dxip)*cos(dxip))
-      enddo
-      dxip=dy/real(np_per_yc(ic),dp)
-      do i=i1+1,i2
-       ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
-      end do
-      do i=i2+1,npty_ne
-       dxip=dpy*(real(i-i2,dp)-0.5)
-       ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
-       wy(i,ic)=1./(cos(dxip)*cos(dxip))
-      enddo
-     endif
-    endif
-   endif
-  enddo
-  if(ndim > 2)then !along-z-drection
-   do ic=1,nsp
-    npzc(ic)=nyh*np_per_zc(ic)
-    nptz_ne=npzc(ic)
-    dpz=(zp_max-zp_min)/real(npzc(ic),dp)
-    do i=1,npzc(ic)
-     zpt(i,ic)=zp_min+dpz*(real(i,dp)-0.5)
-    enddo
-    if(Stretch)then
-     zz=str_zgrid%smin
-     if(zz>zp_min)then
-      dpz=dzi/real(np_per_zc(ic),dp)
-      i1=(str_zgrid%sind(1)-nzl1+1)*np_per_zc(ic)
-      i2=nptz_ne-i1
-      do i=1,i1
-       dxip=dpz*(real(i-i1,dp)-0.5)
-       zpt(i,ic)=str_zgrid%smin+L_s*tan(dxip)
-       wz(i,ic)=1./(cos(dxip)*cos(dxip))
-      enddo
-      dxip=dz/real(np_per_zc(ic),dp)
-      do i=i1+1,i2
-       zpt(i,ic)=str_zgrid%smin+dxip*(real(i-i1,dp)-0.5)
-      enddo
-      do i=i2+1,nptz_ne
-       dxip=dpz*(real(i-i2,dp)-0.5)
-       zpt(i,ic)=str_zgrid%smax+L_s*tan(dxip)
-       wz(i,ic)=1./(cos(dxip)*cos(dxip))
-      enddo
-     endif
-    endif
-   enddo
-  endif
-  do ic=1,nsp
-   do i=1,npzc(ic)
-    zz=zpt(i,ic)
-    do j=1,npyc(ic)
-     yy=ypt(j,ic)
-     wyz(j,i,ic)=1.+chann_fact*(yy*yy+zz*zz)/(w0_y*w0_y)
-    end do
-   end do
-  end do
-  ! Now the y-z particle distribution are shared among mpi-tasks
-  ! on output =>> loc_jmax, loc_kmax
-  !=======================================
-  do ic=1,nsp
-   call set_pgrid_ind(npyc(ic),npzc(ic),ic)
-  enddo
-  !=================================
-  ! LOCAL to mpi domains particle representation
-  ! NO dependence of (y,z) coordinates on x coordinate
-  !=====loc_npty,loc_nptz allocated to (nsp) yz-layers or components
-  !====================
-  loc_npty(1:nsp)=loc_jmax(imody,1:nsp)
-  loc_nptz(1:nsp)=loc_kmax(imodz,1:nsp)
-  npty_ne=1
-  nptz_ne=1
-  npty_ne=maxval(loc_npty(1:nsp))
-  nptz_ne=maxval(loc_nptz(1:nsp))
-! ======================
-  allocate(loc_wghyz(npty_ne,nptz_ne,nsp))
-  allocate(loc_ypt(npty_ne,nsp))
-  allocate(loc_zpt(nptz_ne,nsp))
-  loc_wghyz=1.
-  !===========================
-  call mpi_yz_part_distrib(nsp,loc_npty,loc_nptz,npyc,npzc,&
-                           ymin_t,zmin_t,wyz)
-  !===========================
-  ! WARNING for charge distribution
-  !====================================
-  ! wgh_sp(1:nsp) already set by initial conditions
-  !=====================================================
-  ! Longitudinal distribution
-  nptx=0
-  !Weights for mulpispecies target
-  wgh_sp(1:3)=j0_norm
-  if(nsp==2)then
-   wgh_sp(2)=1./(real(mp_per_cell(2),dp))
-   if(ion_min(1)>1)wgh_sp(2)=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
-  endif
-  select case(layer_mod)
-   !================ first uniform layer np1=================
-  case(1)
+ ! WARNING for charge distribution
+ !====================================
+ ! wgh_sp(1:nsp) already set by initial conditions
+ !=====================================================
+ ! Longitudinal distribution
+ nptx=0
+ !Weights for mulpispecies target
+ wgh_sp(1:3)=j0_norm
+ if(nsp==2)then
+  wgh_sp(2)=1./(real(mp_per_cell(2),dp))
+  if(ion_min(1)>1)wgh_sp(2)=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
+ endif
+ select case(layer_mod)
+  !================ first uniform layer np1=================
+ case(1)
    if(nxl(1)>0)then
     do ic=1,nsp
      n_peak=nxl(1)*np_per_xc(ic)
