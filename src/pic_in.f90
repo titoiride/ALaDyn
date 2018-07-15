@@ -212,7 +212,7 @@
  integer,intent(in) :: nc,ky2(:),kz2(:),nyc(:),nzc(:)
  real(dp),intent(in) :: ymt,zmt,whyz(:,:,:)
  integer :: ic,i2,k1,j1,j2
- real(dp) :: loc_ym
+ real(dp) :: loc_ym, loc_zm
 
  if(ndim < 3)then
   loc_ym=loc_ygrid(imody)%gmin
@@ -232,29 +232,26 @@
   return
  endif
  !==========================
- loc_ym=loc_zgrid(imodz)%gmin
- if(imodz==0)loc_ym=zmt
+ loc_zm=loc_zgrid(imodz)%gmin
+ if(imodz==0)loc_zm=zmt
  loc_ym=loc_ygrid(imody)%gmin
  if(imody==0)loc_ym=ymt
+
  do ic=1,nc
   k1=0
-  do i2=1,nyc(ic)
-   if(ypt(i2,ic)< loc_ym)k1=i2
-  end do
-  do i2=1,ky2(ic)
-   k1=k1+1
-   loc_ypt(i2,ic)=ypt(k1,ic)
-  end do
   do i2=1,nzc(ic)
-   if(zpt(i2,ic)< loc_ym)k1=i2
+   if(zpt(i2,ic)< loc_zm)k1=i2
   end do
-  k1=0
   do i2=1,kz2(ic)
    k1=k1+1
    loc_zpt(i2,ic)=zpt(k1,ic)
    j1=0
+   do j2=1,nyc(ic)
+    if(ypt(j2,ic)< loc_ym)j1=j2
+   end do
    do j2=1,ky2(ic)
     j1=j1+1
+    loc_ypt(j2,ic)=ypt(j1,ic)
     loc_wghyz(j2,i2,ic)=whyz(j1,k1,ic)
    end do
   end do
