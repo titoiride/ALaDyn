@@ -2662,7 +2662,7 @@
  !====================
  !Ghost cell values for field assignement on particles
  vb=vbeam
- call eb_fields_collect(ebf,ebf1_bunch,ebf_bunch,ebf0,nfield)
+ if(Hybrid) call eb_fields_collect(ebf,ebf1_bunch,ebf_bunch,ebf0,nfield)
  call pfields_prepare(ebf,i1,i2,j1,j2,k1,k2,nfield,1,1)
  call pfields_prepare(ebf_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
  call pfields_prepare(ebf1_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)

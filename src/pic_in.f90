@@ -3467,11 +3467,10 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  if(L_Bpoloidal) call set_poloidal_ex_fields( &
   ebf0_bunch,i1,i2b,j1,nyp,k1,nzp,B_ex_poloidal*T_unit,radius_poloidal)
  !=====================================
- call part_distribute(dmodel_id,lp_end(1))
+ if(ny_targ>0) call part_distribute(dmodel_id,lp_end(1))
  if(Hybrid)then
   call init_fluid_density_momenta(up,up0,lp_end(1),nfcomp,dmodel_id,i1,i2,j1,nyp,k1,nzp)
  endif
- if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1))
  !============================
  !----------------------
  if(pe0)then
