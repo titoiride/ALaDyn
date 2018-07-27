@@ -257,7 +257,7 @@
   integer :: n_peak,nyl1,nzl1
   integer :: npyc(4),npzc(4),npty_ne,nptz_ne
   integer :: npmax,nxtot
-  real(dp) :: uu,yy,zz,dxip,dpy,dpz,u2,u3
+  real(dp) :: uu,yy,zz,dxip,dpy,dpz,u2,u3,ramp_prefactor
   real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
   real(dp) :: xfsh,un(2),wgh_sp(3)
   integer :: nxl(5)
@@ -422,12 +422,14 @@
    wgh_sp(2)=1./(real(mp_per_cell(2),dp))
    if(ion_min(1)>1)wgh_sp(2)=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
   endif
+  ramp_prefactor=one_dp
   select case(layer_mod)
    !================ first uniform layer np1=================
   case(1)
    if(nxl(1)>0)then
     do ic=1,nsp
      n_peak=nxl(1)*np_per_xc(ic)
+     ramp_prefactor=one_dp-np1
      do i=1,n_peak
       uu=(real(i,dp)-0.5)/real(n_peak,dp)
       i1=nptx(ic)+i
@@ -451,7 +453,7 @@
       u3=u2*uu
       !wghpt(i1,ic)=(np1+exp(-4.5*u2)*(1.-np1))*wgh_sp(ic)
       !wghpt(i1,ic)=exp(-4.5*u2)*wgh_sp(ic)
-      wghpt(i1,ic)=(-2.*u3+3*u2)*wgh_sp(ic)
+      wghpt(i1,ic)=(-2.*ramp_prefactor*u3+3.*ramp_prefactor*u2+one_dp-ramp_prefactor)*wgh_sp(ic)
      end do
      nptx(ic)=nptx(ic)+n_peak
     end do
@@ -1335,7 +1337,7 @@
  else
   np1_loc=0.005
  endif
- !======== a preplasma rump
+ !======== a preplasma ramp
  if(nxl(2) >0)then
   do ic=3,4
    n_peak=nxl(2)*np_per_xc(ic-2)
