@@ -17,10 +17,11 @@ install:
   - if [%COMPILER%]==[cygwin] SET "PATH=C:\cygwin64\bin;C:\cygwin64\usr\bin;%PATH%"
   - if [%COMPILER%]==[cygwin] SET PATH=%PATH:C:\Program Files\Git\usr\bin;=%
   - git submodule -q update --init --recursive
-  - cd %WORKSPACE%\
+  - cd %WORKSPACE%
   - mkdir cygwin-downloads
   - ps: if($env:COMPILER -eq "cygwin") { Invoke-WebRequest https://cygwin.com/setup-x86_64.exe -OutFile $env:WORKSPACE\cygwin-setup.exe }
-  - if [%COMPILER%]==[cygwin] %WORKSPACE%\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir %WORKSPACE%\cygwin-downloads --packages gcc-g++,libopenmpi-devel,gcc-fortran,cmake,fftw3,libfftw3-devel,libboost-devel
+  - if [%COMPILER%]==[cygwin] %WORKSPACE%\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir %WORKSPACE%\cygwin-downloads --packages gcc-g++,libopenmpi-devel,gcc-fortran,cmake,fftw3,libfftw3-devel,libboost-devel,zlib-devel
+
   - cd %WORKSPACE%\aladyn\
   - mkdir build
   - cd build
