@@ -386,7 +386,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  integer :: p,i,j,i1,i2,ic
  integer :: n_peak,npmax,nxtot
  integer :: npyc(4),npzc(4),npty_ne,nptz_ne
- real(dp) :: uu,u2,xp_min,xp_max
+ real(dp) :: uu,u2,xp_min,xp_max,u3,ramp_prefactor
  real(dp) :: xfsh,un(2),wgh_sp(3)
  integer :: nxl(5)
  integer :: loc_nptx(4),nps_loc(4),last_particle_index(4),nptx_alloc(4)
@@ -446,9 +446,9 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   !================ first uniform layer np1=================
  case(1)
    if(nxl(1)>0)then
+    ramp_prefactor=one_dp-np1
     do ic=1,nsp
      n_peak=nxl(1)*np_per_xc(ic)
-     ramp_prefactor=one_dp-np1
      do i=1,n_peak
       uu=(real(i,dp)-0.5)/real(n_peak,dp)
       i1=nptx(ic)+i
@@ -818,7 +818,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
    end do
   end do
   !=============================
-  ! Alocation using a large buffer npt_max=mp_per_cell(1)*nx_loc*ny_loc*nz_loc
+  ! Allocation using a large buffer npt_max=mp_per_cell(1)*nx_loc*ny_loc*nz_loc
  
   !===========================
   last_particle_index=0
@@ -2655,7 +2655,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   integer,intent(in) :: nfluid,dmodel,i1,i2,j1,j2,k1,k2
   integer :: i,i0,j,k,ic,nxl(5),i0_targ
   integer :: j01,j02,k01,k02,jj,kk
-  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,,u2,u3,ramp_prefactor
+  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,u2,u3,ramp_prefactor
   real(dp) :: yy,zz,r2
 
  do i=1,5
@@ -2722,10 +2722,10 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   !initial plateau, cubic ramp (exponential still available but commented), central plateau and exit ramp
   case(1)
    if(nxl(1) >0)then
+    ramp_prefactor=one_dp-np1
     do i=1,nxl(1)
      i0=i0+1
      fluid_x_profile(i0)=peak_fluid_density*np1
-     ramp_prefactor=one_dp-np1
     end do
    endif
    if(nxl(2) >0)then    !sigma=nxl(2)/3

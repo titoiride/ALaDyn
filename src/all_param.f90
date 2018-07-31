@@ -285,6 +285,7 @@
   mp_per_cell(i)=np_per_xc(i)*np_per_yc(i)
   if(ndim==3) mp_per_cell(i)=np_per_xc(i)*np_per_yc(i)*np_per_zc(i)
  end do
+ j0_norm=1.
  nref=mp_per_cell(1)
  ratio_mpc=1.
  if(mp_per_cell(1) >0)then

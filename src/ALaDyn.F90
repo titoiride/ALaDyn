@@ -229,21 +229,21 @@
 !==================
   if(nvout>0)then
    if (mod_ord==2) then
-    if(L_env_modulus)then
+    !if(L_env_modulus)then
      i=0
      call env_fields_out(env,tnow,i,jump)
-     if(Two_color)call env_fields_out(env1,tnow,-1,jump)
-    else
+     if(Two_color)call env_fields_out(env1,tnow,-1,jump)    !EXIT |A|
+    !else
      if(Two_color)then
       do i=1,2
        call env_two_fields_out(env,env1,tnow,i,jump)
       end do
      else
       do i=1,2
-       call env_fields_out(env,tnow,i,jump)
+       call env_fields_out(env,tnow,i,jump)     !EXIT [Ar,Ai]
       end do
      endif
-    endif
+    !endif
    endif
    do i=1,nvout
     if(L_force_singlefile_output) then
@@ -525,7 +525,7 @@
  real(dp), parameter :: opt_der=1.0
 
  !enable loop to attach with gdb only if really needed
- !WARNING if enabled without needed, the program sleeps at start without doing anything!
+ !WARNING if enabled without need, the program sleeps at start without doing anything!
 #ifdef ENABLE_GDB_ATTACH
  call gdbattach
 #endif
@@ -628,10 +628,14 @@
   tout=tstart
   ! to count outputs in energy-data (iene+1 times)
   ! in general data (nouts+1 times)
+  dt_loc=dt
+  iter_max=1
   dtout=(tmax-tstart)/nouts
   dtdia=(tmax-tstart)/iene
-  iter_max=tmax/dt
-  dt_loc=tmax/float(iter_max)
+  if(tmax >0.0)then
+   iter_max=tmax/dt
+   dt_loc=tmax/float(iter_max)
+  endif
 
  case (1) ! reads from dump evolved data
   if (.not.L_first_output_on_restart) then
@@ -647,8 +651,10 @@
    write(6,*)' Dump data read completed'
   endif
   call set_fxgrid(npe_xloc,sh_ix)
-  iter_max=tmax/dt
-  dt_loc=tmax/float(iter_max)
+  if(tmax >0.0)then
+   iter_max=tmax/dt
+   dt_loc=tmax/float(iter_max)
+  endif
   dtout=tmax/nouts
   dtdia=tmax/iene
   tmax=tmax+tstart
@@ -1101,7 +1107,7 @@
     end do
    end if
  write(60,*)'**********TARGET PLASMA PARAMETERS***********'
-  if(n0_ref>0. .and. Part)then
+  if(Part)then
    write(60,'(a26,e11.4,a10)')'  Electron number density ',n0_ref,'[10^18/cc]'
    write(60,'(a21,f5.2)')'  Plasma wavelength= ',lambda_p
    write(60,'(a20,e11.4)')' Chanelling fact  = ',chann_fact

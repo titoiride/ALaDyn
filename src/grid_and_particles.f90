@@ -75,10 +75,7 @@
  real(dp) :: a_rk(6),b_rk(6),c_rk(0:6)
  real(dp) :: a_lpf(4),b_lpf(4),c_lpf(4)
  real(dp) :: energy_in_targ
- logical :: Part,part_dcmp,cmp,test,Stretch,Hybrid,Channel
- logical :: Lp_active,Lp_inject,Plane_wave,Lin_lp,Circ_lp,Relativistic,Envelope,Ions,Beam,Pbeam,Two_color
- logical :: Ionization,Wake,Solid_target,Charge_cons,G_prof,High_gamma
- logical :: Impact_ioniz,Comoving,P_tracking
+
 
  end module grid_and_particles
 
