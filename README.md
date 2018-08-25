@@ -19,7 +19,7 @@ Copyright on the code is by the ALaDyn Collaboration.
 
 `ALaDyn` is built using CMake.
 
-We support building ALaDyn on almost all sane systems. [Here](doc/BUILD.md) you can find a guide to build the code on many different OS configurations, but only using the `gcc` toolchain.  
+We support building ALaDyn on almost all sane systems. [Here](doc/BUILD.md) you can find a guide to build the code on many different OS configurations.  
 appveyor and travis recipes can also help understanding how to build the code.
 
 ## Support channels
@@ -31,7 +31,7 @@ We also have a group on Telegram ([join here](https://t.me/ALaDyn_Chat)) (for qu
 
 latest release:  [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.592388.svg)](http://dx.doi.org/10.5281/zenodo.592388)
 
-Other releases:
+Other releases:  
 v2.0.0 (v2018.1): [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1195760.svg)](https://doi.org/10.5281/zenodo.1195760)  
 v1.0.0 (v2017.1): [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1065413.svg)](https://doi.org/10.5281/zenodo.1065413)  
 v1.0.0-beta: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.49553.svg)](https://doi.org/10.5281/zenodo.49553)  
