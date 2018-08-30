@@ -3,33 +3,41 @@ language: cpp
 matrix:
   include:
     - os: osx
+      compiler: gcc
       env:
         - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc@5 open-mpi fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-5"
 
 ### broken, still don't know why
 #    - os: osx
+#      compiler: gcc
 #      env:
 #        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc@6 open-mpi fftw && brew upgrade cmake && CC=gcc-6 && CXX=g++-6 && FC=/usr/local/bin/gfortran-6"
 #
 #    - os: osx
+#      compiler: gcc
 #      env:
 #        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc@7 open-mpi fftw && brew upgrade cmake && CC=gcc-7 && CXX=g++-7 && FC=/usr/local/bin/gfortran-7"
 #
 #    - os: osx
+#      compiler: gcc
 #      env:
 #        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && CC=gcc-8 && CXX=g++-8 && FC=/usr/local/bin/gfortran-8"
 
     - os: osx
+      compiler: gcc
       env:
-        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && CC=gcc && CXX=g++ && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
 
     - os: osx
+      compiler: clang
       env:
-        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && CC=clang && CXX=clang++ && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
 
     - os: linux
+      compiler: clang
       addons:
         apt:
+          update: true
           packages:
             - clang-3.6
             - gfortran
@@ -37,11 +45,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
+        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && FC=/usr/bin/gfortran"
 
     - os: linux
+      compiler: clang
       addons:
         apt:
+          update: true
           sources:
             - llvm-toolchain-precise-3.8
           packages:
@@ -51,11 +61,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
+        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && FC=/usr/bin/gfortran"
 
     - os: linux
+      compiler: clang
       addons:
         apt:
+          update: true
           sources:
             - llvm-toolchain-trusty-3.9
           packages:
@@ -65,11 +77,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
+        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9 && FC=/usr/bin/gfortran"
 
     - os: linux
+      compiler: clang
       addons:
         apt:
+          update: true
           sources:
             - llvm-toolchain-trusty-4.0
           packages:
@@ -79,11 +93,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
+        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0 && FC=/usr/bin/gfortran"
 
     - os: linux
+      compiler: clang
       addons:
         apt:
+          update: true
           sources:
             - llvm-toolchain-trusty-5.0
           packages:
@@ -93,11 +109,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && FC=/usr/bin/gfortran"
 
     - os: linux
+      compiler: clang
       addons:
         apt:
+          update: true
           sources:
             - llvm-toolchain-trusty-6.0
             - ubuntu-toolchain-r-test
@@ -108,11 +126,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && FC=/usr/bin/gfortran"
 
     - os: linux
+      compiler: gcc
       addons:
         apt:
+          update: true
           sources:
             - ubuntu-toolchain-r-test
           packages:
@@ -123,11 +143,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && FC=gfortran-4.9"
+         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && FC=/usr/bin/gfortran-4.9"
 
     - os: linux
+      compiler: gcc
       addons:
         apt:
+          update: true
           sources:
             - ubuntu-toolchain-r-test
           packages:
@@ -138,11 +160,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && FC=gfortran-5"
+         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && FC=/usr/bin/gfortran-5"
 
     - os: linux
+      compiler: gcc
       addons:
         apt:
+          update: true
           sources:
             - ubuntu-toolchain-r-test
           packages:
@@ -153,11 +177,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6 && FC=gfortran-6"
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6 && FC=/usr/bin/gfortran-6"
 
     - os: linux
+      compiler: gcc
       addons:
         apt:
+          update: true
           sources:
             - ubuntu-toolchain-r-test
           packages:
@@ -168,11 +194,13 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && FC=gfortran-7"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && FC=/usr/bin/gfortran-7"
 
     - os: linux
+      compiler: gcc
       addons:
         apt:
+          update: true
           sources:
             - ubuntu-toolchain-r-test
           packages:
@@ -183,18 +211,20 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && FC=gfortran-8"
+        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && FC=/usr/bin/gfortran-8"
 
     - os: linux
+      compiler: gcc
       addons:
         apt:
+          update: true
           packages:
             - gfortran
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
       env:
-        - MATRIX_EVAL=""
+        - MATRIX_EVAL="FC=gfortran"
 
 before_install:
   - eval "${MATRIX_EVAL}"
@@ -202,8 +232,7 @@ before_install:
 before_script:
   - mkdir build
   - cd build
-  - cmake .. -DCMAKE_BUILD_TYPE="Debug"
+  - cmake .. -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_Fortran_COMPILER=$FC
 
 script:
   - cmake --build . --target install
-
