@@ -32,6 +32,7 @@ We also have a group on Telegram ([join here](https://t.me/ALaDyn_Chat)) (for qu
 latest release:  [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.592388.svg)](http://dx.doi.org/10.5281/zenodo.592388)
 
 Other releases:  
+v2.1.0 (v2018.2): [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1406920.svg)](https://doi.org/10.5281/zenodo.1406920)  
 v2.0.0 (v2018.1): [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1195760.svg)](https://doi.org/10.5281/zenodo.1195760)  
 v1.0.0 (v2017.1): [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1065413.svg)](https://doi.org/10.5281/zenodo.1065413)  
 v1.0.0-beta: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.49553.svg)](https://doi.org/10.5281/zenodo.49553)  

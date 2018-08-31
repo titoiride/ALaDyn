@@ -8,21 +8,39 @@ matrix:
 ### - for the fortran part: ALWAYS gfortran-8
     - os: osx
       compiler: gcc
+      name: macOS - gcc@5
       env:
         - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc@5 gcc open-mpi fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-8"
 
     - os: osx
       compiler: gcc
+      name: macOS - native gcc (llvm backend)
       env:
         - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
 
     - os: osx
       compiler: clang
+      name: macOS - native clang
       env:
         - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
 
     - os: linux
       compiler: clang
+      name: ubuntu - native clang
+      addons:
+        apt:
+          update: true
+          packages:
+            - gfortran
+            - libopenmpi-dev
+            - libboost-all-dev
+            - libfftw3-dev
+      env:
+        - MATRIX_EVAL="FC=/usr/bin/gfortran"
+
+    - os: linux
+      compiler: clang
+      name: ubuntu - clang@3.6
       addons:
         apt:
           update: true
@@ -37,6 +55,7 @@ matrix:
 
     - os: linux
       compiler: clang
+      name: ubuntu - clang@3.8
       addons:
         apt:
           update: true
@@ -53,6 +72,7 @@ matrix:
 
     - os: linux
       compiler: clang
+      name: ubuntu - clang@3.9
       addons:
         apt:
           update: true
@@ -69,6 +89,7 @@ matrix:
 
     - os: linux
       compiler: clang
+      name: ubuntu - clang@4.0
       addons:
         apt:
           update: true
@@ -85,6 +106,7 @@ matrix:
 
     - os: linux
       compiler: clang
+      name: ubuntu - clang@5.0
       addons:
         apt:
           update: true
@@ -101,6 +123,7 @@ matrix:
 
     - os: linux
       compiler: clang
+      name: ubuntu - clang@6.0
       addons:
         apt:
           update: true
@@ -118,6 +141,21 @@ matrix:
 
     - os: linux
       compiler: gcc
+      name: ubuntu - native gcc
+      addons:
+        apt:
+          update: true
+          packages:
+            - gfortran
+            - libopenmpi-dev
+            - libboost-all-dev
+            - libfftw3-dev
+      env:
+        - MATRIX_EVAL="FC=gfortran"
+
+    - os: linux
+      compiler: gcc
+      name: ubuntu - gcc@4.9
       addons:
         apt:
           update: true
@@ -135,6 +173,7 @@ matrix:
 
     - os: linux
       compiler: gcc
+      name: ubuntu - gcc@5.0
       addons:
         apt:
           update: true
@@ -152,6 +191,7 @@ matrix:
 
     - os: linux
       compiler: gcc
+      name: ubuntu - gcc@6.0
       addons:
         apt:
           update: true
@@ -169,6 +209,7 @@ matrix:
 
     - os: linux
       compiler: gcc
+      name: ubuntu - gcc@7.0
       addons:
         apt:
           update: true
@@ -186,6 +227,7 @@ matrix:
 
     - os: linux
       compiler: gcc
+      name: ubuntu - gcc@8.0
       addons:
         apt:
           update: true
@@ -200,19 +242,6 @@ matrix:
             - libfftw3-dev
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && FC=/usr/bin/gfortran-8"
-
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          update: true
-          packages:
-            - gfortran
-            - libopenmpi-dev
-            - libboost-all-dev
-            - libfftw3-dev
-      env:
-        - MATRIX_EVAL="FC=gfortran"
 
 before_install:
   - eval "${MATRIX_EVAL}"
