@@ -663,6 +663,84 @@
    do ic=1,nsp
     nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
    end do
+  case(4)
+  !================ first uniform layer np1/n0=================
+    if(nxl(1)>0)then
+     do ic=1,nsp
+      n_peak=nxl(1)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(1)*uu
+       wghpt(i1,ic)=np1*wgh_sp(ic)
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(1)
+    endif
+    !================ cos^2 upramp with peak np2/n0 =================
+    if(nxl(2)>0)then
+     do ic=1,nsp
+      n_peak=nxl(2)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       uu=uu-1.
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(2)*uu
+       wghpt(i1,ic)=np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(2)
+    endif
+    !================ cos^2 downramp to the plateau =================
+    if(nxl(3)>0)then
+      do ic=1,nsp
+       n_peak=nxl(3)*np_per_xc(ic)
+       do i=1,n_peak
+        uu=(real(i,dp)-0.5)/real(n_peak,dp)
+        uu=uu-1.
+        i1=nptx(ic)+i
+        xpt(i1,ic)=xfsh+lpx(3)*uu
+        wghpt(i1,ic)=1+(np2-1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu))
+       end do
+       nptx(ic)=nptx(ic)+n_peak
+      end do
+      xfsh=xfsh+lpx(3)
+     endif
+    !================ Central layer=================
+    if(nxl(4)>0)then
+     do ic=1,nsp
+      n_peak=nxl(4)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(4)*uu
+       wghpt(i1,ic)=wgh_sp(ic)
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(4)
+    endif
+    !================ second linear ramp =================
+    if(nxl(5)>0)then
+     do ic=1,nsp
+      n_peak=nxl(5)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(5)*uu
+       wghpt(i1,ic)=(1.-uu*(1.-np2))*wgh_sp(ic)
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(5)
+    endif
+
+    do ic=1,nsp
+     nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
+    end do
+    !========================================= 
   end select
   do ic=1,nsp
    sptx_max(ic)=nptx(ic)
