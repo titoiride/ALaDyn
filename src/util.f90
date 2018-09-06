@@ -813,11 +813,7 @@
                wgh = wgh*exp(-(x-x_cm)**2/2./s_x**2)
                wgh = wgh*exp(-(y-y_cm)**2/2./s_y**2)
                wgh = wgh*exp(-(z-z_cm)**2/2./s_z**2)
-<<<<<<< HEAD
                charge = int(particle_unit_charge*(-1.0)*unit_charge(1), hp_int)
-=======
-               charge = int(particle_unit_charge*-1.*unit_charge(1), hp_int)
->>>>>>> add bunch charge from nml
                bunch(7,idx)=wgh_cmp
                idx=idx+1
              enddo
@@ -859,11 +855,7 @@ integer :: npart
     bunch(6,n1:n2)=rnumber*eps_z/s_z
     bunch(7,n1:n2)=wgh_cmp
     do npart=n1,n2
-<<<<<<< HEAD
       charge = int(particle_unit_charge*(-1.0)*unit_charge(1), hp_int)
-=======
-      charge = int(particle_unit_charge*-1.*unit_charge(1), hp_int)
->>>>>>> add bunch charge from nml
       bunch(7,npart)=wgh_cmp
     enddo
 
@@ -909,11 +901,7 @@ idx=n1
            bunch(2,idx)=y
            bunch(3,idx)=z
            wgh=one_sp/real(PRODUCT(ppcb)*(Charge_left+(Charge_right-Charge_left)/s_x*(x+s_x-x_cm)),sp)
-<<<<<<< HEAD
            charge = int(particle_unit_charge*(-1.0)*unit_charge(1), hp_int)
-=======
-           charge = int(particle_unit_charge*-1.*unit_charge(1), hp_int)
->>>>>>> add bunch charge from nml
            bunch(7,idx)=wgh_cmp
            idx=idx+1
          enddo
@@ -973,11 +961,7 @@ idx=n1
    bunch(6,n1:n2)=rnumber*2.*eps_z/s_z
    bunch(7,n1:n2)=wgh_cmp
    do npart=n1,n2
-<<<<<<< HEAD
      charge = int(particle_unit_charge*(-1.0)*unit_charge(1), hp_int)
-=======
-     charge = int(particle_unit_charge*-1.*unit_charge(1), hp_int)
->>>>>>> add bunch charge from nml
      bunch(7,npart)=wgh_cmp
    enddo
  end subroutine generate_bunch_triangularZ_uniformR_equal
@@ -1025,11 +1009,7 @@ idx=n1
             wgh = one_sp/PRODUCT(ppcb)
             wgh = wgh*real((Charge_left+(Charge_right-Charge_left)/s_x*(x+s_x-x_cm)),sp)
             wgh = wgh*real(exp(-((y-y_cm)**2+(z-z_cm)**2)/2./s_y**2),sp)
-<<<<<<< HEAD
             charge = int(particle_unit_charge*(-1.0)*unit_charge(1), hp_int)
-=======
-            charge = int(particle_unit_charge*-1.*unit_charge(1), hp_int)
->>>>>>> add bunch charge from nml
             bunch(7,idx)=wgh_cmp
             idx=idx+1
           enddo
@@ -1084,11 +1064,7 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
   bunch(6,n1:n2)=rnumber*eps_z/s_z
   bunch(7,n1:n2)=wgh_cmp
   do npart=n1,n2
-<<<<<<< HEAD
     charge = int(particle_unit_charge*(-1.0)*unit_charge(1), hp_int)
-=======
-    charge = int(particle_unit_charge*-1.*unit_charge(1), hp_int)
->>>>>>> add bunch charge from nml
     bunch(7,npart)=wgh_cmp
   enddo
  end subroutine generate_bunch_triangularZ_normalR_equal

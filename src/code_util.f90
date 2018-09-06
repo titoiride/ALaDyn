@@ -26,11 +26,7 @@
  implicit none
 
  integer,parameter :: major_version = 6
-<<<<<<< HEAD
  integer,parameter :: minor_version = 2
-=======
- integer,parameter :: minor_version = 1
->>>>>>> add bunch charge from nml
  character(6) :: sw_name='ALaDyn'
  character(9) :: input_namelist_filename='input.nml'
  character(10) :: input_data_filename='input.data'
