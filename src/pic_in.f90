@@ -663,6 +663,84 @@
    do ic=1,nsp
     nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
    end do
+  case(4)
+  !================ first uniform layer np1/n0=================
+    if(nxl(1)>0)then
+     do ic=1,nsp
+      n_peak=nxl(1)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(1)*uu
+       wghpt(i1,ic)=np1*wgh_sp(ic)
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(1)
+    endif
+    !================ cos^2 upramp with peak np2/n0 =================
+    if(nxl(2)>0)then
+     do ic=1,nsp
+      n_peak=nxl(2)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(2)*uu
+       uu=uu-1.
+       wghpt(i1,ic)=np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(2)
+    endif
+    !================ cos^2 downramp to the plateau =================
+    if(nxl(3)>0)then
+      do ic=1,nsp
+       n_peak=nxl(3)*np_per_xc(ic)
+       do i=1,n_peak
+        uu=(real(i,dp)-0.5)/real(n_peak,dp)
+        i1=nptx(ic)+i
+        xpt(i1,ic)=xfsh+lpx(3)*uu
+        uu=uu-1.
+        wghpt(i1,ic)=1+(np2-1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu))
+       end do
+       nptx(ic)=nptx(ic)+n_peak
+      end do
+      xfsh=xfsh+lpx(3)
+     endif
+    !================ Central layer=================
+    if(nxl(4)>0)then
+     do ic=1,nsp
+      n_peak=nxl(4)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(4)*uu
+       wghpt(i1,ic)=wgh_sp(ic)
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(4)
+    endif
+    !================ second linear ramp =================
+    if(nxl(5)>0)then
+     do ic=1,nsp
+      n_peak=nxl(5)*np_per_xc(ic)
+      do i=1,n_peak
+       uu=(real(i,dp)-0.5)/real(n_peak,dp)
+       i1=nptx(ic)+i
+       xpt(i1,ic)=xfsh+lpx(5)*uu
+       wghpt(i1,ic)=(1.-uu)*wgh_sp(ic)
+      end do
+      nptx(ic)=nptx(ic)+n_peak
+     end do
+     xfsh=xfsh+lpx(5)
+    endif
+
+    do ic=1,nsp
+     nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
+    end do
+    !========================================= 
   end select
   do ic=1,nsp
    sptx_max(ic)=nptx(ic)
@@ -2528,6 +2606,12 @@
   ! np1=n1_over_n/n0 (few %) 
   ! layer(4)+layer(5) as layer(1)+layer(2)
   !----------
+  !model_id=4 lpx(1) is the initial plateau of density np1
+  !lpx(2) is the cos^2 upramp for a bump of length lpx(2) and peak density np2
+  !lpx(3) is the cos^2 downramp from the peak to the central plateau
+  !lpx(4) is the plateau length
+  !lpx(5) is the linear downramp from the plateau
+  !(REMINDER) np1 and np2 are normalized to n0! 
  else
   !SOLID MULTISPECIES TARGETS
   !flag id=1,2 allowed not even implemented
