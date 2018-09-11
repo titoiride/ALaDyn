@@ -687,7 +687,7 @@
        i1=nptx(ic)+i
        xpt(i1,ic)=xfsh+lpx(2)*uu
        uu=uu-1.
-       wghpt(i1,ic)=np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
+       wghpt(i1,ic)=(np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
       end do
       nptx(ic)=nptx(ic)+n_peak
      end do
@@ -702,7 +702,7 @@
         i1=nptx(ic)+i
         xpt(i1,ic)=xfsh+lpx(3)*uu
         uu=uu-1.
-        wghpt(i1,ic)=1+(np2-1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu))
+        wghpt(i1,ic)=(1+(np2-1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))*wgh_sp(ic)
        end do
        nptx(ic)=nptx(ic)+n_peak
       end do
@@ -2682,7 +2682,7 @@
   real(dp),intent(in) :: xf0
   integer,intent(in) :: nfluid,dmodel,i1,i2,j1,j2,k1,k2
   integer :: i,i0,j,k,ic,nxl(5),i0_targ
-  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density
+  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,u2,u3,ramp_prefactor
 
  do i=1,5
   nxl(i)=nint(dx_inv*lpx(i))
@@ -2699,21 +2699,29 @@
  fluid_x_profile(1:i0_targ)=0.0
  i0=i0_targ
  np1_loc=0.005
+ ramp_prefactor=one_dp
  if(np1>0.0)np1_loc=np1
  l_inv=log(1./np1_loc)
  select case(dmodel)
+  !initial plateau, cubic ramp (exponential still available but commented), central plateau and exit ramp
   case(1)
    if(nxl(1) >0)then
     do i=1,nxl(1)
      i0=i0+1
      fluid_x_profile(i0)=peak_fluid_density*np1
+     ramp_prefactor=one_dp-np1
     end do
    endif
    if(nxl(2) >0)then    !sigma=nxl(2)/3
     do i=1,nxl(2)
      i0=i0+1
-     uu=(float(i)-float(nxl(2)))/float(nxl(2))
-     fluid_x_profile(i0)=peak_fluid_density*exp(-4.5*uu*uu)
+     !uu=-(float(i)-float(nxl(2)))/float(nxl(2))
+     uu=(float(i)-0.5)/float(nxl(2))
+     u2=uu*uu
+     u3=u2*uu
+     !fluid_x_profile(i0)=peak_fluid_density*exp(-4.5*uu*uu)
+     fluid_x_profile(i0)=peak_fluid_density*&
+     (-2.*ramp_prefactor*u3+3.*ramp_prefactor*u2+one_dp-ramp_prefactor)
     end do
    endif
    do i=1,nxl(3)
@@ -2733,6 +2741,51 @@
      fluid_x_profile(i0)=peak_fluid_density*np2
     end do
    endif
+  !initial plateau, cos^2 bump, central plateau and exit ramp. 
+  !See model_id=4 for pic case
+  case(4)
+    !================ first uniform layer np1/n0=================
+    if(nxl(1) >0)then
+      do i=1,nxl(1)
+       i0=i0+1
+       fluid_x_profile(i0)=peak_fluid_density*np1
+      end do
+    endif
+    !================ cos^2 upramp with peak np2/n0 =================
+    if(nxl(2) >0)then    !sigma=nxl(2)/3
+      do i=1,nxl(2)
+       i0=i0+1
+       uu=(float(i)-0.5)/float(nxl(2))-one_dp
+       fluid_x_profile(i0)=peak_fluid_density*&
+       (np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))
+      end do
+    endif
+    !================ cos^2 downramp to the plateau =================
+    if(nxl(3) >0)then
+      do i=1,nxl(3)
+        i0=i0+1
+        uu=(real(i,dp)-0.5)/float(nxl(3))-one_dp
+        fluid_x_profile(i0)=peak_fluid_density*&
+        (1+(np2-1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))
+      end do
+    end if
+    !================ Central layer=================
+    if(nxl(4) >0)then
+      do i=1,nxl(4)
+        i0=i0+1
+        fluid_x_profile(i0)=peak_fluid_density
+      end do
+    end if
+    !================ second linear ramp =================
+    if(nxl(5) >0)then
+      do i=1,nxl(5)
+        i0=i0+1
+        uu=(real(i,dp)-0.5)/float(nxl(5))
+        fluid_x_profile(i0)=peak_fluid_density*&
+        (one_dp-uu)
+      end do
+    end if
+    !========================================= 
   end select
   ic=nfluid     !the particle number density
   do k=k1,k2
