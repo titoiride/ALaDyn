@@ -53,6 +53,7 @@ build.*
 .project
 *.nml
 index.md
+fftw*/
 
 #Visual studio code
 *.code-workspace
