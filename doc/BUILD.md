@@ -153,5 +153,5 @@ PS \>                 cinst -y cygwin
 ```PowerShell
 PS \>                 Invoke-WebRequest https://cygwin.com/setup-x86_64.exe -OutFile $env:WORKSPACE\cygwin-setup.exe
 PS \>                 cd $env:WORKSPACE
-PS Code>              .\cygwin-setup --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --packages gcc-g++,libopenmpi-devel,gcc-fortran,cmake,fftw3,libfftw3-devel,libboost-devel,pkg-config
+PS Code>              .\cygwin-setup --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --packages gcc-g++,libopenmpi-devel,gcc-fortran,cmake,fftw3,libfftw3-devel,libboost-devel,zlib-devel,pkg-config
 ```
