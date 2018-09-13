@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-TOTAL_NUMBER_OF_CORES=144
+TOTAL_NUMBER_OF_CORES=64
 
 EXECUTABLE="./ALaDyn"
 stderr_file=epic.txt
@@ -29,6 +29,9 @@ touch ${stdout_file}
   echo "module load compilers/gcc-4.9.2"
   echo "module load compilers/openmpi-1.8.1_gcc-4.8.2"
   echo "module load boost_1_56_0_gcc4_9_0"
+  echo "export SCOREP_ENABLE_PROFILING=true"
+  echo "export SCOREP_ENABLE_TRACING=false"
+  echo "export SCOREP_EXPERIMENT_DIRECTORY=profile"
   echo "/usr/share/lsf/9.1/linux2.6-glibc2.3-x86_64/bin/mpirun.lsf env PSM_SHAREDCONTEXTS_MAX=8 ${EXECUTABLE} >> ${stdout_file} 2>> ${stderr_file}"
 } > $job
 
