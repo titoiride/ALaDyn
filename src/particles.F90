@@ -3029,7 +3029,7 @@
    sx2=sx*sx
    ayh(1)=0.75-sx2
    ayh(2)=0.5*(0.25+sx2+sx)
-   ayh(0)=1.-axh(1)-axh(2)
+   ayh(0)=1.-ayh(1)-ayh(2)
 
    !ayh(1)=sx+0.5
    !ayh(0)=1.-ayh(1)
@@ -3047,7 +3047,7 @@
    sx2=sx*sx
    azh(1)=0.75-sx2
    azh(2)=0.5*(0.25+sx2+sx)
-   azh(0)=1.-axh(1)-axh(2)
+   azh(0)=1.-azh(1)-azh(2)
 
    !azh(1)=sx+0.5
    !azh(0)=1.-azh(1)
