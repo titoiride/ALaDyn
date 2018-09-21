@@ -27,7 +27,7 @@ touch ${stdout_file}
   echo "#BSUB -n ${TOTAL_NUMBER_OF_CORES}"
   echo "module purge"
   echo "module load compilers/gcc-4.9.2"
-  echo "module load compilers/openmpi-1.8.1_gcc-4.8.2"
+  echo "module load compilers/openmpi-1.8.1_gcc-4.9.0_with_cuda6.5"
   echo "module load boost_1_56_0_gcc4_9_0"
   echo "export SCOREP_ENABLE_PROFILING=true"
   echo "export SCOREP_ENABLE_TRACING=false"

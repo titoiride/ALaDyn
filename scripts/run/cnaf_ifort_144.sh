@@ -26,7 +26,7 @@ touch ${stdout_file}
   echo "#BSUB -q ${queue}"
   echo "#BSUB -n ${TOTAL_NUMBER_OF_CORES}"
   echo "module load compilers/gcc-4.9.2"
-  echo "module load compilers/intel-parallel-studio-2016"
+  echo "module load compilers/intel-parallel-studio-2017"
   echo "module load boost_1_56_0_gcc4_9_0"
   echo "export TMI_CONFIG=/shared/software/compilers/impi/intel64/etc/tmi.conf"
   echo "/shared/software/compilers/impi/intel64/bin/mpirun -np ${TOTAL_NUMBER_OF_CORES} -genv PSM_SHAREDCONTEXTS_MAX 8 -genv I_MPI_FABRICS shm:tmi ${EXECUTABLE} >> ${stdout_file} 2>> ${stderr_file}"
