@@ -165,7 +165,9 @@
       n=n+1
       call gasdev(u)
       spec(ic)%part(n,4)=tmp0*u
+      call gasdev(u)
       spec(ic)%part(n,5)=tmp0*u
+      call gasdev(u)
       spec(ic)%part(n,6)=tmp0*u
      end do
     end do
