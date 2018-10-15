@@ -9,7 +9,7 @@
 module purge
 
 module load env-knl
-module load profile/advanced
+module load profile/global
 module load gnu/6.1.0
 module load openmpi/1-10.3--gnu--6.1.0
 module load fftw/3.3.4--openmpi--1-10.3--gnu--6.1.0
