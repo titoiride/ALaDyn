@@ -2224,17 +2224,46 @@
       ekt(3)=ekt(3)+om1*om1*a2+ 2.*om1*ekt(6)+dar*dar+dai*dai
       !|Z|^2=(Ey^2+Bz^2)/2= field energy
       ekt(4)=ekt(4)+om1*a2+ekt(6)    ! Action
-      ekt(5)=max(ekt(5),sqrt(a2))    ! Max |A|
+      ekt(7)=max(ekt(5),sqrt(a2))    ! Max |A|
       kk=kk+1
      end do
     end do
    end do
    dvol=1./real(kk,dp)
    call allreduce_dpreal(SUMV,ekt,ekm,4)
-   if(ekm(2)> 0.0)eavg1(2,nst)=ekm(1)/ekm(2)  !Centroid
-   eavg1(3,nst)=field_energy*dgvol*ekm(3)   !Energy
-   eavg1(4,nst)=dvol*ekm(4)    !Action
-  ekt(1)=ekt(5)
+   if(ekm(2)> 0.0)
+    ekm(1)=ekm(1)/ekm(2)    !Centroid
+   endif
+   eavg1(2,nst)=ekm(1) 
+   eavg1(4,nst)=field_energy*dgvol*ekm(3)   !Energy
+   eavg1(5,nst)=dvol*ekm(4)    !Action
+!===============
+  i0_lp=i1+nint(dx_inv*ekm(1))
+  ekt(1:2)=0.0  
+  do iz=k1,nzp
+   zz=0.0
+   if(k1 >2 )then
+    k=iz-2
+    zz=loc_zg(k,2,imodz)
+   endif
+   do iy=j1,nyp
+    j=iy-2
+    yy=loc_yg(j,2,imody)
+    rr=sqrt(zz*zz+yy*yy)
+    do ix=i01,i02
+     a2=env1(ix,iy,iz,1)*env1(ix,iy,iz,1)+&
+     env1(ix,iy,iz,2)*env1(ix,iy,iz,2)
+     ekt(1)=ekt(1)+rr*a2
+    end do
+   end do
+  end do
+  call allreduce_dpreal(SUMV,ekt,ekm,1)
+  if(ekm(2)> 0.0)then
+   ekm(1)=ekm(1)/ekm(2)  ! env radius
+  endif
+  eavg(3,nst)=ekm(1)  !radius
+!===============
+  ekt(1)=ekt(7)
    if(ekt(1) > giant_field)then
     write(6,*)' WARNING: Env field too big ',ekt(1)
     write(6,'(a23,3i4)')' At the mpi_task=',imodx,imody,imodz
@@ -3045,7 +3074,7 @@
     write(lun,*)'====  the injection pulse integrated variables'
     write(lun,'(4a14)')fenv(1:4)
     do ik=1,nst
-     write(lun,'(4e18.10)')eavg1(1:4,ik)
+     write(lun,'(5e18.10)')eavg1(1:4,ik)
     end do
    endif
   endif
@@ -3124,7 +3153,7 @@
   '     <Px>     ','     <Py>     ','     <Pz>     ',&
   '   <msqX>     ','   <msqY>     ','   <msqZ>     ',&
   '  <msqPx>     ','  <msqPy>     ','  <msqPz>     ',&
-  '   <Emy>      ','   <Emz>      ','   <Gam>      ','   DGam/Gam   '/)
+  '   <Emysq>    ','   <Emzsq>    ','   <Gam>      ','   DGam/Gam   '/)
 
 
  integer :: ib,nbvar,ik
@@ -3173,7 +3202,7 @@
   '     <Px>     ','     <Py>     ','     <Pz>     ',&
   '   <msqX>     ','   <msqY>     ','   <msqZ>     ',&
   '  <msqPx>     ','  <msqPy>     ','  <msqPz>     ',&
-  '   <Emy>      ','   <Emz>      ','   <Gam>      ','   DGam/Gam   '/)
+  '   <Emysq>    ','   <Emzsq>    ','   <Gam>      ','   DGam/Gam   '/)
 
 
  integer :: ik,color,npv
@@ -3232,7 +3261,7 @@
   '     <Px>     ','     <Py>     ','     <Pz>     ',&
   '   <msqX>     ','   <msqY>     ','   <msqZ>     ',&
   '  <msqPx>     ','  <msqPy>     ','  <msqPz>     ',&
-  '   <Emy>      ','   <Emz>      ','   <Gam>      ','   DGam/Gam   '/)
+  '   <Emysq>    ','   <Emzsq>    ','   <Gam>      ','   DGam/Gam   '/)
 
 
  integer :: ik,color,npv

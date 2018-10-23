@@ -1787,9 +1787,10 @@
    gam=sqrt(gam2)
    gam3=gam2*gam
    b2=0.25*dot_product(pp(1:2),vp(1:2))
-   !--------------------
+   !-------------------- def gamma_p
    gam_inv=1./gam
    gam_inv=gam_inv*(1.-dt_lp*b2/gam3)
+   !============================
    vp(1:2)=dt_lp*gam_inv*pp(1:2)
    F_pt(p,3:4)=sp_loc%part(p,1:2) !old (x,y)^n positions
    F_pt(p,5)=dt_lp*gam_inv                   ! 1/gamma
@@ -1962,7 +1963,7 @@
      envf(ix,iy,iz,2)*envf(ix,iy,iz,2))
     av(ix,iy,iz,1)=av(ix,iy,iz,1)+0.5*(env1f(ix,iy,iz,1)*env1f(ix,iy,iz,1)+&
      env1f(ix,iy,iz,2)*env1f(ix,iy,iz,2))
-    !|A|^2/2 at current t^n time level
+    !av(1)=|A0|^2/2i+|A1|^2/2 at current t^n time level
    end do
   end do
  end do
@@ -1984,11 +1985,12 @@
  !=======================================
  !=============== ENV FLUID SECTION
 !=======================================
- subroutine update_adam_bash_fluid_variables(u,u0,flx,ef,dt_lp,i1,i2,j1,j2,k1,k2,itloc,lz0)
+ subroutine update_adam_bash_fluid_variables(u,u0,flx,ef,dt_lp,i1,i2,j1,j2,k1,k2,lz0,init_time)
   real(dp),intent(inout) :: u(:,:,:,:),u0(:,:,:,:)
   real(dp),intent(inout) :: ef(:,:,:,:),flx(:,:,:,:)
   real(dp),intent(in) :: dt_lp,lz0
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2,itloc
+  integer,intent(in) :: i1,i2,j1,j2,k1,k2
+  logical,intent(in) :: init_time
   integer :: i,j,k,ic,ic1,str,stl,fdim,fldim
   real(dp) :: pp(1:3),den,gam2,ch,gam_inv,lzf,apx,apy,apz
   real(dp) :: ex,ey,ez,bx,by,bz,vx,vy,vz,qx,qy,qz,b1p,b1m
@@ -2025,19 +2027,19 @@
     call fill_ebfield_yzxbdsdata(flx,i1,i2,j1,j2,k1,k2,1,fldim,2,2)
     call fill_ebfield_yzxbdsdata(ef,i1,i2,j1,j2,k1,k2,1,nfield,str,stl)
    endif
-  if(itloc==0)then    !a one_step lpf2 update
+  if(init_time)then    !a one_step lpf2 update
    do ic=1,fdim
     do k=k1,k2
      do j=j1,j2
       do i=i1,i2
-       u(i,j,k,ic)=u0(i,j,k,ic)      ! updates u^n => u^{n+1}
+       u(i,j,k,ic)=u0(i,j,k,ic)     
        u0(i,j,k,ic)=0.0
       end do
      end do
     end do
    end do
    call nc_fluid_density_momenta(flx,u0,i1,i2,j1,j2,k1,k2,fdim,apx,apy,apz)
-   call add_lorentz_force   !in u_0 is ftored Dt*(F_adv(u)+ F_{Lorentz})
+   call add_lorentz_force   !in u_0 is stored Dt*(F_adv(u)+ F_{Lorentz}) at t^n
    do ic=1,fdim
     do k=k1,k2
      do j=j1,j2
@@ -2130,13 +2132,14 @@
   real(dp) :: dt2,qx,qy,qz,b1p,b1m,ar,ai,av2
   real(dp),parameter :: wk1=0.5,eps=1.e-04
 
-! Enter fluid variables at t^{n+1/2} and flx(fdim+1)= |a|^2/2 at t^{n+1/2}
+! Enter fluid variables(px,py,pz,den) at t^{n+1/2} and flx(fdim+1)= |a|^2/2 at t^{n+1/2}
+! In jc(1:3) enter Dt*J^{n+1/2} computed using particles.
  ch=dt_lp*wk1*unit_charge(1)
  fdim=curr_ndim+1
   do k=k1,k2
    do j=j1,j2
     do i=i1,i2
-     av2= flx(i,j,k,fdim+1)                 !time centered |A|^{n+1/2}/2
+     av2= flx(i,j,k,fdim+1)     !time centered |a|^{n+1/2}/2 (+|a_1|^2/2 for wo-color)
      den= flx(i,j,k,fdim)  !den^{n+1/2}
      pp(1:curr_ndim)= flx(i,j,k,1:curr_ndim) !p momenta at t^{n+1/2}
      gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
@@ -2156,8 +2159,9 @@
     do i=i1,i2
      qx=ch*(flx(i,j,k,1)+flx(i+1,j,k,1))  !Dt*Jx(i+1/2,j,k)
      qy=ch*(flx(i,j,k,2)+flx(i,j+1,k,2))   !Dt*Jy(i,j+1/2,k)
-     curr(i,j,k,1)=curr(i,j,k,1)+qx
+     curr(i,j,k,1)=curr(i,j,k,1)+qx        
      curr(i,j,k,2)=curr(i,j,k,2)+qy
+                        !Adds particle contributions
     end do
    end do
   end do
@@ -2167,11 +2171,12 @@
      do i=i1,i2
       qz=ch*(flx(i,j,k+1,3)+flx(i,j,k,3))  !Dt*Jz(i,j,k+1/2)
       curr(i,j,k,3)=curr(i,j,k,3)+qz
+                        !Adds particle contributions
      end do
     end do
    end do
   endif
- !In curr(1:curr_ndim) exit  Dt*J^{n+1/2}
+ !In curr(1:curr_ndim) exit  total Dt*J^{n+1/2}
  end subroutine fluid_curr_accumulate
 !=========================================
  subroutine set_env_momentum_density_flux(uv,ef,curr,eb_tot,flx,i1,i2,j1,j2,k1,k2)
@@ -2214,10 +2219,11 @@
   end do
   end subroutine set_env_momentum_density_flux
 !=================================
- subroutine env_lpf2_evolve(dt_loc,it_loc)
+ subroutine env_lpf2_evolve(dt_loc,it_loc,initial_time)
 
  real(dp),intent(in) :: dt_loc
  integer,intent(in) :: it_loc
+ logical,intent(in) :: initial_time
  integer :: np,ic,nyf,nzf,n_st
  integer :: lp,i1,j1,k1,i2,id_ch
  real(dp) :: xm,ym,zm,Ltz,ef2_ion,loc_ef2_ion(2)
@@ -2299,7 +2305,7 @@
   !======================================
   ! exit jc(1)=|a|^2/2 at t^n
   !      jc(2:4)=grad|a|^2/2 at t^n
-  ! For two-color |A|= |A_0|+|A_1|
+  ! For two-color |a|^2= |a_0|^2+|a_1|^2
   !======================================
   call set_env_acc(ebf,jc,spec(ic),ebfp,np,curr_ndim,dt_loc,xm,ym,zm)
                             !call field_charge_multiply(spec(ic),ebfp,1,np,nfield)
@@ -2317,7 +2323,7 @@
     !exit jc(1)=q^2*n/gam, jc(2:4) ponderomotive force on a grid
     !ebf0= total fields flux(1:4)=(P,den)^n 
 !============================
-   call update_adam_bash_fluid_variables(up,up0,flux,ebf0,dt_loc,i1,i2,j1,nyf,k1,nzf,it_loc,Ltz)
+   call update_adam_bash_fluid_variables(up,up0,flux,ebf0,dt_loc,i1,i2,j1,nyf,k1,nzf,Ltz,initial_time)
    ! In up exit updated momenta-density variables u^{n+1}
    ! in  u0^{n} stores Dt*F(u^n), in flux(1:fdim)=(P,den)^{n+1/2}
 
@@ -2353,33 +2359,38 @@
  else
   call env_fields_average(env,jc,i1,i2,j1,nyf,k1,nzf,2,2)
  endif
- ! In jc(1)= F= |A|^2/2 +|A_1|/2 at t^{n+1/2}  in jc(2:4) grad[F]
+ ! In jc(1)= F= |a|^2/2 +|a_1|/2 at t^{n+1/2}  in jc(2:4) grad[F]
  if(Hybrid)then
   flux(i1:i2,j1:nyf,k1:nzf,curr_ndim+2)=jc(i1:i2,j1:nyf,k1:nzf,1)
-  !stores in flux()
+  !stores in flux() fdim+1 last component env F data
  endif
   call set_env_grad_interp(jc,spec(ic),ebfp,np,curr_ndim,xm,ym,zm)
   !=============================
   ! Exit p-interpolated field variables
   ! at time level t^{n+1/2} and positions at time t^n
-  ! in ebfp(1:3)=grad|A|^2/2 ebfp(4)=|A|^2/2 in 3D
-  ! in ebfp(1:2)=graa|A|^2/2 ebfp(3)=|A|^2/2 in 2D
+  ! in ebfp(1:3)=grad|a|^2/2 ebfp(4)=|a|^2/2 in 3D
+  ! in ebfp(1:2)=grad|a|^2/2 ebfp(3)=|a|^2/2 in 2D
   !=====================================
    call lpf_env_positions(spec(ic),ebfp,np,dt_loc,vbeam)
    if(ompe==0.0)return
   !===========================
-  ! ebfp(1:3) dt*V^{n+1/2}  ebfp(4:6) old positions for curr J^{n+1/2}
-  ! ebfp(7)=dt*gam_inv
+  !Computes x^{n+1} 
+  ! stores 
+  !ebfp(1:3) dt*V^{n+1/2}  ebfp(4:6) old positions ebfp(7)=dt*gam_inv
   !==============================
   jc(:,:,:,:)=0.0
   call curr_accumulate(spec(ic),ebfp,jc,1,np,iform,n_st,xm,ym,zm)
+ ! In curr(1:3) exit Dt*J()^{n+1/2)
  !===========================
   call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
+  !adds contributions in overlapped cells of MPI domains
+ !==================================
  if(Hybrid)then
-  !In flux(1:fdim+1) are stored fluid (P,den) at t^{n+1/2}
-  !In flux(fdim+1) is stored |A|^2/2 at t^{n+1/2}
+  !In flux(1:fdim) are stored fluid (P,den) at t^{n+1/2}
+  !In flux(fdim+1) is stored |a|^2/2 at t^{n+1/2}
+  !Enter jc(1:3) currents coming from particles
   call fluid_curr_accumulate(flux,jc,dt_loc,i1,i2,j1,nyf,k1,nzf)
-  !Computes fluid contribution => J^{n+1/2} and adds to particle contribution
+  !Computes fluid contribution of Dt*J^{n+1/2} and adds to particle contributions
  endif
  !====================
  ! Jc(1:3) for total curr Dt*J^{n+1/2}
@@ -2518,7 +2529,7 @@
  endif
   ! exit jc(1)=|a|^2/2 at t^n
   ! exit jc(2:4)=grad|a|^2/2 at t^n
-  ! For two-color |A|= |A_0|+|A_1|
+  ! For two-color |a|^2= |a_0|^2+|a_1|^2
   !======================================
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)then
@@ -2558,9 +2569,13 @@
  real(dp),intent(in) :: t_loc,dt_loc
  integer,intent(in) :: iter_loc,t_ord
  logical,parameter :: mw=.false.
+ logical :: init_time
  !+++++++++++++++++++++++++++++++++
  !for vbeam >0 uses the xw=(x+vbeam*t)
  !x=xi=(xw-vbeam*t) fixed
+ !+++++++++++++++++++++++++++++++++
+ init_time=.false.
+ if(t_loc<1.e-05)init_time=.true.
  if(w_speed>0.0)then ! moves the computational box with w_speed>0.
   if(iter_loc==0)call LP_window_xshift(dt_loc,w_sh,iter_loc)
   if(t_loc>=wi_time.and.t_loc < wf_time)then
@@ -2579,7 +2594,7 @@
  select case(t_ord)
   !=========================
  case(2)
-  call env_lpf2_evolve(dt_loc,iter_loc)
+  call env_lpf2_evolve(dt_loc,iter_loc,init_time)
  case(4)
   call env_rk_evolve(dt_loc,t_ord)
  end select
@@ -2662,10 +2677,11 @@
  !====================
  !Ghost cell values for field assignement on particles
  vb=vbeam
- if(Hybrid) call eb_fields_collect(ebf,ebf1_bunch,ebf_bunch,ebf0,nfield)
- call pfields_prepare(ebf,i1,i2,j1,j2,k1,k2,nfield,1,1)
- call pfields_prepare(ebf_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
- call pfields_prepare(ebf1_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
+ call eb_fields_collect(ebf,ebf1_bunch,ebf_bunch,ebf0,nfield)
+!   in ebf0() the total fields  bunch+wake
+ call pfields_prepare(ebf0,i1,i2,j1,j2,k1,k2,nfield,2,2)
+ !call pfields_prepare(ebf_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
+ !call pfields_prepare(ebf1_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
 !======== first new plasma electrons are injected by ionization
  if(Ionization)then
   if(iter_loc==0)then
@@ -2674,8 +2690,10 @@
   do ic=2,nsp_ionz
    np=loc_npart(imody,imodz,imodx,ic)
    if(np>0)then
+   !?? Please check
      call set_ion_two_Ebfield(ebf,ebf_bunch,ebf1_bunch,spec(ic),&
                       ebfp,np,n_st,ndim,xm,ym,zm)
+   !?? End check
     if(mod(iter_loc,50)==0)then     !refresh ionization tables
      loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.   !In atomic units
@@ -2693,7 +2711,7 @@
  endif
 !=======================
 ! STEP 1
-!Advances momenta and position of plasma particles
+!Advances momenta and position of plasma particles using total field
 !==========================
   jc(:,:,:,:)=0.0
   do ic=1,nsp_run
@@ -2728,13 +2746,15 @@
 !============================
   ! in the flux() array exit: (px,py,pz,den,vx,vy,vz) at t^n
 !============================
-  call update_adam_bash_fluid_variables(up,up0,flux,ebf0,dt_loc,i1,i2,j1,j2,k1,k2,iter_loc,Ltz)
+  call update_adam_bash_fluid_variables(&
+                        up,up0,flux,ebf0,dt_loc,i1,i2,j1,j2,k1,k2,Ltz,initial_time)
    ! In up exit updated momenta-density variables u^{n+1}
    ! in  u0^{n} stores Dt*F(u^n), in flux(1:fdim)=(P,den)^{n+1/2}
    ! In flux(1:curr_ndim+1) are stored fluid (P,den) at t^{n+1/2}
    flux(i1:i2,j1:j2,k1:k2,curr_ndim+2)=0.0
   call fluid_curr_accumulate(flux,jc,dt_loc,i1,i2,j1,j2,k1,k2)
-  !Computes fluid contribution => J_f^{n+1/2} and adds to particle contribution
+!===========================
+  !Computes fluid contribution => Dt*J_f^{n+1/2} added to particle contributions
 !  ===============  END plasma fluid section
  endif
  call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1) 

@@ -294,6 +294,7 @@
      spec(1)%part(ii,4)=temp(1)*u
      call gasdev(u)
      spec(1)%part(ii,5)=temp(2)*u
+     call gasdev(u)
      spec(1)%part(ii,6)=temp(3)*u
      spec(1)%part(ii,id_ch)=wgh_cmp
     end do
@@ -353,6 +354,7 @@
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
      call gasdev(u)
      spec(1)%part(ii,4)=temp(1)*u
+     call gasdev(u)
      spec(1)%part(ii,6)=temp(3)*u
      call gasdev(u)
      spec(1)%part(ii,5)=sp_field(n,1)*u

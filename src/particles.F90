@@ -1325,7 +1325,7 @@
     do i1=1,3
      i2=i1+ih
      dvol1=axh(i1)*dvol
-     ap(1)=ap(1)+dvol1*ef(i2,j2,1,1) !Ex(i+1/2,j)
+     ap(1)=ap(1)+dvol1*ef(i2,j2,1,1) !Ex(i+1/2,j)ap(1)=sum_{i,j}S_{i,j}(x_p,y_p)
     end do
     j2=jh+j1
     dvol=ayh(j1)
@@ -2863,33 +2863,26 @@
  integer,intent(in) :: np,ndm
  real(dp),intent(in) :: xmn,ymn,zmn
 
- real(dp) :: xx,sx,sx2,dvol,dvol1,dxe,dye,dze
- real(dp) :: axh(0:2),ayh(0:2),xp1(3)
- real(dp) :: ax1(0:2),ay1(0:2),azh(0:2),az1(0:2),ap(4)
- integer :: i,ih,j,jh,i1,j1,i2,j2,k,kh,k1,k2,n
+ real(dp) :: xx,sx,sx2,dvol,dvol1
+ real(dp) :: xp1(3),dxe,dye,dze
+ real(dp) :: ax1(0:2),ay1(0:2),az1(0:2),ap(1)
+ integer :: i,j,i1,j1,i2,j2,k,k1,k2,n
 
  !===============================================
  ! enters av(1)=|a|^2 envelope at integer grid nodes
- ! and av(2:4)=[Grad |a|2/2] at staggered grid points
- ! exit |a|^2/2 and grad[|a|^2]/2 at the particle positions
+ ! exit |a|^2/2 at the particle positions
  !=========================
  ! Particle positions assigned using quadratic splines
  !  F=|a|^2/2
- !  ap(1)= [D_x(F)](i+1/2,j,k)
- !  ap(2)= [D_y(F)](i,j+1/2,k)
- !  ap(3)= [D_z(F)](i,j,k+1/2)
- !  ap(4)= [F](i,j,k)
  !===========================================
- ax1(0:2)=zero_dp;ay1(0:2)=zero_dp
- az1(0:2)=zero_dp
- axh(0:2)=zero_dp;ayh(0:2)=zero_dp
- azh(0:2)=zero_dp
+ ax1(0:2)=0.0;ay1(0:2)=0.0
+ az1(0:2)=0.0
 
  select case(ndm)
  case(2)
+  k2=1
   dxe=dx_inv
   dye=dy_inv
-  k2=1
   do n=1,np
    ap=zero_dp
    xp1(1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position

@@ -212,7 +212,7 @@
  integer,intent(in) :: nc,ky2(:),kz2(:),nyc(:),nzc(:)
  real(dp),intent(in) :: ymt,zmt,whyz(:,:,:)
  integer :: ic,i2,k1,j1,j2
- real(dp) :: loc_ym, loc_zm
+ real(dp) :: loc_ym,loc_zm
 
  if(ndim < 3)then
   loc_ym=loc_ygrid(imody)%gmin
@@ -258,7 +258,7 @@
  end do
  end subroutine mpi_yz_part_distrib
  !--------------------------
-subroutine set_uniform_yz_distrib(nyh,nc)
+ subroutine set_uniform_yz_distrib(nyh,nc)
 
  integer,intent(in) :: nyh,nc
  integer :: p,ip
@@ -378,14 +378,13 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  !=====================================
  !==================
  end subroutine set_uniform_yz_distrib
- !============================
+!===========================================
  subroutine multi_layer_gas_target(layer_mod,nyh,xf0)
 
  integer,intent(in) :: layer_mod,nyh
  real(dp),intent(in) :: xf0
  integer :: p,i,j,i1,i2,ic
  integer :: n_peak,npmax,nxtot
- integer :: npyc(4),npzc(4),npty_ne,nptz_ne
  real(dp) :: uu,u2,xp_min,xp_max,u3,ramp_prefactor
  real(dp) :: xfsh,un(2),wgh_sp(3)
  integer :: nxl(5)
@@ -840,123 +839,50 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  real(dp),intent(in) :: xf0
  integer :: p,ip
  integer :: l,i,i1,i2,ic
- integer :: np_per_zcell(6),n_peak
- integer :: nptx_loc(6)
- integer :: npty_layer(6),npty_ne,nptz_ne
+ integer :: n_peak,nptx_loc(6)
  integer :: npmax,nps_loc(4)
- real(dp) :: uu,yy,dxip,dpy,np1_loc
- real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
+ real(dp) :: uu,np1_loc
+ real(dp) :: xp_min,xp_max
  real(dp) :: xfsh,l_inv
- integer :: nxl(6),nyl1
- integer :: ip_ion,ip_el,ip_pr,npyc(6)
- real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
+ integer :: nxl(6)
+ integer :: ip_ion,ip_el,ip_pr
  !=================
  xp_min=xmin
  xp_max=xmax
- np_per_zcell(1:6)=1
- !!+++++++++++++++++++++++++++++++
  nxl=0
- !========= gridding the transverse target size
- nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
- yp_min=ymin_t
- yp_max=ymax_t
- !=============================
- ! Multispecies
- !=============================
- npty=maxval(np_per_yc(1:6))
- npty=nyh*npty
- nptz=1
- if(ndim==3)then
-  np_per_zcell(1:6)=np_per_zc(1:6)
-  zp_min=zmin_t    !-Lz
-  zp_max=zmax_t    !+Lz
-  nptz=maxval(np_per_zc(1:6))
-  nptz=nyh*nptz
- endif
- allocate(ypt(npty+1,6))
- allocate(zpt(nptz+1,6))
- allocate(wy(npty+1,6))
- allocate(wz(nptz+1,6))
- ypt=0.
- zpt=0.
- wy=1.
- wz=1.
- !==================
- allocate(loc_jmax(0:npe_yloc-1,1:6))
- allocate(loc_kmax(0:npe_zloc-1,1:6))
- allocate(loc_imax(0:npe_xloc-1,1:6))
- !====================
- ! Layers space ordering(1:6)
- ! [1:2 electon-proton foam,3:4 electron-ion target, 5:6 electron-proton coat]
+!========== uniform y-z distribution of El-Ion layers
+ call set_uniform_yz_distrib(nyh,6)
  !===============
- npyc(1:2)=np_per_yc(3:4) !pre-plasma or foam layer (Z1+El) lx(1) layer
- npyc(3:4)=np_per_yc(1:2) ! central target+ exp ramp (Z1+El) lx(2)+lx(3)+lx(4)
- npyc(5:6)=np_per_yc(5:6) ! contaminants (Z2+ El)layer lx(5)
- do ic=1,6
-  npty_layer(ic)=nyh*npyc(ic)
- end do
- nptz_ne=1
- do ic=1,6
-  npty_ne=npty_layer(ic)
-  dpy=(yp_max-yp_min)/real(npty_ne,dp)
-  if(ic>4)dpy=(yp_max-yp_min)/real(npty_ne,dp)
-  do i=1,npty_ne
-   ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
-  enddo
-  if(Stretch)then
-   yy=str_ygrid%smin
-   if(yy >yp_min)then
-    dpy=dyi/real(npyc(ic),dp)
-    i1=(str_ygrid%sind(1)-nyl1+1)*npyc(ic)
-    i2=npty_ne-i1
-    do i=1,i1
-     dxip=dpy*(real(i-i1,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
-    dxip=dy/real(npyc(ic),dp)
-    do i=i1+1,i2
-     ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
-    end do
-    do i=i2+1,npty_ne
-     dxip=dpy*(real(i-i2,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
-   endif
-  endif
-  nptz_ne=1
-  if(ndim==3)then
-   zpt(1:npty_ne,ic)=ypt(1:npty_ne,ic)
-   wz(1:npty_ne,ic)=wy(1:npty_ne,ic)
-   nptz_ne=npty_ne
-  endif
-  call set_pgrid_ind(npty_ne,nptz_ne,ic)
- end do
- !===========================
  xtot=0.0
  do i=1,5
   nxl(i)=nint(dx_inv*lpx(i))
   lpx(i)=nxl(i)*dx
   xtot=xtot+lpx(i)
  end do
+ nxl(4)=0  !attached coating
  if(nsp < 3)then
   nxl(5)=0
   if(pe0)then
-   write(6,*)'Warning : for nsp=2 nxl(1) and nxl(5) forced to zero'
+   write(6,*)'Warning : for nsp=2 nxl(5) forced to zero => NO coating layer'
   endif
  endif
  xfsh=xf0+lpx(7)
  targ_in=xfsh
  targ_end=targ_in+xtot
- !               Species x-distribution
- !            lx(1)-lx(3) (Z1+ El)   lx(5) (Z2+El)
- nptx_loc(1:2)=nxl(1)*np_per_xc(3:4)
- nptx_loc(3:4)=(nxl(2)+nxl(3))*np_per_xc(1:2)
+ !               nsp=4 species x-distribution
+ !               preplasma
+ !==================================
+ !            lx(2:3) (Z1-A1+El) central target
+ nptx_loc(1:2)=(nxl(2)+nxl(3))*np_per_xc(1:2)
+ !            lx(1) (Z1-A1-El) uniform with np1 density pre-plasma 
+ nptx_loc(3:4)=nxl(1)*np_per_xc(3:4)
+ !            lx(5) (Z2-A2+El) ) uniform with np2 density coating
  nptx_loc(5:6)=nxl(5)*np_per_xc(5:6)
+!========================
  nptx(1)=nptx_loc(1)+nptx_loc(3)+nptx_loc(5)  !electrons
- nptx(2)=nptx_loc(4)                          !Z1-A1 species
- nptx(3)=nptx_loc(2)+nptx_loc(6)              !Z2-A2  species nxl(1)+nlx(4)
+ nptx(2)=nptx_loc(2)              !Z1-A1 species
+ nptx(3)=nptx_loc(4)              !Z1-A1 species
+ nptx(4)=nptx_loc(6)              !Z2-A2  species nlx(5)
  nptx_max=maxval(nptx_loc(1:6))
  !=======================
  allocate(xpt(nptx_max,6))
@@ -966,44 +892,29 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  allocate(loc_wghx(nptx_max,6))
  wghpt(1:nptx_max,1:6)=1.
  !=============================
- loc_npty(1:6)=loc_jmax(imody,1:6)
- loc_nptz(1:6)=loc_kmax(imodz,1:6)
- !=============================
- npty_ne=1
- nptz_ne=1
- npty_ne=maxval(loc_npty(1:6))
- nptz_ne=maxval(loc_nptz(1:6))
-!======================
- allocate(loc_wghyz(npty_ne,nptz_ne,6))
- allocate(loc_ypt(npty_ne,6))
- allocate(loc_zpt(nptz_ne,6))
- loc_wghyz=1.
- call mpi_yz_part_distrib(6,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wyz)
- !==================
  ! first layer: electrons and Z1 ions
  !x distribution
  loc_imax(imodx,1:6)=nptx_loc(1:6)
  nps_loc=0
  if(nxl(1) >0)then
-  do ic=1,2
+  do ic=3,4
    n_peak=nptx_loc(ic)
    do i=1,n_peak
     uu=(real(i,dp)-0.5)/real(n_peak,dp)
     xpt(i,ic)=xfsh+lpx(1)*uu
    end do
   end do
-  wghpt(1:nptx_loc(1),1)=np1*j0_norm
-  wghpt(1:nptx_loc(2),2)=np1*j0_norm
+  wghpt(1:nptx_loc(3),3)=np1*j0_norm
+  wghpt(1:nptx_loc(4),4)=np1*j0_norm
   if(mp_per_cell(3) >0)then
    uu=ratio_mpc(3)                                  !float(mp_per_cell(1))/float(mp_per_cell(3))
-   wghpt(1:nptx_loc(1),1)=wghpt(1:nptx_loc(1),1)*uu
+   wghpt(1:nptx_loc(3),3)=wghpt(1:nptx_loc(3),3)*uu
    uu=ratio_mpc(4)/unit_charge(2)                   !float(mp_per_cell(1))/float(mp_per_cell(4))
-   wghpt(1:nptx_loc(2),2)=wghpt(1:nptx_loc(2),2)*uu
+   wghpt(1:nptx_loc(4),4)=wghpt(1:nptx_loc(4),4)*uu
   endif
   xfsh=xfsh+lpx(1)
   !=========== Distributes on x-MPI tasks the first layer
-  do ic=1,2
+  do ic=3,4
    i1=0
    do i=1,nptx_loc(ic)
     if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
@@ -1020,19 +931,19 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   p=imodx
   l=imody
   ip=imodz
-  ! Counts particles
+  ! Counts particles in first layer
 
   nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
+   loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
   nps_loc(2)=nps_loc(2)+&
-   loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
+   loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
 
  endif
  !------------------------------
  ! Electrons and Z1_ions : central layer
  ! x distribution
  !====================
- do ic=3,4
+ do ic=1,2
   n_peak=nptx_loc(ic)
   do i=1,n_peak
    xpt(i,ic)=xfsh+(lpx(2)+lpx(3))*(real(i,dp)-0.5)/real(n_peak,dp)
@@ -1040,7 +951,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   end do
  end do
  uu=ratio_mpc(2)/real(ion_min(1),dp)
- ic=4
+ ic=2
  n_peak=nptx_loc(ic)
  wghpt(1:n_peak,ic)=j0_norm*uu
  !================================
@@ -1054,8 +965,8 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  endif
  !======== a preplasma rump
  if(nxl(2) >0)then
-  do ic=3,4
-   n_peak=nxl(2)*np_per_xc(ic-2)
+  do ic=1,2
+   n_peak=nxl(2)*np_per_xc(ic)
    l_inv=log(1./np1_loc)
    do i=1,n_peak
     uu=(real(i,dp)-0.5)/real(n_peak,dp)
@@ -1070,7 +981,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   end do
  endif
  !=========== Distributes on x-MPI tasks
- do ic=3,4
+ do ic=1,2
   i1=0
   do i=1,nptx_loc(ic)
    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
@@ -1087,9 +998,9 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ip=imodz
 
  nps_loc(1)=nps_loc(1)+&
-  loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
+  loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
  nps_loc(2)=nps_loc(2)+&
-  loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
+  loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
  !============================
  if(nptx_loc(5)>0.0)then
   do ic=5,6
@@ -1108,7 +1019,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   end do
   xfsh=xfsh+lpx(5)
   !===============================
-  ! Warning : holds for Z2_ion=1
+  ! Warning : holds for Z2_ion= H(+)
   !===============================
   do ic=5,6
    i1=0
@@ -1144,21 +1055,21 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ! The first electron-proton(or C) foam layer
  if(nxl(1) >0)then
   p=0
-  i2=loc_imax(imodx,1)
-  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
+  i2=loc_imax(imodx,3)
+  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,3,i2,ip_el)
   p=0
-  i2=loc_imax(imodx,2)
-  call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,2,i2,ip_ion)
+  i2=loc_imax(imodx,4)
+  call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,4,i2,ip_ion)
  endif
  !=========================
  ! The second electron-ion solid electron-Z1 layer
  p=ip_el
- i2=loc_imax(imodx,3)
- call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,3,i2,ip_el)
+ i2=loc_imax(imodx,1)
+ call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
 
  p=ip_ion
- i2=loc_imax(imodx,4)
- call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,4,i2,ip_ion)
+ i2=loc_imax(imodx,2)
+ call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,2,i2,ip_ion)
  !============
  ! The third electron-proton layer
  !=========================
@@ -1182,108 +1093,29 @@ subroutine set_uniform_yz_distrib(nyh,nc)
 
  integer,intent(in) :: nyh
  real(dp),intent(in) :: xf0
- integer :: p,ip
- integer :: l,i,i1,i2,ic
- integer :: np_per_zcell(6),n_peak
- integer :: nptx_loc(6)
- integer :: npty_layer(6),npty_ne,nptz_ne
+ integer :: p,ip,l,i,i1,i2,ic,n_peak,nptx_loc(6)
  integer :: npmax,nps_loc(4)
- real(dp) :: uu,yy,dxip,dpy,np1_loc
- real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
- real(dp) :: xfsh,l_inv,wgh_sp(6)
- integer :: nxl(6),nyl1
- integer :: ip_ion,ip_el,ip_pr,npyc(6)
- real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
+ real(dp) :: l_inv,uu,np1_loc,xp_min,xp_max
+ real(dp) :: xfsh,wgh_sp(6)
+ integer :: nxl(6)
+ integer :: ip_ion,ip_el,ip_pr
  !=================
  xp_min=xmin
  xp_max=xmax
- np_per_zcell(1:6)=1
+ call set_uniform_yz_distrib(nyh,6)
  !!+++++++++++++++++++++++++++++++
  nxl=0
- !========= gridding the transverese target size
- nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
- yp_min=ymin_t
- yp_max=ymax_t
- !=============================
- ! Multispecies
- !=============================
- npty=maxval(np_per_yc(1:6))
- npty=nyh*npty
- nptz=1
- if(ndim==3)then
-  np_per_zcell(1:6)=np_per_zc(1:6)
-  zp_min=zmin_t    !-Lz
-  zp_max=zmax_t    !+Lz
-  nptz=maxval(np_per_zc(1:6))
-  nptz=nyh*nptz
- endif
- allocate(ypt(npty+1,6))
- allocate(zpt(nptz+1,6))
- allocate(wy(npty+1,6))
- allocate(wz(nptz+1,6))
- ypt=0.
- zpt=0.
- wy=1.
- wz=1.
- !==================
- allocate(loc_jmax(0:npe_yloc-1,1:6))
- allocate(loc_kmax(0:npe_zloc-1,1:6))
- allocate(loc_imax(0:npe_xloc-1,1:6))
- !====================
- ! Layers space ordering(1:6)
- ! [1:2 electon-proton foam,3:4 electron-ion target, 5:6 electron-proton coat]
- !===============
- npyc(1:2)=np_per_yc(3:4)  !pre-plasma or foam layer
- npyc(3:4)=np_per_yc(1:2)  ! central target
- npyc(5:6)=np_per_yc(5:6)  ! contaminants layer
- do ic=1,6
-  npty_layer(ic)=nyh*npyc(ic)
- end do
- nptz_ne=1
- do ic=1,6
-  npty_ne=npty_layer(ic)
-  dpy=(yp_max-yp_min)/real(npty_ne,dp)
-  if(ic>4)dpy=(yp_max-yp_min)/real(npty_ne,dp)
-  do i=1,npty_ne
-   ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
-  enddo
-  if(Stretch)then
-   yy=str_ygrid%smin
-   if(yy >yp_min)then
-    dpy=dyi/real(npyc(ic),dp)
-    i1=(str_ygrid%sind(1)-nyl1+1)*npyc(ic)
-    i2=npty_ne-i1
-    do i=1,i1
-     dxip=dpy*(real(i-i1,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
-    dxip=dy/real(npyc(ic),dp)
-    do i=i1+1,i2
-     ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
-    end do
-    do i=i2+1,npty_ne
-     dxip=dpy*(real(i-i2,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
-   endif
-  endif
-  nptz_ne=1
-  if(ndim==3)then
-   zpt(1:npty_ne,ic)=ypt(1:npty_ne,ic)
-   wz(1:npty_ne,ic)=wy(1:npty_ne,ic)
-   nptz_ne=npty_ne
-  endif
-  call set_pgrid_ind(npty_ne,nptz_ne,ic)
- end do
- !===========================
+ !x- distribution
+
  xtot=0.0
  do i=1,5
   nxl(i)=nint(dx_inv*lpx(i))
   lpx(i)=nxl(i)*dx
   xtot=xtot+lpx(i)
  end do
+ xfsh=xf0+lpx(7)
+ targ_in=xfsh
+ targ_end=targ_in+xtot
  if(nsp < 3)then
   nxl(1)=0
   nxl(5)=0
@@ -1291,19 +1123,19 @@ subroutine set_uniform_yz_distrib(nyh,nc)
    write(6,*)'Warning : for nsp=2 nxl(1) and nxl(5) forced to zero'
   endif
  endif
- xfsh=xf0+lpx(7)
- targ_in=xfsh
- targ_end=targ_in+xtot
  ! Species x-distribution
- !========= np_per_xc(1:2) electrons and Z1-ions in central layer +ramp
+ !=========np_per_xc(1:2) electrons and Z1-ions in   ramp +  central layer
+                                              !sizes lpx(2)+lpx(3)
  !========= np_per_xc(3:4) electrons and Z2-ions in layer 1
- !========= np_per_xc(5:6) electrons and Z2-ions in layer 3 +ramp
- nptx_loc(1:2)=nxl(1)*np_per_xc(3:4)
- nptx_loc(3:4)=(nxl(2)+nxl(3))*np_per_xc(1:2)
- nptx_loc(5:6)=nxl(5)*np_per_xc(5:6)
+                                                 !size lpx(1)
+ !========= np_per_xc(5:6) electrons and Z3-ions in layer 3 +ramp
+ !                                                  sizes lpx(4)+lpx(5)
+ nptx_loc(1:2)=(nxl(2)+nxl(3))*np_per_xc(1:2)  !Z1 ions
+ nptx_loc(3:4)=nxl(1)*np_per_xc(3:4)           !Z2 ions
+ nptx_loc(5:6)=nxl(5)*np_per_xc(5:6)           !Z3 ions
  nptx(1)=nptx_loc(1)+nptx_loc(3)+nptx_loc(5)  !electrons
- nptx(2)=nptx_loc(4)                          !Z1-A1 species
- nptx(3)=nptx_loc(2)+nptx_loc(6)              !Z2-A2  species nxl(1)+nlx(4)
+ nptx(2)=nptx_loc(2)                          !Z1-A1 species
+ nptx(3)=nptx_loc(4)+nptx_loc(6)              !Z2-A2  species nxl(1)+nlx(4)
  nptx_max=maxval(nptx_loc(1:6))
  !=======================
  allocate(xpt(nptx_max,6))
@@ -1312,37 +1144,24 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  allocate(loc_xpt(nptx_max,6))
  allocate(loc_wghx(nptx_max,6))
  wghpt(1:nptx_max,1:6)=1.
- !================ local y-z part coordinates==========
- loc_npty(1:6)=loc_jmax(imody,1:6)
- loc_nptz(1:6)=loc_kmax(imodz,1:6)
- !=============================
- npty_ne=1
- nptz_ne=1
- npty_ne=maxval(loc_npty(1:6))
- nptz_ne=maxval(loc_nptz(1:6))
-!======================
- allocate(loc_wghyz(npty_ne,nptz_ne,6))
- allocate(loc_ypt(npty_ne,6))
- allocate(loc_zpt(nptz_ne,6))
- loc_wghyz=1.
- call mpi_yz_part_distrib(6,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wyz)
  !==================
- ! nsp ordering: electrons+ Z1 ions + Z2 ions +Z3 ions
- ! first layer: electrons and Z2 (protons) ions
- !x distribution
- loc_imax(imodx,1:6)=nptx_loc(1:6)
- nps_loc=0
+ ! nsp=1-4 ordering: electrons+ Z1 ions + Z2 ions +Z3 ions
  !Weights for multilayer multisp targets
- wgh_sp(1)=1./real(mp_per_cell(3),dp)                   
- wgh_sp(2)=1./(real(ion_min(2),dp)*real(mp_per_cell(4),dp))
- wgh_sp(3)= j0_norm
- wgh_sp(4)=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
+     ! first layer: electrons and Z2 (protons) ions
+ wgh_sp(3)=1./real(mp_per_cell(3),dp)                   
+ wgh_sp(4)=1./(real(ion_min(2),dp)*real(mp_per_cell(4),dp))
+     ! central layer: electrons and Z1 ions
+ wgh_sp(1)= j0_norm
+ wgh_sp(2)= wgh_ion        !ion spec 1 (ionizable)
+     ! coiating layer: electrons and Z3 (H+)
  wgh_sp(5)=1./real(mp_per_cell(5),dp)                   
  wgh_sp(6)=1./(real(ion_min(2),dp)*real(mp_per_cell(6),dp))
  !================================================
+ !x distribution
+ loc_imax(imodx,1:6)=nptx_loc(1:6)
+ nps_loc=0
  if(nxl(1) >0)then
-  do ic=1,2
+  do ic=3,4
    n_peak=nptx_loc(ic)
    do i=1,n_peak
     uu=(real(i,dp)-0.5)/real(n_peak,dp)
@@ -1352,7 +1171,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   end do
   xfsh=xfsh+lpx(1)
   !=========== Distributes on x-MPI tasks
-  do ic=1,2
+  do ic=3,4
    i1=0
    do i=1,nptx_loc(ic)
     if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
@@ -1372,17 +1191,17 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   ! Counts particles (e+Z2 ions)
 
   nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
+   loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
   nps_loc(3)=nps_loc(3)+&
-   loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
-
+   loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
  endif
  !------------------------------
  ! Electrons and Z1_ions : central layer
  ! x distribution
  !====================
- do ic=3,4
+ do ic=1,2
   n_peak=nptx_loc(ic)
+  n_peak=max(1,n_peak)
   do i=1,n_peak
    xpt(i,ic)=xfsh+(lpx(2)+lpx(3))*(real(i,dp)-0.5)/real(n_peak,dp)
    wghpt(i,ic)=wgh_sp(ic)
@@ -1400,8 +1219,8 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  endif
  !======== a preplasma ramp
  if(nxl(2) >0)then
-  do ic=3,4
-   n_peak=nxl(2)*np_per_xc(ic-2)
+  do ic=1,2
+   n_peak=nxl(2)*np_per_xc(ic)
    l_inv=log(1./np1_loc)
    do i=1,n_peak
     uu=(real(i,dp)-0.5)/real(n_peak,dp)
@@ -1416,7 +1235,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   end do
  endif
  !=========== Distributes on x-MPI tasks
- do ic=3,4
+ do ic=1,2
   i1=0
   do i=1,nptx_loc(ic)
    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
@@ -1433,9 +1252,9 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ip=imodz
 
  nps_loc(1)=nps_loc(1)+&
-  loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
+  loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
  nps_loc(2)=nps_loc(2)+&
-  loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
+  loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
  !============================
  if(nptx_loc(5)>0.0)then
   do ic=5,6
@@ -1481,21 +1300,21 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ! The first electron-proton(or C) foam layer
  if(nxl(1) >0)then
   p=0
-  i2=loc_imax(imodx,1)
-  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
+  i2=loc_imax(imodx,3)
+  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,3,i2,ip_el)
   p=0
-  i2=loc_imax(imodx,2)
-  call pspecies_distribute(spec(3),t0_pl(3),unit_charge(3),p,2,i2,ip_pr)
+  i2=loc_imax(imodx,4)
+  call pspecies_distribute(spec(3),t0_pl(3),unit_charge(3),p,4,i2,ip_pr)
  endif
  !=========================
  ! The second electron-ion solid electron-Z1 layer
  p=ip_el
- i2=loc_imax(imodx,3)
- call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,3,i2,ip_el)
+ i2=loc_imax(imodx,1)
+ call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
 
  p=0
- i2=loc_imax(imodx,4)
- call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,4,i2,ip_ion)
+ i2=loc_imax(imodx,2)
+ call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,2,i2,ip_ion)
  !============
  ! The third electron-proton layer
  !=========================
@@ -1521,27 +1340,20 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  real(dp),intent(in) :: xf0
  integer :: p,ip
  integer :: l,i,i1,i2,ic
- integer :: np_per_zcell(6),n_peak
- integer :: nptx_loc(7)
- integer :: npty_layer(7),npty_ne,nptz_ne
+ integer :: n_peak,nptx_loc(7)
  integer :: npmax,nps_loc(4),np1_loc
- real(dp) :: uu,yy,dxip,dpy
- real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
+ real(dp) :: uu,xp_min,xp_max
  real(dp) :: xfsh,l_inv,wgh_sp(7)
- integer :: nxl(6),nyl1
- integer :: ip_ion,ip_el,ip_pr,npyc(7)
- real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
+ integer :: nxl(6)
+ integer :: ip_ion,ip_el,ip_pr
  !=================
+ call set_uniform_yz_distrib(nyh,7)
+ !===========================
  xp_min=xmin
  xp_max=xmax
- np_per_zcell(1:6)=1
  !!+++++++++++++++++++++++++++++++
  ! weights in central layer are wgh_sp(1:3)
  nxl=0
- !========= gridding the transverese target size
- nyl1=1+ny/2-nyh/2  !=1 if nyh=ny
- yp_min=ymin_t
- yp_max=ymax_t
  !=============================
  ! Multispecies  designed for nsp >2
  ! Particles distribution np_per_yc(1:3) and np_per_xc(1:3) central target
@@ -1555,73 +1367,6 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ! In central layer:
  ! Electron number mp_per_cell(1)= Z1*mp_per_cell(2) +Z2*mp_per_cell(3)
  !=============================
- npty=maxval(np_per_yc(1:6))
- npty=nyh*npty
- nptz=1
- if(ndim==3)then
-  np_per_zcell(1:6)=np_per_zc(1:6)
-  zp_min=zmin_t    !-Lz
-  zp_max=zmax_t    !+Lz
-  nptz=maxval(np_per_zc(1:6))
-  nptz=nyh*nptz
- endif
- allocate(ypt(npty+1,7))
- allocate(zpt(nptz+1,7))
- allocate(wy(npty+1,7))
- allocate(wz(nptz+1,7))
- ypt=0.
- zpt=0.
- wy=1.
- wz=1.
- !==================
- allocate(loc_jmax(0:npe_yloc-1,1:7))
- allocate(loc_kmax(0:npe_zloc-1,1:7))
- allocate(loc_imax(0:npe_xloc-1,1:7))
- !====================
- npyc(1:2)=np_per_yc(5:6)       !contaminants
- npyc(3:5)=np_per_yc(1:3)  ! central target (El + two (Z1-Z2) ion species
- npyc(6:7)=npyc(1:2)
- do ic=1,7
-  npty_layer(ic)=nyh*npyc(ic)
- end do
- nptz_ne=1
- do ic=1,7
-  npty_ne=npty_layer(ic)
-  dpy=(yp_max-yp_min)/real(npty_ne,dp)
-  do i=1,npty_ne
-   ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
-  enddo
-  if(Stretch)then
-   yy=str_ygrid%smin
-   if(yy >yp_min)then
-    dpy=dyi/real(npyc(ic),dp)
-    i1=(str_ygrid%sind(1)-nyl1+1)*npyc(ic)
-    i2=npty_ne-i1
-    do i=1,i1
-     dxip=dpy*(real(i-i1,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
-    dxip=dy/real(npyc(ic),dp)
-    do i=i1+1,i2
-     ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
-    end do
-    do i=i2+1,npty_ne
-     dxip=dpy*(real(i-i2,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
-   endif
-  endif
-  nptz_ne=1
-  if(ndim==3)then
-   zpt(1:npty_ne,ic)=ypt(1:npty_ne,ic)
-   wz(1:npty_ne,ic)=wy(1:npty_ne,ic)
-   nptz_ne=npty_ne
-  endif
-  call set_pgrid_ind(npty_ne,nptz_ne,ic)
- end do
- !===========================
  xtot=0.0
  do i=1,5
   nxl(i)=nint(dx_inv*lpx(i))
@@ -1632,18 +1377,18 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  targ_in=xfsh
  targ_end=targ_in+xtot
  ! Species x-distribution
- !=  np_per_xc(1:3) electrons, Z1and Z2 ions in central layer lpx(2)+lpx(3)
+ !=  np_per_xc(1:3) electrons, Z1 and Z2 ions in central layer lpx(2)+lpx(3)
  !=  np_per_xc(5:6) electrons and Z3-ions front and rear side contaminants (same
  !composition) If nsp=3 Z3=Z2
  !======================================
- nptx_loc(1:2)=nxl(1)*np_per_xc(5:6)
- nptx_loc(3:5)=(nxl(2)+nxl(3))*np_per_xc(1:3)
+ nptx_loc(1:3)=(nxl(2)+nxl(3))*np_per_xc(1:3)
+ nptx_loc(4:5)=nxl(1)*np_per_xc(5:6)
  nptx_loc(6:7)=nxl(5)*np_per_xc(5:6)
  !============ nptx(nsp)  distribution
- nptx(1)=nptx_loc(1)+nptx_loc(3)+nptx_loc(6)  !electrons
- nptx(2)=nptx_loc(4)                          !Z1-A1 species
- nptx(3)=nptx_loc(5)                          !Z2-A2 species 
- nptx(4)=nptx_loc(2)+nptx_loc(6)              !Z3-A3  species in nxl(1) and nxl(5) layer
+ nptx(1)=nptx_loc(1)+nptx_loc(4)+nptx_loc(6)  !electrons
+ nptx(2)=nptx_loc(2)                          !Z1-A1 species
+ nptx(3)=nptx_loc(3)                          !Z2-A2 species 
+ nptx(4)=nptx_loc(5)+nptx_loc(7)              !Z3-A3  species in nxl(1) and nxl(5) layer
  nptx_max=maxval(nptx_loc(1:7))
  !=======================
  allocate(xpt(nptx_max,7))
@@ -1653,20 +1398,6 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  allocate(loc_wghx(nptx_max,7))
  wghpt(1:nptx_max,1:7)=1.
  !=============================
- loc_npty(1:7)=loc_jmax(imody,1:7)
- loc_nptz(1:7)=loc_kmax(imodz,1:7)
- npty_ne=1
- nptz_ne=1
- npty_ne=maxval(loc_npty(1:7))
- nptz_ne=maxval(loc_nptz(1:7))
-!======================
- allocate(loc_wghyz(npty_ne,nptz_ne,7))
- allocate(loc_ypt(npty_ne,7))
- allocate(loc_zpt(nptz_ne,7))
- loc_wghyz=1.
- call mpi_yz_part_distrib(7,loc_npty,loc_nptz,npty_layer,npty_layer,&
-  ymin_t,zmin_t,wyz)
- !==================
  ! nsp ordering: electrons+ Z1 ions + Z2 ions
  ! first and last layers: electrons and Z3 (protons) ions
  loc_imax(imodx,1:7)=nptx_loc(1:7)
@@ -1677,7 +1408,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  wgh_sp(3:5)=j0_norm
  !===================================
  if(nxl(1) >0)then                  !first contaminant layer El+Z(nsp-1)
-  do ic=1,2
+  do ic=4,5
    n_peak=nptx_loc(ic)
    do i=1,n_peak
     uu=(real(i,dp)-0.5)/real(n_peak,dp)
@@ -1687,7 +1418,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   end do
   xfsh=xfsh+lpx(1)
   !=========== Distributes on x-MPI tasks
-  do ic=1,2
+  do ic=4,5
    i1=0
    do i=1,nptx_loc(ic)
     if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
@@ -1707,9 +1438,9 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   ! Counts particles (e+Z3 ions)
 
   nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
+   loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
   nps_loc(nsp)=nps_loc(nsp)+&
-   loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
+   loc_imax(p,5)*loc_jmax(l,5)*loc_kmax(ip,5)
 
  endif
  !------------------------------
@@ -1719,7 +1450,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  np1_loc=0.005
  if(np1>0.0)np1_loc=np1
  l_inv=log(1./np1_loc)
- do ic=3,5
+ do ic=1,3
   n_peak=nptx_loc(ic)  !central target
   do i=1,n_peak
    uu=(real(i,dp)-0.5)/real(n_peak,dp)
@@ -1727,7 +1458,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
    wghpt(i,ic)=wgh_sp(ic)       !weights usig mp_per_cell(1:3)  (El, Z1, Z2) ions
   end do
   if(nxl(2) >0)then
-   n_peak=nxl(2)*np_per_xc(ic-2)  !preplasma
+   n_peak=nxl(2)*np_per_xc(ic)  !preplasma
    do i=1,n_peak
     uu=(real(i,dp)-0.5)/real(n_peak,dp)
     wghpt(i,ic)=wghpt(i,ic)*np1_loc*exp(uu*l_inv)
@@ -1739,7 +1470,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ! Charge equilibria mp_per_cell(4)*Z1 +mp_per_cell(5)*Z3= mp_per_cell(1)
  !==========================
  !=========== Distributes on x-MPI tasks
- do ic=3,5
+ do ic=1,3
   i1=0
   do i=1,nptx_loc(ic)
    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
@@ -1756,11 +1487,11 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ip=imodz
 
  nps_loc(1)=nps_loc(1)+&
-  loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
+  loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
  nps_loc(2)=nps_loc(2)+&
-  loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
+  loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
   nps_loc(3)=nps_loc(3)+&
-   loc_imax(p,5)*loc_jmax(l,5)*loc_kmax(ip,5)
+   loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
  !============================
  if(lpx(5) >0.0)then
   do ic=6,7
@@ -1806,25 +1537,25 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ! The first electron-Z3 layer
  if(nxl(1) >0)then
   p=0
-  i2=loc_imax(imodx,1)
-  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
+  i2=loc_imax(imodx,4)
+  call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,4,i2,ip_el)
   p=0
-  i2=loc_imax(imodx,2)
-  call pspecies_distribute(spec(nsp),t0_pl(nsp),unit_charge(nsp),p,2,i2,ip_pr)
+  i2=loc_imax(imodx,5)
+  call pspecies_distribute(spec(nsp),t0_pl(nsp),unit_charge(nsp),p,5,i2,ip_pr)
                               !Z3 for nsp=4  Z3=Z2 for nsp=3
  endif
  !=========================
  ! The second solid electron-Z1-Z2 layer
  p=ip_el
- i2=loc_imax(imodx,3)
- call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,3,i2,ip_el)
+ i2=loc_imax(imodx,1)
+ call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,1,i2,ip_el)
  p=0
- i2=loc_imax(imodx,4)
- call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,4,i2,ip_ion)
+ i2=loc_imax(imodx,2)
+ call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,2,i2,ip_ion)
  p=0
  if(nsp==3)p=ip_pr
- i2=loc_imax(imodx,5)
- call pspecies_distribute(spec(3),t0_pl(3),unit_charge(3),p,5,i2,ip_ion)
+ i2=loc_imax(imodx,3)
+ call pspecies_distribute(spec(3),t0_pl(3),unit_charge(3),p,3,i2,ip_ion)
  !============
  ! The third electron-proton layer
  !=========================
@@ -2326,7 +2057,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  ! Only layers 3 and 4 in x
  loc_nptx(1:2)=nxl(3)*np_per_xc(1:2)
  loc_nptx(3:4)=nxl(4)*np_per_xc(3:4)
- nptx_max=loc_nptx(1)+loc_nptx(3)
+ nptx_max=maxval(loc_nptx(1:4))
 
  allocate(xpt(nptx_max,nsp))
  allocate(loc_xpt(nptx_max,nsp))
@@ -2441,7 +2172,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
  allocate(loc_ypt(npty_ne,nsp))
  allocate(loc_zpt(nptz_ne,nsp))
  loc_wghyz=1.
- !============================= Uniform target
+!============================ Uniform target
  call mpi_yz_part_distrib(2,loc_npty,loc_nptz,npty_layer,nptz_layer,&
   ymin_t,zmin_t,wyz)
  !==========================
@@ -2455,8 +2186,7 @@ subroutine set_uniform_yz_distrib(nyh,nc)
    uu=(real(i,dp)-0.5)/real(n_peak,dp)
    xpt(i1,ic)=xfsh+lpx(3)*uu
    wghpt(i1,ic)=j0_norm
-   uu=ratio_mpc(ic)/real(ion_min(1),dp) !float(mp_per_cell(1))/float(mp_per_cell(ic))
-   if(ic==2)wghpt(i1,ic)=wghpt(i1,ic)*uu
+   if(ic==2)wghpt(i1,ic)=wghpt(i1,ic)*wgh_ion
    loc_xpt(i1,ic)=xpt(i1,ic)
   end do
   nptx(ic)=i1
@@ -2578,12 +2308,6 @@ subroutine set_uniform_yz_distrib(nyh,nc)
   ! np1=n1_over_n/n0 (few %) 
   ! layer(4)+layer(5) as layer(1)+layer(2)
   !----------
-  !model_id=4 lpx(1) is the initial plateau of density np1
-  !lpx(2) is the cos^2 upramp for a bump of length lpx(2) and peak density np2
-  !lpx(3) is the cos^2 downramp from the peak to the central plateau
-  !lpx(4) is the plateau length
-  !lpx(5) is the linear downramp from the plateau
-  !(REMINDER) np1 and np2 are normalized to n0! 
  else
   !SOLID MULTISPECIES TARGETS
   !flag id=1,2 allowed not even implemented
@@ -2646,7 +2370,6 @@ subroutine set_uniform_yz_distrib(nyh,nc)
    end do
   end do
  end do
-
  end subroutine clean_field
  !+++++++++++++++++++++
  subroutine init_fluid_density_momenta(uf,uf0,xf0,nfluid,dmodel,i1,i2,j1,j2,k1,k2)

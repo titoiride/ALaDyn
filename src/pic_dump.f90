@@ -99,12 +99,12 @@
    do j=1,nptx_max
     write(lun)xpt(j,i),wghpt(j,i)
    end do
-   do j=1,loc_npty(1)
+   do j=1,loc_npty(i)
     write(lun)loc_ypt(j,i)
    end do
-   do k=1,loc_nptz(1)
-    write(lun)loc_zpt(j,i)
-    do j=1,loc_npty(1)
+   do k=1,loc_nptz(i)
+    write(lun)loc_zpt(k,i)
+    do j=1,loc_npty(i)
      write(lun)loc_wghyz(j,k,i)
     end do
    end do
@@ -171,7 +171,7 @@
  integer :: n1_old,lun,i,j,k,ic
  integer :: nxf_loc,nyf_loc,nzf_loc,nf,npt_max
  integer :: i2b,j2b,k2b,nbf,env_cp
- integer :: n1_loc,n2_loc,n3_loc,nf_loc
+ integer :: n1_loc,n2_loc,n3_loc,nf_loc,loc_npty_max,loc_nptz_max
  real(dp) :: rdata(10)
  integer :: ndata(10)
  real(dp),allocatable :: xx(:)
@@ -235,21 +235,23 @@
   do i=1,nsp
    read(lun)loc_npty(i),loc_nptz(i)
   end do
+  loc_npty_max=maxval(loc_npty(1:nsp))
+  loc_nptz_max=maxval(loc_nptz(1:nsp))
   allocate(xpt(nptx_max,nsp))
   allocate(wghpt(nptx_max,nsp))
-  allocate(loc_ypt(loc_npty(1),nsp))
-  allocate(loc_zpt(loc_nptz(1),nsp))
-  allocate(loc_wghyz(loc_npty(1),loc_nptz(1),nsp))
+  allocate(loc_ypt(loc_npty_max,nsp))
+  allocate(loc_zpt(loc_nptz_max,nsp))
+  allocate(loc_wghyz(loc_npty_max,loc_nptz_max,nsp))
   do i=1,nsp
    do j=1,nptx_max
     read(lun)xpt(j,i),wghpt(j,i)
    end do
-   do j=1,loc_npty(1)
+   do j=1,loc_npty(i)
     read(lun)loc_ypt(j,i)
    end do
-   do k=1,loc_nptz(1)
-    read(lun)loc_zpt(j,i)
-    do j=1,loc_npty(1)
+   do k=1,loc_nptz(i)
+    read(lun)loc_zpt(k,i)
+    do j=1,loc_npty(i)
      read(lun)loc_wghyz(j,k,i)
     end do
    end do
