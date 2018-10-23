@@ -35,8 +35,8 @@
 
  implicit none
 
- integer :: last_iter,ngout,iter_max
- logical :: Diag
+ integer  :: last_iter,ngout,iter_max
+ logical  :: Diag
  real(dp) :: tdia,dtdia,tout,dtout,tstart,mem_max_addr
  real(dp) :: dt_loc
  integer  :: t_ind,ic,tk_ind
@@ -525,7 +525,8 @@
  real(dp), parameter :: opt_der=1.0
 
  !enable loop to attach with gdb only if really needed
- !WARNING if enabled without need, the program sleeps at start without doing anything!
+ !WARNING if enabled with no need, the program sleeps at start without doing anything!
+ !To enable the flag, uncomment the corresponding line in CMakeLists.txt
 #ifdef ENABLE_GDB_ATTACH
  call gdbattach
 #endif
@@ -633,7 +634,7 @@
   dtout=(tmax-tstart)/nouts
   dtdia=(tmax-tstart)/iene
   if(tmax >0.0)then
-   iter_max=tmax/dt
+   iter_max=int(tmax/dt)
    dt_loc=tmax/float(iter_max)
   endif
 
@@ -652,7 +653,7 @@
   endif
   call set_fxgrid(npe_xloc,sh_ix)
   if(tmax >0.0)then
-   iter_max=tmax/dt
+   iter_max=int(tmax/dt)
    dt_loc=tmax/float(iter_max)
   endif
   dtout=tmax/nouts

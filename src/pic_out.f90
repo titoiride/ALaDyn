@@ -1544,7 +1544,7 @@
   nptot=int(nptot_global_reduced)
  else
   nptot=-1
-     endif
+ endif
  ip_max=ip
  if(pe0)ip_max=maxval(ip_loc(1:npe))
  lenp=ndv*ip
@@ -2207,8 +2207,8 @@
   if(Two_color)then
    kk=0
    ekt=0.0
-  do iz=k1,nzp
-   do iy=j1,nyp
+   do iz=k1,nzp
+    do iy=j1,nyp
      do ix=i1,i2
       ik=ix-2
       dar=aph1*(env1(ix+1,iy,iz,1)-env1(ix-1,iy,iz,1))+aph2*(&
@@ -2231,47 +2231,47 @@
    end do
    dvol=1./real(kk,dp)
    call allreduce_dpreal(SUMV,ekt,ekm,4)
-   if(ekm(2)> 0.0)
+   if(ekm(2)> 0.0)then
     ekm(1)=ekm(1)/ekm(2)    !Centroid
    endif
    eavg1(2,nst)=ekm(1) 
    eavg1(4,nst)=field_energy*dgvol*ekm(3)   !Energy
    eavg1(5,nst)=dvol*ekm(4)    !Action
-!===============
-  i0_lp=i1+nint(dx_inv*ekm(1))
-  ekt(1:2)=0.0  
-  do iz=k1,nzp
-   zz=0.0
-   if(k1 >2 )then
-    k=iz-2
-    zz=loc_zg(k,2,imodz)
-   endif
-   do iy=j1,nyp
-    j=iy-2
-    yy=loc_yg(j,2,imody)
-    rr=sqrt(zz*zz+yy*yy)
-    do ix=i01,i02
-     a2=env1(ix,iy,iz,1)*env1(ix,iy,iz,1)+&
-     env1(ix,iy,iz,2)*env1(ix,iy,iz,2)
-     ekt(1)=ekt(1)+rr*a2
+   !===============
+   i0_lp=i1+nint(dx_inv*ekm(1))
+   ekt(1:2)=0.0  
+   do iz=k1,nzp
+    zz=0.0
+    if(k1 >2 )then
+     k=iz-2
+     zz=loc_zg(k,2,imodz)
+    endif
+    do iy=j1,nyp
+     j=iy-2
+     yy=loc_yg(j,2,imody)
+     rr=sqrt(zz*zz+yy*yy)
+     do ix=i01,i02
+      a2=env1(ix,iy,iz,1)*env1(ix,iy,iz,1)+&
+      env1(ix,iy,iz,2)*env1(ix,iy,iz,2)
+      ekt(1)=ekt(1)+rr*a2
+     end do
     end do
    end do
-  end do
-  call allreduce_dpreal(SUMV,ekt,ekm,1)
-  if(ekm(2)> 0.0)then
-   ekm(1)=ekm(1)/ekm(2)  ! env radius
-  endif
-  eavg(3,nst)=ekm(1)  !radius
-!===============
-  ekt(1)=ekt(7)
+   call allreduce_dpreal(SUMV,ekt,ekm,1)
+   if(ekm(2)> 0.0)then
+    ekm(1)=ekm(1)/ekm(2)  ! env radius
+   endif
+   eavg(3,nst)=ekm(1)  !radius
+  !===============
+   ekt(1)=ekt(7)
    if(ekt(1) > giant_field)then
     write(6,*)' WARNING: Env field too big ',ekt(1)
     write(6,'(a23,3i4)')' At the mpi_task=',imodx,imody,imodz
    endif
-  ekm(1)=ekt(1)
-  if(prl)call allreduce_dpreal(MAXV,ekt,ekm,1)
+   ekm(1)=ekt(1)
+   if(prl)call allreduce_dpreal(MAXV,ekt,ekm,1)
    eavg1(1,nst)=ekm(1)
- endif
+  endif
  end subroutine envelope_struct_data
  !===========================
  subroutine fields_on_target(nst)
@@ -2947,7 +2947,7 @@
 
  open (lun,file='diagnostics/'//fname//'.dat',form='formatted')
  write(lun,*)'    mod_id, dmodel_id,    LP_ord,   der_ord,     ibeam,     color,   &
- n_field'
+ &n_field'
  write(lun,'(7i11)')model_id,dmodel_id,LPf_ord,der_ord,ibeam,color,nfield
  write(lun,*)'        Part,        Beam,        Wake, Solid_Target'
  write(lun,'(4L13)')Part,Beam,Wake,Solid_target

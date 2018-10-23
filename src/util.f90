@@ -808,7 +808,7 @@
                bunch(1,idx)=x
                bunch(2,idx)=y
                bunch(3,idx)=z
-               wgh = 1.0/PRODUCT(ppcb)
+               wgh = one_dp/PRODUCT(ppcb)
                wgh = wgh*alpha
                wgh = wgh*exp(-(x-x_cm)**2/2./s_x**2)
                wgh = wgh*exp(-(y-y_cm)**2/2./s_y**2)

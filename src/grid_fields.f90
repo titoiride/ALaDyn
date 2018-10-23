@@ -900,9 +900,11 @@
     Ar=e0*cos(phi)*sqrt(sqrt(w2))*exp(-w2*r2)
     Ai=-e0*sin(phi)*sqrt(sqrt(w2))*exp(-w2*r2)
     A0=cos(phi1)*cos(phi1)
+                                     !A0=A0*A0
     ef(i,j,k,1)=ef(i,j,k,1)+A0*Ar    !Re[Ay](t_loc)
     ef(i,j,k,2)=ef(i,j,k,2)+A0*Ai    !Im[Ay]
     A0=cos(phi0)*cos(phi0)
+                                     !A0=A0*A0
     ef(i,j,k,3)=ef(i,j,k,3)+A0*Ar    !Re[Ay](t_loc-Dt)
     ef(i,j,k,4)=ef(i,j,k,4)+A0*Ai    !Im[Ay]
    end do
@@ -1584,103 +1586,100 @@
  end subroutine env_grad
 !----------------------------------------
  subroutine env_maxw_solve(curr,evf,i1,n1p,j1,n2p,k1,n3p,&
-  om0,dhx,dhy,dhz,dt_loc)
-  real(dp),intent(inout) :: curr(:,:,:,:),evf(:,:,:,:)
-  integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p
-  real(dp),intent(in) :: om0,dhx,dhy,dhz,dt_loc
-  integer :: i,j,k,ii,ic
-  real(dp) ::dt2,dx1_inv,dhx1_inv,aph_opt(2)
-  real(dp) ::kfact,k2_fact,skfact
-  real(dp),dimension(0:2),parameter :: lder=(/1.0,-4.0,3.0/)
+ om0,dhx,dhy,dhz,dt_loc)
+ real(dp),intent(inout) :: curr(:,:,:,:),evf(:,:,:,:)
+ integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p
+ real(dp),intent(in) :: om0,dhx,dhy,dhz,dt_loc
+ integer :: i,j,k,ii,ic
+ real(dp) ::dt2,dx1_inv,dhx1_inv,aph_opt(2)
+ real(dp) ::kfact,k2_fact,skfact
+ real(dp),dimension(0:2),parameter :: lder=(/1.0,-4.0,3.0/)
  !==========================
  ! EXPLICIT INTEGRATION of Maxwell ENVELOPE EVOLUTION EQUATION
  !============================
-  dt2=dt_loc*dt_loc
-  !khfact=2.*sin(0.5*om0*dt_loc)/dt_loc
-  !kh2_fact=khfact*khfact
-  !khfact=2.*dhx*sin(0.5*om0*dx)
-  !kh2_sfact=khfact*khfact
-
-  !kfact=sin(om0*dt_loc)
-  kfact=om0*dt_loc
-  k2_fact=1./(1.+kfact*kfact)
-  skfact=om0
-  !skfact=dhx*sin(om0*dx)
-  dx1_inv=skfact*dhx
-  dhx1_inv=2.*dx1_inv
-  aph_opt(1)=1.
-  aph_opt(2)=0.
-  if(der_ord ==3)then
-   aph_opt(1)=dx1_inv*opt_der1
-   aph_opt(2)=dx1_inv*0.5*(1.-opt_der1)
-  endif
-  ic=2
+ dt2=dt_loc*dt_loc
+ !khfact=2.*sin(0.5*om0*dt_loc)/dt_loc
+ !kh2_fact=khfact*khfact
+ !khfact=2.*dhx*sin(0.5*om0*dx)
+ !kh2_sfact=khfact*khfact
+ !kfact=sin(om0*dt_loc)
+ kfact=om0*dt_loc
+ k2_fact=1./(1.+kfact*kfact)
+ skfact=om0
+ !skfact=dhx*sin(om0*dx)
+ dx1_inv=skfact*dhx
+ dhx1_inv=2.*dx1_inv
+ aph_opt(1)=1.
+ aph_opt(2)=0.
+ if(der_ord ==3)then
+  aph_opt(1)=dx1_inv*opt_der1
+  aph_opt(2)=dx1_inv*0.5*(1.-opt_der1)
+ endif
+ ic=2
  !========Enter  jc(1:2)= - omp2*<q^2*chi*env(1:2)
  !                        chi <q^2*wgh*n/gam_p> >0
  ! Computes the full Laplacian of A^{n}=env(1:2) components
  !========and adds to  jc(1:2)
-  call potential_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhx,dhy,dhz)
+ call potential_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhx,dhy,dhz)
  !=====================
  ! =>   jc(1:2)=[D^2-omp^2*chi]A= S(A);
  !=================
  !  Computes D_{x} centered first derivatives of A and adds to S(A)
-  call first_Ader
+ call first_Ader
  !S_R => S_R -2*k0[D_xA_I]
  !S_I => S_I +2*k0[D_xA_R]
- !
-   do k=k1,n3p
-    do j=j1,n2p
-     do i=i1,n1p
-      curr(i,j,k,1)=dt2*curr(i,j,k,1)+2.*evf(i,j,k,1)-evf(i,j,k,3)+kfact*evf(i,j,k,4)
-      curr(i,j,k,2)=dt2*curr(i,j,k,2)+2.*evf(i,j,k,2)-evf(i,j,k,4)-kfact*evf(i,j,k,3)
-     end do
-    end do
+ do k=k1,n3p
+  do j=j1,n2p
+   do i=i1,n1p
+    curr(i,j,k,1)=dt2*curr(i,j,k,1)+2.*evf(i,j,k,1)-evf(i,j,k,3)+kfact*evf(i,j,k,4)
+    curr(i,j,k,2)=dt2*curr(i,j,k,2)+2.*evf(i,j,k,2)-evf(i,j,k,4)-kfact*evf(i,j,k,3)
    end do
-
+  end do
+ end do
  !====================
  !curr(1)=F_R=dt2*S_R+2*A_R^n-A_R^{n-1}-kfact*A_I^{n-1}
  !curr(2)=F_I=dt2*S_I+2*A_I^n-A_I^{n-1}+kfact*A_R^{n-1}
-    do k=k1,n3p
-     do j=j1,n2p
-      do i=i1,n1p
-       evf(i,j,k,3)=evf(i,j,k,1)  !A^{n}=> A^{n-1}
-       evf(i,j,k,4)=evf(i,j,k,2)
-       evf(i,j,k,1)=k2_fact*(curr(i,j,k,1)-kfact*curr(i,j,k,2))
-       evf(i,j,k,2)=k2_fact*(curr(i,j,k,2)+kfact*curr(i,j,k,1))
-     end do
-    end do
-   enddo
-    do k=k1,n3p
-     do j=j1,n2p
-      do i=i1,i1+1
-       evf(i,j,k,1)=zero_dp
-       evf(i,j,k,2)=zero_dp
-      end do
-     end do
-    enddo
+ do k=k1,n3p
+  do j=j1,n2p
+   do i=i1,n1p
+    evf(i,j,k,3)=evf(i,j,k,1)  !A^{n}=> A^{n-1}
+    evf(i,j,k,4)=evf(i,j,k,2)
+    evf(i,j,k,1)=k2_fact*(curr(i,j,k,1)-kfact*curr(i,j,k,2))
+    evf(i,j,k,2)=k2_fact*(curr(i,j,k,2)+kfact*curr(i,j,k,1))
+   end do
+  end do
+ enddo
+ do k=k1,n3p
+  do j=j1,n2p
+   do i=i1,i1+1
+    evf(i,j,k,1)=zero_dp
+    evf(i,j,k,2)=zero_dp
+   end do
+  end do
+ enddo
  contains
  subroutine first_Ader
-!============
-  ! explicit second order [-2isin(k0dx)*Dx]A and add to S(A)
+ !============
+ ! explicit second order [-2isin(k0dx)*Dx]A and add to S(A)
  if(der_ord <3)then
   do k=k1,n3p
    do j=j1,n2p
     i=i1
     curr(i,j,k,1)=curr(i,j,k,1)-dhx1_inv*(&
-             evf(i+1,j,k,2)-evf(i,j,k,2))
+    evf(i+1,j,k,2)-evf(i,j,k,2))
     curr(i,j,k,2)=curr(i,j,k,2)+dhx1_inv*(&
-             evf(i+1,j,k,1)-evf(i,j,k,1))
+    evf(i+1,j,k,1)-evf(i,j,k,1))
     do i=i1+1,n1p-1
      curr(i,j,k,1)=curr(i,j,k,1)-dx1_inv*(&
-              evf(i+1,j,k,2)-evf(i-1,j,k,2))
+     evf(i+1,j,k,2)-evf(i-1,j,k,2))
      curr(i,j,k,2)=curr(i,j,k,2)+dx1_inv*(&
-              evf(i+1,j,k,1)-evf(i-1,j,k,1))
+     evf(i+1,j,k,1)-evf(i-1,j,k,1))
     end do
     i=n1p
     curr(i,j,k,1)=curr(i,j,k,1)-dx1_inv*(&
-             evf(i,j,k,2)-evf(i-1,j,k,2))
+    evf(i,j,k,2)-evf(i-1,j,k,2))
     curr(i,j,k,2)=curr(i,j,k,2)+dx1_inv*(&
-             evf(i,j,k,1)-evf(i-1,j,k,1))
+    evf(i,j,k,1)-evf(i-1,j,k,1))
    end do
   end do
  else
@@ -1688,37 +1687,36 @@
    do j=j1,n2p
     i=i1
     curr(i,j,k,1)=curr(i,j,k,1)-dhx1_inv*(&
-             evf(i+1,j,k,2)-evf(i,j,k,2))
+    evf(i+1,j,k,2)-evf(i,j,k,2))
     curr(i,j,k,2)=curr(i,j,k,2)+dhx1_inv*(&
-             evf(i+1,j,k,1)-evf(i,j,k,1))
+    evf(i+1,j,k,1)-evf(i,j,k,1))
     i=i+1
-     curr(i,j,k,1)=curr(i,j,k,1)-dx1_inv*(&
-              evf(i+1,j,k,2)-evf(i-1,j,k,2))
-     curr(i,j,k,2)=curr(i,j,k,2)+dx1_inv*(&
-              evf(i+1,j,k,1)-evf(i-1,j,k,1))
+    curr(i,j,k,1)=curr(i,j,k,1)-dx1_inv*(&
+    evf(i+1,j,k,2)-evf(i-1,j,k,2))
+    curr(i,j,k,2)=curr(i,j,k,2)+dx1_inv*(&
+    evf(i+1,j,k,1)-evf(i-1,j,k,1))
     do i=i1+2,n1p-2
      curr(i,j,k,1)=curr(i,j,k,1)- &
-                 aph_opt(1)*(evf(i+1,j,k,2)-evf(i-1,j,k,2))-&
-                 aph_opt(2)*(evf(i+2,j,k,2)-evf(i-2,j,k,2))
+     aph_opt(1)*(evf(i+1,j,k,2)-evf(i-1,j,k,2))-&
+     aph_opt(2)*(evf(i+2,j,k,2)-evf(i-2,j,k,2))
      curr(i,j,k,2)=curr(i,j,k,2)+ &
-                 aph_opt(1)*(evf(i+1,j,k,1)-evf(i-1,j,k,1))+&
-                 aph_opt(2)*(evf(i+2,j,k,1)-evf(i-2,j,k,1))
+     aph_opt(1)*(evf(i+1,j,k,1)-evf(i-1,j,k,1))+&
+     aph_opt(2)*(evf(i+2,j,k,1)-evf(i-2,j,k,1))
     end do
     i=n1p-1
-     curr(i,j,k,1)=curr(i,j,k,1)-dx1_inv*(&
-              evf(i+1,j,k,2)-evf(i-1,j,k,2))
-     curr(i,j,k,2)=curr(i,j,k,2)+dx1_inv*(&
-              evf(i+1,j,k,1)-evf(i-1,j,k,1))
+    curr(i,j,k,1)=curr(i,j,k,1)-dx1_inv*(&
+    evf(i+1,j,k,2)-evf(i-1,j,k,2))
+    curr(i,j,k,2)=curr(i,j,k,2)+dx1_inv*(&
+    evf(i+1,j,k,1)-evf(i-1,j,k,1))
     i=n1p
     curr(i,j,k,1)=curr(i,j,k,1)-dx1_inv*(&
-             evf(i,j,k,2)-evf(i-1,j,k,2))
+    evf(i,j,k,2)-evf(i-1,j,k,2))
     curr(i,j,k,2)=curr(i,j,k,2)+dx1_inv*(&
-             evf(i,j,k,1)-evf(i-1,j,k,1))
+    evf(i,j,k,1)-evf(i-1,j,k,1))
    end do
   end do
  endif
  end subroutine first_Ader
-
  end subroutine env_maxw_solve
 !==================================
  subroutine env_comov_maxw_solve(curr,evf,i1,n1p,j1,n2p,k1,n3p,&

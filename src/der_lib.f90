@@ -73,10 +73,10 @@
    cmp_coeff(2)=1./8.
   endif
  case(4)
-   !For forth-order first derivative on Yee grid
+  !For forth-order first derivative on Yee grid
   cmp_coeff(1)=1.125   !9/8(SE4)
   cmp_coeff(2)=(1.-cmp_coeff(1))/3.  !-1./24
-    !For forth-order second derivative
+  !For forth-order second derivative
   hord_der2= -1./12.
  !===================================
   avg_cmp=1./(cmp_coeff(1)+cmp_coeff(2))

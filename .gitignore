@@ -60,3 +60,7 @@ fftw*/
 
 #Backup files
 *.bak
+
+#Snippets
+
+snippet_*

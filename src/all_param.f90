@@ -301,7 +301,7 @@
   if(mp_per_cell(1)==0)ratio_mpfluid=0.0
   if(ny_targ==0)ratio_mpfluid=0.0
  endif
- j0_norm=j0_norm*ratio_mpfluid
+ !j0_norm=j0_norm*ratio_mpfluid
  !========================== multispecies
  ! mass-charge parameters four species: three ion species+ electrons
  ! Ions charges defined by initial conditions.
@@ -574,7 +574,7 @@
   endif
  !============================
  !  SET PARAM all cases
- nfcomp=curr_ndim+1
+ if(Hybrid)nfcomp=curr_ndim+1
  nsp_run=nsp
  if(Wake)then
   nsp_run=1  !only electrons running
