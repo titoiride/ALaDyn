@@ -2673,11 +2673,11 @@
  !====================
  !Ghost cell values for field assignement on particles
  vb=vbeam
- call eb_fields_collect(ebf,ebf1_bunch,ebf_bunch,ebf0,nfield)
+ if(Hybrid) call eb_fields_collect(ebf,ebf1_bunch,ebf_bunch,ebf0,nfield)
 !   in ebf0() the total fields  bunch+wake
  call pfields_prepare(ebf0,i1,i2,j1,j2,k1,k2,nfield,2,2)
- !call pfields_prepare(ebf_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
- !call pfields_prepare(ebf1_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
+ call pfields_prepare(ebf_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
+ call pfields_prepare(ebf1_bunch,i1,i2,j1,j2,k1,k2,nfield,1,1)
 !======== first new plasma electrons are injected by ionization
  if(Ionization)then
   if(iter_loc==0)then
