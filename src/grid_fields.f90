@@ -5202,7 +5202,7 @@
   real(dp) :: vl,vr
   real(dp),parameter :: eps=1.e-06
   real(dp),dimension(2),parameter :: w03=(/1./3.,2./3./)
-  !real(dp),dimension(2),parameter :: w03=(/0.1250,0.3750/)
+  !real(dp),dimension(2),parameter :: w03=(/0.1250,0.8750/)
 !  enter data [i1,np]
   integer :: i,l,ic
 
@@ -5241,106 +5241,106 @@
    end do
   end do
 !===================================
-   do ic=1,nc-1
-    do i=i1+1,np-2
-     vv=wr(i,nc)+wl(i,nc)
-     s0=sign(one_dp,vv)        !s0=1*sign(vv)
-     var(i,ic)=max(0.,s0)*wl(i,ic)-min(0.,s0)*wr(i,ic)
-    end do
+  do ic=1,nc-1
+   do i=i1+1,np-2
+    vv=wr(i,nc)+wl(i,nc)
+    s0=sign(one_dp,vv)        !s0=1*sign(vv)
+    var(i,ic)=max(0.,s0)*wl(i,ic)-min(0.,s0)*wr(i,ic)
    end do
+  end do
   end subroutine weno3_nc
 !===========================================
  subroutine weno5(nc,i0,ng)
-  integer,intent(in)  :: nc,i0,ng
-  real(dp) :: pl(0:2),pr(0:2),dw(0:3),sl(0:2),sr(0:2),omgl(0:2),vv,s0,s1,ssl,ssr
-  real(dp) :: vl,vr
-  real(dp),parameter :: eps=1.e-06,cs2=13./12.
-  real(dp),dimension(6),parameter :: lw5=(/-3./8.,7./8.,1./8.,3./8.,5./8.,-1./8./)
-  real(dp),dimension(6),parameter :: rw5=(/-1./8.,5./8.,3./8.,1./8.,7./8.,-3./8./)
-  real(dp),dimension(3),parameter :: dw5=(/0.06250,0.06250,0.03125/)
-  integer :: i,l,ic
-  ! enter data [i0,ng]
+ integer,intent(in)  :: nc,i0,ng
+ real(dp) :: pl(0:2),pr(0:2),dw(0:3),sl(0:2),sr(0:2),omgl(0:2),vv,s0,s1,ssl,ssr
+ real(dp) :: vl,vr
+ real(dp),parameter :: eps=1.e-06,cs2=13./12.
+ real(dp),dimension(6),parameter :: lw5=(/-3./8.,7./8.,1./8.,3./8.,5./8.,-1./8./)
+ real(dp),dimension(6),parameter :: rw5=(/-1./8.,5./8.,3./8.,1./8.,7./8.,-3./8./)
+ real(dp),dimension(3),parameter :: dw5=(/1./16.,5./8.,5./16./)
+ integer :: i,l,ic
+ ! enter data [i0,ng]
 
-  do ic=1,nc
-   i=i0+2
-   dw(0)=var(i-1,ic)-var(i-2,ic)    !Dv_{i-2}
-   dw(1)=var(i,ic)-var(i-1,ic)
-   dw(2)=var(i+1,ic)-var(i,ic)
-   do i=i0+2,ng-2
-    dw(3)=var(i+2,ic)-var(i+1,ic)     !Dv_{i+1}
-    ssl=0.0;ssr=0.0
-    s0=0.0;s1=0.0
-    call smooth_ind
-    do l=0,2
-     pl(l)=lw5(2*l+1)*dw(l)+lw5(2*l+2)*dw(l+1)
-     sl(l)=dw5(l+1)*omgl(l)
-     ssl=ssl+sl(l)
-     s0=s0 +sl(l)*pl(l)
-     pr(l)=rw5(2*l+1)*dw(l)+rw5(2*l+2)*dw(l+1)
-     sr(l)=dw5(3-l)*omgl(l)
-     ssr=ssr+sr(l)
-     s1=s1 +sr(l)*pr(l)
-    end do
-    wl(i,ic)=var(i,ic)+s0/ssl
-    wr(i-1,ic)=var(i,ic)-s1/ssr
-    dw(0)=dw(1)
-    dw(1)=dw(2)
-    dw(2)=dw(3)
+ do ic=1,nc
+  i=i0+2
+  dw(0)=var(i-1,ic)-var(i-2,ic)    !Dv_{i-2}
+  dw(1)=var(i,ic)-var(i-1,ic)
+  dw(2)=var(i+1,ic)-var(i,ic)
+  do i=i0+2,ng-2
+   dw(3)=var(i+2,ic)-var(i+1,ic)     !Dv_{i+1}
+   ssl=0.0;ssr=0.0
+   s0=0.0;s1=0.0
+   call smooth_ind
+   do l=0,2
+    pl(l)=lw5(2*l+1)*dw(l)+lw5(2*l+2)*dw(l+1)
+    sl(l)=dw5(l+1)*omgl(l)
+    ssl=ssl+sl(l)
+    s0=s0 +sl(l)*pl(l)
+    pr(l)=rw5(2*l+1)*dw(l)+rw5(2*l+2)*dw(l+1)
+    sr(l)=dw5(3-l)*omgl(l)
+    ssr=ssr+sr(l)
+    s1=s1 +sr(l)*pr(l)
    end do
-!  wl[i0+2,ng-2]   wr[i0+1,ng-3]
-
-
-  end do           !STORES LxF flux on var arrays
-  do i=i0+2,ng-3
-   vl=wl(i,nc)
-   vr=wr(i,nc)
-   vv=abs(vl+vr)
-   do ic=1,nc-1
-    var(i,ic)=vl*wl(i,ic)+vr*wr(i,ic)-vv*(wr(i,ic)-wl(i,ic))
-    var(i,ic)=0.5*var(i,ic)
-   end do
+   wl(i,ic)=var(i,ic)+s0/ssl
+   wr(i-1,ic)=var(i,ic)-s1/ssr
+   dw(0)=dw(1)
+   dw(1)=dw(2)
+   dw(2)=dw(3)
   end do
-  ! EXIT FLUX (L,R) [i0+2,ng-3]
-  contains
-   subroutine smooth_ind
-    real(dp) :: der1(0:2),der2(0:2),sfact
-    integer :: k,m
-    do k=0,2
-     m=1-k
-     der2(k)=dw(k+1)-dw(k)
-     der1(k)=0.5*(dw(k)+dw(k+1))+m*der2(k)
-     sfact=eps+der1(k)*der1(k)+cs2*der2(k)*der2(k)
-     omgl(k)=1./(sfact*sfact)
-    end do
-   end subroutine smooth_ind
-  end subroutine weno5
+ !  wl[i0+2,ng-2]   wr[i0+1,ng-3]
+
+
+ end do           !STORES LxF flux on var arrays
+ do i=i0+2,ng-3
+  vl=wl(i,nc)
+  vr=wr(i,nc)
+  vv=abs(vl+vr)
+  do ic=1,nc-1
+   var(i,ic)=vl*wl(i,ic)+vr*wr(i,ic)-vv*(wr(i,ic)-wl(i,ic))
+   var(i,ic)=0.5*var(i,ic)
+  end do
+ end do
+ ! EXIT FLUX (L,R) [i0+2,ng-3]
+ contains
+ subroutine smooth_ind
+ real(dp) :: der1(0:2),der2(0:2),sfact
+ integer :: k,m
+ do k=0,2
+  m=1-k
+  der2(k)=dw(k+1)-dw(k)
+  der1(k)=0.5*(dw(k)+dw(k+1))+m*der2(k)
+  sfact=eps+der1(k)*der1(k)+cs2*der2(k)*der2(k)
+  omgl(k)=1./(sfact*sfact)
+ end do
+ end subroutine smooth_ind
+ end subroutine weno5
 !=================================
  subroutine nc_fluid_density_momenta(flx,ef,i1,n1p,j1,n2p,k1,n3p,fcomp,aphx,aphy,aphz)
-  real(dp),intent(in) :: flx(:,:,:,:)
-  real(dp),intent(inout) :: ef(:,:,:,:)
-  integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,fcomp
-  real(dp),intent(in) :: aphx,aphy,aphz
-  integer :: i,ii,j,k,ic,j01,j02,k01,k02
-  real(dp) :: vx,vy,vz
-  real(dp),dimension(3),parameter :: lder=(/0.5,-2.,1.5/)
-  real(dp),dimension(3),parameter :: rder=(/-1.5,2.,-0.5/)
-  real(dp),dimension(4),parameter :: lder4=(/1./6.,-1.,0.5,1./3./)  ![i-2,i+1] stencil
-  real(dp),dimension(4),parameter :: rder4=(/-1./3.,-0.5,1.,-1./6./)![i-1,i+2] stencil
+ real(dp),intent(in) :: flx(:,:,:,:)
+ real(dp),intent(inout) :: ef(:,:,:,:)
+ integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,fcomp
+ real(dp),intent(in) :: aphx,aphy,aphz
+ integer :: i,ii,j,k,ic,j01,j02,k01,k02
+ real(dp) :: vx,vy,vz
+ real(dp),dimension(3),parameter :: lder=(/0.5,-2.,1.5/)
+ real(dp),dimension(3),parameter :: rder=(/-1.5,2.,-0.5/)
+ real(dp),dimension(4),parameter :: lder4=(/1./6.,-1.,0.5,1./3./)  ![i-2,i+1] stencil
+ real(dp),dimension(4),parameter :: rder4=(/-1./3.,-0.5,1.,-1./6./)![i-1,i+2] stencil
 !=========================
-! Enter primitive variables in flux array (Px,Py,Pz,den,vx,vy,vz)
-! flcomp=fcomp+ndim components
-  j01=j1
-  j02=n2p
-  k01=k1
-  k02=n3p
-! momenta-density
-  do k=k1,n3p
-   do j=j1,n2p
-    do ic=1,fcomp+1
-     do i=i1,n1p
-      var(i,ic)=flx(i,j,k,ic)
-     end do
+!Enter primitive variables in flux array (Px,Py,Pz,den,vx,vy,vz)
+!flcomp=fcomp+ndim components
+ j01=j1
+ j02=n2p
+ k01=k1
+ k02=n3p
+!momenta-density
+ do k=k1,n3p
+  do j=j1,n2p
+   do ic=1,fcomp+1
+    do i=i1,n1p
+     var(i,ic)=flx(i,j,k,ic)
     end do
+   end do
    call weno3_nc(fcomp+1,i1,n1p)
    do ic=1,fcomp-1               !var=momenta
     do i=i1+2,n1p-2
@@ -5355,199 +5355,199 @@
   end do
  end do
 !========== density flux
-  call x_nc_boundary_closure ! boundary closere at i=i1,i1+1,i=n1p,n1p-1
+ call x_nc_boundary_closure ! boundary closere at i=i1,i1+1,i=n1p,n1p-1
 !=============== y-flux
-  if(pe0y)call y_left_nc_boundary_closure  !boundary at j=j1,j1+1 ==> j01=j1+2
-  if(pe1y)call y_right_nc_boundary_closure !boundary at n2p,n2p-1  ==> j02=n2p-2
-  do k=k1,n3p
-   do i=i1,n1p
-    do ic=1,fcomp
-     do j=j01-2,j02+2            !Extended range[j1-2,n2p+2] in interior domains
-      var(j,ic)=flx(i,j,k,ic)
-     end do
+ if(pe0y)call y_left_nc_boundary_closure  !boundary at j=j1,j1+1 ==> j01=j1+2
+ if(pe1y)call y_right_nc_boundary_closure !boundary at n2p,n2p-1  ==> j02=n2p-2
+ do k=k1,n3p
+  do i=i1,n1p
+   do ic=1,fcomp
+    do j=j01-2,j02+2            !Extended range[j1-2,n2p+2] in interior domains
+     var(j,ic)=flx(i,j,k,ic)
     end do
-    do j=j01-2,j02+2
-     var(j,fcomp+1)=flx(i,j,k,fcomp+2)
-    end do
-    call weno3_nc(fcomp+1,j01-2,j02+2)    !rec[flux][j01-1,ij02], [j1-1,n2p] for interior points
-    do ic=1,fcomp-1
-     do j=j01,j02
-      vy=var(j,fcomp+1)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*vy*(var(j,ic)-var(j-1,ic))
-     end do
-    end do
-    ic=fcomp
+   end do
+   do j=j01-2,j02+2
+    var(j,fcomp+1)=flx(i,j,k,fcomp+2)
+   end do
+   call weno3_nc(fcomp+1,j01-2,j02+2)    !rec[flux][j01-1,ij02], [j1-1,n2p] for interior points
+   do ic=1,fcomp-1
     do j=j01,j02
-     ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*(var(j,ic)-var(j-1,ic))
+     vy=var(j,fcomp+1)
+     ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*vy*(var(j,ic)-var(j-1,ic))
     end do
    end do
+   ic=fcomp
+   do j=j01,j02
+    ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*(var(j,ic)-var(j-1,ic))
+   end do
   end do
-  if(ndim <3)return
-  if(pe0z)call z_left_nc_boundary_closure  !boundary at k=k1,k1+1 ==> k01=k1+2
-  if(pe1z)call z_right_nc_boundary_closure !boundary at k=n3-,n3p-1 ==> k02=n3p-2
-  do j=j1,n2p
-   do i=i1,n1p
-    do ic=1,fcomp
-     do k=k01-2,k02+2
-      var(k,ic)=flx(i,j,k,ic)
-     end do
-    end do
-    ic=fcomp+1
+ end do
+ if(ndim <3)return
+ if(pe0z)call z_left_nc_boundary_closure  !boundary at k=k1,k1+1 ==> k01=k1+2
+ if(pe1z)call z_right_nc_boundary_closure !boundary at k=n3-,n3p-1 ==> k02=n3p-2
+ do j=j1,n2p
+  do i=i1,n1p
+   do ic=1,fcomp
     do k=k01-2,k02+2
-     var(k,ic)=flx(i,j,k,ic+2)
-    end do
-    call weno3_nc(fcomp+1,k01-2,k02+2)    !rec[flux][j01-1,ij02], [j1-1,n2p] for interior points
-    do ic=1,fcomp-1
-     do k=k01,k02
-      vz=var(k,fcomp+1)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*(var(k,ic)-var(k-1,ic))
-     end do
-    end do
-    ic=fcomp
-    do k=k01,k02
-     ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*(var(k,ic)-var(k-1,ic))
+     var(k,ic)=flx(i,j,k,ic)
     end do
    end do
+   ic=fcomp+1
+   do k=k01-2,k02+2
+    var(k,ic)=flx(i,j,k,ic+2)
+   end do
+   call weno3_nc(fcomp+1,k01-2,k02+2)    !rec[flux][j01-1,ij02], [j1-1,n2p] for interior points
+   do ic=1,fcomp-1
+    do k=k01,k02
+     vz=var(k,fcomp+1)
+     ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*(var(k,ic)-var(k-1,ic))
+    end do
+   end do
+   ic=fcomp
+   do k=k01,k02
+    ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*(var(k,ic)-var(k-1,ic))
+   end do
   end do
+ end do
 !=================================
  contains
  subroutine x_nc_boundary_closure
-  do k=k1,n3p
-   do j=j1,n2p
-    do i=i1,i1+1
-     vx=flx(i,j,k,fcomp+1)
-     if(vx <0.0)then
-      do ic=1,fcomp-1
-       do ii=1,3
-        ww(ii)=flx(i-1+ii,j,k,ic)
-        ef(i,j,k,ic)=ef(i,j,k,ic)+vx*aphx*ww(ii)*rder(ii)
-       end do
-      end do
-      ic=fcomp
+ do k=k1,n3p
+  do j=j1,n2p
+   do i=i1,i1+1
+    vx=flx(i,j,k,fcomp+1)
+    if(vx <0.0)then
+     do ic=1,fcomp-1
       do ii=1,3
-       ww(ii)=flx(i-1+ii,j,k,ic)*flx(i-1+ii,j,k,fcomp+1)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*ww(ii)*rder(ii)
+       ww(ii)=flx(i-1+ii,j,k,ic)
+       ef(i,j,k,ic)=ef(i,j,k,ic)+vx*aphx*ww(ii)*rder(ii)
       end do
-     endif
-    end do
+     end do
+     ic=fcomp
+     do ii=1,3
+      ww(ii)=flx(i-1+ii,j,k,ic)*flx(i-1+ii,j,k,fcomp+1)
+      ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*ww(ii)*rder(ii)
+     end do
+    endif
    end do
   end do
-  do k=k1,n3p
-   do j=j1,n2p
-    do i=n1p-1,n1p
-     vx=flx(i,j,k,fcomp+1)
-     if(vx >0.0)then
-      do ic=1,fcomp-1
-       do ii=1,3
-        ww(ii)=flx(i-3+ii,j,k,ic)
-        ef(i,j,k,ic)=ef(i,j,k,ic)+vx*aphx*ww(ii)*lder(ii)
-       end do
-      end do
-      ic=fcomp
+ end do
+ do k=k1,n3p
+  do j=j1,n2p
+   do i=n1p-1,n1p
+    vx=flx(i,j,k,fcomp+1)
+    if(vx >0.0)then
+     do ic=1,fcomp-1
       do ii=1,3
-       ww(ii)=flx(i-3+ii,j,k,ic)*flx(i-3+ii,j,k,fcomp+1)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*ww(ii)*lder(ii)
+       ww(ii)=flx(i-3+ii,j,k,ic)
+       ef(i,j,k,ic)=ef(i,j,k,ic)+vx*aphx*ww(ii)*lder(ii)
       end do
-     endif
-    end do
+     end do
+     ic=fcomp
+     do ii=1,3
+      ww(ii)=flx(i-3+ii,j,k,ic)*flx(i-3+ii,j,k,fcomp+1)
+      ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*ww(ii)*lder(ii)
+     end do
+    endif
    end do
   end do
+ end do
 !=================================
  end subroutine x_nc_boundary_closure
  subroutine y_left_nc_boundary_closure
-  do k=k1,n3p
-   do i=i1,n1p
-    do j=j1,j1+1
-     vy=flx(i,j,k,fcomp+2)
-     if(vy <0.0)then
-      do ic=1,fcomp-1
-       do ii=1,3
-        ww(ii)=flx(i,j-1+ii,k,ic)
-        ef(i,j,k,ic)=ef(i,j,k,ic)+vy*aphy*ww(ii)*rder(ii)
-       end do
-      end do
-      ic=fcomp
+ do k=k1,n3p
+  do i=i1,n1p
+   do j=j1,j1+1
+    vy=flx(i,j,k,fcomp+2)
+    if(vy <0.0)then
+     do ic=1,fcomp-1
       do ii=1,3
-       ww(ii)=flx(i,j-1+ii,k,ic)*flx(i,j-1+ii,k,fcomp+2)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*ww(ii)*rder(ii)
+       ww(ii)=flx(i,j-1+ii,k,ic)
+       ef(i,j,k,ic)=ef(i,j,k,ic)+vy*aphy*ww(ii)*rder(ii)
       end do
-     endif
-    end do
+     end do
+     ic=fcomp
+     do ii=1,3
+      ww(ii)=flx(i,j-1+ii,k,ic)*flx(i,j-1+ii,k,fcomp+2)
+      ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*ww(ii)*rder(ii)
+     end do
+    endif
    end do
   end do
-  j01=j1+2
+ end do
+ j01=j1+2
  end subroutine y_left_nc_boundary_closure
 
  subroutine y_right_nc_boundary_closure
-  do k=k1,n3p
-   do i=i1,n1p
-    do j=n2p-1,n2p
-     vy=flx(i,j,k,fcomp+2)
-     if(vy >0.0)then
-      do ic=1,fcomp-1
-       do ii=1,3
-        ww(ii)=flx(i,j-3+ii,k,ic)
-        ef(i,j,k,ic)=ef(i,j,k,ic)+vy*aphy*ww(ii)*lder(ii)
-       end do
-      end do
-      ic=fcomp
+ do k=k1,n3p
+  do i=i1,n1p
+   do j=n2p-1,n2p
+    vy=flx(i,j,k,fcomp+2)
+    if(vy >0.0)then
+     do ic=1,fcomp-1
       do ii=1,3
-       ww(ii)=flx(i,j-3+ii,k,ic)*flx(i,j-3+ii,k,fcomp+2)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*ww(ii)*lder(ii)
+       ww(ii)=flx(i,j-3+ii,k,ic)
+       ef(i,j,k,ic)=ef(i,j,k,ic)+vy*aphy*ww(ii)*lder(ii)
       end do
-     endif
-    end do
+     end do
+     ic=fcomp
+     do ii=1,3
+      ww(ii)=flx(i,j-3+ii,k,ic)*flx(i,j-3+ii,k,fcomp+2)
+      ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*ww(ii)*lder(ii)
+     end do
+    endif
    end do
   end do
-  j02=n2p-2
+ end do
+ j02=n2p-2
  end subroutine y_right_nc_boundary_closure
 !====================
  subroutine z_left_nc_boundary_closure
-  do j=j1,n2p
-   do i=i1,n1p
-    do k=k1,k1+1
-     vz=flx(i,j,k,fcomp+3)
-     if(vz <0.0)then
-      do ic=1,fcomp-1
-       do ii=1,3
-        ww(ii)=flx(i,j,k-1+ii,ic)
-        ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*ww(ii)*rder(ii)
-       end do
-      end do
-      ic=fcomp
+ do j=j1,n2p
+  do i=i1,n1p
+   do k=k1,k1+1
+    vz=flx(i,j,k,fcomp+3)
+    if(vz <0.0)then
+     do ic=1,fcomp-1
       do ii=1,3
-       ww(ii)=flx(i,j,k-1+ii,ic)*flx(i,j,k-1+ii,fcomp+3)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*ww(ii)*rder(ii)
+       ww(ii)=flx(i,j,k-1+ii,ic)
+       ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*ww(ii)*rder(ii)
       end do
-     endif
-    end do
+     end do
+     ic=fcomp
+     do ii=1,3
+      ww(ii)=flx(i,j,k-1+ii,ic)*flx(i,j,k-1+ii,fcomp+3)
+      ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*ww(ii)*rder(ii)
+     end do
+    endif
    end do
   end do
-  k01=k1+2
+ end do
+ k01=k1+2
  end subroutine z_left_nc_boundary_closure
 
  subroutine z_right_nc_boundary_closure
-  do j=j1,n2p
-   do i=i1,n1p
-    do k=n3p-1,n3p
-     vz=flx(i,j,k,fcomp+3)
-     if(vz >0.0)then
-      do ic=1,fcomp-1
-       do ii=1,3
-        ww(ii)=flx(i,j,k-3+ii,ic)
-        ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*ww(ii)*lder(ii)
-       end do
-      end do
-      ic=fcomp
+ do j=j1,n2p
+  do i=i1,n1p
+   do k=n3p-1,n3p
+    vz=flx(i,j,k,fcomp+3)
+    if(vz >0.0)then
+     do ic=1,fcomp-1
       do ii=1,3
-       ww(ii)=flx(i,j,k-3+ii,ic)*flx(i,j,k-3+ii,fcomp+3)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*ww(ii)*lder(ii)
+       ww(ii)=flx(i,j,k-3+ii,ic)
+       ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*ww(ii)*lder(ii)
       end do
-     endif
-    end do
+     end do
+     ic=fcomp
+     do ii=1,3
+      ww(ii)=flx(i,j,k-3+ii,ic)*flx(i,j,k-3+ii,fcomp+3)
+      ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*ww(ii)*lder(ii)
+     end do
+    endif
    end do
   end do
-  k02=n3p-2
+ end do
+ k02=n3p-2
  end subroutine z_right_nc_boundary_closure
  end subroutine nc_fluid_density_momenta
  !================================

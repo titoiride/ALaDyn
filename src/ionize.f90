@@ -269,6 +269,7 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:2)=spec(ic)%part(n,1:2)
@@ -287,6 +288,7 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
@@ -331,6 +333,7 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:2)=spec(ic)%part(n,1:2)
@@ -349,6 +352,7 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)

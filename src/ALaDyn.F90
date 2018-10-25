@@ -54,7 +54,7 @@
  tnow=tstart
  ! iter=last_iter
  iter=0
- call diag_part_dist
+ !call diag_part_dist
 
  select case(mod_ord)
  case(1)
@@ -946,7 +946,7 @@
    if(LPf_ord==2)write(60,*)'  One-step leap-frog time integration '
    if(der_ord==2)write(60,*)'  Explicit second order space derivative '
    if(der_ord==3)write(60,*)'  Optmal Explicit second order space derivative'
-   if(der_ord==4)write(60,*)'  Forth-order Mawvell solver only for (E,B) fields'
+   if(der_ord==4)write(60,*)'  Fourth-order Maxwell solver only for (E,B) fields'
    if(LPf_ord>2)then
     write(60,*)'  RK multi-step fourth order time scheme '
     write(60,*)'  Explicit fourth order Space Derivative'
@@ -965,7 +965,7 @@
    write(60,*)' Current components: [Jx,Jy] '
    write(60,*)' Field components: [Ex,Ey,Bz] '
   else
-   write(60,*)' Current components: [Jx,Jyi,Jz] '
+   write(60,*)' Current components: [Jx,Jy,Jz] '
    write(60,*)' Field components: [Ex,Ey,Ez,Bx,By,Bz] '
  endif
   write(60,*)'   Box sizes'
