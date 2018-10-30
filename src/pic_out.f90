@@ -3069,9 +3069,9 @@
    end do
    if(Two_color)then
     write(lun,*)'====  the injection pulse integrated variables'
-    write(lun,'(4a14)')fenv(1:4)
+    write(lun,'(5a14)')fenv(1:5)
     do ik=1,nst
-     write(lun,'(5e18.10)')eavg1(1:4,ik)
+     write(lun,'(5e18.10)')eavg1(1:5,ik)
     end do
    endif
   endif
