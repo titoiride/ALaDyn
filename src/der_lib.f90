@@ -58,7 +58,7 @@
   !=====================================
   !For der_rder=3 opt first derivative on Yee grid
   cmp_coeff(1)=1.+0.125*(1.-fopt*nu*nu)  !rot(E) and rot(B) Modified along x-coord
-  cmp_coeff(2)=(1.-cmp_coeff(1))/3.
+  cmp_coeff(2)=(1.-cmp_coeff(1))/3.     !-(1-nu*nu)/24
   opt_der2= -(1.-nu*nu)/12.
   hord_der2= opt_der2
   !For der_rder=3 opt second derivative 
@@ -73,10 +73,10 @@
    cmp_coeff(2)=1./8.
   endif
  case(4)
-   !For forth-order first derivative on Yee grid
+  !For forth-order first derivative on Yee grid
   cmp_coeff(1)=1.125   !9/8(SE4)
   cmp_coeff(2)=(1.-cmp_coeff(1))/3.  !-1./24
-    !For forth-order second derivative
+  !For forth-order second derivative
   hord_der2= -1./12.
  !===================================
   avg_cmp=1./(cmp_coeff(1)+cmp_coeff(2))

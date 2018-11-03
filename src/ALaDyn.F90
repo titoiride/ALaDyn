@@ -35,7 +35,7 @@
 
  implicit none
 
- integer  :: last_iter,ngout
+ integer  :: last_iter,ngout,iter_max
  logical  :: Diag
  real(dp) :: tdia,dtdia,tout,dtout,tstart,mem_max_addr
  real(dp) :: dt_loc
@@ -54,7 +54,7 @@
  tnow=tstart
  ! iter=last_iter
  iter=0
- call diag_part_dist
+ !call diag_part_dist
 
  select case(mod_ord)
  case(1)
@@ -65,7 +65,7 @@
   call BUNCH_cycle
  end select
 
- call timing
+ !call timing
  call mpi_barrier(comm,error)
  call final_run_info
  call end_parallel
@@ -132,7 +132,7 @@
   call t_particles_collect(spec(1),tk_ind)
  endif
  call data_out(jump)
- dt_loc=dt
+!================
  tk_ind=0
  if(Ionization)then
   !lp_max=1.2*oml*a0
@@ -151,7 +151,7 @@
    endif
   endif
 
-  call timing
+  call timing           !iter=iter+1  tnow=tnow+dt_loc
   call data_out(jump)
 
   if (ier /= 0) then
@@ -229,21 +229,21 @@
 !==================
   if(nvout>0)then
    if (mod_ord==2) then
-    if(L_env_modulus)then
+    !if(L_env_modulus)then
      i=0
      call env_fields_out(env,tnow,i,jump)
-     if(Two_color)call env_fields_out(env1,tnow,-1,jump)
-    else
+     if(Two_color)call env_fields_out(env1,tnow,-1,jump)    !EXIT |A|
+    !else
      if(Two_color)then
       do i=1,2
        call env_two_fields_out(env,env1,tnow,i,jump)
       end do
      else
       do i=1,2
-       call env_fields_out(env,tnow,i,jump)
+       call env_fields_out(env,tnow,i,jump)     !EXIT [Ar,Ai]
       end do
      endif
-    endif
+    !endif
    endif
    do i=1,nvout
     if(L_force_singlefile_output) then
@@ -280,6 +280,10 @@
      call part_pdata_out(tnow,xp0_out,xp1_out,yp_out,i,pjump)
     end do
    endif
+  endif
+  if (pe0) then
+   write(6,'(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
+   write(6,*)' END DATA WRITE'
   endif
   if (dump>0 .and. time_interval_dumps < 0.0) then
    if (iter>0) call dump_data(iter,tnow)
@@ -360,6 +364,11 @@
    end do
   endif
   if(nden>0)then
+   if(Hybrid)then
+    do i=1,nfcomp
+     call fluid_den_mom_out(up,tnow,i,nfcomp,jump)
+    end do
+   endif
    ic=0
    call prl_bden_energy_interp(ic)
    call bden_energy_out(tnow,1,jump)
@@ -392,6 +401,10 @@
      end do
     endif
    endif
+  endif
+  if (pe0) then
+   write(6,'(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
+   write(6,*)' END B-DATA WRITE'
   endif
   if(dump>0 .and. time_interval_dumps < 0.)then
    if(iter>0)call dump_data(iter,tnow)
@@ -512,7 +525,8 @@
  real(dp), parameter :: opt_der=1.0
 
  !enable loop to attach with gdb only if really needed
- !WARNING if enabled without needed, the program sleeps at start without doing anything!
+ !WARNING if enabled with no need, the program sleeps at start without doing anything!
+ !To enable the flag, uncomment the corresponding line in CMakeLists.txt
 #ifdef ENABLE_GDB_ATTACH
  call gdbattach
 #endif
@@ -615,8 +629,14 @@
   tout=tstart
   ! to count outputs in energy-data (iene+1 times)
   ! in general data (nouts+1 times)
+  dt_loc=dt
+  iter_max=1
   dtout=(tmax-tstart)/nouts
   dtdia=(tmax-tstart)/iene
+  if(tmax >0.0)then
+   iter_max=int(tmax/dt)
+   dt_loc=tmax/float(iter_max)
+  endif
 
  case (1) ! reads from dump evolved data
   if (.not.L_first_output_on_restart) then
@@ -632,9 +652,13 @@
    write(6,*)' Dump data read completed'
   endif
   call set_fxgrid(npe_xloc,sh_ix)
+  if(tmax >0.0)then
+   iter_max=int(tmax/dt)
+   dt_loc=tmax/float(iter_max)
+  endif
+  dtout=tmax/nouts
+  dtdia=tmax/iene
   tmax=tmax+tstart
-  dtout=(tmax-tstart)/nouts
-  dtdia=(tmax-tstart)/iene
   if(.not.L_first_output_on_restart) then
    tdia=tstart+dtdia
    tout=tstart+dtout
@@ -644,6 +668,14 @@
   endif
 
  end select
+!===================
+  if(Pe0)then
+   write(6,*)'time step resetting:' 
+   write(6,*)'  new ',dt_loc,'  old ',dt
+   write(6,*)'tot iterations ',iter_max
+   write(6,*)'tot time ',iter_max*dt_loc
+  endif
+!========================
 
  if(Part)then
   if(prl)then
@@ -914,7 +946,7 @@
    if(LPf_ord==2)write(60,*)'  One-step leap-frog time integration '
    if(der_ord==2)write(60,*)'  Explicit second order space derivative '
    if(der_ord==3)write(60,*)'  Optmal Explicit second order space derivative'
-   if(der_ord==4)write(60,*)'  Forth-order Mawvell solver only for (E,B) fields'
+   if(der_ord==4)write(60,*)'  Fourth-order Maxwell solver only for (E,B) fields'
    if(LPf_ord>2)then
     write(60,*)'  RK multi-step fourth order time scheme '
     write(60,*)'  Explicit fourth order Space Derivative'
@@ -933,7 +965,7 @@
    write(60,*)' Current components: [Jx,Jy] '
    write(60,*)' Field components: [Ex,Ey,Bz] '
   else
-   write(60,*)' Current components: [Jx,Jyi,Jz] '
+   write(60,*)' Current components: [Jx,Jy,Jz] '
    write(60,*)' Field components: [Ex,Ey,Ez,Bx,By,Bz] '
  endif
   write(60,*)'   Box sizes'
@@ -1079,6 +1111,7 @@
   if(Part)then
    write(60,'(a26,e11.4,a10)')'  Electron number density ',n0_ref,'[10^18/cc]'
    write(60,'(a21,f5.2)')'  Plasma wavelength= ',lambda_p
+   write(60,'(a20,e11.4)')' Chanelling fact  = ',chann_fact
    if(model_id < 5)then
     write(60,'(a20,f5.2,a10)')'  Critical density= ',ncrit,'[10^21/cc]'
     write(60,'(a18,e11.4,a4)')'  Critical power= ',P_c,'(TW)'
@@ -1160,8 +1193,8 @@
     write(60,'(3e11.4)')rhob(i),bunch_charge(i),reduced_charge(i)
    end do
   else
-   write(60,*)' unit length is 1mm, unit density is n0=10^14/cc'
-   write(60,*)'  Lambda , Omega_p    n_over_n0  '
+   write(60,*)' unit length is 1mm, unit density is nc'
+   write(60,*)'  Lambda , Omega_p    n_over_nc  '
    write(60,'(3e11.4)')lambda_p,omega_p,n_over_nc
    write(60,*)'  gamma   bet0        Lx       sigma_y,   eps_y       eps_z '
    i=1

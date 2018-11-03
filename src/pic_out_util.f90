@@ -28,6 +28,32 @@
  !=====Contains functions to prepare selected output variables=======
  contains
 !============================================
+ subroutine loc_env_amp(envf,av)
+  real(dp),intent(in) :: envf(:,:,:,:)
+  real(dp),intent(out) :: av(:,:,:,:)
+  integer  :: i1,i2,j1,j2,k1,k2
+  integer  :: ix,iy,iz
+  !real(dp) :: ar,ai
+  !===================
+
+  i1=loc_xgrid(imodx)%p_ind(1)
+  i2=loc_xgrid(imodx)%p_ind(2)
+  j1=loc_ygrid(imody)%p_ind(1)
+  j2=loc_ygrid(imody)%p_ind(2)
+  k1=loc_zgrid(imodz)%p_ind(1)
+  k2=loc_zgrid(imodz)%p_ind(2)
+!========================
+  do iz=k1,k2
+   do iy=j1,j2
+    do ix=i1,i2
+     av(ix,iy,iz,1)=0.5*(envf(ix,iy,iz,1)*envf(ix,iy,iz,1)+&
+                         envf(ix,iy,iz,2)*envf(ix,iy,iz,2))
+                         !|A|^2/2 at current t^n time level
+    end do
+   end do
+  end do
+  if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,1,2,2)
+ end subroutine loc_env_amp
 !=============== Tracking particles============
  subroutine initial_tparticles_select(sp_loc,dt_loc,tx1,tx2,ty1,ty2,tz1,tz2)
 
@@ -101,8 +127,6 @@
   write(6,'(a19,i6)')'  tot_track_parts  ',track_tot_part
   write(6,'(a18,i8)')'  short_int size  ',huge(plab)
   write(6,'(a20,e11.4)')'  ptrack memory(MB) ',1.e-06*real(4*ndv*track_tot_nstep*track_tot_part,dp)
-  write(6,'(a20,i6)')'  track_aux size   ',2*ndv*ik_max
-  write(6,'(a20,i6)')'  ik_max           ',ik_max
  endif
 !================================
  end subroutine initial_tparticles_select
@@ -112,15 +136,25 @@
  type(species),intent(in) :: sp_loc
  integer,intent(in) :: time_ind
 
- integer :: np,ik,ik_max,ip,p,ndv,ipe,kk,ik1,ik2
+ integer :: np,ik,ik_max,ip,p,ndv,ndvp,ipe,kk,ik1,ik2
  logical :: sr
+ real :: xm,ym,zm
 
  if(time_ind > track_tot_nstep)return
- np=size(sp_loc%part,1)
+ xm=loc_xgrid(imodx)%gmin
+ ym=loc_ygrid(imody)%gmin
+ zm=loc_zgrid(imodz)%gmin
+ np=loc_npart(imody,imodz,imodx,1)
+!===================
+ if(Envelope)then
+  call loc_env_amp(env,jc)
+  call  set_env_interp(jc,sp_loc,ebfp,np,ndim,xm,ym,zm)
+  !In ebfp(:,1) exit particle assigned |A|^2/2
+ endif
  ndv=size(sp_loc%part,2)
+ ndvp=ndv+1
  ik=0
  kk=0
- ik2=0
  do p=1,np
   wgh_cmp=sp_loc%part(p,ndv)
   if(part_ind >0)ik=ik+1
@@ -128,19 +162,23 @@
  loc_tpart(mype+1)=ik
  call intvec_distribute(ik,loc_tpart,npe)
  ik_max=maxval(loc_tpart(1:npe))
- if(ndv*ik_max > size(track_aux))then
+ if(ndvp*ik_max > size(track_aux))then
   deallocate(track_aux)
-  allocate(track_aux(ndv*ik_max))
+  allocate(track_aux(ndvp*ik_max))
  endif
  ik=0
  do p=1,np
   wgh_cmp=sp_loc%part(p,ndv)
   if(part_ind >0)then
    ik=ik+1
-   do ip=1,ndv
+   do ip=1,ndv-1
     kk=kk+1
     track_aux(kk)=sp_loc%part(p,ip)
    enddo
+   kk=kk+1
+   track_aux(kk)=ebfp(p,1)
+   kk=kk+1
+   track_aux(kk)=wgh_cmp
   endif
  enddo
 !=================
@@ -150,13 +188,13 @@
   do ipe=1,npe-1
    ik=loc_tpart(ipe+1)
    if(ik >0)then
-    call exchange_1d_grdata(sr,track_aux,ik*ndv,ipe,ipe+10)
+    call exchange_1d_grdata(sr,track_aux,ik*ndvp,ipe,ipe+10)
                !pe0 receives from ipe ik sp_aux data and collects on track array
-    wgh_cmp=track_aux(ndv)
+    wgh_cmp=track_aux(ndvp)
     kk=0
     do p=1,ik
      ik2=ik1+p
-     do ip=1,ndv-1
+     do ip=1,ndv
       kk=kk+1
       pdata_tracking(ip,ik2,time_ind)=real(track_aux(kk),sp)
      enddo
@@ -172,8 +210,8 @@
   ik=loc_tpart(mype+1)
   if(ik >0)then
    sr=.true.
-   call exchange_1d_grdata(sr,track_aux,ik*ndv,0,mype+10)    !sends ik data to pe0
-   wgh_cmp=track_aux(ndv)
+   call exchange_1d_grdata(sr,track_aux,ik*ndvp,0,mype+10)    !sends ik data to pe0
+   wgh_cmp=track_aux(ndvp)
   endif
  endif
  end subroutine t_particles_collect

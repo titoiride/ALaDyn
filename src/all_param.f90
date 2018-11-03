@@ -150,9 +150,9 @@
 
  subroutine param
  ! sets general parameters and grid depending on initial conditions
- integer :: i, sh_t,pml_size
+ integer :: i, pml_size
  real(dp) :: bunch_charge_density,gvol,gvol_inv,nm_fact
- real(dp) :: aph_fwhm
+ real(dp) :: aph_fwhm,c1_fact,c2_fact
 
  a_lpf(1:4)=1.
  b_lpf(1:4)=1.
@@ -185,7 +185,7 @@
  nx1_loc=nx/nprocy
  ny_loc=ny/nprocy
  nz_loc=nz/nprocz
- sh_t=ny/2-ny_targ/2
+ sh_targ=ny/2-ny_targ/2
  nx_stretch=0
  pml_size=0
  Stretch=.false.
@@ -238,12 +238,12 @@
   zmin_t=z(1)
   zmax_t=z(nz+1)
   if(ndim >1)then
-   ymin_t=y(sh_t+1)
-   ymax_t=y(ny+1-sh_t)
+   ymin_t=y(sh_targ+1)
+   ymax_t=y(ny+1-sh_targ)
   endif
   if(ndim >2 )then
-   zmin_t=z(1+sh_t)
-   zmax_t=z(nz+1-sh_t)
+   zmin_t=z(1+sh_targ)
+   zmax_t=z(nz+1-sh_targ)
   endif
 !======================================
  Hybrid= .false.
@@ -265,9 +265,10 @@
  Two_color = .false.
  Wake=.false.
  Solid_target=.false.
+ Channel=.false.
  nm_fact=1.
  if(iform <2)Charge_cons=.true.
- if(np_per_xc(1) > 0)Part=.true.
+ if(np_per_xc(1) > 0 .and. np_per_yc(1)>0)Part=.true.
  if(nsp > 1)Part=.true.
  if(nsp >1)Ions=.true.
  if(model_id <5)then
@@ -284,6 +285,7 @@
   mp_per_cell(i)=np_per_xc(i)*np_per_yc(i)
   if(ndim==3) mp_per_cell(i)=np_per_xc(i)*np_per_yc(i)*np_per_zc(i)
  end do
+ j0_norm=1.
  nref=mp_per_cell(1)
  ratio_mpc=1.
  if(mp_per_cell(1) >0)then
@@ -299,7 +301,7 @@
   if(mp_per_cell(1)==0)ratio_mpfluid=0.0
   if(ny_targ==0)ratio_mpfluid=0.0
  endif
- j0_norm=j0_norm*ratio_mpfluid
+ !j0_norm=j0_norm*ratio_mpfluid
  !========================== multispecies
  ! mass-charge parameters four species: three ion species+ electrons
  ! Ions charges defined by initial conditions.
@@ -356,7 +358,6 @@
   if(model_id == 4) then
    mod_ord=2
    Envelope=.true.
-  ! L_env_modulus= .true.
   endif
   if(n_over_nc >1.)then
    Solid_target=.true.
@@ -396,6 +397,15 @@
 !=============================
   nc0=oml*oml              !nc0=(2*pi/lam0)** 2
   ompe=nc0*n_over_nc       !squared adimensional plasma frequency :
+!===============================
+! Parabolic plasma channel profile const  r_c=w0_y matched condition
+  chann_fact=0.0
+  if(r_c >0.0)then
+   Channel=.true.
+   c1_fact= w0_y*w0_y/(r_c*r_c)
+   c2_fact= lam0*lam0/(r_c*r_c)
+   chann_fact=c1_fact*c2_fact/(pi*pi*n_over_nc)
+  endif
 !========== Laser parameters
   lp_intensity=1.37*(a0/lam0)*(a0/lam0)  !in units 10^18 W/cm^2
   lp_rad=w0_y*sqrt(2.*log(2.))           !FWHM focal spot
@@ -440,9 +450,9 @@
    ! for fields E_u=GV/m = 1.e-03*mc^2/(l0*e*E0)  (A,phi) in kVolt unit
    ! n0= 10^18/cc =10^6/mu^3
    !========================================
-   ! the electron radius r_c=rc0*10^{-8}mu
+   ! the electron radius r_e=rc0*10^{-8}mu
    !the squared adimensional plasma frequency on n0 density
-   !   r_c*l0*l0*n0= 10^{-3}*rc0
+   !   r_e*l0*l0*n0= 10^{-3}*rc0
    !omp^2=   4*pi*l0*l0*rc*n0=4*pi*rc0*1.e-03*E0/
    !=============================
    nm_fact=1.e+06      !electron density[mu^{-3}] in the n0=10^18/cm^3 plasma

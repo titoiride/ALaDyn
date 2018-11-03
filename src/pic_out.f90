@@ -1523,7 +1523,7 @@
  if(ne > 0)then
   do p=1,ne
    wgh_cmp=spec(1)%part(p,id_ch)
-   if(abs(wgh-ch_ion)< 1.e-05)then
+   if(part_ind< 0)then
     ip=ip+1
     do q=1,nd2+1
      ebfp(ip,q)=spec(1)%part(p,q)
@@ -1544,7 +1544,7 @@
   nptot=int(nptot_global_reduced)
  else
   nptot=-1
-     endif
+ endif
  ip_max=ip
  if(pe0)ip_max=maxval(ip_loc(1:npe))
  lenp=ndv*ip
@@ -1625,7 +1625,7 @@
 
  write (folderName,'(i4.4)') iout
 
- ndv=nd2+1
+ ndv=nd2+2
  if(mype>0)then
   ip=0
  else
@@ -2110,9 +2110,9 @@
 
  integer,intent(in) :: nst
  integer :: i1,j1,k1,i2,nyp,nzp,kk
- integer :: ik,ix,iy,iz,i01,i02,i0_lp
+ integer :: ik,ix,iy,iz,i01,i02,i0_lp,j,k
  real(dp) :: ekt(7),ekm(7)
- real(dp) :: dvol,dgvol
+ real(dp) :: dvol,dgvol,rr,yy,zz
  real(dp) :: dar,dai,a2,aph1,aph2
  real(dp),parameter :: field_energy=1.156e-06
 
@@ -2127,93 +2127,149 @@
 
 
  ekt=0.0
- i0_lp=3+nint(dx_inv*(lp_in(1)-xmin))
 
-  ! env(1)=Re[A], env(2)=Im[A] A in adimensional form
-  aph1=0.5*dx_inv
-  aph2=0.0
-  i01=i1+1
-  i02=i2-1
-  if(der_ord==4)then
-   aph1=4.*dx_inv/3.
-   aph2=-dx_inv/6.
-   i01=i01+1
-   i02=i02-1
+ ! env(1)=Re[A], env(2)=Im[A] A in adimensional form
+ aph1=0.5*dx_inv
+ aph2=0.0
+ i01=i1+1
+ i02=i2-1
+ if(der_ord==4)then
+  aph1=4.*dx_inv/3.
+  aph2=-dx_inv/6.
+  i01=i01+1
+  i02=i02-1
+ endif
+ kk=0
+ do iz=k1,nzp
+  do iy=j1,nyp
+   do ix=i01,i02
+    ik=ix-2
+    dar=aph1*(env(ix+1,iy,iz,1)-env(ix-1,iy,iz,1))+aph2*(&
+     env(ix+2,iy,iz,1)-env(ix-2,iy,iz,1))
+    dai=aph1*(env(ix+1,iy,iz,2)-env(ix-1,iy,iz,2))+aph2*(&
+     env(ix+2,iy,iz,2)-env(ix-2,iy,iz,2))
+    a2=env(ix,iy,iz,1)*env(ix,iy,iz,1)+&
+     env(ix,iy,iz,2)*env(ix,iy,iz,2)
+
+    ekt(1)=ekt(1)+x(ik)*a2         ! Centroid
+    ekt(2)=ekt(2)+a2               ! !A|^2
+    ekt(6)=dai*env(ix,iy,iz,1)-dar*env(ix,iy,iz,2)
+    ekt(3)=ekt(3)+oml*oml*a2+ 2.*oml*ekt(6)+dar*dar+dai*dai
+    !|Z|^2=(Ey^2+Bz^2)/2= field energy
+    ekt(4)=ekt(4)+oml*a2+ekt(6)    ! Action
+    ekt(7)=max(ekt(7),sqrt(a2))    ! Max |A|
+    kk=kk+1
+   end do
+  end do
+ end do
+ dvol=1./real(kk,dp)
+ call allreduce_dpreal(SUMV,ekt,ekm,4)
+ if(ekm(2)> 0.0)then
+  ekm(1)=ekm(1)/ekm(2)  !Centroid
+ endif
+ eavg(2,nst)=ekm(1)  !Centroid
+ eavg(4,nst)=field_energy*dgvol*ekm(3)   !Energy
+ eavg(5,nst)=dvol*ekm(4)    !Action
+!===============
+ i0_lp=i1+nint(dx_inv*ekm(1))
+ ekt(1:2)=0.0  
+ do iz=k1,nzp
+  zz=0.0
+  if(k1 >2 )then
+   k=iz-2
+   zz=loc_zg(k,2,imodz)
   endif
+  do iy=j1,nyp
+   j=iy-2
+   yy=loc_yg(j,2,imody)
+   rr=sqrt(zz*zz+yy*yy)
+   do ix=i01,i02
+    a2=env(ix,iy,iz,1)*env(ix,iy,iz,1)+&
+    env(ix,iy,iz,2)*env(ix,iy,iz,2)
+    ekt(1)=ekt(1)+rr*a2
+   end do
+  end do
+ end do
+ call allreduce_dpreal(SUMV,ekt,ekm,1)
+ if(ekm(2)> 0.0)then
+  ekm(1)=ekm(1)/ekm(2)  ! env radius
+ endif
+ eavg(3,nst)=ekm(1)  !radius
+!===============
+ ekt(1)=ekt(7)
+ if(ekt(1) > giant_field)then
+  write(6,*)' WARNING: Env field too big ',ekt(1)
+  write(6,'(a23,3i4)')' At the mpi_task=',imodx,imody,imodz
+ endif
+ ekm(1)=ekt(1)
+ if(prl)call allreduce_dpreal(MAXV,ekt,ekm,1)
+ eavg(1,nst)=ekm(1)
+ if(Two_color)then
   kk=0
+  ekt=0.0
   do iz=k1,nzp
    do iy=j1,nyp
-    do ix=i01,i02
+    do ix=i1,i2
      ik=ix-2
-     dar=aph1*(env(ix+1,iy,iz,1)-env(ix-1,iy,iz,1))+aph2*(&
-      env(ix+2,iy,iz,1)-env(ix-2,iy,iz,1))
-     dai=aph1*(env(ix+1,iy,iz,2)-env(ix-1,iy,iz,2))+aph2*(&
-      env(ix+2,iy,iz,2)-env(ix-2,iy,iz,2))
-     a2=env(ix,iy,iz,1)*env(ix,iy,iz,1)+&
-      env(ix,iy,iz,2)*env(ix,iy,iz,2)
-
+     dar=aph1*(env1(ix+1,iy,iz,1)-env1(ix-1,iy,iz,1))+aph2*(&
+     env1(ix+2,iy,iz,1)-env1(ix-2,iy,iz,1))
+     dai=aph1*(env1(ix+1,iy,iz,2)-env1(ix-1,iy,iz,2))+aph2*(&
+     env1(ix+2,iy,iz,2)-env1(ix-2,iy,iz,2))
+     a2=env1(ix,iy,iz,1)*env1(ix,iy,iz,1)+&
+     env1(ix,iy,iz,2)*env1(ix,iy,iz,2)
      ekt(1)=ekt(1)+x(ik)*a2         ! Centroid
      ekt(2)=ekt(2)+a2               ! !A|^2
-     ekt(6)=dai*env(ix,iy,iz,1)-dar*env(ix,iy,iz,2)
-     ekt(3)=ekt(3)+oml*oml*a2+ 2.*oml*ekt(6)+dar*dar+dai*dai
+     ekt(6)=dai*env1(ix,iy,iz,1)-dar*env1(ix,iy,iz,2)
+     ekt(3)=ekt(3)+om1*om1*a2+ 2.*om1*ekt(6)+dar*dar+dai*dai
      !|Z|^2=(Ey^2+Bz^2)/2= field energy
-     ekt(4)=ekt(4)+oml*a2+ekt(6)    ! Action
-     ekt(5)=max(ekt(5),sqrt(a2))    ! Max |A|
+     ekt(4)=ekt(4)+om1*a2+ekt(6)    ! Action
+     ekt(7)=max(ekt(7),sqrt(a2))    ! Max |A|
      kk=kk+1
     end do
    end do
   end do
   dvol=1./real(kk,dp)
   call allreduce_dpreal(SUMV,ekt,ekm,4)
-  if(ekm(2)> 0.0)eavg(2,nst)=ekm(1)/ekm(2)  !Centroid
-  eavg(3,nst)=field_energy*dgvol*ekm(3)   !Energy
-  eavg(4,nst)=dvol*ekm(4)    !Action
-  ekt(1)=ekt(5)
+  if(ekm(2)> 0.0)then
+   ekm(1)=ekm(1)/ekm(2)    !Centroid
+  endif
+  eavg1(2,nst)=ekm(1) 
+  eavg1(4,nst)=field_energy*dgvol*ekm(3)   !Energy
+  eavg1(5,nst)=dvol*ekm(4)    !Action
+  !===============
+  i0_lp=i1+nint(dx_inv*ekm(1))
+  ekt(1:2)=0.0  
+  do iz=k1,nzp
+   zz=0.0
+   if(k1 >2 )then
+    k=iz-2
+    zz=loc_zg(k,2,imodz)
+   endif
+   do iy=j1,nyp
+    j=iy-2
+    yy=loc_yg(j,2,imody)
+    rr=sqrt(zz*zz+yy*yy)
+    do ix=i01,i02
+     a2=env1(ix,iy,iz,1)*env1(ix,iy,iz,1)+&
+     env1(ix,iy,iz,2)*env1(ix,iy,iz,2)
+     ekt(1)=ekt(1)+rr*a2
+    end do
+   end do
+  end do
+  call allreduce_dpreal(SUMV,ekt,ekm,1)
+  if(ekm(2)> 0.0)then
+   ekm(1)=ekm(1)/ekm(2)  ! env radius
+  endif
+  eavg(3,nst)=ekm(1)  !radius
+ !===============
+  ekt(1)=ekt(7)
   if(ekt(1) > giant_field)then
-   write(6,*)' WARNING: Env field too big ',ekt(1)
+   write(6,*)' WARNING: Env1 field too big ',ekt(1)
    write(6,'(a23,3i4)')' At the mpi_task=',imodx,imody,imodz
   endif
   ekm(1)=ekt(1)
   if(prl)call allreduce_dpreal(MAXV,ekt,ekm,1)
-  eavg(1,nst)=ekm(1)
-  if(Two_color)then
-  kk=0
-   ekt=0.0
-  do iz=k1,nzp
-   do iy=j1,nyp
-     do ix=i1,i2
-      ik=ix-2
-      dar=aph1*(env1(ix+1,iy,iz,1)-env1(ix-1,iy,iz,1))+aph2*(&
-      env1(ix+2,iy,iz,1)-env1(ix-2,iy,iz,1))
-      dai=aph1*(env1(ix+1,iy,iz,2)-env1(ix-1,iy,iz,2))+aph2*(&
-      env1(ix+2,iy,iz,2)-env1(ix-2,iy,iz,2))
-      a2=env1(ix,iy,iz,1)*env1(ix,iy,iz,1)+&
-      env1(ix,iy,iz,2)*env1(ix,iy,iz,2)
-
-      ekt(1)=ekt(1)+x(ik)*a2         ! Centroid
-      ekt(2)=ekt(2)+a2               ! !A|^2
-      ekt(6)=dai*env1(ix,iy,iz,1)-dar*env1(ix,iy,iz,2)
-      ekt(3)=ekt(3)+om1*om1*a2+ 2.*om1*ekt(6)+dar*dar+dai*dai
-      !|Z|^2=(Ey^2+Bz^2)/2= field energy
-      ekt(4)=ekt(4)+om1*a2+ekt(6)    ! Action
-      ekt(5)=max(ekt(5),sqrt(a2))    ! Max |A|
-     kk=kk+1
-    end do
-   end do
-  end do
-  dvol=1./real(kk,dp)
-  call allreduce_dpreal(SUMV,ekt,ekm,4)
-   if(ekm(2)> 0.0)eavg1(2,nst)=ekm(1)/ekm(2)  !Centroid
-   eavg1(3,nst)=field_energy*dgvol*ekm(3)   !Energy
-   eavg1(4,nst)=dvol*ekm(4)    !Action
-  ekt(1)=ekt(5)
-   if(ekt(1) > giant_field)then
-    write(6,*)' WARNING: Env field too big ',ekt(1)
-    write(6,'(a23,3i4)')' At the mpi_task=',imodx,imody,imodz
-   endif
-  ekm(1)=ekt(1)
-  if(prl)call allreduce_dpreal(MAXV,ekt,ekm,1)
-   eavg1(1,nst)=ekm(1)
+  eavg1(1,nst)=ekm(1)
  endif
  end subroutine envelope_struct_data
  !===========================
@@ -2373,11 +2429,11 @@
    end do
   end do
  endif
- if(Ionization)then
-  call enb_ionz(nst,tnow,gam_min)      !select ioniz.electrons with gamma > gam_min
- else
-  if(High_gamma)call enb_hgam(nst,tnow,gam_min)
- endif
+ 
+ if(Ionization)call enb_ionz(nst,tnow,gam_min)      !select ioniz.electrons with gamma > gam_min
+ 
+ if(High_gamma)call enb_hgam(nst,tnow,gam_min)
+
 !   END PARTICLE SECTION
  !======================== Field  section
  ekt=0.0
@@ -2728,10 +2784,9 @@
   case(2)
    do p=1,np
     wgh_cmp=spec(1)%part(p,id_ch)
-    dwgh=real(wgh-ch_ion,sp)
     pp(1:2)=spec(1)%part(p,3:4)
     gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
-    if(abs(dwgh)< 1.e-05.and.gam > gmm)then
+    if(part_ind< 0.and.gam > gmm)then
      ik=ik+1
      do q=1,nd2+1
       ebfp(ik,q)=spec(1)%part(p,q)
@@ -2741,10 +2796,9 @@
   case(3)
    do p=1,np
     wgh_cmp=spec(1)%part(p,id_ch)
-    dwgh=real(wgh-ch_ion,sp)
     pp(1:3)=spec(1)%part(p,4:6)
     gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
-    if(abs(dwgh)< 1.e-05.and.gam > gmm)then
+    if(part_ind< 0.and.gam > gmm)then
      ik=ik+1
      do q=1,nd2+1
       ebfp(ik,q)=spec(1)%part(p,q)
@@ -2862,8 +2916,8 @@
  character(14),dimension(6), parameter:: lfenv=(/&
   '  COM(1)      ','   COM(2)     ',' COM(3)       ','  COM(4)      ',&
   '  COM(5)      ','   COM(6)     '/)
- character(14),dimension(4), parameter:: fenv=(/&
-  '  Env_max     ','   Centroid   ',' Env_energy   ','  Env_action  '/)
+ character(14),dimension(5), parameter:: fenv=(/&
+  '  Env_max     ','   Centroid   ','  Env radius  ',' Env_energy   ','  Env_action  '/)
  !character(14),dimension(5), parameter:: flaser=(/&
  ! '  Int_max     ',' Las_energy(J)','  < X_c >     ','   <W_y>      ',&
  ! '   < W_z >    '/)
@@ -2890,7 +2944,7 @@
 
  open (lun,file='diagnostics/'//fname//'.dat',form='formatted')
  write(lun,*)'    mod_id, dmodel_id,    LP_ord,   der_ord,     ibeam,     color,   &
- n_field'
+ &n_field'
  write(lun,'(7i11)')model_id,dmodel_id,LPf_ord,der_ord,ibeam,color,nfield
  write(lun,*)'        Part,        Beam,        Wake, Solid_Target'
  write(lun,'(4L13)')Part,Beam,Wake,Solid_target
@@ -3009,15 +3063,15 @@
  if(Wake)then
   if(Envelope)then
    write(lun,*)'====  the leading pulse integrated variables'
-   write(lun,'(4a14)')fenv(1:4)
+   write(lun,'(5a14)')fenv(1:5)
    do ik=1,nst
-    write(lun,'(4e18.10)')eavg(1:4,ik)
+    write(lun,'(5e18.10)')eavg(1:5,ik)
    end do
    if(Two_color)then
     write(lun,*)'====  the injection pulse integrated variables'
-    write(lun,'(4a14)')fenv(1:4)
+    write(lun,'(5a14)')fenv(1:5)
     do ik=1,nst
-     write(lun,'(4e18.10)')eavg1(1:4,ik)
+     write(lun,'(5e18.10)')eavg1(1:5,ik)
     end do
    endif
   endif
@@ -3096,7 +3150,7 @@
   '     <Px>     ','     <Py>     ','     <Pz>     ',&
   '   <msqX>     ','   <msqY>     ','   <msqZ>     ',&
   '  <msqPx>     ','  <msqPy>     ','  <msqPz>     ',&
-  '   <Emy>      ','   <Emz>      ','   <Gam>      ','   DGam/Gam   '/)
+  '   <Emysq>    ','   <Emzsq>    ','   <Gam>      ','   DGam/Gam   '/)
 
 
  integer :: ib,nbvar,ik
@@ -3145,7 +3199,7 @@
   '     <Px>     ','     <Py>     ','     <Pz>     ',&
   '   <msqX>     ','   <msqY>     ','   <msqZ>     ',&
   '  <msqPx>     ','  <msqPy>     ','  <msqPz>     ',&
-  '   <Emy>      ','   <Emz>      ','   <Gam>      ','   DGam/Gam   '/)
+  '   <Emysq>    ','   <Emzsq>    ','   <Gam>      ','   DGam/Gam   '/)
 
 
  integer :: ik,color,npv
@@ -3204,7 +3258,7 @@
   '     <Px>     ','     <Py>     ','     <Pz>     ',&
   '   <msqX>     ','   <msqY>     ','   <msqZ>     ',&
   '  <msqPx>     ','  <msqPy>     ','  <msqPz>     ',&
-  '   <Emy>      ','   <Emz>      ','   <Gam>      ','   DGam/Gam   '/)
+  '   <Emysq>    ','   <Emzsq>    ','   <Gam>      ','   DGam/Gam   '/)
 
 
  integer :: ik,color,npv

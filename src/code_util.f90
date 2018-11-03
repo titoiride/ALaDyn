@@ -25,8 +25,8 @@
 
  implicit none
 
- integer,parameter :: major_version = 6
- integer,parameter :: minor_version = 3
+ integer,parameter :: major_version = 7
+ integer,parameter :: minor_version = 0
  character(6) :: sw_name='ALaDyn'
  character(9) :: input_namelist_filename='input.nml'
  character(10) :: input_data_filename='input.data'
@@ -40,7 +40,7 @@
  real(dp) :: unix_time_begin, unix_time_now
  real(dp) :: time_interval_dumps, unix_time_last_dump
  real(dp) :: gamma_cut_min,weights_cut_min,weights_cut_max
- logical :: Part,part_dcmp,cmp,test,Stretch,Hybrid
+ logical :: Part,part_dcmp,cmp,test,Stretch,Hybrid,Channel
  logical :: Lp_active,Lp_inject,Plane_wave,Lin_lp,Circ_lp,Relativistic,Envelope,Ions,Beam,Pbeam,Two_color
  logical :: Ionization,Wake,Solid_target,Charge_cons,G_prof,High_gamma
  logical :: Impact_ioniz,Comoving,P_tracking

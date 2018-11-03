@@ -269,6 +269,7 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:2)=spec(ic)%part(n,1:2)
@@ -287,6 +288,7 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
@@ -294,6 +296,7 @@
      spec(1)%part(ii,4)=temp(1)*u
      call gasdev(u)
      spec(1)%part(ii,5)=temp(2)*u
+     call gasdev(u)
      spec(1)%part(ii,6)=temp(3)*u
      spec(1)%part(ii,id_ch)=wgh_cmp
     end do
@@ -330,6 +333,7 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:2)=spec(ic)%part(n,1:2)
@@ -348,11 +352,13 @@
    if(inc>0)then
     wgh_cmp=spec(ic)%part(n,id_ch)
     charge=-1
+    part_ind=-1
     do i=1,inc
      ii=ii+1
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
      call gasdev(u)
      spec(1)%part(ii,4)=temp(1)*u
+     call gasdev(u)
      spec(1)%part(ii,6)=temp(3)*u
      call gasdev(u)
      spec(1)%part(ii,5)=sp_field(n,1)*u
