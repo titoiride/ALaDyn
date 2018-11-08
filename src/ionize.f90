@@ -338,7 +338,11 @@
      ii=ii+1
      spec(1)%part(ii,1:2)=spec(ic)%part(n,1:2)
      call gasdev(u)
-     spec(1)%part(ii,3)=temp(1)*u
+     if(Symmetrization_pulse)then
+      spec(1)%part(ii,3)=sin(2*pi*u)*a_symm
+     else
+      spec(1)%part(ii,3)=temp(1)*u
+     endif
      call gasdev(u)
      spec(1)%part(ii,4)=sp_field(n,1)*u
      spec(1)%part(ii,id_ch)=wgh_cmp
@@ -359,7 +363,11 @@
      call gasdev(u)
      spec(1)%part(ii,4)=temp(1)*u
      call gasdev(u)
-     spec(1)%part(ii,6)=temp(3)*u
+     if(Symmetrization_pulse)then
+      spec(1)%part(ii,6)=sin(2*pi*u)*a_symm
+     else
+      spec(1)%part(ii,6)=temp(3)*u
+     endif
      call gasdev(u)
      spec(1)%part(ii,5)=sp_field(n,1)*u
      spec(1)%part(ii,id_ch)=wgh_cmp

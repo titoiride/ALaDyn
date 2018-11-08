@@ -67,7 +67,7 @@
   mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,&
   n_over_nc,np1,np2,r_c,L_disable_rng_seed
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
- lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1
+ lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1,Symmetrization_pulse,a_symm
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,gam_min,xp0_out,xp1_out,yp_out,tmax,cfl, &
   new_sim,id_new,dump,P_tracking,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
@@ -111,6 +111,8 @@
  call consistency_check_number_of_particles_comp
 
  !--- reading laser parameters ---!
+ Symmetrization_pulse= .false.
+ a_symm=0.
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,LASER,iostat=nml_ierr)
  nml_error_message='LASER'
@@ -303,7 +305,7 @@ end subroutine read_nml_integrated_background_diagnostic
   mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,&
   n_over_nc,np1,np2,r_c
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
-  lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1
+  lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1,Symmetrization_pulse,a_symm
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,gam_min,xp0_out,xp1_out,yp_out,tmax,cfl, &
   new_sim,id_new,dump,P_tracking,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
