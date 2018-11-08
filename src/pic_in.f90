@@ -749,7 +749,7 @@
    end do
    xfsh=xfsh+lpx(4)
   endif
-  !================ second linear ramp =================
+  !================ cos^2 downramp =================
   if(nxl(5)>0)then
    do ic=1,nsp
     n_peak=nxl(5)*np_per_xc(ic)
@@ -757,7 +757,7 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(5)*uu
-     wghpt(i1,ic)=(1.-uu)*wgh_sp(ic)
+     wghpt(i1,ic)=(cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -2592,13 +2592,13 @@
         fluid_x_profile(i0)=peak_fluid_density
       end do
     end if
-    !================ second linear ramp =================
+    !================ cos^2 downramp =================
     if(nxl(5) >0)then
       do i=1,nxl(5)
         i0=i0+1
         uu=(real(i,dp)-0.5)/float(nxl(5))
         fluid_x_profile(i0)=peak_fluid_density*&
-        (one_dp-uu)
+        cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
       end do
     end if
     !========================================= 
