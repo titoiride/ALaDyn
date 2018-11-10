@@ -34,11 +34,14 @@
  integer,intent(in) :: it_loc
  real(dp),intent(in) :: tloc
  character(13) :: fname='             '
+ character(29) :: fname_out
  integer :: np,ic,lun,i,j,k
  integer :: nxf_loc,nyf_loc,nzf_loc,nf
- integer :: i2b,j2b,k2b,nbf,env_cp
- real(dp) :: rdata(10)
+ integer :: i2b,j2b,k2b,nbf,env_cp,disp
+ integer :: size_x,size_y,size_z,size_w
+ real(dp) :: rdata(10), buf_size
  integer :: ndata(10),nps_loc(4),nbs_loc(5)
+ integer :: ierr,thefile
  !==============
  write (fname,'(a7,i6.6)') 'dumpout',mype
 
@@ -77,88 +80,190 @@
  !if(pe0)write(6,*)'dump data',ndata(1:10)
  !==============
  lun=10
- open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
- write(lun)rdata(1:10)
- write(lun)ndata(1:10)
- write(lun)nptx(1:nsp)
- write(lun)sptx_max(1:nsp)
+ fname_out='dumpRestart/'//fname//'.bin'
+ !open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
+ disp=0
+
+ call mpi_file_open(comm,fname_out, &
+ mpi_mode_wronly + mpi_mode_create, &
+ mpi_INFO_NULL,thefile,ierr)
+ 
+ call mpi_file_set_view(thefile, disp, mpi_real, &
+ mpi_real, 'native', &
+ mpi_info_null, ierr)
+
+ buf_size=10
+ call mpi_file_write(thefile,rdata,buf_size, mpi_real, &
+ mpi_status_ignore, ierr)
+
+ buf_size=10
+ call mpi_file_write(thefile,ndata,buf_size, mpi_integer, &
+ mpi_status_ignore, ierr)
+ 
+ buf_size=nsp
+ call mpi_file_write(thefile,nptx(1:nsp),buf_size, mpi_real, &
+ mpi_status_ignore, ierr)
+
+ buf_size=nsp
+ call mpi_file_write(thefile,sptx_max(1:nsp),buf_size, mpi_real, &
+ mpi_status_ignore, ierr)
+
  i=ndata(9)
- write(lun)x(1:i)
+ buf_size=i
+ call mpi_file_write(thefile,x(1:i),buf_size, mpi_real, &
+ mpi_status_ignore, ierr)
+
+ !write(lun)rdata(1:10)
+ !write(lun)ndata(1:10)
+ !write(lun)nptx(1:nsp)
+ !write(lun)sptx_max(1:nsp)
+ !i=ndata(9)
+ !write(lun)x(1:i)
  !-----------------------------
  if(Hybrid)then
   if(nxf >0)then
-   write(lun)fluid_x_profile(1:nxf)
-   write(lun)fluid_yz_profile(1:nyf_loc,1:nzf_loc)
+   buf_size=nxf
+   call mpi_file_write(thefile,fluid_x_profile(1:nxf),buf_size, mpi_real, &
+   mpi_status_ignore, ierr)
+   buf_size=nyf_loc*nzf_loc
+   call mpi_file_write(thefile,fluid_yz_profile(1:nyf_loc,1:nzf_loc), &
+   buf_size, mpi_real, &
+   mpi_status_ignore, ierr)
+   !write(lun)fluid_x_profile(1:nxf)
+   !write(lun)fluid_yz_profile(1:nyf_loc,1:nzf_loc)
   endif
  endif
+
  if(targ_end > xmax)then
+  buf_size=1
   do i=1,nsp
-   write(lun)loc_npty(i),loc_nptz(i)
+   call mpi_file_write(thefile,loc_npty(i), &
+   buf_size, mpi_real, &
+   mpi_status_ignore, ierr)
+   call mpi_file_write(thefile,loc_nptz(i), &
+   buf_size, mpi_real, &
+   mpi_status_ignore, ierr)
+   !write(lun)loc_npty(i),loc_nptz(i)
   end do
   do i=1,nsp
    do j=1,nptx_max
-    write(lun)xpt(j,i),wghpt(j,i)
+    call mpi_file_write(thefile,xpt(j,i), &
+    buf_size, mpi_real, &
+    mpi_status_ignore, ierr)
+    call mpi_file_write(thefile,wghpt(j,i), &
+    buf_size, mpi_real, &
+    mpi_status_ignore, ierr)
+    !write(lun)xpt(j,i),wghpt(j,i)
    end do
    do j=1,loc_npty(i)
-    write(lun)loc_ypt(j,i)
+    call mpi_file_write(thefile,loc_ypt(j,i), &
+    buf_size, mpi_real, &
+    mpi_status_ignore, ierr)
+    !write(lun)loc_ypt(j,i)
    end do
    do k=1,loc_nptz(i)
-    write(lun)loc_zpt(k,i)
+    call mpi_file_write(thefile,loc_zpt(k,i), &
+    buf_size, mpi_real, &
+    mpi_status_ignore, ierr)
+    !write(lun)loc_zpt(k,i)
     do j=1,loc_npty(i)
-     write(lun)loc_wghyz(j,k,i)
+     call mpi_file_write(thefile,loc_wghyz(j,k,i), &
+     buf_size, mpi_real, &
+     mpi_status_ignore, ierr)
+     !write(lun)loc_wghyz(j,k,i)
     end do
    end do
   end do
  endif
  !-----------------------
  !========================
- write(lun)ebf(:,:,:,:)
+ buf_size=nxf_loc*nyf_loc*nzf_loc*nf
+ call mpi_file_write(thefile,ebf(:,:,:,:), &
+ buf_size, mpi_real, &
+ mpi_status_ignore, ierr)
+ !write(lun)ebf(:,:,:,:)
  if(Envelope)then
   env_cp=size(env,4)
-  write(lun)env(:,:,:,:)
-  if(Two_color)write(lun)env1(:,:,:,:)
+  size_x=size(env,1)
+  size_y=size(env,2)
+  size_z=size(env,3)
+  buf_size=size_x*size_y*size_z*env_cp
+  call mpi_file_write(thefile,env(:,:,:,:), &
+  buf_size, mpi_real, &
+  mpi_status_ignore, ierr)
+  !write(lun)env(:,:,:,:)
+  if(Two_color)then
+   call mpi_file_write(thefile,env1(:,:,:,:), &
+   buf_size, mpi_real, &
+   mpi_status_ignore, ierr)
+   !write(lun)env1(:,:,:,:)
+  endif
  endif
  if(Hybrid)then
-  write(lun)up(:,:,:,:)
-  write(lun)up0(:,:,:,:)
+  size_w=size(up,4)
+  size_x=size(up,1)
+  size_y=size(up,2)
+  size_z=size(up,3)
+  buf_size=size_x*size_y*size_z*env_cp
+  call mpi_file_write(thefile,up(:,:,:,:), &
+  buf_size, mpi_real, &
+  mpi_status_ignore, ierr)
+  call mpi_file_write(thefile,up0(:,:,:,:), &
+  buf_size, mpi_real, &
+  mpi_status_ignore, ierr)
+  !write(lun)up(:,:,:,:)
+  !write(lun)up0(:,:,:,:)
  endif
   
- if(Beam)then
-  write(lun)ebf_bunch(1:i2b,1:j2b,1:k2b,1:nbf)
-  if(ibeam==1)write(lun)ebf1_bunch(1:i2b,1:j2b,1:k2b,1:nbf)
-  if(Pbeam)write(lun)ebf0_bunch(1:i2b,1:j2b,1:k2b,1:3)
-  if(L_Bpoloidal)write(lun)ebf0_bunch(1:i2b,1:j2b,1:k2b,1:3)
- endif
+ ! if(Beam)then
+  ! write(lun)ebf_bunch(1:i2b,1:j2b,1:k2b,1:nbf)
+  ! if(ibeam==1)write(lun)ebf1_bunch(1:i2b,1:j2b,1:k2b,1:nbf)
+  ! if(Pbeam)write(lun)ebf0_bunch(1:i2b,1:j2b,1:k2b,1:3)
+  ! if(L_Bpoloidal)write(lun)ebf0_bunch(1:i2b,1:j2b,1:k2b,1:3)
+ ! endif
  !========================================Particle section
  if(Part)then
   do i=1,nsp
    nps_loc(i)=size(spec(i)%part,1)
   end do
-  write(lun)nps_loc(1:nsp)
-  write(lun)loc_npart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsp)
+  buf_size=nsp
+  call mpi_file_write(thefile,nps_loc(1:nsp), &
+  buf_size, mpi_real, &
+  mpi_status_ignore, ierr)
+  !write(lun)nps_loc(1:nsp)
+  buf_size=npe_yloc*npe_zloc*npe_yloc*nsp
+  call mpi_file_write(thefile,loc_npart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsp), &
+  buf_size, mpi_real, &
+  mpi_status_ignore, ierr)
+  !write(lun)loc_npart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsp)
   do ic=1,nsp
    np=loc_npart(imody,imodz,imodx,ic)
    if(np >0)then
+    buf_size=np*(nd2+1)
     ebfp(1:np,1:nd2+1)=spec(ic)%part(1:np,1:nd2+1)
-    write(lun)ebfp(1:np,1:nd2+1)
+    call mpi_file_write(thefile,ebfp(1:np,1:nd2+1), &
+    buf_size, mpi_real, &
+    mpi_status_ignore, ierr)
+    !write(lun)ebfp(1:np,1:nd2+1)
    endif
   end do
  endif
- if(Beam)then
-  do i=1,nsb
-   nbs_loc(i)=size(bunch(i)%part,1)
-  end do
-  write(lun)nbs_loc(1:nsb)
-  write(lun)loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsb)
-  do ic=1,nsb
-   np=loc_nbpart(imody,imodz,imodx,ic)
-   if(np >0)then
-    ebfb(1:np,1:nd2+1)=bunch(ic)%part(1:np,1:nd2+1)
-    write(lun)ebfb(1:np,1:nd2+1)
-   endif
-  end do
- endif
- close(lun)
+ ! if(Beam)then
+  ! do i=1,nsb
+   ! nbs_loc(i)=size(bunch(i)%part,1)
+  ! end do
+  ! write(lun)nbs_loc(1:nsb)
+  ! write(lun)loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:nsb)
+  ! do ic=1,nsb
+   ! np=loc_nbpart(imody,imodz,imodx,ic)
+   ! if(np >0)then
+    ! ebfb(1:np,1:nd2+1)=bunch(ic)%part(1:np,1:nd2+1)
+    ! write(lun)ebfb(1:np,1:nd2+1)
+   ! endif
+  ! end do
+ ! endif
+ !close(lun)
+ call mpi_file_close(thefile, ierr)
  unix_time_last_dump = unix_time_now
  end subroutine dump_data
  !==============================================================
