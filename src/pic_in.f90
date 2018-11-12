@@ -691,7 +691,7 @@
    nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
   end do
  case(4)
- !================ first uniform layer np1/n0=================
+  !================ cos^2 upramp with peak np2/n0 =================
   if(nxl(1)>0)then
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
@@ -699,13 +699,14 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(1)*uu
-     wghpt(i1,ic)=np1*wgh_sp(ic)
+     uu=uu-1.
+     wghpt(i1,ic)=(np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(1)
   endif
-  !================ cos^2 upramp with peak np2/n0 =================
+   !================ uniform layer np2/n0=================
   if(nxl(2)>0)then
    do ic=1,nsp
     n_peak=nxl(2)*np_per_xc(ic)
@@ -713,8 +714,7 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(2)*uu
-     uu=uu-1.
-     wghpt(i1,ic)=(np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
+     wghpt(i1,ic)=np2*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -2560,20 +2560,20 @@
   !initial plateau, cos^2 bump, central plateau and exit ramp. 
   !See model_id=4 for pic case
   case(4)
-    !================ first uniform layer np1/n0=================
+    !================ cos^2 upramp with peak np2/n0 =================
     if(nxl(1) >0)then
       do i=1,nxl(1)
        i0=i0+1
-       fluid_x_profile(i0)=peak_fluid_density*np1
-      end do
-    endif
-    !================ cos^2 upramp with peak np2/n0 =================
-    if(nxl(2) >0)then    !sigma=nxl(2)/3
-      do i=1,nxl(2)
-       i0=i0+1
-       uu=(float(i)-0.5)/float(nxl(2))-one_dp
+       uu=(float(i)-0.5)/float(nxl(1))-one_dp
        fluid_x_profile(i0)=peak_fluid_density*&
        (np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))
+      end do
+    endif
+    !================ uniform layer np2/n0=================
+    if(nxl(2) >0)then
+      do i=1,nxl(2)
+       i0=i0+1
+       fluid_x_profile(i0)=peak_fluid_density*np2
       end do
     endif
     !================ cos^2 downramp to the plateau =================
