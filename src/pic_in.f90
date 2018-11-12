@@ -2685,9 +2685,9 @@
  endif
  if(nb_laser >1)then
   do ic=2,nb_laser
-   lp_in(ic)=lp_in(ic-1)-lp_delay
-   lp_end(ic)=lp_end(ic-1)-lp_delay
-   xc_loc(ic)=xc_loc(ic-1)-lp_delay
+   lp_in(ic)=lp_in(ic-1)-lp_delay(ic-1)
+   lp_end(ic)=lp_end(ic-1)-lp_delay(ic-1)
+   xc_loc(ic)=xc_loc(ic-1)-lp_delay(ic-1)
    xf_loc(ic)=xc_loc(ic)+t0_lp
    if(lp_end(ic) > xm)call init_lp_inc0_fields(ebf,lp_amp,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,&
                                               lp_ind,i1,i2)
@@ -2796,9 +2796,9 @@
  endif
  if(nb_laser >1)then
   do ic=2,nb_laser
-   lp_in(ic)=lp_in(ic-1)-lp_delay
-   lp_end(ic)=lp_end(ic-1)-lp_delay
-   xc_loc(ic)=xc_loc(ic-1)-lp_delay
+   lp_in(ic)=lp_in(ic-1)-lp_delay(ic-1)
+   lp_end(ic)=lp_end(ic-1)-lp_delay(ic-1)
+   xc_loc(ic)=xc_loc(ic-1)-lp_delay(ic-1)
    xf_loc(ic)=xc_loc(ic)+t0_lp
    if(lp_end(ic) > xm)then
     if(G_prof)then
