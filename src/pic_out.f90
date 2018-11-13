@@ -38,8 +38,8 @@
  real(dp) :: nde(ne,500,4),eksp_max(500,4),nde_sm(ne,500,4),nde_sp(ne,500,4)
  real(sp) :: real_par(par_dim),part_real_par(20)
  integer :: int_par(par_dim),part_int_par(20),ionz_number(500),hgam_number(500)
- real(dp) :: ionz_bavg(500,16),bavg(1000,16,8),tb(1000),tionz(500)
- real(dp) :: hgam_bavg(500,16),tgam(500)
+ real(dp) :: ionz_bavg(500,18),bavg(1000,16,8),tb(1000),tionz(500),hgam_charge(500),ionz_charge(500)
+ real(dp) :: hgam_bavg(500,18),tgam(500)
 
  character(13),dimension(20),parameter :: rpar=(/&
  ' time =      ',' xmin =      ',' xmax =      ',' ymin =      ',' ymax =      ',&
@@ -2784,7 +2784,7 @@
  real(dp),intent(in) :: t_loc,gmm
 
  integer :: ik,np,p,q,id_ch
- real(dp) :: np_norm,bcorr(16),ekt(1),ekm(1)
+ real(dp) :: np_norm,bcorr(16),ekt(2),ekm(2)
  real(dp) :: pp(3),gam
  real(sp) :: dwgh,ch_ion
 
@@ -2792,6 +2792,7 @@
  ch_ion=real(wgh_ion,sp)
  np=loc_npart(imody,imodz,imodx,1)
  id_ch=size(ebfp,2)
+ ekt=0.0
  if(np > 0)then
   select case(curr_ndim)
   case(2)
@@ -2800,6 +2801,7 @@
     pp(1:2)=spec(1)%part(p,3:4)
     gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
     if(part_ind< 0.and.gam > gmm)then
+     ekt(2)=ekt(2)+wgh
      ik=ik+1
      do q=1,nd2+1
       ebfp(ik,q)=spec(1)%part(p,q)
@@ -2812,6 +2814,7 @@
     pp(1:3)=spec(1)%part(p,4:6)
     gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
     if(part_ind< 0.and.gam > gmm)then
+     ekt(2)=ekt(2)+wgh
      ik=ik+1
      do q=1,nd2+1
       ebfp(ik,q)=spec(1)%part(p,q)
@@ -2824,12 +2827,13 @@
  tionz(nst)=t_loc
 !================================
   ekt(1)=real(ik,dp)
-  call allreduce_dpreal(SUMV,ekt,ekm,1)
+  call allreduce_dpreal(SUMV,ekt,ekm,2)
   ionz_number(nst)=nint(ekm(1))
   np_norm=1.
   if(ekm(1) >0.0)np_norm=1./ekm(1)
   call  bunch_corr(ebfp,ik,np_norm,bcorr)
   ionz_bavg(nst,1:16)=bcorr(1:16)
+  ionz_charge(nst)= e_charge*np_per_cell*ekm(2)
  end subroutine enb_ionz
 !============================
  subroutine enb_hgam(nst,t_loc,gmm)
@@ -2837,19 +2841,22 @@
  real(dp),intent(in) :: t_loc,gmm
 
  integer :: ik,np,p,q,id_ch
- real(dp) :: np_norm,bcorr(16),ekt(1),ekm(1)
+ real(dp) :: np_norm,bcorr(16),ekt(2),ekm(2)
  real(dp) :: pp(3),gam
 
  ik=0
  np=loc_npart(imody,imodz,imodx,1)
  id_ch=size(ebfp,2)
+ ekt=0.0
  if(np > 0)then
   select case(curr_ndim)
   case(2)
    do p=1,np
+    wgh_cmp=spec(1)%part(p,id_ch)
     pp(1:2)=spec(1)%part(p,3:4)
     gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
     if(gam > gmm)then
+     ekt(2)=ekt(2)+wgh
      ik=ik+1
      do q=1,nd2+1
       ebfp(ik,q)=spec(1)%part(p,q)
@@ -2858,9 +2865,11 @@
    end do
   case(3)
    do p=1,np
+    wgh_cmp=spec(1)%part(p,id_ch)
     pp(1:3)=spec(1)%part(p,4:6)
     gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
     if(gam > gmm)then
+    ekt(2)=ekt(2)+wgh
      ik=ik+1
      do q=1,nd2+1
       ebfp(ik,q)=spec(1)%part(p,q)
@@ -2873,12 +2882,13 @@
  tgam(nst)=t_loc
 !================================
   ekt(1)=real(ik,dp)
-  call allreduce_dpreal(SUMV,ekt,ekm,1)
+  call allreduce_dpreal(SUMV,ekt,ekm,2)
   hgam_number(nst)=nint(ekm(1))
   np_norm=1.
   if(ekm(1) >0.0)np_norm=1./ekm(1)
   call  bunch_corr(ebfp,ik,np_norm,bcorr)
   hgam_bavg(nst,1:16)=bcorr(1:16)
+  hgam_charge(nst)=e_charge*np_per_cell*ekm(2)
  !==========================
  end subroutine enb_hgam
  !=====================================
@@ -3245,8 +3255,10 @@
   write(lun,*)'====================================='
   write(lun,*)'time'
   write(lun,'(5e11.4)')tionz(1:nst)
-  write(lun,*)' ionization numbers '
+  write(lun,*)' ionization-hg numbers '
   write(lun,'(6i10)')ionz_number(1:nst)
+  write(lun,*)' ionization-hg charge(pC)'
+  write(lun,'(6e13.4)')ionz_charge(1:nst)
   write(lun,'(6a14)')fb(1:6)
   do ik=1,nst
    write(lun,'(6e13.4)')ionz_bavg(ik,1:6)
@@ -3307,7 +3319,9 @@
   write(lun,'(5e11.4)')tloc(1:nst)
   write(lun,*)' higamma numbers '
   write(lun,'(5i8)')hgam_number(1:nst)
-   write(lun,'(6a14)')fb(1:6)
+  write(lun,*)' higamma charge(pC) '
+  write(lun,'(5E13.4)')hgam_charge(1:nst)
+  write(lun,'(6a14)')fb(1:6)
   do ik=1,nst
    write(lun,'(6e13.4)')hgam_bavg(ik,1:6)
   end do
