@@ -4446,7 +4446,7 @@
  cf(0)=0.0
  cf(1)=1.
  cf(2)=-2.
- if(dord > 2)then              ! dord=3  se_coeff(2)=-(1-nu*nu)/8  dord=4 se_coeff(2)=-1/8    
+ if(dord > 2)then              ! dord=3  se_coeff(2)=-(1-nu*nu)/8  dord=4 se_coeff(2)=-1/8
   cf(0)=hord_der2
   cf(1)=1.-4.*hord_der2
   cf(2)=6.*hord_der2-2.

@@ -72,7 +72,7 @@
   if(dt_loc > 0.0)p=nint((t_out-t_in)/dt_loc)
   track_tot_nstep=nint(real(p,dp)/real(tkjump,dp))
   ndv=size(sp_loc%part,2)
-  
+
 ! Select particles on each mpi_task
  ik=0
  select case(ndim)
@@ -114,7 +114,7 @@
  if(mype==1)last_ind=loc_tpart(1)
  if(mype>1)last_ind=sum(loc_tpart(1:mype))
  !if(loc_tpart(mype+1)>0)write(6,*)'last particle index',mype,last_ind
- do p=1,np 
+ do p=1,np
   wgh_cmp=sp_loc%part(p,ndv)
   if(part_ind >0)part_ind=part_ind+last_ind
   sp_loc%part(p,ndv)=wgh_cmp
@@ -466,7 +466,7 @@
  end subroutine prl_den_energy_interp
 !
  subroutine set_wake_potential
- 
+
  integer :: nyf,nzf,np,i1,i2,j1,k1,stl,str
  real(dp) :: xm,ym,zm
  integer :: ic,i,j,k,jj,kk,n_str,ft_mod,ft_sym
@@ -505,7 +505,7 @@
 !============== jc(1)=rho-Jx=======================
 
  ft_mod=2                                          !for cosine transform
- ft_sym=2              
+ ft_sym=2
 !-------------------------------------------
  call FFT_2D_Psolv(jc,ompe,nx,nx_loc,ny,ny_loc,nz,nz_loc,&
                                 i1,i2,j1,nyf,k1,nzf,ft_mod,ft_sym)

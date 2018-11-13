@@ -544,10 +544,10 @@
     if(bunch_shape(i)==1 .and. nb_tot(i)==-1) then
       jb_norm(i)=1.0_dp/(PRODUCT(ppc_bunch(i,:))*j0_norm)
     endif
-    if(bunch_shape(i)==2 .and. nb_tot(i)>  0) then 
+    if(bunch_shape(i)==2 .and. nb_tot(i)>  0) then
       jb_norm(i)=(Charge_left(i)+Charge_right(i))/2.0*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
     endif
-    if(bunch_shape(i)==1 .and. nb_tot(i)==-1) then 
+    if(bunch_shape(i)==1 .and. nb_tot(i)==-1) then
       jb_norm(i)=1.0_dp/(PRODUCT(ppc_bunch(i,:))*j0_norm)
     endif
     if(bunch_shape(i)==3 .and. nb_tot(i)>  0) then
@@ -556,10 +556,10 @@
     if(bunch_shape(i)==3 .and. nb_tot(i)==-1) then
       jb_norm(i)=1.0_dp/(PRODUCT(ppc_bunch(i,:))*j0_norm)
     endif
-    if(bunch_shape(i)==4 .and. nb_tot(i)>  0) then 
+    if(bunch_shape(i)==4 .and. nb_tot(i)>  0) then
       jb_norm(i)=rhob(i)*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
     endif
-    if(bunch_shape(i)==1 .and. nb_tot(i)==-1) then 
+    if(bunch_shape(i)==1 .and. nb_tot(i)==-1) then
       jb_norm(i)=1.0_dp/(PRODUCT(ppc_bunch(i,:))*j0_norm)
     endif
    end do

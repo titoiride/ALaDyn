@@ -49,6 +49,7 @@
  integer :: comm,status(mpi_status_size),error,mpi_sd
  logical :: pex0,pex1
  integer :: coor(3),comm_col(3),color(3)
+ integer, allocatable :: single_communicator(:)
 
  contains
 
@@ -82,6 +83,9 @@
  call mpi_init(error)
  call mpi_comm_size(mpi_comm_world,mpi_size,error)
  call mpi_comm_rank(mpi_comm_world,mpi_rank,error)
+ allocate(single_communicator(mpi_size))
+
+ call mpi_comm_split(mpi_comm_world,mpi_rank,mpi_rank,single_communicator,error)
 
  call check_decomposition
 
@@ -288,6 +292,30 @@
  call mpi_file_close(thefile, ierr)
 
  end subroutine mpi_write_part_col
+ !========================
+ subroutine mpi_write_dump_real(buf,bufsize,thefile)
+
+ real(sp),intent(in) :: buf(:)
+ integer,intent(in) :: bufsize, thefile
+
+ integer :: ierr
+
+ call mpi_file_write(thefile, buf, bufsize, mpi_real, &
+  mpi_status_ignore, ierr)
+
+ end subroutine mpi_write_dump_real
+ !========================
+ subroutine mpi_write_dump_int(buf,bufsize,thefile)
+
+ real(sp),intent(in) :: buf(:)
+ integer,intent(in) :: bufsize, thefile
+
+ integer :: ierr
+
+ call mpi_file_write(thefile, buf, bufsize, mpi_integer, &
+  mpi_status_ignore, ierr)
+
+ end subroutine mpi_write_dump_int
  !========================
  subroutine mpi_write_field(buf,bufsize,header,header_size,disp,nchar,fout)
 

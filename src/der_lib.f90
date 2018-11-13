@@ -61,9 +61,9 @@
   cmp_coeff(2)=(1.-cmp_coeff(1))/3.     !-(1-nu*nu)/24
   opt_der2= -(1.-nu*nu)/12.
   hord_der2= opt_der2
-  !For der_rder=3 opt second derivative 
+  !For der_rder=3 opt second derivative
   opt_der1= (4.-nu*nu)/3.
-  !For der_rder=3 opt for centered first derivative 
+  !For der_rder=3 opt for centered first derivative
   !=========================
   avg_cmp=1./(cmp_coeff(1)+cmp_coeff(2))
   aph_der=cmp_coeff(2)*avg_cmp

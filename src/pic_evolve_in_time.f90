@@ -193,7 +193,7 @@
  integer :: j2,k2,ndv
  integer :: j,k
 
- !========== inject particles from the right 
+ !========== inject particles from the right
  !   xmx is the box xmax grid value at current time after window move
  !   in Comoving frame xmax is fixed and particles are left advected
  !=================================
@@ -201,7 +201,7 @@
  !  nptx(ic) is updated in the same way both for moving window xmax
  !  or for left-advect particles with fixed xmax
  !===============================================
- 
+
  ndv=nd2+1
  do ic=1,nsp
  ! if(Comoving)then
@@ -332,25 +332,25 @@
  real(dp) :: dt_tot
  logical,parameter :: mw=.true.
  !======================
- ! In comoving x-coordinate the 
+ ! In comoving x-coordinate the
  ! [xmin <= x <= xmax] computational box is stationaty
- ! xi= (x-vb*t) => xw is left-advected 
+ ! xi= (x-vb*t) => xw is left-advected
  ! fields are left-advected in the x-grid directely in the maxw. equations
  ! particles are left-advected:
  ! xp=xp-vb*dt inside the computational box is added in the eq. of motion and
  ! for moving coordinates at each w_nst steps
  ! xpt(ix,ic)=xpt(ix,ic)-vb*w_nst*dt outside the computational box
  ! then targ_in=targ_in -vb*w_nst*dt   targ_out=targ_out-vb*w_nst*dt
- ! 
+ !
  !==================
  if(loc_it==0)return
  dt_tot=0.0
  do i=1,w_nst
   dt_tot=dt_tot+dt_loc
  enddo
- nshx=nint(dx_inv*dt_tot*vb)      !the number of grid points x-shift for each w_nst step 
+ nshx=nint(dx_inv*dt_tot*vb)      !the number of grid points x-shift for each w_nst step
  do i=1,nx+1
-  xw(i)=xw(i)-dx*nshx   !moves backwards the grid xw 
+  xw(i)=xw(i)-dx*nshx   !moves backwards the grid xw
  end do
  xw_max=xw_max-dx*nshx
  xw_min=xw_min-dx*nshx
@@ -1428,7 +1428,7 @@
      pp(1:curr_ndim)=gam_inv*pp(1:curr_ndim)  !(vx,vy)=pp/gam
     endif
     do ic=1,curr_ndim
-     flx(i,j,k,fdim+ic)=pp(ic) 
+     flx(i,j,k,fdim+ic)=pp(ic)
     end do
    end do
   end do
@@ -1447,7 +1447,7 @@
   end do
  endif
  call fill_flux_yzxbdsdata(flx,&
- i1,i2,j1,j2,k1,k2,1,fldim,3,3)  
+ i1,i2,j1,j2,k1,k2,1,fldim,3,3)
  !extends flx arrays to [j1-3--j2+3]
  call fill_ebfield_yzxbdsdata(&
  ef,i1,i2,j1,j2,k1,k2,1,nfield,2,2)
@@ -1464,7 +1464,7 @@
  call rk_fluid_density_momenta(u,flx,i1,i2,j1,j2,k1,k2,fdim,fldim,apx,apy,apz)
  !in u() adds f(u) derivatives in yrange [j1+1,j2+1]
  ! u=u0+f(u)   flx[u^{k-1} unmodified
- call add_rk_lorentz_force      !exit u=u+(E+vxB)^{k-1}  
+ call add_rk_lorentz_force      !exit u=u+(E+vxB)^{k-1}
  do ic=1,fdim
   do k=k1,k2
    do j=j1,j2
@@ -1610,7 +1610,7 @@
     endif
     call ionization_cycle(spec(ic),ebfp,np,ic,itr,0,de_inv)
    endif
-    !======== injects new electrons. 
+    !======== injects new electrons.
   end do
  endif
  !===================END IONIZATION MODULE============
@@ -1907,7 +1907,7 @@
  end do
  if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,1,spr_in,spl_in)
  call env_grad(av,i1,i2,j1,j2,k1,k2,ord,dx_inv,dy_inv,dz_inv)
- !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
+ !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3)
 
  if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,2,curr_ndim+1,spr_in,spl_in)
  !=====================
@@ -1937,7 +1937,7 @@
  if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,1,spr,spl)
 
  call env_grad(av,i1,i2,j1,j2,k1,k2,ord,dx_inv,dy_inv,dz_inv)
- !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
+ !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3)
 
  if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,curr_ndim+1,spr,spl)
 
@@ -2019,7 +2019,7 @@
  str=1
  stl=1
  if(prl)then
-  !extends flux data to j1-2,j2+2 and k1-2,k2+2 
+  !extends flux data to j1-2,j2+2 and k1-2,k2+2
   call fill_ebfield_yzxbdsdata(flx,i1,i2,j1,j2,k1,k2,1,fldim,2,2)
   call fill_ebfield_yzxbdsdata(ef,i1,i2,j1,j2,k1,k2,1,nfield,str,stl)
  endif
@@ -2028,7 +2028,7 @@
    do k=k1,k2
     do j=j1,j2
      do i=i1,i2
-      u(i,j,k,ic)=u0(i,j,k,ic)     
+      u(i,j,k,ic)=u0(i,j,k,ic)
       u0(i,j,k,ic)=0.0
      end do
     end do
@@ -2051,7 +2051,7 @@
    do k=k1,k2
     do j=j1,j2
      do i=i1,i2
-      u(i,j,k,ic)=u(i,j,k,ic)+abf_0*u0(i,j,k,ic)  
+      u(i,j,k,ic)=u(i,j,k,ic)+abf_0*u0(i,j,k,ic)
       u0(i,j,k,ic)=0.0
      end do
     end do
@@ -2099,15 +2099,15 @@
      if(flx(i,j,k,fdim)<=eps)den=0.0
      ez=wk1*(ef(i,j,k,3)+ef(i,j,k-1,3))  !Ez(i,j,k)
      b1p=wk1*(ef(i,j,k,5)+ef(i-1,j,k,5))        !by(i+1/2,j,k+1/2)
-     b1m=wk1*(ef(i,j,k-1,5)+ef(i-1,j,k-1,5))    
+     b1m=wk1*(ef(i,j,k-1,5)+ef(i-1,j,k-1,5))
      by=wk1*(b1p+b1m)                !By(i,j,k)
      b1p=wk1*(ef(i,j,k,4)+ef(i,j-1,k,4))        !bx(i,j+1/2,k+1/2)
-     b1m=wk1*(ef(i,j,k-1,4)+ef(i,j-1,k-1,4))    
+     b1m=wk1*(ef(i,j,k-1,4)+ef(i,j-1,k-1,4))
      bx=wk1*(b1p+b1m)                !Bx(i,j,k)
      vx=flx(i,j,k,fdim+1)    !vx^n
      vy=flx(i,j,k,fdim+2)    !vy^n
      vz=flx(i,j,k,fdim+3)    !vz^n
-     u0(i,j,k,1)=u0(i,j,k,1)-den*lzf*vz*by 
+     u0(i,j,k,1)=u0(i,j,k,1)-den*lzf*vz*by
      u0(i,j,k,2)=u0(i,j,k,2)+den*lzf*vz*bx
      u0(i,j,k,3)=u0(i,j,k,3)+den*lzf*(ez+vx*by-vy*bx)
      !=> u^{n+1}
@@ -2155,7 +2155,7 @@
     do i=i1,i2
      qx=ch*(flx(i,j,k,1)+flx(i+1,j,k,1))  !Dt*Jx(i+1/2,j,k)
      qy=ch*(flx(i,j,k,2)+flx(i,j+1,k,2))   !Dt*Jy(i,j+1/2,k)
-     curr(i,j,k,1)=curr(i,j,k,1)+qx        
+     curr(i,j,k,1)=curr(i,j,k,1)+qx
      curr(i,j,k,2)=curr(i,j,k,2)+qy
                         !Adds particle contributions
     end do
@@ -2317,7 +2317,7 @@
  !+++++++++++++++++++++++++++++++++++++++++++++++++++++++
    call set_env_momentum_density_flux(up,ebf,jc,ebf0,flux,i1,i2,j1,nyf,k1,nzf)
     !exit jc(1)=q^2*n/gam, jc(2:4) ponderomotive force on a grid
-    !ebf0= total fields flux(1:4)=(P,den)^n 
+    !ebf0= total fields flux(1:4)=(P,den)^n
 !============================
    call update_adam_bash_fluid_variables(up,up0,flux,ebf0,dt_loc,i1,i2,j1,nyf,k1,nzf,Ltz,initial_time)
    ! In up exit updated momenta-density variables u^{n+1}
@@ -2370,8 +2370,8 @@
    call lpf_env_positions(spec(ic),ebfp,np,dt_loc,vbeam)
    if(ompe==0.0)return
   !===========================
-  !Computes x^{n+1} 
-  ! stores 
+  !Computes x^{n+1}
+  ! stores
   !ebfp(1:3) dt*V^{n+1/2}  ebfp(4:6) old positions ebfp(7)=dt*gam_inv
   !==============================
   jc(:,:,:,:)=0.0
@@ -2615,7 +2615,7 @@
   if(nfield ==6)then
    ef_tot(:,:,:,5:6)=ef_tot(:,:,:,5:6)+efb2(:,:,:,5:6)
   endif
- end subroutine eb_fields_collect 
+ end subroutine eb_fields_collect
 !=============================
  subroutine set_eb_momentum_density_flux(uv,flx,i1,i2,j1,j2,k1,k2)
   real(dp),intent(in) :: uv(:,:,:,:)
@@ -2703,7 +2703,7 @@
                         spec(ic),ebfp,np,ic,iter_loc,0,deb_inv)
    endif
   end do
-  !======== injects new electrons, with weights equal to ion weights 
+  !======== injects new electrons, with weights equal to ion weights
  endif
 !=======================
 ! STEP 1
@@ -2728,7 +2728,7 @@
     if(initial_time)call init_lpf_momenta(spec(ic),ebfp,1,np,dt_loc,Ltz)
     call lpf_momenta_and_positions(spec(ic),ebfp,1,np,dt_loc,vb,Ltz)
 !  EXIT p^{n+1/2}, v^{n+1/2}, x^{n+1}
-!  in x^{n+1} are stored in ebfp(1:3) old x^n are stored in ebfp((4:6)  
+!  in x^{n+1} are stored in ebfp(1:3) old x^n are stored in ebfp((4:6)
 !  in ebfp(7) is stored dt_loc/gamma
    call curr_accumulate(spec(ic),ebfp,jc,1,np,iform,n_st,xm,ym,zm)
    endif
@@ -2753,7 +2753,7 @@
   !Computes fluid contribution => Dt*J_f^{n+1/2} added to particle contributions
 !  ===============  END plasma fluid section
  endif
- call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1) 
+ call advance_lpf_fields(ebf,jc,dt_loc,vbeam,i1,i2,j1,j2,k1,k2,1)
 !==============================
 ! STEP 2
 !Advances momenta and position of bunch particles

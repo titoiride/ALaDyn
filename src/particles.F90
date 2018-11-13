@@ -2997,13 +2997,13 @@
  ! enters av(1)=F=|a|^2/2 envelope at integer grid nodes
  ! and av(2:4)=grad[F] at staggered points
  !  COMPUTES
- !(E,B), F, gradF  assignements to particle positions 
- ! => ap(1:6)  in 2D 
+ !(E,B), F, gradF  assignements to particle positions
+ ! => ap(1:6)  in 2D
  ! => ap(1:10) in 3D
  ! approximated gamma function:
  ! gam_new= gam +0.25*charge*Dt(gam*E+0.5*grad[F]).p^{n-1/2}/gam^2
  ! EXIT
- ! (E+ 0.5grad[F]/gam_new) B/gam_new, F   and wgh/gam_new  
+ ! (E+ 0.5grad[F]/gam_new) B/gam_new, F   and wgh/gam_new
  ! pt(1:5)  in 2D
  ! pt(1:7)  in 3D
  !========================================
@@ -3106,7 +3106,7 @@
    gam_inv=(gam-dgam)/gam2
    ap(3:5)=ap(3:5)*gam_inv          !ap(3)=q*B/gamp, ap(4:5)= q*Grad[F]/2*gamp
 
-   pt(n,1:2)=ap(1:2)-ap(4:5)   ! Lorentz force already multiplied by q    
+   pt(n,1:2)=ap(1:2)-ap(4:5)   ! Lorentz force already multiplied by q
    pt(n,3)=ap(3)
    pt(n,5)=wgh*gam_inv     !weight/gamp
   end do

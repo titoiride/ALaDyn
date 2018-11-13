@@ -35,7 +35,8 @@
  real(dp),intent(in) :: tloc
  character(13) :: fname='             '
  character(29) :: fname_out
- integer :: np,ic,lun,i,j,k
+ !integer :: lun
+ integer :: np,ic,i,j,k
  integer :: nxf_loc,nyf_loc,nzf_loc,nf
  integer :: i2b,j2b,k2b,nbf,env_cp,disp
  integer :: size_x,size_y,size_z,size_w
@@ -77,29 +78,30 @@
  ndata(8)=npt_buffer(1)
  ndata(9)=size(x)
  ndata(10)=nxf
- !if(pe0)write(6,*)'dump data',ndata(1:10)
+ if(pe0)write(6,*)'Start dump data'
  !==============
- lun=10
+ !lun=10
  fname_out='dumpRestart/'//fname//'.bin'
  !open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
  disp=0
 
- call mpi_file_open(comm,fname_out, &
+ call mpi_file_open(single_communicator,fname_out, &
  mpi_mode_wronly + mpi_mode_create, &
  mpi_INFO_NULL,thefile,ierr)
- 
+
  call mpi_file_set_view(thefile, disp, mpi_real, &
  mpi_real, 'native', &
  mpi_info_null, ierr)
 
  buf_size=10
+ !call mpi_write_dump_real(rdata,buf_size,thefile)
  call mpi_file_write(thefile,rdata,buf_size, mpi_real, &
  mpi_status_ignore, ierr)
 
  buf_size=10
  call mpi_file_write(thefile,ndata,buf_size, mpi_integer, &
  mpi_status_ignore, ierr)
- 
+
  buf_size=nsp
  call mpi_file_write(thefile,nptx(1:nsp),buf_size, mpi_real, &
  mpi_status_ignore, ierr)
@@ -214,7 +216,7 @@
   !write(lun)up(:,:,:,:)
   !write(lun)up0(:,:,:,:)
  endif
-  
+
  ! if(Beam)then
   ! write(lun)ebf_bunch(1:i2b,1:j2b,1:k2b,1:nbf)
   ! if(ibeam==1)write(lun)ebf1_bunch(1:i2b,1:j2b,1:k2b,1:nbf)
@@ -265,6 +267,7 @@
  !close(lun)
  call mpi_file_close(thefile, ierr)
  unix_time_last_dump = unix_time_now
+ if(pe0)write(6,*)'End dump data'
  end subroutine dump_data
  !==============================================================
  !==============================================================
