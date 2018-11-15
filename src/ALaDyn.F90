@@ -1118,7 +1118,9 @@
     if(Symmetrization_pulse)then
      write(60,*)' A symmetrization pulse is implied when ionizing'
      write(60,*)' The sym. formula is sin(2*pi*u)*a_symm'
-     write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm',a_symm
+     if(a_symm>zero_dp)then
+      write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm',a_symm
+     endif
     endif
    end if
  write(60,*)'**********TARGET PLASMA PARAMETERS***********'
