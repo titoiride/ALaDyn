@@ -2651,7 +2651,7 @@
 
   integer :: ik,ic,kk,ndv
   real(dp) :: gmb,pp(3),mu(7),ekt(9),ekm(9)
-  real(dp) :: corr2(8),emy,emz,dgam,wgh,w_norm
+  real(dp) :: corr2(8),emy,emz,dgam,w_norm
  !=====================
   bcorr=0.0
   mu=0.0
