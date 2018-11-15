@@ -2651,7 +2651,7 @@
 
   integer :: ik,ic,kk,ndv
   real(dp) :: gmb,pp(3),mu(7),ekt(9),ekm(9)
-  real(dp) :: corr2(8),emy,emz,dgam
+  real(dp) :: corr2(8),emy,emz,dgam,wgh,w_norm
  !=====================
   bcorr=0.0
   mu=0.0
@@ -2659,66 +2659,79 @@
   ndv=2*curr_ndim
   ekt=0.0
   if(np_loc>0)then
-   do ik=1,ndv
-    ekt(ik)=sum(bch(1:np_loc,ik)) !averages six phase space coordinates
-   enddo
    if(curr_ndim==2)then
     do kk=1,np_loc
+     wgh_cmp=bch(kk,5)
+     ekt(1:2)=ekt(1:2)+wgh*bch(kk,1:2)     !<w*X>  <w*Y>
      pp(1:2)=bch(kk,3:4)
+     ekt(3)=ekt(3)+wgh*pp(1)
+     ekt(4)=ekt(4)+wgh*pp(2)
      gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
-     ekt(ndv+1)=ekt(ndv+1)+gmb
+     ekt(ndv+1)=ekt(ndv+1)+wgh*gmb
+     ekt(8)=ekt(8)+wgh
     end do
-    ekt(7)=ekt(ndv+1)  !<gam>
-    ekt(6)=0.0         !<Pz>
-    ekt(5)=ekt(4)      !<Py>
-    ekt(4)=ekt(3)      !<Px>
-    ekt(3)=0.0          !<z>
+    ekt(7)=ekt(ndv+1)  !<w*gam>
+    ekt(6)=0.0         !<w*Pz>
+    ekt(5)=ekt(4)      !<w*Py>
+    ekt(4)=ekt(3)      !<w*Px>
+    ekt(3)=0.0          !<w*z>
    else
     do kk=1,np_loc
+     wgh_cmp=bch(kk,7)
+     ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3) ! weight*(X,Y,Z) coordinates
      pp(1:3)=bch(kk,4:6)
      gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
-     ekt(7)=ekt(7)+gmb
-    end do
+     ekt(4:6)=ekt(4:6)+wgh*pp(1:3)
+     ekt(7)=ekt(7)+wgh*gmb
+     ekt(8)=ekt(8)+wgh
+     end do
    endif
   endif
-  call allreduce_dpreal(SUMV,ekt,ekm,7)
-  mu(1:7)=np_norm*ekm(1:7) !Averages <(x,y,z,Px,Py,Pz,gamma)>
+  call allreduce_dpreal(SUMV,ekt,ekm,8)
+    w_norm=np_norm
+  if(ekm(8) >0.0)w_norm=1./ekm(8)
+!===================
+  mu(1:3)=w_norm*ekm(1:3) !weighted averages <(x,y,z)>
+  mu(4:7)=w_norm*ekm(4:7) !weighted averages <(Px,Py,Pz,gamma)>
   !=========== 2th moments
   ekm=0.0
   ekt=0.0
   if(np_loc>0)then
-   do ik=1,ndv
-    do kk=1,np_loc
-     ekt(ik)=ekt(ik)+bch(kk,ik)*bch(kk,ik)
-    end do
-   enddo
    if(curr_ndim==2)then
-    ekt(6)=0.0         !<Pz*Pz>
-    ekt(5)=ekt(4)      !<Py*Py>
-    ekt(4)=ekt(3)      !<Px+Px>
-    ekt(3)=0.0         !<z*z>
-   !================mixed corr
     do kk=1,np_loc
-     ekt(7)=ekt(7)+bch(kk,4)*bch(kk,2)  !<y*py>
-     ekt(8)=0.0
+     wgh_cmp=bch(kk,5)
+     ekt(1)=ekt(1)+wgh*bch(kk,1)*bch(kk,1)
+     ekt(2)=ekt(2)+wgh*bch(kk,2)*bch(kk,2)
      pp(1:2)=bch(kk,3:4)
+     ekt(3)=ekt(3)+wgh*pp(1)*pp(1)    !<w*p*p>
+     ekt(4)=ekt(4)+wgh*pp(2)*pp(2)
+     ekt(7)=ekt(7)+wgh*pp(2)*bch(kk,2)  !<y*w*py>
      gmb=1.+pp(1)*pp(1)+pp(2)*pp(2)
-     ekt(9)=ekt(9)+gmb       !<(gam**2>
+     ekt(9)=ekt(9)+wgh*gmb       !<w*gam**2>
     end do
+    ekt(6)=0.0         !<Pz*Pz>
+    ekt(8) =0.0        !<z*Pz)
+    ekt(5)=ekt(4)      !<Py*Py>
+    ekt(4)=ekt(3)      !<Px*Px>
+    ekt(3)=0.0         !<z*z>
    else
     do kk=1,np_loc
-     ekt(7)=ekt(7)+bch(kk,5)*bch(kk,2)  !<yPy>
-     ekt(8)=ekt(8)+bch(kk,6)*bch(kk,3)  !<zPz>
+     wgh_cmp=bch(kk,7)
+     ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3)*bch(kk,1:3)
      pp(1:3)=bch(kk,4:6)
-     gmb=1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3)
-     ekt(9)=ekt(9)+gmb                            !<(gam**2>
+     ekt(4:6)=ekt(4:6)+wgh*pp(1:3)*pp(1:3)
+     ekt(7)=ekt(7)+wgh*pp(2)*bch(kk,2)  !<y*w*py>
+     ekt(8)=ekt(8)+wgh*pp(3)*bch(kk,3)  !<z*w*pz>
+     gmb=wgh*(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
+     ekt(9)=ekt(9)+gmb                                !<(w*gam**2>
     end do
    endif
   endif
   call allreduce_dpreal(SUMV,ekt,ekm,9)
-  ekm(1:9)=np_norm*ekm(1:9)
+  ekm(1:9)=w_norm*ekm(1:9)
+
   do ik=1,6
-   corr2(ik)=ekm(ik)-mu(ik)*mu(ik)
+   corr2(ik)=ekm(ik)-mu(ik)*mu(ik)   !<UU>-<U><U>   U[X,Y,Z,Px,Py,Pz]
   end do
   corr2(7)=ekm(7)-mu(2)*mu(5)
   corr2(8)=ekm(8)-mu(3)*mu(6)
@@ -2726,7 +2739,7 @@
   !<yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
   emy=corr2(2)*corr2(5)-corr2(7)*corr2(7)
   emz=corr2(3)*corr2(6)-corr2(8)*corr2(8)
-  gmb=mu(7)*mu(7)
+  gmb=mu(7)*mu(7)                  !<gam><gam>
   dgam=0.0
   if(gmb >0.0)dgam=ekm(9)/gmb -1.0
   if(dgam >0.0)dgam=sqrt(dgam)   !Dgamm/gamma
