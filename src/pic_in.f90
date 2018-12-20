@@ -2429,7 +2429,6 @@
  endif
  !=============================
  allocate(fluid_x_profile(nxf))
- allocate(fluid_yz_profile(j2,k2))
  !====================
  peak_fluid_density=1.-ratio_mpfluid
  fluid_x_profile(:)=0.0

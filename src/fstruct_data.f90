@@ -165,10 +165,12 @@
  allocate(up(n1p,n2p,n3p,fcomp),STAT=AllocStatus)
  allocate(up0(n1p,n2p,n3p,fcomp),STAT=AllocStatus)
  allocate(flux(n1p,n2p,n3p,flcomp),STAT=AllocStatus)
+ allocate(fluid_yz_profile(n2p,n3p),STAT=AllocStatus)
  up=0.0
  flux=0.0
  up0=0.0
- fsize=fsize+ng*(2*fcomp+flcomp)
+ fluid_yz_profile=0.0
+ fsize=fsize+ng*(2*fcomp+flcomp) +n2p*n3p
  if(lp >2)then
   allocate(up1(n1p,n2p,n3p,fcomp),STAT=AllocStatus)
   up1=0.0
