@@ -10,19 +10,19 @@ matrix:
       compiler: gcc
       name: macOS - gcc@5
       env:
-        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc@5 gcc open-mpi fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew install gcc@5 gcc open-mpi fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-8"
 
     - os: osx
       compiler: gcc
       name: macOS - native gcc (llvm backend)
       env:
-        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
 
     - os: osx
       compiler: clang
       name: macOS - native clang
       env:
-        - MATRIX_EVAL="brew update && brew cask uninstall oclint && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
 
     - os: linux
       compiler: clang

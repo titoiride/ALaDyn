@@ -281,9 +281,13 @@
     end do
    endif
   endif
+
+  call cpu_time(unix_time_now)
+
   if (pe0) then
    write(6,'(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
    write(6,*)' END DATA WRITE'
+   write(6,'(a16,f12.3)')' Time elapsed = ',unix_time_now-unix_time_begin
   endif
   if (dump>0 .and. time_interval_dumps < 0.0) then
    if (iter>0) call dump_data(iter,tnow)
@@ -1053,7 +1057,12 @@
   write(60,'(a9,e13.3,a4)')'  Power = ',lp_pow,'(TW)'
   write(60,'(a10,e13.3,a3)')'  Energy= ',lp_energy,'(J)'
   write(60,'(a30,i4)')'  Number of main laser pulses= ',nb_laser
-  if(nb_laser >1)write(60,'(a29,f5.2)')'  Distance among lp centers= ',lp_delay
+  if(nb_laser >1)then
+   do i=2,nb_laser
+    write(60,'(a23,i2,a5,i2,a10,f5.2)')'  Distance between the ',i-1,' and ',i,'&
+    & centers= ',lp_delay(i-1)
+   end do
+  endif
   write(60,*)'-----------------------------------'
   if(Two_color)then
    write(60,*)'     Injected pulse parameters '

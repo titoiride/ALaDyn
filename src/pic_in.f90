@@ -417,9 +417,14 @@
   xtot=xtot+lpx(i)
   nxtot=nxtot+nxl(i)
  end do
- xfsh=xf0+lpx(7)
- targ_in=xfsh
+ if(xf0 >0.0)then
+  targ_in=xf0
  targ_end=targ_in+xtot
+  else
+  targ_in= xmin
+  targ_end=xtot+xf0
+ endif
+ xfsh=xf0
  !=============================
  loc_nptx=0
  loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5))*np_per_xc(1:nsp)
@@ -686,7 +691,7 @@
    nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
   end do
  case(4)
- !================ first uniform layer np1/n0=================
+  !================ cos^2 upramp with peak np2/n0 =================
   if(nxl(1)>0)then
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
@@ -694,13 +699,14 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(1)*uu
-     wghpt(i1,ic)=np1*wgh_sp(ic)
+     uu=uu-1.
+     wghpt(i1,ic)=(np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(1)
   endif
-  !================ cos^2 upramp with peak np2/n0 =================
+   !================ uniform layer np2/n0=================
   if(nxl(2)>0)then
    do ic=1,nsp
     n_peak=nxl(2)*np_per_xc(ic)
@@ -708,8 +714,7 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(2)*uu
-     uu=uu-1.
-     wghpt(i1,ic)=(np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
+     wghpt(i1,ic)=np2*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -744,7 +749,7 @@
    end do
    xfsh=xfsh+lpx(4)
   endif
-  !================ second linear ramp =================
+  !================ cos^2 downramp =================
   if(nxl(5)>0)then
    do ic=1,nsp
     n_peak=nxl(5)*np_per_xc(ic)
@@ -752,7 +757,7 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(5)*uu
-     wghpt(i1,ic)=(1.-uu)*wgh_sp(ic)
+     wghpt(i1,ic)=(cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -763,6 +768,25 @@
   end do
   !========================================= 
  end select
+ if(xf0 <0.)then
+  do ic=1,nsp
+   i1=0
+   if(pe0)write(6,*)'tot part number',ic,nptx(ic)
+   do i=1,nptx(ic)
+    if(xpt(i,ic) > xmin)then
+     i1=i1+1
+     xpt(i1,ic)=xpt(i,ic)
+     wghpt(i1,ic)=wghpt(i,ic)
+    endif
+   end do
+   nptx(ic)=i1
+   if(pe0)write(6,*)'new tot part number',ic,nptx(ic)
+  enddo
+ endif
+!============================= 
+ do ic=1,nsp
+  nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
+ end do
  do ic=1,nsp
   sptx_max(ic)=nptx(ic)
  end do
@@ -2376,75 +2400,85 @@
  end subroutine clean_field
  !+++++++++++++++++++++
  subroutine init_fluid_density_momenta(uf,uf0,xf0,nfluid,dmodel,i1,i2,j1,j2,k1,k2)
-  real(dp),intent(inout) :: uf(:,:,:,:),uf0(:,:,:,:)
-  real(dp),intent(in) :: xf0
-  integer,intent(in) :: nfluid,dmodel,i1,i2,j1,j2,k1,k2
-  integer :: i,i0,j,k,ic,nxl(5),i0_targ
-  integer :: j01,j02,k01,k02,jj,kk
-  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,u2,u3,ramp_prefactor
-  real(dp) :: yy,zz,r2
+ real(dp),intent(inout) :: uf(:,:,:,:),uf0(:,:,:,:)
+ real(dp),intent(in) :: xf0
+ integer,intent(in) :: nfluid,dmodel,i1,i2,j1,j2,k1,k2
+ integer :: i,i0,j,k,ic,nxl(5),ntot,i0_targ,i1_targ
+ integer :: j01,j02,k01,k02,jj,kk
+ real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,u2,u3,ramp_prefactor
+ real(dp) :: yy,zz,r2
 
  xtot=zero_dp
+ ntot=0
  do i=1,5
   nxl(i)=nint(dx_inv*lpx(i))
   lpx(i)=nxl(i)*dx
   xtot=xtot+lpx(i)
+  ntot=ntot+nxl(i)
  end do
- targ_in=xf0+lpx(7)
- targ_end=targ_in+xtot
- i0_targ=nint(dx_inv*targ_in)
- peak_fluid_density=1.-ratio_mpfluid
+ if(xf0 >0.)then
+  targ_in=xf0
+  i0_targ=nint(dx_inv*targ_in)
+  targ_end=targ_in+xtot
+  nxf=i0_targ+ntot
+ else
+  targ_in=0.0
+  i0_targ=0
+  targ_end=xtot+xf0     ! targ_end < xtot
+  nxf=ntot
+ endif
  !=============================
- nxf=i0_targ+nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5)
  allocate(fluid_x_profile(nxf))
  allocate(fluid_yz_profile(j2,k2))
- fluid_x_profile(1:i0_targ)=0.0
+ !====================
+ peak_fluid_density=1.-ratio_mpfluid
+ fluid_x_profile(:)=0.0
  fluid_yz_profile(:,:)=0.0
- i0=i0_targ
  np1_loc=0.005
  ramp_prefactor=one_dp
  if(np1>0.0)np1_loc=np1
  l_inv=log(1./np1_loc)
 !==============
-  j01=j1
-  k01=k1
-  j02=j2
-  k02=k2
-  if(pe0y)j01=sh_targ+1
-  if(pe1y)j02=j2-sh_targ
-  if(ndim >2)then
-   if(pe0z)k01=sh_targ+1
-   if(pe1z)k02=k2-sh_targ
-  endif
-  do k=k01,k02
-   do j=j01,j02
-     fluid_yz_profile(j,k)=1.0
-   end do
+ j01=j1
+ k01=k1
+ j02=j2
+ k02=k2
+ if(pe0y)j01=sh_targ+1
+ if(pe1y)j02=j2-sh_targ
+ if(ndim >2)then
+  if(pe0z)k01=sh_targ+1
+  if(pe1z)k02=k2-sh_targ
+ endif
+ do k=k01,k02
+  do j=j01,j02
+   fluid_yz_profile(j,k)=1.0
   end do
-  if(Channel)then
-   if(ndim <3)then
-    k=k01
-    zz=0.0
+ end do
+ if(Channel)then
+  if(ndim <3)then
+   k=k01
+   zz=0.0
+   do j=j01,j02
+    jj=j-2
+    yy=loc_yg(jj,1,imody)
+    r2=(yy*yy+zz*zz)/(w0_y*w0_y)
+    fluid_yz_profile(j,k)=1.0 +chann_fact*r2
+   end do
+  else
+   do k=k01,k02
+    kk=k-2
+    zz=loc_zg(kk,1,imodz)
     do j=j01,j02
      jj=j-2
      yy=loc_yg(jj,1,imody)
      r2=(yy*yy+zz*zz)/(w0_y*w0_y)
      fluid_yz_profile(j,k)=1.0 +chann_fact*r2
     end do
-   else
-    do k=k01,k02
-     kk=k-2
-     zz=loc_zg(kk,1,imodz)
-     do j=j01,j02
-      jj=j-2
-      yy=loc_yg(jj,1,imody)
-      r2=(yy*yy+zz*zz)/(w0_y*w0_y)
-      fluid_yz_profile(j,k)=1.0 +chann_fact*r2
-     end do
-    end do
-   endif
-   if(pe0)write(6,'(a15,e11.4)')'channel factor=',chann_fact
+   end do
   endif
+  if(pe0)write(6,'(a15,e11.4)')'channel factor=',chann_fact
+ endif
+ i0=i0_targ
  select case(dmodel)
   !initial plateau, cubic ramp (exponential still available but commented), central plateau and exit ramp
   case(1)
@@ -2526,20 +2560,20 @@
   !initial plateau, cos^2 bump, central plateau and exit ramp. 
   !See model_id=4 for pic case
   case(4)
-    !================ first uniform layer np1/n0=================
+    !================ cos^2 upramp with peak np2/n0 =================
     if(nxl(1) >0)then
       do i=1,nxl(1)
        i0=i0+1
-       fluid_x_profile(i0)=peak_fluid_density*np1
-      end do
-    endif
-    !================ cos^2 upramp with peak np2/n0 =================
-    if(nxl(2) >0)then    !sigma=nxl(2)/3
-      do i=1,nxl(2)
-       i0=i0+1
-       uu=(float(i)-0.5)/float(nxl(2))-one_dp
+       uu=(float(i)-0.5)/float(nxl(1))-one_dp
        fluid_x_profile(i0)=peak_fluid_density*&
        (np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))
+      end do
+    endif
+    !================ uniform layer np2/n0=================
+    if(nxl(2) >0)then
+      do i=1,nxl(2)
+       i0=i0+1
+       fluid_x_profile(i0)=peak_fluid_density*np2
       end do
     endif
     !================ cos^2 downramp to the plateau =================
@@ -2548,7 +2582,7 @@
         i0=i0+1
         uu=(real(i,dp)-0.5)/float(nxl(3))-one_dp
         fluid_x_profile(i0)=peak_fluid_density*&
-        (1+(np2-1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))
+        (one_dp+(np2-one_dp)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))
       end do
     end if
     !================ Central layer=================
@@ -2558,17 +2592,29 @@
         fluid_x_profile(i0)=peak_fluid_density
       end do
     end if
-    !================ second linear ramp =================
+    !================ cos^2 downramp =================
     if(nxl(5) >0)then
       do i=1,nxl(5)
         i0=i0+1
         uu=(real(i,dp)-0.5)/float(nxl(5))
         fluid_x_profile(i0)=peak_fluid_density*&
-        (one_dp-uu)
+        cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
       end do
     end if
     !========================================= 
   end select
+  if(xf0 < 0.0)then
+   i1_targ=nint(dx_inv*abs(xf0))
+   i0=0
+   do i=1,ntot-i1_targ
+    i0=i0+1
+    fluid_x_profile(i0)=fluid_x_profile(i+i1_targ)
+   end do
+  endif
+!-------------------------------
+! target profile of length nxf (xtot)
+! now put target on the computationale grid
+!
   ic=nfluid     !the particle number density
   do k=k1,k2
    do j=j1,j2
@@ -2579,6 +2625,7 @@
    end do
   end do
   if(pe0)then
+   write(6,*)'xt_in=',targ_in,'off_set= ',xf0
    write(6,'(a22,e11.4)')'Max init fluid density',maxval(uf(i1:i2,j1:j2,k1:k2,ic))
   endif
  !========================
@@ -2638,9 +2685,9 @@
  endif
  if(nb_laser >1)then
   do ic=2,nb_laser
-   lp_in(ic)=lp_in(ic-1)-lp_delay
-   lp_end(ic)=lp_end(ic-1)-lp_delay
-   xc_loc(ic)=xc_loc(ic-1)-lp_delay
+   lp_in(ic)=lp_in(ic-1)-lp_delay(ic-1)
+   lp_end(ic)=lp_end(ic-1)-lp_delay(ic-1)
+   xc_loc(ic)=xc_loc(ic-1)-lp_delay(ic-1)
    xf_loc(ic)=xc_loc(ic)+t0_lp
    if(lp_end(ic) > xm)call init_lp_inc0_fields(ebf,lp_amp,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,&
                                               lp_ind,i1,i2)
@@ -2660,7 +2707,7 @@
   
 !==================================
  !==================== inject particles
- if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1))
+ if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1)+lpx(7))
  !=================def part distr points
  end subroutine LP_pulse
  !===========================
@@ -2696,7 +2743,7 @@
  endif
 !======================
  if(Part)then
-  call part_distribute(dmodel_id,lp_end(1))
+  call part_distribute(dmodel_id,lp_end(1)+lpx(7))
  endif
  end subroutine CP_pulse
  !-------------------------
@@ -2749,9 +2796,9 @@
  endif
  if(nb_laser >1)then
   do ic=2,nb_laser
-   lp_in(ic)=lp_in(ic-1)-lp_delay
-   lp_end(ic)=lp_end(ic-1)-lp_delay
-   xc_loc(ic)=xc_loc(ic-1)-lp_delay
+   lp_in(ic)=lp_in(ic-1)-lp_delay(ic-1)
+   lp_end(ic)=lp_end(ic-1)-lp_delay(ic-1)
+   xc_loc(ic)=xc_loc(ic-1)-lp_delay(ic-1)
    xf_loc(ic)=xc_loc(ic)+t0_lp
    if(lp_end(ic) > xm)then
     if(G_prof)then
@@ -2805,9 +2852,9 @@
   endif
  endif
  if(Hybrid)then
-  call init_fluid_density_momenta(up,up0,lp_end(1),nfcomp,dmodel_id,i1,i2,j1,nyp,k1,nzp)
+  call init_fluid_density_momenta(up,up0,lp_end(1)+lpx(7),nfcomp,dmodel_id,i1,i2,j1,nyp,k1,nzp)
  endif
- if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1))
+ if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1)+lpx(7))
  !=================def part distr points
  end subroutine set_envelope
  !=========================
