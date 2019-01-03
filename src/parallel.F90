@@ -32,7 +32,7 @@
  include 'mpif.h'
 
 
- integer, parameter :: offset_kind = MPI_OFFSET_KIND
+ integer, parameter :: offset_kind = MPI_OFFSET_KIND,whence = MPI_SEEK_SET
 
  integer :: mpi_err
  integer,allocatable :: loc_npart(:,:,:,:),loc_nbpart(:,:,:,:)

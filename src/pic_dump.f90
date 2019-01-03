@@ -94,7 +94,8 @@
  endif
 !===============================
  kk=loc_grid_size(mype+1)
- grid_size_max=maxval(loc_grid_size(1:npe))
+ call intvec_distribute(kk,loc_grid_size,npe)  
+ grid_size_max=maxval(loc_grid_size,npe)
  lenbuff=lenbuff*grid_size_max+grid2d_size_max
 !===============================
  if(Part)then
@@ -189,7 +190,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
 !==================
   close(lun)
  endif       !end pe0 write on fname
- if(pe0)write(6,*)'end write comm'
+ if(pe0)write(6,*)'End write Common data'
 !===========================
  allocate(send_buff(lenbuff))     !to be used for all mpi_write()
 !=====================
@@ -214,6 +215,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   if(MOD(mype,npe_yloc) > 0)disp_col=sum(lenw(imodz*npe_yloc+1:mype)) 
   disp_col=8*disp_col
   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
+  if(pe0)write(6,*)'End write Particles data'
  endif
 !===============================
  write (fnamel_ebf,'(a9,i2.2)') 'EB-fields',imodz
@@ -233,7 +235,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
 
  disp_col=8*imody*lenw(1+mype)
  call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
- if(pe0)write(6,*)'end write field'
+ if(pe0)write(6,*)'End write Fields'
  !========================
  if(envelope)then
   write (fnamel_env,'(a9,i2.2)') 'ENVfields',imodz
@@ -264,8 +266,9 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   endif
   disp_col=8*imody*lenw(1+mype)
   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
- if(pe0)write(6,*)'end write env'
+ if(pe0)write(6,*)'End write Envelope'
  endif
+ !===============================
  if(Hybrid)then
   write (fnamel_fl,'(a9,i2.2)')'FL-fields',imodz
   fnamel_out='dumpRestart/'//fnamel_fl//'.bin'
@@ -299,7 +302,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   end do
   disp_col=8*imody*lenw(1+mype)
   call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
- if(pe0)write(6,*)'end write fluid'
+ if(pe0)write(6,*)'End write Fluid'
  endif
 !============== write (y,z,wghyz initial part distribution
  if(Part)then
@@ -393,7 +396,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  loc2d_grid_size(mype+1)=n2_loc*n3_loc
  lenbuff=ebf_cp
  if(Envelope)then
-  env1=0
+  env1_cp=0
   env_cp=size(env,4)
   if(Two_color)env1_cp=env_cp
   lenbuff=max(lenbuff,env_cp+env1_cp)
