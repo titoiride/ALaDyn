@@ -766,7 +766,7 @@
    do ic=1,nsp
    nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
   end do
-  !========================================= 
+  !=========================================
  end select
  if(xf0 <0.)then
   do ic=1,nsp
@@ -783,7 +783,7 @@
    if(pe0)write(6,*)'new tot part number',ic,nptx(ic)
   enddo
  endif
-!============================= 
+!=============================
  do ic=1,nsp
   nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
  end do
@@ -823,7 +823,7 @@
  !==================
 !=====================
  !Resets nptx(ic)=last particle coordinate inside the computational box
- !in the initial condition: for t>0  nptx(ic) updated by mowing window 
+ !in the initial condition: for t>0  nptx(ic) updated by mowing window
  do ic=1,nsp
   i1=0
   do j=1,nptx(ic)
@@ -901,7 +901,7 @@
  !==================================
  !            lx(2:3) (Z1-A1+El) central target
  nptx_loc(1:2)=(nxl(2)+nxl(3))*np_per_xc(1:2)
- !            lx(1) (Z1-A1-El) uniform with np1 density pre-plasma 
+ !            lx(1) (Z1-A1-El) uniform with np1 density pre-plasma
  nptx_loc(3:4)=nxl(1)*np_per_xc(3:4)
  !            lx(5) (Z2-A2+El) ) uniform with np2 density coating
  nptx_loc(5:6)=nxl(5)*np_per_xc(5:6)
@@ -1175,13 +1175,13 @@
  ! nsp=1-4 ordering: electrons+ Z1 ions + Z2 ions +Z3 ions
  !Weights for multilayer multisp targets
      ! first layer: electrons and Z2 (protons) ions
- wgh_sp(3)=1./real(mp_per_cell(3),dp)                   
+ wgh_sp(3)=1./real(mp_per_cell(3),dp)
  wgh_sp(4)=1./(real(ion_min(2),dp)*real(mp_per_cell(4),dp))
      ! central layer: electrons and Z1 ions
  wgh_sp(1)= j0_norm
  wgh_sp(2)= wgh_ion        !ion spec 1 (ionizable)
      ! coiating layer: electrons and Z3 (H+)
- wgh_sp(5)=1./real(mp_per_cell(5),dp)                   
+ wgh_sp(5)=1./real(mp_per_cell(5),dp)
  wgh_sp(6)=1./(real(ion_min(2),dp)*real(mp_per_cell(6),dp))
  !================================================
  !x distribution
@@ -1235,7 +1235,7 @@
   end do
  end do
  !================================
- ! WARNING : electrons and Z1 ions have the same weight 
+ ! WARNING : electrons and Z1 ions have the same weight
  ! if mp_per_cell(1)=Z1*mp_per_cell(2)
  !=================================
  xfsh=xfsh+lpx(3)+lpx(2)
@@ -1414,7 +1414,7 @@
  !============ nptx(nsp)  distribution
  nptx(1)=nptx_loc(1)+nptx_loc(4)+nptx_loc(6)  !electrons
  nptx(2)=nptx_loc(2)                          !Z1-A1 species
- nptx(3)=nptx_loc(3)                          !Z2-A2 species 
+ nptx(3)=nptx_loc(3)                          !Z2-A2 species
  nptx(4)=nptx_loc(5)+nptx_loc(7)              !Z3-A3  species in nxl(1) and nxl(5) layer
  nptx_max=maxval(nptx_loc(1:7))
  !=======================
@@ -2324,7 +2324,7 @@
   !lpx(4) second plateau density np2 and to final downramp lpx(5)
   !n_0=n_over_nc can be an average, or n0_=n1_over_nc or n0_=n2_over_nc
   !Multispecies implementation
-  ! target in models id=1 and id=2 contain (implicitely) an ion species id_sp=1 
+  ! target in models id=1 and id=2 contain (implicitely) an ion species id_sp=1
   !as a neutralizing background. If ionization is on, nsp=2 and ionizing species
   !is loaded and activated for ionization.
   !====================================
@@ -2332,7 +2332,7 @@
   !as a neutralizing background:
   ! layer(1) + layer(2) only electrons and H+ with ne=n0=n_over_nc
   ! layer(3) is a plateau with an added dopant (A1,Z1) with density
-  ! np1=n1_over_n/n0 (few %) 
+  ! np1=n1_over_n/n0 (few %)
   ! layer(4)+layer(5) as layer(1)+layer(2)
   !----------
  else
@@ -2429,7 +2429,6 @@
  endif
  !=============================
  allocate(fluid_x_profile(nxf))
- allocate(fluid_yz_profile(j2,k2))
  !====================
  peak_fluid_density=1.-ratio_mpfluid
  fluid_x_profile(:)=0.0
@@ -2557,7 +2556,7 @@
      write(6,*)'dmodel_id =3 not activated for one-species fluid scheme'
     endif
    return
-  !initial plateau, cos^2 bump, central plateau and exit ramp. 
+  !initial plateau, cos^2 bump, central plateau and exit ramp.
   !See model_id=4 for pic case
   case(4)
     !================ cos^2 upramp with peak np2/n0 =================
@@ -2601,7 +2600,7 @@
         cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
       end do
     end if
-    !========================================= 
+    !=========================================
   end select
   if(xf0 < 0.0)then
    i1_targ=nint(dx_inv*abs(xf0))
@@ -2636,7 +2635,7 @@
  integer,intent(in) :: lp_mod
  integer :: ic,i1,i2,j1,j2,k1,k2,lp_ind
  real(dp) :: angle,shx_lp,sigm,eps,xm,tt,tau,tau1
- 
+
 
  !===========================
  ! field grid index defined on set_pgrid
@@ -2697,14 +2696,14 @@
  if(Two_color)then
   xc1_lp=xc_loc(nb_laser)-lp_offset
   xf1=xc1_lp+t1_lp
-  
+
   lp_ionz_in=xc1_lp-tau1
   lp_ionz_end=xc1_lp+tau1
   call init_lp_inc0_fields(ebf,lp1_amp,tt,t1_lp,w1_x,w1_y,xf1,om1,&
                                               lp_ind,i1,i2)
   if(pe0)write(6,'(a30,e11.4)')'two-color activated at xc1_lp=',xc1_lp
- endif 
-  
+ endif
+
 !==================================
  !==================== inject particles
  if(ny_targ>0)call part_distribute(dmodel_id,lp_end(1)+lpx(7))
@@ -2816,7 +2815,7 @@
   env1(:,:,:,:)=0.0
   xc1_lp=xc_loc(nb_laser)-lp_offset
   xf1=xc1_lp+t1_lp
-   
+
   lp_ionz_in=xc1_lp-tau1
   lp_ionz_end=xc1_lp+tau1
   if(lp_ionz_end > xm)then
@@ -2827,7 +2826,7 @@
     call init_envelope_field(&
               env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
    endif
-  endif 
+  endif
  endif
  !=======================
  !==========================
@@ -2981,7 +2980,7 @@
  end subroutine beam_data
  !===================
  subroutine MPI_beam_distribute(ndm)
- 
+
  integer,intent(in) :: ndm
 
  integer :: i,ii,i1,j
@@ -3226,7 +3225,7 @@
  if(ndim==3)call FFT_Psolv(jc,gam2,ompe,nx,nx_loc,ny,ny_loc,nz,nz_loc,&
                 i1,i2b,j1,nyp,k1,nzp,ft_mod,ft_sym)
  !Solves Laplacian[pot]=ompe*rho
- !Beam potential in jc(1) 
+ !Beam potential in jc(1)
  !===================
  !====================
  call fill_ebfield_yzxbdsdata(jc,i1,i2b,j1,nyp,k1,nzp,1,2,1,1)

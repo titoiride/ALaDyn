@@ -2172,7 +2172,7 @@
  eavg(5,nst)=dvol*ekm(4)    !Action
 !===============
  i0_lp=i1+nint(dx_inv*ekm(1))
- ekt(1:2)=0.0  
+ ekt(1:2)=0.0
  do iz=k1,nzp
   zz=0.0
   if(k1 >2 )then
@@ -2233,12 +2233,12 @@
   if(ekm(2)> 0.0)then
    ekm(1)=ekm(1)/ekm(2)    !Centroid
   endif
-  eavg1(2,nst)=ekm(1) 
+  eavg1(2,nst)=ekm(1)
   eavg1(4,nst)=field_energy*dgvol*ekm(3)   !Energy
   eavg1(5,nst)=dvol*ekm(4)    !Action
   !===============
   i0_lp=i1+nint(dx_inv*ekm(1))
-  ekt(1:2)=0.0  
+  ekt(1:2)=0.0
   do iz=k1,nzp
    zz=0.0
    if(k1 >2 )then
@@ -2429,9 +2429,9 @@
    end do
   end do
  endif
- 
+
  if(Ionization)call enb_ionz(nst,tnow,gam_min)      !select ioniz.electrons with gamma > gam_min
- 
+
  if(High_gamma)call enb_hgam(nst,tnow,gam_min)
 
 !   END PARTICLE SECTION

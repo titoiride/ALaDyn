@@ -48,10 +48,10 @@
  !==============
  ! ns =nsp for active ionization
  !======================
- !extended grid [1:n1+3]  interior [ihx,n1]  
+ !extended grid [1:n1+3]  interior [ihx,n1]
  !overlapping grid [n1-1,n1+ihx]=> 1,ihx+2  [1,2] <= [n1-1,n1],[ihx,ihx+2]=>[n1+1,n1+3]
- 
- n1p=n1+ihx          
+
+ n1p=n1+ihx
  n2p=n2+ihx
  n3p=n3
  ng0=1+(n1-2)*(n2-2)
@@ -165,10 +165,12 @@
  allocate(up(n1p,n2p,n3p,fcomp),STAT=AllocStatus)
  allocate(up0(n1p,n2p,n3p,fcomp),STAT=AllocStatus)
  allocate(flux(n1p,n2p,n3p,flcomp),STAT=AllocStatus)
+ allocate(fluid_yz_profile(n2p,n3p),STAT=AllocStatus)
  up=0.0
  flux=0.0
  up0=0.0
- fsize=fsize+ng*(2*fcomp+flcomp)
+ fluid_yz_profile=0.0
+ fsize=fsize+ng*(2*fcomp+flcomp) +n2p*n3p
  if(lp >2)then
   allocate(up1(n1p,n2p,n3p,fcomp),STAT=AllocStatus)
   up1=0.0

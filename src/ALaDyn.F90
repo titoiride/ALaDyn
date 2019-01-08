@@ -674,7 +674,7 @@
  end select
 !===================
   if(Pe0)then
-   write(6,*)'time step resetting:' 
+   write(6,*)'time step resetting:'
    write(6,*)'  new ',dt_loc,'  old ',dt
    write(6,*)'tot iterations ',iter_max
    write(6,*)'tot time ',iter_max*dt_loc
