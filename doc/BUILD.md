@@ -122,6 +122,8 @@ PS Code>              cd ALaDyn
 PS Code\ALaDyn>       cp $env:WORKSPACE\vcpkg\installed\x64-windows\bin\fftw3.dll .\bin\
 ```
 
+Note: in case you need to re-download a compatible MS-MPI runtime, please use this link [MS-MPI Redistributable 2012 R2 v4.2.4400.0](https://download.microsoft.com/download/B/C/8/BC826318-B57E-490D-82C1-06C99F52C608/MSMPISetup.exe); in case you need to re-download a compatible MS-MPI Client Utilities, please use this link [MS-MPI CU 2012 R2 v4.2.4400.0](https://download.microsoft.com/download/7/A/3/7A3BA65C-669D-4F2F-A295-6A16AA730B59/HpcClient_x64.Msi); in case you need to re-download a compatible MS-MPI SDK, please use this link [MS-MPI SDK 2012 R2 v4.2.4400.0](https://download.microsoft.com/download/3/F/3/3F3BE6EA-EB22-4445-9A72-D1A642256217/sdk_x64.msi)
+
 #### Upgrade software
 
 1) To update software installed with Chocolatey, open a Powershell with Administrator privileges and type

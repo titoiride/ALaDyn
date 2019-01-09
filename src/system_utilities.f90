@@ -27,17 +27,22 @@
 
  subroutine create_timestep_folder(iout)
  integer, intent(in) :: iout
- character(4) :: folderName
+ character(5) :: folderName
 
  write (folderName,'(i4.4)') iout
+ folderName=TRIM(ADJUSTL(folderName))//char(0)
  if(pe0) call create_folder(folderName)
 
  end subroutine create_timestep_folder
 
 
  subroutine create_initial_folders
- if(pe0) call create_folder("dumpRestart")
- if(pe0) call create_folder("diagnostics")
+ character(12) :: folderDumpRestart
+ character(12) :: folderDiagnostics
+ folderDumpRestart="dumpRestart"//char(0)
+ folderDiagnostics="diagnostics"//char(0)
+ if(pe0) call create_folder(folderDumpRestart)
+ if(pe0) call create_folder(folderDiagnostics)
  end subroutine create_initial_folders
 
 
