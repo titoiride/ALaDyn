@@ -63,22 +63,21 @@ PS \>                 cinst -y git cmake powershell javaruntime
 ```
 
 5) Restart the PC if required by chocolatey after the latest step
-6) Install PGI 18.10 from the [official website](https://www.pgroup.com/products/community.htm) (the community edition is enough and is free; NOTE: install included MS-MPI, but avoid JRE and Cygwin)
-7) Activate license for PGI 18.10 Community Edition (rename the file `%PROGRAMFILES%\PGI\license.dat-COMMUNITY-18.10` to `%PROGRAMFILES%\PGI\license.dat`) if necessary, otherwise enable a Professional License if available
-8) Define a work folder, which we will call `WORKSPACE` in this tutorial: this could be a "Code" folder in our home, a "cpp" folder on our desktop, whatever you want. Create it if you don't already have, using your favourite method (mkdir in Powershell, or from the graphical interface in explorer). We will now define an environment variable to tell the system where our folder is. Please note down its full path. Open a Powershell (as a standard user) and type
+6) Install PGI 18.10 from the [official website](https://www.pgroup.com/products/community.htm) (the community edition is enough and is free; NOTE: install included MS-MPI, but avoid JRE and Cygwin). Note that from some time it was necessary to activate license for PGI 18.10 Community Edition (rename the file `%PROGRAMFILES%\PGI\license.dat-COMMUNITY-18.10` to `%PROGRAMFILES%\PGI\license.dat`)
+7) Define a work folder, which we will call `WORKSPACE` in this tutorial: this could be a "Code" folder in our home, a "cpp" folder on our desktop, whatever you want. Create it if you don't already have, using your favourite method (mkdir in Powershell, or from the graphical interface in explorer). We will now define an environment variable to tell the system where our folder is. Please note down its full path. Open a Powershell (as a standard user) and type
 
 ```PowerShell
 PS \>                 rundll32 sysdm.cpl,EditEnvironmentVariables
 ```
 
-9) In the upper part of the window that pops-up, we have to create a new environment variable, with name `WORKSPACE` and value the full path noted down before.
+8) In the upper part of the window that pops-up, we have to create a new environment variable, with name `WORKSPACE` and value the full path noted down before.
 If it not already in the `PATH` (this is possible only if you did it before), we also need to modify the "Path" variable adding the following string (on Windows 10 you need to add a new line to insert it, on Windows 7/8 it is necessary to append it using a `;` as a separator between other records):
 
 ```cmd
                       %PROGRAMFILES%\CMake\bin
 ```
 
-10) If `vcpkg` is not installed, please follow the next procedure, otherwise please jump to #12
+9) If `vcpkg` is not installed, please follow the next procedure, otherwise please jump to #11
 
 ```PowerShell
 PS \>                 cd $env:WORKSPACE
@@ -87,7 +86,7 @@ PS Code>              cd vcpkg
 PS Code\vcpkg>        .\bootstrap-vcpkg.bat
 ```
 
-11) Open a Powershell with Administrator privileges and type
+10) Open a Powershell with Administrator privileges and type
 
 ```PowerShell
 PS \>                 cd $env:WORKSPACE
@@ -95,7 +94,7 @@ PS Code>              cd vcpkg
 PS Code\vcpkg>        .\vcpkg integrate install
 ```
 
-12) Open a Powershell (as a standard user) and type (the last command requires a confirmation and is used to clean up unnecessary files). Note: do NOT install msmpi from vcpkg because it will be preferred from the one included in PGI and it is incompatible with PGI compiler
+11) Open a Powershell (as a standard user) and type (the last command requires a confirmation and is used to clean up unnecessary files). Note: do NOT install msmpi from vcpkg because it will be preferred from the one included in PGI and it is incompatible with PGI compiler
 
 ```PowerShell
 PS \>                 cd $env:WORKSPACE
@@ -106,7 +105,7 @@ PS Code\vcpkg>        cd $env:WORKSPACE
 PS Code>              git clone https://github.com/ALaDyn/ALaDyn
 ```
 
-13) Open a Powershell and build `ALaDyn` using the `scripts\build\cmake.win.ps1` script
+12) Open a Powershell and build `ALaDyn` using the `scripts\build\cmake.win.ps1` script
 
 ```PowerShell
 PS \>                 cd $env:WORKSPACE
@@ -114,7 +113,7 @@ PS Code>              cd ALaDyn
 PS Code\ALaDyn>       .\scripts\build\cmake.win.ps1
 ```
 
-14) You may have to manually copy the `fftw3.dll` from the vcpkg folder to the install folder
+13) You may have to manually copy the `fftw3.dll` from the vcpkg folder to the install folder
 
 ```PowerShell
 PS \>                 cd $env:WORKSPACE

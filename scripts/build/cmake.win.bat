@@ -12,7 +12,7 @@ if exist "%PROGRAMFILES(x86)%\Microsoft Visual Studio\2017\Professional\VC\Auxil
 
 set PGI=%PROGRAMFILES%\PGI
 set PATH=%PROGRAMFILES%\PGI\flexlm;%PATH%
-set PATH=%PGI%\win64\18.10\bin;%PATH%
+set PATH=%PROGRAMFILES%\PGI\win64\18.10\bin;%PATH%
 set PATH=%PATH%;.
 set FLEXLM_BATCH=1
 echo PGI 18.10 Enabled

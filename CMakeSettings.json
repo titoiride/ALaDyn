@@ -1,0 +1,82 @@
+{
+  "configurations": [
+    {
+      // Native debug build using PGI
+      "environments": [
+        {
+          "PGI": "C:\\Program Files\\PGI",
+          "PATH": "C:\\Program Files\\PGI\\win64\\18.10\\bin;C:\\Program Files\\PGI\\flexlm;${env.PATH};.",
+          "FLEXLM_BATCH": "1"
+        }
+      ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "configurationType": "Debug",
+      "generator": "NMake Makefiles",
+      "inheritEnvironments": [ "msvc_x64" ],
+      "name": "x64-Debug",
+      "variables": [
+        {
+          "name": "CMAKE_TOOLCHAIN_FILE",
+          "value": "${env.WORKSPACE}\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+        },
+        {
+          "name": "VCPKG_TARGET_TRIPLET",
+          "value": "x64-windows"
+        }
+      ]
+    },
+    {
+      // Native release build using PGI
+      "environments": [
+        {
+          "PGI": "C:\\Program Files\\PGI",
+          "PATH": "C:\\Program Files\\PGI\\win64\\18.10\\bin;${env.PROGRAMFILES}\\PGI\\flexlm;${env.PATH};.",
+          "FLEXLM_BATCH": "1"
+        }
+      ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "configurationType": "Release",
+      "generator": "NMake Makefiles",
+      "inheritEnvironments": [ "msvc_x64" ],
+      "name": "x64-Release",
+      "variables": [
+        {
+          "name": "CMAKE_TOOLCHAIN_FILE",
+          "value": "${env.WORKSPACE}\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake"
+        },
+        {
+          "name": "VCPKG_TARGET_TRIPLET",
+          "value": "x64-windows"
+        }
+      ]
+    },
+    {
+      // WSL debug build
+      "name": "WSL-Debug",
+      "generator": "Unix Makefiles",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "configurationType": "Debug",
+      "remoteCMakeListsRoot": "${env.WORKSPACE_WSL}/ALaDyn",
+      "cmakeExecutable": "/usr/bin/cmake",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "remoteBuildRoot": "${env.WORKSPACE_WSL}/ALaDyn/build_wsl",
+      "remoteCopySources": false,
+      "remoteCopyBuildOutput": false,
+      "inheritEnvironments": [ "linux_x64" ]
+    },
+    {
+      // WSL release build
+      "name": "WSL-Release",
+      "generator": "Unix Makefiles",
+      "remoteMachineName": "${defaultRemoteMachineName}",
+      "configurationType": "Release",
+      "remoteCMakeListsRoot": "${env.WORKSPACE_WSL}/ALaDyn",
+      "cmakeExecutable": "/usr/bin/cmake",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "remoteBuildRoot": "${env.WORKSPACE_WSL}/ALaDyn/build_wsl",
+      "remoteCopySources": false,
+      "remoteCopyBuildOutput": false,
+      "inheritEnvironments": [ "linux_x64" ]
+    }
+  ]
+}

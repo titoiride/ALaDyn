@@ -9,26 +9,131 @@ environment:
       COMPILER: cygwin
       CYGWIN_NOWINPATH: yes
       CYGSH: C:\cygwin64\bin\bash -c
+    - platform: PGI1810
+      COMPILER: pgi
+      MSMPI_VERSION: MSMPI2012
+      GENERATOR: "NMake Makefiles"
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+    - platform: PGI1810
+      COMPILER: pgi
+      MSMPI_VERSION: MSMPI9
+      GENERATOR: "NMake Makefiles"
+      VCPKG_DEFAULT_TRIPLET: x64-windows
 
-#init:
-#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+init:
+  #- ps: if($env:COMPILER -eq "pgi") {iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
 
 install:
+  #initial setup
   - if [%COMPILER%]==[cygwin] SET "PATH=C:\cygwin64\bin;C:\cygwin64\usr\bin;%PATH%"
   - if [%COMPILER%]==[cygwin] SET PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-  - git submodule -q update --init --recursive
+  - if [%COMPILER%]==[pgi] cinst cmake
+  - if [%COMPILER%]==[pgi] SET "PATH=C:\Program Files\CMake\bin;%PATH%"
+  - if [%COMPILER%]==[pgi] call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+  - cd %WORKSPACE%
+  #prepare the silent install for PGI
+  - if [%COMPILER%]==[pgi] echo [Application] > setup.iss
+  - if [%COMPILER%]==[pgi] echo Name=PGI Workstation 18.10 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Version=18.10 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Company=The Portland Group >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Lang=0409 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-DlgOrder] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg0={3BD78770-86EB-48BB-8771-84A92FB13503}-SdWelcome-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Count=11 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg1={3BD78770-86EB-48BB-8771-84A92FB13503}-SdLicense2Rtf-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg2={3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg3={3BD78770-86EB-48BB-8771-84A92FB13503}-SdRegisterUser-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg4={3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg5={3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg6={3BD78770-86EB-48BB-8771-84A92FB13503}-SdSelectFolder-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg7={3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg8={3BD78770-86EB-48BB-8771-84A92FB13503}-SdStartCopy-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg9={3BD78770-86EB-48BB-8771-84A92FB13503}-SprintfBox-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg10={3BD78770-86EB-48BB-8771-84A92FB13503}-SdFinish-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdWelcome-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdLicense2Rtf-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Sel-0=0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Sel-1=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdRegisterUser-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szName=none >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szCompany=none >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szDir=C:\Program Files\PGI\ >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szDir=C:\temp >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdSelectFolder-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szFolder=PGI Workstation >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Sel-0=0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Sel-1=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdStartCopy-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SprintfBox-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdFinish-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo bOpt1=0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo bOpt2=0 >> setup.iss
+  #download & install PGI
+  - if [%COMPILER%]==[pgi]  curl --location --referer "http://www.pgroup.com/products/community.htm" "https://www.pgroup.com/support/downloader.php?file=pgi-community-windows-x64" -o pgiws64-1810.exe
+  - if [%COMPILER%]==[pgi] %WORKSPACE%\pgiws64-1810.exe /s /f1"%WORKSPACE%\setup.iss"
+  #wait for installation to complete!
+  #not necessary in latest version, the installer blocks the command prompt until finished
+  #- if [%COMPILER%]==[pgi] echo Waiting 10 minutes
+  #- if [%COMPILER%]==[pgi] ping -n 600 127.0.0.1 > nul
+  #install Community license (installation should be over by now)
+  #not necessary in latest version, the file is already with the proper name
+  #- if [%COMPILER%]==[pgi] copy %PROGRAMFILES%\PGI\license.dat-COMMUNITY-18.10 %PROGRAMFILES%\PGI\license.dat
+  #download & install msmpi
+  - ps: if($env:COMPILER -eq "pgi") { if($env:MSMPI_VERSION -eq "MSMPI2012") { Invoke-WebRequest https://download.microsoft.com/download/B/C/8/BC826318-B57E-490D-82C1-06C99F52C608/MSMPISetup.exe -OutFile $env:WORKSPACE\msmpi.exe } }
+  #- ps: if($env:COMPILER -eq "pgi") { if($env:MSMPI_VERSION -eq "MSMPI2012") { Invoke-WebRequest https://download.microsoft.com/download/7/A/3/7A3BA65C-669D-4F2F-A295-6A16AA730B59/HpcClient_x64.Msi -OutFile $env:WORKSPACE\msmpi_client.exe } }
+  #- ps: if($env:COMPILER -eq "pgi") { if($env:MSMPI_VERSION -eq "MSMPI2012") { Invoke-WebRequest https://download.microsoft.com/download/3/F/3/3F3BE6EA-EB22-4445-9A72-D1A642256217/sdk_x64.msi -OutFile $env:WORKSPACE\msmpi_sdk.exe } }
+  - ps: if($env:COMPILER -eq "pgi") { if($env:MSMPI_VERSION -eq "MSMPI9")    { Invoke-WebRequest https://download.microsoft.com/download/2/E/C/2EC96D7F-687B-4613-80F6-E10F670A2D97/msmpisetup.exe -OutFile $env:WORKSPACE\msmpi.exe } }
+  - if [%COMPILER%]==[pgi] %WORKSPACE%\msmpi.exe -unattend
+  - if [%COMPILER%]==[pgi] if [%MSMPI_VERSION%]==[MSMPI2012] dir "C:\Program Files\Microsoft MPI\"
+  - if [%COMPILER%]==[pgi] if [%MSMPI_VERSION%]==[MSMPI2012] dir "C:\Program Files\Microsoft MPI\Bin"
+  - if [%COMPILER%]==[pgi] if [%MSMPI_VERSION%]==[MSMPI2012] dir "C:\Program Files\Microsoft MPI\Inc"
+  - if [%COMPILER%]==[pgi] if [%MSMPI_VERSION%]==[MSMPI2012] dir "C:\Program Files\Microsoft MPI\Lib"
+  #- if [%COMPILER%]==[pgi] if [%MSMPI_VERSION%]==[MSMPI2012] %WORKSPACE%\msmpi_client.exe -unattend
+  #- if [%COMPILER%]==[pgi] if [%MSMPI_VERSION%]==[MSMPI2012] %WORKSPACE%\msmpi_sdk.exe -unattend
+  #download & install libs for pgi
+  - cd %WORKSPACE%\
+  - if [%COMPILER%]==[pgi] vcpkg integrate install
+  - if [%COMPILER%]==[pgi] vcpkg install fftw3
+  - if [%COMPILER%]==[pgi] if [%MSMPI_VERSION%]==[MSMPI9] vcpkg install msmpi
+  - if [%COMPILER%]==[pgi] dir "C:\Tools\vcpkg\installed\x64-windows\include"
+  #download & install libs for cygwin
   - cd %WORKSPACE%
   - mkdir cygwin-downloads
   - ps: if($env:COMPILER -eq "cygwin") { Invoke-WebRequest https://cygwin.com/setup-x86_64.exe -OutFile $env:WORKSPACE\cygwin-setup.exe }
   - if [%COMPILER%]==[cygwin] %WORKSPACE%\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir %WORKSPACE%\cygwin-downloads --packages libopenmpi-devel,cmake,fftw3,libfftw3-devel,libboost-devel,zlib-devel,gcc-g++,gcc-fortran
-
+  #get ready for build
   - cd %WORKSPACE%\aladyn\
   - mkdir build
   - cd build
+  - if [%COMPILER%]==[pgi]   set PGI=%PROGRAMFILES%\PGI
+  - if [%COMPILER%]==[pgi]   set PATH=%PROGRAMFILES%\PGI\flexlm;%PATH%
+  - if [%COMPILER%]==[pgi]   set PATH=%PROGRAMFILES%\PGI\win64\18.10\bin;%PATH%
+  - if [%COMPILER%]==[pgi]   set PATH=%PATH%;.
+  - if [%COMPILER%]==[pgi]   set FLEXLM_BATCH=1
+  - if [%COMPILER%]==[pgi]   echo PGI 18.10 Enabled
 
 build_script:
-  - if [%COMPILER%]==[cygwin] %CYGSH% 'cmake .. -G "Unix Makefiles"'
-  - if [%COMPILER%]==[cygwin] %CYGSH% 'cmake --build .'
+  - if [%COMPILER%]==[pgi]   if [%MSMPI_VERSION%]==[MSMPI2012] cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=x64-windows" "-DCMAKE_BUILD_TYPE=Release" -DMPI_C_HEADER_DIR="C:/Program Files/Microsoft MPI/Inc" -DMSMPI_BIN="C:/Program Files/Microsoft MPI/Bin" ..
+  - if [%COMPILER%]==[pgi]   if [%MSMPI_VERSION%]==[MSMPI9]    cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=x64-windows" "-DCMAKE_BUILD_TYPE=Release" ..
+  - if [%COMPILER%]==[pgi]   cmake --build . --target install
+  - if [%COMPILER%]==[cygwin] %CYGSH% 'cmake -G "Unix Makefiles" "-DCMAKE_BUILD_TYPE=Debug" ..'
+  - if [%COMPILER%]==[cygwin] %CYGSH% 'cmake --build . --target install'
 
-#on_finish:
-#    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+on_finish:
+  #- ps: if($env:COMPILER -eq "pgi") {$blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))}
