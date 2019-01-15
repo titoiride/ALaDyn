@@ -163,7 +163,7 @@ string(APPEND CMAKE_Fortran_LINK_FLAGS " ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FL
 
 if(APPLE AND USING_PGI_COMPILER)
   string(APPEND CMAKE_CXX_LINK_FLAGS " -read_only_relocs suppress")
-  string(APPEND CMAKE_Fortran_LINK_FLAGS " -read_only_relocs suppress")
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
 include_directories(${OTHER_INCLUDE_DIR} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${FFTW_INCLUDE_DIR} ${MKL_INCLUDE_DIR} ${MKL_FFTW_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
