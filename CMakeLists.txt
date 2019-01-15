@@ -123,14 +123,31 @@ if(FORCE_STATIC_LINK)
 endif()
 
 if(WIN32 AND USING_PGI_COMPILER)
-  find_package(MPI COMPONENTS C REQUIRED)
-  list(APPEND ALaDyn_Fortran_sources ${MPI_INCLUDE_PATH}/mpi.f90)
+  if(FORCE_MSMPI_PATH_R2)
+    set(MPI_INCLUDE_PATH "C:/Program Files/Microsoft MPI/Inc")
+    message(STATUS "Forced MPI_INCLUDE_PATH: ${MPI_INCLUDE_PATH}")
+    set(MPI_LIBRARIES "C:/Program Files/Microsoft MPI/Lib/amd64/msmpi.lib")
+    message(STATUS "Forced MPI_LIBRARIES: ${MPI_LIBRARIES}")
+  elseif(FORCE_MSMPI_PATH_R1)
+    set(MPI_INCLUDE_PATH "C:/Program Files/Microsoft HPC Pack 2012/Inc")
+    message(STATUS "Forced MPI_INCLUDE_PATH: ${MPI_INCLUDE_PATH}")
+    set(MPI_LIBRARIES "C:/Program Files/Microsoft HPC Pack 2012/Lib/amd64/msmpi.lib")
+    message(STATUS "Forced MPI_LIBRARIES: ${MPI_LIBRARIES}")
+  else()
+    find_package(MPI COMPONENTS C REQUIRED)
+  endif()
+  list(GET MPI_INCLUDE_PATH -1 MPI_CUSTOM_PATH)
   add_definitions(-DUSE_MPI_MODULE)
-  include_directories("${MPI_INCLUDE_PATH}/amd64")
-  set(MISSING_MPI_LIBRARY "${MPI_INCLUDE_PATH}/../Lib/amd64/msmpifec.lib")
+  include_directories("${MPI_CUSTOM_PATH}/amd64")
+  list(APPEND ALaDyn_Fortran_sources "${MPI_CUSTOM_PATH}/mpi.f90")
+  set(MISSING_MPI_LIBRARY "${MPI_CUSTOM_PATH}/../Lib/amd64/msmpifec.lib")
   list(APPEND MPI_LIBRARIES ${MISSING_MPI_LIBRARY})
 else()
-  find_package(MPI REQUIRED)
+  find_package(MPI COMPONENTS Fortran REQUIRED)
+endif()
+
+if(UNIX AND USING_PGI_COMPILER AND NOT APPLE)
+  find_package(Numa REQUIRED)
 endif()
 
 if(NOT WIN32)
@@ -155,8 +172,12 @@ string(APPEND CMAKE_CXX_LINK_FLAGS " ${MPI_LINK_FLAGS}")
 string(APPEND CMAKE_Fortran_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
 string(APPEND CMAKE_Fortran_LINK_FLAGS " ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
 
+if(APPLE AND USING_PGI_COMPILER)
+  string(APPEND CMAKE_CXX_LINK_FLAGS " -read_only_relocs suppress")
+  #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 include_directories(${OTHER_INCLUDE_DIR} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${FFTW_INCLUDE_DIR} ${MKL_INCLUDE_DIR} ${MKL_FFTW_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
-link_directories(${OTHER_LINK_DIR})
 
 add_executable(ALaDyn
   ${ALaDyn_Fortran_sources}
@@ -170,12 +191,43 @@ target_link_libraries(ALaDyn
   cpp_folder_tree
   find_last_addr
   enable_gdb_attach
-  ${MPI_Fortran_LIBRARIES}
-  ${MPI_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${MKL_LIBRARIES}
-  ${FFTW_LIBRARY}
 )
+
+if(MPI_Fortran_LIBRARIES)
+  target_link_libraries(ALaDyn
+    ${MPI_Fortran_LIBRARIES}
+  )
+endif()
+
+if(MPI_LIBRARIES)
+  target_link_libraries(ALaDyn
+    ${MPI_LIBRARIES}
+  )
+endif()
+
+if(Boost_LIBRARIES)
+  target_link_libraries(ALaDyn
+    ${Boost_LIBRARIES}
+  )
+endif()
+
+if(MKL_LIBRARIES)
+  target_link_libraries(ALaDyn
+    ${MKL_LIBRARIES}
+  )
+endif()
+
+if(FFTW_LIBRARY)
+  target_link_libraries(ALaDyn
+    ${FFTW_LIBRARY}
+  )
+endif()
+
+if(NUMA_LIBRARY)
+  target_link_libraries(ALaDyn
+    ${NUMA_LIBRARY}
+  )
+endif()
 
 set_target_properties(ALaDyn PROPERTIES LINKER_LANGUAGE Fortran)
 
