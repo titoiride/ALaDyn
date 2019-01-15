@@ -4,7 +4,6 @@ $env:PGI = "${env:PROGRAMFILES}/PGI"
 $env:Path = "${env:PROGRAMFILES}/PGI/flexlm;$env:Path"
 $env:Path = "${env:PROGRAMFILES}/PGI/win64/18.10/bin;$env:Path"
 $env:Path = "${env:Path};."
-$env:VCPKG_ROOT = "${env:WORKSPACE}\vcpkg"
 $env:FLEXLM_BATCH = 1
 Write-Host "PGI 18.10 Enabled"
 
