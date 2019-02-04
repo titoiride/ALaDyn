@@ -95,7 +95,7 @@
 !===============================
  kk=loc_grid_size(mype+1)
  call intvec_distribute(kk,loc_grid_size,npe)  
- grid_size_max=maxval(loc_grid_size,npe)
+ grid_size_max=maxval(loc_grid_size(1:npe))
  lenbuff=lenbuff*grid_size_max+grid2d_size_max
 !===============================
  if(Part)then
@@ -233,7 +233,9 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   end do
  end do
 
- disp_col=8*imody*lenw(1+mype)
+ disp=lenw(1+mype)
+ disp_col=imody*disp
+ disp_col=8*disp_col
  call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
  if(pe0)write(6,*)'End write Fields'
  !========================
@@ -264,7 +266,9 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
     end do
    end do
   endif
-  disp_col=8*imody*lenw(1+mype)
+  disp=lenw(1+mype)
+  disp_col=imody*disp
+  disp_col=8*disp_col
   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
  if(pe0)write(6,*)'End write Envelope'
  endif
@@ -300,7 +304,9 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
     end do
    end do
   end do
-  disp_col=8*imody*lenw(1+mype)
+  disp=lenw(1+mype)
+  disp_col=imody*disp
+  disp_col=8*disp_col
   call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
  if(pe0)write(6,*)'End write Fluid'
  endif
@@ -339,8 +345,10 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
    end do
   call intvec_distribute(kk,lenw,npe)  
   disp=0
-  if(mype >0)disp=8*sum(lenw(1:mype))
+  if(mype >0)disp=sum(lenw(1:mype))
+  disp=8*disp
   call mpi_write_dp(send_buff,lenw(mype+1),disp,25,fname_out)
+ if(pe0)write(6,*)'End write Particles'
  endif
   deallocate(send_buff)
 !====================
@@ -349,7 +357,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   if(pe0)write(6,*)'END TOTAL DUMP WRITE'
  end subroutine dump_data
  !==============================================================
- !==============================================================
+
  subroutine restart(it_loc,tloc)
  integer,intent(out) :: it_loc
  real(dp),intent(out) :: tloc
@@ -398,7 +406,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  if(Envelope)then
   env1_cp=0
   env_cp=size(env,4)
-  if(Two_color)env1_cp=env_cp
+  if(Two_color)env1_cp=size(env1,4)
   lenbuff=max(lenbuff,env_cp+env1_cp)
  endif
  grid2d_size_max=0
@@ -414,6 +422,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  grid_size_max=maxval(loc_grid_size(1:npe))
  lenbuff=lenbuff*grid_size_max+grid2d_size_max
 !===================
+ if(pe0)write(6,*)'Max size of recieve buffer',lenbuff
  lun=10
  if(pe0)then
  open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
@@ -554,6 +563,104 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  allocate(recv_buff(lenbuff))
  recv_buff(:)=0.0
 !============================================
+ if(Hybrid)then
+  write (fnamel_fl,'(a9,i2.2)') 'FL-fields',imodz
+  fnamel_out='dumpRestart/'//fnamel_fl//'.bin'
+  lenw(1:npe)=2*fl_cp*loc_grid_size(1:npe)+loc2d_grid_size(1:npe)
+!==========================
+  disp=lenw(1+mype)
+  disp_col=imody*disp
+  disp_col=8*disp_col
+  call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
+  kk=0
+  do k=1,n3_loc
+   do j=1,n2_loc
+    kk=kk+1
+    fluid_yz_profile(j,k)=recv_buff(kk)
+   end do
+  end do
+  do ic=1,fl_cp
+   do k=1,n3_loc
+    do j=1,n2_loc
+     do i=1,n1_loc
+      kk=kk+1
+      up(i,j,k,ic)=recv_buff(kk)
+     end do
+    end do
+   end do
+  end do
+  do ic=1,fl_cp
+   do k=1,n3_loc
+    do j=1,n2_loc
+     do i=1,n1_loc
+      kk=kk+1
+      up0(i,j,k,ic)=recv_buff(kk)
+     end do
+    end do
+   end do
+  end do
+  if(pe0)write(6,*)'End fluid read'
+ endif
+!================
+ if(envelope)then
+  write (fnamel_env,'(a9,i2.2)') 'ENVfields',imodz
+  fnamel_out='dumpRestart/'//fnamel_env//'.bin'
+  lenw(1:npe)=(env_cp+env1_cp)*loc_grid_size(1:npe)
+!==================
+  disp=lenw(1+mype)
+  disp_col=imody*disp
+  disp_col=8*disp_col
+  call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
+!======================
+  kk=0
+  do ic=1,env_cp
+   do k=1,n3_loc
+    do j=1,n2_loc
+     do i=1,n1_loc
+      kk=kk+1
+      env(i,j,k,ic)=recv_buff(kk)
+     end do
+    end do
+   end do
+  end do
+  if(Two_color)then
+   do ic=1,env1_cp
+    do k=1,n3_loc
+     do j=1,n2_loc
+      do i=1,n1_loc
+       kk=kk+1
+       env1(i,j,k,ic)=recv_buff(kk)
+      end do
+     end do
+    end do
+   end do
+  endif
+  if(pe0)write(6,*)'End envelope read'
+ endif
+  !--------------------- FIELD DUMP READ
+ write (fnamel_ebf,'(a9,i2.2)') 'EB-fields',imodz
+ fnamel_out='dumpRestart/'//fnamel_ebf//'.bin'
+ lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
+!=========================
+ disp=lenw(1+mype)
+ disp_col=imody*disp
+ disp_col=8*disp_col
+
+ call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
+!===========================
+  kk=0
+   do ic=1,ebf_cp
+    do k=1,n3_loc
+     do j=1,n2_loc
+      do i=1,n1_loc
+       kk=kk+1
+       ebf(i,j,k,ic)=recv_buff(kk)
+      end do
+     end do
+    end do
+   end do
+ if(pe0)write(6,*)'End E.M. field read'
+!=========================
  if(Part)then
   write (fnamel_part,'(a9,i2.2)') 'Particles',imodz
   fnamel_out='dumpRestart/'//fnamel_part//'.bin'
@@ -584,96 +691,6 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   end do
  endif
 !=================================
- !--------------------- FIELD DUMP READ
- write (fnamel_ebf,'(a9,i2.2)') 'EB-fields',imodz
- fnamel_out='dumpRestart/'//fnamel_ebf//'.bin'
- lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
-!=========================
- disp_col=8*imody*lenw(1+mype)
- call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
-!===========================
-  kk=0
-   do ic=1,ebf_cp
-    do k=1,n3_loc
-     do j=1,n2_loc
-      do i=1,n1_loc
-       kk=kk+1
-       ebf(i,j,k,ic)=recv_buff(kk)
-      end do
-     end do
-    end do
-   end do
- !========================
- if(Hybrid)then
-  write (fnamel_fl,'(a9,i2.2)') 'FL-fields',imodz
-  fnamel_out='dumpRestart/'//fnamel_fl//'.bin'
-  lenw(1:npe)=2*fl_cp*loc_grid_size(1:npe)+loc2d_grid_size(1:npe)
-!==========================
-  disp_col=8*imody*lenw(1+mype)
-  call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
-!================================
-  kk=0
-  do k=1,n3_loc
-   do j=1,n2_loc
-    kk=kk+1
-    fluid_yz_profile(j,k)=recv_buff(kk)
-   end do
-  end do
-  do ic=1,fl_cp
-   do k=1,n3_loc
-    do j=1,n2_loc
-     do i=1,n1_loc
-      kk=kk+1
-      up(i,j,k,ic)=recv_buff(kk)
-     end do
-    end do
-   end do
-  end do
-  do ic=1,fl_cp
-   do k=1,n3_loc
-    do j=1,n2_loc
-     do i=1,n1_loc
-      kk=kk+1
-      up0(i,j,k,ic)=recv_buff(kk)
-     end do
-    end do
-   end do
-  end do
- endif
-!================
- if(envelope)then
-  write (fnamel_env,'(a9,i2.2)') 'ENVfields',imodz
-  fnamel_out='dumpRestart/'//fnamel_env//'.bin'
-  lenw(1:npe)=(env_cp+env1_cp)*loc_grid_size(1:npe)
-!==================
-  disp_col=8*imody*lenw(1+mype)
-  call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
-!======================
-  kk=0
-  do ic=1,env_cp
-   do k=1,n3_loc
-    do j=1,n2_loc
-     do i=1,n1_loc
-      kk=kk+1
-      env(i,j,k,ic)=recv_buff(kk)
-     end do
-    end do
-   end do
-  end do
-  if(Two_color)then
-   do ic=1,env1_cp
-    do k=1,n3_loc
-     do j=1,n2_loc
-      do i=1,n1_loc
-       kk=kk+1
-       env1(i,j,k,ic)=recv_buff(kk)
-      end do
-     end do
-    end do
-   end do
-  endif
- endif
-!=========================
  if(Part)then
   fname_out='dumpRestart/'//fname_yz//'.bin'
    kk=0
