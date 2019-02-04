@@ -2008,8 +2008,8 @@
  apy=-dy_inv*dt_lp
  apz=-dz_inv*dt_lp
  ch=dt_lp*unit_charge(1)
- fdim=curr_ndim+1
- fldim=2*curr_ndim+1
+ fdim=curr_ndim+1              ! three or four components
+ fldim=2*curr_ndim+1           !(five or seven components)
  abf_0=-0.5
  abf_1=1.5
  !================== Enter
@@ -2050,13 +2050,13 @@
   do ic=1,fdim
    do k=k1,k2
     do j=j1,j2
-     do i=i1,i2
+     do i=i1+1,i2
       u(i,j,k,ic)=u(i,j,k,ic)+abf_0*u0(i,j,k,ic)
-      u0(i,j,k,ic)=0.0
      end do
     end do
    end do
   end do
+  u0(:,:,:,:)=0.0
   call nc_fluid_density_momenta(flx,u0,i1,i2,j1,j2,k1,k2,fdim,apx,apy,apz)
   call add_lorentz_force   !in u_0 is ftored Dt*(F_adv(u)+ F_{Lorentz}) for next timestep
   do ic=1,fdim
@@ -2244,46 +2244,45 @@
    call init_random_seed(mype)
   endif
   id_ch=nd2+1
-  call pfields_prepare(env,i1,i2,j1,nyf,k1,nzf,2,2,2)
-  if(Two_color)then
-   call pfields_prepare(env1,i1,i2,j1,nyf,k1,nzf,2,2,2)
+  if(Enable_ionization(1))then
+   call pfields_prepare(env,i1,i2,j1,nyf,k1,nzf,2,2,2)
    do ic=2,nsp_ionz
     np=loc_npart(imody,imodz,imodx,ic)
     if(np>0)then
-     call set_ion_env_field(env1,spec(ic),ebfp,np,ndim,xm,ym,zm,om1)
+     call set_ion_env_field(env,spec(ic),ebfp,np,ndim,xm,ym,zm,oml)
      loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
-     call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
-!================
-     call set_ion_env_field(env,spec(ic),ebfp,np,ndim,xm,ym,zm,oml)
-     loc_ef2_ion(2)=maxval(ebfp(1:np,id_ch))
-     loc_ef2_ion(2)=sqrt(loc_ef2_ion(2))
-     ef2_ion=max(loc_ef2_ion(1),loc_ef2_ion(2))
-     call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
+     ef2_ion=loc_ef2_ion(1)
      if(ef2_ion > lp_max)then
+      write(6,'(a22,i6,2E11.4)')'reset high ionz field ',mype,ef2_ion,lp_max
       lp_max=1.1*ef2_ion
       call set_field_ioniz_wfunction(&
-       ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
+      ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
      endif
+     call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
     endif
    end do
-  else
-   do ic=2,nsp_ionz
-    np=loc_npart(imody,imodz,imodx,ic)
-    if(np>0)then
-     call set_ion_env_field(env,spec(ic),ebfp,np,ndim,xm,ym,zm,oml)
+  endif
+  if(Two_color)then
+   if(Enable_ionization(2))then
+    call pfields_prepare(env1,i1,i2,j1,nyf,k1,nzf,2,2,2)
+    do ic=2,nsp_ionz
+     np=loc_npart(imody,imodz,imodx,ic)
+     if(np>0)then
+      call set_ion_env_field(env1,spec(ic),ebfp,np,ndim,xm,ym,zm,om1)
       loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
       loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
-      ef2_ion=loc_ef2_ion(1)
+!=================
       if(ef2_ion > lp_max)then
        write(6,'(a22,i6,2E11.4)')'reset high ionz field ',mype,ef2_ion,lp_max
        lp_max=1.1*ef2_ion
        call set_field_ioniz_wfunction(&
        ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
       endif
-     call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
-    endif
-   end do
+      call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
+     endif
+    end do
+   endif
   endif
  endif
  ic=1

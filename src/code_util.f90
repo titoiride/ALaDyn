@@ -52,5 +52,6 @@
  logical :: L_disable_rng_seed
  logical :: L_intdiagnostics_background
  logical :: L_env_modulus
+ logical :: Enable_ionization(2)
 
  end module code_util
