@@ -261,7 +261,7 @@
  ii=np_el
   temp(1)=t0_pl(1)
   temp(2:3)=temp(1)
-  if(ii==0)write(6,'(a33,2I6)')'warning, no electrons before ionz',imody,imodz
+  !if(ii==0)write(6,'(a33,2I6)')'warning, no electrons before ionz',imody,imodz
   select case(curr_ndim)
   case(2)
   do n=1,np
@@ -358,8 +358,14 @@
      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
      call gasdev(u)
      spec(1)%part(ii,4)=temp(1)*u
-     call gasdev(u)
-     spec(1)%part(ii,6)=temp(3)*u
+     if(Symmetrization_pulse)then
+      call random_number(u)
+      a_symm=sp_field(n,1)*sqrt(2.0)
+      spec(1)%part(ii,6)=sin(2.*pi*u)*a_symm
+     else
+      call gasdev(u)
+      spec(1)%part(ii,6)=temp(3)*u
+     endif
      call gasdev(u)
      spec(1)%part(ii,5)=sp_field(n,1)*u
      spec(1)%part(ii,id_ch)=wgh_cmp

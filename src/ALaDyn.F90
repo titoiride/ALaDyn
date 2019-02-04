@@ -1106,15 +1106,22 @@
    endif
  write(60,*)'-----------------------------------'
    if(Ionization)then
-  write(60,*)' Field ionization model:'
-  if(ionz_model==1)write(60,*)' W_DC ADK  '
-  if(ionz_model==2)write(60,*)' W_AC= <W_DC>  ADK '
-  if(ionz_model==4)write(60,*)' W_AC ADK +BSI '
-  if(Beam)write(60,'(a24,e11.4,a6)')'  Reference max E_field ',eb_max,'(TV/m)'
-  if(Lp_active)write(60,'(a24,e11.4,a6)')'  Reference max E_field ',lp_max,'(TV/m)'
+    write(60,*)' Field ionization model:'
+    if(ionz_model==1)write(60,*)' W_DC ADK  '
+    if(ionz_model==2)write(60,*)' W_AC= <W_DC>  ADK '
+    if(ionz_model==4)write(60,*)' W_AC ADK +BSI '
+    if(Beam)write(60,'(a24,e11.4,a6)')'  Reference max E_field ',eb_max,'(TV/m)'
+    if(Lp_active)write(60,'(a24,e11.4,a6)')'  Reference max E_field ',lp_max,'(TV/m)'
     do i=1,nsp_ionz-1
-   write(60,*)' Ionization active on ion species:',species_name(atomic_number(i))
+      write(60,*)' Ionization active on ion species:',species_name(atomic_number(i))
     end do
+    if(Symmetrization_pulse)then
+     write(60,*)' A symmetrization pulse is implied when ionizing'
+     write(60,*)' The sym. formula is sin(2*pi*u)*a_symm'
+     if(a_symm>zero_dp)then
+      write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm',a_symm
+     endif
+    endif
    end if
  write(60,*)'**********TARGET PLASMA PARAMETERS***********'
   if(Part)then
