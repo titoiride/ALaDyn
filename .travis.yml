@@ -536,6 +536,9 @@ matrix:
     - name: macOS - PGI 18.10
     - name: macOS - PGI 18.10 - mpich
     - name: macOS - PGI 18.10 - PGI mpich
+    - name: macOS - gcc@5 - mpich
+    - name: macOS - native gcc (llvm backend) - mpich
+    - name: macOS - native clang - mpich
 
 
 before_install:
