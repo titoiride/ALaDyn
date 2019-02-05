@@ -990,8 +990,8 @@
    write(60,'(a6,e11.4,a6,e11.4,a6,e11.4)')'  Dx =',dx,'  Dy =',dy,'  Dz =',dz
   endif
  if(Stretch)then
-  write(60,*)'  y=tang(a*xi) stretched layers on the transverse coordinates'
-  write(60,'(a20,i6,2e11.4)')'  stretched grid size=',ny_stretch,y(ny_stretch+1)
+  write(60,*)' y=tan(a*xi) stretched layers on the transverse coordinates'
+  write(60,'(a22,i6,a2,2e11.4)')'  stretched grid size=',ny_stretch,'  ',y(ny_stretch+1)
  endif
  write(60,*)'***************PHYSICAL MODEL**********************'
  if(model_id <4)then
@@ -1057,6 +1057,7 @@
   write(60,'(a9,e13.3,a4)')'  Power = ',lp_pow,'(TW)'
   write(60,'(a10,e13.3,a3)')'  Energy= ',lp_energy,'(J)'
   write(60,'(a30,i4)')'  Number of main laser pulses= ',nb_laser
+  if(.not.Enable_ionization(1))write(60,*)' WARNING: Ionization disabled for the main pulse'
   if(nb_laser >1)then
    do i=2,nb_laser
     write(60,'(a23,i2,a5,i2,a10,f5.2)')'  Distance between the ',i-1,' and ',i,'&
@@ -1076,6 +1077,7 @@
    write(60,'(a29,e11.4)')'  Diffraction length Z_Rayl= ',ZR1
    write(60,'(a25,f5.2)')'  Strength parameter a0= ',a1
    write(60,'(a33,f5.2,a6)')'  Max transverse field at focus= ',E0*a1*om1,'(TV/m)'
+   if(.not.Enable_ionization(2))write(60,*)' WARNING: Ionization disabled for the injection pulse'
   endif
  endif
  if(Hybrid)then
