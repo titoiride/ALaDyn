@@ -554,37 +554,34 @@
  !============================
  end subroutine curr_accumulate
  !==============================
- subroutine curr_mpi_collect(curr,i1,n1p,j1,n2p,k1,n3p)
+ subroutine curr_mpi_collect(curr,i1,n1p,j1,n2p,k1,n3p,njc)
 
  real(dp),intent(inout) :: curr(:,:,:,:)
- integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p
+ integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,njc
  integer :: i,j,k,jj,kk
  real(dp) :: dery,derhy,derz,derhz
- !============sums daata on ghost points
+ !============sums data on ghost points
  if(prl)then
-  call fill_curr_yzxbdsdata(curr,i1,n1p,j1,n2p,k1,n3p,nj_dim)
+  call fill_curr_yzxbdsdata(curr,i1,n1p,j1,n2p,k1,n3p,njc)
  endif
- call jc_xyzbd(curr,i1,n1p,j1,n2p,k1,n3p,nj_dim)
+ call jc_xyzbd(curr,i1,n1p,j1,n2p,k1,n3p,njc)
  !=================
- if(iform < 2)then   !iform=0=iform=1  use Esisrkepov scheme
+ if(iform <2)then   !iform=0=iform=1  use Esisrkepov scheme
   do i=1,ndim
    curr(i1:n1p,j1:n2p,k1:n3p,i)=djc(i)*curr(i1:n1p,j1:n2p,k1:n3p,i)
   end do
  endif
- if(ndim <2)return
  if(Stretch)then
-  select case(nj_dim)
+  select case(curr_ndim)
   case(2)
    do k=k1,n3p
-    kk=max(k-2,1)
-    derz=loc_zg(kk,3,imodz)
     do j=j1,n2p
      jj=j-2
      dery=loc_yg(jj,3,imody)
      derhy=loc_yg(jj,4,imody)
      do i=i1,n1p
-      curr(i,j,k,1)=dery*derz*curr(i,j,k,1)
-      curr(i,j,k,2)=derhy*derz*curr(i,j,k,2)
+      curr(i,j,k,1)=dery*curr(i,j,k,1)
+      curr(i,j,k,2)=derhy*curr(i,j,k,2)
      end do
     end do
    end do
@@ -1238,7 +1235,7 @@
    endif
   enddo
   !==========================================
-  call curr_mpi_collect(jc,i1,i2,j1,j2,k1,k2)
+  call curr_mpi_collect(jc,i1,i2,j1,j2,k1,k2,curr_ndim)
  endif        !end particle section
  !================ sums and normalize currents
  !=======================
@@ -1487,11 +1484,11 @@
    end do
   end do
  endif
- !=========================
+ !==========================
  contains
- !============= step=1 advances (E,B)^n => (E,B)^{n+1/2} ghost points already set
+ !============== step=1 advances (E,B)^n => (E,B)^{n+1/2} ghost points already set
  subroutine add_rk_lorentz_force
- !================ADDS the LORETZ FORCE collocated on the (i,j,k)node points
+ !=================ADDS the LORETZ FORCE collocated on the (i,j,k)node points
  real(dp) :: qp,qm,qpp,qmm
 
  select case(curr_ndim)
@@ -1641,7 +1638,7 @@
      call ncdef_rk_curr(ebfp,jc,nst,np,ndim,xm,ym,zm)
     endif
    end do
-   call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
+   call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf,curr_ndim)
   endif
   if(Hybrid)then
                                    !ADVANCES fluid variables  and sets currents
@@ -1847,6 +1844,17 @@
  !==================================
  if(Stretch)then
   ic=1
+    if(ndim==2)then
+   k=1
+   do j=j1,n2p
+    jj=j-2
+    dery=loc_yg(jj,3,imody)
+    do i=i1,n1p
+     eden(i,j,k,ic)=dery*eden(i,j,k,ic)
+    end do
+   end do
+   return
+  endif
   do k=k1,n3p
    kk=k-2
    derz=loc_zg(kk,3,imodz)
@@ -2252,7 +2260,7 @@
    do ic=2,nsp_ionz
     np=loc_npart(imody,imodz,imodx,ic)
     if(np>0)then
-     call set_ion_env_field(env,spec(ic),ebfp,np,ndim,xm,ym,zm,oml)
+     call set_ion_env_field(env,spec(ic),ebfp,np,ndim,n_st,xm,ym,zm,oml)
      loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
      loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
      ef2_ion=loc_ef2_ion(1)
@@ -2272,7 +2280,7 @@
     do ic=2,nsp_ionz
      np=loc_npart(imody,imodz,imodx,ic)
      if(np>0)then
-      call set_ion_env_field(env1,spec(ic),ebfp,np,ndim,xm,ym,zm,om1)
+      call set_ion_env_field(env1,spec(ic),ebfp,np,ndim,n_st,xm,ym,zm,om1)
       loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
       loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
 !=================
@@ -2333,7 +2341,7 @@
    ! for the envelope field solver
   endif
   jc(:,:,:,1)=0.0
-  call set_env_density(ebfp,jc,np,curr_ndim,1,xm,ym,zm)
+  call set_env_density(ebfp,jc,np,curr_ndim,1,n_st,xm,ym,zm)
   call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
   ! in jc(1)the particle contribution of the source term <q^2*n/gamp>
   ! to be added to the fluid contribution if (Hybrid)
@@ -2364,7 +2372,7 @@
   flux(i1:i2,j1:nyf,k1:nzf,curr_ndim+2)=jc(i1:i2,j1:nyf,k1:nzf,1)
   !stores in flux() fdim+1 last component env F data
  endif
-  call set_env_grad_interp(jc,spec(ic),ebfp,np,curr_ndim,xm,ym,zm)
+  call set_env_grad_interp(jc,spec(ic),ebfp,np,curr_ndim,n_st,xm,ym,zm)
   !=============================
   ! Exit p-interpolated field variables
   ! at time level t^{n+1/2} and positions at time t^n
@@ -2382,7 +2390,7 @@
   call curr_accumulate(spec(ic),ebfp,jc,1,np,iform,n_st,xm,ym,zm)
  ! In curr(1:3) exit Dt*J()^{n+1/2)
  !===========================
-  call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
+  call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf,curr_ndim)
   !adds contributions in overlapped cells of MPI domains
  !==================================
  if(Hybrid)then
@@ -2539,7 +2547,7 @@
    !====================
    ! stores in ebfp(1:3)=(x,y,z)^{k-1}; in ebf(4:6)=dt_rk*q*wgh*(v_x,v_y,v_z)^{k-1}; in ebfp(7)=wgh*q/gamp
    jc(:,:,:,1)=0.0    !enters ebf(7) = wgh/gam_p at t^{k-1}
-   call set_env_density(ebfp,jc,np,curr_ndim,1,xm,ym,zm)
+   call set_env_density(ebfp,jc,np,curr_ndim,1,nst,xm,ym,zm)
   endif
   call env_den_collect(jc,i1,i2,j1,nyf,k1,nzf)
   call advance_env_rk4_field(&
@@ -2550,7 +2558,7 @@
    ! in ebfp(1:6)[x,v*dt_k] at time (lps-1)
    call ncdef_rk_curr(ebfp,jc,nst,np,ndim,xm,ym,zm)
   endif
-  call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf)
+  call curr_mpi_collect(jc,i1,i2,j1,nyf,k1,nzf,curr_ndim)
   call update_rk4_fields(ebf,ebf0,ebf1,jc,&
    vbeam,dt_loc,i1,i2,j1,nyf,k1,nzf,lps)
  end do
@@ -2737,7 +2745,7 @@
    call curr_accumulate(spec(ic),ebfp,jc,1,np,iform,n_st,xm,ym,zm)
    endif
   end do
-  call curr_mpi_collect(jc,i1,i2,j1,j2,k1,k2)
+  call curr_mpi_collect(jc,i1,i2,j1,j2,k1,k2,curr_ndim)
 ! EXIT current density jc(1:3) due to plasma particles density and velocity at
 ! time t^{n+1/2}
 !======================================================
@@ -2747,7 +2755,7 @@
   ! in the flux() array exit: (px,py,pz,den,vx,vy,vz) at t^n
 !============================
   call update_adam_bash_fluid_variables(&
-                        up,up0,flux,ebf0,dt_loc,i1,i2,j1,j2,k1,k2,Ltz,initial_time)
+  up,up0,flux,ebf0,dt_loc,i1,i2,j1,j2,k1,k2,Ltz,initial_time)
    ! In up exit updated momenta-density variables u^{n+1}
    ! in  u0^{n} stores Dt*F(u^n), in flux(1:fdim)=(P,den)^{n+1/2}
    ! In flux(1:curr_ndim+1) are stored fluid (P,den) at t^{n+1/2}
@@ -2789,7 +2797,7 @@
 
   endif
  enddo
- call curr_mpi_collect(jb,i1,i2,j1,j2,k1,k2)
+ call curr_mpi_collect(jb,i1,i2,j1,j2,k1,k2,curr_ndim)
 ! EXIT current density jb(1:3) due to bunch particles density and velocity at
 ! time t^{n+1/2}
 ! STEP3  advances fields

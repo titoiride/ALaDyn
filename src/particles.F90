@@ -2664,12 +2664,12 @@
  !================================
  end subroutine set_part3d_hcell_acc
  !=================================
- subroutine set_env_grad_interp(av,sp_loc,pt,np,ndm,xmn,ymn,zmn)
+ subroutine set_env_grad_interp(av,sp_loc,pt,np,ndm,nst_ind,xmn,ymn,zmn)
 
  type(species),intent(in) :: sp_loc
  real(dp),intent(in) :: av(:,:,:,:)
  real(dp),intent(inout) :: pt(:,:)
- integer,intent(in) :: np,ndm
+ integer,intent(in) :: np,ndm,nst_ind
  real(dp),intent(in) :: xmn,ymn,zmn
 
  real(dp) :: xx,sx,sx2,dvol,dvol1,dxe,dye,dze
@@ -2700,10 +2700,19 @@
   dye=dy_inv
   k2=1
   do n=1,np
+   pt(n,1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
+   pt(n,2)=sp_loc%part(n,2) !
+  end do
+  if(nst_ind==0)then
+   do n=1,np
+    pt(n,2)=dye*(pt(n,2)-ymn) !loc y position
+   end do
+  else
+   call map2dy_part_sind(np,nst_ind,2,ymn,pt)
+  endif
+  do n=1,np
    ap=0.0
-   xp1(1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
-   xp1(2)=dye*(sp_loc%part(n,2)-ymn) !loc y position
-
+   xp1(1:2)=pt(n,1:2)
    xx=shx+xp1(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -2740,16 +2749,15 @@
    ih=ih-1
    jh=jh-1
    !==========================
-   ap=0.0
    do j1=0,2
     j2=j+j1
     dvol=ay1(j1)
     do i1=0,2
      i2=i1+ih
      dvol1=dvol*axh(i1)
-     ap(1)=ap(1)+dvol1*av(i2,j2,k2,2)
+     ap(1)=ap(1)+dvol1*av(i2,j2,k2,2)    !Dx[Phi]
      i2=i1+i
-     ap(3)=ap(3)+ax1(i1)*dvol*av(i2,j2,k2,1)
+     ap(3)=ap(3)+ax1(i1)*dvol*av(i2,j2,k2,1) ![Phi]
     end do
    end do
    do j1=0,2
@@ -2758,7 +2766,7 @@
     do i1=0,2
      i2=i+i1
      dvol1=dvol*ax1(i1)
-     ap(2)=ap(2)+dvol1*av(i2,j2,k2,3)
+     ap(2)=ap(2)+dvol1*av(i2,j2,k2,3)   !Dy[Phi]
     end do
    end do
    !pt(n,1)=dxe*ap(1)    !assigned grad[A^2/2]
@@ -2771,10 +2779,20 @@
   dye=dy_inv
   dze=dz_inv
   do n=1,np
+   pt(n,1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
+   pt(n,2:3)=sp_loc%part(n,2:3)
+  end do
+  if(nst_ind==00)then
+   do n=1,np
+    pt(n,2)=dye*(pt(n,2)-ymn) !loc y position
+    pt(n,3)=dze*(pt(n,3)-zmn) !loc z position
+   end do
+  else
+   call map3d_part_sind(pt,np,nst_ind,2,3,ymn,zmn)
+  endif
+  do n=1,np
    ap=0.0
-   xp1(1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
-   xp1(2)=dye*(sp_loc%part(n,2)-ymn) !loc y position
-   xp1(3)=dze*(sp_loc%part(n,3)-zmn) !loc z position
+   xp1(1:3)=pt(n,1:3)
 
    xx=shx+xp1(1)
    i=int(xx+0.5)
@@ -2868,12 +2886,12 @@
  end select
  end subroutine set_env_grad_interp
 
- subroutine set_env_interp(av,sp_loc,pt,np,ndm,xmn,ymn,zmn)
+ subroutine set_env_interp(av,sp_loc,pt,np,ndm,nst_ind,xmn,ymn,zmn)
 
  type(species),intent(in) :: sp_loc
  real(dp),intent(in) :: av(:,:,:,:)
  real(dp),intent(inout) :: pt(:,:)
- integer,intent(in) :: np,ndm
+ integer,intent(in) :: np,ndm,nst_ind
  real(dp),intent(in) :: xmn,ymn,zmn
 
  real(dp) :: xx,sx,sx2,dvol,dvol1
@@ -2897,9 +2915,18 @@
   dxe=dx_inv
   dye=dy_inv
   do n=1,np
-   ap=zero_dp
-   xp1(1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
-   xp1(2)=dye*(sp_loc%part(n,2)-ymn) !loc y position
+   pt(n,2)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
+  end do
+  if(nst_ind==00)then
+   do n=1,np
+    pt(n,3)=dye*(sp_loc%part(n,2)-ymn) !loc y position
+   end do
+  else
+   call map2dy_part_sind(np,nst_ind,3,ymn,pt)
+  endif
+  do n=1,np
+   ap(1)=0.0
+   xp1(1:2)=pt(n,2:3)
 
    xx=shx+xp1(1)
    i=int(xx+0.5)
@@ -2937,10 +2964,19 @@
   dye=dy_inv
   dze=dz_inv
   do n=1,np
-   ap=zero_dp
-   xp1(1)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
-   xp1(2)=dye*(sp_loc%part(n,2)-ymn) !loc y position
-   xp1(3)=dze*(sp_loc%part(n,3)-zmn) !loc z position
+   pt(n,4)=dxe*(sp_loc%part(n,1)-xmn) !loc x position
+  end do
+  if(nst_ind==00)then
+   do n=1,np
+    pt(n,5)=dye*(sp_loc%part(n,2)-ymn) !loc y position
+    pt(n,6)=dze*(sp_loc%part(n,3)-zmn) !loc z position
+   end do
+  else
+   call map3d_part_sind(pt,np,nst_ind,5,6,ymn,zmn)
+  endif
+  do n=1,np
+   ap(1)=0.0
+   xp1(1:3)=pt(n,4:6)
 
    xx=shx+xp1(1)
    i=int(xx+0.5)
@@ -3547,11 +3583,11 @@
  end subroutine set_env_rk_acc
  !-------------------------
  !=============================
- subroutine set_env_density(efp,av,np,ndm,ic,xmn,ymn,zmn)
+ subroutine set_env_density(efp,av,np,ndm,ic,nstr_ind,xmn,ymn,zmn)
 
  real(dp),intent(inout) :: efp(:,:)
  real(dp),intent(inout) :: av(:,:,:,:)
- integer,intent(in) :: np,ndm,ic
+ integer,intent(in) :: np,ndm,ic,nstr_ind
  real(dp),intent(in) :: xmn,ymn,zmn
 
  real(dp) :: xx,sx,sx2,dvol,dvol1,wghp
@@ -3567,9 +3603,16 @@
  select case(ndm)
  case(2)
   k2=1
+  if(nstr_ind==0)then
+   do n=1,np
+    efp(n,2)=dy_inv*(efp(n,2)-ymn)                ! local y
+   end do
+  else
+   call map2dy_part_sind(np,nstr_ind,2,ymn,efp)
+  endif 
   do n=1,np
-   xp1(1)=dx_inv*(efp(n,1)-xmn)                ! local x
-   xp1(2)=dy_inv*(efp(n,2)-ymn)                ! local y
+   xp1(1)=dx_inv*(efp(n,1)-xmn)        ! local x
+   xp1(2)=efp(n,2)                     ! local y
    wghp=efp(n,5)                       !the particle  q*wgh/gamp at current time
    xx=shx+xp1(1)
    i=int(xx+0.5)
@@ -3602,10 +3645,17 @@
   end do
   !========================
  case(3)
+  if(nstr_ind==0)then
+   do n=1,np
+    efp(n,2)=dy_inv*(efp(n,2)-ymn)                ! local y
+    efp(n,3)=dz_inv*(efp(n,3)-zmn)                ! local z
+   end do
+  else
+   call map3d_part_sind(efp,np,nstr_ind,2,3,ymn,zmn)
+  endif
   do n=1,np
-   xp1(1)=dx_inv*(efp(n,1)-xmn)                ! local x
-   xp1(2)=dy_inv*(efp(n,2)-ymn)                ! local y
-   xp1(3)=dz_inv*(efp(n,3)-zmn)                ! local z
+   xp1(1)=dx_inv*(efp(n,1)-xmn)      ! local x
+   xp1(2:3)=efp(n,2:3)               ! local y-z
    wghp=efp(n,7)          !the particle  wgh/gamp at current time
 
    xx=shx+xp1(1)

@@ -136,7 +136,7 @@
  type(species),intent(in) :: sp_loc
  integer,intent(in) :: time_ind
 
- integer :: np,ik,ik_max,ip,p,ndv,ndvp,ipe,kk,ik1,ik2
+ integer :: np,ik,ik_max,ip,p,ndv,ndvp,ipe,kk,ik1,ik2,nst
  logical :: sr
  real :: xm,ym,zm
 
@@ -145,10 +145,12 @@
  ym=loc_ygrid(imody)%gmin
  zm=loc_zgrid(imodz)%gmin
  np=loc_npart(imody,imodz,imodx,1)
+ nst=0
+ if(Stretch)nst=str_indx(imody,imodz)
 !===================
  if(Envelope)then
   call loc_env_amp(env,jc)
-  call  set_env_interp(jc,sp_loc,ebfp,np,ndim,xm,ym,zm)
+  call  set_env_interp(jc,sp_loc,ebfp,np,ndim,nst,xm,ym,zm)
   !In ebfp(:,1) exit particle assigned |A|^2/2
  endif
  ndv=size(sp_loc%part,2)
@@ -430,10 +432,14 @@
   end do
   if(prl)call fill_ebfield_yzxbdsdata(jc,i1,i2,j1,nyf,k1,nzf,3,3,2,2)
   call set_grid_den_env_energy(&
-                        spec(ic),ebfp,jc,np,ndim,curr_ndim,n_str,3,xm,ym,zm)
+   spec(ic),ebfp,jc,np,ndim,curr_ndim,n_str,3,xm,ym,zm)
+   ! in jc(1) is the plasma density in jc(2) (gam-1)density with gamma with
+   ! envelope component
  else
   call set_grid_den_energy(&
-                        spec(ic),ebfp,jc,np,ndim,curr_ndim,n_str,xm,ym,zm)
+  spec(ic),ebfp,jc,np,ndim,curr_ndim,n_str,xm,ym,zm)
+  ! in jc(1) is plasma norm density in jc(2) <(gam-1)density>  with
+  ! kineticagamma
  endif
  !========= den on [i1-1:i2+2,j1-1:nyp+2,k1-1:nzp+2]
  if(prl)then
@@ -447,20 +453,31 @@
  jc(i1:i2,j1:nyf,k1:nzf,2)=mass(ic)*electron_mass*jc(i1:i2,j1:nyf,k1:nzf,2)
  !=========== energy density in Mev*n/n_0
  if(Stretch)then
-  kk=1
+  select case(ndim)
+  case(2)
+  k=1
+  do j=j1,nyf
+  jj=j-2
+   dery=loc_yg(jj,3,imody)
+   do i=i1,i2
+    jc(i,j,k,1)=dery*jc(i,j,k,1)
+    jc(i,j,k,2)=dery*jc(i,j,k,2)
+   end do
+  end do
+  case(3)
   do k=k1,nzf
+   kk=k-2
    derz=loc_zg(kk,3,imodz)
-   jj=1
    do j=j1,nyf
+    jj=j-2
     dery=loc_yg(jj,3,imody)*derz
     do i=i1,i2
      jc(i,j,k,1)=dery*jc(i,j,k,1)
      jc(i,j,k,2)=dery*jc(i,j,k,2)
     end do
-    jj=jj+1
    end do
-   kk=kk+1
   end do
+  end select
  endif
  !======================
  end subroutine prl_den_energy_interp
