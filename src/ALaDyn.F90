@@ -1126,7 +1126,7 @@
     endif
    end if
  write(60,*)'**********TARGET PLASMA PARAMETERS***********'
-  if(Part)then
+  if(Part.or.Hybrid)then
    write(60,'(a26,e11.4,a10)')'  Electron number density ',n0_ref,'[10^18/cc]'
    write(60,'(a21,f5.2)')'  Plasma wavelength= ',lambda_p
    write(60,'(a20,e11.4)')' Chanelling fact  = ',chann_fact
