@@ -261,11 +261,9 @@
  subroutine set_uniform_yz_distrib(nyh,nc)
 
  integer,intent(in) :: nyh,nc
- integer :: p,ip
  integer :: j,i,i1,i2,ic
- integer :: n_peak
  integer :: npyc(6),npzc(6),npty_ne,nptz_ne
- real(dp) :: yy,zz,dxip,dpy,dpz,np1_loc
+ real(dp) :: yy,zz,dxip,dpy,dpz
  real(dp) :: zp_min,zp_max,yp_min,yp_max
  integer :: nyl1,nzl1
  real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
@@ -313,50 +311,78 @@
    do i=1,npty_ne
     ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
    enddo
-  endif
-  if(Stretch)then
-   yy=str_ygrid%smin
-   if(yy >yp_min)then
-    dpy=dyi/real(npyc(ic),dp)
-    i1=(str_ygrid%sind(1)-nyl1+1)*npyc(ic)
-    i2=npty_ne-i1
-    do i=1,i1
-     dxip=dpy*(real(i-i1,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
-    dxip=dy/real(npyc(ic),dp)
-    do i=i1+1,i2
-     ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
-    end do
-    do i=i2+1,npty_ne
-     dxip=dpy*(real(i-i2,dp)-0.5)
-     ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
-     wy(i,ic)=1./(cos(dxip)*cos(dxip))
-    enddo
+   if(Stretch)then
+    yy=str_ygrid%smin
+    if(yy >yp_min)then
+     dpy=dyi/real(np_per_yc(ic),dp)
+     i1=(str_ygrid%sind(1)-nyl1+1)*np_per_yc(ic)
+     i2=npty_ne-i1
+     do i=1,i1
+      dxip=dpy*(real(i-i1,dp)-0.5)
+      ypt(i,ic)=str_ygrid%smin+L_s*tan(dxip)
+      wy(i,ic)=1./(cos(dxip)*cos(dxip))
+     enddo
+     dxip=dy/real(np_per_yc(ic),dp)
+     do i=i1+1,i2
+      ypt(i,ic)=str_ygrid%smin+dxip*(real(i-i1,dp)-0.5)
+     end do
+     do i=i2+1,npty_ne
+      dxip=dpy*(real(i-i2,dp)-0.5)
+      ypt(i,ic)=str_ygrid%smax+L_s*tan(dxip)
+      wy(i,ic)=1./(cos(dxip)*cos(dxip))
+     enddo
+    endif
    endif
-  endif
+   do i=1,npty_ne
+    wyz(i,1,ic)=wy(i,ic)*wz(1,ic)
+   end do
+  endif     ! end np_per_yc >0
   nptz_ne=1
   if(ndim==3)then
    nptz_ne=npzc(ic)
-   dpz=(zp_max-zp_min)/real(nptz_ne,dp)
+   if(nptz_ne >0)then
+    dpz=(zp_max-zp_min)/real(nptz_ne,dp)
+    do i=1,nptz_ne
+     zpt(i,ic)=zp_min+dpz*(real(i,dp)-0.5)
+    enddo
+    if(Stretch)then
+     zz=str_zgrid%smin
+     if(zz >zp_min)then
+      dpz=dzi/real(np_per_zc(ic),dp)
+      i1=(str_zgrid%sind(1)-nzl1+1)*np_per_zc(ic)
+      i2=nptz_ne-i1
+      do i=1,i1
+       dxip=dpy*(real(i-i1,dp)-0.5)
+       zpt(i,ic)=str_zgrid%smin+L_s*tan(dxip)
+       wz(i,ic)=1./(cos(dxip)*cos(dxip))
+      enddo
+      dxip=dz/real(np_per_zc(ic),dp)
+      do i=i1+1,i2
+       zpt(i,ic)=str_zgrid%smin+dxip*(real(i-i1,dp)-0.5)
+      end do
+      do i=i2+1,nptz_ne
+       dxip=dpy*(real(i-i2,dp)-0.5)
+       zpt(i,ic)=str_zgrid%smax+L_s*tan(dxip)
+       wz(i,ic)=1./(cos(dxip)*cos(dxip))
+      enddo
+     endif
+    endif
+   endif
    do i=1,nptz_ne
-    zpt(i,ic)=zp_min+dpz*(real(i,dp)-0.5)
-   enddo
-   wz(1:nptz_ne,ic)=wy(1:npty_ne,ic)
-  endif
-  do i=1,npty_ne
-   wyz(i,1:nptz_ne,ic)=wy(i,ic)*wz(1:nptz_ne,ic)
-  end do
-  if(chann_fact >0.0)then
-   do i=1,nptz_ne
-    zz=zpt(i,ic)
     do j=1,npty_ne
-     yy=ypt(j,ic)
-     wyz(j,i,ic)=1.+chann_fact*(yy*yy+zz*zz)/(w0_y*w0_y)
+     wyz(j,i,ic)=wy(j,ic)*wz(i,ic)
     end do
    end do
-  endif
+   if(chann_fact >0.0)then
+    do i=1,nptz_ne
+     zz=zpt(i,ic)
+     do j=1,npty_ne
+      yy=ypt(j,ic)
+      wyz(j,i,ic)=1.+chann_fact*(yy*yy+zz*zz)/(w0_y*w0_y)
+     end do
+    end do
+   endif
+  endif          !end ndim=3
   call set_pgrid_ind(npty_ne,nptz_ne,ic)  !exit loc_jmax,loc_kmax
  end do
  !===========================
@@ -374,6 +400,7 @@
  loc_wghyz=1.
  call mpi_yz_part_distrib(nc,loc_npty,loc_nptz,npyc,npzc,&
  ymin_t,zmin_t,wyz)
+
  !=EXIT local to mpi (imody,imodz) tasks (loc_ypt,loc_zpt), weights (loc_wghyz)
  ! => set in common in pstruct_data.f90 file/
  ! and particle numbers (loc_npty,loc_nptz)
@@ -2431,8 +2458,8 @@
  allocate(fluid_x_profile(nxf))
  !====================
  peak_fluid_density=1.-ratio_mpfluid
- fluid_x_profile(:)=0.0
- fluid_yz_profile(:,:)=0.0
+ fluid_x_profile(:)=zero_dp
+ fluid_yz_profile(:,:)=one_dp
  np1_loc=0.005
  ramp_prefactor=one_dp
  if(np1>0.0)np1_loc=np1
@@ -2442,17 +2469,6 @@
  k01=k1
  j02=j2
  k02=k2
- if(pe0y)j01=sh_targ+1
- if(pe1y)j02=j2-sh_targ
- if(ndim >2)then
-  if(pe0z)k01=sh_targ+1
-  if(pe1z)k02=k2-sh_targ
- endif
- do k=k01,k02
-  do j=j01,j02
-   fluid_yz_profile(j,k)=1.0
-  end do
- end do
  if(Channel)then
   if(ndim <3)then
    k=k01
@@ -2623,10 +2639,10 @@
     end do
    end do
   end do
-  if(pe0)then
-   write(6,*)'xt_in=',targ_in,'off_set= ',xf0
-   write(6,'(a22,e11.4)')'Max init fluid density',maxval(uf(i1:i2,j1:j2,k1:k2,ic))
-  endif
+  ! if(pe0)then
+  !  write(6,*)'xt_in=',targ_in,'off_set= ',xf0
+  !  write(6,'(a22,e11.4)')'Max init fluid density',maxval(uf(i1:i2,j1:j2,k1:k2,ic))
+  ! endif
  !========================
  end subroutine init_fluid_density_momenta
 
@@ -2786,10 +2802,10 @@
  if(lp_end(1) > xm)then
   if(G_prof)then
    call init_gprof_envelope_field(&
-              env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
+   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
   else
    call init_envelope_field(&
-              env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
+   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
    !call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
   endif
  endif
@@ -2821,10 +2837,10 @@
   if(lp_ionz_end > xm)then
    if(G_prof)then
     call init_gprof_envelope_field(&
-              env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
+    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
    else
     call init_envelope_field(&
-              env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
+    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
    endif
   endif
  endif
@@ -2833,21 +2849,22 @@
  ebf=0.0
  !=====================
  if(pe0)then
-  write(6,*)'number ',nb_laser,'LP envelope injected '
-  write(6,*)' First pulse parameters'
-  write(6,'(a21,e11.4)')' Focal x-position xf=',xf
-  write(6,'(a21,e11.4)')' Centr x-position xc=',xc_lp
-  write(6,'(a20,e11.4)')' Size (microns) lx=',w0_x
-  write(6,'(a14,e11.4)')' FWHM (fs) lx=',tau_FWHM
-  write(6,'(a19,e11.4)')' Waist(microns) ly=',w0_y
-  write(6,'(a17,e11.4)')' FWHM(microns) = ',lp_rad
+  open(26,file='Initial_env_info.dat')
+  write(26,*)'number ',nb_laser,'LP envelope injected '
+  write(26,*)' First pulse parameters'
+  write(26,'(a21,e11.4)')' Focal x-position xf=',xf
+  write(26,'(a21,e11.4)')' Centr x-position xc=',xc_lp
+  write(26,'(a20,e11.4)')' Size (microns) lx=',w0_x
+  write(26,'(a14,e11.4)')' FWHM (fs) lx=',tau_FWHM
+  write(26,'(a19,e11.4)')' Waist(microns) ly=',w0_y
+  write(26,'(a17,e11.4)')' FWHM(microns) = ',lp_rad
   if(Two_color)then
-   write(6,*)' Injection pulse parameters'
-   write(6,'(a16,e11.4)')' amplitude  a1 =',a1
-   write(6,'(a21,e11.4)')' Focal x-position xf=',xf1
-   write(6,'(a21,e11.4)')' Centr x-position xc=',xc1_lp
-   write(6,'(a20,e11.4)')' Size (microns) lx=',w1_x
-   write(6,'(a19,e11.4)')' Waist(microns) ly=',w1_y
+   write(26,*)' Injection pulse parameters'
+   write(26,'(a16,e11.4)')' amplitude  a1 =',a1
+   write(26,'(a21,e11.4)')' Focal x-position xf=',xf1
+   write(26,'(a21,e11.4)')' Centr x-position xc=',xc1_lp
+   write(26,'(a20,e11.4)')' Size (microns) lx=',w1_x
+   write(26,'(a19,e11.4)')' Waist(microns) ly=',w1_y
   endif
  endif
  if(Hybrid)then

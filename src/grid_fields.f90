@@ -31,12 +31,24 @@
  real(dp),allocatable :: ww(:),ww0(:,:),sf1(:),sf2(:),wr(:,:),wl(:,:),var(:,:)
  real(dp) :: sigm_opt
  real(dp) :: mat_env_coeff(5,5)
+ logical :: xl_bd,xr_bd,yl_bd,yr_bd,zl_bd,zr_bd
  contains
 
  subroutine w_alloc(opt_der)
  real(dp),intent(in) :: opt_der
  real(dp) :: cfl_loc,as0,alp
  integer :: ndmx,nd1mx,ng
+ ! sets logical bd flags
+ xl_bd=.true.
+ xr_bd=.true.
+ yl_bd=.false.
+ yr_bd=.false.
+ zl_bd=.false.
+ zr_bd=.false.
+ if(pe0y)yl_bd=.true.
+ if(pe1y)yr_bd=.true.
+ if(pe0z)zl_bd=.true.
+ if(pe1z)zr_bd=.true.
 
  !============================
  ! allocate auxiliary arrays ww() dw() and
@@ -44,7 +56,12 @@
  nd1mx=max(nx_loc,nx1_loc)
  allocate(ww(ndmx+5),ww0(ndmx+5,max(ny,nz)))
  allocate(wr(ndmx+6,10),wl(ndmx+6,10))
- allocate(var(0:ndmx+5,10))
+ allocate(var(ndmx+5,10))
+ var(:,:)=0.0
+ wr(:,:)=0.0
+ wl(:,:)=0.0
+ ww(:)=0.0
+ ww0(:,:)=0.0
  cfl_loc=0.0
  ng=nx
 
@@ -209,8 +226,6 @@
  integer :: k,ic,ic1
  real(dp) :: b1,bn
  real(dp) :: fact,alp,gm,bet
-
-
  !==========================
  ! Solves
  ! a*ww(i-1)+b*ww(i)+c*ww(i+1)=u(i), i=1,2,..,n
@@ -1124,8 +1139,8 @@
 
  integer,intent(in) :: ic1,ic2,ord,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: dhy,dhz
- integer :: i,j,k,ic,j01,j02,k01,k02
- real(dp) :: dy2_inv,dz2_inv,cf(0:2)
+ integer :: i,j,k,ic,jj,kk,j01,j02,k01,k02
+ real(dp) :: dy2_inv,dz2_inv,cf(0:2),shy,shz,sphy,smhy,sphz,smhz
  !==========================
  ! is=1 adds  is=-1 subtracts the laaplacian term
  !--------------------------------------------------
@@ -1141,141 +1156,198 @@
  endif
  !===========================
  !Second order derivative. At boundaries D^3[av]=0
+ shy=1.
+ shz=1.
+ sphy=1.
+ smhy=1.
+ sphz=1.
+ smhz=1.
  j01=j1
  j02=n2p
  k01=k1
  k02=n3p
- if(pe0y)then
-  j=j1
-  do ic=ic1,ic2
-   do k=k1,n3p
-    do i=i1,n1p
-     source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
-       av(i,j,k,ic)-2.*av(i,j+1,k,ic)+av(i,j+2,k,ic))
-    end do
-    j01=j1+1
-   end do
-    end do
-  if(der_ord==4)then
-   j=j1+1
+ if(iby <2)then
+  if(pe0y)then
+   j=j1
+    jj=j-2
+    shy=dy2_inv*loc_yg(jj+1,3,imody)
+    sphy=loc_yg(jj+1,4,imody)
+    smhy=loc_yg(jj,4,imody)
    do ic=ic1,ic2
     do k=k1,n3p
      do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
-       av(i,j-1,k,ic)-2.*av(i,j,k,ic)+av(i,j+1,k,ic))
+     source(i,j,k,ic)=source(i,j,k,ic)+shy*(&
+     sphy*(av(i,j+2,k,ic)-av(i,j+1,k,ic))-smhy*(av(i,j+1,k,ic)-av(i,j,k,ic)))
+     end do
+     j01=j1+1
+    end do
+     end do
+   if(der_ord==4)then
+    j=j1+1
+    do ic=ic1,ic2
+     do k=k1,n3p
+      do i=i1,n1p
+       source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
+        av(i,j-1,k,ic)-2.*av(i,j,k,ic)+av(i,j+1,k,ic))
+     end do
     end do
    end do
-  end do
-  j01=j1+2
- endif
- endif
- if(pe1y)then
-  j=n2p
-  do ic=ic1,ic2
-   do k=k1,n3p
-    do i=i1,n1p
-     source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
-       av(i,j,k,ic)-2.*av(i,j-1,k,ic)+av(i,j-2,k,ic))
-    end do
-    end do
-  end do
-  j02=n2p-1
-  if(der_ord==4)then
-   j=n2p-1
+   j01=j1+2
+   endif
+  endif        !Pe0y end
+  if(pe1y)then
+   j=n2p
+   jj=j-2
+   shy=dy2_inv*loc_yg(jj-1,3,imody)
+   sphy=loc_yg(jj-1,4,imody)
+   smhy=loc_yg(jj-2,4,imody)
    do ic=ic1,ic2
     do k=k1,n3p
      do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
-       av(i,j-1,k,ic)-2.*av(i,j,k,ic)+av(i,j+1,k,ic))
+      source(i,j,k,ic)=source(i,j,k,ic)+shy*(&
+      sphy*(av(i,j,k,ic)-av(i,j-1,k,ic)) -&
+      smhy*(av(i,j-1,k,ic)-av(i,j-2,k,ic)))
+     end do
     end do
    end do
-  end do
-  j02=n2p-2
- endif
- endif
+   j02=n2p-1
+   if(der_ord==4)then
+    j=n2p-1
+    do ic=ic1,ic2
+     do k=k1,n3p
+      do i=i1,n1p
+       source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
+        av(i,j-1,k,ic)-2.*av(i,j,k,ic)+av(i,j+1,k,ic))
+     end do
+    end do
+   end do
+   j02=n2p-2
+   endif
+  endif
+ endif            !END non periodic BCs
  do ic=ic1,ic2
   do k=k1,n3p
    do j=j01,j02
+    jj=j-2
+    shy=dy2_inv*loc_yg(jj,3,imody)
+    sphy=loc_yg(jj,4,imody)
+    smhy=loc_yg(jj-1,4,imody)
     do i=i1,n1p
-     source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
-      cf(1)*(av(i,j+1,k,ic)+av(i,j-1,k,ic))+cf(2)*av(i,j,k,ic))
+     source(i,j,k,ic)=source(i,j,k,ic)+shy*(&
+     sphy*(av(i,j+1,k,ic)-av(i,j,k,ic))-&
+     smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
     end do
    end do
-    end do
-   end do
+  end do
+ end do
  if(der_ord==4)then
   do ic=ic1,ic2
    do k=k1,n3p
     do j=j01,j02
      do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*cf(0)*(&
-                                av(i,j+2,k,ic)+av(i,j-2,k,ic))
+      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*(&
+      cf(1)*(av(i,j+1,k,ic)+av(i,j-1,k,ic))+cf(2)*av(i,j,k,ic))
      end do
+    end do
+   end do
   end do
- end do
+  do ic=ic1,ic2
+   do k=k1,n3p
+    do j=j01,j02
+     do i=i1,n1p
+      source(i,j,k,ic)=source(i,j,k,ic)+dy2_inv*cf(0)*(&
+      av(i,j+2,k,ic)+av(i,j-2,k,ic))
+     end do
+    end do
+   end do
   end do
  endif
  if(ndim< 3)return
  !====================
- if(pe0z)then
-  k=k1
-  do ic=ic1,ic2
-   do j=j1,n2p
-    do i=i1,n1p
-     source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
-       av(i,j,k,ic)-2.*av(i,j,k+1,ic)+av(i,j,k+2,ic))
-    end do
-    end do
-   end do
-  k01=k1+1
-  if(der_ord==4)then
-   k=k1+1
+ if(ibz <2)then
+  if(pe0z)then
+   k=k1
+   jj=k-2
+   shz=dz2_inv*loc_zg(jj+1,3,imodz)
+   sphz=loc_zg(jj+1,4,imodz)
+   smhz=loc_zg(jj,4,imodz)
    do ic=ic1,ic2
     do j=j1,n2p
      do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
-       av(i,j,k-1,ic)-2.*av(i,j,k,ic)+av(i,j,k+1,ic))
+      source(i,j,k,ic)=source(i,j,k,ic)+shz*(&
+      sphz*(av(i,j,k+2,ic)-av(i,j,k+1,ic))-smhz*(av(i,j,k+1,ic)-av(i,j,k,ic)))
+     end do
+     end do
     end do
-   end do
-  end do
-  k01=k1+2
- endif
- endif
- if(pe1z)then
-  k=n3p
-  do ic=ic1,ic2
-   do j=j1,n2p
-    do i=i1,n1p
-     source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
-       av(i,j,k,ic)-2.*av(i,j,k-1,ic)+av(i,j,k-2,ic))
-    end do
-   end do
-  end do
-  k02=n3p-1
-  if(der_ord==4)then
-   k=n3p-1
-   do ic=ic1,ic2
-    do j=j1,n2p
-     do i=i1,n1p
-      source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
-       av(i,j,k-1,ic)-2.*av(i,j,k,ic)+av(i,j,k+1,ic))
+   k01=k1+1
+   if(der_ord==4)then
+    k=k1+1
+    do ic=ic1,ic2
+     do j=j1,n2p
+      do i=i1,n1p
+       source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
+        av(i,j,k-1,ic)-2.*av(i,j,k,ic)+av(i,j,k+1,ic))
      end do
     end do
    end do
-   k01=n3p-2
+   k01=k1+2
+  endif
+  endif
+  if(pe1z)then
+   k=n3p
+   jj=k-2
+   shz=dz2_inv*loc_zg(jj-1,3,imodz)
+   sphz=loc_zg(jj-1,4,imodz)
+   smhz=loc_zg(jj-2,4,imodz)
+   do ic=ic1,ic2
+    do j=j1,n2p
+     do i=i1,n1p
+      source(i,j,k,ic)=source(i,j,k,ic)+shz*(&
+      sphz*(av(i,j,k,ic)-av(i,j,k-1,ic))-smhz*(av(i,j,k-1,ic)-av(i,j,k-2,ic)))
+     end do
+    end do
+   end do
+   k02=n3p-1
+   if(der_ord==4)then
+    k=n3p-1
+    do ic=ic1,ic2
+     do j=j1,n2p
+      do i=i1,n1p
+       source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
+        av(i,j,k-1,ic)-2.*av(i,j,k,ic)+av(i,j,k+1,ic))
+      end do
+     end do
+    end do
+    k01=n3p-2
+   endif
   endif
  endif
  do ic=ic1,ic2
   do k=k01,k02
+   jj=k-2
+   shz=dz2_inv*loc_zg(jj,3,imodz)
+   sphz=loc_zg(jj,4,imodz)
+   smhz=loc_zg(jj-1,4,imodz)
    do j=j1,n2p
     do i=i1,n1p
-     source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
-      cf(1)*(av(i,j,k-1,ic)+av(i,j,k+1,ic))+cf(2)*av(i,j,k,ic))
+     source(i,j,k,ic)=source(i,j,k,ic)+shz*(&
+     sphz*(av(i,j,k+1,ic)-av(i,j,k,ic))- &
+     smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
     end do
    end do
-    end do
-   end do
+  end do
+ end do
  if(der_ord==4)then
+  do ic=ic1,ic2
+   do k=k01,k02
+    do j=j1,n2p
+     do i=i1,n1p
+      source(i,j,k,ic)=source(i,j,k,ic)+dz2_inv*(&
+      cf(1)*(av(i,j,k-1,ic)+av(i,j,k+1,ic))+cf(2)*av(i,j,k,ic))
+     end do
+    end do
+   end do
+  end do
   do ic=ic1,ic2
    do k=k01+1,k02-1
     do j=j1,n2p
@@ -1447,7 +1519,7 @@
  integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,ider
  real(dp),intent(in) :: dhx,dhy,dhz
  integer :: n1,i,j,k,j01,j02,k01,k02
- real(dp) :: ax1,ax2,ay1,ay2,az1,az2
+ real(dp) :: ax1,ax2,ay1,ay2,az1,az2,shz,shy
  real(dp),parameter :: a_hcd=9./8., b_hcd=-1./24.
  !===========fourth order central flux derivatives
 
@@ -1510,10 +1582,11 @@
  endif
  if(pe1y)then
   j=n2p
+  shy=loc_yg(j-2,4,imody)*ay1
   do k=k1,n3p
    do i=i1,n1p
     envg(i,j+1,k,1)=2.*envg(i,j,k,1)-envg(i,j-1,k,1)
-    envg(i,j,k,3)=dhy*(envg(i,j+1,k,1)-envg(i,j,k,1))
+    envg(i,j,k,3)=shy*(envg(i,j+1,k,1)-envg(i,j,k,1))
    end do
   end do
   j02=n2p-1
@@ -1521,18 +1594,20 @@
 
  if(pe0y)then
   j=j1
+  shy=loc_yg(j-2,4,imody)*ay1
   do k=k1,n3p
    do i=i1,n1p
     envg(i,j-1,k,1)=2.*envg(i,j,k,1)-envg(i,j+1,k,1)
-    envg(i,j,k,3)=dhy*(envg(i,j+1,k,1)-envg(i,j,k,1))
+    envg(i,j,k,3)=shy*(envg(i,j+1,k,1)-envg(i,j,k,1))
    end do
   end do
   j01=j1+1
  endif
  do k=k1,n3p
   do j=j01,j02
+   shy=loc_yg(j-2,4,imody)*ay1
    do i=i1,n1p
-    envg(i,j,k,3)=ay1*(envg(i,j+1,k,1)-envg(i,j,k,1))
+    envg(i,j,k,3)=shy*(envg(i,j+1,k,1)-envg(i,j,k,1))
    end do
   end do
  end do
@@ -1548,29 +1623,32 @@
  if(ndim ==2)return
  if(pe1z)then
   k=n3p
+  shz=loc_zg(k-2,4,imodz)*dhz
   do j=j1,n2p
    do i=i1,n1p
     envg(i,j,k+1,1)=2.*envg(i,j,k,1)-envg(i,j,k-1,1)
-    envg(i,j,k,4)=dhz*(envg(i,j,k+1,1)-envg(i,j,k,1))
+    envg(i,j,k,4)=shz*(envg(i,j,k+1,1)-envg(i,j,k,1))
    end do
   end do
   k02=n3p-1
  end if
  if(pe0z)then
   k=k1
+  shz=loc_zg(k-2,4,imodz)*dhz
   do j=j1,n2p
    do i=i1,n1p
     envg(i,j,k-1,1)=2.*envg(i,j,k,1)-envg(i,j,k+1,1)
-    envg(i,j,k,4)=dhz*(envg(i,j,k+1,1)-envg(i,j,k,1))
+    envg(i,j,k,4)=shz*(envg(i,j,k+1,1)-envg(i,j,k,1))
    end do
   end do
   k01=k1+1
  end if
  !==================
  do k=k01,k02
+  shz=loc_zg(k-2,4,imodz)*az1
   do j=j1,n2p
    do i=i1,n1p
-    envg(i,j,k,4)=az1*(envg(i,j,k+1,1)-envg(i,j,k,1))
+    envg(i,j,k,4)=shz*(envg(i,j,k+1,1)-envg(i,j,k,1))
    end do
   end do
  end do
@@ -1649,6 +1727,8 @@
    end do
   end do
  enddo
+ !Ensures that the envelope field at left boundary (tail of the box)
+ !is kept zero
  do k=k1,n3p
   do j=j1,n2p
    do i=i1,i1+1
@@ -4533,7 +4613,7 @@
  real(dp),intent(inout) :: ef(:,:,:,:)
  integer,intent(in) :: i1,n1p,j1,j2,k1,k2
  real(dp),intent(in) :: aphx,aphy,aphz
- real(dp) :: sdhx,sdhy,sdhz
+ real(dp) :: sdhy,sdhz
  integer :: i,j,k,ii,jj,kk
  real(dp) :: aph1,aph2
 
@@ -4548,16 +4628,14 @@
   k=1;j=1
   do i=i1,n1p
    ii=i-2
-   sdhx=aph1*loc_xg(ii,4,imodx)
    ef(i,j,k,nfield)=ef(i,j,k,nfield)-&
-    sdhx*(ef(i+1,j,k,2)-ef(i,j,k,2))
+   aph1*(ef(i+1,j,k,2)-ef(i,j,k,2))
   end do
-   do i=i1+1,n1p-1
-    ii=i-2
-    sdhx=aph2*loc_xg(ii,4,imodx)
-    ef(i,j,k,nfield)=ef(i,j,k,nfield)-&
-     sdhx*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
-   end do
+  do i=i1+1,n1p-1
+   ii=i-2
+   ef(i,j,k,nfield)=ef(i,j,k,nfield)-&
+   aph2*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
+  end do
   return
  endif
  !=================================
@@ -4567,17 +4645,15 @@
    sdhy=loc_yg(jj,4,imody)*aphy
    do i=i1,n1p
     ii=i-2
-    sdhx=aph1*loc_xg(ii,4,imodx)
     ef(i,j,k,nfield)=ef(i,j,k,nfield)-&
-     sdhx*(ef(i+1,j,k,2)-ef(i,j,k,2))+&
-     sdhy*(ef(i,j+1,k,1)-ef(i,j,k,1))
+    aph1*(ef(i+1,j,k,2)-ef(i,j,k,2))+&
+    sdhy*(ef(i,j+1,k,1)-ef(i,j,k,1))
    end do
-    do i=i1+1,n1p-1
-     ii=i-2
-     sdhx=aph2*loc_xg(ii,4,imodx)
-     ef(i,j,k,nfield)=ef(i,j,k,nfield)-&
-      sdhx*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
-    end do
+   do i=i1+1,n1p-1
+    ii=i-2
+    ef(i,j,k,nfield)=ef(i,j,k,nfield)-&
+    aph2*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
+   end do
    end do
   end do
  if(nfield <6)return
@@ -4590,18 +4666,16 @@
     sdhy=loc_yg(jj,4,imody)*aphy
     do i=i1,n1p
      ii=i-2
-     sdhx=aph1*loc_xg(ii,4,imodx)
      ef(i,j,k,4)=ef(i,j,k,4)-sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3))+&
-      sdhz*(ef(i,j,k+1,2)-ef(i,j,k,2))
+     sdhz*(ef(i,j,k+1,2)-ef(i,j,k,2))
      ef(i,j,k,5)=ef(i,j,k,5)+&
-      sdhx*(ef(i+1,j,k,3)-ef(i,j,k,3))-&
-      sdhz*(ef(i,j,k+1,1)-ef(i,j,k,1))
+     aph1*(ef(i+1,j,k,3)-ef(i,j,k,3))-&
+     sdhz*(ef(i,j,k+1,1)-ef(i,j,k,1))
     end do
     do i=i1+1,n1p-1
      ii=i-2
-     sdhx=aph2*loc_xg(ii,4,imodx)
      ef(i,j,k,5)=ef(i,j,k,5)+&
-      sdhx*(ef(i+2,j,k,3)-ef(i-1,j,k,3))
+     aph2*(ef(i+2,j,k,3)-ef(i-1,j,k,3))
     end do
    end do
   end do
@@ -4612,16 +4686,14 @@
    sdhy=loc_yg(jj,4,imody)*aphy
    do i=i1,n1p
     ii=i-2
-    sdhx=aph1*loc_xg(ii,4,imodx)
     ef(i,j,k,4)=ef(i,j,k,4)-sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3))
-    ef(i,j,k,5)=ef(i,j,k,5)+sdhx*(ef(i+1,j,k,3)-ef(i,j,k,3))
+    ef(i,j,k,5)=ef(i,j,k,5)+aph1*(ef(i+1,j,k,3)-ef(i,j,k,3))
    end do
-    do i=i1+1,n1p-1
-     ii=i-2
-     sdhx=aph2*loc_xg(ii,4,imodx)
-     ef(i,j,k,5)=ef(i,j,k,5)+&
-      sdhx*(ef(i+2,j,k,3)-ef(i-1,j,k,3))
-    end do
+   do i=i1+1,n1p-1
+    ii=i-2
+    ef(i,j,k,5)=ef(i,j,k,5)+&
+    aph2*(ef(i+2,j,k,3)-ef(i-1,j,k,3))
+   end do
    end do
  endif
  !================== interior domains
@@ -4632,7 +4704,7 @@
  real(dp),intent(inout) :: ef(:,:,:,:)
  integer,intent(in) :: i1,n1p,j1,j2,k1,k2
  real(dp),intent(in) :: aphx,aphy,aphz
- real(dp) :: sdx,sdy,sdz,aph1,aph2
+ real(dp) :: sdy,sdz,aph1,aph2
  integer :: i,j,k,ii,jj,kk
  ! E=E+DT*rot[B]          Two-point Second order derivatives
  !==================== B=B-dt*rot(E) interior domain==========
@@ -4643,9 +4715,7 @@
  if(ndim==1)then
   k=1;j=1
   do i=i1,n1p
-   ii=i-2
-   sdx=loc_xg(ii,3,imodx)*aphx
-   ef(i,j,k,2)=ef(i,j,k,2)-sdx*(ef(i,j,k,nfield)-ef(i-1,j,k,nfield))
+   ef(i,j,k,2)=ef(i,j,k,2)-aphx*(ef(i,j,k,nfield)-ef(i-1,j,k,nfield))
   end do
  endif
  !=========================== NDIM > 1
@@ -4655,19 +4725,16 @@
    sdy=loc_yg(jj,3,imody)*aphy
    do i=i1,n1p
     ii=i-2
-    sdx=loc_xg(ii,3,imodx)*aph1
     ef(i,j,k,1)=ef(i,j,k,1)+sdy*(ef(i,j,k,nfield)-ef(i,j-1,k,nfield))
-    ef(i,j,k,2)=ef(i,j,k,2)-sdx*(ef(i,j,k,nfield)-ef(i-1,j,k,nfield))
+    ef(i,j,k,2)=ef(i,j,k,2)-aph1*(ef(i,j,k,nfield)-ef(i-1,j,k,nfield))
    end do
    do i=i1+2,n1p-1
-     ii=i-2
-     sdx=loc_xg(ii,3,imodx)*aph2
-     ef(i,j,k,2)=ef(i,j,k,2)-&
-      sdx*(ef(i+1,j,k,nfield)-ef(i-2,j,k,nfield))
-
-    end do
+    ii=i-2
+    ef(i,j,k,2)=ef(i,j,k,2)-&
+    aph2*(ef(i+1,j,k,nfield)-ef(i-2,j,k,nfield))
    end do
   end do
+ end do
  if(nfield <6)return
  if(ndim==3)then
   do k=k1,k2
@@ -4678,19 +4745,17 @@
     sdy=aphy*loc_yg(jj,3,imody)
     do i=i1,n1p
      ii=i-2
-     sdx=loc_xg(ii,3,imodx)*aph1
      ef(i,j,k,1)=ef(i,j,k,1)-&
-      sdz*(ef(i,j,k,5)-ef(i,j,k-1,5))
+     sdz*(ef(i,j,k,5)-ef(i,j,k-1,5))
      ef(i,j,k,2)=ef(i,j,k,2)+sdz*(ef(i,j,k,4)-ef(i,j,k-1,4))
      ef(i,j,k,3)=ef(i,j,k,3)+&
-      sdx*(ef(i,j,k,5)-ef(i-1,j,k,5))-&
-      sdy*(ef(i,j,k,4)-ef(i,j-1,k,4))
+     aph1*(ef(i,j,k,5)-ef(i-1,j,k,5))-&
+     sdy*(ef(i,j,k,4)-ef(i,j-1,k,4))
     end do
     do i=i1+2,n1p-1
      ii=i-2
-     sdx=loc_xg(ii,3,imodx)*aph2
      ef(i,j,k,3)=ef(i,j,k,3)+&
-                sdx*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
+     aph2*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
     end do
    end do
   end do
@@ -4701,16 +4766,14 @@
    sdy=aphy*loc_yg(jj,3,imody)
    do i=i1,n1p
     ii=i-2
-    sdx=loc_xg(ii,3,imodx)*aph1
     ef(i,j,k,3)=ef(i,j,k,3)+&
-     sdx*(ef(i,j,k,5)-ef(i-1,j,k,5))-&
-     sdy*(ef(i,j,k,4)-ef(i,j-1,k,4))
+    aph1*(ef(i,j,k,5)-ef(i-1,j,k,5))-&
+    sdy*(ef(i,j,k,4)-ef(i,j-1,k,4))
    end do
    do i=i1+2,n1p-1
      ii=i-2
-     sdx=loc_xg(ii,3,imodx)*aph2
      ef(i,j,k,3)=ef(i,j,k,3)+&
-      sdx*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
+     aph2*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
     end do
    end do
  endif
@@ -5319,21 +5382,33 @@
  real(dp),intent(in) :: flx(:,:,:,:)
  real(dp),intent(inout) :: ef(:,:,:,:)
  integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,fcomp
+ integer(kind=4) :: flux_ind
  real(dp),intent(in) :: aphx,aphy,aphz
  integer :: i,ii,j,k,ic,j01,j02,k01,k02
- real(dp) :: vx,vy,vz
+ real(dp) :: vx,vy,vz,shy,shz
+ real(dp) :: dw(2),sl(2),sr(2),omgl(2),vv,s0
+ real(dp) :: vl,vr
+ real(dp),parameter :: eps=1.e-06
+ real(dp),dimension(2),parameter :: w03=(/1./3.,2./3./)
  real(dp),dimension(3),parameter :: lder=(/0.5,-2.,1.5/)
  real(dp),dimension(3),parameter :: rder=(/-1.5,2.,-0.5/)
  real(dp),dimension(4),parameter :: lder4=(/1./6.,-1.,0.5,1./3./)  ![i-2,i+1] stencil
  real(dp),dimension(4),parameter :: rder4=(/-1./3.,-0.5,1.,-1./6./)![i-1,i+2] stencil
 !=========================
-!Enter primitive variables in flux array (Px,Py,Pz,den,vx,vy,vz)
-!flcomp=fcomp+ndim components
+! Enter primitive variables in flux array flx(Px,Py,Pz,den,vx,vy,vz)
+! flcomp=fcomp+ndim components
+ flux_ind=1     !=1 for pure upwind   
+                !=2 for LxF fluxin density equation
  j01=j1
+ if(yl_bd)j01=j1+2
  j02=n2p
+ if(yr_bd)j02=n2p-2
  k01=k1
+ if(zl_bd)k01=k1+2
  k02=n3p
-!momenta-density
+ if(zr_bd)k02=n3p-2
+!===========================
+! momenta-density
  do k=k1,n3p
   do j=j1,n2p
    do ic=1,fcomp+1
@@ -5341,24 +5416,15 @@
      var(i,ic)=flx(i,j,k,ic)
     end do
    end do
-   call weno3_nc(fcomp+1,i1,n1p)
-   do ic=1,fcomp-1               !var=momenta
-    do i=i1+2,n1p-2
-     vx=var(i,fcomp+1)
-     ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*vx*(var(i,ic)-var(i-1,ic))
+   call weno3_nc(fcomp+1,i1,n1p,xl_bd,xr_bd)
+   do ic=1,fcomp               !var=momenta
+    do i=i1,n1p
+     ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*ww0(i,ic)
     end do
-   end do
-   ic=fcomp                     !var(ic)=vx*density
-   do i=i1+2,n1p-2
-    ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*(var(i,ic)-var(i-1,ic))
    end do
   end do
  end do
-!========== density flux
- call x_nc_boundary_closure ! boundary closere at i=i1,i1+1,i=n1p,n1p-1
-!=============== y-flux
- if(pe0y)call y_left_nc_boundary_closure  !boundary at j=j1,j1+1 ==> j01=j1+2
- if(pe1y)call y_right_nc_boundary_closure !boundary at n2p,n2p-1  ==> j02=n2p-2
+ !====================
  do k=k1,n3p
   do i=i1,n1p
    do ic=1,fcomp
@@ -5369,22 +5435,16 @@
    do j=j01-2,j02+2
     var(j,fcomp+1)=flx(i,j,k,fcomp+2)
    end do
-   call weno3_nc(fcomp+1,j01-2,j02+2)    !rec[flux][j01-1,ij02], [j1-1,n2p] for interior points
-   do ic=1,fcomp-1
+   call weno3_nc(fcomp+1,j01-2,j02+2,yl_bd,yr_bd)    !rec[flux][j01-1,j02+1]
+   do ic=1,fcomp
     do j=j01,j02
-     vy=var(j,fcomp+1)
-     ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*vy*(var(j,ic)-var(j-1,ic))
+     shy=aphy*loc_yg(j-2,3,imody)
+     ef(i,j,k,ic)=ef(i,j,k,ic)+shy*ww0(j,ic)
     end do
-   end do
-   ic=fcomp
-   do j=j01,j02
-    ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*(var(j,ic)-var(j-1,ic))
    end do
   end do
  end do
  if(ndim <3)return
- if(pe0z)call z_left_nc_boundary_closure  !boundary at k=k1,k1+1 ==> k01=k1+2
- if(pe1z)call z_right_nc_boundary_closure !boundary at k=n3-,n3p-1 ==> k02=n3p-2
  do j=j1,n2p
   do i=i1,n1p
    do ic=1,fcomp
@@ -5396,159 +5456,111 @@
    do k=k01-2,k02+2
     var(k,ic)=flx(i,j,k,ic+2)
    end do
-   call weno3_nc(fcomp+1,k01-2,k02+2)    !rec[flux][j01-1,ij02], [j1-1,n2p] for interior points
+   call weno3_nc(fcomp+1,k01-2,k02+2,zl_bd,zr_bd)
    do ic=1,fcomp-1
     do k=k01,k02
-     vz=var(k,fcomp+1)
-     ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*(var(k,ic)-var(k-1,ic))
+     shz=aphz*loc_zg(k-2,3,imodz)
+     ef(i,j,k,ic)=ef(i,j,k,ic)+shz*ww0(k,ic)
     end do
-   end do
-   ic=fcomp
-   do k=k01,k02
-    ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*(var(k,ic)-var(k-1,ic))
    end do
   end do
  end do
 !=================================
  contains
- subroutine x_nc_boundary_closure
- do k=k1,n3p
-  do j=j1,n2p
-   do i=i1,i1+1
-    vx=flx(i,j,k,fcomp+1)
-    if(vx <0.0)then
-     do ic=1,fcomp-1
-      do ii=1,3
-       ww(ii)=flx(i-1+ii,j,k,ic)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+vx*aphx*ww(ii)*rder(ii)
-      end do
-     end do
-     ic=fcomp
-     do ii=1,3
-      ww(ii)=flx(i-1+ii,j,k,ic)*flx(i-1+ii,j,k,fcomp+1)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*ww(ii)*rder(ii)
-     end do
-    endif
-   end do
-  end do
- end do
- do k=k1,n3p
-  do j=j1,n2p
-   do i=n1p-1,n1p
-    vx=flx(i,j,k,fcomp+1)
-    if(vx >0.0)then
-     do ic=1,fcomp-1
-      do ii=1,3
-       ww(ii)=flx(i-3+ii,j,k,ic)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+vx*aphx*ww(ii)*lder(ii)
-      end do
-     end do
-     ic=fcomp
-     do ii=1,3
-      ww(ii)=flx(i-3+ii,j,k,ic)*flx(i-3+ii,j,k,fcomp+1)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*ww(ii)*lder(ii)
-     end do
-    endif
-   end do
-  end do
- end do
-!=================================
- end subroutine x_nc_boundary_closure
- subroutine y_left_nc_boundary_closure
- do k=k1,n3p
-  do i=i1,n1p
-   do j=j1,j1+1
-    vy=flx(i,j,k,fcomp+2)
-    if(vy <0.0)then
-     do ic=1,fcomp-1
-      do ii=1,3
-       ww(ii)=flx(i,j-1+ii,k,ic)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+vy*aphy*ww(ii)*rder(ii)
-      end do
-     end do
-     ic=fcomp
-     do ii=1,3
-      ww(ii)=flx(i,j-1+ii,k,ic)*flx(i,j-1+ii,k,fcomp+2)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*ww(ii)*rder(ii)
-     end do
-    endif
-   end do
-  end do
- end do
- j01=j1+2
- end subroutine y_left_nc_boundary_closure
+  subroutine weno3_nc(nc,i1,np,lbd,rbd)
+  integer,intent(in)  :: nc,i1,np
+  logical,intent(in) :: lbd,rbd
+!  enter data [i1,np]
+  integer :: i,l,ic
 
- subroutine y_right_nc_boundary_closure
- do k=k1,n3p
-  do i=i1,n1p
-   do j=n2p-1,n2p
-    vy=flx(i,j,k,fcomp+2)
-    if(vy >0.0)then
-     do ic=1,fcomp-1
-      do ii=1,3
-       ww(ii)=flx(i,j-3+ii,k,ic)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+vy*aphy*ww(ii)*lder(ii)
-      end do
-     end do
-     ic=fcomp
-     do ii=1,3
-      ww(ii)=flx(i,j-3+ii,k,ic)*flx(i,j-3+ii,k,fcomp+2)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+aphy*ww(ii)*lder(ii)
-     end do
-    endif
-   end do
-  end do
- end do
- j02=n2p-2
- end subroutine y_right_nc_boundary_closure
-!====================
- subroutine z_left_nc_boundary_closure
- do j=j1,n2p
-  do i=i1,n1p
-   do k=k1,k1+1
-    vz=flx(i,j,k,fcomp+3)
-    if(vz <0.0)then
-     do ic=1,fcomp-1
-      do ii=1,3
-       ww(ii)=flx(i,j,k-1+ii,ic)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*ww(ii)*rder(ii)
-      end do
-     end do
-     ic=fcomp
-     do ii=1,3
-      ww(ii)=flx(i,j,k-1+ii,ic)*flx(i,j,k-1+ii,fcomp+3)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*ww(ii)*rder(ii)
-     end do
-    endif
-   end do
-  end do
- end do
- k01=k1+2
- end subroutine z_left_nc_boundary_closure
+!=======ENTER DATA [i1,np]
+!wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 
+!wr_{i+1/2}  uses stencil [i,i+1,i+2] in range [i=i1,np-2] 
+!            common interior points [i1+1,np-2
+!            Dw first derivative in range[i1+2,np-2]
+!            L-Boundary    Dw^r[i1+1] uses the [i1:i1+3] stencil for v<0
+!            R-Boundary    Dw^L[np-1] uses the [np-3:np1] stencil
+!===========================================
 
- subroutine z_right_nc_boundary_closure
- do j=j1,n2p
-  do i=i1,n1p
-   do k=n3p-1,n3p
-    vz=flx(i,j,k,fcomp+3)
-    if(vz >0.0)then
-     do ic=1,fcomp-1
-      do ii=1,3
-       ww(ii)=flx(i,j,k-3+ii,ic)
-       ef(i,j,k,ic)=ef(i,j,k,ic)+vz*aphz*ww(ii)*lder(ii)
-      end do
-     end do
-     ic=fcomp
-     do ii=1,3
-      ww(ii)=flx(i,j,k-3+ii,ic)*flx(i,j,k-3+ii,fcomp+3)
-      ef(i,j,k,ic)=ef(i,j,k,ic)+aphz*ww(ii)*lder(ii)
-     end do
-    endif
+  ic=nc-1
+  do i=i1,np
+   var(i,ic)=var(i,ic)*var(i,nc)  !in den array => den*v
+  end do
+!========== the flux for continuity equation  den*v
+  do ic=1,nc
+   do i=i1+1,np-1
+    dw(1)=var(i,ic)-var(i-1,ic)    !DW_{i-1/2}
+    dw(2)=var(i+1,ic)-var(i,ic)    !DW_{i+1/2}
+    omgl(1)=1./(dw(1)*dw(1)+eps)
+    omgl(2)=1./(dw(2)*dw(2)+eps)
+    sl(1)=w03(1)*omgl(1)
+    sl(2)=w03(2)*omgl(2)
+    sr(1)=w03(2)*omgl(1)
+    sr(2)=w03(1)*omgl(2)
+    s0=sl(1)+sl(2)
+    wl(i,ic)=var(i,ic)+0.5*(dw(1)*sl(1)+dw(2)*sl(2))/s0
+    s0=sr(1)+sr(2)
+    wr(i-1,ic)=var(i,ic)-0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
    end do
   end do
- end do
- k02=n3p-2
- end subroutine z_right_nc_boundary_closure
+!===================================
+  !upwind boundary derivatives
+  if(lbd)then
+   do ic=1,nc-2
+    do i=i1,i1+1
+    ww0(i,ic)=0.0
+     vv=var(i,nc)
+     if(vv <0.0)ww0(i,ic)=vv*dot_product(rder(1:3),var(i:i+2,ic))
+    end do
+   end do
+   ic=nc-1
+    do i=i1,i1+1
+     ww0(i,ic)=0.0
+     vv=var(i,nc)
+     if(vv <0.0)ww0(i,ic)=vv*dot_product(rder(1:3),var(i:i+2,ic))
+    !i=i1+1
+    !vv=var(i,nc)
+    !if(vv< 0.0)ww0(i,ic)=vv*(wr(i,ic)-wr(i-1,ic))
+    end do
+  end if
+  if(rbd)then
+   do ic=1,nc-2
+    do i=np-1,np
+     ww0(i,ic)=0.0
+     vv=var(i,ic)
+     if(vv >0.0)ww0(i,ic)=vv*dot_product(lder(1:3),var(i-2:i,ic))
+    end do
+   end do
+   ic=nc-1
+   do i=np-1,np
+    ww0(i,ic)=0.0
+    vv=var(i,ic)
+    if(vv >0.0)ww0(i,ic)=dot_product(lder(1:3),var(i-2:i,ic))
+   end do
+  endif
+!===================================
+!   UPWINDING at interior points
+  do ic=1,nc-1
+   do i=i1+1,np-2
+    vv=wr(i,nc)+wl(i,nc)
+    s0=sign(one_dp,vv)        !s0=1*sign(vv)
+    var(i,ic)=max(0.,s0)*wl(i,ic)-min(0.,s0)*wr(i,ic)
+   end do
+  end do
+  !  Derivatives
+   do ic=1,nc-2
+    !interior points momentum derivatives v*(p_{i+1/2}-p_{i-1/2})
+    do i=i1+2,np-2 
+     ww0(i,ic)=var(i,nc)*(var(i,ic)-var(i-1,ic))
+    end do
+   end do
+   ic=nc-1
+   !interior points density flux derivatives (nv)_{j+1/2}-(nv)_{j-1/2}
+   do i=i1+2,np-2 
+    ww0(i,ic)=var(i,ic)-var(i-1,ic)
+   end do
+  end subroutine weno3_nc
+!====================================
  end subroutine nc_fluid_density_momenta
  !================================
  !================================
@@ -5577,7 +5589,7 @@
       var(i,ic)=flx(i,j,k,ic)
      end do
     end do
-   call weno3(fcomp+1,i1,n1p)   !Exit rec[flux] [i1+1,n1p-2]
+   call weno3(fcomp+1,i1,n1p)   !ww0() first derivative
    do ic=1,fcomp
     do i=i1+2,n1p-2
      ef(i,j,k,ic)=ef(i,j,k,ic)+aphx*(var(i,ic)-var(i-1,ic))
@@ -5586,10 +5598,6 @@
   end do
  end do
 !========== density flux
-  call x_boundary_closure ! boundary closere at i=i1,i1+1,i=n1p,n1p-1
-!=============== y-flux
-  if(pe0y)call y_left_boundary_closure  !boundary at j=j1,j1+1 ==> j01=j1+2
-  if(pe1y)call y_right_boundary_closure !boundary at n2p,n2p-1  ==> j02=n2p-2
   do k=k1,n3p
    do i=i1,n1p
     do ic=1,fcomp

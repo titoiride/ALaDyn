@@ -627,6 +627,8 @@
   call fill_ebfield_yzxbdsdata(ef,i1,i2,j1,j2,k1,k2,1,nc,spr,spl)
   !======================
   ! Adds point data => spl to the left spr to the right
+  ! Sets periodic BCs for
+  ! iby,ibz,ibx =2
   !==================
  endif
  call field_xyzbd(ef,i1,i2,j1,j2,k1,k2,nc,spl,spr)
@@ -1959,7 +1961,7 @@
      envf(ix,iy,iz,2)*envf(ix,iy,iz,2))
     av(ix,iy,iz,1)=av(ix,iy,iz,1)+0.5*(env1f(ix,iy,iz,1)*env1f(ix,iy,iz,1)+&
      env1f(ix,iy,iz,2)*env1f(ix,iy,iz,2))
-    !av(1)=|A0|^2/2i+|A1|^2/2 at current t^n time level
+    !av(1)=|A0|^2/2+|A1|^2/2 at current t^n time level
    end do
   end do
  end do
@@ -1981,7 +1983,8 @@
  !=======================================
  !=============== ENV FLUID SECTION
  !=======================================
- subroutine update_adam_bash_fluid_variables(u,u0,flx,ef,dt_lp,i1,i2,j1,j2,k1,k2,lz0,init_time)
+ subroutine update_adam_bash_fluid_variables(u,u0,flx,ef,dt_lp,&
+                                            i1,i2,j1,j2,k1,k2,lz0,init_time)
  real(dp),intent(inout) :: u(:,:,:,:),u0(:,:,:,:)
  real(dp),intent(inout) :: ef(:,:,:,:),flx(:,:,:,:)
  real(dp),intent(in) :: dt_lp,lz0
@@ -2285,6 +2288,7 @@
    endif
   endif
  endif
+ !=================================
  ic=1
  Ltz=Lorentz_fact(ic)
  !Lorentz force on a particle => ebfp0(1:3), velocity ebfp0(3:4) stored
@@ -2300,9 +2304,10 @@
   !======================================
   ! exit jc(1)=|a|^2/2 at t^n
   !      jc(2:4)=grad|a|^2/2 at t^n
-  ! For two-color |a|^2= |a_0|^2+|a_1|^2
+  ! For two-color |A|^2= |A_0|^2+|A_1|^2
   !======================================
-  call set_env_acc(ebf,jc,spec(ic),ebfp,np,curr_ndim,dt_loc,xm,ym,zm)
+  ebfp(:,:)=0.0
+  call set_env_acc(ebf,jc,spec(ic),ebfp,np,curr_ndim,n_st,dt_loc,xm,ym,zm)
                             !call field_charge_multiply(spec(ic),ebfp,1,np,nfield)
   !exit ebfp(1:3)=q*[E+F] ebfp(4:6)=q*B/gamp, ebfp(7)=wgh/gamp at t^n
   !Lorentz force already multiplied by particle charge
@@ -2354,7 +2359,7 @@
  else
   call env_fields_average(env,jc,i1,i2,j1,nyf,k1,nzf,2,2)
  endif
- ! In jc(1)= F= |a|^2/2 +|a_1|/2 at t^{n+1/2}  in jc(2:4) grad[F]
+ ! In jc(1)= F= |A|^2/2 +|A_1|/2 at t^{n+1/2}  in jc(2:4) grad[F]
  if(Hybrid)then
   flux(i1:i2,j1:nyf,k1:nzf,curr_ndim+2)=jc(i1:i2,j1:nyf,k1:nzf,1)
   !stores in flux() fdim+1 last component env F data
@@ -2363,8 +2368,8 @@
   !=============================
   ! Exit p-interpolated field variables
   ! at time level t^{n+1/2} and positions at time t^n
-  ! in ebfp(1:3)=grad|a|^2/2 ebfp(4)=|a|^2/2 in 3D
-  ! in ebfp(1:2)=grad|a|^2/2 ebfp(3)=|a|^2/2 in 2D
+  ! in ebfp(1:3)=grad|A|^2/2 ebfp(4)=|A|^2/2 in 3D
+  ! in ebfp(1:2)=grad|A|^2/2 ebfp(3)=|A|^2/2 in 2D
   !=====================================
    call lpf_env_positions(spec(ic),ebfp,np,dt_loc,vbeam)
    if(ompe==0.0)return

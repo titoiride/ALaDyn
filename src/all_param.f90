@@ -151,7 +151,7 @@
  subroutine param
  ! sets general parameters and grid depending on initial conditions
  integer :: i, pml_size
- real(dp) :: bunch_charge_density,gvol,gvol_inv,nm_fact
+ real(dp) :: bunch_charge_density,gvol,gvol_inv,nm_fact,np_over_nmacro,ncell
  real(dp) :: aph_fwhm,c1_fact,c2_fact
 
  a_lpf(1:4)=1.
@@ -193,11 +193,11 @@
  if(model_id >4)str_flag=0
  if(str_flag==1)then           !size_of_stretch defined in phys_param module
   Stretch=.true.
-  ny_stretch=nint(real(ny,dp)*size_of_stretch_along_y)
+  ny_stretch=nint(real(ny,dp)*size_of_stretch_along_y)    !set to ny/6 
  endif
  if(str_flag==2)then
   Stretch=.true.
-  ny_stretch=nint(real(ny,dp)*size_of_stretch_along_y)
+  ny_stretch=nint(real(ny,dp)*1.5*size_of_stretch_along_y) !set to ny/4
  endif
  call grid_alloc(nx,nx_loc,ny,ny_loc,nz,nz_loc,ny_targ,&
                 pml_size,nprocy,nprocz,nprocx)
@@ -367,9 +367,11 @@
   Relativistic=.true.
   nfield=3
   curr_ndim=2
+  nbfield=4
   if(ndim > 2)then
    nfield=6
    curr_ndim=ndim
+   nbfield=6
   endif
   if(Circ_lp)then
    nfield=6
@@ -386,8 +388,10 @@
 !=======================
   ! Code Units for laser fields
   ncrit=pi/(rc0*lam0*lam0)      !critical density in units n0=10^21/cm^3=10^9/mu^3
-  n0_ref= 1.e03*ncrit*n_over_nc !initial density in e18/cc unit
+  n0_ref= 1.e03*ncrit*n_over_nc ! reference density in 10^18/cc=10^6/mu^3 unit
   nm_fact=ncrit*(1.e+9)         ! critical density (1/mu^3)
+  !n_over_nc*nm_fact = n0_ref*1.e+06=  background density in [1/mu^3]
+!===================================    
   oml=pi2/lam0               !laser frequency in unit c/l0
   om1=pi2/lam1               !laser frequency in unit c/l0
   lp_amp=a0*oml
