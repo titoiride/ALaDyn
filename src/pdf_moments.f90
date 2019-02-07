@@ -182,7 +182,7 @@
  integer, intent(in) ::  component1,  component2, number_bunch
  integer :: np_loc,i
  real(dp) :: mu_mean_local_1(1),mu_mean_local_2(1),mu_mean_1(1),mu_mean_2(1)
- real(dp) :: correlation_local(1),correlation(1)
+ real(dp) :: correlation_local(1),correlation(1),moment_local_1,moment_local_2
  real(dp) :: tot_weights_local(1)=0.0,tot_weights(1)=0.0
  real(dp) :: tot_weights2_local(1)=0.0,tot_weights2(1)=0.0
 
@@ -1161,6 +1161,7 @@ ENDDO
  real(dp) :: corr_y_py(1), corr_z_pz(1), corr_x_px(1) !correlation transverse plane
  real(dp) :: emittance_y(1), emittance_z(1) !emittance variables
  real(dp) :: weights_local(1),weights(1),total_charge(1)
+ real(dp) :: xmin_out,xmax_out,ymax_out
  integer :: ip,nInside_loc
  logical, allocatable :: mask(:)
 
