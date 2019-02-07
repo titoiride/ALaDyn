@@ -347,32 +347,50 @@
    endif
   end do
   case(3)
-  do n=1,np
-   inc=ion_ch_inc(n)
-   if(inc>0)then
-    wgh_cmp=spec(ic)%part(n,id_ch)
-    charge=-1
-    part_ind=-1
-    do i=1,inc
-     ii=ii+1
-     spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
-     call gasdev(u)
-     spec(1)%part(ii,4)=temp(1)*u
-     if(Symmetrization_pulse)then
+  if(Symmetrization_pulse)then
+   do n=1,np
+    inc=ion_ch_inc(n)
+    if(inc>0)then
+     wgh_cmp=spec(ic)%part(n,id_ch)
+     charge=-1
+     part_ind=-1
+     do i=1,inc
+      ii=ii+1
+      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
+      call gasdev(u)
+      spec(1)%part(ii,4)=temp(1)*u
       call random_number(u)
       a_symm=sp_field(n,1)*sqrt(2.0)
       spec(1)%part(ii,6)=sin(2.*pi*u)*a_symm
-     else
+      call gasdev(u)
+      spec(1)%part(ii,5)=sp_field(n,1)*u
+      spec(1)%part(ii,id_ch)=wgh_cmp
+     end do
+     np_el=np_el+inc
+    endif
+   end do
+  else
+   do n=1,np
+    inc=ion_ch_inc(n)
+    if(inc>0)then
+     wgh_cmp=spec(ic)%part(n,id_ch)
+     charge=-1
+     part_ind=-1
+     do i=1,inc
+      ii=ii+1
+      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
+      call gasdev(u)
+      spec(1)%part(ii,4)=temp(1)*u
       call gasdev(u)
       spec(1)%part(ii,6)=temp(3)*u
-     endif
-     call gasdev(u)
-     spec(1)%part(ii,5)=sp_field(n,1)*u
-     spec(1)%part(ii,id_ch)=wgh_cmp
-    end do
-    np_el=np_el+inc
-   endif
-  end do
+      call gasdev(u)
+      spec(1)%part(ii,5)=sp_field(n,1)*u
+      spec(1)%part(ii,id_ch)=wgh_cmp
+     end do
+     np_el=np_el+inc
+    endif
+   end do
+  endif
   end select
  loc_npart(imody,imodz,imodx,1)=np_el
  !============ Now create new_np_el electrons
