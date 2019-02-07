@@ -1609,19 +1609,19 @@
  endif
  end subroutine part_ionz_out
 !================================
- subroutine track_part_pdata_out(tnow,tk,pid)
+ subroutine track_part_pdata_out(tnow,tk)
 
  character(12),parameter :: tpart='El_track_out'
  character(14) :: fname
  character(23) :: fname_out
  real(dp),intent(in) :: tnow
- integer,intent(in) :: tk,pid
+ integer,intent(in) :: tk
  real(sp),allocatable :: pdata(:)
  integer :: ik,p,q,ip,ip_max,it,tot_tpart
- integer :: lenp,ip_loc(npe),ndv,i_end
+ integer :: lenp,ndv,i_end
  integer(offset_kind) :: disp
  character(4) :: folderName
- integer,parameter :: file_version = 4
+ !integer,parameter :: file_version = 4
 
  write (folderName,'(i4.4)') iout
 
@@ -2644,112 +2644,110 @@
  end subroutine envar
  !--------------------------
  subroutine bunch_corr(bch,np_loc,np_norm,bcorr)
-  real(dp),intent(in) :: bch(:,:)
-  integer,intent(in) :: np_loc
-  real(dp),intent(out) :: bcorr(16)
-  real(dp),intent(in) :: np_norm
-
-  integer :: ik,ic,kk,ndv
-  real(dp) :: gmb,pp(3),mu(7),ekt(9),ekm(9)
-  real(dp) :: corr2(8),emy,emz,dgam,w_norm
- !=====================
-  bcorr=0.0
-  mu=0.0
-  corr2=0.0
-  ndv=2*curr_ndim
-  ekt=0.0
-  if(np_loc>0)then
-   if(curr_ndim==2)then
-    do kk=1,np_loc
-     wgh_cmp=bch(kk,5)
-     ekt(1:2)=ekt(1:2)+wgh*bch(kk,1:2)     !<w*X>  <w*Y>
-     pp(1:2)=bch(kk,3:4)
-     ekt(3)=ekt(3)+wgh*pp(1)
-     ekt(4)=ekt(4)+wgh*pp(2)
-     gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
-     ekt(ndv+1)=ekt(ndv+1)+wgh*gmb
-     ekt(8)=ekt(8)+wgh
+ real(dp),intent(in) :: bch(:,:)
+ integer,intent(in) :: np_loc
+ real(dp),intent(out) :: bcorr(16)
+ real(dp),intent(in) :: np_norm
+ integer :: ik,kk,ndv
+ real(dp) :: gmb,pp(3),mu(7),ekt(9),ekm(9)
+ real(dp) :: corr2(8),emy,emz,dgam,w_norm
+!=====================
+ bcorr=0.0
+ mu=0.0
+ corr2=0.0
+ ndv=2*curr_ndim
+ ekt=0.0
+ if(np_loc>0)then
+  if(curr_ndim==2)then
+   do kk=1,np_loc
+    wgh_cmp=bch(kk,5)
+    ekt(1:2)=ekt(1:2)+wgh*bch(kk,1:2)     !<w*X>  <w*Y>
+    pp(1:2)=bch(kk,3:4)
+    ekt(3)=ekt(3)+wgh*pp(1)
+    ekt(4)=ekt(4)+wgh*pp(2)
+    gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
+    ekt(ndv+1)=ekt(ndv+1)+wgh*gmb
+    ekt(8)=ekt(8)+wgh
+   end do
+   ekt(7)=ekt(ndv+1)  !<w*gam>
+   ekt(6)=0.0         !<w*Pz>
+   ekt(5)=ekt(4)      !<w*Py>
+   ekt(4)=ekt(3)      !<w*Px>
+   ekt(3)=0.0          !<w*z>
+  else
+   do kk=1,np_loc
+    wgh_cmp=bch(kk,7)
+    ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3) ! weight*(X,Y,Z) coordinates
+    pp(1:3)=bch(kk,4:6)
+    gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
+    ekt(4:6)=ekt(4:6)+wgh*pp(1:3)
+    ekt(7)=ekt(7)+wgh*gmb
+    ekt(8)=ekt(8)+wgh
     end do
-    ekt(7)=ekt(ndv+1)  !<w*gam>
-    ekt(6)=0.0         !<w*Pz>
-    ekt(5)=ekt(4)      !<w*Py>
-    ekt(4)=ekt(3)      !<w*Px>
-    ekt(3)=0.0          !<w*z>
-   else
-    do kk=1,np_loc
-     wgh_cmp=bch(kk,7)
-     ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3) ! weight*(X,Y,Z) coordinates
-     pp(1:3)=bch(kk,4:6)
-     gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
-     ekt(4:6)=ekt(4:6)+wgh*pp(1:3)
-     ekt(7)=ekt(7)+wgh*gmb
-     ekt(8)=ekt(8)+wgh
-     end do
-   endif
   endif
-  call allreduce_dpreal(SUMV,ekt,ekm,8)
-    w_norm=np_norm
-  if(ekm(8) >0.0)w_norm=1./ekm(8)
+ endif
+ call allreduce_dpreal(SUMV,ekt,ekm,8)
+   w_norm=np_norm
+ if(ekm(8) >0.0)w_norm=1./ekm(8)
 !===================
-  mu(1:3)=w_norm*ekm(1:3) !weighted averages <(x,y,z)>
-  mu(4:7)=w_norm*ekm(4:7) !weighted averages <(Px,Py,Pz,gamma)>
-  !=========== 2th moments
-  ekm=0.0
-  ekt=0.0
-  if(np_loc>0)then
-   if(curr_ndim==2)then
-    do kk=1,np_loc
-     wgh_cmp=bch(kk,5)
-     ekt(1)=ekt(1)+wgh*bch(kk,1)*bch(kk,1)
-     ekt(2)=ekt(2)+wgh*bch(kk,2)*bch(kk,2)
-     pp(1:2)=bch(kk,3:4)
-     ekt(3)=ekt(3)+wgh*pp(1)*pp(1)    !<w*p*p>
-     ekt(4)=ekt(4)+wgh*pp(2)*pp(2)
-     ekt(7)=ekt(7)+wgh*pp(2)*bch(kk,2)  !<y*w*py>
-     gmb=1.+pp(1)*pp(1)+pp(2)*pp(2)
-     ekt(9)=ekt(9)+wgh*gmb       !<w*gam**2>
-    end do
-    ekt(6)=0.0         !<Pz*Pz>
-    ekt(8) =0.0        !<z*Pz)
-    ekt(5)=ekt(4)      !<Py*Py>
-    ekt(4)=ekt(3)      !<Px*Px>
-    ekt(3)=0.0         !<z*z>
-   else
-    do kk=1,np_loc
-     wgh_cmp=bch(kk,7)
-     ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3)*bch(kk,1:3)
-     pp(1:3)=bch(kk,4:6)
-     ekt(4:6)=ekt(4:6)+wgh*pp(1:3)*pp(1:3)
-     ekt(7)=ekt(7)+wgh*pp(2)*bch(kk,2)  !<y*w*py>
-     ekt(8)=ekt(8)+wgh*pp(3)*bch(kk,3)  !<z*w*pz>
-     gmb=wgh*(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
-     ekt(9)=ekt(9)+gmb                                !<(w*gam**2>
-    end do
-   endif
+ mu(1:3)=w_norm*ekm(1:3) !weighted averages <(x,y,z)>
+ mu(4:7)=w_norm*ekm(4:7) !weighted averages <(Px,Py,Pz,gamma)>
+ !=========== 2th moments
+ ekm=0.0
+ ekt=0.0
+ if(np_loc>0)then
+  if(curr_ndim==2)then
+   do kk=1,np_loc
+    wgh_cmp=bch(kk,5)
+    ekt(1)=ekt(1)+wgh*bch(kk,1)*bch(kk,1)
+    ekt(2)=ekt(2)+wgh*bch(kk,2)*bch(kk,2)
+    pp(1:2)=bch(kk,3:4)
+    ekt(3)=ekt(3)+wgh*pp(1)*pp(1)    !<w*p*p>
+    ekt(4)=ekt(4)+wgh*pp(2)*pp(2)
+    ekt(7)=ekt(7)+wgh*pp(2)*bch(kk,2)  !<y*w*py>
+    gmb=1.+pp(1)*pp(1)+pp(2)*pp(2)
+    ekt(9)=ekt(9)+wgh*gmb       !<w*gam**2>
+   end do
+   ekt(6)=0.0         !<Pz*Pz>
+   ekt(8) =0.0        !<z*Pz)
+   ekt(5)=ekt(4)      !<Py*Py>
+   ekt(4)=ekt(3)      !<Px*Px>
+   ekt(3)=0.0         !<z*z>
+  else
+   do kk=1,np_loc
+    wgh_cmp=bch(kk,7)
+    ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3)*bch(kk,1:3)
+    pp(1:3)=bch(kk,4:6)
+    ekt(4:6)=ekt(4:6)+wgh*pp(1:3)*pp(1:3)
+    ekt(7)=ekt(7)+wgh*pp(2)*bch(kk,2)  !<y*w*py>
+    ekt(8)=ekt(8)+wgh*pp(3)*bch(kk,3)  !<z*w*pz>
+    gmb=wgh*(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
+    ekt(9)=ekt(9)+gmb                                !<(w*gam**2>
+   end do
   endif
-  call allreduce_dpreal(SUMV,ekt,ekm,9)
-  ekm(1:9)=w_norm*ekm(1:9)
-
-  do ik=1,6
-   corr2(ik)=ekm(ik)-mu(ik)*mu(ik)   !<UU>-<U><U>   U[X,Y,Z,Px,Py,Pz]
-  end do
-  corr2(7)=ekm(7)-mu(2)*mu(5)
-  corr2(8)=ekm(8)-mu(3)*mu(6)
-  !    emy^2= corr2_y*corr2_py -mixed
-  !<yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
-  emy=corr2(2)*corr2(5)-corr2(7)*corr2(7)
-  emz=corr2(3)*corr2(6)-corr2(8)*corr2(8)
-  gmb=mu(7)*mu(7)                  !<gam><gam>
-  dgam=0.0
-  if(gmb >0.0)dgam=ekm(9)/gmb -1.0
-  if(dgam >0.0)dgam=sqrt(dgam)   !Dgamm/gamma
-  bcorr(1:6)=mu(1:6)
-  bcorr(7:12)=corr2(1:6)
-  bcorr(13)=emy
-  bcorr(14)=emz
-  bcorr(15)=mu(7)
-  bcorr(16)=dgam
- !==========================
+ endif
+ call allreduce_dpreal(SUMV,ekt,ekm,9)
+ ekm(1:9)=w_norm*ekm(1:9)
+ do ik=1,6
+  corr2(ik)=ekm(ik)-mu(ik)*mu(ik)   !<UU>-<U><U>   U[X,Y,Z,Px,Py,Pz]
+ end do
+ corr2(7)=ekm(7)-mu(2)*mu(5)
+ corr2(8)=ekm(8)-mu(3)*mu(6)
+ !    emy^2= corr2_y*corr2_py -mixed
+ !<yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
+ emy=corr2(2)*corr2(5)-corr2(7)*corr2(7)
+ emz=corr2(3)*corr2(6)-corr2(8)*corr2(8)
+ gmb=mu(7)*mu(7)                  !<gam><gam>
+ dgam=0.0
+ if(gmb >0.0)dgam=ekm(9)/gmb -1.0
+ if(dgam >0.0)dgam=sqrt(dgam)   !Dgamm/gamma
+ bcorr(1:6)=mu(1:6)
+ bcorr(7:12)=corr2(1:6)
+ bcorr(13)=emy
+ bcorr(14)=emz
+ bcorr(15)=mu(7)
+ bcorr(16)=dgam
+!==========================
  end subroutine bunch_corr
 
  subroutine enbvar(nst,tnow)
@@ -2786,7 +2784,7 @@
  integer :: ik,np,p,q,id_ch
  real(dp) :: np_norm,bcorr(16),ekt(2),ekm(2)
  real(dp) :: pp(3),gam
- real(sp) :: dwgh,ch_ion
+ real(sp) :: ch_ion
 
  ik=0
  ch_ion=real(wgh_ion,sp)
@@ -2936,9 +2934,9 @@
   'Bx_max(GV/m)  ','By_max(GV/m)  ','Bz_max(GV/m)  ',&
   '  E2(x<X_t)   ','  B2(x<X_t)   ',&
   '  E2(x>X_t)   ','  B2(x>X_t)   '/)
- character(14),dimension(6), parameter:: lfenv=(/&
-  '  COM(1)      ','   COM(2)     ',' COM(3)       ','  COM(4)      ',&
-  '  COM(5)      ','   COM(6)     '/)
+!  character(14),dimension(6), parameter:: lfenv=(/&
+!   '  COM(1)      ','   COM(2)     ',' COM(3)       ','  COM(4)      ',&
+!   '  COM(5)      ','   COM(6)     '/)
  character(14),dimension(5), parameter:: fenv=(/&
   '  Env_max     ','   Centroid   ','  Env radius  ',' Env_energy   ','  Env_action  '/)
  !character(14),dimension(5), parameter:: flaser=(/&

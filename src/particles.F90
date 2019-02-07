@@ -505,7 +505,7 @@
  real(dp),intent(inout) :: pt_loc(:,:)
  integer,intent(in) :: n1,np,njc
  integer :: n
- real(dp) :: gam2,gam_inv
+ real(dp) :: gam2
 
 
   select case(njc)
@@ -596,7 +596,7 @@
   call set_local_positions(pt,1,np,n_st,2,xmn,ymn,zmn)
 !==========================
   do n=1,np
-   wght=pt(n,4)
+   wght=real(pt(n,4),sp)
    xp(1:2)=pt(n,1:2)
    xx=shx+xp(1)
    i=int(xx+0.5)
@@ -637,7 +637,7 @@
   call set_local_positions(pt,1,np,n_st,3,xmn,ymn,zmn)
   do n=1,np
    xp(1:3)=pt(n,1:3)
-   wght=pt(n,4)
+   wght=real(pt(n,4),sp)
    xx=shx+xp(1)
    i=int(xx+0.5)
    sx=xx-real(i,dp)
@@ -682,14 +682,14 @@
  end select
  end subroutine set_grid_charge
  !+++++++++++++++++++++++++++++++
- subroutine set_grid_charge_and_Jx(sp_loc,pt,den,np,ndm,n_st,dt_loc,xmn,ymn,zmn)
+ subroutine set_grid_charge_and_Jx(sp_loc,pt,den,np,ndm,dt_loc,xmn,ymn,zmn)
 
  type(species),intent(in) :: sp_loc
  real(dp),intent(inout) :: pt(:,:)
  real(dp),intent(inout) :: den(:,:,:,:)
- integer,intent(in) :: np,ndm,n_st
+ integer,intent(in) :: np,ndm
  real(dp),intent(in) :: dt_loc,xmn,ymn,zmn
- real(dp) :: dvol,dvol1,dvol2,wgh,gam
+ real(dp) :: dvol,dvol1,dvol2,gam
  real(dp) :: axh0(2),axh1(2)
  real(dp) :: ax0(3),ay0(3),ax1(3),ay1(3),az0(3),az1(3)
  integer :: i,j,i0,j0,i1,j1,i2,j2,k,k0,k1,k2,n
@@ -709,7 +709,7 @@
    pp(1:2)=sp_loc%part(n,3:4)
    gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))!gamma
    wgh_cmp=sp_loc%part(n,ch)
-   wght=0.5*charge*wgh
+   wght=real(0.5*charge*wgh,sp)
    pp(1:2)=pp(1:2)/gam                 !velocities
    pt(n,3)=pt(n,1)-dt_loc*pp(1)           !old positions
    pt(n,4)=pt(n,2)-dt_loc*pp(2)
@@ -756,7 +756,7 @@
    pp(1:3)=sp_loc%part(n,4:6)
    gam=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))!gamma
    wgh_cmp=sp_loc%part(n,ch)
-   wght=0.5*charge*wgh
+   wght=real(0.5*charge*wgh,sp)
    pp(1:3)=pp(1:3)/gam                 !velocities
    pt(n,4)=pt(n,1)-dt_loc*pp(1)           !old positions
    pt(n,5)=pt(n,2)-dt_loc*pp(2)
@@ -2303,7 +2303,7 @@
  real(dp),intent(in) :: xmn,ymn,zmn
 
  real(dp) :: xx,sx,sx2,dvol,eftot
- real(dp) :: axh(0:2),ayh(0:2),xp1(3),pp(3)
+ real(dp) :: axh(0:2),ayh(0:2),xp1(3)
  real(dp) :: ax1(0:2),ay1(0:2),azh(0:2),az1(0:2),ap(6)
  integer :: i,ih,j,jh,i1,j1,i2,j2,k,kh,k1,k2,n
 
@@ -2863,7 +2863,7 @@
  integer,intent(in) :: np,ndm
  real(dp),intent(in) :: xmn,ymn,zmn
 
- real(dp) :: xx,sx,sx2,dvol,dvol1
+ real(dp) :: xx,sx,sx2,dvol
  real(dp) :: xp1(3),dxe,dye,dze
  real(dp) :: ax1(0:2),ay1(0:2),az1(0:2),ap(1)
  integer :: i,j,i1,j1,i2,j2,k,k1,k2,n

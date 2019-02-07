@@ -39,7 +39,7 @@
  character(9) :: fname_yz='         '
  character(9) :: fname_ebf='         '
  character(9) :: fname_env='         '
- character(9) :: fname_fl='          '
+ character(9) :: fname_fl='         '
  character(9) :: fname_part='         '
  character(11) :: fnamel_part='           '
  character(11) :: fnamel_ebf ='           '
@@ -52,14 +52,14 @@
  
  integer(offset_kind) :: disp,disp_col
  integer :: max_npt_size
- integer :: np,ic,ic1,lun,i,j,k,k1,k2,kk,ipe,lenbuff
+ integer :: np,ic,lun,i,j,k,kk,ipe,lenbuff
  integer :: nxf_loc,nyf_loc,nzf_loc,ndv
  integer :: npt_arr(npe,nsp),ip_loc(npe)
  integer :: loc_grid_size(npe),loc2d_grid_size(npe),lenw(npe)
  integer :: grid_size_max,grid2d_size_max
  integer :: env_cp,env1_cp,fl_cp,ebf_cp
  real(dp) :: rdata(10)
- integer :: ndata(10),nps_loc(4),nbs_loc(5)
+ integer :: ndata(10),nps_loc(4)
  integer :: dist_npy(npe_yloc,nsp),dist_npz(npe_zloc,nsp)
  !==============
  write (fname,'(a9)') 'Comm-data'
@@ -128,7 +128,7 @@
   endif
   if(imodz >0)then
    call mpi_send(loc_nptz,nsp,mpi_integer,pe0z,10+imodz, &
-			comm_col(2),error)
+   comm_col(2),error)
   else
    do ipe=1,npe_zloc-1
     call mpi_recv(loc_nptz,nsp,mpi_integer,ipe,10+ipe, &
@@ -163,7 +163,7 @@
 !==========================
  lun=10
  if(pe0)then
-		open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
+  open(lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
   write(lun)rdata(1:10)
   write(lun)ndata(1:10)
   write(lun)nptx(1:nsp)
@@ -347,7 +347,7 @@
   if(mype >0)disp=sum(lenw(1:mype))
   disp=8*disp
   call mpi_write_dp(send_buff,lenw(mype+1),disp,25,fname_out)
- 	if(pe0)write(6,*)'Incoming plasma target transverse distribution data dumped'
+  if(pe0)write(6,*)'Incoming plasma target transverse distribution data dumped'
  endif
  deallocate(send_buff)
 !====================
@@ -363,7 +363,7 @@
  character(9) :: fname_yz='         '
  character(9) :: fname_ebf='         '
  character(9) :: fname_env='         '
- character(9) :: fname_fl='          '
+ character(9) :: fname_fl='         '
  character(9) :: fname_part='         '
  character(11) :: fnamel_part='           '
  character(11) :: fnamel_ebf ='           '
@@ -373,12 +373,12 @@
  character(25) :: fname_out='                         '
  character(27) :: fnamel_out='                           '
  integer(offset_kind) :: disp,disp_col
- integer :: max_npt_size,npy_max,npz_max,ipe,npt_arr(npe,nsp)
- integer :: np,ic,ic1,lun,i,j,k,kk,k1,k2,jj,lenw(npe),lenbuff
- integer :: nxf_loc,nyf_loc,nzf_loc,ndv
+ integer :: max_npt_size,ipe,npt_arr(npe,nsp)
+ integer :: np,ic,lun,i,j,k,kk,k1,lenw(npe),lenbuff
+ integer :: ndv
  integer :: ip_loc(npe),loc_grid_size(npe),loc2d_grid_size(npe)
  integer :: grid_size_max,grid2d_size_max
- integer :: env_cp,env1_cp,fl_cp,ebf_cp,nypt(10),nzpt(10)
+ integer :: env_cp,env1_cp,fl_cp,ebf_cp
  integer :: ndata(10),nps_loc(4),np_max,n1_old
  integer :: n1_loc,n2_loc,n3_loc,nypt_max,nzpt_max
  integer :: dist_npy(npe_yloc,nsp),dist_npz(npe_zloc,nsp)
@@ -740,7 +740,7 @@
     end do
    end do
   end do
-		if(pe0)write(6,*)'Particles data read'
+  if(pe0)write(6,*)'Particles data read'
  endif                   !end of part read
 !============================================
  deallocate(recv_buff)
