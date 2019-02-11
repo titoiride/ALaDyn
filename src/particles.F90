@@ -5203,11 +5203,9 @@
  real(sp) :: wght
  integer :: i,j,i0,j0,i1,j1,i2,j2,n
  integer :: ih0,jh0,ih,jh
- logical :: set_den
  !=======================
- set_den=.false.
- if(size(jc,4)>njc)set_den=.true.
-
+ !Enter pt(3:4) old x-y positions
+ !=====================================
  if(ndm <2)then
   j2=1
   do n=n0,np
@@ -5261,14 +5259,6 @@
     i2=i+i1
     jcurr(i2,j2,1,2)=jcurr(i2,j2,1,2)+vp(2)*ax1(i1)
    end do
-   if(set_den)then
-    do i1=1,3
-     i2=i+i1
-     jcurr(i2,j2,1,3)=jcurr(i2,j2,1,3)+vp(3)*ax1(i1)
-     i2=i0+i1
-     jcurr(i2,j2,1,3)=jcurr(i2,j2,1,3)-vp(3)*ax0(i1)
-    end do
-   endif
   end do
   !=============
   return
@@ -5292,32 +5282,66 @@
   do n=n0,np
    wgh_cmp=loc_sp%part(n,5)
    wght=charge*wgh                   !w*q for  q=e, ion_charge
-   vp(1)=wght*pt(n,1)                !q*wgh*dt*Vx also in comoving
    vp(2)=wght*pt(n,5)*loc_sp%part(n,4)    !dt*q*wgh*Vy
-   vp(1:2)=0.5*vp(1:2)               !1/2 * V*q*wgh*dt
+   vp(2)=0.5*vp(2)               !1/2 * V*q*wgh*dt
 
    pt(n,1)=loc_sp%part(n,1)          !new x position
    xp1(1)=dx_inv*(pt(n,1)-xmn)
-   xp0(1)=dx_inv*(pt(n,3)-xmn)
+   xp0(1)=dx_inv*(pt(n,3)-xmn)       !old x position
 !============================
    xp1(2)=pt(n,2)                !norm new and y-positions
    xp0(2)=pt(n,4)
 
-   call ql_interpolate(xp0,ax0,axh0,ay0,ayh0,i0,j0,ih0,jh0)
-   call ql_interpolate(xp1,ax1,axh1,ay1,ayh1,i,j,ih,jh)
-   !===============[Jx   Jy  rho^(new}]==============
+   ax=shx+xp0(1)
+   i0=int(ax+0.5)
+   sx=ax-real(i0,dp)
+   sx2=sx*sx
+   ax0(2)=0.75-sx2
+   ax0(3)=0.5*(0.25+sx2+sx)
+   ax0(1)=1.-ax0(3)-ax0(2)
+
+   ax=shx+xp1(1)
+   i=int(ax+0.5)
+   sx=ax-real(i,dp)
+   sx2=sx*sx
+   ax1(2)=0.75-sx2
+   ax1(3)=0.5*(0.25+sx2+sx)
+   ax1(1)=1.-ax1(3)-ax1(2)
+
+   i=i-1
+   i0=i0-1
+
+   ax=shy+xp0(2)
+   j0=int(ax+0.5)
+   sx=ax-real(j0,dp)
+   sx2=sx*sx
+   ay0(2)=0.75-sx2
+   ay0(3)=0.5*(0.25+sx2+sx)
+   ay0(1)=1.-ay0(3)-ay0(2)
+   !=========
+   ax=shy+xp1(2)
+   j=int(ax+0.5)
+   sx=ax-real(j,dp)
+   sx2=sx*sx
+   ay1(2)=0.75-sx2
+   ay1(3)=0.5*(0.25+sx2+sx)
+   ay1(1)=1.-ay1(3)-ay1(2)
+   !-----------
+   j0=j0-1
+   j=j-1
+   !===============[Jx=  rho^{new} - rho_{old}==============
    do j1=1,3
-    j2=j0+j1
-    dvol(1)=vp(1)*ay0(j1)
-    do i1=1,2
-     i2=ih0+i1
-     jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)+dvol(1)*axh0(i1)
-    end do
     j2=j+j1
-    dvol(1)=vp(1)*ay1(j1)
-    do i1=1,2
-     i2=ih+i1
-     jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)+dvol(1)*axh1(i1)
+     dvol(1)=wght*ay1(j1)
+     do i1=1,3
+      i2=i+i1
+      jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)+dvol(1)*ax1(i1)
+     end do
+     j2=j0+j1
+     dvol(1)=wght*ay0(j1)
+     do i1=1,3
+      i2=i0+i1
+      jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)-dvol(1)*ax0(i1)
     end do
    end do
    !=============
@@ -5335,22 +5359,6 @@
      jcurr(i2,j2,1,2)=jcurr(i2,j2,1,2)+dvol(2)*ax1(i1)
     end do
    end do
-   if(set_den)then
-    do j1=1,3
-     j2=j+j1
-     dvol(1)=wght*ay1(j1)
-     do i1=1,3
-      i2=i+i1
-      jcurr(i2,j2,1,3)=jcurr(i2,j2,1,3)+dvol(1)*ax1(i1)
-     end do
-     j2=j0+j1
-     dvol(1)=wght*ay0(j1)
-     do i1=1,3
-      i2=i0+i1
-      jcurr(i2,j2,1,3)=jcurr(i2,j2,1,3)-dvol(1)*ax0(i1)
-     end do
-    end do
-   endif
   end do
   !==============
  case(3)  !2D +3V
@@ -5418,35 +5426,37 @@
    !-----------
    j0=j0-1
    j=j-1
-   !===============[Jx  Jy  Jz rho]==================
-   do j1=1,3
+   !===============[Jx=Drho]==================
+   do j=1,3
+    j2=j+j1
+    dvol(1)=wght*ay1(j1)
+    do i1=1,3
+     i2=i+i1
+     jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)+dvol(1)*ax1(i1)
+    end do
     j2=j0+j1
-    dvol(1:3)=vp(1:3)*ay0(j1)
+    dvol(1)=wght*ay0(j1)
     do i1=1,3
      i2=i0+i1
-     jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)+dvol(1)*ax0(i1)
+     jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)-dvol(1)*ax0(i1)
+    end do
+   end do
+   do j1=1,3
+   j2=j0+j1
+    dvol(2:3)=vp(2:3)*ay0(j1)
+    do i1=1,3
+     i2=i0+i1
      jcurr(i2,j2,1,2)=jcurr(i2,j2,1,2)+dvol(2)*ax0(i1)
      jcurr(i2,j2,1,3)=jcurr(i2,j2,1,3)+dvol(3)*ax0(i1)
     end do
     j2=j+j1
-    dvol(1:3)=vp(1:3)*ay1(j1)
+    dvol(2:3)=vp(2:3)*ay1(j1)
     do i1=1,3
      i2=i+i1
-     jcurr(i2,j2,1,1)=jcurr(i2,j2,1,1)+dvol(1)*ax1(i1)
      jcurr(i2,j2,1,2)=jcurr(i2,j2,1,2)+dvol(2)*ax1(i1)
      jcurr(i2,j2,1,3)=jcurr(i2,j2,1,3)+dvol(3)*ax1(i1)
     end do
    end do
-   if(set_den)then
-    do j=1,3
-     j2=j+j1
-     dvol(1)=wght*ay1(j1)
-     do i1=1,3
-      i2=i+i1
-      jcurr(i2,j2,1,4)=jcurr(i2,j2,1,4)+dvol(1)*ax1(i1)
-     end do
-    end do
-   endif
   end do
  end select
  !============= Curr data on [0:n+3] extended range
@@ -5467,26 +5477,23 @@
  real(dp) :: axh0(0:1),axh1(0:1),ayh0(0:1),ayh1(0:1),azh0(0:1),azh1(0:1)
  real(sp) :: wght
  integer :: i,j,k,i0,j0,k0,i1,j1,k1,i2,j2,k2,n
- integer :: ih,jh,kh,ih0,jh0,kh0,ib_ind
- logical :: set_den
+ integer :: ih,jh,kh,ih0,jh0,kh0
  !=======================
- !
  ! WARNING: NO X-stretch allowed
  ! Current densities defined by alternating order (quadratic/linear) shapes
- ! Enter new and old positions.
+ ! Enter pt(4:6)=old positions sp_loc(1:3)=new positions
  !WARNING : to be used ONLY within the one cycle partcle integration scheme
+ !==========================================
+ ! Exit in jcurr(1:3) =[Drho,J_y,J_z]   !Drho= rho^{new}-rho^{old}
+ ! Component J_x recovered by enforcing the continuity equation on a grid
  !=============================================
- ib_ind=size(jc,4)
- set_den=.false.
- !============================
- if(ib_ind>3)set_den=.true.
  ax1(0:2)=zero_dp;ay1(0:2)=zero_dp
  az1(0:2)=zero_dp;az0(0:2)=zero_dp
  ax0(0:2)=zero_dp;ay0(0:2)=zero_dp
  axh0(0:1)=zero_dp;ayh0(0:1)=zero_dp
  azh0(0:1)=zero_dp;azh1(0:1)=zero_dp
  axh1(0:1)=zero_dp;ayh1(0:1)=zero_dp
-
+!====================================
  do n=n0,np
   pt(n,2:3)=sp_loc%part(n,2:3)  !(y,z) new
  end do
@@ -5502,12 +5509,10 @@
   call map3d_part_sind(pt,np,s_ind,5,6,ymn,zmn)
  endif
  do n=n0,np
-  vp(1)=pt(n,1)            !dt*V_x holds also comoving
   vp(2:3)=sp_loc%part(n,5:6)     !Momenta at t^{n+1/2}
   wgh_cmp=sp_loc%part(n,7)
   wght=real(charge*wgh,sp)       !w*q for  q=charge
   gam_inv=wght*pt(n,7)           !q*wgh*dt/gam
-  vp(1)=0.5*wght*vp(1)           !dt*q*wgh*V_x/2
   vp(2:3)=0.5*gam_inv*vp(2:3)    !wgh*q*dt*V factor 1/2 from density average
 
   pt(n,1)=sp_loc%part(n,1)  !(x) new
@@ -5594,17 +5599,30 @@
   k=k-1
   kh=k
   kh0=k0
-  !================Jx-Jy-Jz=============
+!======================in jcurr(1)=rho^new-rho_old
   do k1=0,2
+    k2=k+k1
+    do j1=0,2
+     j2=j+j1
+     dvol(1)=wght*ay1(j1)*az1(k1)
+     do i1=0,2
+      i2=i+i1
+      jcurr(i2,j2,k2,1)=jcurr(i2,j2,k2,1)+dvol(1)*ax1(i1)
+     end do
+    end do
    k2=k0+k1
    do j1=0,2
     j2=j0+j1
-    dvol(1)=vp(1)*ay0(j1)*az0(k1)
-    do i1=0,1
-     i2=ih0+i1
-     jcurr(i2,j2,k2,1)=jcurr(i2,j2,k2,1)+dvol(1)*axh0(i1)
+    dvol(1)=wght*ay0(j1)*az0(k1)
+    do i1=0,2
+     i2=i0+i1
+     jcurr(i2,j2,k2,1)=jcurr(i2,j2,k2,1)-dvol(1)*ax0(i1)
     end do
    end do
+   end do
+  !================Jy-Jz=============
+  do k1=0,2
+   k2=k0+k1
    do j1=0,1
     j2=jh0+j1
     dvol(2)=vp(2)*ayh0(j1)*az0(k1)
@@ -5614,14 +5632,6 @@
     end do
    end do
    k2=k+k1
-   do j1=0,2
-    j2=j+j1
-    dvol(1)=vp(1)*ay1(j1)*az1(k1)
-    do i1=0,1
-     i2=ih+i1
-     jcurr(i2,j2,k2,1)=jcurr(i2,j2,k2,1)+dvol(1)*axh1(i1)
-    end do
-   end do
    do j1=0,1
     j2=jh+j1
     dvol(2)=vp(2)*ayh1(j1)*az1(k1)
@@ -5651,29 +5661,6 @@
     end do
    end do
   end do
-  !============== rho^{n+1}- rho^n
-  if(set_den)then
-   do k1=0,2
-    k2=k+k1
-    do j1=0,2
-     j2=j+j1
-     dvol(1)=wght*ay1(j1)*az1(k1)
-     do i1=0,2
-      i2=i+i1
-      jcurr(i2,j2,k2,ib_ind)=jcurr(i2,j2,k2,ib_ind)+dvol(1)*ax1(i1)
-     end do
-    end do
-    k2=k0+k1
-    do j1=0,2
-     j2=j0+j1
-     dvol(1)=wght*ay0(j1)*az0(k1)
-     do i1=0,2
-      i2=i0+i1
-      jcurr(i2,j2,k2,ib_ind)=jcurr(i2,j2,k2,ib_ind)-dvol(1)*ax0(i1)
-     end do
-    end do
-   end do
-  endif
  end do
  !============= Curr and density data on [0:n+3] extended range
  end subroutine ncdef_3d_curr

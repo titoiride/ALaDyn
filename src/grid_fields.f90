@@ -54,7 +54,7 @@
  ! allocate auxiliary arrays ww() dw() and
  ndmx=max(nx,ny,nz)
  nd1mx=max(nx_loc,nx1_loc)
- allocate(ww(ndmx+5),ww0(ndmx+5,max(ny,nz)))
+ allocate(ww(ndmx+5),ww0(ndmx+5,5+max(ny_loc,nz_loc)))
  allocate(wr(ndmx+6,10),wl(ndmx+6,10))
  allocate(var(ndmx+5,10))
  var(:,:)=0.0
