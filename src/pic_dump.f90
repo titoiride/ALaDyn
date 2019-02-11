@@ -78,8 +78,12 @@
  loc_grid_size(mype+1)=nxf_loc*nyf_loc*nzf_loc  !allowing for different grid sizes among mpi_tasks
  loc2d_grid_size(mype+1)=nyf_loc*nzf_loc 
  lenbuff=ebf_cp
+
+ env_cp=0
+ env1_cp=0
+ fl_cp=0
+ ndv=0
  if(Envelope)then
-  env1_cp=0
   env_cp=size(env,4)
   if(Two_color)env1_cp=env_cp
   lenbuff=max(lenbuff,env_cp+env1_cp)
@@ -401,8 +405,10 @@
  loc_grid_size(mype+1)=n1_loc*n2_loc*n3_loc
  loc2d_grid_size(mype+1)=n2_loc*n3_loc
  lenbuff=ebf_cp
+ env_cp=0
+ env1_cp=0
+ fl_cp=0
  if(Envelope)then
-  env1_cp=0
   env_cp=size(env,4)
   if(Two_color)env1_cp=size(env1,4)
   lenbuff=max(lenbuff,env_cp+env1_cp)
