@@ -639,7 +639,7 @@
   dtdia=(tmax-tstart)/iene
   if(tmax >0.0)then
    iter_max=int(tmax/dt)
-   dt_loc=tmax/float(iter_max)
+   dt_loc=tmax/real(iter_max)
   endif
 
  case (1) ! reads from dump evolved data
@@ -658,7 +658,7 @@
   call set_fxgrid(npe_xloc,sh_ix)
   if(tmax >0.0)then
    iter_max=int(tmax/dt)
-   dt_loc=tmax/float(iter_max)
+   dt_loc=tmax/real(iter_max)
   endif
   dtout=tmax/nouts
   dtdia=tmax/iene

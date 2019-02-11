@@ -2492,7 +2492,7 @@
     do i=1,nxl(2)
      i0=i0+1
      !uu=-(float(i)-float(nxl(2)))/float(nxl(2))
-     uu=(float(i)-0.5)/float(nxl(2))
+     uu=(real(i)-0.5)/real(nxl(2))
      u2=uu*uu
      u3=u2*uu
      !fluid_x_profile(i0)=peak_fluid_density*exp(-4.5*uu*uu)
@@ -2507,7 +2507,7 @@
    if(nxl(4) >0)then
     do i=1,nxl(4)
      i0=i0+1
-     uu=peak_fluid_density*float(i)/nxl(4)
+     uu=peak_fluid_density*real(i)/nxl(4)
      fluid_x_profile(i0)=peak_fluid_density-uu*(1.-np2)
     end do
    endif
@@ -2521,7 +2521,7 @@
     if(nxl(1) >0)then            !a ramp 0==>np1
      do i=1,nxl(1)
       i0=i0+1
-      uu=(float(i)-float(nxl(1)))/float(nxl(1))
+      uu=(real(i)-real(nxl(1)))/real(nxl(1))
       fluid_x_profile(i0)=np1*peak_fluid_density*exp(-4.5*uu*uu)
      end do
     endif
@@ -2534,7 +2534,7 @@
     if(nxl(3) >0)then  ! a down ramp np1=> np2
      do i=1,nxl(3)
       i0=i0+1
-      uu=peak_fluid_density*float(i)/nxl(3)
+      uu=peak_fluid_density*real(i)/nxl(3)
       fluid_x_profile(i0)=np1*peak_fluid_density-uu*(np1-np2)
      end do
     endif
@@ -2547,7 +2547,7 @@
     if(nxl(5) >0)then
      do i=1,nxl(5)
       i0=i0+1
-      uu=peak_fluid_density*float(i)/nxl(5)
+      uu=peak_fluid_density*real(i)/nxl(5)
       fluid_x_profile(i0)=peak_fluid_density*np2*(1.-uu)
      end do
     endif
@@ -2563,7 +2563,7 @@
     if(nxl(1) >0)then
       do i=1,nxl(1)
        i0=i0+1
-       uu=(float(i)-0.5)/float(nxl(1))-one_dp
+       uu=(real(i)-0.5)/real(nxl(1))-one_dp
        fluid_x_profile(i0)=peak_fluid_density*&
        (np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))
       end do
@@ -2579,7 +2579,7 @@
     if(nxl(3) >0)then
       do i=1,nxl(3)
         i0=i0+1
-        uu=(real(i,dp)-0.5)/float(nxl(3))-one_dp
+        uu=(real(i,dp)-0.5)/real(nxl(3))-one_dp
         fluid_x_profile(i0)=peak_fluid_density*&
         (one_dp+(np2-one_dp)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))
       end do
@@ -2595,7 +2595,7 @@
     if(nxl(5) >0)then
       do i=1,nxl(5)
         i0=i0+1
-        uu=(real(i,dp)-0.5)/float(nxl(5))
+        uu=(real(i,dp)-0.5)/real(nxl(5))
         fluid_x_profile(i0)=peak_fluid_density*&
         cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
       end do

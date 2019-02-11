@@ -50,7 +50,7 @@
 
  if(LPf_ord >0)then
   cfl_loc=cfl
-  if(ndim >1)cfl_loc=cfl*yx_rat/sqrt(yx_rat*yx_rat+float(ndim)-1.)
+  if(ndim >1)cfl_loc=cfl*yx_rat/sqrt(yx_rat*yx_rat+real(ndim)-1.)
  endif
  call set_mat_der(cfl_loc,opt_der,nx,ny,nz,ndim,&
                   ibx,der_ord,ifilt,iform,Comoving)
