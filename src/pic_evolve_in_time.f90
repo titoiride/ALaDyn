@@ -2258,7 +2258,7 @@
       call set_field_ioniz_wfunction(&
       ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
      endif
-     call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
+     call ionization_cycle(spec(ic),ebfp,np,ic,1,de_inv)
     endif
    end do
   endif
@@ -2278,7 +2278,7 @@
        call set_field_ioniz_wfunction(&
        ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
       endif
-      call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
+      call ionization_cycle(spec(ic),ebfp,np,ic,1,de_inv)
      endif
     end do
    endif
