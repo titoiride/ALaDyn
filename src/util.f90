@@ -778,9 +778,9 @@
  real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,sigma_cut,dg,alpha
  real(dp),intent(in) :: x_cm,y_cm,z_cm,dx,dy,dz,particle_unit_charge
  real(dp),intent(inout) :: bunch(:,:)
- integer :: i,j,np,effecitve_cell_number,npart,npart_x,npart_y,npart_z,npart_tot,idx,ix,iy,iz
- real(dp) :: sigs(6),rnumber(n2-n1+1)
- real(dp) :: v1,rnd,a,xm,pxm,x,y,z
+ integer :: npart,npart_x,npart_y,npart_z,npart_tot,idx,ix,iy,iz
+ real(dp) :: rnumber(n2-n1+1)
+ real(dp) :: x,y,z
  real(dp), allocatable :: ppcb_positions(:,:)
 
    allocate(ppcb_positions(PRODUCT(ppcb),3))
@@ -808,11 +808,11 @@
                bunch(1,idx)=x
                bunch(2,idx)=y
                bunch(3,idx)=z
-               wgh = one_dp/PRODUCT(ppcb)
-               wgh = wgh*alpha
-               wgh = wgh*exp(-(x-x_cm)**2/2./s_x**2)
-               wgh = wgh*exp(-(y-y_cm)**2/2./s_y**2)
-               wgh = wgh*exp(-(z-z_cm)**2/2./s_z**2)
+               wgh = real(one_dp/PRODUCT(ppcb),sp)
+               wgh = real(wgh*alpha,sp)
+               wgh = real(wgh*exp(-(x-x_cm)**2/2./s_x**2),sp)
+               wgh = real(wgh*exp(-(y-y_cm)**2/2./s_y**2),sp)
+               wgh = real(wgh*exp(-(z-z_cm)**2/2./s_z**2),sp)
                charge = int(particle_unit_charge*(-1.0)*unit_charge(1), hp_int)
                bunch(7,idx)=wgh_cmp
                idx=idx+1
@@ -833,10 +833,10 @@
 
 !---*** BIGAUSSIAN bunch particle with the SAME WEIGHT ***---!
 subroutine generate_bunch_bigaussian_equal( &
- n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,sigma_cut,dg,bunch,dx,dy,dz,alpha,particle_unit_charge)
+ n1,n2,s_x,x_cm,s_y,y_cm,s_z,z_cm,gm,eps_y,eps_z,sigma_cut,dg,bunch,particle_unit_charge)
 integer,intent(in) :: n1,n2
-real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,dg,alpha,sigma_cut
-real(dp),intent(in) :: x_cm,y_cm,z_cm,dx,dy,dz,particle_unit_charge
+real(dp),intent(in) :: s_x,s_y,s_z,gm,eps_y,eps_z,dg,sigma_cut
+real(dp),intent(in) :: x_cm,y_cm,z_cm,particle_unit_charge
 real(dp),intent(inout) :: bunch(:,:)
 real(dp) :: rnumber(n2-n1+1)
 integer :: npart
@@ -863,15 +863,15 @@ end subroutine generate_bunch_bigaussian_equal
 
  !---*** TRIANGULAR-UNIFORM_R bunch, same number of particle per cell :: different weights ***---!
  subroutine generate_bunch_triangularZ_uniformR_weighted(n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-  gamma_m,eps_y,eps_z,sigma_cut,dgamma,bunch,Charge_right,Charge_left,dx,dy,dz,ppcb,particle_unit_charge)
+  gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,dx,dy,dz,ppcb,particle_unit_charge)
  integer,intent(in)   :: n1,n2,ppcb(3)
- real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz,sigma_cut
+ real(dp),intent(in)    :: x_cm,y_cm,z_cm,dx,dy,dz
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
  real(dp),intent(in)    :: Charge_right,Charge_left,particle_unit_charge
  real(dp),intent(inout)   :: bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
- integer :: i,cells,ix,iy,iz,idx,npart,npart_x,npart_y,npart_z,npart_tot,effecitve_cell_number
- real(dp) :: z,y,x,a,intercept,slope
+ integer :: ix,iy,iz,idx,npart,npart_x,npart_y,npart_z,npart_tot
+ real(dp) :: z,y,x
  real(dp), allocatable :: ppcb_positions(:,:)
 
 
@@ -922,9 +922,9 @@ idx=n1
  !---*** TRIANGULAR-UNIFORM_R bunch, all particle SAME WEIGHT ***---!
  subroutine generate_bunch_triangularZ_uniformR_equal( &
    n1,n2,x_cm,y_cm,z_cm,s_x,s_y,s_z,&
-   gamma_m,eps_y,eps_z,sigma_cut,dgamma,bunch,Charge_right,Charge_left,particle_unit_charge)
+   gamma_m,eps_y,eps_z,dgamma,bunch,Charge_right,Charge_left,particle_unit_charge)
  integer,intent(in)   :: n1,n2
- real(dp),intent(in)    :: x_cm,y_cm,z_cm,sigma_cut
+ real(dp),intent(in)    :: x_cm,y_cm,z_cm
  real(dp),intent(in)    :: s_x,s_y,s_z,gamma_m,eps_y,eps_z,dgamma
  real(dp),intent(in)    :: Charge_right,Charge_left,particle_unit_charge
  real(dp),intent(inout)   :: bunch(:,:)
@@ -977,8 +977,8 @@ idx=n1
  real(dp),intent(in)    :: Charge_right,Charge_left,particle_unit_charge
  real(dp),intent(inout)   :: bunch(:,:)
  real(dp) :: rnumber(n2-n1+1)
- integer :: i,ix,iy,iz,effecitve_cell_number,idx,npart,npart_x,npart_y,npart_z,npart_tot
- real(dp) :: x,a,intercept,slope,y,z
+ integer :: ix,iy,iz,idx,npart,npart_x,npart_y,npart_z,npart_tot
+ real(dp) :: x,y,z
  real(dp), allocatable :: ppcb_positions(:,:)
 
  allocate(ppcb_positions(PRODUCT(ppcb),3))
@@ -1038,7 +1038,7 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
   real(dp),intent(inout) :: bunch(:,:)
   real(dp) :: rnumber(n2-n1+1)
   integer :: i, npart
-  real(dp) :: z,y,x,a,intercept,slope
+  real(dp) :: x,a,intercept,slope
 
   do i=n1,n2+1
     call random_number(x)
@@ -1252,11 +1252,11 @@ subroutine generate_bunch_triangularZ_normalR_equal(n1,n2,x_cm,y_cm,z_cm,s_x,s_y
 
  subroutine bunch_twissrotation(n1,n2,generated_bunch, &
    Alpha_y_T,Beta_y_T,Alpha_z_T,Beta_z_T, &
-   s_y,s_z,eps_y,eps_z,x_cm,y_cm,z_cm)
+   s_y,s_z,eps_y,eps_z,y_cm,z_cm)
  integer,intent(in) :: n1,n2
  real(dp),intent(inout)   :: generated_bunch(:,:)
  real(dp),intent(in) :: Alpha_y_T,Beta_y_T,Alpha_z_T,Beta_z_T
- real(dp),intent(in) :: s_y,s_z,eps_y,eps_z,x_cm,y_cm,z_cm
+ real(dp),intent(in) :: s_y,s_z,eps_y,eps_z,y_cm,z_cm
  integer :: i
  real(dp) :: ay11,ay12,az11,az12
 

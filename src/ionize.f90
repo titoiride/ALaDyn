@@ -244,10 +244,10 @@
  end subroutine set_field_ioniz_wfunction
 
  !========================================
- subroutine ionization_electrons_inject(ion_ch_inc,ic,np,np_el,new_np_el)
+ subroutine ionization_electrons_inject(ion_ch_inc,ic,np,np_el)
 
  integer,intent(in) :: ion_ch_inc(:)
- integer,intent(in) :: ic,np,new_np_el
+ integer,intent(in) :: ic,np
  integer,intent(inout) :: np_el
  integer(sp) :: inc,id_ch
  real(dp) :: u,temp(3)
@@ -308,11 +308,11 @@
  !============ Now create new_np_el electrons
  end subroutine ionization_electrons_inject
 !=======================================
- subroutine env_ionization_electrons_inject(sp_field,ion_ch_inc,ic,np,np_el,new_np_el)
+ subroutine env_ionization_electrons_inject(sp_field,ion_ch_inc,ic,np,np_el)
 
  real(dp),intent(in) :: sp_field(:,:)
  integer,intent(in) :: ion_ch_inc(:)
- integer,intent(in) :: ic,np,new_np_el
+ integer,intent(in) :: ic,np
  integer,intent(inout) :: np_el
  integer(sp) :: inc,id_ch
  real(dp) :: u,temp(3)
@@ -347,32 +347,50 @@
    endif
   end do
   case(3)
-  do n=1,np
-   inc=ion_ch_inc(n)
-   if(inc>0)then
-    wgh_cmp=spec(ic)%part(n,id_ch)
-    charge=-1
-    part_ind=-1
-    do i=1,inc
-     ii=ii+1
-     spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
-     call gasdev(u)
-     spec(1)%part(ii,4)=temp(1)*u
-     if(Symmetrization_pulse)then
+  if(Symmetrization_pulse)then
+   do n=1,np
+    inc=ion_ch_inc(n)
+    if(inc>0)then
+     wgh_cmp=spec(ic)%part(n,id_ch)
+     charge=-1
+     part_ind=-1
+     do i=1,inc
+      ii=ii+1
+      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
+      call gasdev(u)
+      spec(1)%part(ii,4)=temp(1)*u
       call random_number(u)
       a_symm=sp_field(n,1)*sqrt(2.0)
       spec(1)%part(ii,6)=sin(2.*pi*u)*a_symm
-     else
+      call gasdev(u)
+      spec(1)%part(ii,5)=sp_field(n,1)*u
+      spec(1)%part(ii,id_ch)=wgh_cmp
+     end do
+     np_el=np_el+inc
+    endif
+   end do
+  else
+   do n=1,np
+    inc=ion_ch_inc(n)
+    if(inc>0)then
+     wgh_cmp=spec(ic)%part(n,id_ch)
+     charge=-1
+     part_ind=-1
+     do i=1,inc
+      ii=ii+1
+      spec(1)%part(ii,1:3)=spec(ic)%part(n,1:3)
+      call gasdev(u)
+      spec(1)%part(ii,4)=temp(1)*u
       call gasdev(u)
       spec(1)%part(ii,6)=temp(3)*u
-     endif
-     call gasdev(u)
-     spec(1)%part(ii,5)=sp_field(n,1)*u
-     spec(1)%part(ii,id_ch)=wgh_cmp
-    end do
-    np_el=np_el+inc
-   endif
-  end do
+      call gasdev(u)
+      spec(1)%part(ii,5)=sp_field(n,1)*u
+      spec(1)%part(ii,id_ch)=wgh_cmp
+     end do
+     np_el=np_el+inc
+    endif
+   end do
+  endif
   end select
  loc_npart(imody,imodz,imodx,1)=np_el
  !============ Now create new_np_el electrons
@@ -387,12 +405,11 @@
  integer,intent(in) :: np,ic
  integer,intent(inout) :: new_np_el
  integer,intent(inout) :: ion_ch_inc(:)
- real(dp),allocatable :: wpr(:)
- real(dp) :: ion_wch,p
+ real(dp) :: p
  integer :: n,nk,kk,z0
- integer :: kf,loc_inc,id_ch,sp_ion
- real(dp) :: energy_norm,ef_ion
-      !=====================
+ integer :: kf,id_ch,sp_ion
+ real(dp) :: ef_ion
+!=====================
  ! Units Ef_ion is in unit mc^2/e=2 MV/m
  ! Hence E0*Ef_ion, E0=0.51 is the electric field in MV/m
  ! The reference value in ADK formula is Ea= 1a.u. 0.514 MV/m,
@@ -421,16 +438,16 @@
    ion_ch_inc(n)=0
    call random_number(p)
    if(p < W_one_lev(nk,z0,sp_ion))then
-    charge=charge+1
+    charge=charge+int(1,hp_int)
     ion_ch_inc(n)=1                !the ionization electron count
     z0=z0+1
     sp_loc%part(n,id_ch)=wgh_cmp          !the new ion (id,z-chargei,wgh)
     ef_ion=1.5*amp_aux(n,1)/Vfact(z0,sp_ion)
     if(ef_ion >0.0)amp_aux(n,1)=sqrt(ef_ion)*amp_aux(n,2)!Delta*|A| on ion(n,ic)
     kk=kk+1
-     endif
+   endif
    !ion_ch_inc(n)=0 or 1
-    end do
+  end do
   new_np_el=kk
   !============= old ion charge stored in ebfp(id_ch)
  case(2)
@@ -442,10 +459,10 @@
  !================= Exit
  end subroutine part_ionize
  !
- subroutine ionization_cycle(sp_loc,sp_aux,np,ic,itloc,mom_id,def_inv)
+ subroutine ionization_cycle(sp_loc,sp_aux,np,ic,mom_id,def_inv)
  type(species),intent(inout) :: sp_loc
  real(dp),intent(inout) :: sp_aux(:,:)
- integer,intent(in) :: np,ic,itloc,mom_id
+ integer,intent(in) :: np,ic,mom_id
  real(dp),intent(in) :: def_inv
  integer :: id_ch,old_np_el,new_np_el,new_np_alloc,n,nk
  real(dp) :: ef2_ion,ef_ion
@@ -538,9 +555,9 @@
 !=========== and then Inject new electrons================
   select case(mom_id)
    case(0)
-   call ionization_electrons_inject(el_ionz_count,ic,np,old_np_el,new_np_el)
+   call ionization_electrons_inject(el_ionz_count,ic,np,old_np_el)
    case(1)
-   call env_ionization_electrons_inject(efp_aux,el_ionz_count,ic,np,old_np_el,new_np_el)
+   call env_ionization_electrons_inject(efp_aux,el_ionz_count,ic,np,old_np_el)
  end select
   endif
  !Ionization energy to be added to the plasma particles current

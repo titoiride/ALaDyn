@@ -261,11 +261,9 @@
  subroutine set_uniform_yz_distrib(nyh,nc)
 
  integer,intent(in) :: nyh,nc
- integer :: p,ip
  integer :: j,i,i1,i2,ic
- integer :: n_peak
  integer :: npyc(6),npzc(6),npty_ne,nptz_ne
- real(dp) :: yy,zz,dxip,dpy,dpz,np1_loc
+ real(dp) :: yy,zz,dxip,dpy,dpz
  real(dp) :: zp_min,zp_max,yp_min,yp_max
  integer :: nyl1,nzl1
  real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
@@ -283,6 +281,8 @@
  end do
  npty=maxval(npyc(1:nc))
  nptz=1
+ zp_min=zero_dp
+ zp_max=zero_dp
  if(ndim==3)then
   npzc(1:nc)=nyh*np_per_zc(1:nc)
   zp_min=zmin_t    !-Lz
@@ -2005,7 +2005,7 @@
  integer :: np_per_zcell(2),n_peak,ntubes
  integer :: npty_ne,nptz_ne
  integer :: npmax,nps_loc(2)
- real(dp) :: uu,dpy,dlpy,rat,whp
+ real(dp) :: uu,dpy,dlpy,rat
  real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
  real(dp) :: loc_ym,loc_ymx,loc_zm,loc_zmx
  real(dp) :: xfsh,r_int,r_ext
@@ -2274,7 +2274,7 @@
  !============
  do ic=1,nsp
   i2=loc_nptx(ic)
-  charge=int(unit_charge(ic))
+  charge=int(unit_charge(ic),hp_int)
   p=0
   do k1=1,loc_npty(ic)
    do i=1,i2
@@ -2492,7 +2492,7 @@
     do i=1,nxl(2)
      i0=i0+1
      !uu=-(float(i)-float(nxl(2)))/float(nxl(2))
-     uu=(float(i)-0.5)/float(nxl(2))
+     uu=(real(i)-0.5)/real(nxl(2))
      u2=uu*uu
      u3=u2*uu
      !fluid_x_profile(i0)=peak_fluid_density*exp(-4.5*uu*uu)
@@ -2507,7 +2507,7 @@
    if(nxl(4) >0)then
     do i=1,nxl(4)
      i0=i0+1
-     uu=peak_fluid_density*float(i)/nxl(4)
+     uu=peak_fluid_density*real(i)/nxl(4)
      fluid_x_profile(i0)=peak_fluid_density-uu*(1.-np2)
     end do
    endif
@@ -2521,7 +2521,7 @@
     if(nxl(1) >0)then            !a ramp 0==>np1
      do i=1,nxl(1)
       i0=i0+1
-      uu=(float(i)-float(nxl(1)))/float(nxl(1))
+      uu=(real(i)-real(nxl(1)))/real(nxl(1))
       fluid_x_profile(i0)=np1*peak_fluid_density*exp(-4.5*uu*uu)
      end do
     endif
@@ -2534,7 +2534,7 @@
     if(nxl(3) >0)then  ! a down ramp np1=> np2
      do i=1,nxl(3)
       i0=i0+1
-      uu=peak_fluid_density*float(i)/nxl(3)
+      uu=peak_fluid_density*real(i)/nxl(3)
       fluid_x_profile(i0)=np1*peak_fluid_density-uu*(np1-np2)
      end do
     endif
@@ -2547,7 +2547,7 @@
     if(nxl(5) >0)then
      do i=1,nxl(5)
       i0=i0+1
-      uu=peak_fluid_density*float(i)/nxl(5)
+      uu=peak_fluid_density*real(i)/nxl(5)
       fluid_x_profile(i0)=peak_fluid_density*np2*(1.-uu)
      end do
     endif
@@ -2563,7 +2563,7 @@
     if(nxl(1) >0)then
       do i=1,nxl(1)
        i0=i0+1
-       uu=(float(i)-0.5)/float(nxl(1))-one_dp
+       uu=(real(i)-0.5)/real(nxl(1))-one_dp
        fluid_x_profile(i0)=peak_fluid_density*&
        (np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))
       end do
@@ -2579,7 +2579,7 @@
     if(nxl(3) >0)then
       do i=1,nxl(3)
         i0=i0+1
-        uu=(real(i,dp)-0.5)/float(nxl(3))-one_dp
+        uu=(real(i,dp)-0.5)/real(nxl(3))-one_dp
         fluid_x_profile(i0)=peak_fluid_density*&
         (one_dp+(np2-one_dp)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))
       end do
@@ -2595,7 +2595,7 @@
     if(nxl(5) >0)then
       do i=1,nxl(5)
         i0=i0+1
-        uu=(real(i,dp)-0.5)/float(nxl(5))
+        uu=(real(i,dp)-0.5)/real(nxl(5))
         fluid_x_profile(i0)=peak_fluid_density*&
         cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
       end do
@@ -2786,10 +2786,10 @@
  if(lp_end(1) > xm)then
   if(G_prof)then
    call init_gprof_envelope_field(&
-              env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
+   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
   else
    call init_envelope_field(&
-              env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
+   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
    !call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
   endif
  endif
@@ -2802,10 +2802,10 @@
    if(lp_end(ic) > xm)then
     if(G_prof)then
      call init_gprof_envelope_field(&
-              env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2)
+     env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2)
     else
      call init_envelope_field(&
-              env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2)
+     env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2)
     endif
    endif
   end do
@@ -2821,10 +2821,10 @@
   if(lp_ionz_end > xm)then
    if(G_prof)then
     call init_gprof_envelope_field(&
-              env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
+    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
    else
     call init_envelope_field(&
-              env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
+    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
    endif
   endif
  endif
@@ -2872,18 +2872,18 @@
  !=======================
  np_tot=0
  do i=1,nsb
-   if(ppc_bunch(i,1)>0 .and. nb_tot(i)==-1) then
-      effecitve_cell_number=bunch_volume_incellnumber(bunch_shape(i),sxb(i),syb(i),syb(i),dx,dy,dz,sigma_cut_bunch(i))
-      nb_tot(i)=PRODUCT(ppc_bunch(i,:))*effecitve_cell_number
-      if(pe0) write(*,'(A,1I1,A)') 'bunch(',i,') :: weighted :: option'
-      if(pe0) write(*,'(A,1I1,A)') 'bunch(',i,') :: changing total number of particles :: equal number of ppc'
-      if(pe0) write(*,'(A,1I1,A,1I3,A,1I1,A,1I1,A,1I10)') &
-             'bunch(',i,') :: ppc =', ppc_bunch(i,1),'x',ppc_bunch(i,2),'x',ppc_bunch(i,3), &
-             ' :: total number of bunch particles =',nb_tot(i)
-   endif
-   if(ppc_bunch(i,1)==-1 .and. nb_tot(i)>0) then
-       if(pe0) write(*,'(A,1I1,A,1I10)') 'bunch(',i,') :: equal :: option (all particle have the same weight) =',nb_tot(i)
-   endif
+  if(ppc_bunch(i,1)>0 .and. nb_tot(i)==-1) then
+   effecitve_cell_number=bunch_volume_incellnumber(bunch_shape(i),sxb(i),syb(i),syb(i),dx,dy,dz,sigma_cut_bunch(i))
+   nb_tot(i)=int(PRODUCT(ppc_bunch(i,:))*effecitve_cell_number,sp)
+   if(pe0) write(*,'(A,1I1,A)') 'bunch(',i,') :: weighted :: option'
+   if(pe0) write(*,'(A,1I1,A)') 'bunch(',i,') :: changing total number of particles :: equal number of ppc'
+   if(pe0) write(*,'(A,1I1,A,1I3,A,1I1,A,1I1,A,1I10)') &
+   'bunch(',i,') :: ppc =', ppc_bunch(i,1),'x',ppc_bunch(i,2),'x',ppc_bunch(i,3), &
+   ' :: total number of bunch particles =',nb_tot(i)
+  endif
+  if(ppc_bunch(i,1)==-1 .and. nb_tot(i)>0) then
+   if(pe0) write(*,'(A,1I1,A,1I10)') 'bunch(',i,') :: equal :: option (all particle have the same weight) =',nb_tot(i)
+  endif
   np_tot=np_tot+nb_tot(i)
  end do
  cut=3.
@@ -2930,19 +2930,19 @@
                                syb(ip),zc_bunch(ip),&
                                gam(ip),&
                               epsy(ip),epsz(ip),sigma_cut_bunch(ip),&
-                              dg(ip),bpart,dx,dy,dz,rhob(ip), particle_charge(ip))
+                              dg(ip),bpart,particle_charge(ip))
    if(bunch_shape(ip)==2 .and. ppc_bunch(ip,1)>0) & !weighted-option
                           call generate_bunch_triangularZ_uniformR_weighted(i1,i2,&
                                xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),&
                                sxb(ip),syb(ip),syb(ip),gam(ip),&
-                               epsy(ip),epsz(ip),sigma_cut_bunch(ip),dg(ip),&
+                               epsy(ip),epsz(ip),dg(ip),&
                                bpart,Charge_right(ip),Charge_left(ip),dx,dy,dz, &
                                ppc_bunch(ip,1:3), particle_charge(ip))
    if(bunch_shape(ip)==2 .and. ppc_bunch(ip,1)==-1) & !equal-weight
                            call generate_bunch_triangularZ_uniformR_equal(i1,i2,&
                                 xc_bunch(ip),yc_bunch(ip),zc_bunch(ip),&
                                 sxb(ip),syb(ip),syb(ip),gam(ip),&
-                                epsy(ip),epsz(ip),sigma_cut_bunch(ip),dg(ip),&
+                                epsy(ip),epsz(ip),dg(ip),&
                                 bpart,Charge_right(ip),Charge_left(ip), particle_charge(ip))
    if(bunch_shape(ip)==3 .and. ppc_bunch(ip,1)>0) & !weighted-option
                            call generate_bunch_triangularZ_normalR_weighted(i1,i2,&
@@ -2961,7 +2961,7 @@
     !--- Twiss Rotation ---!
     if(L_TWISS(ip)) call bunch_twissrotation(i1,i2,bpart, &
       alpha_twiss(ip),beta_twiss(ip),alpha_twiss(ip),beta_twiss(ip), &
-      syb(ip),syb(ip),epsy(ip),epsz(ip),xc_bunch(ip),yc_bunch(ip),zc_bunch(ip))
+      syb(ip),syb(ip),epsy(ip),epsz(ip),yc_bunch(ip),zc_bunch(ip))
 
    i1=i2+1
   end do

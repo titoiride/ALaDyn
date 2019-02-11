@@ -829,7 +829,7 @@
  real(dp),intent(inout) :: curr(:,:,:,:),evf(:,:,:,:)
  real(dp),intent(in) :: dt_loc,omg
  integer,intent(in) :: i1,nxp,j1,nyp,k1,nzp
- integer :: i,j,k,ic
+ integer :: i,j,k
  integer :: nst,str,stl,cind,ib
 
  !====== enter env(3:4)=A^{n-1} and env(1:2)= A^{n}
@@ -1080,7 +1080,7 @@
 
  integer,intent(in) :: n0,np
  real(dp),intent(in) :: dt_lp,vb,Lfact
- integer :: p,ch
+ integer :: p,ch=0
  real(dp) :: alp,dth_lp,bb(3),pp(3),vp(3),vph(3),efp(6),b2,bv,gam02,gam2,gam
  !========================================
  ! uses exact explicit solution for
@@ -1171,7 +1171,7 @@
  real(dp),intent(in) :: t_loc,dt_loc
  integer,intent(in) :: iter_loc
  logical,intent(in) :: initial_time
- integer :: lp,ic,np,i1,i2,j1,j2,k1,k2,n_st,id_ch
+ integer :: ic,np,i1,i2,j1,j2,k1,k2,n_st,id_ch
  real(dp) :: xm,ym,zm,Ltz,ef2_ion(1),loc_ef2_ion(1)
  !============================
  xm=loc_xgrid(imodx)%gmin
@@ -1207,7 +1207,7 @@
       ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
      endif
     endif
-    call ionization_cycle(spec(ic),ebfp,np,ic,iter_loc,0,de_inv)
+    call ionization_cycle(spec(ic),ebfp,np,ic,0,de_inv)
    endif
    !======== injects new electrons.
   end do
@@ -1386,10 +1386,10 @@
  real(dp),intent(inout) :: ef(:,:,:,:),flx(:,:,:,:)
  real(dp),intent(in) :: dt_lp
  integer,intent(in) :: i1,i2,j1,j2,k1,k2,kst
- integer :: i,j,k,ic,str,stl,fdim,fldim
+ integer :: i,j,k,ic,fdim,fldim
  real(dp) :: pp(1:3),b1p,b1m,b1pp,b1mm
  real(dp) :: dt_rk,gam2,ch,gam_inv,lzf,apx,apy,apz,dtx,dty,dtz
- real(dp) ::dth,den,ex,ey,ez,bx,by,bz,qx,qy,qz,vx,vy,vz
+ real(dp) :: den,ex,ey,ez,bx,by,bz,qx,qy,qz,vx,vy
  real(dp),parameter :: wk1= 9./16.,wk2=-1./16.
  dt_rk=b_rk(kst)*dt_lp
  lzf=unit_charge(1)*dt_rk
@@ -1461,7 +1461,7 @@
   end do
  end do
 !=========================
- call rk_fluid_density_momenta(u,flx,i1,i2,j1,j2,k1,k2,fdim,fldim,apx,apy,apz)
+ call rk_fluid_density_momenta(u,flx,i1,i2,j1,j2,k1,k2,fdim,apx,apy)
  !in u() adds f(u) derivatives in yrange [j1+1,j2+1]
  ! u=u0+f(u)   flx[u^{k-1} unmodified
  call add_rk_lorentz_force      !exit u=u+(E+vxB)^{k-1}
@@ -1608,7 +1608,7 @@
                      ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
      endif
     endif
-    call ionization_cycle(spec(ic),ebfp,np,ic,itr,0,de_inv)
+    call ionization_cycle(spec(ic),ebfp,np,ic,0,de_inv)
    endif
     !======== injects new electrons.
   end do
@@ -1987,9 +1987,9 @@
  real(dp),intent(in) :: dt_lp,lz0
  integer,intent(in) :: i1,i2,j1,j2,k1,k2
  logical,intent(in) :: init_time
- integer :: i,j,k,ic,ic1,str,stl,fdim,fldim
- real(dp) :: pp(1:3),den,gam2,ch,gam_inv,lzf,apx,apy,apz
- real(dp) :: ex,ey,ez,bx,by,bz,vx,vy,vz,qx,qy,qz,b1p,b1m
+ integer :: i,j,k,ic,str,stl,fdim,fldim
+ real(dp) :: den,ch,lzf,apx,apy,apz
+ real(dp) :: ex,ey,ez,bx,by,bz,vx,vy,vz,b1p,b1m
  real(dp),parameter :: wk1=0.5,eps=1.e-06
  real(dp) :: abf_0,abf_1
  !===================================
@@ -2073,7 +2073,6 @@
 !=========================
  contains
  subroutine add_lorentz_force
- real(dp) :: qp,qm
  do k=k1,k2
   do j=j1,j2
    do i=i1,i2
@@ -2120,14 +2119,14 @@
  end subroutine update_adam_bash_fluid_variables
 !===================
  subroutine fluid_curr_accumulate(flx,curr,dt_lp,i1,i2,j1,j2,k1,k2)
-  real(dp),intent(inout) :: flx(:,:,:,:),curr(:,:,:,:)
-  real(dp),intent(in) :: dt_lp
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2
-  integer :: i,j,k,ic,ic1,str,stl,fdim
-  real(dp) :: pp(1:3),den,gam2,ch,gam_inv
-  real(dp) :: dt2,qx,qy,qz,b1p,b1m,ar,ai,av2
-  real(dp),parameter :: wk1=0.5,eps=1.e-04
-
+ real(dp),intent(inout) :: flx(:,:,:,:),curr(:,:,:,:)
+ real(dp),intent(in) :: dt_lp
+ integer,intent(in) :: i1,i2,j1,j2,k1,k2
+ integer :: i,j,k,ic,fdim
+ real(dp) :: pp(1:3),den,gam2,ch,gam_inv
+ real(dp) :: qx,qy,qz,av2
+ real(dp),parameter :: wk1=0.5
+ !real(dp),parameter :: eps=1.e-04
 ! Enter fluid variables(px,py,pz,den) at t^{n+1/2} and flx(fdim+1)= |a|^2/2 at t^{n+1/2}
 ! In jc(1:3) enter Dt*J^{n+1/2} computed using particles.
  ch=dt_lp*wk1*unit_charge(1)
@@ -2221,7 +2220,7 @@
  integer,intent(in) :: it_loc
  logical,intent(in) :: initial_time
  integer :: np,ic,nyf,nzf,n_st
- integer :: lp,i1,j1,k1,i2,id_ch
+ integer :: i1,j1,k1,i2,id_ch
  real(dp) :: xm,ym,zm,Ltz,ef2_ion,loc_ef2_ion(2)
  !============================
  xm=loc_xgrid(imodx)%gmin
@@ -2259,7 +2258,7 @@
       call set_field_ioniz_wfunction(&
       ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
      endif
-     call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
+     call ionization_cycle(spec(ic),ebfp,np,ic,1,de_inv)
     endif
    end do
   endif
@@ -2279,7 +2278,7 @@
        call set_field_ioniz_wfunction(&
        ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
       endif
-      call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
+      call ionization_cycle(spec(ic),ebfp,np,ic,1,de_inv)
      endif
     end do
    endif
@@ -2367,7 +2366,7 @@
   ! in ebfp(1:2)=grad|a|^2/2 ebfp(3)=|a|^2/2 in 2D
   !=====================================
    call lpf_env_positions(spec(ic),ebfp,np,dt_loc,vbeam)
-   if(ompe==0.0)return
+   if(ompe==zero_dp)return
   !===========================
   !Computes x^{n+1}
   ! stores
@@ -2651,7 +2650,7 @@
  logical,intent(in) :: initial_time
  integer :: np,ic,lps
  integer :: i1,i2,j1,j2,k1,k2,n_st,id_ch
- real(dp) :: xm,ym,zm,vb,Ltz,ef2_ion(1),loc_ef2_ion(1)
+ real(dp) :: xm,ym,zm,vb,Ltz,ef2_ion,loc_ef2_ion
  !============================
  ! Fields are in ebf() (wake) and ebf_bunch() bunches
  ! particles are in spec(1)+ebfp plasma bunch(1:2)+ebfb (drive and witness)
@@ -2690,16 +2689,17 @@
     ebfp,np,n_st,ndim,xm,ym,zm)
     !?? End check
     if(mod(iter_loc,50)==0)then     !refresh ionization tables
-     loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
-     loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))/514.   !In atomic units
-     if(ef2_ion(1) > eb_max)then
-      eb_max=1.1*ef2_ion(1)
+     loc_ef2_ion=maxval(ebfp(1:np,id_ch))
+     loc_ef2_ion=sqrt(loc_ef2_ion)/514.   !In atomic units
+     ef2_ion=loc_ef2_ion
+     if(ef2_ion > eb_max)then
+      eb_max=1.1*ef2_ion
       call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,&
-                                     ionz_lev,ionz_model,eb_max,dt_loc)
+      ionz_lev,ionz_model,eb_max,dt_loc)
      endif
     endif
-   call ionization_cycle(&
-                        spec(ic),ebfp,np,ic,iter_loc,0,deb_inv)
+    call ionization_cycle(&
+    spec(ic),ebfp,np,ic,0,deb_inv)
    endif
   end do
   !======== injects new electrons, with weights equal to ion weights
