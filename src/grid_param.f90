@@ -524,6 +524,11 @@
    dy1(i)=1.
    dy1h(i)=1.
   end do
+!============== Stretched grid 
+!   index      [1:y_stretch]              [ns1:n2+1] 
+!   coordinate [y(1): sm=y(y_stretch+1]   [sp: y(n2+1)=ymax]
+!   unstretched: [y_stretch+1:ns1-1=n2+1-(y_stretch1)]
+!========================
   ns1=n2+1-y_stretch
   if(y_stretch>0)then
    dyi=aph/real(y_stretch,dp)
@@ -532,6 +537,10 @@
    sy_rat=dyi*dy_inv
    sm=y(y_stretch+1)
    sp=y(ns1)
+   str_ygrid%sind(1)=y_stretch
+   str_ygrid%sind(2)=ns1
+   str_ygrid%smin=sm
+   str_ygrid%smax=sp
    do i=1,y_stretch
     yy=dyi*real(i-1-y_stretch,dp)
     yyh=yy+0.5*dyi
@@ -549,10 +558,6 @@
     dy1(i)=cos(yy)*cos(yy)
    end do
   endif
-  str_ygrid%sind(1)=y_stretch
-  str_ygrid%sind(2)=ns1
-  str_ygrid%smin=y(y_stretch+1)
-  str_ygrid%smax=y(ns1)
   ymin=y(1)
   ymax=y(n2+1)
   Ly_box=ymax-ymin
@@ -590,6 +595,10 @@
    sz_rat=dzi*dz_inv
    sm=z(y_stretch+1)
    sp=z(ns1)
+   str_zgrid%sind(1)=y_stretch
+   str_zgrid%sind(2)=ns1
+   str_zgrid%smin=sm
+   str_zgrid%smax=sp
    do i=1,y_stretch
     yy=dzi*real(i-1-y_stretch,dp)
     yyh=yy+0.5*dzi
@@ -607,10 +616,6 @@
     dz1(i)=cos(yy)*cos(yy)
    end do
   endif
-  str_zgrid%sind(1)=y_stretch
-  str_zgrid%sind(2)=ns1
-  str_zgrid%smin=sm
-  str_zgrid%smax=sp
   zmin=z(1)
   zmax=z(n3+1)
   Lz_box=zmax-zmin
