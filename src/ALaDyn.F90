@@ -223,7 +223,7 @@
   endif
   if(P_tracking)then
    if(tk_ind >1)then
-   if(tk_ind <= track_tot_nstep)call track_part_pdata_out(tnow,tk_ind,1)
+   if(tk_ind <= track_tot_nstep)call track_part_pdata_out(tnow,tk_ind)
    endif
   endif
 !==================
@@ -526,7 +526,7 @@
  subroutine start
 
  integer :: nxp,nyp,nzp,ns_ioniz
- real(dp), parameter :: opt_der=1.0
+ !real(dp), parameter :: opt_der=1.0
 
  !enable loop to attach with gdb only if really needed
  !WARNING if enabled with no need, the program sleeps at start without doing anything!
@@ -639,7 +639,7 @@
   dtdia=(tmax-tstart)/iene
   if(tmax >0.0)then
    iter_max=int(tmax/dt)
-   dt_loc=tmax/float(iter_max)
+   dt_loc=tmax/real(iter_max)
   endif
 
  case (1) ! reads from dump evolved data
@@ -658,7 +658,7 @@
   call set_fxgrid(npe_xloc,sh_ix)
   if(tmax >0.0)then
    iter_max=int(tmax/dt)
-   dt_loc=tmax/float(iter_max)
+   dt_loc=tmax/real(iter_max)
   endif
   dtout=tmax/nouts
   dtdia=tmax/iene

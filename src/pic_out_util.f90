@@ -29,30 +29,29 @@
  contains
 !============================================
  subroutine loc_env_amp(envf,av)
-  real(dp),intent(in) :: envf(:,:,:,:)
-  real(dp),intent(out) :: av(:,:,:,:)
-  integer  :: i1,i2,j1,j2,k1,k2
-  integer  :: ix,iy,iz
-  !real(dp) :: ar,ai
-  !===================
-
-  i1=loc_xgrid(imodx)%p_ind(1)
-  i2=loc_xgrid(imodx)%p_ind(2)
-  j1=loc_ygrid(imody)%p_ind(1)
-  j2=loc_ygrid(imody)%p_ind(2)
-  k1=loc_zgrid(imodz)%p_ind(1)
-  k2=loc_zgrid(imodz)%p_ind(2)
+ real(dp),intent(in) :: envf(:,:,:,:)
+ real(dp),intent(out) :: av(:,:,:,:)
+ integer  :: i1,i2,j1,j2,k1,k2
+ integer  :: ix,iy,iz
+ !real(dp) :: ar,ai
+ !===================
+ i1=loc_xgrid(imodx)%p_ind(1)
+ i2=loc_xgrid(imodx)%p_ind(2)
+ j1=loc_ygrid(imody)%p_ind(1)
+ j2=loc_ygrid(imody)%p_ind(2)
+ k1=loc_zgrid(imodz)%p_ind(1)
+ k2=loc_zgrid(imodz)%p_ind(2)
 !========================
-  do iz=k1,k2
-   do iy=j1,j2
-    do ix=i1,i2
-     av(ix,iy,iz,1)=0.5*(envf(ix,iy,iz,1)*envf(ix,iy,iz,1)+&
-                         envf(ix,iy,iz,2)*envf(ix,iy,iz,2))
-                         !|A|^2/2 at current t^n time level
-    end do
+ do iz=k1,k2
+  do iy=j1,j2
+   do ix=i1,i2
+    av(ix,iy,iz,1)=0.5*(envf(ix,iy,iz,1)*envf(ix,iy,iz,1)+&
+    envf(ix,iy,iz,2)*envf(ix,iy,iz,2))
+    !|A|^2/2 at current t^n time level
    end do
   end do
-  if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,1,2,2)
+ end do
+ if(prl)call fill_ebfield_yzxbdsdata(av,i1,i2,j1,j2,k1,k2,1,1,2,2)
  end subroutine loc_env_amp
 !=============== Tracking particles============
  subroutine initial_tparticles_select(sp_loc,dt_loc,tx1,tx2,ty1,ty2,tz1,tz2)
@@ -68,11 +67,10 @@
  ndv=size(sp_loc%part,2)
 !========================
 ! Define track_tot_nstep
-  p=0
-  if(dt_loc > 0.0)p=nint((t_out-t_in)/dt_loc)
-  track_tot_nstep=nint(real(p,dp)/real(tkjump,dp))
-  ndv=size(sp_loc%part,2)
-
+ p=0
+ if(dt_loc > 0.0)p=nint((t_out-t_in)/dt_loc)
+ track_tot_nstep=nint(real(p,dp)/real(tkjump,dp))
+ ndv=size(sp_loc%part,2)
 ! Select particles on each mpi_task
  ik=0
  select case(ndim)
@@ -111,8 +109,8 @@
  track_tot_part=sum(loc_tpart(1:npe))
  ik_max=maxval(loc_tpart(1:npe))
  last_ind=0
- if(mype==1)last_ind=loc_tpart(1)
- if(mype>1)last_ind=sum(loc_tpart(1:mype))
+ if(mype==1)last_ind=int(loc_tpart(1),hp_int)
+ if(mype>1)last_ind=int(sum(loc_tpart(1:mype)),hp_int)
  !if(loc_tpart(mype+1)>0)write(6,*)'last particle index',mype,last_ind
  do p=1,np
   wgh_cmp=sp_loc%part(p,ndv)
@@ -187,11 +185,12 @@
  if(pe0)then
   sr=.false.
   ik1=0
+  ik2=0
   do ipe=1,npe-1
    ik=loc_tpart(ipe+1)
    if(ik >0)then
     call exchange_1d_grdata(sr,track_aux,ik*ndvp,ipe,ipe+10)
-               !pe0 receives from ipe ik sp_aux data and collects on track array
+    !pe0 receives from ipe ik sp_aux data and collects on track array
     wgh_cmp=track_aux(ndvp)
     kk=0
     do p=1,ik
@@ -219,33 +218,32 @@
  end subroutine t_particles_collect
 !=================================================
  subroutine fill_density_data(den,i1,i2,j1,j2,k1,k2,ic)
-  real(dp),intent(inout)  :: den(:,:,:,:)
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2,ic
-  integer :: i,ii,j,k,iy,iz,n_loc
-
-   n_loc=loc_ygrid(imody)%ng
-   do k=k1,k2
-    do j=j1,j2-1
-     iy=j+imody*n_loc
-     if(y(iy) > ymin_t.and.y(iy)<ymax_t)then
-      do i=i1,i2-1
-       if(x(i)>=targ_in)den(i,j,k,ic)=den(i,j,k,ic)+1.
-      end do
-     endif
-    enddo
+ real(dp),intent(inout)  :: den(:,:,:,:)
+ integer,intent(in) :: i1,i2,j1,j2,k1,k2,ic
+ integer :: i,j,k,iy,iz,n_loc
+ n_loc=loc_ygrid(imody)%ng
+ do k=k1,k2
+  do j=j1,j2-1
+   iy=j+imody*n_loc
+   if(y(iy) > ymin_t.and.y(iy)<ymax_t)then
+    do i=i1,i2-1
+     if(x(i)>=targ_in)den(i,j,k,ic)=den(i,j,k,ic)+1.
+    end do
+   endif
+  enddo
+ enddo
+ if(ndim <3)return
+ n_loc=loc_zgrid(imodz)%ng
+ do k=k1,k2-1
+  iz=k+imodz*n_loc
+  if(z(iz)> zmin_t.and. z(iz) < zmax_t)then
+   do j=j1,j2-1
+    do i=i1,i2-1
+     den(i,j,k,ic)=den(i,j,k,ic)+1.
+    end do
    end do
-   if(ndim <3)return
-   n_loc=loc_zgrid(imodz)%ng
-   do k=k1,k2-1
-    iz=k+imodz*n_loc
-     if(z(iz)> zmin_t.and. z(iz) < zmax_t)then
-      do j=j1,j2-1
-       do i=i1,i2-1
-        den(i,j,k,ic)=den(i,j,k,ic)+1.
-       end do
-      end do
-     endif
-    enddo
+  endif
+ enddo
  end subroutine fill_density_data
 !=============================================
  subroutine collect_bunch_and_plasma_density(this_bunch,isp)
@@ -397,7 +395,7 @@
  !============================
  subroutine prl_den_energy_interp(ic)
  integer,intent(in) :: ic
- integer :: nyf,nzf,np,i1,i2,j1,k1,stl,str
+ integer :: nyf,nzf,np,i1,i2,j1,k1
  real(dp) :: xm,ym,zm,dery,derz,ar,ai
  integer :: i,j,k,jj,kk,n_str
 
@@ -484,9 +482,9 @@
 !
  subroutine set_wake_potential
 
- integer :: nyf,nzf,np,i1,i2,j1,k1,stl,str
+ integer :: nyf,nzf,np,i1,i2,j1,k1
  real(dp) :: xm,ym,zm
- integer :: ic,i,j,k,jj,kk,n_str,ft_mod,ft_sym
+ integer :: ic,n_str,ft_mod,ft_sym
 
 
  xm=loc_xgrid(imodx)%gmin
@@ -507,7 +505,7 @@
  do ic=1,nsp
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)call set_grid_charge_and_Jx(&
-                                   spec(ic),ebfp,jc,np,ndim,n_str,dt,xm,ym,zm)
+                                   spec(ic),ebfp,jc,np,ndim,dt,xm,ym,zm)
  end do
  !========= jc(1)=charge density jc(2)= Jx at t^{n+1/2}
  if(prl)then

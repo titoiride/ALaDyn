@@ -42,7 +42,8 @@
 
  subroutine bunch_output_struct(tdia,dtdia,tout,dtout)
  real(dp),intent(inout) :: tdia,dtdia,tout,dtout
- dump_t1=MPI_Wtime()
+ 
+ dump_t1=real(MPI_Wtime(),dp)
 
  !---scalar diagnostic output---!
  if (tnow>=tdia) then

@@ -67,7 +67,7 @@
 
  if(LPf_ord >0)then
   cfl_loc=cfl
-  if(ndim >1)cfl_loc=cfl*yx_rat/sqrt(yx_rat*yx_rat+float(ndim)-1.)
+  if(ndim >1)cfl_loc=cfl*yx_rat/sqrt(yx_rat*yx_rat+real(ndim)-1.)
  endif
  call set_mat_der(cfl_loc,opt_der,nx,ny,nz,ndim,&
                   ibx,der_ord,ifilt,iform,Comoving)
@@ -387,8 +387,8 @@
  integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,ic1,ic2,tsch
  real(dp),intent(in) :: aphx,v_adv
  integer :: i,j,k,ii,n1,n1_loc,ic,ind
- real(dp) :: aphx_adv,aphx_adv1,a,b,c,b1,c1,an,bn,cn
- real(dp),dimension(3),parameter :: rder=(/-3.,4.,-1./)
+ real(dp) :: aphx_adv,aphx_adv1,a,b,c,b1,c1,an,bn
+ !real(dp),dimension(3),parameter :: rder=(/-3.,4.,-1./)
  !=====================
  ! APPLIES also for prlx=.true. (MPI x decomposition)
  !=============================================
@@ -499,7 +499,7 @@
  real(dp),intent(in) :: aphx,v_adv
  integer :: i,j,k,ii,n1,n1_loc,ic,ind
  real(dp) :: aphx_adv,aphx_adv1,a,b,c,b1,c1,an,bn
- real(dp),dimension(3),parameter :: rder=(/-3.,4.,-1./)
+ !real(dp),dimension(3),parameter :: rder=(/-3.,4.,-1./)
  !=====================
  ! APPLIES also for prlx=.true. (MPI x decomposition)
  !=============================================
@@ -1668,10 +1668,10 @@
  real(dp),intent(inout) :: curr(:,:,:,:),evf(:,:,:,:)
  integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: om0,dhx,dhy,dhz,dt_loc
- integer :: i,j,k,ii,ic
+ integer :: i,j,k,ic
  real(dp) ::dt2,dx1_inv,dhx1_inv,aph_opt(2)
  real(dp) ::kfact,k2_fact,skfact
- real(dp),dimension(0:2),parameter :: lder=(/1.0,-4.0,3.0/)
+ !real(dp),dimension(0:2),parameter :: lder=(/1.0,-4.0,3.0/)
  !==========================
  ! EXPLICIT INTEGRATION of Maxwell ENVELOPE EVOLUTION EQUATION
  !============================
@@ -1949,7 +1949,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  real(dp),intent(in) :: om0,dhx,dhy,dhz,dt_loc
  integer :: i,j,k,ii,ic,ic1,n1
  real(dp) :: dx1_inv,om2,aph1,dx_norm,dx2_norm
- real(dp) :: adv,an,bn,der2_norm,c1_der(0:1),c2_der(0:2)
+ real(dp) :: adv,an,bn,der2_norm
  !==========================
  ! EXPLICIT INTEGRATION of ENVELOPE EVOLUTION EQUATION
  !============================
@@ -2178,7 +2178,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  real(dp) :: dx1_inv,om2,dx2_norm
  real(dp) :: alp2,b2,a,adv,c,c1,b1,an,bn
  real(dp) :: c1_der(0:1),c2_der(0:2)
- real(dp),parameter :: alp=0.25, a1=0.75
+ real(dp),parameter :: alp=0.25
+	!real(dp),parameter :: a1=0.75
  !==========================
 
  n1=n1p+1-i1
@@ -2365,7 +2366,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  subroutine get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
  real(dp),intent(in) :: coords(4),par_lp(7)
  real(dp),intent(out) :: fields(6)
- real(dp) :: phi0, phi1, phig00, phig10, csphig01
+ real(dp) :: phi0, phi1, phig00, phig10
  real(dp) :: x1, y1, t1,r2,w2
  real(dp):: A0, A1,tshape,phx,wshape
  !========== enter
@@ -2403,7 +2404,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  subroutine get_2Dlaser_fields_lp(coords,par_lp,fields)
  real(dp),intent(in) :: coords(4),par_lp(7)
  real(dp),intent(out) :: fields(6)
- real(dp) :: phi0, phi1, phig00, phig10, csphig01
+ real(dp) :: phi0, phi1, phig00, phig10
  real(dp) :: x1, y1, t1,pih
  real(dp) :: w2,A0, A1
  real(dp) :: tshape, phx, r2, wshape
@@ -2489,7 +2490,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  subroutine get_laser_gprof_fields_lp(coords,par_lp,fields)
  real(dp),intent(in) :: coords(4),par_lp(7)
  real(dp),intent(out) :: fields(6)
- real(dp) :: phi0, phi1, phig00, phig10, csphig01
+ real(dp) :: phi0, phi1, phig00, phig10
  real(dp) :: x1, y1, z1, t1,pih
  real(dp) :: A0, A1,w2
  real(dp) :: phx, r2, wshape,tshape
@@ -2954,7 +2955,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  real(dp),intent(in) :: e0,t_loc,tf,wx,wy,xf0,om0
  integer,intent(in) :: lp,i1,i2
  real(dp) :: xxh,xx,yy,yyh,zz,zzh,sigma,eps
- real(dp) :: xp,xc,yp,yc,zra
+ real(dp) :: xp,xc,yc,zra
  real(dp) :: Ex,Ey,Ez,Bx,By,Bz
  integer :: i,j,k,ii,jj,kk
  integer :: j1,j2,k1,k2
@@ -4776,7 +4777,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  integer,intent(in) :: nef,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: vb,aphx,aphy,aphz
  integer :: i,j,k,ic,ii,jj,j01,j02,kk,k01,k02
- real(dp),dimension(2),parameter :: e4_coeff=(/1.125,-1./24/)
+ !real(dp),dimension(2),parameter :: e4_coeff=(/1.125,-1./24/)
  real(dp) :: aphx1,aphx2,advx,advx1,advx2
  real(dp) :: aphy1,aphy2,sdy
  real(dp) :: aphz1,aphz2,sdz
@@ -4987,8 +4988,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
 
  integer,intent(in) :: nef,i1,n1p,j1,n2p,k1,n3p
  real(dp),intent(in) :: vb,aphx,aphy,aphz
- integer :: i,j,k,ic,ic1,ii,jj,j01,j02,kk,k01,k02
- real(dp),dimension(2),parameter :: e4_coeff=(/1.125,-1./24/)
+ integer :: i,j,k,ic,ic1,jj,j01,j02,kk,k01,k02
+ !real(dp),dimension(2),parameter :: e4_coeff=(/1.125,-1./24/)
  real(dp) :: aphx1,aphx2,advx,advx1,advx2
  real(dp) :: aphy1,aphy2,sdy
  real(dp) :: aphz1,aphz2,sdz
@@ -5194,12 +5195,11 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  subroutine weno3(nc,i1,np)
   integer,intent(in)  :: nc,i1,np
   real(dp) :: dw(2),sl(2),sr(2),omgl(2),vv,s0
-  real(dp) :: vl,vr
   real(dp),parameter :: eps=1.e-06
   real(dp),dimension(2),parameter :: w03=(/1./3.,2./3./)
   !real(dp),dimension(2),parameter :: w03=(/0.1250,0.3750/)
 !  enter data [i1,np]
-  integer :: i,l,ic
+  integer :: i,ic
 
 !=======ENTER DATA [i1,np]
 !wl_{i+1/2}in range [i=i1+1,np-1]
@@ -5253,12 +5253,11 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  subroutine weno3_nc(nc,i1,np)
   integer,intent(in)  :: nc,i1,np
   real(dp) :: dw(2),sl(2),sr(2),omgl(2),vv,s0
-  real(dp) :: vl,vr
   real(dp),parameter :: eps=1.e-06
   real(dp),dimension(2),parameter :: w03=(/1./3.,2./3./)
   !real(dp),dimension(2),parameter :: w03=(/0.1250,0.8750/)
 !  enter data [i1,np]
-  integer :: i,l,ic
+  integer :: i,ic
 
 !=======ENTER DATA [i1,np]
 !wl_{i+1/2}in range [i=i1+1,np-1]
@@ -5383,8 +5382,9 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  real(dp),dimension(2),parameter :: w03=(/1./3.,2./3./)
  real(dp),dimension(3),parameter :: lder=(/0.5,-2.,1.5/)
  real(dp),dimension(3),parameter :: rder=(/-1.5,2.,-0.5/)
- real(dp),dimension(4),parameter :: lder4=(/1./6.,-1.,0.5,1./3./)  ![i-2,i+1] stencil
- real(dp),dimension(4),parameter :: rder4=(/-1./3.,-0.5,1.,-1./6./)![i-1,i+2] stencil
+	! Uncomment to change weno weights
+ !real(dp),dimension(4),parameter :: lder4=(/1./6.,-1.,0.5,1./3./)  ![i-2,i+1] stencil
+ !real(dp),dimension(4),parameter :: rder4=(/-1./3.,-0.5,1.,-1./6./)![i-1,i+2] stencil
 !=========================
 ! Enter primitive variables in flux array flx(Px,Py,Pz,den,vx,vy,vz)
 ! flcomp=fcomp+ndim components
@@ -5563,8 +5563,9 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
   real(dp) :: vx,vy,vz
   real(dp),dimension(3),parameter :: lder=(/0.5,-2.,1.5/)
   real(dp),dimension(3),parameter :: rder=(/-1.5,2.,-0.5/)
-  real(dp),dimension(4),parameter :: lder4=(/1./6.,-1.,0.5,1./3./)  ![i-2,i+1] stencil
-  real(dp),dimension(4),parameter :: rder4=(/-1./3.,-0.5,1.,-1./6./)![i-1,i+2] stencil
+		! Uncomment to change weno weights
+  !real(dp),dimension(4),parameter :: lder4=(/1./6.,-1.,0.5,1./3./)  ![i-2,i+1] stencil
+  !real(dp),dimension(4),parameter :: rder4=(/-1./3.,-0.5,1.,-1./6./)![i-1,i+2] stencil
 !=========================
 ! Enter conservative variables in flux array (ux,uy,uz,den,vx,vy,vz)
 ! fcomp+ndim components
@@ -5742,15 +5743,16 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  end subroutine cons_fluid_density_momenta
  !================================
  !================================
- subroutine rk_fluid_density_momenta(ef,flx,i1,n1p,j1,n2p,k1,n3p,fcomp,flcomp,aphx,aphy,aphz)
+ subroutine rk_fluid_density_momenta(ef,flx,i1,n1p,j1,n2p,k1,n3p,fcomp,aphx,aphy)
  real(dp),intent(inout) :: ef(:,:,:,:),flx(:,:,:,:)
 
- integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,fcomp,flcomp
- real(dp),intent(in) :: aphx,aphy,aphz
+ integer,intent(in) :: i1,n1p,j1,n2p,k1,n3p,fcomp
+ real(dp),intent(in) :: aphx,aphy
  integer :: i,ii,j,k,ic,j01,j02
- real(dp) :: vx,vy,vz
- real(dp),dimension(4),parameter :: lder_0=(/-3./8.,13./8.,-25./8.,15./8./)
- real(dp),dimension(4),parameter :: rder_0=(/-15./8.,25./8.,-13./8.,3./8./)
+ real(dp) :: vx,vy
+	! Uncomment to change weno weights
+ !real(dp),dimension(4),parameter :: lder_0=(/-3./8.,13./8.,-25./8.,15./8./)
+ !real(dp),dimension(4),parameter :: rder_0=(/-15./8.,25./8.,-13./8.,3./8./)
  real(dp),dimension(4),parameter :: lder_1=(/1./8.,-7./8.,3./8.,3./8./)
  real(dp),dimension(4),parameter :: rder_1=(/-3./8.,-3./8.,7./8.,-1./8./)
   real(dp),dimension(3),parameter :: lder3=(/0.5,-2.,1.5/)

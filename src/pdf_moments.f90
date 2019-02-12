@@ -45,7 +45,7 @@
 
  SUBROUTINE bunch_diagnostics(bunch_number)
  integer, intent(in) :: bunch_number
- integer :: i,np_local
+ integer :: np_local
  real(dp) :: moments(2,6)
 
  !---!
@@ -75,8 +75,8 @@
  real(dp) FUNCTION calculate_nth_central_moment_bunch(number_bunch,nth,component)
  integer, intent(in) :: nth, component, number_bunch
  integer :: np_loc,i
- real(dp) :: mu_mean_local(1)=0.0,mu_mean(1)=0.0,moment_local(1)=0.0,moment(1)=0.0, bch
- real(dp) :: tot_weights_local(1)=0.0,tot_weights(1)=0.0
+ real(dp) :: mu_mean_local(1)=0.0,mu_mean(1)=0.0,moment_local(1)=0.0,moment(1)=0.0
+ real(dp) :: tot_weights_local(1)=0.0,tot_weights(1)=0.0,nb_tot_inv
 
  !---
  np_loc=loc_nbpart(imody,imodz,imodx,number_bunch)
@@ -182,7 +182,7 @@
  integer, intent(in) ::  component1,  component2, number_bunch
  integer :: np_loc,i
  real(dp) :: mu_mean_local_1(1),mu_mean_local_2(1),mu_mean_1(1),mu_mean_2(1)
- real(dp) :: correlation_local(1),correlation(1)
+ real(dp) :: correlation_local(1),correlation(1),moment_local_1,moment_local_2
  real(dp) :: tot_weights_local(1)=0.0,tot_weights(1)=0.0
  real(dp) :: tot_weights2_local(1)=0.0,tot_weights2(1)=0.0
 
@@ -289,7 +289,7 @@ correlation         = correlation / (1.-tot_weights2(1))
  !--- --- ---!
  SUBROUTINE bunch_moments_diagnostic(bunch_number)
  integer, intent(in) :: bunch_number
- integer :: n_moment,np_local
+ integer :: n_moment
  real(dp) :: moment(6,8) !firsts 8th moments for: 3-spatial 3-velocity
  real(dp) :: JB(6),JB_S(6),JB_K(6),vs,ek,vk,n_samples !jarque-brera normal-tests variables
  character(1) :: b2str
@@ -337,7 +337,7 @@ correlation         = correlation / (1.-tot_weights2(1))
 
  SUBROUTINE bunch_integrated_diagnostics(bunch_number,moments)
  integer, intent(in) :: bunch_number
- integer :: np_local,np,i
+ integer :: np_local
  real(dp),intent(inout) :: moments(2,6)
  real(dp) :: mu_x, mu_y, mu_z !spatial meam
  real(dp) :: mu_px, mu_py, mu_pz !momenta mean
@@ -465,7 +465,6 @@ correlation         = correlation / (1.-tot_weights2(1))
  real(dp) :: corr_y_py(1), corr_z_pz(1), corr_x_px(1) !correlation transverse plane
  real(dp) :: emittance_y(1), emittance_z(1) !emittance variables
  real(dp) :: tot_weights(1),tot_weights_local(1)
- real(dp) :: np_inv
  character(1) :: b2str
 
  !---!
@@ -1147,7 +1146,7 @@ ENDDO
  !C
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  SUBROUTINE diagnostic_integrated_background
- integer :: np_local,np
+ integer :: np_local
  real(dp) :: mu_x_local(1), mu_y_local(1), mu_z_local(1) !spatial meam
  real(dp) :: mu_x(1), mu_y(1), mu_z(1) !spatial meam
  real(dp) :: mu_px_local(1), mu_py_local(1), mu_pz_local(1) !momenta mean
@@ -1162,7 +1161,7 @@ ENDDO
  real(dp) :: corr_y_py(1), corr_z_pz(1), corr_x_px(1) !correlation transverse plane
  real(dp) :: emittance_y(1), emittance_z(1) !emittance variables
  real(dp) :: weights_local(1),weights(1),total_charge(1)
- real(dp) :: np_inv
+ real(dp) :: xmin_out,xmax_out,ymax_out
  integer :: ip,nInside_loc
  logical, allocatable :: mask(:)
 
@@ -1174,22 +1173,22 @@ ENDDO
  !---- Mask Calculation ---------!
  allocate (mask(np_local))
 
-nInside_loc=0
+ nInside_loc=0
  do ip=1,np_local
-      mask(ip)=.true.
-      !---spacial selection ---!
-      if( abs(spec(1)%part(ip,2)) > ymax_out) mask(ip)=.false.
-      if( abs(spec(1)%part(ip,3)) > ymax_out) mask(ip)=.false.
-      if(spec(1)%part(ip,1) < xmin_out ) mask(ip)=.false.
-      if(spec(1)%part(ip,1) > xmax_out) mask(ip)=.false.
-      ! !--- weight selection ---!
-      wgh_cmp=spec(1)%part(ip,7)
-      if(wgh < weights_cut_min) mask(ip)=.false.
-      if(wgh > weights_cut_max) mask(ip)=.false.
-      ! !--- gamma selection ---!
-      if( sqrt(1.0+SUM(spec(1)%part(ip,4:6)**2)) < gamma_cut_min) mask(ip)=.false.
-      !--- particle counter ---!
-      if (mask(ip)) nInside_loc=nInside_loc+1
+  mask(ip)=.true.
+  !---spacial selection ---!
+  if( abs(spec(1)%part(ip,2)) > ymax_out) mask(ip)=.false.
+  if( abs(spec(1)%part(ip,3)) > ymax_out) mask(ip)=.false.
+  if(spec(1)%part(ip,1) < xmin_out ) mask(ip)=.false.
+  if(spec(1)%part(ip,1) > xmax_out) mask(ip)=.false.
+  ! !--- weight selection ---!
+  wgh_cmp=spec(1)%part(ip,7)
+  if(wgh < weights_cut_min) mask(ip)=.false.
+  if(wgh > weights_cut_max) mask(ip)=.false.
+  ! !--- gamma selection ---!
+  if( sqrt(1.0+SUM(spec(1)%part(ip,4:6)**2)) < gamma_cut_min) mask(ip)=.false.
+  !--- particle counter ---!
+  if (mask(ip)) nInside_loc=nInside_loc+1
  enddo
 
  !--- mean calculation ---!
@@ -1201,16 +1200,16 @@ nInside_loc=0
  mu_py_local=0.0
  mu_pz_local=0.0
  do ip=1,np_local
-        if(mask(ip)) then
-         wgh_cmp=spec(1)%part(ip,7)
-         mu_x_local   = mu_x_local+spec(1)%part(ip,1) * wgh
-         mu_y_local   = mu_y_local+spec(1)%part(ip,2) * wgh
-         mu_z_local   = mu_z_local+spec(1)%part(ip,3) * wgh
-         mu_px_local  = mu_px_local+spec(1)%part(ip,4) * wgh
-         mu_py_local  = mu_py_local+spec(1)%part(ip,5) * wgh
-         mu_pz_local  = mu_pz_local+spec(1)%part(ip,6) * wgh
-         weights_local = weights_local+wgh
-       endif
+  if(mask(ip)) then
+   wgh_cmp=spec(1)%part(ip,7)
+   mu_x_local   = mu_x_local+spec(1)%part(ip,1) * wgh
+   mu_y_local   = mu_y_local+spec(1)%part(ip,2) * wgh
+   mu_z_local   = mu_z_local+spec(1)%part(ip,3) * wgh
+   mu_px_local  = mu_px_local+spec(1)%part(ip,4) * wgh
+   mu_py_local  = mu_py_local+spec(1)%part(ip,5) * wgh
+   mu_pz_local  = mu_pz_local+spec(1)%part(ip,6) * wgh
+   weights_local = weights_local+wgh
+  endif
  enddo
  !---
  call allreduce_dpreal(0,mu_x_local,mu_x,1)
