@@ -1049,7 +1049,7 @@
   write(60,*)' Longitudinal scales'
   write(60,'(a8,f6.2,a18,f6.2)')'  w0_x= ',w0_x,'   tau_fwhm(fs) = ',tau_FWHM
   write(60,'(a13,f5.2,a13,f5.2)')'  wavelength=',lam0,'   frequency=',oml
-  write(60,'(a17,f6.2,a17,f6.2)')'  Initial focus =',xf,'   Pulse center= ',xc_lp
+  write(60,'(a17,e13.3,a17,f6.2)')'  Initial focus =',xf,'   Pulse center= ',xc_lp
   write(60,'(a29,e11.4)')'  Diffraction length Z_Rayl= ',ZR
   write(60,'(a25,f5.2)')'  Strength parameter a0= ',a0
   write(60,'(a33,f5.2,a6)')'  Max transverse field at focus= ',E0*a0*oml,'(TV/m)'
