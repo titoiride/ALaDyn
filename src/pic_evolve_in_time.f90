@@ -2073,10 +2073,10 @@
   do ic=1,fdim
    do k=k1,k2
     do j=j1,j2
-      u(i1,j,k,ic)=u(i1,j,k,ic)+u0(i1,j,k,ic)   !Euler first order update
-      do i=i1+1,i2
-       u(i,j,k,ic)=u(i,j,k,ic)+abf_1*u0(i,j,k,ic)   !updates u^{n+1}=u^{n}+Dt*(3/2*F^n-1/2F^{n-1})
-      end do
+     u(i1,j,k,ic)=u(i1,j,k,ic)+u0(i1,j,k,ic)   !Euler first order update
+     do i=i1+1,i2
+      u(i,j,k,ic)=u(i,j,k,ic)+abf_1*u0(i,j,k,ic)   !updates u^{n+1}=u^{n}+Dt*(3/2*F^n-1/2F^{n-1})
+     end do
      do i=i1,i2
       flx(i,j,k,ic)=0.5*(flx(i,j,k,ic)+u(i,j,k,ic))   ! (P,den) at t(n+1/2)
      end do
@@ -2084,9 +2084,11 @@
    end do
   end do
  endif
-!=========================
+!==========================
  contains
  subroutine add_lorentz_force
+   real(dp) :: qp,qm
+                           !in u0() -flux derivatives
  do k=k1,k2
   do j=j1,j2
    do i=i1,i2
@@ -2148,7 +2150,7 @@
   do k=k1,k2
    do j=j1,j2
     do i=i1,i2
-     av2= flx(i,j,k,fdim+1)     !time centered |a|^{n+1/2}/2 (+|a_1|^2/2 for wo-color)
+     av2= flx(i,j,k,fdim+1)                 !time centered |A|^{n+1/2}/2
      den= flx(i,j,k,fdim)  !den^{n+1/2}
      pp(1:curr_ndim)= flx(i,j,k,1:curr_ndim) !p momenta at t^{n+1/2}
      gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
@@ -2387,7 +2389,6 @@
   ! in ebfp(1:2)=grad|A|^2/2 ebfp(3)=|A|^2/2 in 2D
   !=====================================
    call lpf_env_positions(spec(ic),ebfp,np,dt_loc,vbeam)
-   if(ompe==zero_dp)return
   !===========================
   !Computes x^{n+1}
   ! stores

@@ -525,7 +525,7 @@
 
  subroutine start
 
- integer :: nxp,nyp,nzp,ns_ioniz
+ integer :: nxp,nyp,nzp,ns_ioniz,ncmp
  !real(dp), parameter :: opt_der=1.0
 
  !enable loop to attach with gdb only if really needed
@@ -595,10 +595,14 @@
  nzp=loc_zgrid(imodz)%p_ind(2)  !Nz_loc+2
  nxp=loc_xgrid(imodx)%p_ind(2)  !Nx_loc+2
  !====== Fields and current arrays allocated on [1: N_loc+5]
+ ncmp=nfield
  !==========================
  call v_alloc(nxp,nyp,nzp,nfield,nj_dim,&
              ndim,ns_ioniz,ibeam,LPf_ord,der_ord,Envelope,Two_color,Comoving,mem_size)
- if(Hybrid)call fluid_alloc(nxp,nyp,nzp,nfcomp,ndim,LPF_ord,mem_size)
+ if(Hybrid)then
+  call fluid_alloc(nxp,nyp,nzp,nfcomp,ndim,LPF_ord,mem_size)
+  ncmp=max(ncmp,nfcomp)
+ endif
  if (Beam) then
   call bv_alloc(nxp,nyp,nzp,nbfield,ndim,ibeam,mem_size)
  endif
@@ -606,7 +610,7 @@
   if (pe0) call str_grid_data
  endif
  if (iform==1) iform=0    !only esirkepov schemes used
- call mpi_valloc(loc_nxc_max,loc_nyc_max,loc_nzc_max,nfield,iform,mem_size)
+ call mpi_valloc(loc_nxc_max,loc_nyc_max,loc_nzc_max,ncmp,iform,mem_size)
  call set_output_grid(jump)   !allocates wdata(); counts nhx,nhy,nhz local grid points
  if(pe0)then
   write(6,*)'START OF RUN'
