@@ -197,11 +197,11 @@
      ik2=ik1+p
      do ip=1,ndv
       kk=kk+1
-      pdata_tracking(ip,ik2,time_ind)=real(track_aux(kk),sp)
+      pdata_tracking(ip,ik2,time_ind)=track_aux(kk)
      enddo
      kk=kk+1
      wgh_cmp=track_aux(kk)
-     pdata_tracking(ndv,ik2,time_ind)=real(part_ind,sp)
+     pdata_tracking(ndv,ik2,time_ind)=part_ind
     enddo
     ik1=ik2
    endif

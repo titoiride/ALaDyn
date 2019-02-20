@@ -1616,7 +1616,7 @@
  character(23) :: fname_out
  real(dp),intent(in) :: tnow
  integer,intent(in) :: tk
- real(sp),allocatable :: pdata(:)
+ real(dp),allocatable :: pdata(:)
  integer :: ik,p,q,ip,ip_max,it,tot_tpart
  integer :: lenp,ndv,i_end
  integer(offset_kind) :: disp
@@ -1686,8 +1686,8 @@
  else
   disp=mype+tk*ndv*sum(loc_tpart(1:mype))  ! da usare con mpi_write_part
  endif
- disp=disp*4  ! sia gli int che i float sono di 4 bytes
- call mpi_write_part(pdata,lenp,ip,disp,23,fname_out)
+ disp=disp*8  ! sia gli int che i float sono di 4 bytes
+ call mpi_write_dp(pdata,lenp,disp,23,fname_out)
 
  if(allocated(pdata))deallocate(pdata)
  if(pe0)then
