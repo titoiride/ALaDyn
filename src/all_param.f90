@@ -446,6 +446,9 @@
   endif
   bet0=0.0
   lpvol=el_lp*el_lp*el_lp
+  if(Symmetrization_pulse)then
+   if(a_symm_rat<=zero_dp)a_symm_rat=sqrt(2.0)
+  endif
  endif
  !===================================
  if(Beam)then !  e-Beams section

@@ -1123,16 +1123,16 @@
     end do
     if(Symmetrization_pulse)then
      write(60,*)' A symmetrization pulse is implied when ionizing'
-     write(60,*)' The sym. formula is sin(2*pi*u)*a_symm'
-     if(a_symm>zero_dp)then
-      write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm',a_symm
+     write(60,*)' The sym. formula is sin(2*pi*u)*\Delta*a_1*a_symm_rat'
+     if(a_symm_rat>zero_dp)then
+      write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm_rat',a_symm_rat
      endif
     endif
    end if
  write(60,*)'**********TARGET PLASMA PARAMETERS***********'
   if(Part.or.Hybrid)then
    write(60,'(a26,e11.4,a10)')'  Electron number density ',n0_ref,'[10^18/cc]'
-   write(60,'(a21,f5.2)')'  Plasma wavelength= ',lambda_p
+   write(60,'(a21,e11.4)')'  Plasma wavelength= ',lambda_p
    write(60,'(a20,e11.4)')' Chanelling fact  = ',chann_fact
    if(model_id < 5)then
     write(60,'(a20,f5.2,a10)')'  Critical density= ',ncrit,'[10^21/cc]'
