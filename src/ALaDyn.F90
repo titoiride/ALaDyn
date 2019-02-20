@@ -80,13 +80,13 @@
  subroutine LP_cycle
 
  call data_out(jump)
- dt_loc=dt
+
  t_ind=0
  tk_ind=0
  if(Ionization)then
   lp_max=2.*lp_max
   do ic=2,nsp_ionz
-   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt)
+   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
   end do
   if(Pe0) call Ioniz_data(lp_max,ion_min,atomic_number,ionz_lev,ionz_model)
   if(Impact_ioniz)then
@@ -99,7 +99,7 @@
   if(P_tracking)then
    if(tnow>=t_in .and. tnow <=t_in+dt_loc)then
     tk_ind=tk_ind+1
-    call initial_tparticles_select(spec(1),dt,txmin,txmax,tymin,tymax,tzmin,tzmax)
+    call initial_tparticles_select(spec(1),dt_loc,txmin,txmax,tymin,tymax,tzmin,tzmax)
     call t_particles_collect(spec(1),tk_ind)
    endif
   endif
@@ -134,7 +134,7 @@
  if(Ionization)then
   !lp_max=1.2*oml*a0
   do ic=2,nsp_ionz
-   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt)
+   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
   end do
   if(Pe0) call Ioniz_data(lp_max,ion_min,atomic_number,ionz_lev,ionz_model)
  endif
@@ -142,9 +142,9 @@
 
   
   if(P_tracking)then
-   if(tnow>=t_in .and. tnow<=t_in+dt_loc)then
+   if(tnow>=t_in .and. tnow<t_in+dt_loc)then
     tk_ind=tk_ind+1
-    call initial_tparticles_select(spec(1),dt,txmin,txmax,tymin,tymax,tzmin,tzmax)
+    call initial_tparticles_select(spec(1),dt_loc,txmin,txmax,tymin,tymax,tzmin,tzmax)
     call t_particles_collect(spec(1),tk_ind)
    endif
   endif
@@ -177,12 +177,11 @@
   call bunch_output_struct(tdia,dtdia,tout,dtout)
  endif
  call bdata_out(jump)
- dt_loc=dt
  t_ind=0
  if(Ionization)then
   eb_max=0.8   !max beam field in atomic unit 0.514[TV/m] => here Ef_{max}=410[GV/m]
   do ic=2,nsp_ionz
-   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,eb_max,dt)
+   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,eb_max,dt_loc)
   end do
   if(Pe0) call Ioniz_data(eb_max,ion_min,atomic_number,ionz_lev,ionz_model)
  endif

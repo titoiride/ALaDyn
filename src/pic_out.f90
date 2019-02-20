@@ -1625,7 +1625,7 @@
 
  write (folderName,'(i4.4)') iout
 
- ndv=nd2+2
+ ndv=nd2+1
  if(mype>0)then
   ip=0
  else
@@ -1684,7 +1684,7 @@
   close(10)
   write(6,*)'Particles param written on file: '//foldername//'/'//fname//'.dat'
  else
-  disp=mype+tk*ndv*sum(loc_tpart(1:mype))  ! da usare con mpi_write_part
+  disp=tk*ndv*sum(loc_tpart(1:mype))  ! da usare con mpi_write_part
  endif
  disp=disp*8  ! sia gli int che i float sono di 4 bytes
  call mpi_write_dp(pdata,lenp,disp,23,fname_out)
