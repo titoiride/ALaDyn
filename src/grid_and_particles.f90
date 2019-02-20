@@ -47,7 +47,7 @@
  real(dp) :: lp_offset,t1_lp,xc1_lp,xf1,w1_x,w1_y,lam1,a1,lp1_rad,ZR1,tau1_fwhm
  real(dp) :: lp1_amp,om1,a_symm_rat
  real(dp) :: oml,ZR,E0,lp_pow,lp_intensity,lp_xsize,lp_delay(Ref_nlas),P_c,r_c
- real(dp) :: lp_amp,lp_max,eb_max,lp_energy
+ real(dp) :: lp_amp,lp_max,eb_max,lp_energy,y0_cent(Ref_nlas),z0_cent(Ref_nlas),y1_cent,z1_cent
 
  real(dp) :: t0_b,lp_rad,el_lp,el_D,lambda_p,omega_p,lpvol
  real(dp) :: nc0,ncrit,n_over_nc,n1_over_n,n2_over_n,np1,np2,np_per_cell,nmacro

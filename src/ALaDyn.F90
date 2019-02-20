@@ -1121,11 +1121,13 @@
     do i=1,nsp_ionz-1
       write(60,*)' Ionization active on ion species:',species_name(atomic_number(i))
     end do
-    if(Symmetrization_pulse)then
+    if(Symmetrization_pulse .and. (curr_ndim>2))then
      write(60,*)' A symmetrization pulse is implied when ionizing'
      write(60,*)' The sym. formula is sin(2*pi*u)*\Delta*a_1*a_symm_rat'
      if(a_symm_rat>zero_dp)then
       write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm_rat',a_symm_rat
+     else
+      write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm_rat',sqrt(2.)
      endif
     endif
    end if

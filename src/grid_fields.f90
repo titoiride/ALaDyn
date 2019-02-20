@@ -869,14 +869,14 @@
  ! SECTION for initial fields in ENVELOPE MODEL
  !======================================
  subroutine init_envelope_field(ef,e0,dt_loc,t_loc,tf,wx,&
-  wy,xf0,om0,i1,i2)
+  wy,xf0,om0,i1,i2,ycent,zcent)
 
  real(dp),intent(inout) :: ef(:,:,:,:)
  real(dp),intent(in) :: e0,dt_loc,t_loc,tf,wx,wy,xf0,om0
  integer,intent(in) :: i1,i2
  integer :: j1,j2,k1,k2
  real(dp) :: xx,yy,zz,r2,w2
- real(dp) :: t,tm,zra
+ real(dp) :: t,tm,zra,ycent,zcent
  real(dp) :: pih,phi,phi0,phi1,phx
  real(dp) :: A0,Ar,Ai
  integer :: i,j,k,ii,jj,kk
@@ -897,7 +897,7 @@
   do j=j1,j2
    jj=j-2
    yy=loc_rg(jj,1,imody)
-   yy=yy/wy
+   yy=(yy-ycent)/wy
    r2=yy*yy
    do i=i1,i2
     ii=i-2
@@ -934,11 +934,11 @@
  do k=k1,k2
   kk=k-2
   zz=loc_zg(kk,1,imodz)
-  zz=zz/wy
+  zz=(zz-zcent)/wy
   do j=j1,j2
    jj=j-2
    yy=loc_yg(jj,1,imody)
-   yy=yy/wy
+   yy=(yy-ycent)/wy
    r2=(yy*yy+zz*zz)
    do i=i1,i2
     ii=i-2
@@ -967,14 +967,14 @@
  end subroutine init_envelope_field
 !========================
  subroutine init_gprof_envelope_field(ef,e0,dt_loc,t_loc,tf,wx,&
-  wy,xf0,om0,i1,i2)
+  wy,xf0,om0,i1,i2,ycent,zcent)
 
  real(dp),intent(inout) :: ef(:,:,:,:)
  real(dp),intent(in) :: e0,dt_loc,t_loc,tf,wx,wy,xf0,om0
  integer,intent(in) :: i1,i2
  integer :: j1,j2,k1,k2
  real(dp) :: xx,yy,zz,r2,w2
- real(dp) :: t,tm,zra
+ real(dp) :: t,tm,zra,ycent,zcent
  real(dp) :: pih,phi,phi0,phi1,phx
  real(dp) :: A0,Ar,Ai
  integer :: i,j,k,ii,jj,kk
@@ -996,7 +996,7 @@
   do j=j1,j2
    jj=j-2
    yy=loc_rg(jj,1,imody)
-   yy=yy/wy
+   yy=(yy-ycent)/wy
    r2=yy*yy
    do i=i1,i2
     ii=i-2
@@ -1029,11 +1029,11 @@
  do k=k1,k2
   kk=k-2
   zz=loc_zg(kk,1,imodz)
-  zz=zz/wy
+  zz=(zz-zcent)/wy
   do j=j1,j2
    jj=j-2
    yy=loc_yg(jj,1,imody)
-   yy=yy/wy
+   yy=(yy-ycent)/wy
    r2=(yy*yy+zz*zz)
    do i=i1,i2
     ii=i-2
@@ -2949,13 +2949,13 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  end subroutine inflow_lp_fields
  !===================================
  subroutine init_lp_inc0_fields(ef,e0,t_loc,tf,wx,wy,xf0,om0,&
-                              lp,i1,i2)
+                              lp,i1,i2,ycent,zcent)
  !==========================
  real(dp),intent(inout) :: ef(:,:,:,:)
  real(dp),intent(in) :: e0,t_loc,tf,wx,wy,xf0,om0
  integer,intent(in) :: lp,i1,i2
  real(dp) :: xxh,xx,yy,yyh,zz,zzh,sigma,eps
- real(dp) :: xp,xc,yc,zra
+ real(dp) :: xp,xc,yc,zc,zra,ycent,zcent
  real(dp) :: Ex,Ey,Ez,Bx,By,Bz
  integer :: i,j,k,ii,jj,kk
  integer :: j1,j2,k1,k2
@@ -2970,7 +2970,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  eps=1./(om0*wy)
  zra=0.5*om0*wy*wy
  xc=xf0-tf
- yc=0.0 ! yc centroid y coordinate
+ yc=ycent ! yc centroid y coordinate
+ zc=zcent ! zc centroid z coordinate
  par_lp(1)=om0
  par_lp(2)=xc
  par_lp(3)=wx
@@ -3096,7 +3097,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      xxh=loc_xg(ii,2,imodx)
      !===ora Ex(xxh,yy)=========
      coords(1)=xxh-xf0
-     coords(2)=yy
+     coords(2)=yy-yc
      !==== Ex(xxh,yy)!
      if(G_prof)then
       call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
@@ -3107,7 +3108,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,1)=ef(i,j,k,1)+Ex
      !==== Ey(xx,yyh)!
      coords(1)=xx-xf0
-     coords(2)=yyh
+     coords(2)=yyh-yc
      if(G_prof)then
       call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3117,7 +3118,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,2)=ef(i,j,k,2)+Ey
      !===ora Bz(xxh,yyh)=========
      coords(1)=xxh-xf0
-     coords(2)=yyh
+     coords(2)=yyh-yc
      if(G_prof)then
       call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3144,8 +3145,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      xxh=loc_xg(ii,2,imodx)
      !==== Ex(xxh,yy,zz)=========
      coords(1)=xxh-xf0
-     coords(2)=yy
-     coords(3)=zz
+     coords(2)=yy-yc
+     coords(3)=zz-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3155,7 +3156,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,1)=ef(i,j,k,1)+Ex
      !==== Ey(xx,yyh,zz) =========
      coords(1)=xx-xf0
-     coords(2)=yyh
+     coords(2)=yyh-yc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3165,8 +3166,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,2)=ef(i,j,k,2)+Ey
      !==== Ez(xx,yy,zzh) =========
      coords(1)=xx-xf0
-     coords(2)=yy
-     coords(3)=zzh
+     coords(2)=yy-yc
+     coords(3)=zzh-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3176,8 +3177,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,3)=ef(i,j,k,3)+Ez
      !==== Bx(xx,yyh,zzh)=========
      coords(1)=xx-xf0
-     coords(2)=yyh
-     coords(3)=zzh
+     coords(2)=yyh-yc
+     coords(3)=zzh-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3187,8 +3188,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,4)=ef(i,j,k,4)+Bx
      !==== By(xxh,yy,zzh) =========
      coords(1)=xxh-xf0
-     coords(2)=yy
-     coords(3)=zzh
+     coords(2)=yy-yc
+     coords(3)=zzh-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3198,8 +3199,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,5)=ef(i,j,k,5)+By
      !==== Bz(xxh,yyh,zz)=========
      coords(1)=xxh-xf0
-     coords(2)=yyh
-     coords(3)=zz
+     coords(2)=yyh-yc
+     coords(3)=zz-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3225,7 +3226,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      xxh=loc_xg(ii,2,imodx)
      !===ora Ez(xx,yy)=========
      coords(1)=xx-xf0
-     coords(2)=yy
+     coords(2)=yy-yc
      if(G_prof)then
       call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3235,7 +3236,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,3)=ef(i,j,k,3)+Ez
      !==== Bx(xx,yyh)=========
      coords(1)=xx-xf0
-     coords(2)=yyh
+     coords(2)=yyh-yc
      if(G_prof)then
       call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3245,7 +3246,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,4)=ef(i,j,k,4)+Bx
      !==== By(xx,yyh) =======
      coords(1)=xx-xf0
-     coords(2)=yyh
+     coords(2)=yyh-yc
      if(G_prof)then
       call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3272,8 +3273,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      xxh=loc_xg(ii,2,imodx)
      !==== Ex(xxh,yy,zz)=========
      coords(1)=xxh-xf0
-     coords(2)=yy
-     coords(3)=zz
+     coords(2)=yy-yc
+     coords(3)=zz-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3283,8 +3284,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,1)=ef(i,j,k,1)+Ex
      !==== Ey(xx,yyh,zz) =========
      coords(1)=xx-xf0
-     coords(2)=yyh
-     coords(3)=zz
+     coords(2)=yyh-yc
+     coords(3)=zz-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3294,8 +3295,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,2)=ef(i,j,k,2)+Ey
      !==== Ez(xx,yy,zzh) =========
      coords(1)=xx-xf0
-     coords(2)=yy
-     coords(3)=zzh
+     coords(2)=yy-yc
+     coords(3)=zzh-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3305,8 +3306,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,3)=ef(i,j,k,3)+Ez
      !==== Bx(xx,yyh,zzh)=========
      coords(1)=xx-xf0
-     coords(2)=yyh
-     coords(3)=zzh
+     coords(2)=yyh-yc
+     coords(3)=zzh-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3316,8 +3317,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,4)=ef(i,j,k,4)+Bx
      !==== By(xxh,yy,zzh) =========
      coords(1)=xxh-xf0
-     coords(2)=yy
-     coords(3)=zzh
+     coords(2)=yy-yc
+     coords(3)=zzh-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3327,8 +3328,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      ef(i,j,k,5)=ef(i,j,k,5)+By
      !==== Bz(xxh,yyh,zz)=========
      coords(1)=xxh-xf0
-     coords(2)=yyh
-     coords(3)=zz
+     coords(2)=yyh-yc
+     coords(3)=zz-zc
      if(G_prof)then
       call get_laser_gprof_fields_lp(coords,par_lp,fields)
      else
@@ -3343,13 +3344,13 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  end subroutine init_lp_inc0_fields
 !=====================================
  subroutine init_lp_fields(ef,e0,t_loc,tf,wx,wy,xf0,om0,&
-                              angle,lp_shx,lp,i1,i2)
+                              angle,lp_shx,lp,i1,i2,ycent,zcent)
  !==========================
  real(dp),intent(inout) :: ef(:,:,:,:)
  real(dp),intent(in) :: e0,t_loc,tf,wx,wy,xf0,angle,lp_shx,om0
  integer,intent(in) :: lp,i1,i2
  real(dp) :: xxh,xx,yy,yyh,zz,zzh,sigma,eps
- real(dp) :: xp,xc,yp,yc
+ real(dp) :: xp,xc,yp,yc,zc,ycent,zcent
  real(dp) :: zra,sf,cf
  real(dp) :: Ex,Ey,Ez,Bx,By,Bz
  integer :: i,j,k,ii,jj,kk
@@ -3369,7 +3370,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  eps=1./(om0*wy)
  zra=0.5*om0*wy*wy
  xc=xf0-tf+lp_shx
- yc=0.0 ! yc centroid y coordinate
+ yc=ycent
+ zc=zcent ! yc centroid y coordinate
  par_lp(1)=om0
  par_lp(2)=xc
  par_lp(3)=wx
@@ -3491,6 +3493,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
     jj=j-2
     yy=loc_yg(jj,1,imody)
     yyh=loc_yg(jj,2,imody)
+    yy=yy-yc
+    yyh=yyh-yc
     do i=i1,i2
      ii=i-2
      xx=loc_xg(ii,1,imodx)
@@ -3502,7 +3506,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      coords(2)=yp
      !==== Ex(xxh,yy)!
      call get_2Dlaser_fields_lp(coords,par_lp,fields)
-                                       !call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
+     !call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      Ex=e0*fields(1)
      Ey=e0*fields(2)
      ef(i,j,k,1)=ef(i,j,k,1)+Ex*cf-Ey*sf
@@ -3512,17 +3516,17 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      coords(1)=xp-xf0
      coords(2)=yp
      call get_2Dlaser_fields_lp(coords,par_lp,fields)
-                                       !call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
+     !call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      Ex=e0*fields(1)
-    Ey=e0*fields(2)
+     Ey=e0*fields(2)
      ef(i,j,k,2)=ef(i,j,k,2)+Ey*cf+Ex*sf
      !===ora Bz(xxh,yyh)=========
      xp=xc+(xxh-xc)*cf+yyh*sf
      yp=yyh*cf-(xxh-xc)*sf
-    coords(1)=xp-xf0
+     coords(1)=xp-xf0
      coords(2)=yp
      call get_2Dlaser_fields_lp(coords,par_lp,fields)
-                           !call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
+     !call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      Bz=e0*fields(6)
      ef(i,j,k,3)=ef(i,j,k,3)+Bz
    end do
@@ -3531,96 +3535,100 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
  endif
   !====3D ========================
  do k=k1,k2
-   kk=k-2
+  kk=k-2
   zz=loc_zg(kk,1,imodz)
   zzh=loc_zg(kk,2,imodz)
+  zz=zz-zc
+  zzh=zzh-zc
   do j=j1,j2
-    jj=j-2
+   jj=j-2
    yy=loc_yg(jj,1,imody)
    yyh=loc_yg(jj,2,imody)
-    do i=i1,i2          !xp=x*cos+y*sin  yp=y*cos-x*sin
-     ii=i-2
-     xx=loc_xg(ii,1,imodx)
-     xxh=loc_xg(ii,2,imodx)
-     !==== Ex(xxh,yy,zz)=========
-     xp=xc+(xxh-xc)*cf+yy*sf
-     yp=yy*cf-(xxh-xc)*sf
-   coords(1)=xp-xf0
-   coords(2)=yp
-   coords(3)=zz
-     if(G_prof)then
-      call get_laser_gprof_fields_lp(coords,par_lp,fields)
-     else
-      call get_laser_fields_lp(coords,par_lp,fields)
-     endif
-   Ex=e0*fields(1)
-     Ey=e0*fields(2)
-     ef(i,j,k,1)=Ex*cf-Ey*sf
-     !==== Ey(xx,yyh,zz) =========
-     xp=xc+(xx-xc)*cf+yyh*sf
-     yp=yyh*cf-(xx-xc)*sf
-   coords(1)=xp-xf0
-   coords(2)=yp
-     Ex=e0*fields(1)
-   Ey=e0*fields(2)
-     ef(i,j,k,2)=Ey*cf+Ex*sf
-     !==== Ez(xx,yy,zzh) =========
-     xp=xc+(xx-xc)*cf+yy*sf
-     yp=yy*cf-(xx-xc)*sf
-     coords(1)=xp-xf0
-   coords(2)=yp
-   coords(3)=zzh
-     if(G_prof)then
-      call get_laser_gprof_fields_lp(coords,par_lp,fields)
-     else
-      call get_laser_fields_lp(coords,par_lp,fields)
-     endif
-   Ez=e0*fields(3)
-   ef(i,j,k,3)=Ez
-     !==== Bx(xx,yyh,zzh)=========
-     xp=xc+(xx-xc)*cf+yyh*sf
-     yp=yyh*cf-(xx-xc)*sf
-     coords(1)=xp-xf0
-   coords(2)=yp
-   coords(3)=zzh
-     if(G_prof)then
-      call get_laser_gprof_fields_lp(coords,par_lp,fields)
-     else
-      call get_laser_fields_lp(coords,par_lp,fields)
-     endif
-   Bx=e0*fields(4)
-     By=e0*fields(5)
-     ef(i,j,k,4)=Bx*cf-By*sf
-     !==== By(xxh,yy,zzh) =========
-     xp=xc+(xxh-xc)*cf+yy*sf
-     yp=yy*cf-(xxh-xc)*sf
-   coords(1)=xp-xf0
-   coords(2)=yp
-     coords(3)=zzh
-     if(G_prof)then
-      call get_laser_gprof_fields_lp(coords,par_lp,fields)
-     else
-      call get_laser_fields_lp(coords,par_lp,fields)
-     endif
-     Bx=e0*fields(4)
-   By=e0*fields(5)
-     ef(i,j,k,5)=By*cf+Bx*sf
-     !==== Bz(xxh,yyh,zz)=========
-     xp=xc+(xxh-xc)*cf+yyh*sf
-     yp=yyh*cf-(xxh-xc)*sf
-     coords(1)=xp-xf0
-   coords(2)=yp
-   coords(3)=zz
-     if(G_prof)then
-      call get_laser_gprof_fields_lp(coords,par_lp,fields)
-     else
-      call get_laser_fields_lp(coords,par_lp,fields)
-     endif
-   Bz=e0*fields(6)
-   ef(i,j,k,6)=Bz
-  end do
+   yy=yy-yc
+   yyh=yyh-yc
+   do i=i1,i2          !xp=x*cos+y*sin  yp=y*cos-x*sin
+    ii=i-2
+    xx=loc_xg(ii,1,imodx)
+    xxh=loc_xg(ii,2,imodx)
+    !==== Ex(xxh,yy,zz)=========
+    xp=xc+(xxh-xc)*cf+yy*sf
+    yp=yy*cf-(xxh-xc)*sf
+    coords(1)=xp-xf0
+    coords(2)=yp
+    coords(3)=zz
+    if(G_prof)then
+     call get_laser_gprof_fields_lp(coords,par_lp,fields)
+    else
+     call get_laser_fields_lp(coords,par_lp,fields)
+    endif
+    Ex=e0*fields(1)
+    Ey=e0*fields(2)
+    ef(i,j,k,1)=Ex*cf-Ey*sf
+    !==== Ey(xx,yyh,zz) =========
+    xp=xc+(xx-xc)*cf+yyh*sf
+    yp=yyh*cf-(xx-xc)*sf
+    coords(1)=xp-xf0
+    coords(2)=yp
+    Ex=e0*fields(1)
+    Ey=e0*fields(2)
+    ef(i,j,k,2)=Ey*cf+Ex*sf
+    !==== Ez(xx,yy,zzh) =========
+    xp=xc+(xx-xc)*cf+yy*sf
+    yp=yy*cf-(xx-xc)*sf
+    coords(1)=xp-xf0
+    coords(2)=yp
+    coords(3)=zzh
+    if(G_prof)then
+     call get_laser_gprof_fields_lp(coords,par_lp,fields)
+    else
+     call get_laser_fields_lp(coords,par_lp,fields)
+    endif
+    Ez=e0*fields(3)
+    ef(i,j,k,3)=Ez
+    !==== Bx(xx,yyh,zzh)=========
+    xp=xc+(xx-xc)*cf+yyh*sf
+    yp=yyh*cf-(xx-xc)*sf
+    coords(1)=xp-xf0
+    coords(2)=yp
+    coords(3)=zzh
+    if(G_prof)then
+     call get_laser_gprof_fields_lp(coords,par_lp,fields)
+    else
+     call get_laser_fields_lp(coords,par_lp,fields)
+    endif
+    Bx=e0*fields(4)
+    By=e0*fields(5)
+    ef(i,j,k,4)=Bx*cf-By*sf
+    !==== By(xxh,yy,zzh) =========
+    xp=xc+(xxh-xc)*cf+yy*sf
+    yp=yy*cf-(xxh-xc)*sf
+    coords(1)=xp-xf0
+    coords(2)=yp
+    coords(3)=zzh
+    if(G_prof)then
+     call get_laser_gprof_fields_lp(coords,par_lp,fields)
+    else
+     call get_laser_fields_lp(coords,par_lp,fields)
+    endif
+    Bx=e0*fields(4)
+    By=e0*fields(5)
+    ef(i,j,k,5)=By*cf+Bx*sf
+    !==== Bz(xxh,yyh,zz)=========
+    xp=xc+(xxh-xc)*cf+yyh*sf
+    yp=yyh*cf-(xxh-xc)*sf
+    coords(1)=xp-xf0
+    coords(2)=yp
+    coords(3)=zz
+    if(G_prof)then
+     call get_laser_gprof_fields_lp(coords,par_lp,fields)
+    else
+     call get_laser_fields_lp(coords,par_lp,fields)
+    endif
+    Bz=e0*fields(6)
+    ef(i,j,k,6)=Bz
    end do
   end do
+ end do
   !====== S POLARIZATION ==============================================
  case(2)
   if(ndim<3)then
@@ -3630,6 +3638,8 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
     jj=j-2
     yy=loc_yg(jj,1,imody)
     yyh=loc_yg(jj,2,imody)
+    yy=yy-yc
+    yyh=yyh-yc
     do i=i1,i2          !xp=x*cos+y*sin  yp=y*cos-x*sin
      ii=i-2
      xx=loc_xg(ii,1,imodx)
@@ -3639,7 +3649,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      yp=yy*cf-(xx-xc)*sf
      coords(1)=xp-xf0
      coords(2)=yp
-                              !call get_2Dlaser_fields_lp(coords,par_lp,fields)
+     !call get_2Dlaser_fields_lp(coords,par_lp,fields)
      call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      Ez=e0*fields(2)    !  Ez(s-pol)=Ey(p-pol)
      ef(i,j,k,3)=Ez
@@ -3648,7 +3658,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      yp=yyh*cf-(xx-xc)*sf
      coords(1)=xp-xf0
      coords(2)=yp
-                           !call get_2Dlaser_fields_lp(coords,par_lp,fields)
+     !call get_2Dlaser_fields_lp(coords,par_lp,fields)
      call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      Bx=e0*fields(1)     !  Bx(s-pol)= Ex(p-pol)
      By=-e0*fields(6)    !  By(s-pol)=-Bz(p-pol)
@@ -3658,7 +3668,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
      yp=yyh*cf-(xx-xc)*sf
      coords(1)=xp-xf0
      coords(2)=yp
-     !                   call get_2Dlaser_fields_lp(coords,par_lp,fields)
+     !call get_2Dlaser_fields_lp(coords,par_lp,fields)
      call get_2Dlaser_gprof_fields_lp(coords,par_lp,fields)
      Bx=e0*fields(1)   !  Bx(s-pol)= Ex(p-pol
      By=-e0*fields(2)  !  By(s-pol)=-Bz(p-pol)
@@ -3672,10 +3682,14 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
    kk=k-2
    zz=loc_zg(kk,1,imodz)
    zzh=loc_zg(kk,2,imodz)
+   zz=zz-zc
+   zzh=zzh-zc
    do j=j1,j2
     jj=j-2
     yy=loc_yg(jj,1,imody)
     yyh=loc_yg(jj,2,imody)
+    yy=yy-yc
+    yyh=yyh-yc
     do i=i1,i2          !xp=x*cos+y*sin  yp=y*cos-x*sin
      ii=i-2
      xx=loc_xg(ii,1,imodx)

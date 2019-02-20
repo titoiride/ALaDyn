@@ -2717,11 +2717,11 @@
    shx_lp=lpx(7)
   if(lp_end(1) > xm)then
    call init_lp_fields(ebf,lp_amp,tt,t0_lp,w0_x,w0_y,xf,oml,&
-                                       angle,shx_lp,lp_ind,i1,i2)
+                                       angle,shx_lp,lp_ind,i1,i2,y0_cent(1),z0_cent(1))
   endif
  else         !normal incidence
   if(lp_end(1) > xm)then
-   call init_lp_inc0_fields(ebf,lp_amp,tt,t0_lp,w0_x,w0_y,xf,oml,lp_ind,i1,i2)
+   call init_lp_inc0_fields(ebf,lp_amp,tt,t0_lp,w0_x,w0_y,xf,oml,lp_ind,i1,i2,y0_cent(1),z0_cent(1))
   endif
  endif
  if(nb_laser >1)then
@@ -2731,7 +2731,7 @@
    xc_loc(ic)=xc_loc(ic-1)-lp_delay(ic-1)
    xf_loc(ic)=xc_loc(ic)+t0_lp
    if(lp_end(ic) > xm)call init_lp_inc0_fields(ebf,lp_amp,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,&
-                                              lp_ind,i1,i2)
+                                              lp_ind,i1,i2,y0_cent(ic),z0_cent(ic))
   end do
  endif
 !=================TWO-COLOR
@@ -2742,7 +2742,7 @@
   lp_ionz_in=xc1_lp-tau1
   lp_ionz_end=xc1_lp+tau1
   call init_lp_inc0_fields(ebf,lp1_amp,tt,t1_lp,w1_x,w1_y,xf1,om1,&
-                                              lp_ind,i1,i2)
+                                              lp_ind,i1,i2,y1_cent,z1_cent)
   if(pe0)write(6,'(a30,e11.4)')'two-color activated at xc1_lp=',xc1_lp
  endif
 
@@ -2828,10 +2828,10 @@
  if(lp_end(1) > xm)then
   if(G_prof)then
    call init_gprof_envelope_field(&
-   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
+   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2,y0_cent(1),z0_cent(1))
   else
    call init_envelope_field(&
-   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2)
+   env,a0,dt,tt,t0_lp,w0_x,w0_y,xf,oml,i1,i2,y0_cent(1),z0_cent(1))
    !call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
   endif
  endif
@@ -2844,10 +2844,10 @@
    if(lp_end(ic) > xm)then
     if(G_prof)then
      call init_gprof_envelope_field(&
-     env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2)
+     env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2,y0_cent(ic),z0_cent(ic))
     else
      call init_envelope_field(&
-     env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2)
+     env,a0,dt,tt,t0_lp,w0_x,w0_y,xf_loc(ic),oml,i1,i2,y0_cent(ic),z0_cent(ic))
     endif
    endif
   end do
@@ -2863,10 +2863,10 @@
   if(lp_ionz_end > xm)then
    if(G_prof)then
     call init_gprof_envelope_field(&
-    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
+    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2,y1_cent,z1_cent)
    else
     call init_envelope_field(&
-    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2)
+    env1,a1,dt,tt,t1_lp,w1_x,w1_y,xf1,om1,i1,i2,y1_cent,z1_cent)
    endif
   endif
  endif
