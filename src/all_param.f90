@@ -600,7 +600,7 @@
   ! here the total initial nmacro particles
  endif
  !========================= Memory allocation
- nx_alloc=nint(dx_inv*sum(lpx(1:5)))
+ nx_alloc=nint(dx_inv*sum(lpx(1:6)))
  nx_alloc=min(nx_loc,nx_alloc)
  npt_buffer=0
  do i=1,nsp

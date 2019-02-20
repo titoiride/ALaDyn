@@ -51,7 +51,7 @@
 
  real(dp) :: t0_b,lp_rad,el_lp,el_D,lambda_p,omega_p,lpvol
  real(dp) :: nc0,ncrit,n_over_nc,n1_over_n,n2_over_n,np1,np2,np_per_cell,nmacro
- real(dp) :: lpx(7),lpy(3),targ_in,targ_end,lx_fwhm,tau_fwhm
+ real(dp) :: lpx(7),lpy(3),targ_in,targ_end,lx_fwhm,tau_fwhm,incid_angle
  real(dp) :: lp_in(Ref_nlas),lp_end(Ref_nlas),lp_ionz_in,lp_ionz_end,xf_loc(Ref_nlas),xc_loc(Ref_nlas)
  real(dp) :: ymin_t,ymax_t,zmin_t,zmax_t,rmin_t,rmax_t
  ! tracking param

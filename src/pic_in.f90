@@ -419,7 +419,7 @@
  integer :: n_peak,npmax,nxtot
  real(dp) :: uu,u2,xp_min,xp_max,u3,ramp_prefactor
  real(dp) :: xfsh,un(2),wgh_sp(3)
- integer :: nxl(5)
+ integer :: nxl(6)
  integer :: loc_nptx(4),nps_loc(4),last_particle_index(4),nptx_alloc(4)
  !==========================
  p=0
@@ -440,7 +440,7 @@
  ! Layers nxl(1:5) all containing the same ion species
  xtot=0.0
  nxtot=0
- do i=1,5
+ do i=1,6
   nxl(i)=nint(dx_inv*lpx(i))
   lpx(i)=nxl(i)*dx
   xtot=xtot+lpx(i)
@@ -448,15 +448,15 @@
  end do
  if(xf0 >0.0)then
   targ_in=xf0
- targ_end=targ_in+xtot
-  else
+  targ_end=targ_in+xtot
+ else
   targ_in= xmin
   targ_end=xtot+xf0
  endif
  xfsh=xf0
  !=============================
  loc_nptx=0
- loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5))*np_per_xc(1:nsp)
+ loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5)+nxl(6))*np_per_xc(1:nsp)
 
  nptx_max=maxval(loc_nptx(1:nsp))
  allocate(xpt(nptx_max,nsp))
@@ -720,7 +720,7 @@
    nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
   end do
  case(4)
-  !================ cos^2 upramp with peak np2/n0 =================
+  !================ cos^2 upramp with peak n0 =================
   if(nxl(1)>0)then
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
@@ -729,13 +729,13 @@
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(1)*uu
      uu=uu-1.
-     wghpt(i1,ic)=(np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
+     wghpt(i1,ic)=one_dp*cos(0.5*pi*(uu))*cos(0.5*pi*(uu))*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(1)
   endif
-   !================ uniform layer np2/n0=================
+   !================ uniform layer n0=================
   if(nxl(2)>0)then
    do ic=1,nsp
     n_peak=nxl(2)*np_per_xc(ic)
@@ -743,13 +743,13 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(2)*uu
-     wghpt(i1,ic)=np2*wgh_sp(ic)
+     wghpt(i1,ic)=one_dp*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(2)
   endif
-  !================ cos^2 downramp to the plateau =================
+  !================ cos^2 downramp to the plateau np1/n0 =================
   if(nxl(3)>0)then
     do ic=1,nsp
      n_peak=nxl(3)*np_per_xc(ic)
@@ -758,13 +758,14 @@
       i1=nptx(ic)+i
       xpt(i1,ic)=xfsh+lpx(3)*uu
       uu=uu-1.
-      wghpt(i1,ic)=(1+(np2-1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))*wgh_sp(ic)
+      wghpt(i1,ic)=(np1+(one_dp-np1)*&
+      sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))*wgh_sp(ic)
      end do
      nptx(ic)=nptx(ic)+n_peak
     end do
     xfsh=xfsh+lpx(3)
    endif
-  !================ Central layer=================
+  !================ Central layer of density np1/n0 =================
   if(nxl(4)>0)then
    do ic=1,nsp
     n_peak=nxl(4)*np_per_xc(ic)
@@ -772,13 +773,13 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(4)*uu
-     wghpt(i1,ic)=wgh_sp(ic)
+     wghpt(i1,ic)=np1*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(4)
   endif
-  !================ cos^2 downramp =================
+  !================ cos^2 downramp to second plateau np2/n0 =================
   if(nxl(5)>0)then
    do ic=1,nsp
     n_peak=nxl(5)*np_per_xc(ic)
@@ -786,13 +787,29 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(5)*uu
-     wghpt(i1,ic)=(cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
+     wghpt(i1,ic)=(np2+(np1-np2)*&
+     cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(5)
   endif
+  !================ Second plateau of density np2/n0 =================
+  if(nxl(6) >0)then
    do ic=1,nsp
+    n_peak=nxl(6)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(6)*uu
+     wghpt(i1,ic)=np2*wgh_sp(ic)
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+   end do
+   xfsh=xfsh+lpx(6)
+  end if
+
+  do ic=1,nsp
    nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
   end do
   !=========================================
@@ -2432,14 +2449,14 @@
  real(dp),intent(inout) :: uf(:,:,:,:),uf0(:,:,:,:)
  real(dp),intent(in) :: xf0
  integer,intent(in) :: nfluid,dmodel,i1,i2,j1,j2,k1,k2
- integer :: i,i0,j,k,ic,nxl(5),ntot,i0_targ,i1_targ
+ integer :: i,i0,j,k,ic,nxl(6),ntot,i0_targ,i1_targ
  integer :: j01,j02,k01,k02,jj,kk
  real(dp) :: uu,xtot,l_inv,np1_loc,peak_fluid_density,u2,u3,ramp_prefactor
  real(dp) :: yy,zz,r2
 
  xtot=zero_dp
  ntot=0
- do i=1,5
+ do i=1,6
   nxl(i)=nint(dx_inv*lpx(i))
   lpx(i)=nxl(i)*dx
   xtot=xtot+lpx(i)
@@ -2498,153 +2515,160 @@
  i0=i0_targ
  select case(dmodel)
   !initial plateau, cubic ramp (exponential still available but commented), central plateau and exit ramp
-  case(1)
-   if(nxl(1) >0)then
-    ramp_prefactor=one_dp-np1
-    do i=1,nxl(1)
-     i0=i0+1
-     fluid_x_profile(i0)=peak_fluid_density*np1
-    end do
-   endif
-   if(nxl(2) >0)then    !sigma=nxl(2)/3
-    do i=1,nxl(2)
-     i0=i0+1
-     !uu=-(float(i)-float(nxl(2)))/float(nxl(2))
-     uu=(real(i)-0.5)/real(nxl(2))
-     u2=uu*uu
-     u3=u2*uu
-     !fluid_x_profile(i0)=peak_fluid_density*exp(-4.5*uu*uu)
-     fluid_x_profile(i0)=peak_fluid_density*&
-     (-2.*ramp_prefactor*u3+3.*ramp_prefactor*u2+one_dp-ramp_prefactor)
-    end do
-   endif
+ case(1)
+  if(nxl(1) >0)then
+   ramp_prefactor=one_dp-np1
+   do i=1,nxl(1)
+    i0=i0+1
+    fluid_x_profile(i0)=peak_fluid_density*np1
+   end do
+  endif
+  if(nxl(2) >0)then    !sigma=nxl(2)/3
+   do i=1,nxl(2)
+    i0=i0+1
+    !uu=-(float(i)-float(nxl(2)))/float(nxl(2))
+    uu=(real(i)-0.5)/real(nxl(2))
+    u2=uu*uu
+    u3=u2*uu
+    !fluid_x_profile(i0)=peak_fluid_density*exp(-4.5*uu*uu)
+    fluid_x_profile(i0)=peak_fluid_density*&
+    (-2.*ramp_prefactor*u3+3.*ramp_prefactor*u2+one_dp-ramp_prefactor)
+   end do
+  endif
+  do i=1,nxl(3)
+   i0=i0+1
+   fluid_x_profile(i0)=peak_fluid_density
+  end do
+  if(nxl(4) >0)then
+   do i=1,nxl(4)
+    i0=i0+1
+    uu=peak_fluid_density*real(i)/nxl(4)
+    fluid_x_profile(i0)=peak_fluid_density-uu*(1.-np2)
+   end do
+  endif
+  if(nxl(5) >0)then
+   do i=1,nxl(5)
+    i0=i0+1
+    fluid_x_profile(i0)=peak_fluid_density*np2
+   end do
+  endif
+ case(2)
+  if(nxl(1) >0)then            !a ramp 0==>np1
+   do i=1,nxl(1)
+    i0=i0+1
+    uu=(real(i)-real(nxl(1)))/real(nxl(1))
+    fluid_x_profile(i0)=np1*peak_fluid_density*exp(-4.5*uu*uu)
+   end do
+  endif
+  if(nxl(2) >0)then    ! np1 plateau
+   do i=1,nxl(2)
+    i0=i0+1
+    fluid_x_profile(i0)=np1*peak_fluid_density
+   end do
+  endif
+  if(nxl(3) >0)then  ! a down ramp np1=> np2
    do i=1,nxl(3)
+    i0=i0+1
+    uu=peak_fluid_density*real(i)/nxl(3)
+    fluid_x_profile(i0)=np1*peak_fluid_density-uu*(np1-np2)
+   end do
+  endif
+  if(nxl(4) >0)then   !a np2 plateau
+   do i=1,nxl(4)
+    i0=i0+1
+    fluid_x_profile(i0)=np2*peak_fluid_density
+   end do
+  endif
+  if(nxl(5) >0)then
+   do i=1,nxl(5)
+    i0=i0+1
+    uu=peak_fluid_density*real(i)/nxl(5)
+    fluid_x_profile(i0)=peak_fluid_density*np2*(1.-uu)
+   end do
+  endif
+ case(3)
+  if(pe0)then
+   write(6,*)'dmodel_id =3 not activated for one-species fluid scheme'
+  endif
+ return
+ !initial plateau, cos^2 bump, central plateau and exit ramp.
+ !See model_id=4 for pic case
+ case(4)
+  !================ cos^2 upramp with peak n0 =================
+  if(nxl(1) >0)then
+   do i=1,nxl(1)
+    i0=i0+1
+    uu=(real(i)-0.5)/real(nxl(1))-one_dp
+    fluid_x_profile(i0)=peak_fluid_density*&
+    cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
+   end do
+  endif
+  !================ uniform layer n0 =================
+  if(nxl(2) >0)then
+   do i=1,nxl(2)
     i0=i0+1
     fluid_x_profile(i0)=peak_fluid_density
    end do
-   if(nxl(4) >0)then
-    do i=1,nxl(4)
-     i0=i0+1
-     uu=peak_fluid_density*real(i)/nxl(4)
-     fluid_x_profile(i0)=peak_fluid_density-uu*(1.-np2)
-    end do
-   endif
-   if(nxl(5) >0)then
-    do i=1,nxl(5)
-     i0=i0+1
-     fluid_x_profile(i0)=peak_fluid_density*np2
-    end do
-   endif
-  case(2)
-    if(nxl(1) >0)then            !a ramp 0==>np1
-     do i=1,nxl(1)
-      i0=i0+1
-      uu=(real(i)-real(nxl(1)))/real(nxl(1))
-      fluid_x_profile(i0)=np1*peak_fluid_density*exp(-4.5*uu*uu)
-     end do
-    endif
-    if(nxl(2) >0)then    ! np1 plateau
-     do i=1,nxl(2)
-      i0=i0+1
-      fluid_x_profile(i0)=np1*peak_fluid_density
-     end do
-    endif
-    if(nxl(3) >0)then  ! a down ramp np1=> np2
-     do i=1,nxl(3)
-      i0=i0+1
-      uu=peak_fluid_density*real(i)/nxl(3)
-      fluid_x_profile(i0)=np1*peak_fluid_density-uu*(np1-np2)
-     end do
-    endif
-    if(nxl(4) >0)then   !a np2 plateau
-     do i=1,nxl(4)
-      i0=i0+1
-      fluid_x_profile(i0)=np2*peak_fluid_density
-     end do
-    endif
-    if(nxl(5) >0)then
-     do i=1,nxl(5)
-      i0=i0+1
-      uu=peak_fluid_density*real(i)/nxl(5)
-      fluid_x_profile(i0)=peak_fluid_density*np2*(1.-uu)
-     end do
-    endif
-   case(3)
-    if(pe0)then
-     write(6,*)'dmodel_id =3 not activated for one-species fluid scheme'
-    endif
-   return
-  !initial plateau, cos^2 bump, central plateau and exit ramp.
-  !See model_id=4 for pic case
-  case(4)
-    !================ cos^2 upramp with peak np2/n0 =================
-    if(nxl(1) >0)then
-      do i=1,nxl(1)
-       i0=i0+1
-       uu=(real(i)-0.5)/real(nxl(1))-one_dp
-       fluid_x_profile(i0)=peak_fluid_density*&
-       (np1+(np2-np1)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))
-      end do
-    endif
-    !================ uniform layer np2/n0=================
-    if(nxl(2) >0)then
-      do i=1,nxl(2)
-       i0=i0+1
-       fluid_x_profile(i0)=peak_fluid_density*np2
-      end do
-    endif
-    !================ cos^2 downramp to the plateau =================
-    if(nxl(3) >0)then
-      do i=1,nxl(3)
-        i0=i0+1
-        uu=(real(i,dp)-0.5)/real(nxl(3))-one_dp
-        fluid_x_profile(i0)=peak_fluid_density*&
-        (one_dp+(np2-one_dp)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))
-      end do
-    end if
-    !================ Central layer=================
-    if(nxl(4) >0)then
-      do i=1,nxl(4)
-        i0=i0+1
-        fluid_x_profile(i0)=peak_fluid_density
-      end do
-    end if
-    !================ cos^2 downramp =================
-    if(nxl(5) >0)then
-      do i=1,nxl(5)
-        i0=i0+1
-        uu=(real(i,dp)-0.5)/real(nxl(5))
-        fluid_x_profile(i0)=peak_fluid_density*&
-        cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
-      end do
-    end if
-    !=========================================
-  end select
-  if(xf0 < 0.0)then
-   i1_targ=nint(dx_inv*abs(xf0))
-   i0=0
-   do i=1,ntot-i1_targ
-    i0=i0+1
-    fluid_x_profile(i0)=fluid_x_profile(i+i1_targ)
-   end do
   endif
+  !================ cos^2 downramp to the plateau np1/n0 =================
+  if(nxl(3) >0)then
+   do i=1,nxl(3)
+    i0=i0+1
+    uu=(real(i,dp)-0.5)/real(nxl(3))-one_dp
+    fluid_x_profile(i0)=peak_fluid_density*&
+    (np1+(one_dp-np1)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))
+   end do
+  end if
+  !================ Central layer of density np1/n0 =================
+  if(nxl(4) >0)then
+   do i=1,nxl(4)
+    i0=i0+1
+    fluid_x_profile(i0)=peak_fluid_density*np1
+   end do
+  end if
+  !================ cos^2 downramp to second plateau np2/n0 =================
+  if(nxl(5) >0)then
+   do i=1,nxl(5)
+    i0=i0+1
+    uu=(real(i,dp)-0.5)/real(nxl(5))
+    fluid_x_profile(i0)=peak_fluid_density*&
+    (np2+(np1-np2)*cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))
+   end do
+  end if
+  !================ Second plateau of density np2/n0 =================
+  if(nxl(6) >0)then
+   do i=1,nxl(6)
+    i0=i0+1
+    fluid_x_profile(i0)=peak_fluid_density*np2
+   end do
+  end if
+  !=========================================
+ end select
+ if(xf0 < 0.0)then
+  i1_targ=nint(dx_inv*abs(xf0))
+  i0=0
+  do i=1,ntot-i1_targ
+   i0=i0+1
+   fluid_x_profile(i0)=fluid_x_profile(i+i1_targ)
+  end do
+ endif
 !-------------------------------
 ! target profile of length nxf (xtot)
 ! now put target on the computationale grid
 !
-  ic=nfluid     !the particle number density
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,i2
-     uf(i,j,k,ic)=fluid_x_profile(i)*fluid_yz_profile(j,k)
-     uf0(i,j,k,ic)=uf(i,j,k,ic)
-    end do
+ ic=nfluid     !the particle number density
+ do k=k1,k2
+  do j=j1,j2
+   do i=i1,i2
+    uf(i,j,k,ic)=fluid_x_profile(i)*fluid_yz_profile(j,k)
+    uf0(i,j,k,ic)=uf(i,j,k,ic)
    end do
   end do
-  ! if(pe0)then
-  !  write(6,*)'xt_in=',targ_in,'off_set= ',xf0
-  !  write(6,'(a22,e11.4)')'Max init fluid density',maxval(uf(i1:i2,j1:j2,k1:k2,ic))
-  ! endif
+ end do
+ ! if(pe0)then
+ !  write(6,*)'xt_in=',targ_in,'off_set= ',xf0
+ !  write(6,'(a22,e11.4)')'Max init fluid density',maxval(uf(i1:i2,j1:j2,k1:k2,ic))
+ ! endif
  !========================
  end subroutine init_fluid_density_momenta
 
@@ -2681,7 +2705,7 @@
  lp_end(1)=xc_lp+tau
  eps=1./(oml*w0_y)
  sigm=lam0/w0_x
- angle=lpx(6)
+ angle=incid_angle
  xf=xc_lp+t0_lp
   !=======================
  lp_ind=lp_mod
@@ -2745,7 +2769,7 @@
  lp_end(1)=lp_in(1)+w0_x
  eps=1./(oml*w0_y)
  sigm=lam0/w0_x
- angle=lpx(6)
+ angle=incid_angle
  xf=xc_lp+t0_lp
  shx_cp=0.0
  if(angle >0.0)shx_cp=lpx(7)
