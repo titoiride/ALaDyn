@@ -1683,11 +1683,14 @@
    write(10,'(2i8)')tot_tpart,track_tot_part
   close(10)
   write(6,*)'Particles param written on file: '//foldername//'/'//fname//'.dat'
- else
-  disp=tk*ndv*sum(loc_tpart(1:mype))  ! da usare con mpi_write_part
+  open(10,file=fname_out,form='unformatted')
+  write(10)pdata
+  close(10)
+ !else
+ ! disp=tk*ndv*sum(loc_tpart(1:mype))  ! da usare con mpi_write_part
  endif
- disp=disp*8  ! sia gli int che i float sono di 4 bytes
- call mpi_write_dp(pdata,lenp,disp,23,fname_out)
+ !disp=disp*8  ! sia gli int che i float sono di 4 bytes
+ !call mpi_write_dp(pdata,lenp,disp,23,fname_out)
 
  if(allocated(pdata))deallocate(pdata)
  if(pe0)then
