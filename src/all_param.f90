@@ -446,6 +446,9 @@
   endif
   bet0=0.0
   lpvol=el_lp*el_lp*el_lp
+  if(Symmetrization_pulse)then
+   if(a_symm_rat<=zero_dp)a_symm_rat=sqrt(2.0)
+  endif
  endif
  !===================================
  if(Beam)then !  e-Beams section
@@ -600,7 +603,7 @@
   ! here the total initial nmacro particles
  endif
  !========================= Memory allocation
- nx_alloc=nint(dx_inv*sum(lpx(1:5)))
+ nx_alloc=nint(dx_inv*sum(lpx(1:6)))
  nx_alloc=min(nx_loc,nx_alloc)
  npt_buffer=0
  do i=1,nsp
