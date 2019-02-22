@@ -2672,10 +2672,10 @@
     ekt(ndv+1)=ekt(ndv+1)+wgh*gmb
     ekt(8)=ekt(8)+wgh
    end do
-   ekt(7)=ekt(ndv+1)  !<w*gam>
+   ekt(7)=ekt(ndv+1)*electron_mass  !<w*gam>
    ekt(6)=0.0         !<w*Pz>
-   ekt(5)=ekt(4)      !<w*Py>
-   ekt(4)=ekt(3)      !<w*Px>
+   ekt(5)=ekt(4)*electron_mass      !<w*Py>
+   ekt(4)=ekt(3)*electron_mass      !<w*Px>
    ekt(3)=0.0          !<w*z>
   else
    do kk=1,np_loc
@@ -2687,6 +2687,7 @@
     ekt(7)=ekt(7)+wgh*gmb
     ekt(8)=ekt(8)+wgh
     end do
+    ekt(4:7)=electron_mass*ekt(4:7)
   endif
  endif
  call allreduce_dpreal(SUMV,ekt,ekm,8)
@@ -2713,8 +2714,8 @@
    end do
    ekt(6)=0.0         !<Pz*Pz>
    ekt(8) =0.0        !<z*Pz)
-   ekt(5)=ekt(4)      !<Py*Py>
-   ekt(4)=ekt(3)      !<Px*Px>
+   ekt(5)=ekt(4)*electron_mass*electron_mass      !<Py*Py>
+   ekt(4)=ekt(3)*electron_mass*electron_mass      !<Px*Px>
    ekt(3)=0.0         !<z*z>
   else
    do kk=1,np_loc
@@ -2727,6 +2728,8 @@
     gmb=wgh*(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
     ekt(9)=ekt(9)+gmb                                !<(w*gam**2>
    end do
+   ekt(4:6)=electron_mass*electron_mass*ekt(4:6)
+   ekt(9)=electron_mass*electron_mass*ekt(9)
   endif
  endif
  call allreduce_dpreal(SUMV,ekt,ekm,9)

@@ -97,7 +97,7 @@
  do while (tnow < tmax)
 
   if(P_tracking)then
-   if(tnow>=t_in .and. tnow <=t_in+dt_loc)then
+   if(tnow>=t_in .and. tnow <t_in+dt_loc)then
     tk_ind=tk_ind+1
     call initial_tparticles_select(spec(1),dt_loc,txmin,txmax,tymin,tymax,tzmin,tzmax)
     call t_particles_collect(spec(1),tk_ind)
