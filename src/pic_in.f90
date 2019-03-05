@@ -749,7 +749,7 @@
    end do
    xfsh=xfsh+lpx(2)
   endif
-  !================ cos^2 downramp to the plateau np1/n0 =================
+  !================ cos^2 downramp to the plateau np1*n0 =================
   if(nxl(3)>0)then
     do ic=1,nsp
      n_peak=nxl(3)*np_per_xc(ic)
@@ -765,7 +765,7 @@
     end do
     xfsh=xfsh+lpx(3)
    endif
-  !================ Central layer of density np1/n0 =================
+  !================ Central layer of density np1*n0 =================
   if(nxl(4)>0)then
    do ic=1,nsp
     n_peak=nxl(4)*np_per_xc(ic)
@@ -779,7 +779,7 @@
    end do
    xfsh=xfsh+lpx(4)
   endif
-  !================ cos^2 downramp to second plateau np2/n0 =================
+  !================ cos^2 downramp to second plateau np2*n0 =================
   if(nxl(5)>0)then
    do ic=1,nsp
     n_peak=nxl(5)*np_per_xc(ic)
@@ -794,7 +794,7 @@
    end do
    xfsh=xfsh+lpx(5)
   endif
-  !================ Second plateau of density np2/n0 =================
+  !================ Second plateau of density np2*n0 =================
   if(nxl(6) >0)then
    do ic=1,nsp
     n_peak=nxl(6)*np_per_xc(ic)
