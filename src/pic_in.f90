@@ -1841,7 +1841,7 @@
  loc_wghyz=1.
  call mpi_yz_part_distrib(8,loc_npty,loc_nptz,npty_layer,npty_layer,&
   ymin_t,zmin_t,wyz)
-!=======================
+ !=======================
  !Longitudinal layer distribution
  !===========================
  xtot=0.0
@@ -1870,10 +1870,9 @@
  !=======================
  allocate(xpt(nptx_max,8))
  allocate(wghpt(nptx_max,8))
-
  allocate(loc_xpt(nptx_max,8))
  allocate(loc_wghx(nptx_max,8))
- wghpt(1:nptx_max,1:8)=1.
+ wghpt(1:nptx_max,1:8)=one_dp
 !=================
  !========================
  loc_imax(imodx,1:8)=nptx_loc(1:8)
@@ -1884,13 +1883,13 @@
   do ic=1,2
    n_peak=nptx_loc(ic)
    if(n_peak >0)then
-   do i=1,n_peak
-    uu=(real(i,dp)-0.5)/real(n_peak,dp)
-    xpt(i,ic)=xfsh+lpx(3)*uu
-    wghpt(i,ic)=ratio_mpc(ic)*j0_norm
-    xpt(i,ic+2)=xpt(i,ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     xpt(i,ic)=xfsh+lpx(3)*uu
+     wghpt(i,ic)=ratio_mpc(ic)*j0_norm
+     xpt(i,ic+2)=xpt(i,ic)
      wghpt(i,ic+2)=np1*wghpt(i,ic)    !inter-wire plasma (or vacuum)
-   end do
+    end do
    endif
    !========================= np1>0 a low density  interwire plasma
   end do
@@ -1901,11 +1900,11 @@
    do i=1,nptx_loc(ic)
     if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
      .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
-    i1=i1+1
-    loc_xpt(i1,ic)=xpt(i,ic)
-    loc_wghx(i1,ic)=wghpt(i,ic)
-    loc_xpt(i1,ic+2)=xpt(i,ic+2)
-    loc_wghx(i1,ic+2)=wghpt(i,ic+2)
+     i1=i1+1
+     loc_xpt(i1,ic)=xpt(i,ic)
+     loc_wghx(i1,ic)=wghpt(i,ic)
+     loc_xpt(i1,ic+2)=xpt(i,ic+2)
+     loc_wghx(i1,ic+2)=wghpt(i,ic+2)
     endif
    end do
    loc_imax(imodx,ic)=i1
@@ -1919,14 +1918,14 @@
   ! Counts particles
 
   nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
+  loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
   nps_loc(2)=nps_loc(2)+&
-   loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
+  loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
   if(np1 >0.0)then
    nps_loc(1)=nps_loc(1)+&
-    loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
+   loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
    nps_loc(2)=nps_loc(2)+&
-    loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
+   loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
   endif
  endif
  !------------------------------
@@ -1937,11 +1936,11 @@
   do ic=5,6
    n_peak=nptx_loc(ic)
    if(n_peak >0)then
-   do i=1,n_peak
-    xpt(i,ic)=xfsh+lpx(4)*(real(i,dp)-0.5)/real(n_peak,dp)
-    uu=j0_norm*ratio_mpc(ic-2)
-    wghpt(i,ic)=uu
-   end do
+    do i=1,n_peak
+     xpt(i,ic)=xfsh+lpx(4)*(real(i,dp)-0.5)/real(n_peak,dp)
+     uu=j0_norm*ratio_mpc(ic-2)
+     wghpt(i,ic)=uu
+    end do
    endif
   end do
   xfsh=xfsh+lpx(4)
@@ -1949,11 +1948,11 @@
    i1=0
    do i=1,nptx_loc(ic)
     if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
-     .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
+    .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
      i1=i1+1
      loc_xpt(i1,ic)=xpt(i,ic)
      loc_wghx(i1,ic)=wghpt(i,ic)
-  endif
+    endif
    end do
    loc_imax(imodx,ic)=i1
   end do
@@ -1973,38 +1972,38 @@
   do ic=7,8
    n_peak=nptx_loc(ic)
    if(n_peak >0)then
-   do i=1,n_peak
-    xpt(i,ic)=xfsh+lpx(5)*(real(i,dp)-0.5)/real(n_peak,dp)
-    uu=j0_norm*ratio_mpc(ic-2)
-    wghpt(i,ic)=uu*np2
-   end do
+    do i=1,n_peak
+     xpt(i,ic)=xfsh+lpx(5)*(real(i,dp)-0.5)/real(n_peak,dp)
+     uu=j0_norm*ratio_mpc(ic-2)
+     wghpt(i,ic)=uu*np2
+    end do
    endif
   end do
   ic=8
   n_peak=nptx_loc(ic)
   wghpt(1:n_peak,ic)=wghpt(1:n_peak,ic)/real(ion_min(nsp-1),dp)
- xfsh=xfsh+lpx(5)
+  xfsh=xfsh+lpx(5)
  !===============
   do ic=7,8
-  i1=0
-  do i=1,nptx_loc(ic)
-   if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
+   i1=0
+   do i=1,nptx_loc(ic)
+    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
     .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
-   i1=i1+1
-   loc_xpt(i1,ic)=xpt(i,ic)
-   loc_wghx(i1,ic)=wghpt(i,ic)
-   endif
-  end do
+     i1=i1+1
+     loc_xpt(i1,ic)=xpt(i,ic)
+     loc_wghx(i1,ic)=wghpt(i,ic)
+    endif
+   end do
    loc_imax(imodx,ic)=i1-1
- end do
- p=imodx
- l=imody
- ip=imodz
-
- nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,7)*loc_jmax(l,7)*loc_kmax(ip,7)
+  end do
+  p=imodx
+  l=imody
+  ip=imodz
+ 
+  nps_loc(1)=nps_loc(1)+&
+  loc_imax(p,7)*loc_jmax(l,7)*loc_kmax(ip,7)
   nps_loc(nsp)=nps_loc(nsp)+&
-   loc_imax(p,8)*loc_jmax(l,8)*loc_kmax(ip,8)
+  loc_imax(p,8)*loc_jmax(l,8)*loc_kmax(ip,8)
  endif
 !+++++++++++++++++END target x-distribution
  !==============
