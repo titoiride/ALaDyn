@@ -1658,7 +1658,7 @@
  integer :: np_per_zcell(6),n_peak
  integer :: nptx_loc(8)
  integer :: npty_layer(8),npyc(8),npty_ne,nptz_ne
- integer :: npmax,nps_loc(4),nps_bulk
+ integer :: npmax,nps_loc(4)
  real(dp) :: uu,yy,dxip,dpy
  real(dp) :: zp_min,zp_max,yp_min,yp_max,xp_min,xp_max
  real(dp) :: xfsh,dlpy,tot_lpy,loc_ymp
@@ -1667,12 +1667,11 @@
  real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
  !=================
  !++++++++++++++++ WARNING
- ! ONLY layers (3) n_over_nc, (4) and (5)
+ ! ONLY layers (3) and (4) n_over_nc, np2*n_over_nc layer (5)
  !============================
  xp_min=xmin
  xp_max=xmax
  np_per_zcell(1:6)=1
- nps_bulk=min(3,nsp)        !
  !!+++++++++++++++++++++++++++++++
  nxl=0
  z2=ion_min(nsp-1)
@@ -1707,20 +1706,23 @@
  allocate(zpt(nptz+1,8))
  allocate(wy(npty+1,8))
  allocate(wz(nptz+1,8))
+ allocate(wyz(npty+1,nptz+1,8))
  ypt=0.
  zpt=0.
  wy=1.
  wz=1.
+ wyz=1.
  !==================
  allocate(loc_jmax(0:npe_yloc-1,1:8))
  allocate(loc_kmax(0:npe_zloc-1,1:8))
  allocate(loc_imax(0:npe_xloc-1,1:8))
  !====================
- ! Layers space ordering(1:4)
- ! [1:2 electon-ions wires,1:2 electron-ion target, 3:4 electron-proton coat]
- !===============
- npyc(1:2)=np_per_yc(1:2)  !layer of nano_wires
- npyc(3:4)=np_per_yc(1:2)  !layer inter wire plasma
+ !layers in y-z transverse coordinates
+ !====================================
+ npyc(1:2)=np_per_yc(1:2)  !layer of nano_wires electron+Z1_ion
+ npyc(3:4)=np_per_yc(1:2)  !layer of inter wire plasma of np1 density layer[1:4] of x-length=lpx(3)
+ npyc(5:6)=np_per_yc(3:4)  !bulk of electron-Z1_ion      x-length lpx(4)        
+ npyc(7:8)=np_per_yc(5:6)  ! coating of electron-Z2_ion      x-length lpx(5)        
  nptz_ne=1
  if(nwires >2)then
   do ic=1,2
@@ -1782,8 +1784,7 @@
    !===========================
   end do
  endif
- !============= Uniform y-z distribution
- npyc(5:8)=np_per_yc(3:6)  ! bulk target + contaminants
+ !============= Uniform y-z distribution in layers [5-8]
  do ic=5,8
   npty_layer(ic)=nyh*npyc(ic)
   npty_ne=npty_layer(ic)
@@ -1826,37 +1827,7 @@
   endif
   call set_pgrid_ind(npty_ne,nptz_ne,ic)
  enddo
- !===========================
- xtot=0.0
- lpx(1:2)=0.0
- do i=1,5
-  nxl(i)=nint(dx_inv*lpx(i))
-  lpx(i)=nxl(i)*dx
-  xtot=xtot+lpx(i)
- end do
- xfsh=xf0+lpx(7)
- targ_in=xfsh
- targ_end=targ_in+xtot
- ! Input particles
- !====np_per_xc(1:2) electrons and Z1 ions in the nanowires target => lpx(3)
- !====np_per_xc(3:4) electrons and Z2 ions in bulk layer
- !=== np_per_xc(5:6) electrons and Z3=proton in contaminant layer
- !  Particles grid ordering
- !  only nxl(3) nxl(4) and nxl(5) layers activated
- nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !inter-wire  electrons+Z1-ion plasma
- nptx_loc(3:4)=nptx_loc(1:2)         !nanowires electron-Z1 ions
- nptx_loc(5:6)=nxl(4)*np_per_xc(3:4) !bulk layer electrons +Z2 ions
- nptx_loc(7:8)=nxl(5)*np_per_xc(5:6) !contaminant electrons +Z3 ions (proton)
-
- nptx_max=maxval(nptx_loc(1:8))
- !=======================
- allocate(xpt(nptx_max,8))
- allocate(wghpt(nptx_max,8))
-
- allocate(loc_xpt(nptx_max,8))
- allocate(loc_wghx(nptx_max,8))
- wghpt(1:nptx_max,1:8)=1.
-!=================
+!=================== y-z data on local arrays
  loc_npty(1:8)=loc_jmax(imody,1:8)
  loc_nptz(1:8)=loc_kmax(imodz,1:8)
  npty_ne=1
@@ -1871,6 +1842,38 @@
  call mpi_yz_part_distrib(8,loc_npty,loc_nptz,npty_layer,npty_layer,&
   ymin_t,zmin_t,wyz)
  !=======================
+ !Longitudinal layer distribution
+ !===========================
+ xtot=0.0
+ lpx(1:2)=0.0   !only layers 3-4-5
+ do i=1,5
+  nxl(i)=nint(dx_inv*lpx(i))
+  lpx(i)=nxl(i)*dx
+  xtot=xtot+lpx(i)
+ end do
+ xfsh=xf0
+ targ_in=xfsh
+ targ_end=targ_in+xtot
+ ! Input particles
+ !====np_per_xc(1:2) electrons and Z1 ions in the nanowires target +
+ !internanow-plasma => lpx(3)
+ !====np_per_xc(3:4) electrons and Z1 ions in bulk layer
+ !=== np_per_xc(5:6) electrons and Z2=proton in contaminant layer
+ !  Particles grid ordering
+ !  only nxl(3) nxl(4) and nxl(5) layers activated
+ nptx_loc(1:2)=nxl(3)*np_per_xc(1:2) !inter-wire  electrons+Z1-ion plasma
+ nptx_loc(3:4)=nptx_loc(1:2)         !nanowires electron-Z1 ions
+ nptx_loc(5:6)=nxl(4)*np_per_xc(3:4) !bulk layer electrons +Z1 ions
+ nptx_loc(7:8)=nxl(5)*np_per_xc(5:6) !contaminant electrons +Z2 ions (proton)
+
+ nptx_max=maxval(nptx_loc(1:8))
+ !=======================
+ allocate(xpt(nptx_max,8))
+ allocate(wghpt(nptx_max,8))
+ allocate(loc_xpt(nptx_max,8))
+ allocate(loc_wghx(nptx_max,8))
+ wghpt(1:nptx_max,1:8)=one_dp
+!=================
  !========================
  loc_imax(imodx,1:8)=nptx_loc(1:8)
  nps_loc(1:nsp)=0
@@ -1879,13 +1882,15 @@
  if(nxl(3) >0)then
   do ic=1,2
    n_peak=nptx_loc(ic)
-   do i=1,n_peak
-    uu=(real(i,dp)-0.5)/real(n_peak,dp)
-    xpt(i,ic)=xfsh+lpx(3)*uu
-    wghpt(i,ic)=ratio_mpc(ic)*j0_norm
-    xpt(i,ic+2)=xpt(i,ic)
-    wghpt(i,ic+2)=np1*wghpt(i,ic)
-   end do
+   if(n_peak >0)then
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     xpt(i,ic)=xfsh+lpx(3)*uu
+     wghpt(i,ic)=ratio_mpc(ic)*j0_norm
+     xpt(i,ic+2)=xpt(i,ic)
+     wghpt(i,ic+2)=np1*wghpt(i,ic)    !inter-wire plasma (or vacuum)
+    end do
+   endif
    !========================= np1>0 a low density  interwire plasma
   end do
   xfsh=xfsh+lpx(3)
@@ -1895,17 +1900,16 @@
    do i=1,nptx_loc(ic)
     if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
      .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
-    i1=i1+1
-    loc_xpt(i1,ic)=xpt(i,ic)
-    loc_wghx(i1,ic)=wghpt(i,ic)
-    loc_xpt(i1,ic+2)=xpt(i,ic+2)
-    loc_wghx(i1,ic+2)=wghpt(i,ic+2)
+     i1=i1+1
+     loc_xpt(i1,ic)=xpt(i,ic)
+     loc_wghx(i1,ic)=wghpt(i,ic)
+     loc_xpt(i1,ic+2)=xpt(i,ic+2)
+     loc_wghx(i1,ic+2)=wghpt(i,ic+2)
     endif
    end do
    loc_imax(imodx,ic)=i1
    loc_imax(imodx,ic+2)=i1
   enddo
-  !========================
   !========================
   p=imodx
   l=imody
@@ -1914,80 +1918,94 @@
   ! Counts particles
 
   nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
+  loc_imax(p,1)*loc_jmax(l,1)*loc_kmax(ip,1)
   nps_loc(2)=nps_loc(2)+&
-   loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
+  loc_imax(p,2)*loc_jmax(l,2)*loc_kmax(ip,2)
   if(np1 >0.0)then
    nps_loc(1)=nps_loc(1)+&
-    loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
+   loc_imax(p,3)*loc_jmax(l,3)*loc_kmax(ip,3)
    nps_loc(2)=nps_loc(2)+&
-    loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
+   loc_imax(p,4)*loc_jmax(l,4)*loc_kmax(ip,4)
   endif
  endif
  !------------------------------
- !  Electrons and Z2_ions: bulk layer  species nps_bulk
+ !  Electrons and Z1_ions: bulk layer 
  !     x distribution. Density given by the particle density mpc(3:4)
  !====================
  if(nxl(4) >0)then
   do ic=5,6
    n_peak=nptx_loc(ic)
-   do i=1,n_peak
-    xpt(i,ic)=xfsh+lpx(4)*(real(i,dp)-0.5)/real(n_peak,dp)
-    uu=j0_norm*ratio_mpc(ic-2)
-    wghpt(i,ic)=uu
-   end do
+   if(n_peak >0)then
+    do i=1,n_peak
+     xpt(i,ic)=xfsh+lpx(4)*(real(i,dp)-0.5)/real(n_peak,dp)
+     uu=j0_norm*ratio_mpc(ic-2)
+     wghpt(i,ic)=uu
+    end do
+   endif
   end do
-  if(nps_bulk >2)then
-   ic=6
-   n_peak=nptx_loc(ic)
-   wghpt(1:n_peak,ic)=wghpt(1:n_peak,ic)/real(ion_min(nps_bulk-1),dp)
-  endif
+  xfsh=xfsh+lpx(4)
+  do ic=5,6
+   i1=0
+   do i=1,nptx_loc(ic)
+    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
+    .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
+     i1=i1+1
+     loc_xpt(i1,ic)=xpt(i,ic)
+     loc_wghx(i1,ic)=wghpt(i,ic)
+    endif
+   end do
+   loc_imax(imodx,ic)=i1
+  end do
+  p=imodx
+  l=imody
+  ip=imodz
+
+  nps_loc(1)=nps_loc(1)+&
+  loc_imax(p,5)*loc_jmax(l,5)*loc_kmax(ip,5)
+  nps_loc(2)=nps_loc(2)+&
+  loc_imax(p,6)*loc_jmax(l,6)*loc_kmax(ip,6)
  endif
- xfsh=xfsh+lpx(4)
  !  Electrons and Z3_ions contaminants
  !     x distribution density given by np2
  !====================
  if(nxl(5) >0)then
   do ic=7,8
    n_peak=nptx_loc(ic)
-   do i=1,n_peak
-    xpt(i,ic)=xfsh+lpx(4)*(real(i,dp)-0.5)/real(n_peak,dp)
-    uu=j0_norm*ratio_mpc(ic-2)
-    wghpt(i,ic)=uu*np2
-   end do
+   if(n_peak >0)then
+    do i=1,n_peak
+     xpt(i,ic)=xfsh+lpx(5)*(real(i,dp)-0.5)/real(n_peak,dp)
+     uu=j0_norm*ratio_mpc(ic-2)
+     wghpt(i,ic)=uu*np2
+    end do
+   endif
   end do
   ic=8
   n_peak=nptx_loc(ic)
   wghpt(1:n_peak,ic)=wghpt(1:n_peak,ic)/real(ion_min(nsp-1),dp)
- endif
- xfsh=xfsh+lpx(5)
+  xfsh=xfsh+lpx(5)
  !===============
- do ic=5,8
-  i1=0
-  do i=1,nptx_loc(ic)
-   if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
+  do ic=7,8
+   i1=0
+   do i=1,nptx_loc(ic)
+    if(xpt(i,ic)>=loc_xgrid(imodx)%gmin&
     .and.xpt(i,ic)<loc_xgrid(imodx)%gmax)then
-   i1=i1+1
-   loc_xpt(i1,ic)=xpt(i,ic)
-   loc_wghx(i1,ic)=wghpt(i,ic)
-   endif
+     i1=i1+1
+     loc_xpt(i1,ic)=xpt(i,ic)
+     loc_wghx(i1,ic)=wghpt(i,ic)
+    endif
+   end do
+   loc_imax(imodx,ic)=i1-1
   end do
-  loc_imax(imodx,ic)=i1
- end do
- p=imodx
- l=imody
- ip=imodz
-
- nps_loc(1)=nps_loc(1)+&
-  loc_imax(p,5)*loc_jmax(l,5)*loc_kmax(ip,5)
- nps_loc(nps_bulk)=nps_loc(nps_bulk)+&
-  loc_imax(p,6)*loc_jmax(l,6)*loc_kmax(ip,6)
- if(nsp==4)then   !contaminants added
+  p=imodx
+  l=imody
+  ip=imodz
+ 
   nps_loc(1)=nps_loc(1)+&
-   loc_imax(p,7)*loc_jmax(l,7)*loc_kmax(ip,7)
+  loc_imax(p,7)*loc_jmax(l,7)*loc_kmax(ip,7)
   nps_loc(nsp)=nps_loc(nsp)+&
-   loc_imax(p,8)*loc_jmax(l,8)*loc_kmax(ip,8)
+  loc_imax(p,8)*loc_jmax(l,8)*loc_kmax(ip,8)
  endif
+!+++++++++++++++++END target x-distribution
  !==============
  npmax=maxval(nps_loc(1:nsp))
  npmax=max(npmax,1)
@@ -2014,16 +2032,14 @@
   endif
  endif
  !=========================
- ! The second electron-ion solid layer with Z2 A2 ion element
+ ! The second electron-ion solid layer with Z1 A1 ion element
  if(nxl(4) >0)then
   p=ip_el
   i2=loc_imax(imodx,5)
   call pspecies_distribute(spec(1),t0_pl(1),unit_charge(1),p,5,i2,ip_el)
-
   p=ip_ion
-  if(nps_bulk==3)p=0
   i2=loc_imax(imodx,6)
-  call pspecies_distribute(spec(nps_bulk),t0_pl(nps_bulk),unit_charge(nps_bulk),p,6,i2,ip_ion)
+  call pspecies_distribute(spec(2),t0_pl(2),unit_charge(2),p,6,i2,ip_ion)
  endif
  !============
  ! The contaminant electron-ion solid layer Z3=proton ion element
