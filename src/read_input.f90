@@ -71,9 +71,9 @@
  y0_cent,z0_cent,y1_cent,z1_cent
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,gam_min,xp0_out,xp1_out,yp_out,tmax,cfl, &
-  new_sim,id_new,dump,P_tracking,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
+  new_sim,id_new,dump,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
   L_first_output_on_restart,L_env_modulus
- NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out
+ NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out,P_tracking
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
 
  !--- reading grid parameters ---!
@@ -316,9 +316,9 @@ end subroutine read_nml_integrated_background_diagnostic
   y0_cent,z0_cent,y1_cent,z1_cent
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,gam_min,xp0_out,xp1_out,yp_out,tmax,cfl, &
-  new_sim,id_new,dump,P_tracking,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
+  new_sim,id_new,dump,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
   L_first_output_on_restart,L_env_modulus
- NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out
+ NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out,P_tracking
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
  NAMELIST/NUMBER_BUNCHES/ n_bunches, L_particles, L_intdiagnostics_pwfa, &
   L_intdiagnostics_classic,L_EMBunchEvolution,number_of_slices
