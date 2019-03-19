@@ -229,7 +229,7 @@
  !==========================
  ! Partcles to be injected have index ix [i1,i2]
  !============================
-  if(i2 > i1)then
+  if(i2 >= i1)then
  !==========================
    npt_inj(ic)=0
  !=========== injects particles with coordinates index i1<= ix <=i2
