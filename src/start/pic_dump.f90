@@ -41,7 +41,16 @@
  character(9) :: fname_env='         '
  character(9) :: fname_fl='         '
  character(9) :: fname_part='         '
+ character(9) :: fname_bunchpart='         '
+ character(9) :: fname_bunch0='        '
+ character(9) :: fname_bunch1='        '
+ !=== BE CAREFUL: FILE NAMES HAVE BEEN INITIALIZED TO ONLY ALLOW A MAXIMUM
+ ! 99 CORES ALONG Z. IF MORE ARE NEEDED, IT IS NECESSARY TO CHANGE FROM
+ ! CHARACTER(11) TO CHARACTER(12) (OR MORE) ===
  character(11) :: fnamel_part='           '
+ character(11) :: fnamel_bunchpart='           '
+ character(11) :: fnamel_bunch0='           '
+ character(11) :: fnamel_bunch1='           '
  character(11) :: fnamel_ebf ='           '
  character(11) :: fnamel_env ='           '
  character(11) :: fnamel_fl ='           '
@@ -53,8 +62,8 @@
  integer(offset_kind) :: disp_col,disp
  integer :: max_npt_size
  integer :: np,ic,lun,i,j,k,kk,ipe,lenbuff
- integer :: nxf_loc,nyf_loc,nzf_loc,ndv
- integer :: npt_arr(npe,nsp),ip_loc(npe)
+ integer :: nxf_loc,nyf_loc,nzf_loc,ndv,ndvb
+ integer :: npt_arr(npe,nsp),ip_loc(npe),ip_loc_bunch(npe)
  integer :: loc_grid_size(npe),loc2d_grid_size(npe),lenw(npe)
  integer :: grid_size_max,grid2d_size_max
  integer :: env_cp,env1_cp,fl_cp,ebf_cp
@@ -68,6 +77,9 @@
  write (fname_env,'(a9)') 'ENVfields'
  write (fname_fl,'(a9)') 'FL-fields'
  write (fname_part,'(a9)') 'Particles'
+ write (fname_bunchpart,'(a9)') 'BunchPart'
+ write (fname_bunch0,'(a9)') 'Bunch-EB0'
+ write (fname_bunch1,'(a9)') 'Bunch-EB1'
  write (foldername,'(a11)')'dumpRestart'
 !================field array sizes
  nxf_loc=size(ebf,1)
@@ -111,6 +123,20 @@
   end do
   max_npt_size=ndv*maxval(ip_loc(1:npe))
   lenbuff=max(lenbuff,max_npt_size)
+  if(Beam)then
+   ndvb=size(ebfb,2)
+   do i=1,nsp
+    nps_loc(i)=size(bunch(i)%part,1)
+    kk=loc_nbpart(imody,imodz,imodx,i)
+    call intvec_distribute(kk,ip_loc,npe)  
+    npt_arr(1:npe,i)=ip_loc(1:npe)
+   end do
+   do i=1,npe
+    ip_loc_bunch(i)=sum(npt_arr(i,1:nsp))
+   end do
+   max_npt_size=ndvb*maxval(ip_loc_bunch(1:npe))
+   lenbuff=max(lenbuff,max_npt_size)
+  endif
 !=============================
   dist_npy(:,:)=0
   dist_npz(:,:)=0
@@ -194,6 +220,8 @@
 !===========================
  allocate(send_buff(lenbuff))     !to be used for all mpi_write()
 !=====================
+
+!=== PARTICLES DUMP SECTION ====
  if(Part)then
   write (fnamel_part,'(a9,i2.2)') 'Particles',imodz
   fnamel_out='dumpRestart/'//fnamel_part//'.bin'
@@ -216,8 +244,33 @@
   disp_col=8*disp_col
   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
   if(pe0)write(6,*)'Particles data dumped'
+  if(Beam)then
+   write (fnamel_part,'(a9,i2.2)') 'BunchPart',imodz
+   fnamel_out='dumpRestart/'//fnamel_part//'.bin'
+   lenw(1:npe)=ndvb*ip_loc_bunch(1:npe)
+   max_npt_size=maxval(lenw(1:npe))
+   kk=0
+   do ic=1,nsp
+    np=loc_nbpart(imody,imodz,imodx,ic)
+    if(np >0)then
+     do j=1,ndvb
+      do i=1,np
+       kk=kk+1
+       send_buff(kk)=bunch(ic)%part(i,j)
+      end do
+     end do
+    endif
+   end do
+   disp_col=0
+   if(MOD(mype,npe_yloc) > 0)disp_col=sum(lenw(imodz*npe_yloc+1:mype)) 
+   disp_col=8*disp_col
+   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
+   if(pe0)write(6,*)'Bunch particles data dumped'
+  endif
  endif
-!===============================
+!=== END PARTICLES DUMP SECTION ===
+
+!=== ELECTROMAGNETIC FIELD DUMP SECTION ===
  write (fnamel_ebf,'(a9,i2.2)') 'EB-fields',imodz
  fnamel_out='dumpRestart/'//fnamel_ebf//'.bin'
  lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
@@ -238,8 +291,10 @@
  disp_col=8*disp_col
  call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
  if(pe0)write(6,*)'Electromagnetic fields data dumped'
- !========================
- if(envelope)then
+ !=== END ELECTROMAGNETIC FIELD DUMP SECTION ===
+
+ !=== ENVELOPE FIELD DUMP SECTION ===
+ if(Envelope)then
   write (fnamel_env,'(a9,i2.2)') 'ENVfields',imodz
   fnamel_out='dumpRestart/'//fnamel_env//'.bin'
   lenw(1:npe)=(env_cp+env1_cp)*loc_grid_size(1:npe)
@@ -272,7 +327,9 @@
   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
   if(pe0)write(6,*)'Envelope field data dumped'
  endif
-!===============================
+ !=== END ENVELOPE FIELD DUMP SECTION ===
+
+ !=== FLUID DUMP SECTION ===
  if(Hybrid)then
   write (fnamel_fl,'(a9,i2.2)')'FL-fields',imodz
   fnamel_out='dumpRestart/'//fnamel_fl//'.bin'
@@ -310,6 +367,53 @@
   call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
   if(pe0)write(6,*)'Fluid density and momentum data dumped'
  endif
+
+!=== END FLUID DUMP SECTION ===
+
+!=== BUNCH FIELD DUMP SECTION ===
+ if(Beam)then
+  write (fnamel_bunch0,'(a9,i2.2)') 'Bunch-EB0',imodz
+  fnamel_out='dumpRestart/'//fnamel_bunch0//'.bin'
+  lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
+  kk=0
+  do ic=1,ebf_cp
+   do k=1,nzf_loc
+    do j=1,nyf_loc
+     do i=1,nxf_loc
+      kk=kk+1
+      send_buff(kk)=ebf_bunch(i,j,k,ic)
+     end do
+    end do
+   end do
+  end do
+  disp=lenw(1+mype)
+  disp_col=imody*disp
+  disp_col=8*disp_col
+  call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
+  if(ibeam==1)then
+   write (fnamel_bunch1,'(a9,i2.2)') 'Bunch-EB1',imodz
+   fnamel_out='dumpRestart/'//fnamel_bunch1//'.bin'
+   lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
+   kk=0
+   do ic=1,ebf_cp
+    do k=1,nzf_loc
+     do j=1,nyf_loc
+      do i=1,nxf_loc
+       kk=kk+1
+       send_buff(kk)=ebf1_bunch(i,j,k,ic)
+      end do
+     end do
+    end do
+   end do
+   disp=lenw(1+mype)
+   disp_col=imody*disp
+   disp_col=8*disp_col
+   call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
+  endif
+  if(pe0)write(6,*)'Bunch fields data dumped'
+ endif
+ !=== END BUNCH FIELD DUMP SECTION ===
+
 !============== write (y,z,wghyz initial part distribution
  if(Part)then
   fname_out='dumpRestart/'//fname_yz//'.bin'
@@ -366,7 +470,13 @@
  character(9) :: fname_env='         '
  character(9) :: fname_fl='         '
  character(9) :: fname_part='         '
+ character(9) :: fname_bunch0='        '
+ character(9) :: fname_bunch1='        '
+ character(9) :: fname_bunchpart='         '
  character(11) :: fnamel_part='           '
+ character(11) :: fnamel_bunch0='           '
+ character(11) :: fnamel_bunch1='           '
+ character(11) :: fnamel_bunchpart='           '
  character(11) :: fnamel_ebf ='           '
  character(11) :: fnamel_env ='           '
  character(11) :: fnamel_fl ='           '
@@ -390,6 +500,9 @@
  write (fname_env,'(a9)') 'ENVfields'
  write (fname_fl,'(a9)') 'FL-fields'
  write (fname_part,'(a9)') 'Particles'
+ write (fname_bunch0,'(a9)') 'Bunch-EB0'
+ write (fname_bunch1,'(a9)') 'Bunch-EB1'
+ write (fname_bunchpart,'(a9)') 'BunchPart'
  write (foldername,'(a11)')'dumpRestart'
  write (fname_yz,'(a9)') 'Dist-wgyz'
  !==============       Already defined data
@@ -560,7 +673,7 @@
 !============================================
  allocate(recv_buff(lenbuff))
  recv_buff(:)=0.0
-!============================================
+!=== FLUID RESTART SECTION ===
  if(Hybrid)then
   write (fnamel_fl,'(a9,i2.2)') 'FL-fields',imodz
   fnamel_out='dumpRestart/'//fnamel_fl//'.bin'
@@ -599,8 +712,10 @@
   end do
  if(pe0)write(6,*)'Fluid density and momentum data read'
  endif
-!================
- if(envelope)then
+!=== END FLUID RESTART SECTION ===
+
+!=== ENVELOPE RESTART SECTION ===
+ if(Envelope)then
   write (fnamel_env,'(a9,i2.2)') 'ENVfields',imodz
   fnamel_out='dumpRestart/'//fnamel_env//'.bin'
   lenw(1:npe)=(env_cp+env1_cp)*loc_grid_size(1:npe)
@@ -635,7 +750,9 @@
   endif
  if(pe0)write(6,*)'Envelope field data read'
  endif
- !--------------------- FIELD DUMP READ
+!=== END ENVELOPE RESTART SECTION ===
+
+!=== FIELD RESTART SECTION ===
  write (fnamel_ebf,'(a9,i2.2)') 'EB-fields',imodz
  fnamel_out='dumpRestart/'//fnamel_ebf//'.bin'
  lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
@@ -658,7 +775,56 @@
     end do
    end do
  if(pe0)write(6,*)'Electromagnetic fields data read'
-!=========================
+!=== END FIELD RESTART SECTION===
+
+!=== BUNCH FIELD RESTART SECTION ===
+ if(Beam)then
+  write (fnamel_bunch0,'(a9,i2.2)') 'Bunch-EB0',imodz
+  fnamel_out='dumpRestart/'//fnamel_bunch0//'.bin'
+  lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
+! =========================
+  disp=lenw(1+mype)
+  disp_col=imody*disp
+  disp_col=8*disp_col
+  call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
+! ===========================
+  kk=0
+  do ic=1,ebf_cp
+   do k=1,n3_loc
+    do j=1,n2_loc
+     do i=1,n1_loc
+      kk=kk+1
+      ebf_bunch(i,j,k,ic)=recv_buff(kk)
+     end do
+    end do
+   end do
+  end do
+  if(ibeam==1)then
+   write (fnamel_bunch1,'(a9,i2.2)') 'Bunch-EB1',imodz
+   fnamel_out='dumpRestart/'//fnamel_bunch1//'.bin'
+   lenw(1:npe)=ebf_cp*loc_grid_size(1:npe)
+!  =========================
+   disp=lenw(1+mype)
+   disp_col=imody*disp
+   disp_col=8*disp_col
+   call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
+!  ===========================
+   kk=0
+   do ic=1,ebf_cp
+    do k=1,n3_loc
+     do j=1,n2_loc
+      do i=1,n1_loc
+       kk=kk+1
+       ebf1_bunch(i,j,k,ic)=recv_buff(kk)
+      end do
+     end do
+    end do
+   end do
+  endif
+  if(pe0)write(6,*)'Bunch fields data read'
+ endif
+
+!=== END BUNCH FIELD RESTART SECTION ===
  if(Part)then
   write (fnamel_part,'(a9,i2.2)') 'Particles',imodz
   fnamel_out='dumpRestart/'//fnamel_part//'.bin'
