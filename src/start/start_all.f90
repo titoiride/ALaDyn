@@ -63,10 +63,21 @@
   call end_parallel
   stop
  endif
+  !=== Ascii art generated on http://patorjk.com/software/taag using the Star Wars font ===
  if(pe0)then
-  write(6,*)                    '========================================'
-  write(6,'(a4,a6,a4,i1,a1,i2,a23)') ' =  ',sw_name,' v. ',major_version,'.',minor_version,'                      ='
-  write(6,*)                    '========================================'
+  write(6,*)"     ___       __           ___       _______  ____    ____ .__   __.  ___         ___  " 
+  write(6,*)"    /   \     |  |         /   \     |       \ \   \  /   / |  \ |  | |__ \       / _ \ "
+  write(6,*)"   /  ^  \    |  |        /  ^  \    |  .--.  | \   \/   /  |   \|  |    ) |     | | | |" 
+  write(6,*)"  /  /_\  \   |  |       /  /_\  \   |  |  |  |  \_    _/   |  . `  |   / /      | | | |"
+  write(6,*)" /  _____  \  |  `----. /  _____  \  |  '--'  |    |  |     |  |\   |  / /_   __ | |_| |" 
+  write(6,*)"/__/     \__\ |_______|/__/     \__\ |_______/     |__|     |__| \__| |____| (__) \___/ "
+  write(6,*)"                                                                                        "
+ endif                                                                             
+ if(pe0)then
+  write(6,*)'========================================================================================'
+  write(6,'(a50,i1,a1,i2,a34)') ' =                                Code version    ',major_version,'.'&
+  &,minor_version,'                                 ='
+  write(6,*)'========================================================================================'
   call create_initial_folders
   call write_read_nml
  endif

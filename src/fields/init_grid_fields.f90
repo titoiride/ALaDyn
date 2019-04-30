@@ -2184,8 +2184,8 @@ endif
     fluid_yz_profile(j,k)=1.0
    end do
   end do
-  if(pe0)write(6,'(a15,e11.4)')&
-  'Uniform fluid density on the (y-z) target coordinates '
+  !if(pe0)write(6,'(a15,e11.4)')&
+  !'Uniform fluid density on the (y-z) target coordinates '
   if(Channel)then
    if(ndim <3)then
     k=k01
@@ -2208,7 +2208,7 @@ endif
      end do
     end do
    endif
-   if(pe0)write(6,'(a15,e11.4)')'channel factor=',chann_fact
+   !if(pe0)write(6,'(a15,e11.4)')'channel factor=',chann_fact
   endif
  i0=i0_targ
  select case(dmodel)
