@@ -39,7 +39,7 @@
  character(9) :: fname_yz='         '
  character(9) :: fname_ebf='         '
  character(9) :: fname_env='         '
- character(9) :: fname_fl='          '
+ character(9) :: fname_fl='         '
  character(9) :: fname_part='         '
  character(11) :: fnamel_part='           '
  character(11) :: fnamel_ebf ='           '
@@ -160,11 +160,11 @@
  ndata(6)=size(x)
  ndata(7)=nxf
  ndata(8)=nd2
-!==========================
+ !==========================
  !==============
  lun=10
  if(pe0)then
-open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
+  open(lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
   write(lun)rdata(1:10)
   write(lun)ndata(1:10)
   write(lun)nptx(1:nsp)         !the index of particles inside the box
@@ -190,7 +190,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
 !==================
   close(lun)
  endif       !end pe0 write on fname
- if(pe0)write(6,*)'end write comm'
+ if(pe0)write(6,*)'End write Common data'
 !===========================
  allocate(send_buff(lenbuff))     !to be used for all mpi_write()
 !=====================
@@ -215,6 +215,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   if(MOD(mype,npe_yloc) > 0)disp_col=sum(lenw(imodz*npe_yloc+1:mype)) 
   disp_col=8*disp_col
   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
+  if(pe0)write(6,*)'Particles data dumped'
  endif
 !===============================
  write (fnamel_ebf,'(a9,i2.2)') 'EB-fields',imodz
@@ -236,7 +237,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  disp_col=imody*disp
  disp_col=8*disp_col
  call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
- if(pe0)write(6,*)'end write field',kk
+ if(pe0)write(6,*)'Electromagnetic fields data dumped'
  !========================
  if(envelope)then
   write (fnamel_env,'(a9,i2.2)') 'ENVfields',imodz
@@ -268,9 +269,8 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   disp=lenw(1+mype)
   disp_col=imody*disp
   disp_col=8*disp_col
-
   call mpi_write_col_dp(send_buff,lenw(mype+1),disp_col,27,fnamel_out)
-  if(pe0)write(6,*)'end write env',kk
+  if(pe0)write(6,*)'Envelope field data dumped'
  endif
 !===============================
  if(Hybrid)then
@@ -308,7 +308,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   disp_col=imody*disp
   disp_col=8*disp_col
   call mpi_write_col_dp(send_buff,lenw(1+mype),disp_col,27,fnamel_out)
-  if(pe0)write(6,*)'end write fluid',kk
+  if(pe0)write(6,*)'Fluid density and momentum data dumped'
  endif
 !============== write (y,z,wghyz initial part distribution
  if(Part)then
@@ -330,7 +330,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
      end do
     endif
    end do
-!================================
+ !===============================
    do ic=1,nsp
     if(loc_nptz(ic)>0)then
      do j=1,loc_nptz(ic)
@@ -348,7 +348,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   if(mype >0)disp=sum(lenw(1:mype))
   disp=8*disp
   call mpi_write_dp(send_buff,lenw(mype+1),disp,25,fname_out)
-  if(pe0)write(6,*)'end write particles',kk
+  if(pe0)write(6,*)'Incoming plasma target transverse distribution data dumped'
  endif
   deallocate(send_buff)
 !====================
@@ -364,7 +364,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  character(9) :: fname_yz='         '
  character(9) :: fname_ebf='         '
  character(9) :: fname_env='         '
- character(9) :: fname_fl='          '
+ character(9) :: fname_fl='         '
  character(9) :: fname_part='         '
  character(11) :: fnamel_part='           '
  character(11) :: fnamel_ebf ='           '
@@ -380,7 +380,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  integer :: grid_size_max,grid2d_size_max
  integer :: env_cp,env1_cp,fl_cp,ebf_cp
  integer :: ndata(10),nps_loc(4),np_max,n1_old
- integer :: n1_lc,n2_lc,n3_lc,nypt_max,nzpt_max
+ integer :: n1_loc,n2_loc,n3_loc,nypt_max,nzpt_max
  integer :: dist_npy(npe_yloc,nsp),dist_npz(npe_zloc,nsp)
  real(dp) :: rdata(10),x0_new
  
@@ -393,13 +393,13 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  write (foldername,'(a11)')'dumpRestart'
  write (fname_yz,'(a9)') 'Dist-wgyz'
  !==============       Already defined data
- n1_lc=size(ebf,1)
- n2_lc=size(ebf,2)
- n3_lc=size(ebf,3)
+ n1_loc=size(ebf,1)
+ n2_loc=size(ebf,2)
+ n3_loc=size(ebf,3)
  ebf_cp=size(ebf,4)
 !===================
- loc_grid_size(mype+1)=n1_lc*n2_lc*n3_lc
- loc2d_grid_size(mype+1)=n2_lc*n3_lc
+ loc_grid_size(mype+1)=n1_loc*n2_loc*n3_loc
+ loc2d_grid_size(mype+1)=n2_loc*n3_loc
  lenbuff=ebf_cp
  if(Envelope)then
   env1_cp=0
@@ -420,7 +420,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  grid_size_max=maxval(loc_grid_size(1:npe))
  lenbuff=lenbuff*grid_size_max+grid2d_size_max
 !===================
- if(pe0)write(6,*)' max size of recv buffer',lenbuff
+ if(pe0)write(6,*)'Max size of recieve buffer',lenbuff
  lun=10
  if(pe0)then
  open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown')
@@ -502,34 +502,33 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   endif
   if(pe0)then
    do ipe=1,npe-1
-    call mpi_send(xpt(1,1),nptx_max*nsp,mpi_double_precision,ipe,100+ipe, &
-                    comm,error)
-    call mpi_send(wghpt(1,1),nptx_max*nsp,mpi_double_precision,ipe,400+ipe, &
-                    comm,error)
+    call mpi_send(xpt(1,1),nptx_max*nsp,mpi_double_precision,ipe,100+ipe,&
+    comm,error)
+    call mpi_send(wghpt(1,1),nptx_max*nsp,mpi_double_precision,ipe,400+ipe,&
+    comm,error)
    enddo
   else
-   call mpi_recv(xpt(1,1),nptx_max*nsp,mpi_double_precision,pe_min,100+mype, &
-      comm,status,error)
-   call mpi_recv(wghpt(1,1),nptx_max*nsp,mpi_double_precision,pe_min,400+mype, &
-      comm,status,error)
+   call mpi_recv(xpt(1,1),nptx_max*nsp,mpi_double_precision,pe_min,100+mype,&
+   comm,status,error)
+   call mpi_recv(wghpt(1,1),nptx_max*nsp,mpi_double_precision,pe_min,400+mype,&
+   comm,status,error)
   endif
 !===========================
   if(Hybrid)then
    if(nxf>0)then
     if(pe0)then
      do ipe=1,npe-1
-      call mpi_send(fluid_x_profile(1),nxf,mpi_double_precision,ipe,10+ipe, &
-                    comm,error)
+      call mpi_send(fluid_x_profile(1),nxf,mpi_double_precision,ipe,10+ipe,&
+      comm,error)
      enddo
     else
-     call mpi_recv(fluid_x_profile(1),nxf,mpi_double_precision,pe_min,10+mype, &
-      comm,status,error)
+     call mpi_recv(fluid_x_profile(1),nxf,mpi_double_precision,pe_min,10+mype,&
+     comm,status,error)
     endif
    endif
   endif
  endif
- if(Part)then
-                 !distributes npart => npt(npe,nsp)
+ if(Part)then                 !distributes npart => npt(npe,nsp)
   call mpi_bcast(npt_arr(1,1),npe*nsp,mpi_integer,pe_min,comm,error)
   do i=1,npe
    ip_loc(i)=sum(npt_arr(i,1:nsp))
@@ -542,9 +541,9 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
      do k=0,npe_yloc-1
       loc_npart(k,j,i,1:nsp)=npt_arr(ipe+1,1:nsp)
       ipe=ipe+1
-     end do
-    end do
-   end do
+     enddo
+    enddo
+   enddo
 !========== distributes npty,nptz initial particle distribution
   call mpi_bcast(dist_npy(1,1),npe_yloc*nsp,mpi_integer,pe_min,comm,error)
   call mpi_bcast(dist_npz(1,1),npe_zloc*nsp,mpi_integer,pe_min,comm,error)
@@ -562,7 +561,6 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
  allocate(recv_buff(lenbuff))
  recv_buff(:)=0.0
 !============================================
-!================================
  if(Hybrid)then
   write (fnamel_fl,'(a9,i2.2)') 'FL-fields',imodz
   fnamel_out='dumpRestart/'//fnamel_fl//'.bin'
@@ -573,16 +571,16 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   disp_col=8*disp_col
   call mpi_read_col_dp(recv_buff,lenw(1+mype),disp_col,27,fnamel_out)
   kk=0
-  do k=1,n3_lc
-   do j=1,n2_lc
+  do k=1,n3_loc
+   do j=1,n2_loc
     kk=kk+1
     fluid_yz_profile(j,k)=recv_buff(kk)
    end do
   end do
   do ic=1,fl_cp
-   do k=1,n3_lc
-    do j=1,n2_lc
-     do i=1,n1_lc
+   do k=1,n3_loc
+    do j=1,n2_loc
+     do i=1,n1_loc
       kk=kk+1
       up(i,j,k,ic)=recv_buff(kk)
      end do
@@ -590,16 +588,16 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
    end do
   end do
   do ic=1,fl_cp
-   do k=1,n3_lc
-    do j=1,n2_lc
-     do i=1,n1_lc
+   do k=1,n3_loc
+    do j=1,n2_loc
+     do i=1,n1_loc
       kk=kk+1
       up0(i,j,k,ic)=recv_buff(kk)
      end do
     end do
    end do
   end do
- if(pe0)write(6,*)'end read fluid',size(recv_buff),kk,lenw(1)
+ if(pe0)write(6,*)'Fluid density and momentum data read'
  endif
 !================
  if(envelope)then
@@ -614,9 +612,9 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
 !======================
   kk=0
   do ic=1,env_cp
-   do k=1,n3_lc
-    do j=1,n2_lc
-     do i=1,n1_lc
+   do k=1,n3_loc
+    do j=1,n2_loc
+     do i=1,n1_loc
       kk=kk+1
       env(i,j,k,ic)=recv_buff(kk)
      end do
@@ -625,9 +623,9 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
   end do
   if(Two_color)then
    do ic=1,env1_cp
-    do k=1,n3_lc
-     do j=1,n2_lc
-      do i=1,n1_lc
+    do k=1,n3_loc
+     do j=1,n2_loc
+      do i=1,n1_loc
        kk=kk+1
        env1(i,j,k,ic)=recv_buff(kk)
       end do
@@ -635,7 +633,7 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
     end do
    end do
   endif
- if(pe0)write(6,*)'end read env',size(recv_buff),kk,lenw(1)
+ if(pe0)write(6,*)'Envelope field data read'
  endif
  !--------------------- FIELD DUMP READ
  write (fnamel_ebf,'(a9,i2.2)') 'EB-fields',imodz
@@ -650,17 +648,16 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
 !===========================
   kk=0
    do ic=1,ebf_cp
-    do k=1,n3_lc
-     do j=1,n2_lc
-      do i=1,n1_lc
+    do k=1,n3_loc
+     do j=1,n2_loc
+      do i=1,n1_loc
        kk=kk+1
        ebf(i,j,k,ic)=recv_buff(kk)
       end do
      end do
     end do
    end do
- if(pe0)write(6,*)'end read fields',size(recv_buff),kk,lenw(1)
- !========================
+ if(pe0)write(6,*)'Electromagnetic fields data read'
 !=========================
  if(Part)then
   write (fnamel_part,'(a9,i2.2)') 'Particles',imodz
@@ -719,13 +716,11 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
      end do
     endif
    end do
-  
   call intvec_distribute(kk,lenw,npe)  
   disp=0
   if(mype >0)disp=sum(lenw(1:mype))
   disp=8*disp
   call mpi_read_dp(recv_buff,lenw(mype+1),disp,25,fname_out)
-
    kk=0
    do ic=1,nsp
     do i=1,loc_npty(ic)
@@ -747,14 +742,13 @@ open (lun,file='dumpRestart/'//fname//'.bin',form='unformatted',status='unknown'
      end do
     end do
    end do
+   if(pe0)write(6,*)'Particles data read'
   endif                   !end of part read
 !============================================
   deallocate(recv_buff)
-!===================================
 !===============================
  if(pe0)write(6,*)'END TOTAL DUMP READ'
  end subroutine restart
  !===========================
  end module pic_dump
  !===================================
- !==============================================================
