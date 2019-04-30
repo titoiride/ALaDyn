@@ -86,8 +86,6 @@
  subroutine LP_cycle
 
  call data_out(jump)
- dt_loc=dt
-
  do while (tnow < tmax)
 !=======================
   call LP_run(tnow,dt_loc,iter)
@@ -139,7 +137,6 @@
   !call bunch_output_struct(tdia,dtdia,tout,dtout)
  !endif
  call bdata_out(jump)
- dt_loc=dt
  t_ind=0
 
  do while (tnow < tmax)
@@ -236,11 +233,13 @@
     end do
    endif
   endif
+
   call cpu_time(unix_time_now)
+
   if (pe0) then
    write(6,'(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ',iter,' t = ',tnow,' dt = ',dt_loc
    write(6,*)' END DATA WRITE'
-   write(6,'(a16,f12.3,a10,i15)')' Time elapsed = ',unix_time_now-unix_time_begin
+   write(6,'(a16,f12.3)')' Time elapsed = ',unix_time_now-unix_time_begin
   endif
   !if (dump>0 .and. time_interval_dumps < 0.0) then
   ! if (iter>0) call dump_data(iter,tnow)
