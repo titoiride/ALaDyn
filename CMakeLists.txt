@@ -66,7 +66,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/start/pic_dump.f90
   src/start/read_input.f90
   src/start/set_init_param.f90
-  src/start/start_all.f90
+  src/start/start_all.F90
   src/start/system_utilities.f90
   src/work/array_alloc.f90
   src/work/array_wspace.f90

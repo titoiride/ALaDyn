@@ -43,9 +43,9 @@
  !enable loop to attach with gdb only if really needed
  !WARNING if enabled with no need, the program sleeps at start without doing anything!
  !To enable the flag, uncomment the corresponding line in CMakeLists.txt
-!#ifdef ENABLE_GDB_ATTACH
-! call gdbattach
-!#endif
+#ifdef ENABLE_GDB_ATTACH
+ call gdbattach
+#endif
 
  !Read parameters from input.nml file
  call read_main_input
