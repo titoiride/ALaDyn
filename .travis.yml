@@ -539,6 +539,7 @@ matrix:
     - name: macOS - gcc@5 - mpich
     - name: macOS - native gcc (llvm backend) - mpich
     - name: macOS - native clang - mpich
+    - name: macOS - gcc@5 - openmpi
 
 
 before_install:
