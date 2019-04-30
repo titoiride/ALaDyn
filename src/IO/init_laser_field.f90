@@ -57,7 +57,7 @@
  lp_end(1)=xc_lp+tau
  eps=1./(oml*w0_y)
  sigm=lam0/w0_x
- angle=lpx(6)
+ angle=incid_angle
  xf=xc_lp+t0_lp
   !=======================
  lp_ind=lp_mod

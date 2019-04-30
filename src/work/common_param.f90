@@ -80,7 +80,7 @@
  real(dp) :: np_per_cell,nb_per_cell,np_per_nmacro,nmacro
  real(dp) :: targ_in,targ_end,lx_fwhm
  real(dp) :: lp_in(Ref_nlas),lp_end(Ref_nlas),lp_ionz_in,lp_ionz_end,xf_loc(Ref_nlas),xc_loc(Ref_nlas)
- real(dp) :: y0_cent(Ref_nlas),z0_cent(Ref_nlas),y1_cent,z1_cent
+ real(dp) :: y0_cent(Ref_nlas),z0_cent(Ref_nlas),y1_cent,z1_cent,incid_angle
  real(dp) :: ymin_t,ymax_t,zmin_t,zmax_t,rmin_t,rmax_t
  ! tracking param
  integer  :: track_tot_part
