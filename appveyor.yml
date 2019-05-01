@@ -4,18 +4,18 @@ clone_folder: c:\projects\aladyn
 environment:
   WORKSPACE: C:\projects
   matrix:
-  - platform: PGI1810
+  - platform: PGI194
     COMPILER: pgi
     INSTALLED_MPI_VERSION: MSMPI_PGI
     GENERATOR: "NMake Makefiles"
     VCPKG_DEFAULT_TRIPLET: x64-windows
-  - platform: PGI1810
+  - platform: PGI194
     COMPILER: pgi
     INSTALLED_MPI_VERSION: MSMPI_HPC2012
     GENERATOR: "NMake Makefiles"
     VCPKG_DEFAULT_TRIPLET: x64-windows
   # broken: PGI is incompatible with latest MS-MPI
-  - platform: PGI1810
+  - platform: PGI194
     COMPILER: pgi
     INSTALLED_MPI_VERSION: MSMPI_VCPKG
     GENERATOR: "NMake Makefiles"
@@ -44,8 +44,8 @@ install:
   - cd %WORKSPACE%
   #prepare the silent install for PGI
   - if [%COMPILER%]==[pgi] echo [Application] > setup.iss
-  - if [%COMPILER%]==[pgi] echo Name=PGI Workstation 18.10 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Version=18.10 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Name=PGI Workstation 19.4 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Version=19.4 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Company=The Portland Group >> setup.iss
   - if [%COMPILER%]==[pgi] echo Lang=0409 >> setup.iss
   - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-DlgOrder] >> setup.iss
@@ -111,8 +111,8 @@ install:
   - if [%COMPILER%]==[pgi] echo bOpt1=0 >> setup.iss
   - if [%COMPILER%]==[pgi] echo bOpt2=0 >> setup.iss
   #download & install PGI
-  - if [%COMPILER%]==[pgi] curl --location --referer "http://www.pgroup.com/products/community.htm" "https://www.pgroup.com/support/downloader.php?file=pgi-community-windows-x64" -o pgiws64-1810.exe
-  - if [%COMPILER%]==[pgi] %WORKSPACE%\pgiws64-1810.exe /s /f1"%WORKSPACE%\setup.iss"
+  - if [%COMPILER%]==[pgi] curl --location --referer "http://www.pgroup.com/products/community.htm" "https://www.pgroup.com/support/downloader.php?file=pgi-community-windows-x64" -o pgiws64-194.exe
+  - if [%COMPILER%]==[pgi] %WORKSPACE%\pgiws64-194.exe /s /f1"%WORKSPACE%\setup.iss"
   #wait for installation to complete!
   #not necessary in latest version, the installer blocks the command prompt until finished
   #- if [%COMPILER%]==[pgi] echo Waiting 10 minutes
@@ -143,10 +143,10 @@ install:
   - cd build
   - if [%COMPILER%]==[pgi] set PGI=%PROGRAMFILES%\PGI
   - if [%COMPILER%]==[pgi] set PATH=%PROGRAMFILES%\PGI\flexlm;%PATH%
-  - if [%COMPILER%]==[pgi] set PATH=%PROGRAMFILES%\PGI\win64\18.10\bin;%PATH%
+  - if [%COMPILER%]==[pgi] set PATH=%PROGRAMFILES%\PGI\win64\19.4\bin;%PATH%
   - if [%COMPILER%]==[pgi] set PATH=%PATH%;.
   - if [%COMPILER%]==[pgi] set FLEXLM_BATCH=1
-  - if [%COMPILER%]==[pgi] echo PGI 18.10 Enabled
+  - if [%COMPILER%]==[pgi] echo PGI 19.4 Enabled
 
 build_script:
   - if [%COMPILER%]==[pgi]    if [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI]       cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" "-DCMAKE_BUILD_TYPE=Release" "-DFORCE_MSMPI_PATH_R1:BOOL=TRUE" ..
