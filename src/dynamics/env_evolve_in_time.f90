@@ -419,7 +419,7 @@
  if(Hybrid)then
   !In flux(1:fdim+1) are stored fluid (P,den) at t^{n+1/2}
   !In flux(fdim+1) is stored |A|^2/2 at t^{n+1/2}
-  call fluid_curr_accumulate(flux,jc,dt_loc,i1,i2,j1,nyf,k1,nzf)
+  call env_fluid_curr_accumulate(flux,jc,dt_loc,i1,i2,j1,nyf,k1,nzf)
   !Computes fluid contribution => J^{n+1/2} and adds to particle contribution
  endif
  !====================
