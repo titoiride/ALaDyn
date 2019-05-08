@@ -22,6 +22,10 @@ Copyright on the code is by the ALaDyn Collaboration.
 We support building ALaDyn on almost all sane systems. [Here](doc/BUILD.md) you can find a guide to build the code on many different OS configurations.  
 appveyor and travis recipes can also help understanding how to build the code.
 
+## How to contribute to the development
+
+[Here](https://github.com/ALaDyn/ALaDyn/blob/master/CONTRIBUTING.md) you can find the instructions to propose your changes to `ALaDyn`
+
 ## Support channels
 
 We have a Telegram channel to promote latest news: [join here](https://t.me/ALaDyn_Collaboration)  
