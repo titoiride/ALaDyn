@@ -4,6 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/evol3yvpqqfyxi7p?svg=true)](https://ci.appveyor.com/project/cenit/aladyn-kul79)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.592388.svg)](http://dx.doi.org/10.5281/zenodo.592388)
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/aladyn/aladyn.svg?label=Latest%20Release)
 
 ![ALaDyn Logo](https://raw.githubusercontent.com/ALaDyn/ALaDyn/master/logo.png)
 
