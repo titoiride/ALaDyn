@@ -47,7 +47,8 @@
    call Bpulse(xf0)  
   end select
  endif
- if(Part)call part_distribute(dmodel_id,xf0)
+ !if(Part)
+ call part_distribute(dmodel_id,xf0)
 
  if(Hybrid)call init_fluid_density_momenta(dmodel_id,xf0)
  

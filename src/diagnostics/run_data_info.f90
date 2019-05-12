@@ -282,8 +282,8 @@
    write(60,'(a6,e11.4,a6,e11.4,a6,e11.4)')'  Dx =',dx,'  Dy =',dy,'  Dz =',dz
   endif
  if(Stretch)then
-  write(60,*)'  y=tang(a*xi) stretched layers on the transverse coordinates'
-  write(60,'(a20,i6,2e11.4)')'  stretched grid size=',ny_stretch,y(ny_stretch+1)
+  write(60,*)'  y=tan(a*xi) stretched layers on the transverse coordinates'
+  write(60,'(a22,i6,a2,2e11.4)')'  stretched grid size=',ny_stretch,'  ',y(ny_stretch+1)
  endif
  write(60,*)'***************PHYSICAL MODEL**********************'
  if(model_id <4)then
@@ -341,7 +341,7 @@
   write(60,*)' Longitudinal scales'
   write(60,'(a8,f6.2,a18,f6.2)')'  w0_x= ',w0_x,'   tau_fwhm(fs) = ',tau_FWHM
   write(60,'(a13,f5.2,a13,f5.2)')'  wavelength=',lam0,'   frequency=',oml
-  write(60,'(a17,f6.2,a17,f6.2)')'  Initial focus =',xf,'   Pulse center= ',xc_lp
+  write(60,'(a17,e13.3,a17,f6.2)')'  Initial focus =',xf,'   Pulse center= ',xc_lp
   write(60,'(a29,e11.4)')'  Diffraction length Z_Rayl= ',ZR
   write(60,'(a25,f5.2)')'  Strength parameter a0= ',a0
   write(60,'(a33,f5.2,a6)')'  Max transverse field at focus= ',E0*a0*oml,'(TV/m)'
@@ -349,7 +349,13 @@
   write(60,'(a9,e13.3,a4)')'  Power = ',lp_pow,'(TW)'
   write(60,'(a10,e13.3,a3)')'  Energy= ',lp_energy,'(J)'
   write(60,'(a30,i4)')'  Number of main laser pulses= ',nb_laser
-  if(nb_laser >1)write(60,'(a29,f5.2)')'  Distance among lp centers= ',lp_delay
+  if(.not.Enable_ionization(1))write(60,*)' WARNING: Ionization disabled for the main pulse'
+  if(nb_laser >1)then
+   do i=2,nb_laser
+    write(60,'(a23,i2,a5,i2,a10,f5.2)')'  Distance between the ',i-1,' and ',i,'&
+    & centers= ',lp_delay(i-1)
+   end do
+  endif
   write(60,*)'-----------------------------------'
   if(Two_color)then
    write(60,*)'     Injected pulse parameters '
@@ -363,6 +369,7 @@
    write(60,'(a29,e11.4)')'  Diffraction length Z_Rayl= ',ZR1
    write(60,'(a25,f5.2)')'  Strength parameter a0= ',a1
    write(60,'(a33,f5.2,a6)')'  Max transverse field at focus= ',E0*a1*om1,'(TV/m)'
+   if(.not.Enable_ionization(2))write(60,*)' WARNING: Ionization disabled for the injection pulse'
   endif
  endif
  if(Hybrid)then
@@ -402,11 +409,20 @@
     do i=1,nsp_ionz-1
    write(60,*)' Ionization active on ion species:',species_name(atomic_number(i))
     end do
+    if(Symmetrization_pulse .and. (curr_ndim>2))then
+     write(60,*)' A symmetrization pulse is implied when ionizing'
+     write(60,*)' The sym. formula is sin(2*pi*u)*\Delta*a_1*a_symm_rat'
+     if(a_symm_rat>zero_dp)then
+      write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm_rat',a_symm_rat
+     else
+      write(60,'(a32,e11.4)')' Symmetrization amplitude a_symm_rat',sqrt(2.)
+     endif
+    endif
    end if
  write(60,*)'**********TARGET PLASMA PARAMETERS***********'
-  if(Part)then
+  if(Part.or.Hybrid)then
    write(60,'(a26,e11.4,a10)')'  Electron number density ',n0_ref,'[10^18/cc]'
-   write(60,'(a21,f5.2)')'  Plasma wavelength= ',lambda_p
+   write(60,'(a21,e11.4)')'  Plasma wavelength= ',lambda_p
    write(60,'(a20,e11.4)')' Chanelling fact  = ',chann_fact
    if(model_id < 5)then
     write(60,'(a20,f5.2,a10)')'  Critical density= ',ncrit,'[10^21/cc]'

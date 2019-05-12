@@ -485,7 +485,7 @@
  do ic=1,nsp
   np=loc_npart(imody,imodz,imodx,ic)
   if(np>0)call set_grid_charge_and_Jx(&
-                                   spec(ic),ebfp,jc,np,ndim,n_str,dt,xm,ym,zm)
+                                   spec(ic),ebfp,jc,np,ndim,dt,xm,ym,zm)
  end do
  !========= jc(1)=charge density jc(2)= Jx at t^{n+1/2}
  if(prl)then

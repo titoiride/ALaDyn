@@ -1,5 +1,5 @@
 
-!*****************************************************************************************************!
+ !*****************************************************************************************************!
  !                            Copyright 2008-2018  The ALaDyn Collaboration                            !
  !*****************************************************************************************************!
 
@@ -266,6 +266,7 @@
  k1=loc_zgrid(imodz)%p_ind(1)
  nzf=loc_zgrid(imodz)%p_ind(2)
  n_st=0
+ ef2_ion=zero_dp
  if(Stretch)n_st=str_indx(imody,imodz)
  !====================
  if(prl)call fill_ebfield_yzxbdsdata(&
@@ -276,43 +277,50 @@
    call init_random_seed(mype)
   endif
   id_ch=nd2+1
-  if(Two_color)then
+  if(Enable_ionization(1))then
    if(prl)call fill_ebfield_yzxbdsdata(&
                 env1,i1,i2,j1,nyf,k1,nzf,1,2,2,2)
    do ic=2,nsp_ionz
     np=loc_npart(imody,imodz,imodx,ic)
     if(np>0)then
-     call set_ion_env_field(env1,spec(ic),ebfp,np,ndim,n_st,xm,ym,zm,om1)
-     loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
-     loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
-     if(ef2_ion > lp_max)then
-      lp_max=1.1*ef2_ion
-      call set_field_ioniz_wfunction(&
-       ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
-     endif
-     call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
-    endif
-   end do
-!================
-  else
-   if(prl)call fill_ebfield_yzxbdsdata(&
-                env,i1,i2,j1,nyf,k1,nzf,1,2,2,2)
-   do ic=2,nsp_ionz
-    np=loc_npart(imody,imodz,imodx,ic)
-    if(np>0)then
      call set_ion_env_field(env,spec(ic),ebfp,np,ndim,n_st,xm,ym,zm,oml)
+     if(mod(it_loc,100)==0)then
       loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
       loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
-      ef2_ion=loc_ef2_ion(1)
+      ef2_ion=max(loc_ef2_ion(1),ef2_ion)
       if(ef2_ion > lp_max)then
-       write(6,'(a22,i6,2E11.4)')'reset high ionz field ',mype,ef2_ion,lp_max
        lp_max=1.1*ef2_ion
        call set_field_ioniz_wfunction(&
        ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
       endif
+     endif
      call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
     endif
    end do
+  endif
+  if(Two_color)then
+   if(Enable_ionization(2))then
+    if(prl)call fill_ebfield_yzxbdsdata(&
+                 env,i1,i2,j1,nyf,k1,nzf,1,2,2,2)
+    do ic=2,nsp_ionz
+     np=loc_npart(imody,imodz,imodx,ic)
+     if(np>0)then
+      call set_ion_env_field(env1,spec(ic),ebfp,np,ndim,n_st,xm,ym,zm,om1)
+      if(mod(it_loc,100)==0)then
+       loc_ef2_ion(1)=maxval(ebfp(1:np,id_ch))
+       loc_ef2_ion(1)=sqrt(loc_ef2_ion(1))
+       ef2_ion=max(loc_ef2_ion(1),ef2_ion)
+       if(ef2_ion > lp_max)then
+        write(6,'(a22,i6,2E11.4)')'reset high ionz field ',mype,ef2_ion,lp_max
+        lp_max=1.1*ef2_ion
+        call set_field_ioniz_wfunction(&
+        ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt_loc)
+       endif
+      endif
+      call ionization_cycle(spec(ic),ebfp,np,ic,it_loc,1,de_inv)
+     endif
+    end do
+   endif
   endif
  endif
 !=================================
@@ -411,7 +419,7 @@
  if(Hybrid)then
   !In flux(1:fdim+1) are stored fluid (P,den) at t^{n+1/2}
   !In flux(fdim+1) is stored |A|^2/2 at t^{n+1/2}
-  call fluid_curr_accumulate(flux,jc,dt_loc,i1,i2,j1,nyf,k1,nzf)
+  call env_fluid_curr_accumulate(flux,jc,dt_loc,i1,i2,j1,nyf,k1,nzf)
   !Computes fluid contribution => J^{n+1/2} and adds to particle contribution
  endif
  !====================

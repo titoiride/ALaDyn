@@ -40,8 +40,8 @@
  integer :: nb_laser,nb_1,np_per_xc(Ref_nlayer),np_per_yc(Ref_nlayer)
  real(dp) :: mass_number(3),t0_pl(4)
  real (dp) :: lpx(7),lpy(2),n_over_nc,np1,np2,r_c
- real(dp) :: t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay
- real(dp) :: lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1
+ real(dp) :: t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay(Ref_nlas)
+ real(dp) :: lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1,a_symm_rat
  real(dp) :: xc_1,gam_1,sxb_1,syb_1,epsy_1,epsz_1,dg_1, charge_1,t_inject
  integer :: nouts,iene,nvout,nden,npout,nbout,jump,pjump
  integer :: new_sim,id_new,dump
@@ -58,6 +58,7 @@
  logical :: Ionization,Ions
  logical :: Part,Stretch,Channel,Inject_beam
  logical :: Lp_active,Lp_inject,Plane_wave,Lin_lp,Circ_lp,Relativistic,Two_color
+ logical :: Enable_ionization(2),Symmetrization_pulse
  logical :: Charge_cons,High_gamma,Test
 
  integer :: nx_loc,ny_loc,nz_loc,npty,nptz,nptx_max,ncmp_max,nx_alloc
@@ -79,6 +80,7 @@
  real(dp) :: np_per_cell,nb_per_cell,np_per_nmacro,nmacro
  real(dp) :: targ_in,targ_end,lx_fwhm
  real(dp) :: lp_in(Ref_nlas),lp_end(Ref_nlas),lp_ionz_in,lp_ionz_end,xf_loc(Ref_nlas),xc_loc(Ref_nlas)
+ real(dp) :: y0_cent(Ref_nlas),z0_cent(Ref_nlas),y1_cent,z1_cent,incid_angle
  real(dp) :: ymin_t,ymax_t,zmin_t,zmax_t,rmin_t,rmax_t
  ! tracking param
  integer  :: track_tot_part

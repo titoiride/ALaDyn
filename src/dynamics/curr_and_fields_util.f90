@@ -204,7 +204,7 @@
   ! recvs stl points from right at (nyp+stl), (nzp+stl)
  endif
  !============== first substep dt/2 advance of B-field
- call ef_bds(ef,i1,i2,j1,j2,k1,k2,0.0,ibd)
+ call ef_bds(ef,i1,i2,j1,j2,k1,k2,zero_dp,ibd)
  ! Uses upper BCs of E fields: ibd=0 for inflow-outflow
  !                             ibd=1 for symmetric
  if(Comoving)then

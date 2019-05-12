@@ -68,13 +68,14 @@
   mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,&
   n_over_nc,np1,np2,r_c,L_disable_rng_seed
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
- lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1
+ lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1,Symmetrization_pulse,a_symm_rat,Enable_ionization,&
+ y0_cent,z0_cent,y1_cent,z1_cent,incid_angle
  NAMELIST/BEAM_INJECT/nb_1,xc_1,gam_1,sxb_1,syb_1,epsy_1,epsz_1,dg_1,charge_1,t_inject
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,gam_min,xp0_out,xp1_out,yp_out,tmax,cfl, &
-  new_sim,id_new,dump,P_tracking,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
+  new_sim,id_new,dump,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
   L_first_output_on_restart,L_env_modulus
- NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out
+ NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out,P_tracking
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
 
  !--- reading grid parameters ---!
@@ -102,6 +103,7 @@
  np_per_yc=-1
  np_per_zc=-1
  L_disable_rng_seed = .false.
+ incid_angle=zero_dp
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,TARGET_DESCRIPTION,iostat=nml_ierr)
  nml_error_message='TARGET_DESCRIPTION'
@@ -109,7 +111,15 @@
  if(nml_ierr>0) call print_at_screen_nml_error
  !call consistency_check_number_of_particles
  call consistency_check_number_of_particles_comp
+
  !--- reading laser parameters ---!
+ Symmetrization_pulse= .false.
+ a_symm_rat=0.
+ Enable_ionization(:)=.true.
+ y0_cent(:)=zero_dp
+ z0_cent(:)=zero_dp
+ y1_cent=zero_dp
+ z1_cent=zero_dp
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,LASER,iostat=nml_ierr)
  nml_error_message='LASER'
@@ -135,7 +145,6 @@
  bunch_charge(1)=charge_1
  endif
 
-
  !--- reading moving window parameters ---!
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,MOVING_WINDOW,iostat=nml_ierr)
@@ -149,7 +158,7 @@
  L_force_singlefile_output = .true.
  L_first_output_on_restart = .false.
  L_print_J_on_grid = .true.
- L_env_modulus     = .true.
+ L_env_modulus     = .false.
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,OUTPUT,iostat=nml_ierr)
  nml_error_message='OUTPUT'
@@ -180,6 +189,7 @@
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
  !C
  !C Reads bunch namelist for PWFA
+ !C
  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
  !--- *** namelist *** ---!
@@ -282,12 +292,13 @@
   mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,&
   n_over_nc,np1,np2,r_c
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
-  lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1
+  lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1,Symmetrization_pulse,a_symm_rat,Enable_ionization,&
+  y0_cent,z0_cent,y1_cent,z1_cent,incid_angle
  NAMELIST/MOVING_WINDOW/w_sh,wi_time,wf_time,w_speed
  NAMELIST/OUTPUT/nouts,iene,nvout,nden,npout,nbout,jump,pjump,gam_min,xp0_out,xp1_out,yp_out,tmax,cfl, &
-  new_sim,id_new,dump,P_tracking,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
+  new_sim,id_new,dump,L_force_singlefile_output,time_interval_dumps,L_print_J_on_grid, &
   L_first_output_on_restart,L_env_modulus
- NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out
+ NAMELIST/TRACKING/tkjump,nkjump,txmin,txmax,tymin,tymax,tzmin,tzmax,t_in,t_out,P_tracking
  NAMELIST/MPIPARAMS/nprocx,nprocy,nprocz
  NAMELIST/NUMBER_BUNCHES/ n_bunches, L_particles, L_intdiagnostics_pwfa, &
   L_intdiagnostics_classic,L_EMBunchEvolution,number_of_slices

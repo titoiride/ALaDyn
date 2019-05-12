@@ -276,9 +276,9 @@
  integer,intent(in) :: nyh,nc
  integer :: j,i,i1,i2,ic
  integer :: npyc(6),npzc(6),npty_ne,nptz_ne
- real(dp) :: yy,zz,dxip,dpy
+ real(dp) :: yy,zz,dxip,dpy,dpz
  real(dp) :: zp_min,zp_max,yp_min,yp_max
- integer :: nyl1,nzl1,np_per_zc(nc)
+ integer :: nyl1,nzl1
  real(dp),allocatable :: wy(:,:),wz(:,:),wyz(:,:,:)
  !=================
  !========= gridding the transverse target size
@@ -289,12 +289,13 @@
  !=============================
  ! Multispecies
  !=============================
- np_per_zc(1:nc)=np_per_yc(1:nc)
  do ic=1,nc
   npyc(ic)=nyh*np_per_yc(ic)
  end do
  npty=maxval(npyc(1:nc))
  nptz=1
+ zp_min=zero_dp
+ zp_max=zero_dp
  if(ndim==3)then
   npzc(1:nc)=nyh*np_per_zc(1:nc)
   zp_min=zmin_t    !-Lz
@@ -355,14 +356,14 @@
   if(ndim==3)then
    nptz_ne=npzc(ic)
    if(nptz_ne >0)then
-    dpy=(zp_max-zp_min)/real(nptz_ne,dp)
+    dpz=(zp_max-zp_min)/real(nptz_ne,dp)
     do i=1,nptz_ne
-     zpt(i,ic)=zp_min+dpy*(real(i,dp)-0.5)
+     zpt(i,ic)=zp_min+dpz*(real(i,dp)-0.5)
     enddo
     if(Stretch)then
      zz=str_zgrid%smin
      if(zz >zp_min)then
-      dpy=dyi/real(np_per_zc(ic),dp)
+      dpz=dzi/real(np_per_zc(ic),dp)
       i1=(str_zgrid%sind(1)-nzl1+1)*np_per_zc(ic)
       i2=nptz_ne-i1
       do i=1,i1
@@ -382,15 +383,15 @@
      endif
     endif
    endif
-   do i=1,npzc(ic)
-    do j=1,npyc(ic)
+   do i=1,nptz_ne
+    do j=1,npty_ne
      wyz(j,i,ic)=wy(j,ic)*wz(i,ic)
     end do
    end do
    if(chann_fact >0.0)then
-    do i=1,npzc(ic)
+    do i=1,nptz_ne
      zz=zpt(i,ic)
-     do j=1,npyc(ic)
+     do j=1,npty_ne
       yy=ypt(j,ic)
       wyz(j,i,ic)=1.+chann_fact*(yy*yy+zz*zz)/(w0_y*w0_y)
      end do
@@ -428,11 +429,11 @@
  integer,intent(in) :: layer_mod,nyh
  real(dp),intent(in) :: xf0
  integer :: p,i,j,i1,i2,ic
- integer :: n_peak,npmax
- real(dp) :: uu,u2,xp_min,xp_max
+ integer :: n_peak,npmax,nxtot
+ real(dp) :: uu,u2,xp_min,xp_max,u3,ramp_prefactor
  real(dp) :: xfsh,un(2),wgh_sp(3)
- integer :: nxl(5)
- integer ::  nps_loc(4),last_particle_index(4),nptx_alloc(4)
+ integer :: nxl(6)
+ integer :: nps_loc(4),last_particle_index(4),nptx_alloc(4)
  !==========================
  p=0
  i=0
@@ -451,10 +452,12 @@
  !============================
  ! Layers nxl(1:5) all containing the same ion species
  xtot=0.0
- do i=1,5
+ nxtot=0
+ do i=1,6
   nxl(i)=nint(dx_inv*lpx(i))
   lpx(i)=nxl(i)*dx
   xtot=xtot+lpx(i)
+  nxtot=nxtot+nxl(i)
  end do
  if(xf0 >0.0)then
   targ_in=xf0
@@ -466,15 +469,16 @@
  xfsh=xf0
  !=============================
  loc_nptx=0
- loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5))*np_per_xc(1:nsp)
+ loc_nptx(1:nsp)=(nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5)+nxl(6))*np_per_xc(1:nsp)
 
  nptx_max=maxval(loc_nptx(1:nsp))
  allocate(xpt(nptx_max,nsp))
  allocate(wghpt(nptx_max,nsp))
  allocate(loc_xpt(nptx_max,nsp))
  !=============================
- wghpt=1.0
- un=1.
+ wghpt=one_dp
+ un=one_dp
+ ramp_prefactor=one_dp
  !===================================
  ! WARNING for charge distribution
  !====================================
@@ -492,6 +496,7 @@
   !================ first uniform layer np1=================
  case(1)
   if(nxl(1)>0)then
+   ramp_prefactor=one_dp-np1
    do ic=1,nsp
     n_peak=nxl(1)*np_per_xc(ic)
     do i=1,n_peak
@@ -504,7 +509,7 @@
    end do
    xfsh=xfsh+lpx(1)
   endif
-  !================ first linear or exp ramp np1 => 1 =================
+  !================ first CUBIC ramp np1 => 1 --linear or exponential still available but commented =================
   if(nxl(2)>0)then
    do ic=1,nsp
     n_peak=nxl(2)*np_per_xc(ic)
@@ -512,9 +517,12 @@
      uu=(real(i,dp)-0.5)/real(n_peak,dp)
      i1=nptx(ic)+i
      xpt(i1,ic)=xfsh+lpx(2)*uu
-     u2=(uu-1.)*(uu-1.)
+     !u2=(uu-1.)*(uu-1.)
+     u2=uu*uu
+     u3=u2*uu
      !wghpt(i1,ic)=(np1+exp(-4.5*u2)*(1.-np1))*wgh_sp(ic)
-     wghpt(i1,ic)=exp(-4.5*u2)*wgh_sp(ic)
+     !wghpt(i1,ic)=exp(-4.5*u2)*wgh_sp(ic)
+     wghpt(i1,ic)=(-2.*ramp_prefactor*u3+3.*ramp_prefactor*u2+one_dp-ramp_prefactor)*wgh_sp(ic)
     end do
     nptx(ic)=nptx(ic)+n_peak
    end do
@@ -561,6 +569,9 @@
    end do
    xfsh=xfsh+lpx(5)
   endif
+  do ic=1,nsp
+   nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
+  end do
   !=========================================
  case(2)
   !                 two bumps  (n1/n_c, n2/n_c) of length x_1 and x_2
@@ -636,7 +647,10 @@
    end do
    xfsh=xfsh+lpx(5)
   endif
-!======================================
+  do ic=1,nsp
+   nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
+  end do
+!=====================================
  case(3)
   !                 three layers
   !                 lpx(1)[ramp]+lpx(2)[plateau]  and lpx(4) plateu lpx(5) downramp n_ion=0 n_e=n_0
@@ -719,96 +733,110 @@
    nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
   end do
 !===================================
- case (4)
- !================ cos^2 upramp with peak np2/n0 =================
+ case(4)
+  !================ cos^2 upramp with peak n0 =================
   if(nxl(1)>0)then
    do ic=1,nsp
-    i1=nptx(ic)
     n_peak=nxl(1)*np_per_xc(ic)
     if(n_peak >0)then
      do i=1,n_peak
       uu=(real(i,dp)-0.5)/real(n_peak,dp)
-      i1= i1+1
+      i1=nptx(ic)+i
       xpt(i1,ic)=xfsh+lpx(1)*uu
       uu=uu-1.
-      wghpt(i1,ic)=np2*cos(0.5*pi*(uu))*cos(0.5*pi*(uu))
-      wghpt(i1,ic)=wgh_sp(ic)*wghpt(i1,ic)
+      wghpt(i1,ic)=one_dp*cos(0.5*pi*(uu))*cos(0.5*pi*(uu))*wgh_sp(ic)
      end do
     endif
-    nptx(ic)= i1
+    nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(1)
   endif
+  !================ uniform layer n0=================
   if(nxl(2)>0)then
    do ic=1,nsp
     n_peak=nxl(2)*np_per_xc(ic)
-    i1=nptx(ic)
     if(n_peak >0)then
-    do i=1,n_peak
-     uu=(real(i,dp)-0.5)/real(n_peak,dp)
-     i1=i1+1
-     xpt(i1,ic)=xfsh+lpx(2)*uu
-     wghpt(i1,ic)=np2*wgh_sp(ic)
-    end do
+     do i=1,n_peak
+      uu=(real(i,dp)-0.5)/real(n_peak,dp)
+      i1=nptx(ic)+i
+      xpt(i1,ic)=xfsh+lpx(2)*uu
+      wghpt(i1,ic)=one_dp*wgh_sp(ic)
+     end do
     endif
-    nptx(ic)= i1
+    nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(2)
   endif
- !================ cos^2 downramp to the main plateau =================
+ !================ cos^2 downramp to the plateau np1*n0 =================
   if(nxl(3)>0)then
    do ic=1,nsp
     n_peak=nxl(3)*np_per_xc(ic)
-    i1=nptx(ic)
     if(n_peak >0)then
-    do i=1,n_peak
-     uu=(real(i,dp)-0.5)/real(n_peak,dp)
-     i1=i1+1
-     xpt(i1,ic)=xfsh+lpx(3)*uu
-     uu=uu-1.
-     wghpt(i1,ic)=1.+(np2-1.)*sin(0.5*pi*(uu))*sin(0.5*pi*(uu))
-     wghpt(i1,ic)=wgh_sp(ic)*wghpt(i1,ic)
-    end do
+     do i=1,n_peak
+      uu=(real(i,dp)-0.5)/real(n_peak,dp)
+      i1=nptx(ic)+i
+      xpt(i1,ic)=xfsh+lpx(3)*uu
+      uu=uu-1.
+      wghpt(i1,ic)=(np1+(one_dp-np1)*&
+      sin(0.5*pi*(uu))*sin(0.5*pi*(uu)))*wgh_sp(ic)
+     end do
     endif
-    nptx(ic)=i1
+    nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(3)
   endif
-  !================ a second plateaau=================
+  !================ Central layer of density np1*n0 =================
   if(nxl(4)>0)then
    do ic=1,nsp
     n_peak=nxl(4)*np_per_xc(ic)
-    i1=nptx(ic)
     if(n_peak >0)then
-    do i=1,n_peak
-     uu=(real(i,dp)-0.5)/real(n_peak,dp)
-     i1=i1+1
-     xpt(i1,ic)=xfsh+lpx(4)*uu
-     wghpt(i1,ic)=wgh_sp(ic)
-    end do
+     do i=1,n_peak
+      uu=(real(i,dp)-0.5)/real(n_peak,dp)
+      i1=nptx(ic)+i
+      xpt(i1,ic)=xfsh+lpx(4)*uu
+      wghpt(i1,ic)=np1*wgh_sp(ic)
+     end do
     endif
-    nptx(ic)= i1
+    nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(4)
   endif
- !================ second linear downramp =================
+!================ cos^2 downramp to second plateau np2*n0 =================
   if(nxl(5)>0)then
    do ic=1,nsp
     n_peak=nxl(5)*np_per_xc(ic)
-    i1=nptx(ic)
     if(n_peak >0)then
-    do i=1,n_peak
-     uu=(real(i,dp)-0.5)/real(n_peak,dp)
-     i1=i1+1
-     xpt(i1,ic)=xfsh+lpx(5)*uu
-     wghpt(i1,ic)=(1.-uu)*wgh_sp(ic)
-    end do
+     do i=1,n_peak
+      uu=(real(i,dp)-0.5)/real(n_peak,dp)
+      i1=nptx(ic)+i
+      xpt(i1,ic)=xfsh+lpx(5)*uu
+      wghpt(i1,ic)=(np2+(np1-np2)*&
+      cos(0.5*pi*(uu))*cos(0.5*pi*(uu)))*wgh_sp(ic)
+     end do
     endif
-    nptx(ic)=i1
+    nptx(ic)=nptx(ic)+n_peak
    end do
    xfsh=xfsh+lpx(5)
   endif
-!==============================
+  !================ Second plateau of density np2*n0 =================
+  if(nxl(6) >0)then
+   do ic=1,nsp
+    n_peak=nxl(6)*np_per_xc(ic)
+    do i=1,n_peak
+     uu=(real(i,dp)-0.5)/real(n_peak,dp)
+     i1=nptx(ic)+i
+     xpt(i1,ic)=xfsh+lpx(6)*uu
+     wghpt(i1,ic)=np2*wgh_sp(ic)
+    end do
+    nptx(ic)=nptx(ic)+n_peak
+   end do
+   xfsh=xfsh+lpx(6)
+  end if
+
+  do ic=1,nsp
+   nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
+  end do
+  !=========================================
  end select
   if(xf0 <0.)then
    do ic=1,nsp
@@ -822,12 +850,21 @@
      endif
     end do
     nptx(ic)=i1
+    if(pe0)write(6,*)'new tot part number',ic,nptx(ic)
    enddo
   endif
 !============================= 
  do ic=1,nsp
+  nptx_alloc(ic)=min(nptx(ic)+10,nx*np_per_xc(ic))
+ end do
+ do ic=1,nsp
   sptx_max(ic)=nptx(ic)
  end do
+ !================================
+ ! END of section setting global coordinates
+ !=================================
+ ! Restricts to the computational box
+ !=================================
  if(pe0)then
   open(12,file='Initial_gas_target_x-profiles',form='formatted')
    do ic=1,nsp

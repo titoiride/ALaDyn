@@ -48,12 +48,12 @@
  character(23) :: fname_out
  real(dp),intent(in) :: tnow
  integer,intent(in) :: tk
- real(sp),allocatable :: pdata(:)
+ real(dp),allocatable :: pdata(:)
  integer :: ik,p,q,ip,ip_max,it,tot_tpart
  integer :: lenp,ndv
  integer(offset_kind) :: disp
  character(4) :: folderName
- integer,parameter :: file_version = 4
+ !integer,parameter :: file_version = 4
 
  write (folderName,'(i4.4)') iout
 
@@ -858,7 +858,7 @@
    else
     do kk=1,np_loc
      wgh_cmp=bch(kk,7)
-     ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3) ! <w(X,Y,Z) coordinates
+     ekt(1:3)=ekt(1:3)+wgh*bch(kk,1:3) ! weight*(X,Y,Z) coordinates
      pp(1:3)=bch(kk,4:6)
      gmb=sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
      ekt(4:6)=ekt(4:6)+wgh*pp(1:3)

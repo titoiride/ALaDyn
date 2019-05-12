@@ -230,7 +230,7 @@
  real(dp),intent(in) :: dtloc,vb
  integer :: p,ch
  real(dp) :: pp(3),vp(3)
- real(dp) :: b2,gam2,gam_inv,gamp_inv,gam3_inv,dt_lp,dth_lp
+ real(dp) :: b2,gam2,gam_inv,dt_lp,dth_lp,gam,gam3
 
  dt_lp=dtloc
  dth_lp=0.5*dt_lp
@@ -245,15 +245,16 @@
    vp(1:2)=F_pt(p,1:2)              !grad[F]
    !=============================
    gam2=1.+dot_product(pp(1:2),pp(1:2))+F_pt(p,3)
+   gam=sqrt(gam2)
+   gam3=gam2*gam
    b2=0.25*dot_product(pp(1:2),vp(1:2))
    !-------------------- def gamma_p
-   gam_inv=1./sqrt(gam2)
-   gam3_inv=gam_inv/gam2
-   gamp_inv=gam_inv*(1.-dt_lp*b2*gam3_inv)
+   gam_inv=1./gam
+   gam_inv=gam_inv*(1.-dt_lp*b2/gam3)
    !============================
-   vp(1:2)=dt_lp*gamp_inv*pp(1:2)
+   vp(1:2)=dt_lp*gam_inv*pp(1:2)
    F_pt(p,3:4)=sp_loc%part(p,1:2) !old (x,y)^n positions
-   F_pt(p,5)=dt_lp*gamp_inv                   ! dt/gamma
+   F_pt(p,5)=dt_lp*gam_inv                   ! dt/gamma
    sp_loc%part(p,1:2)=sp_loc%part(p,1:2)+vp(1:2)
    F_pt(p,1:2)=vp(1:2) ! dt*V^{n+1/2}  velocities
   end do
@@ -266,14 +267,15 @@
    vp(1:3)=F_pt(p,1:3)              !grad[F]
    !=============================
    gam2=1.+dot_product(pp(1:3),pp(1:3))+F_pt(p,4)
+   gam=sqrt(gam2)
+   gam3=gam2*gam
    b2=0.25*dot_product(pp(1:3),vp(1:3))
    !--------------------
    gam_inv=1./sqrt(gam2)
-   gam3_inv=gam_inv/gam2
-   gamp_inv=gam_inv*(1.-dt_lp*b2*gam3_inv)
-   vp(1:3)=dt_lp*gamp_inv*pp(1:3)
+   gam_inv=gam_inv*(1.-dt_lp*b2/gam3)
+   vp(1:3)=dt_lp*gam_inv*pp(1:3)
    F_pt(p,4:6)=sp_loc%part(p,1:3) !old positions
-   F_pt(p,7)=dt_lp*gamp_inv             ! dt*gam_inv
+   F_pt(p,7)=dt_lp*gam_inv             ! dt*gam_inv
    sp_loc%part(p,1:3)=sp_loc%part(p,1:3)+vp(1:3)
    F_pt(p,1:3)=vp(1:3) ! dt*V^{n+1/2}  velocities
   end do
