@@ -24,7 +24,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
       STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Profiling")
 endif()
 
 list(APPEND ALaDyn_Fortran_sources
@@ -108,6 +108,7 @@ elseif(Fortran_COMPILER_NAME MATCHES "ifor*" OR Fortran_COMPILER_NAME MATCHES "f
   string(APPEND CMAKE_CXX_COMPILE_FLAGS " -diag-enable warn")
   string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -real-size 64")
   string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -real-size 64 -diag-enable warn")
+  string(APPEND CMAKE_Fortran_FLAGS_PROFILING "-g -O2 -qopt-report=5 -qopt-report-file=comp_report_out -qopt-report-per-object -real-size 64")
   if(MARCONI_KNL)
     string(APPEND CMAKE_CXX_COMPILE_FLAGS " -xMIC-AVX512")
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -xMIC-AVX512 -O3")

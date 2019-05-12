@@ -2,6 +2,9 @@
 
 [![Build Status Master](https://travis-ci.org/ALaDyn/ALaDyn.png?branch=master)](https://travis-ci.org/ALaDyn/ALaDyn "master")
 [![Build status](https://ci.appveyor.com/api/projects/status/evol3yvpqqfyxi7p?svg=true)](https://ci.appveyor.com/project/cenit/aladyn-kul79)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.592388.svg)](http://dx.doi.org/10.5281/zenodo.592388)
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/aladyn/aladyn.svg?label=Latest%20Release)
 
 ![ALaDyn Logo](https://raw.githubusercontent.com/ALaDyn/ALaDyn/master/logo.png)
 
@@ -21,6 +24,10 @@ Copyright on the code is by the ALaDyn Collaboration.
 
 We support building ALaDyn on almost all sane systems. [Here](doc/BUILD.md) you can find a guide to build the code on many different OS configurations.  
 appveyor and travis recipes can also help understanding how to build the code.
+
+## How to contribute to the development
+
+[Here](https://github.com/ALaDyn/ALaDyn/blob/master/CONTRIBUTING.md) you can find the instructions to propose your changes to `ALaDyn`
 
 ## Support channels
 
