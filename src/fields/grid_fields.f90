@@ -100,7 +100,7 @@
    jj=j-2
    shy=loc_yg(jj,3,imody)*aphy
    do i=i1,n1p
-    curr(i,j,k,1)=curr(i,j,k,1)+aphy*(curr(i,j,k,2)-curr(i,j-1,k,2))
+    curr(i,j,k,1)=curr(i,j,k,1)+shy*(curr(i,j,k,2)-curr(i,j-1,k,2))
    end do
   end do
  end do

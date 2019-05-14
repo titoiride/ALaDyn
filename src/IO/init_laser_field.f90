@@ -120,7 +120,7 @@
  lp_end(1)=lp_in(1)+w0_x
  eps=1./(oml*w0_y)
  sigm=lam0/w0_x
- angle=lpx(6)
+ angle=incid_angle
  xf=xc_lp+t0_lp
  shx_cp=0.0
  if(angle >0.0)shx_cp=lpx(7)
