@@ -42,6 +42,7 @@
  endif
  !====To activate/disactivate diagnostics in envar() en_data routines=========
  Diag=.true.
+ initial_time=.false.
  if(iene==0)then
   Diag = .false.
   iene=1
@@ -61,6 +62,8 @@
  unix_time_last_dump=unix_time_begin
 
  tnow=tstart
+ if(tnow==0.0)initial_time=.true.
+ 
  ! iter=last_iter
  iter=0
 
@@ -88,7 +91,7 @@
  call data_out(jump)
  do while (tnow < tmax)
 !=======================
-  call LP_run(tnow,dt_loc,iter)
+  call LP_run(tnow,iter)
 
   call timing
   call data_out(jump)
@@ -115,7 +118,7 @@
  tk_ind=0
  do while (tnow < tmax)
 !=================================
-  call ENV_run(tnow,dt_loc,iter)
+  call ENV_run(tnow,iter)
 
   call timing           !iter=iter+1  tnow=tnow+dt_loc
   call data_out(jump)
@@ -140,7 +143,7 @@
  t_ind=0
 
  do while (tnow < tmax)
-  call BUNCH_run(tnow,dt_loc,iter)
+  call BUNCH_run(tnow,iter)
 
   call timing
   call bdata_out(jump)
@@ -254,7 +257,6 @@
  !endif
 
  end subroutine data_out
-
 
  !--------------------------
  subroutine bdata_out(jump)

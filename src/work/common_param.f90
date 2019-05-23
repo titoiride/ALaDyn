@@ -45,14 +45,15 @@
  real(dp) :: xc_1,gam_1,sxb_1,syb_1,epsy_1,epsz_1,dg_1, charge_1,t_inject
  integer :: nouts,iene,nvout,nden,npout,nbout,jump,pjump
  integer :: new_sim,id_new,dump
- real(dp) :: gam_min,xp0_out,xp1_out,yp_out,tmax,cfl
+ real(dp) :: gam_min,xp0_out,xp1_out,yp_out
+!====================
  real(dp) :: w_speed,wi_time,wf_time
+ real(dp) :: tnow,tmax,tscale,dt_loc,dt,cfl
+ logical  :: initial_time
+!====================
  integer :: tkjump,nkjump,track_tot_nstep
  real(dp) :: txmin,txmax,tymin, tymax, tzmin, tzmax,t_in, t_out
  integer :: nprocx,nprocy,nprocz 
-
-                                          ! parameters set by initial
-                                          ! conditiona
  logical :: G_prof,P_tracking,Comoving 
  logical :: Beam, Hybrid, Wake,Envelope,Solid_target
  logical :: Ionization,Ions
@@ -66,7 +67,7 @@
  integer :: sh_targ,nx_stretch,ny_stretch,nz_stretch
  integer :: mp_per_cell(6),nref,np_per_zc(Ref_nlayer),ppc(Ref_nlayer)
  integer :: loc_nyc_max,loc_nzc_max,loc_nxc_max,ndim_max
- real(dp) :: djc(3),ratio_mpc(6),pavg_npart(4),wgh_ion,dt
+ real(dp) :: djc(3),ratio_mpc(6),pavg_npart(4),wgh_ion
  real(dp) :: mass(4),mass_rat(4),charge_to_mass(4),unit_charge(4),Lorentz_fact(4)
  real(dp) :: n0_ref,pmass,ompe,vbeam,curr_max(3),j0_norm,ratio_mpfluid,chann_fact
  real(dp) :: gam0,bet0,u0_b, nb_over_np,b_charge
@@ -91,7 +92,6 @@
  integer :: ndim,curr_ndim,nj_dim,nd2,nfield,nbfield,nfcomp,mod_ord,w_sh
  real(dp) :: macro_charge
 
- real(dp) :: tnow,tscale
  real(dp) :: energy_in_targ
  integer(kind=8) :: nptot_global
 

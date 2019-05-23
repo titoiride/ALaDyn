@@ -231,11 +231,11 @@
  loc_xgrid(p)%gmax=x(ip+1)
  end subroutine reset_loc_xgrid
  !========================================
- subroutine comoving_coordinate(vb,dt_loc,w_nst,loc_it)
- real(dp),intent(in) :: vb,dt_loc
+ subroutine comoving_coordinate(vb,w_nst,loc_it)
+ real(dp),intent(in) :: vb
  integer,intent(in) :: w_nst,loc_it
  integer :: i,ic,nshx
- real(dp) :: dt_tot
+ real(dp) :: dt_tot,dt_step
  logical,parameter :: mw=.true.
  !======================
  ! In comoving x-coordinate the 
@@ -250,9 +250,10 @@
  ! 
  !==================
  if(loc_it==0)return
+ dt_step=dt_loc
  dt_tot=0.0
  do i=1,w_nst
-  dt_tot=dt_tot+dt_loc
+  dt_tot=dt_tot+dt_step
  enddo
  nshx=nint(dx_inv*dt_tot*vb)      !the number of grid points x-shift for each w_nst step 
  do i=1,nx+1
@@ -279,12 +280,11 @@
   endif
  end subroutine comoving_coordinate
  !====================================
- subroutine LP_window_xshift(dt_loc,witr,init_iter)
- real(dp),intent(in) :: dt_loc
+ subroutine LP_window_xshift(witr,init_iter)
  integer,intent(in) :: witr,init_iter
- integer :: i1,n1p,j1,nyp,k1,nzp,nc_env
+ integer :: i1,n1p,nc_env
  integer :: ix,nshx,wi2
- real(dp),save :: xlapse
+ real(dp),save :: xlapse,dt_step
  integer,save :: wi1
  logical,parameter :: mw=.true.
 
@@ -293,15 +293,12 @@
   wi1=0
   return
  endif
+ dt_step=dt_loc
  !==================
  i1=loc_xgrid(imodx)%p_ind(1)
  n1p=loc_xgrid(imodx)%p_ind(2)
- j1=loc_ygrid(imody)%p_ind(1)
- nyp=loc_ygrid(imody)%p_ind(2)
- k1=loc_zgrid(imodz)%p_ind(1)
- nzp=loc_zgrid(imodz)%p_ind(2)
  !======================
- xlapse=xlapse+w_speed*dt_loc*witr
+ xlapse=xlapse+w_speed*dt_step*witr
  wi2=nint(dx_inv*xlapse)
  nshx=wi2-wi1
  wi1=wi2
@@ -313,7 +310,7 @@
  xmax=xmax+dx*nshx
  xp0_out=xp0_out+dx*nshx
  xp1_out=xp1_out+dx*nshx
- loc_xgrid(imodx)%gmin=loc_xgrid(imodx)%gmin+dx*nshx
+ xmn=xmn+dx*nshx
  loc_xgrid(imodx)%gmax=loc_xgrid(imodx)%gmax+dx*nshx
  wi2=n1p-nshx
  if(wi2<=0)then
@@ -322,20 +319,19 @@
   return
  endif
  !===========================
- call fields_left_xshift(ebf,i1,wi2,j1,nyp,k1,nzp,1,nfield,nshx)
+ call fields_left_xshift(ebf,i1,wi2,1,nfield,nshx)
  if(Hybrid)then
   do ix=wi2,nxf-nshx
    fluid_x_profile(ix)=fluid_x_profile(ix+nshx)
   end do
   nxf=nxf-nshx
-  call fluid_left_xshift(up,fluid_x_profile,fluid_yz_profile,i1,wi2,j1,nyp,k1,nzp,1,nfcomp,nshx)
-  call fields_left_xshift(up0,i1,wi2,j1,nyp,k1,nzp,1,nfcomp,nshx)
-  !call fluid_left_xshift(up0,fluid_x_profile,fluid_yz_profile,i1,wi2,j1,nyp,k1,nzp,1,nfcomp,nshx)
+  call fluid_left_xshift(up,fluid_x_profile,fluid_yz_profile,i1,wi2,1,nfcomp,nshx)
+  call fields_left_xshift(up0,i1,wi2,1,nfcomp,nshx)
  endif
  if(Envelope)then
   nc_env=size(env,4)
-  call fields_left_xshift(env,i1,wi2,j1,nyp,k1,nzp,1,nc_env,nshx)
-  if(Two_color)call fields_left_xshift(env1,i1,wi2,j1,nyp,k1,nzp,1,nc_env,nshx)
+  call fields_left_xshift(env,i1,wi2,1,nc_env,nshx)
+  if(Two_color)call fields_left_xshift(env1,i1,wi2,1,nc_env,nshx)
  endif
  !shifts fields data and inject right ebf(wi2+1:n1p) x-grid nshx new data
  !===========================
@@ -351,12 +347,11 @@
  end subroutine LP_window_xshift
  !==============================
  !=======================================
- subroutine BUNCH_window_xshift(dt_loc,witr,wt)
- real(dp),intent(in) :: dt_loc
+ subroutine BUNCH_window_xshift(witr,wt)
  integer,intent(in) :: witr,wt
- integer :: i1,n1p,j1,nyp,k1,nzp
+ integer :: i1,n1p
  integer :: ix,nshx,wi2,w2f
- real(dp),save :: xlapse
+ real(dp),save :: xlapse,dt_step
  integer,save :: wi1
  logical,parameter :: mw=.true.
 
@@ -365,17 +360,14 @@
   wi1=0
   return
  endif
+ dt_step=dt_loc
  !==================
  !i1=sh_ix;n1=nx+i1-1
- i1=loc_xgrid(imodx)%p_ind(1)
- n1p=loc_xgrid(imodx)%p_ind(2)
+ i1=ix1
+ n1p=ix2
  !=======================
- j1=loc_ygrid(imody)%p_ind(1)
- nyp=loc_ygrid(imody)%p_ind(2)
- k1=loc_zgrid(imodz)%p_ind(1)
- nzp=loc_zgrid(imodz)%p_ind(2)
  !========== bunch fields have enlarged stencil of (y,z)points
- xlapse=xlapse+w_speed*dt_loc*witr
+ xlapse=xlapse+w_speed*dt_step*witr
  wi2=nint(dx_inv*xlapse)
  nshx=wi2-wi1
  wi1=wi2
@@ -387,6 +379,7 @@
  xmax=xmax+dx*nshx
  loc_xgrid(imodx)%gmin=loc_xgrid(imodx)%gmin+dx*nshx
  loc_xgrid(imodx)%gmax=loc_xgrid(imodx)%gmax+dx*nshx
+ xmn=loc_xgrid(imodx)%gmin
  xp0_out=xp0_out+dx*nshx
  xp1_out=xp1_out+dx*nshx
  !====================
@@ -398,19 +391,18 @@
   return
  endif
  !===========================
- call fields_left_xshift(ebf,i1,w2f,j1,nyp,k1,nzp,1,nfield,nshx)
+ call fields_left_xshift(ebf,i1,w2f,1,nfield,nshx)
  call fields_left_xshift(&
-                   ebf_bunch,i1,w2f,j1,nyp,k1,nzp,1,nbfield,nshx)
+                   ebf_bunch,i1,w2f,1,nbfield,nshx)
  call fields_left_xshift(&
-             ebf1_bunch,i1,w2f,j1,nyp,k1,nzp,1,nbfield,nshx)
+             ebf1_bunch,i1,w2f,1,nbfield,nshx)
  if(Hybrid)then
   do ix=wi2,nxf-nshx
    fluid_x_profile(ix)=fluid_x_profile(ix+nshx)
   end do
   nxf=nxf-nshx
-  call fluid_left_xshift(up,fluid_x_profile,fluid_yz_profile,i1,wi2,j1,nyp,k1,nzp,1,nfcomp,nshx)
-  call fields_left_xshift(up0,i1,w2f,j1,nyp,k1,nzp,1,nbfield,nshx)
-  !call fluid_left_xshift(up0,fluid_x_profile,fluid_yz_profile,i1,wi2,j1,nyp,k1,nzp,1,nfcomp,nshx)
+  call fluid_left_xshift(up,fluid_x_profile,fluid_yz_profile,i1,wi2,1,nfcomp,nshx)
+  call fields_left_xshift(up0,i1,w2f,1,nbfield,nshx)
  endif
  !========================================
  if(Part)then

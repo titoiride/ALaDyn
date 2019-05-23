@@ -39,6 +39,7 @@
 
  use common_param
  use grid_param
+ use mpi_var
 
  implicit none
 
@@ -591,19 +592,40 @@
   end do
  end do
  end subroutine set_str_ind
+
+ subroutine set_loc_grid_param
+
+  xmn=loc_xgrid(imodx)%gmin
+  ymn=loc_ygrid(imody)%gmin
+  zmn=loc_zgrid(imodz)%gmin
+  ix1=loc_xgrid(imodx)%p_ind(1)
+  ix2=loc_xgrid(imodx)%p_ind(2)
+  jy1=loc_ygrid(imody)%p_ind(1)
+  jy2=loc_ygrid(imody)%p_ind(2)
+  kz1=loc_zgrid(imodz)%p_ind(1)
+  kz2=loc_zgrid(imodz)%p_ind(2)
+  n_str=0
+  if(Stretch)n_str=str_indx(imody,imodz)
+
+  nyp =loc_ygrid(imody)%p_ind(2)  !Ny_loc+2
+  nzp= loc_zgrid(imodz)%p_ind(2)    !Nz_loc+2
+  nxp= loc_xgrid(imodx)%p_ind(2)    !Nx_loc+2
+
+ end subroutine set_loc_grid_param
+!=====
  !--------------------------
 
  !--------------------------
  subroutine set_ftgrid(n1,n2,n3)
- integer,intent(in) :: n1,n2,n3
- integer :: i
- real(dp) :: wkx,wky,wkz
+  integer,intent(in) :: n1,n2,n3
+  integer :: i
+  real(dp) :: wkx,wky,wkz
 
 
- allocate(aky(n2+2,0:2),akz(n3+2,0:2))
- allocate(sky(n2+2,0:2),skz(n3+2,0:2))
- allocate(ak2y(n2+2,0:2),ak2z(n3+2,0:2),ak2x(n1+1,0:2))
- allocate(akx(1:n1+1,0:2),skx(1:n1+1,0:2))
+  allocate(aky(n2+2,0:2),akz(n3+2,0:2))
+  allocate(sky(n2+2,0:2),skz(n3+2,0:2))
+  allocate(ak2y(n2+2,0:2),ak2z(n3+2,0:2),ak2x(n1+1,0:2))
+  allocate(akx(1:n1+1,0:2),skx(1:n1+1,0:2))
   akx(:,0:2)=0.0
   ak2x(:,0:2)=0.0
   aky(:,0:2)=0.0

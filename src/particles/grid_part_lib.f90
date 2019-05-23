@@ -21,6 +21,7 @@
 
  module grid_part_lib
 
+ use common_param
  use grid_param
 
  implicit none
@@ -30,6 +31,74 @@
  integer(kind=2) :: err_ind
 
  contains
+ !    Templates of spl=1,2,3 order shape functions for grid-particle  connection
+ !==================================================
+ ! Computes 
+ subroutine set_int_pshape(spl,xx,ax,ind)
+ integer,intent(in) :: spl
+ real(dp),intent(in) :: xx
+ real(dp),intent(out) :: ax(0:3)
+ integer,intent(out) :: ind
+ real(dp) :: sx,sx2,sx3
+ !To integer grid points
+ ax(0:3)=0.0
+ select case(spl)
+ case(1)
+  ind=int(xx)
+  ax(1)=xx-real(ind,dp)
+  ax(0)=1.-ax(1)
+ case(2)
+  ind=int(xx+0.5)
+  sx=xx-real(ind,dp)
+  sx2=sx*sx
+  ax(1)=0.75-sx2
+  ax(2)=0.5*(0.25+sx2+sx)
+  ax(0)=1.-ax(1)-ax(2)
+ case(3)
+  ind=int(xx)
+  sx=xx-real(ind,dp)
+  sx2=sx*sx
+  sx3=sx2*sx
+  ax(1)=two_third-sx2+0.5*sx3
+  ax(2)=one_sixth+0.5*(sx+sx2-sx3)
+  ax(3)=one_sixth*sx3
+  ax(0)=1.-ax(1)-ax(2)-ax(3)
+ end select
+ end subroutine set_int_pshape
+!========================
+ subroutine set_hint_pshape(spl,xx,ax,ind)
+ integer,intent(in) :: spl
+ real(dp),intent(in) :: xx
+ integer,intent(out) :: ind
+ real(dp),intent(out) :: ax(0:3)
+ real(dp) :: sx,sx2,sx3
+ !To half-integer grid points
+ ax(0:3)=0.0
+ select case(spl)
+ case(1)
+  sx=xx+0.5
+  ind=int(sx)
+  ax(1)=sx-real(ind,dp)
+  ax(0)=1.-ax(1)
+ case(2)
+  ind=int(xx)
+  sx=xx-0.5-real(ind,dp)
+  sx2=sx*sx
+  ax(1)=0.75-sx2
+  ax(2)=0.5*(0.25+sx2+sx)
+  ax(0)=1.-ax(1)-ax(2)
+ case(3)
+  ind=int(xx+0.5)
+  sx=xx-real(ind,dp)
+  sx2=sx*sx
+  sx3=sx2*sx
+  ax(1)=two_third-sx2+0.5*sx3
+  ax(2)=one_sixth+0.5*(sx+sx2-sx3)
+  ax(3)=one_sixth*sx3
+  ax(0)=1.-ax(1)-ax(2)-ax(3) ! to (i-1/2,i+1/2,i+3/2,i+5/2) half-int
+ end select
+ end subroutine set_hint_pshape
+ !=======================
  !============== Mapping for stretched grids==========
 
  subroutine map2dy_part_sind(np,sind,ic1,ym,pt)
@@ -254,216 +323,353 @@
   end do
  end select
  end subroutine map3d_part_sind
-
  !========================================
- !    Linear and quadratic shape functions for grid-particle  connection
- !==================================================
- subroutine set_hint_pshape(spl,xx,ax,ind)
- integer,intent(in) :: spl
- real(dp),intent(in) :: xx
- real(dp),intent(out) :: ax(0:3)
- integer,intent(out) :: ind
- real(dp) :: sx,sx2,sx3
- !To half-integer grid points
- select case(spl)
- case(1)
-  sx=xx+0.5
-  ind=int(sx)
-  ax(1)=sx-real(ind,dp)
-  ax(0)=1.-ax(1)
- case(2)
-  ind=int(xx)
-  sx=xx-0.5-real(ind,dp)
-  sx2=sx*sx
-  ax(1)=0.75-sx2
-  ax(2)=0.5*(0.25+sx2+sx)
-  ax(0)=1.-ax(1)-ax(2)
- case(3)
-  ind=int(xx+0.5)
-  sx=xx-real(ind,dp)
-  sx2=sx*sx
-  sx3=sx2*sx
-  ax(1)=two_third-sx2+0.5*sx3
-  ax(2)=one_sixth+0.5*(sx+sx2-sx3)
-  ax(3)=one_sixth*sx3
-  ax(0)=1.-ax(1)-ax(2)-ax(3) ! to (i-1/2,i+1/2,i+3/2,i+5/2) half-int
- end select
- end subroutine set_hint_pshape
- !=======================
- subroutine set_int_pshape(spl,xx,ax,ind)
- integer,intent(in) :: spl
- real(dp),intent(in) :: xx
- real(dp),intent(out) :: ax(0:3)
- integer,intent(out) :: ind
- real(dp) :: sx,sx2,sx3
- !To integer grid points
- select case(spl)
- case(1)
-  ind=int(xx)
-  ax(1)=xx-real(ind,dp)
-  ax(0)=1.-ax(1)
- case(2)
-  ind=int(xx+0.5)
-  sx=xx-real(ind,dp)
-  sx2=sx*sx
-  ax(1)=0.75-sx2
-  ax(2)=0.5*(0.25+sx2+sx)
-  ax(0)=1.-ax(1)-ax(2)
- case(3)
-  ind=int(xx)
-  sx=xx-real(ind,dp)
-  sx2=sx*sx
-  sx3=sx2*sx
-  ax(1)=two_third-sx2+0.5*sx3
-  ax(2)=one_sixth+0.5*(sx+sx2-sx3)
-  ax(3)=one_sixth*sx3
-  ax(0)=1.-ax(1)-ax(2)-ax(3)
- end select
- end subroutine set_int_pshape
  !===========================================
  !     Computes particle density charge on grid integer points
  !==============================================
- !DIR$ ATTRIBUTES INLINE :: qq_interpolate
+ !DIR$ ATTRIBUTES INLINE :: ql_interpolate,qq_interpolate
 !====================
- subroutine qq_density_spline(sh,x0,x1,a0,a1,ix0,ix1)
- real(sp),intent(in)  :: sh
- real(dp),intent(in)  :: x0,x1
- real(dp),intent(inout) :: a0(3),a1(3)
- integer, intent(out) :: ix0,ix1
- real(dp) :: xx,sx,sx2
+  subroutine qlh_2d_spline(xp,ax,axh,ay,ayh,ix,ihx,iy,ihy)
+   real(dp),intent(in) :: xp(:)
+   real(dp),intent(inout) :: ax(0:2),axh(0:1),ay(0:2),ayh(0:1)
+   integer,intent(inout) :: ix,ihx,iy,ihy
+   real(sp) :: xx,sx,sx2
+!======================
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
 
- xx=sh+x0
- ix0=int(xx+0.5)
- sx=xx-real(ix0,dp)
- sx2=sx*sx
- a0(2)=0.75-sx2
- a0(3)=0.5*(0.25+sx2+sx)
- a0(1)=1.-a0(2)-a0(3)
- xx=sh+x1
- ix1=int(xx+0.5)
- sx=xx-real(ix1,dp)
- sx2=sx*sx
- a1(2)=0.75-sx2
- a1(3)=0.5*(0.25+sx2+sx)
- a1(1)=1.-a1(2)-a1(3)
- ix0=ix0-2
- ix1=ix1-2
- end subroutine qq_density_spline
-!==========================================
- subroutine qlql_density_spline(sh,x0,x1,a0,a1,ah0,ah1,ix0,ix1,ih0,ih1)
- real(sp),intent(in)  :: sh
- real(dp),intent(in)  :: x0,x1
- real(dp),intent(inout) :: a0(3),a1(3),ah0(2),ah1(2)
- integer, intent(out) :: ix0,ix1,ih0,ih1
- real(dp) :: xx,sx,sx2
+   axh(1)=sx+0.5
+   axh(0)=1.-axh(1)
 
- xx=sh+x0
- ix0=int(xx+0.5)
- sx=xx-real(ix0,dp)
- sx2=sx*sx
- a0(2)=0.75-sx2
- a0(3)=0.5*(0.25+sx2+sx)
- a0(1)=1.-a0(2)-a0(3)
+   xx=shy+xp(2)
+   iy=int(xx+0.5)
+   sx=xx-real(iy,dp)
+   sx2=sx*sx
+   ay(1)=0.75-sx2
+   ay(2)=0.5*(0.25+sx2+sx)
+   ay(0)=1.-ay(1)-ay(2)
 
- ah0(2)=sx+0.5
- ah0(1)=1.-ah0(2)
+   ayh(1)=sx+0.5
+   ayh(0)=1.-ayh(1)
 
- xx=sh+x1
- ix1=int(xx+0.5)
- sx=xx-real(ix1,dp)
- sx2=sx*sx
- a1(2)=0.75-sx2
- a1(3)=0.5*(0.25+sx2+sx)
- a1(1)=1.-a1(2)-a1(3)
+   ix=ix-1
+   ihx=ix
+   iy=iy-1
+   ihy=iy
 
- ah1(2)=sx+0.5
- ah1(1)=1.-ah1(2)
+  end subroutine qlh_2d_spline
+!====================
+  subroutine qqh_1d_spline(xp,ax,axh,ix,ihx)
+   real(dp),intent(in) :: xp(:)
+   real(dp),intent(inout) :: ax(0:2),axh(0:2)
+   integer,intent(inout) :: ix,ihx
+   real(sp) :: xx,sx,sx2
+!======================
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
 
- ix0=ix0-2
- ih0=ix0
- ix1=ix1-2
- ih1=ix1
- end subroutine qlql_density_spline
-!==========================================
-!
- subroutine qq_interpolate(xp,ax1,axh,ay1,ayh,ix,iy,ixh,iyh)
- real(dp),intent(in)  :: xp(:)
- real(dp),intent(inout) :: ax1(:),axh(:),ay1(:),ayh(:)
- integer, intent(out) :: ix,iy,ixh,iyh
- real(dp) :: xx,sx,sx2
+   ihx=int(xx)
+   sx=xx-real(ihx,dp)
+   sx2=sx*sx
+   axh(1)=0.75-sx2
+   axh(2)=0.5*(0.25+sx2+sx)
+   axh(0)=1.-axh(1)-axh(2)
+   ix=ix-1
+   ihx=ihx-1
 
- xx=shx+xp(1)
- ix=int(xx+0.5)
- sx=xx-real(ix,dp)
- sx2=sx*sx
- ax1(2)=0.75-sx2
- ax1(3)=0.5*(0.25+sx2+sx)
- ax1(1)=1.-ax1(2)-ax1(3)
+  end subroutine qqh_1d_spline
+!=======================
+  subroutine qqh_2d_spline(xp,ax,axh,ay,ayh,ix,ihx,iy,ihy)
+   real(dp),intent(in) :: xp(:)
+   real(dp),intent(inout) :: ax(0:2),axh(0:2),ay(0:2),ayh(0:2)
+   integer,intent(inout) :: ix,ihx,iy,ihy
+   real(sp) :: xx,sx,sx2
+!======================
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
 
- ixh=int(xx)
- sx=xx-0.5-real(ixh,dp)
- sx2=sx*sx
- axh(2)=0.75-sx2
- axh(3)=0.5*(0.25+sx2+sx)
- axh(1)=1.-axh(3)-axh(2)
+   ihx=int(xx)
+   sx=xx-real(ihx,dp)
+   sx2=sx*sx
+   axh(1)=0.75-sx2
+   axh(2)=0.5*(0.25+sx2+sx)
+   axh(0)=1.-axh(1)-axh(2)
 
- xx=shy+xp(2)
+   xx=shy+xp(2)
+   iy=int(xx+0.5)
+   sx=xx-real(iy,dp)
+   sx2=sx*sx
+   ay(1)=0.75-sx2
+   ay(2)=0.5*(0.25+sx2+sx)
+   ay(0)=1.-ay(1)-ay(2)
 
- iy=int(xx+0.5)
- sx=xx-real(iy,dp)
- sx2=sx*sx
- ay1(2)=0.75-sx2
- ay1(3)=0.5*(0.25+sx2+sx)
- ay1(1)=1.-ay1(3)-ay1(2)
+   ihy=int(xx)
+   sx=xx-real(ihy,dp)
+   sx2=sx*sx
+   ayh(1)=0.75-sx2
+   ayh(2)=0.5*(0.25+sx2+sx)
+   ayh(0)=1.-ayh(1)-ayh(2)
 
- iyh=int(xx)
- sx=xx-0.5-real(iyh,dp)
- sx2=sx*sx
- ayh(2)=0.75-sx2
- ayh(3)=0.5*(0.25+sx2+sx)
- ayh(1)=1.-ayh(3)-ayh(2)
+   ix=ix-1
+   ihx=ihx-1
+   iy=iy-1
+   ihy=ihy-1
+  end subroutine qqh_2d_spline
+!=======================================
+  subroutine qlh_3d_spline(xp,ax,axh,ay,ayh,az,azh,ix,ihx,iy,ihy,iz,ihz)
+   real(dp),intent(in) :: xp(:)
+   real(dp),intent(inout) :: ax(0:2),axh(0:1),ay(0:2),ayh(0:1),az(0:2),azh(0:1)
+   integer,intent(inout) :: ix,ihx,iy,ihy,iz,ihz
+   real(sp) :: xx,sx,sx2
+!======================
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
 
- ix=ix-2
- iy=iy-2
- ixh=ixh-2
- iyh=iyh-2
- end subroutine qq_interpolate
+   axh(1)=sx+0.5
+   axh(0)=1.-axh(1)
+
+   xx=shy+xp(2)
+   iy=int(xx+0.5)
+   sx=xx-real(iy,dp)
+   sx2=sx*sx
+   ay(1)=0.75-sx2
+   ay(2)=0.5*(0.25+sx2+sx)
+   ay(0)=1.-ay(1)-ay(2)
+
+   ayh(1)=sx+0.5
+   ayh(0)=1.-ayh(1)
+
+   xx=shz+xp(3)
+   iz=int(xx+0.5)
+   sx=xx-real(iz,dp)
+   sx2=sx*sx
+   az(1)=0.75-sx2
+   az(2)=0.5*(0.25+sx2+sx)
+   az(0)=1.-az(1)-az(2)
+
+   azh(1)=sx+0.5
+   azh(0)=1.-azh(1)
+
+   ix=ix-1
+   ihx=ix
+   iy=iy-1
+   ihy=iy
+   iz=iz-1
+   ihz=iz
+  end subroutine qlh_3d_spline
+!=================================
+  subroutine qqh_3d_spline(xp,ax,axh,ay,ayh,az,azh,ix,ihx,iy,ihy,iz,ihz)
+   real(dp),intent(in) :: xp(:)
+   real(dp),intent(inout) :: ax(0:2),axh(0:2),ay(0:2),ayh(0:2),az(0:2),azh(0:2)
+   integer,intent(inout) :: ix,ihx,iy,ihy,iz,ihz
+   real(sp) :: xx,sx,sx2
+
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
+
+   ihx=int(xx)
+   sx=xx-real(ihx,dp)
+   sx2=sx*sx
+   axh(1)=0.75-sx2
+   axh(2)=0.5*(0.25+sx2+sx)
+   axh(0)=1.-axh(1)-axh(2)
+
+   xx=shy+xp(2)
+   iy=int(xx+0.5)
+   sx=xx-real(iy,dp)
+   sx2=sx*sx
+   ay(1)=0.75-sx2
+   ay(2)=0.5*(0.25+sx2+sx)
+   ay(0)=1.-ay(1)-ay(2)
+
+   ihy=int(xx)
+   sx=xx-real(ihy,dp)
+   sx2=sx*sx
+   ayh(1)=0.75-sx2
+   ayh(2)=0.5*(0.25+sx2+sx)
+   ayh(0)=1.-ayh(1)-ayh(2)
+
+   xx=shz+xp(3)
+   iz=int(xx+0.5)
+   sx=xx-real(iz,dp)
+   sx2=sx*sx
+   az(1)=0.75-sx2
+   az(2)=0.5*(0.25+sx2+sx)
+   az(0)=1.-az(1)-az(2)
+
+   ihz=int(xx)
+   sx=xx-real(ihz,dp)
+   sx2=sx*sx
+   azh(1)=0.75-sx2
+   azh(2)=0.5*(0.25+sx2+sx)
+   azh(0)=1.-azh(1)-azh(2)
+
+   ix=ix-1
+   ihx=ihx-1
+   iy=iy-1
+   ihy=ihy-1
+   iz=iz-1
+   ihz=ihz-1
+  end subroutine qqh_3d_spline
+
+  subroutine qden_1d_wgh(xp,ax,ix)
+   real(dp),intent(in) :: xp(:)
+   integer,intent(inout) :: ix
+   real(dp),intent(inout) :: ax(0:2)
+   real(sp) :: xx,sx,sx2
+!======================
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
+  end subroutine qden_1d_wgh
+
+  subroutine qden_2d_wgh(xp,ax,ay,ix,iy)
+   real(dp),intent(in) :: xp(:)
+   real(dp),intent(inout) :: ax(0:2),ay(0:2)
+   integer,intent(inout) :: ix,iy
+   real(sp) :: xx,sx,sx2
+!======================
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
+
+   xx=shy+xp(2)
+   iy=int(xx+0.5)
+   sx=xx-real(iy,dp)
+   sx2=sx*sx
+   ay(1)=0.75-sx2
+   ay(2)=0.5*(0.25+sx2+sx)
+   ay(0)=1.-ay(1)-ay(2)
+  end subroutine qden_2d_wgh
+!------------------------------
+  subroutine qden_3d_wgh(xp,ax,ay,az,ix,iy,iz)
+   real(dp),intent(in) :: xp(:)
+   real(dp),intent(inout) :: ax(0:2),ay(0:2),az(0:2)
+   integer,intent(inout) :: ix,iy,iz
+   real(sp) :: xx,sx,sx2
+!======================
+   xx=shx+xp(1)
+   ix=int(xx+0.5)
+   sx=xx-real(ix,dp)
+   sx2=sx*sx
+   ax(1)=0.75-sx2
+   ax(2)=0.5*(0.25+sx2+sx)
+   ax(0)=1.-ax(1)-ax(2)
+
+   xx=shy+xp(2)
+   iy=int(xx+0.5)
+   sx=xx-real(iy,dp)
+   sx2=sx*sx
+   ay(1)=0.75-sx2
+   ay(2)=0.5*(0.25+sx2+sx)
+   ay(0)=1.-ay(1)-ay(2)
+
+   xx=shz+xp(3)
+   iz=int(xx+0.5)
+   sx=xx-real(iz,dp)
+   sx2=sx*sx
+   az(1)=0.75-sx2
+   az(2)=0.5*(0.25+sx2+sx)
+   az(0)=1.-az(1)-az(2)
+  end subroutine qden_3d_wgh
+!====================================
 
  !DIR$ ATTRIBUTES INLINE :: ql_interpolate
- subroutine ql_interpolate(xp,ax1,axh,ay1,ayh,ix,iy,ixh,iyh)
- real(dp),intent(in)  :: xp(:)
- real(dp),intent(inout) :: ax1(:),axh(:),ay1(:),ayh(:)
- integer, intent(out) :: ix,iy,ixh,iyh
- real(dp) :: xx,sx,sx2
+ subroutine set_local_2d_positions(pt_loc,n1,np)
 
- xx=shx+xp(1)
- ix=int(xx+0.5)
- sx=xx-real(ix,dp)
- sx2=sx*sx
- ax1(2)=0.75-sx2
- ax1(3)=0.5*(0.25+sx2+sx)
- ax1(1)=1.-ax1(2)-ax1(3)
+ real(dp),intent(inout) :: pt_loc(:,:)
+ integer,intent(in) :: n1,np
+ integer :: n
+ !=========================
+ do n=1,np
+  pt_loc(n,1)=dx_inv*(pt_loc(n,1)-xmn)
+ end do
+ if(n1==0)return
+ if(n_str==0)then
+  do n=1,np
+    pt_loc(n,2)=dy_inv*(pt_loc(n,2)-ymn)              !
+  end do
+ else
+  call map2dy_part_sind(np,n_str,2,ymn,pt_loc)
+ endif
+ if(n1==1)return
 
- axh(2)=sx+0.5
- axh(1)=1.-axh(2)
+ do n=1,np
+  pt_loc(n,3)=dx_inv*(pt_loc(n,3)-xmn)
+ end do
+ if(n_str==0)then
+  do n=1,np
+    pt_loc(n,4)=dy_inv*(pt_loc(n,4)-ymn)              !
+  end do
+ else
+  call map2dy_part_sind(np,n_str,4,ymn,pt_loc)
+ endif
 
- xx=shy+xp(2)
+ end subroutine set_local_2d_positions
+!======================
+ subroutine set_local_3d_positions(pt_loc,n1,np)
+  real(dp),intent(inout) :: pt_loc(:,:)
+  integer,intent(in) :: n1,np
+  integer :: n
+ !=========================
+  do n=1,np
+   pt_loc(n,1)=dx_inv*(pt_loc(n,1)-xmn)
+  end do
+  if(n_str==0)then
+   do n=1,np
+    pt_loc(n,2)=dy_inv*(pt_loc(n,2)-ymn)
+    pt_loc(n,3)=dz_inv*(pt_loc(n,3)-zmn)
+   end do
+  else
+   call map3d_part_sind(pt_loc,np,n_str,2,3,ymn,zmn)
+  endif
+  if(n1==1)return
+  do n=1,np
+   pt_loc(n,4)=dx_inv*(pt_loc(n,4)-xmn)
+  end do
+  if(n_str==0)then
+   do n=1,np
+    pt_loc(n,5)=dy_inv*(pt_loc(n,5)-ymn)
+    pt_loc(n,6)=dz_inv*(pt_loc(n,6)-zmn)
+   end do
+  else
+   call map3d_part_sind(pt_loc,np,n_str,5,6,ymn,zmn)
+  endif
 
- iy=int(xx+0.5)
- sx=xx-real(iy,dp)
- sx2=sx*sx
- ay1(2)=0.75-sx2
- ay1(3)=0.5*(0.25+sx2+sx)
- ay1(1)=1.-ay1(3)-ay1(2)
-
- ayh(2)=sx+0.5
- ayh(1)=1.-ayh(2)
-
- ix=ix-2
- iy=iy-2
- ixh=ix
- iyh=iy
- end subroutine ql_interpolate
+ end subroutine set_local_3d_positions
  
  end module grid_part_lib
  !==========================

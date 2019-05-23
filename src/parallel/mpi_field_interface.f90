@@ -40,6 +40,7 @@
 
  use array_wspace
  use parallel
+ use grid_param
 
  implicit none
  integer,parameter :: x_parity(6)=(/-1,1,1,-1,1,1/)
@@ -49,38 +50,38 @@
 
  contains
  !===========================
- subroutine field_xyzbd(ef,i01,i02,j01,j02,k01,k02,nc,stl,str)
+ subroutine field_xyzbd(ef,nc,stl,str)
  real(dp),intent(inout) :: ef(:,:,:,:)
- integer,intent(in) :: i01,i02,j01,j02,k01,k02,nc,stl,str
+ integer,intent(in) :: nc,stl,str
  integer :: ik,iy,ix,iz
  integer :: i1,i2,j1,j2,k1,k2
  !==========================
  ! enter fields(1:n1,j01-1:j02+1,k01-1:k02+1,nc)
  ! Only for NON-PERIODIC boundaries
- j1=j01;j2=j02
- k1=k01;k2=k02
- i1=i01;i2=i02
+ j1=jy1;j2=jy2
+ k1=kz1;k2=kz2
+ i1=ix1;i2=ix2
  if(prly)then
-  j1=j01-stl;j2=j02+str
+  j1=jy1-stl;j2=jy2+str
  endif
  if(prlz)then
-  k1=k01-stl;k2=k02+str
+  k1=kz1-stl;k2=kz2+str
  endif
- i1=i01;i2=i02
+ i1=ix1;i2=ix2
  if(prlx)then
-  i1=i01-stl;i2=i02+str
+  i1=ix1-stl;i2=ix2+str
  endif
  if(pex0)then
   if(ibx< 2)then
    do ik=1,nc
     do iz=k1,k2
      do iy=j1,j2
-      ef(i01-1,iy,iz,ik)=2.*ef(i01,iy,iz,ik)- &
-       ef(i01+1,iy,iz,ik)
+      ef(ix1-1,iy,iz,ik)=2.*ef(ix1,iy,iz,ik)- &
+       ef(ix1+1,iy,iz,ik)
      end do
     end do
    end do
-   i1=i01-1
+   i1=ix1-1
   endif
  endif
  if(pex1)then
@@ -88,8 +89,8 @@
    do ik=1,nc
     do iz=k1,k2
      do iy=j1,j2
-      ef(i02+1,iy,iz,ik)=2.*ef(i02,iy,iz,ik)- &
-       ef(i02-1,iy,iz,ik)
+      ef(ix2+1,iy,iz,ik)=2.*ef(ix2,iy,iz,ik)- &
+       ef(ix2-1,iy,iz,ik)
      end do
     end do
    end do
@@ -98,11 +99,11 @@
    do ik=1,nc
     do iz=k1,k2
      do iy=j1,j2
-      ef(i02+1,iy,iz,ik)=x_parity(ik)*ef(i02,iy,iz,ik)
+      ef(ix2+1,iy,iz,ik)=x_parity(ik)*ef(ix2,iy,iz,ik)
      end do
     end do
    end do
-   i2=i02+1
+   i2=i2+1
   endif
  endif
  if(ndim <2)return
@@ -111,7 +112,7 @@
    do ik=1,nc
     do iz=k1,k2
      do ix=i1,i2
-      ef(ix,j01-1,iz,ik)=2.*ef(ix,j01,iz,ik)-ef(ix,j01+1,iz,ik)
+      ef(ix,jy1-1,iz,ik)=2.*ef(ix,jy1,iz,ik)-ef(ix,jy1+1,iz,ik)
      end do
     end do
    enddo
@@ -120,7 +121,7 @@
    do ik=1,nc
     do iz=k1,k2
      do ix=i1,i2
-      ef(ix,j01-1,iz,ik)=y_parity(ik)*ef(ix,j01+1,iz,ik)
+      ef(ix,jy1-1,iz,ik)=y_parity(ik)*ef(ix,jy1+1,iz,ik)
      end do
     end do
    end do
@@ -131,16 +132,16 @@
    do ik=1,nc
     do iz=k1,k2
      do ix=i1,i2
-      ef(ix,j02+1,iz,ik)=2.*ef(ix,j02,iz,ik)-ef(ix,j02-1,iz,ik)
+      ef(ix,jy2+1,iz,ik)=2.*ef(ix,jy2,iz,ik)-ef(ix,jy2-1,iz,ik)
      end do
     end do
    end do
   endif
   if(iby==1)then
    do ik=1,nc
-    do iz=k01,k02
+    do iz=k1,k2
      do ix=i1,i2
-      ef(ix,j02+1,iz,ik)=y_parity(ik)*ef(ix,j02-1,iz,ik)
+      ef(ix,jy2+1,iz,ik)=y_parity(ik)*ef(ix,jy2-1,iz,ik)
      end do
     end do
    end do
@@ -152,7 +153,7 @@
    do ik=1,nc
     do iy=j1,j2
      do ix=i1,i2
-      ef(ix,iy,k01-1,ik)=2*ef(ix,iy,k01,ik)-ef(ix,iy,k01+1,ik)
+      ef(ix,iy,kz1-1,ik)=2*ef(ix,iy,kz1,ik)-ef(ix,iy,kz1+1,ik)
      end do
     end do
    end do
@@ -161,7 +162,7 @@
    do ik=1,nc
     do iy=j1,j2
      do ix=i1,i2
-      ef(ix,iy,k01-1,ik)=z_parity(ik)*ef(ix,iy,k01+1,ik)
+      ef(ix,iy,kz1-1,ik)=z_parity(ik)*ef(ix,iy,kz1+1,ik)
      end do
     end do
    end do
@@ -172,7 +173,7 @@
    do ik=1,nc
     do iy=j1,j2
      do ix=i1,i2
-      ef(ix,iy,k02+1,ik)=2*ef(ix,iy,k02,ik)-ef(ix,iy,k02-1,ik)
+      ef(ix,iy,kz2+1,ik)=2*ef(ix,iy,kz2,ik)-ef(ix,iy,kz2-1,ik)
      end do
     end do
    end do
@@ -181,7 +182,7 @@
    do ik=1,nc
     do iy=j1,j2
      do ix=i1,i2
-      ef(ix,iy,k01+1,ik)=z_parity(ik)*ef(ix,iy,k01-1,ik)
+      ef(ix,iy,kz1+1,ik)=z_parity(ik)*ef(ix,iy,kz1-1,ik)
      end do
     end do
    end do
@@ -189,15 +190,19 @@
  endif
  end subroutine field_xyzbd
  !-----------------------------------------------
- subroutine fluid_left_xshift(fld,den_x,den_yz,i1,i2,j1,j2,k1,k2,ic1,ic2,xsh)
+ subroutine fluid_left_xshift(fld,den_x,den_yz,i1,i2,ic1,ic2,xsh)
 
- integer,intent(in) :: i1,i2,j1,j2,k1,k2,ic1,ic2,xsh
+ integer,intent(in) :: i1,i2,ic1,ic2,xsh
  real(dp),intent(inout) :: fld(:,:,:,:)
  real(dp),intent(in) :: den_x(:),den_yz(:,:)
  integer :: ic,ix,j,iy,iz,kk,lenws
-
+ integer :: j1,j2,k1,k2
 
  if(xsh==0)return
+
+ j1=jy1; j2=jy2
+ k1=kz1; k2=kz2
+
  lenws=(ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
  if(prlx)then
   !Sends to x-left side xsh data (i1:i1+xsh-1)
@@ -265,15 +270,18 @@
 
  end subroutine fluid_left_xshift
  !==================================
- subroutine fields_left_xshift(fld,i1,i2,j1,j2,k1,k2,ic1,ic2,xsh)
+ subroutine fields_left_xshift(fld,i1,i2,ic1,ic2,xsh)
 
- integer,intent(in) :: i1,i2,j1,j2,k1,k2,ic1,ic2,xsh
+ integer,intent(in) :: i1,i2,ic1,ic2,xsh
  real(dp) :: fld(:,:,:,:)
  integer :: ic,ix,j,iy,iz,kk,lenws
+ integer :: j1,j2,k1,k2
 
 
  if(xsh==0)return
- lenws=(ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
+  j1=jy1; j2=jy2
+  k1=kz1; k2=kz2
+  lenws=(ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
  if(prlx)then
   !Sends to x-left side xsh data (i1:i1+xsh-1)
   !Recvs from x-right data(i2+1:i2+xsh)       i2=n1p-sh
@@ -323,11 +331,16 @@
 
  end subroutine fields_left_xshift
  !=================================
- subroutine fill_ebfield_yzxbdsdata(fld,i1,i2,j1,j2,k1,k2,ic1,ic2,str,stl)
+ subroutine fill_ebfield_yzxbdsdata(fld,ic1,ic2,str,stl)
 
- integer,intent(in) :: i1,i2,j1,j2,k1,k2,ic1,ic2,str,stl
  real(dp) :: fld(:,:,:,:)
+ integer,intent(in) :: ic1,ic2,str,stl
  integer :: ic,ix,j,iy,iz,kk,iy1,iy2,iz1,iz2,lenws,lenwr
+ integer :: i1,i2,j1,j2,k1,k2
+
+ i1=ix1; i2=ix2
+ j1=jy1; j2=jy2
+ k1=kz1; k2=kz2
 
  iy1=j1
  iy2=j2
@@ -613,11 +626,16 @@
  !===========================
  end subroutine fill_ebfield_yzxbdsdata
  !===============================
- subroutine fill_ebfield_xbdsdata(fld,i1,i2,j1,j2,k1,k2,ic1,ic2,str,stl)
- integer,intent(in) :: i1,i2,j1,j2,k1,k2,ic1,ic2,str,stl
- real(dp) :: fld(:,:,:,:)
- integer :: ic,ix,j,iy,iz,kk,lenws,lenwr
+ subroutine fill_ebfield_xbdsdata(fld,ic1,ic2,str,stl)
+  real(dp) :: fld(:,:,:,:)
+  integer,intent(in) :: ic1,ic2,str,stl
+  integer :: ic,ix,j,iy,iz,kk,lenws,lenwr
+  integer :: i1,i2,j1,j2,k1,k2
  !----------------------------
+ i1=ix1; i2=ix2
+ j1=jy1; j2=jy2
+ k1=kz1; k2=kz2
+
  if(.not.prlx)then
   if(ibx==2)then
    if(str >0)then

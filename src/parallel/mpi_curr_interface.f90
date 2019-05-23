@@ -40,6 +40,7 @@
 
  use array_wspace
  use parallel
+ use grid_param
 
  implicit none
 
@@ -47,12 +48,16 @@
 
  contains
 !===============================
- subroutine jc_xyzbd(curr,i1,n1,j1,n2,k1,n3,nc)
+ subroutine jc_xyzbd(curr,nc)
  real(dp),intent(inout) :: curr(:,:,:,:)
- integer,intent(in) :: i1,n1,j1,n2,k1,n3,nc
+ integer,intent(in) :: nc
  integer :: ix,iy,iz,i0,j2,k2,ik
+ integer :: i1,n1,j1,n2,k1,n3
  ! Enter current data on extended ranges:
  !========== Only for Periodic BDs period=n1-1
+ i1=ix1; n1=ix2
+ j1=jy1; n2=jy2 
+ k1=kz1; n3=kz2 
  j2=n2;k2=n3
  if(ibx==0)then
   do ik=1,nc
@@ -135,13 +140,18 @@
  end subroutine jc_xyzbd
  !-----------------------------------------------
  !
- subroutine den_zyxbd(rho,i1,i2,j1,j2,k1,k2,ik)
+ subroutine den_zyxbd(rho,ik)
  real(dp),intent(inout) :: rho(:,:,:,:)
- integer,intent(in) :: i1,i2,j1,j2,k1,k2,ik
+ integer,intent(in) :: ik
+ integer :: i1,i2,j1,j2,k1,k2
  integer :: ix,iy
  ! Enter current data on extended ranges:
 
  !Enter data on the computational box [i1:n1p][j1:nyp][k1:nzp]
+
+ i1=ix1; i2=ix2
+ j1=jy1;j2=jy2 
+ k1=kz1;k2=kz2 
  if(ndim>2)then
   if(ibz==0)then
    if(pe0z)then
@@ -203,28 +213,29 @@
  endif
  end subroutine den_zyxbd
  !====================
- subroutine fill_curr_yzxbdsdata(curr,i1,nxc,j1,nyc,k1,nzc,nc)
- integer,intent(in) :: i1,nxc,j1,nyc,k1,nzc,nc
+ subroutine fill_curr_yzxbdsdata(curr,nc)
  real(dp),intent(inout) :: curr(:,:,:,:)
- integer :: s1,s2,r1,r2,iy1,iy2,iz1,iz2,ix1,ix2
+ integer,intent(in) :: nc
+ integer :: s1,s2,r1,r2,y1,y2,z1,z2,x1,x2
  integer :: ic,ix,j,iy,iz,kk,lenws,lenwr
  integer,parameter :: str=3,str2=2
  !================
  ! enter currents on a five-point extended stencil
  !===========================
- iz1=k1-str2
- iz2=nzc+str
- iy1=j1-str2
- iy2=nyc+str
+ z1=kz1-str2
+ z2=kz2+str
+ y1=jy1-str2
+ y2=jy2+str
  if(ndim <3)then
-  iz1=k1;iz2=nzc
+  z1=kz1;z2=kz2
  endif
  if(ndim <2)then
-  iy1=k1;iy2=nyc
+  y1=jy1;y2=jy2
  endif
- ix1=i1-str2
- ix2=nxc+str
- lenwr=str*nc*(ix2+1-ix1)*max(iz2+1-iz1,iy2+1-iy1)
+ x1=ix1-str2
+ x2=ix2+str
+
+ lenwr=str*nc*(x2+1-x1)*max(z2+1-z1,y2+1-y1)
  if(size(aux1) <lenwr)then
   deallocate(aux1,aux2)
   allocate(aux1(lenwr))
@@ -232,13 +243,13 @@
  endif
  if(prly)then
   ! [j1-2:j1-1] left-y data
-  s1=j1-str
+  s1=jy1-str
   kk=0
   do ic=1,nc
-   do iz=iz1,iz2
+   do iz=z1,z2
     do j=1,str2
      iy=s1+j
-     do ix=ix1,ix2
+     do ix=x1,x2
       kk=kk+1
       aux1(kk)=curr(ix,iy,iz,ic)
      end do
@@ -251,7 +262,7 @@
   !=====================
   ! sends y=[j1-2;j1-1] str-1 data to left
   !receives from right and adds data on y=[nyc-1:nyc] sign=+1
-  r1=nyc-str2
+  r1=jy2-str2
   kk=0
   if(pe1y)then
    if(iby < 2)then
@@ -259,10 +270,10 @@
    endif
   endif
   do ic=1,nc
-   do iz=iz1,iz2
+   do iz=z1,z2
     do j=1,str2
      iy=j+r1
-     do ix=ix1,ix2
+     do ix=x1,x2
       kk=kk+1
       curr(ix,iy,iz,ic)=curr(ix,iy,iz,ic)+aux2(kk)
      end do
@@ -271,13 +282,13 @@
   end do
   ! sends y=[nyc+1:nyc+str] str=3 data to the right
   !receives from left and adds data on y=[j1:j1+str2] sign=-1
-  s2=nyc
+  s2=jy2
   kk=0
   do ic=1,nc
-   do iz=iz1,iz2
+   do iz=z1,z2
     do j=1,str
      iy=j+s2
-     do ix=ix1,ix2
+     do ix=x1,x2
       kk=kk+1
       aux1(kk)=curr(ix,iy,iz,ic)
      end do
@@ -288,7 +299,7 @@
   lenwr=lenws
   call exchange_bdx_data(aux1,aux2,lenws,lenwr,1,lt)
   !=====================
-  r2=j1-1
+  r2=jy1-1
   kk=0
   if(pe0y)then
    if(iby < 2)then
@@ -296,10 +307,10 @@
    endif
   endif
   do ic=1,nc
-   do iz=iz1,iz2
+   do iz=z1,z2
     do j=1,str
      iy=j+r2
-     do ix=ix1,ix2
+     do ix=x1,x2
       kk=kk+1
       curr(ix,iy,iz,ic)=curr(ix,iy,iz,ic)+aux2(kk)
      end do
@@ -308,21 +319,20 @@
   end do
  endif
  ! The reduced stencil of summed data
- iy1=j1
- iy2=nyc
+ y1=jy1; y2=jy2
  !================
  if(prlz)then
   !================
   ! sends z=[k1-2;k1-1] str-1 data to left
   ! receives from right and adds data on y=[nzc-1:nzc] sign=+1
 
-  s1=k1-str
+  s1=kz1-str
   kk=0
   do ic=1,nc
    do j=1,str2
     iz=s1+j
-    do iy=iy1,iy2
-     do ix=ix1,ix2
+    do iy=y1,y2
+     do ix=x1,x2
       kk=kk+1
       aux1(kk)=curr(ix,iy,iz,ic)
      end do
@@ -333,7 +343,7 @@
   lenwr=lenws
   call exchange_bdx_data(aux1,aux2,lenws,lenwr,2,rt)
 
-  r1=nzc-str2
+  r1=kz2-str2
   if(pe1z)then
    if(ibz < 2)then
     aux2(1:lenwr)=0.0
@@ -343,8 +353,8 @@
   do ic=1,nc
    do j=1,str2
     iz=j+r1
-    do iy=iy1,iy2
-     do ix=ix1,ix2
+    do iy=y1,y2
+     do ix=x1,x2
       kk=kk+1
       curr(ix,iy,iz,ic)=curr(ix,iy,iz,ic)+aux2(kk)
      end do
@@ -355,13 +365,13 @@
   !================
   ! sends z=[nzc+1:nzc+str] str=3 data to the right
   !receives from left and adds data on z=[k1:k1+str2] sign=-1
-  s2=nzc
+  s2=kz2
   kk=0
   do ic=1,nc
    do j=1,str
     iz=j+s2
-    do iy=iy1,iy2
-     do ix=ix1,ix2
+    do iy=y1,y2
+     do ix=x1,x2
       kk=kk+1
       aux1(kk)=curr(ix,iy,iz,ic)
      end do
@@ -374,7 +384,7 @@
   !================
   ! Recvs and adds on z[k1:k1:str2]
   !================
-  r2=k1-1
+  r2=kz1-1
   if(pe0z)then
    if(ibz < 2)then
     aux2(1:lenwr)=0.0
@@ -384,8 +394,8 @@
   do ic=1,nc
    do j=1,str
     iz=j+r2
-    do iy=iy1,iy2
-     do ix=ix1,ix2
+    do iy=y1,y2
+     do ix=x1,x2
       kk=kk+1
       curr(ix,iy,iz,ic)=curr(ix,iy,iz,ic)+aux2(kk)
      end do
@@ -393,18 +403,18 @@
    end do
   end do
   ! The reduced stencil of summed data
-  iz1=k1
-  iz2=nzc
+  z1=kz1
+  z2=kz2
  endif
  !========================== prlx case
  if(prlx)then
   ! sends x=[i1-2;i1-1] str-1 data to left
   ! receives from right and adds data on x=[nxc-1:nxc] sign=+1
-  s1=i1-str
+  s1=ix1-str
   kk=0
   do ic=1,nc
-   do iz=iz1,iz2
-    do iy=iy1,iy2
+   do iz=z1,z2
+    do iy=y1,y2
      do j=1,str2
       ix=s1+j
       kk=kk+1
@@ -419,7 +429,7 @@
   !=====================
   ! sends x=[i1-2;i1-1] str-1 data to left
   !receives from right and adds data on x=[nxc-1:nxc] sign=+1
-  r1=nxc-str2
+  r1=ix2-str2
   kk=0
   if(pex1)then
    if(ibx < 2)then
@@ -427,8 +437,8 @@
    endif
   endif
   do ic=1,nc
-   do iz=iz1,iz2
-    do iy=iy1,iy2
+   do iz=z1,z2
+    do iy=y1,y2
      do j=1,str2
       ix=j+r1
       kk=kk+1
@@ -439,11 +449,11 @@
   end do
   ! sends x=[nxc+1:nxc+str] str=3 data to the right
   !receives from left and adds data on x=[i1:i1+str2] sign=-1
-  s2=nxc
+  s2=ix2
   kk=0
   do ic=1,nc
-   do iz=iz1,iz2
-    do iy=iy1,iy2
+   do iz=z1,z2
+    do iy=y1,y2
      do j=1,str
       ix=j+s2
       kk=kk+1
@@ -456,7 +466,7 @@
   lenwr=lenws
   call exchange_bdx_data(aux1,aux2,lenws,lenwr,3,lt)
   !=====================
-  r2=i1-1
+  r2=ix1-1
   kk=0
   if(pex0)then
    if(ibx < 2)then
@@ -464,8 +474,8 @@
    endif
   endif
   do ic=1,nc
-   do iz=iz1,iz2
-    do iy=iy1,iy2
+   do iz=z1,z2
+    do iy=y1,y2
      do j=1,str
       ix=j+r2
       kk=kk+1
@@ -480,17 +490,17 @@
  if(ibx==2)then
   ! data nxc-1:nxc sums to i1-2:i1-1
   ! data i1:i1+2 sums to nxc+1:nxc+3
-  s1=i1-str
-  r1=nxc-str2
+  s1=ix1-str
+  r1=ix2-str2
   do ic=1,nc
-   do iz=iz1,iz2
-    do iy=iy1,iy2
+   do iz=z1,z2
+    do iy=y1,y2
      do j=1,str2
       curr(r1+j,iy,iz,ic)=curr(r1+j,iy,iz,ic)+curr(s1+j,iy,iz,ic)
      end do
      do j=1,str
-      ix=i1-1+j
-      curr(ix,iy,iz,ic)=curr(ix,iy,iz,ic)+curr(nxc+j,iy,iz,ic)
+      ix=ix1-1+j
+      curr(ix,iy,iz,ic)=curr(ix,iy,iz,ic)+curr(r1+j,iy,iz,ic)
      end do
     end do
    end do

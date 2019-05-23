@@ -46,7 +46,11 @@
  real(dp) :: Lx_box,Ly_box,Lz_box
  real(dp) :: dx,dx_inv,dxi_inv,dy,dz,dy_inv,dyi_inv,dz_inv,dzi_inv
  real(dp) :: aph,L_s,Lx_s,dxi,dyi,dzi,sy_rat,sz_rat,sx_rat
+ real(dp) :: xmn,ymn,zmn
+!=============================
+ integer :: nxp,nyp,nzp
  integer :: loc_ygr_max,loc_zgr_max,loc_xgr_max
+ integer :: ix1,ix2,jy1,jy2,kz1,kz2,n_str
  !--------------------------
  end module grid_param
 

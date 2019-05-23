@@ -27,10 +27,9 @@
  implicit none
  contains
  !=====================
- subroutine initial_beam_fields(pot,efb,i1,nxp,j1,nyp,k1,nzp,g2,bet)
+ subroutine initial_beam_fields(pot,efb,g2,bet)
  real(dp),intent(inout) :: pot(:,:,:,:)
  real(dp),intent(out) :: efb(:,:,:,:)
- integer,intent(in) :: i1,nxp,j1,nyp,k1,nzp
  real(dp),intent(in) :: g2,bet
  integer :: i,j,k,ic,jj,kk
  real(dp) :: sdhy,sdhz
@@ -46,45 +45,45 @@
  !==============================================================
  ic=1
  if(pe1y)then
-  j=nyp
-  do k=k1,nzp
-   do i=i1,nxp
+  j=jy2
+  do k=kz1,kz2
+   do i=ix1,ix2
     pot(i,j+1,k,ic)=3.*(pot(i,j,k,ic)-pot(i,j-1,k,ic))+pot(i,j-2,k,ic)
    end do
   end do
  endif
  if(pe1x)then
-  do k=k1,nzp
-   do j=j1,nyp
-    pot(nxp+1,j,k,1)=pot(nxp,j,k,1)
-    pot(nxp+1,j,k,2)=2.*pot(nxp,j,k,2)-pot(nxp-1,j,k,2)
+  do k=kz1,kz2
+   do j=jy1,jy2
+    pot(ix2+1,j,k,1)=pot(ix2,j,k,1)
+    pot(ix2+1,j,k,2)=2.*pot(ix2,j,k,2)-pot(ix2-1,j,k,2)
    end do
   end do
  endif
 ! Interpolates jx=Jx[i+1/2,j,k]
- do k=k1,nzp
-  do j=j1,nyp
-   do i=i1,nxp
+ do k=kz1,kz2
+  do j=jy1,jy2
+   do i=ix1,ix2
     efb(i,j,k,4)=0.5*(pot(i,j,k,2)+pot(i+1,j,k,2))
    end do
   end do
  end do
- do k=k1,nzp
-  do j=j1,nyp
+ do k=kz1,kz2
+  do j=jy1,jy2
    jj=j-2
    sdhy=loc_yg(jj,3,imody)*dy_inv
-   do i=i1,nxp+1
+   do i=ix1,ix2+1
     efb(i,j,k,2)=-sdhy*(pot(i,j+1,k,1)-pot(i,j,k,1))
    end do
-   do i=i1,nxp
+   do i=ix1,ix2
     efb(i,j,k,1)=-dx_inv*(pot(i+1,j,k,1)-pot(i,j,k,1))/g2
    end do
   end do
  end do
  if(ndim==2)then  !defines Bz[i+1/2,j+1/2,k] using interpolated Ey
- do k=k1,nzp
-  do j=j1,nyp
-   do i=i1,nxp
+ do k=kz1,kz2
+  do j=jy1,jy2
+   do i=ix1,ix2
     efb(i,j,k,3)=0.5*bet*(efb(i,j,k,2)+efb(i+1,j,k,2))
    end do
   end do
@@ -94,33 +93,33 @@
  endif
 !==============Here only 3D case
   if(pe1z)then
-   k=nzp
-   do j=j1,nyp
-    do i=i1,nxp
+   k=kz2
+   do j=jy1,jy2
+    do i=ix1,ix2
      pot(i,j,k+1,1)=2.*pot(i,j,k,1)-pot(i,j,k-1,1)
     end do
    end do
   endif
- do k=k1,nzp
-  do j=j1,nyp
-   do i=i1,nxp
+  do k=kz1,kz2
+   do j=jy1,jy2
+    do i=ix1,ix2
     efb(i,j,k,6)=0.5*bet*(efb(i,j,k,2)+efb(i+1,j,k,2))
    end do
   end do
  end do
-  do k=k1,nzp
+  do k=kz1,kz2
    kk=k-2
    sdhz=loc_zg(kk,3,imodz)*dz_inv
-   do j=j1,nyp
-    do i=i1,nxp
+   do j=jy1,jy2
+    do i=ix1,ix2
      efb(i,j,k,3)=-sdhz*(pot(i,j,k+1,1)-pot(i,j,k,1))
     end do
    end do
   end do                ![Ex,Ey,Ez, Bz]defined
 
- do k=k1,nzp
-  do j=j1,nyp
-   do i=i1,nxp
+  do k=kz1,kz2
+   do j=jy1,jy2
+    do i=ix1,ix2
     pot(i,j,k,2)=0.5*(efb(i,j,k,3)+efb(i+1,j,k,3))
     efb(i,j,k,5)=-bet*pot(i,j,k,2)
    end do
