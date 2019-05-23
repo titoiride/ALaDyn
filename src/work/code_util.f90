@@ -45,7 +45,6 @@
  real(dp) :: gamma_cut_min,weights_cut_min,weights_cut_max
  real(dp) :: tdia,dtdia,tout,dtout,tstart,mem_max_addr
 
- real(dp) :: dt_loc
  logical  :: Diag,Tpart
  logical :: L_intdiagnostics_pwfa,L_intdiagnostics_classic
  logical :: L_force_singlefile_output
