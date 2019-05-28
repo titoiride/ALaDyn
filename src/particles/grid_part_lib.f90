@@ -404,7 +404,7 @@
    ax(0)=1.-ax(1)-ax(2)
 
    ihx=int(xx)
-   sx=xx-real(ihx,dp)
+   sx=xx-real(ihx,dp)-0.5
    sx2=sx*sx
    axh(1)=0.75-sx2
    axh(2)=0.5*(0.25+sx2+sx)
@@ -419,7 +419,7 @@
    ay(0)=1.-ay(1)-ay(2)
 
    ihy=int(xx)
-   sx=xx-real(ihy,dp)
+   sx=xx-real(ihy,dp)-0.5
    sx2=sx*sx
    ayh(1)=0.75-sx2
    ayh(2)=0.5*(0.25+sx2+sx)
@@ -493,7 +493,7 @@
    ax(0)=1.-ax(1)-ax(2)
 
    ihx=int(xx)
-   sx=xx-real(ihx,dp)
+   sx=xx-real(ihx,dp)-0.5
    sx2=sx*sx
    axh(1)=0.75-sx2
    axh(2)=0.5*(0.25+sx2+sx)
@@ -508,7 +508,7 @@
    ay(0)=1.-ay(1)-ay(2)
 
    ihy=int(xx)
-   sx=xx-real(ihy,dp)
+   sx=xx-real(ihy,dp)-0.5
    sx2=sx*sx
    ayh(1)=0.75-sx2
    ayh(2)=0.5*(0.25+sx2+sx)
@@ -523,7 +523,7 @@
    az(0)=1.-az(1)-az(2)
 
    ihz=int(xx)
-   sx=xx-real(ihz,dp)
+   sx=xx-real(ihz,dp)-0.5
    sx2=sx*sx
    azh(1)=0.75-sx2
    azh(2)=0.5*(0.25+sx2+sx)

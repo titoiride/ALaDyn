@@ -463,6 +463,9 @@
    wgh_cmp=sp_loc%part(n,5)          !the current particle (weight,charge)
 
    call qqh_2d_spline(xp1,ax1,axh1,ay1,ayh1,i,ih,j,jh)
+   if(i<=0)then
+    write(6,'(a4,e11.4,a5,e11.4)')'xp1=',xmn,'sploc',sp_loc%part(n,1)
+   endif
    !==========================
    do j1=0,stl
     j2=j+j1
@@ -965,7 +968,7 @@
     wght=charge*wgh
     pt(n,5)=wght
    end do
-   call set_local_2d_positions(pt,1,np)
+   call set_local_2d_positions(pt,2,np)
 !========================
    i0=0;j0=0
    i=0;j=0

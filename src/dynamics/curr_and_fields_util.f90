@@ -173,7 +173,6 @@
  end subroutine pfields_prepare
 !================================
  subroutine advance_lpf_fields(ef,curr,ibd)
-&
   real(dp),intent(inout) :: ef(:,:,:,:)
   real(dp),intent(in) :: curr(:,:,:,:)
   integer,intent(in) :: ibd

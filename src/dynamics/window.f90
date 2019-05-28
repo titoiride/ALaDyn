@@ -310,8 +310,9 @@
  xmax=xmax+dx*nshx
  xp0_out=xp0_out+dx*nshx
  xp1_out=xp1_out+dx*nshx
- xmn=xmn+dx*nshx
+ loc_xgrid(imodx)%gmin=loc_xgrid(imodx)%gmin+dx*nshx
  loc_xgrid(imodx)%gmax=loc_xgrid(imodx)%gmax+dx*nshx
+ xmn=xmn+dx*nshx
  wi2=n1p-nshx
  if(wi2<=0)then
   write(6,'(a37,3i6)')'Error in window shifting for MPI proc',imody,imodz,imodx
