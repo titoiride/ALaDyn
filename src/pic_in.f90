@@ -484,7 +484,7 @@
  !if(nsp==2)then
  !wgh_sp(2)=1./(real(mp_per_cell(2),dp))
  
- wgh_sp(1)=n_plasma/real(mp_per_cell(1),dp)
+ wgh_sp(1)=j0_norm*n_plasma
  do i=2,nsp
   if(mp_per_cell(i)>0) wgh_sp(i)=one_dp/real(mp_per_cell(i),dp)
   wgh_sp(i)=conc(i-1)*wgh_sp(i)
@@ -2502,7 +2502,7 @@
  !=============================
  allocate(fluid_x_profile(nxf))
  !====================
- peak_fluid_density=1.-ratio_mpfluid
+ peak_fluid_density=(one_dp-ratio_mpfluid)*n_plasma
  fluid_x_profile(:)=zero_dp
  fluid_yz_profile(:,:)=one_dp
  np1_loc=0.005

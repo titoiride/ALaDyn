@@ -301,7 +301,7 @@
   if(mp_per_cell(1)==0)ratio_mpfluid=0.0
   if(ny_targ==0)ratio_mpfluid=0.0
  endif
- !j0_norm=j0_norm*ratio_mpfluid
+ j0_norm=j0_norm*ratio_mpfluid
  !========================== multispecies
  ! mass-charge parameters four species: three ion species+ electrons
  ! Ions charges defined by initial conditions.
@@ -403,6 +403,7 @@
    if(n_plasma<epsilon)then
     np_per_xc(1)=0
     np_per_yc(1)=0
+    n_plasma=zero_dp
    end if
   else if(nsp==1)then
    n_plasma=one_dp
