@@ -3,15 +3,6 @@ language: cpp
 matrix:
   include:
 
-### since macOS homebrew's libraries are built against clang and the latest gfortran, the only working combinations are
-### - for the cpp part:     Apple-clang (both the gcc and the clang front-ends) OR gcc@5 (ABI compatible with Apple-clang)
-### - for the fortran part: ALWAYS gfortran-9
-    - os: osx
-      compiler: gcc
-      name: macOS - gcc@5 - openmpi
-      env:
-        - MATRIX_EVAL="brew update && brew install gcc@5 gcc open-mpi fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-9"
-
     - os: osx
       compiler: gcc
       name: macOS - native gcc (llvm backend)
@@ -30,12 +21,6 @@ matrix:
       name: macOS - PGI 18.10
       env:
         - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-macos-x64' -o PGI-1810.dmg && hdiutil attach PGI-1810.dmg && sudo installer -store -pkg '/Volumes/PGI 18.10/PGI 18.10.pkg' -target / && FC=/opt/pgi/osx86-64/18.10/bin/pgfortran"
-
-    - os: osx
-      compiler: gcc
-      name: macOS - gcc@5 - mpich
-      env:
-        - MATRIX_EVAL="brew update && brew install gcc@5 gcc mpich fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-9"
 
     - os: osx
       compiler: gcc
@@ -536,10 +521,10 @@ matrix:
     - name: macOS - PGI 18.10
     - name: macOS - PGI 18.10 - mpich
     - name: macOS - PGI 18.10 - PGI mpich
-    - name: macOS - gcc@5 - mpich
     - name: macOS - native gcc (llvm backend) - mpich
     - name: macOS - native clang - mpich
-
+    - name: ubuntu - PGI 18.10 - openmpi
+    - name: ubuntu - PGI 18.10 - mpich
 
 before_install:
   - eval "${MATRIX_EVAL}"
