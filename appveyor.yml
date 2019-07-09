@@ -48,65 +48,65 @@ install:
   - if [%COMPILER%]==[pgi] echo Version=19.4 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Company=The Portland Group >> setup.iss
   - if [%COMPILER%]==[pgi] echo Lang=0409 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-DlgOrder] >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Dlg0={3BD78770-86EB-48BB-8771-84A92FB13503}-SdWelcome-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-DlgOrder] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg0={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdWelcome-0 >> setup.iss
   - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Count=11 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg1={3BD78770-86EB-48BB-8771-84A92FB13503}-SdLicense2Rtf-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg2={3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg3={3BD78770-86EB-48BB-8771-84A92FB13503}-SdRegisterUser-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg4={3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg5={3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg6={3BD78770-86EB-48BB-8771-84A92FB13503}-SdSelectFolder-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg7={3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg8={3BD78770-86EB-48BB-8771-84A92FB13503}-SdStartCopy-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg9={3BD78770-86EB-48BB-8771-84A92FB13503}-SprintfBox-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg10={3BD78770-86EB-48BB-8771-84A92FB13503}-SdFinish-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg1={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg2={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg3={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdRegisterUser-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg4={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg5={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg6={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdSelectFolder-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg7={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg8={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdStartCopy-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg9={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SprintfBox-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg10={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdFinish-0 >> setup.iss
   - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Count=12 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg1={3BD78770-86EB-48BB-8771-84A92FB13503}-SdLicense2Rtf-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg2={3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg3={3BD78770-86EB-48BB-8771-84A92FB13503}-SdLicense2Rtf-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg4={3BD78770-86EB-48BB-8771-84A92FB13503}-SdRegisterUser-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg5={3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg6={3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg7={3BD78770-86EB-48BB-8771-84A92FB13503}-SdSelectFolder-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg8={3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg9={3BD78770-86EB-48BB-8771-84A92FB13503}-SdStartCopy-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg10={3BD78770-86EB-48BB-8771-84A92FB13503}-SprintfBox-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg11={3BD78770-86EB-48BB-8771-84A92FB13503}-SdFinish-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdWelcome-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg1={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg2={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg3={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg4={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdRegisterUser-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg5={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg6={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg7={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdSelectFolder-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg8={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg9={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdStartCopy-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg10={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SprintfBox-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg11={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdFinish-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdWelcome-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdLicense2Rtf-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
   - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-0=0 >> setup.iss
   - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-1=1 >> setup.iss
   - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-0=1 >> setup.iss
   - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-1=0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdLicense2Rtf-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-1] >> setup.iss
   - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdRegisterUser-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdRegisterUser-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo szName=none >> setup.iss
   - if [%COMPILER%]==[pgi] echo szCompany=none >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo szDir=C:\Program Files\PGI\ >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdAskDestPath-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-1] >> setup.iss
   - if [%COMPILER%]==[pgi] echo szDir=C:\temp >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdSelectFolder-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdSelectFolder-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo szFolder=PGI Workstation >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-AskOptions-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-1] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Sel-0=0 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Sel-1=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdStartCopy-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdStartCopy-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SprintfBox-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SprintfBox-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{3BD78770-86EB-48BB-8771-84A92FB13503}-SdFinish-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdFinish-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
   - if [%COMPILER%]==[pgi] echo bOpt1=0 >> setup.iss
   - if [%COMPILER%]==[pgi] echo bOpt2=0 >> setup.iss

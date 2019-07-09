@@ -3,26 +3,17 @@ language: cpp
 matrix:
   include:
 
-### since macOS homebrew's libraries are built against clang and the latest gfortran, the only working combinations are
-### - for the cpp part:     Apple-clang (both the gcc and the clang front-ends) OR gcc@5 (ABI compatible with Apple-clang)
-### - for the fortran part: ALWAYS gfortran-8
-    - os: osx
-      compiler: gcc
-      name: macOS - gcc@5 - openmpi
-      env:
-        - MATRIX_EVAL="brew update && brew install gcc@5 gcc open-mpi fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-8"
-
     - os: osx
       compiler: gcc
       name: macOS - native gcc (llvm backend)
       env:
-        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     - os: osx
       compiler: clang
       name: macOS - native clang
       env:
-        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     # broken, PGI compiler cannot compile OpenMPI headers
     - os: osx
@@ -33,21 +24,15 @@ matrix:
 
     - os: osx
       compiler: gcc
-      name: macOS - gcc@5 - mpich
-      env:
-        - MATRIX_EVAL="brew update && brew install gcc@5 gcc mpich fftw && brew upgrade cmake && CC=gcc-5 && CXX=g++-5 && FC=/usr/local/bin/gfortran-8"
-
-    - os: osx
-      compiler: gcc
       name: macOS - native gcc (llvm backend) - mpich
       env:
-        - MATRIX_EVAL="brew update && brew install gcc mpich fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew install gcc mpich fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     - os: osx
       compiler: clang
       name: macOS - native clang - mpich
       env:
-        - MATRIX_EVAL="brew update && brew install gcc mpich fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-8"
+        - MATRIX_EVAL="brew update && brew install gcc mpich fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     # broken, PGI cannot link properly with homebrew's mpich - a single final error is remaining
     - os: osx
@@ -536,10 +521,10 @@ matrix:
     - name: macOS - PGI 19.4
     - name: macOS - PGI 19.4 - mpich
     - name: macOS - PGI 19.4 - PGI mpich
-    - name: macOS - gcc@5 - mpich
     - name: macOS - native gcc (llvm backend) - mpich
     - name: macOS - native clang - mpich
-
+    - name: ubuntu - PGI 18.10 - openmpi
+    - name: ubuntu - PGI 18.10 - mpich
 
 before_install:
   - eval "${MATRIX_EVAL}"

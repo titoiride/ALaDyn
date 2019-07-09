@@ -5540,7 +5540,7 @@ call pp_lapl(evf,curr,1,ic,der_ord,i1,n1p,j1,n2p,k1,n3p,dhy,dhz)
     var(k,ic)=flx(i,j,k,ic+2)
    end do
    call weno3_nc(fcomp+1,k01-2,k02+2,zl_bd,zr_bd)
-   do ic=1,fcomp-1
+   do ic=1,fcomp
     do k=k01,k02
      shz=aphz*loc_zg(k-2,3,imodz)
      ef(i,j,k,ic)=ef(i,j,k,ic)+shz*ww0(k,ic)
