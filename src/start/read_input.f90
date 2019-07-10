@@ -103,7 +103,6 @@
  np_per_yc=-1
  np_per_zc=-1
  L_disable_rng_seed = .false.
- incid_angle=zero_dp
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,TARGET_DESCRIPTION,iostat=nml_ierr)
  nml_error_message='TARGET_DESCRIPTION'
@@ -120,6 +119,7 @@
  z0_cent(:)=zero_dp
  y1_cent=zero_dp
  z1_cent=zero_dp
+ incid_angle = zero_dp
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,LASER,iostat=nml_ierr)
  nml_error_message='LASER'

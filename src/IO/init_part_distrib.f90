@@ -1993,7 +1993,7 @@
    n_peak=nptx_loc(ic)
    if(n_peak >0)then
     do i=1,n_peak
-     xpt(i,ic)=xfsh+lpx(4)*(real(i,dp)-0.5)/real(n_peak,dp)
+     xpt(i,ic)=xfsh+lpx(5)*(real(i,dp)-0.5)/real(n_peak,dp)
      uu=j0_norm*ratio_mpc(ic-2)
      wghpt(i,ic)=uu*np2
     end do
