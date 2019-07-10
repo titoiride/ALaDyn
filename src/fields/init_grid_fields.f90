@@ -2160,7 +2160,7 @@ endif
  allocate(fluid_x_profile(nxf))
  !allocate(fluid_yz_profile(j2,k2)) already allocated in comon file
 !====================
- peak_fluid_density=1.-ratio_mpfluid
+ peak_fluid_density=(one_dp-ratio_mpfluid)*n_plasma
  fluid_x_profile(:)=zero_dp
  fluid_yz_profile(:,:)=one_dp
  np1_loc=0.005

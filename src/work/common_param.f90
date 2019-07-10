@@ -36,7 +36,8 @@
  real(dp) :: k0,yx_rat,zx_rat
  integer :: ibx,iby,ibz,ibeam
  integer :: LPf_ord,der_ord,str_flag,iform,model_id,dmodel_id
- integer :: nsp,nsb,ionz_lev,ionz_model,ion_min(3),ion_max(3),atomic_number(3)
+ integer :: nsp,nsb,ionz_lev,ionz_model,ion_min(Ref_nlayer),ion_max(Ref_nlayer)
+ integer :: atomic_number(Ref_nlayer),N_mol_atoms(Ref_nlayer)
  integer :: nb_laser,nb_1,np_per_xc(Ref_nlayer),np_per_yc(Ref_nlayer)
  real(dp) :: mass_number(3),t0_pl(4)
  real (dp) :: lpx(7),lpy(2),n_over_nc,np1,np2,r_c
@@ -65,11 +66,11 @@
  integer :: nx_loc,ny_loc,nz_loc,npty,nptz,nptx_max,ncmp_max,nx_alloc
  integer :: loc_npty(8),loc_nptz(8),nptx(8),loc_nptx(8),sptx_max(4),nxf,npt_buffer(4)
  integer :: sh_targ,nx_stretch,ny_stretch,nz_stretch
- integer :: mp_per_cell(6),nref,np_per_zc(Ref_nlayer),ppc(Ref_nlayer)
+ integer :: mp_per_cell(Ref_nlayer),nref,np_per_zc(Ref_nlayer),ppc(Ref_nlayer)
  integer :: loc_nyc_max,loc_nzc_max,loc_nxc_max,ndim_max
- real(dp) :: djc(3),ratio_mpc(6),pavg_npart(4),wgh_ion
+ real(dp) :: djc(3),ratio_mpc(Ref_nlayer),pavg_npart(4),wgh_ion, concentration(Ref_nlayer)
  real(dp) :: mass(4),mass_rat(4),charge_to_mass(4),unit_charge(4),Lorentz_fact(4)
- real(dp) :: n0_ref,pmass,ompe,vbeam,curr_max(3),j0_norm,ratio_mpfluid,chann_fact
+ real(dp) :: n0_ref,pmass,ompe,vbeam,curr_max(3),j0_norm,ratio_mpfluid,chann_fact,n_plasma
  real(dp) :: gam0,bet0,u0_b, nb_over_np,b_charge
 
  real(dp) :: oml,E0,lp_pow,ZR,lp_intensity,lp_xsize,P_c
