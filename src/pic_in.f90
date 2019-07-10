@@ -1764,6 +1764,22 @@
    npty_layer(ic)=i2
    !===========================
   end do
+  if(lpx(4) <=0)then
+   do ic=7,8
+    npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
+    i2=0
+    loc_ymp=yp_min+lpy(2)
+    do i1=1,nwires                     !layers of lpy=dlpy(1+rat) length
+     dpy=dlpy/real(npty_ne,dp)
+     do i=1,npty_ne
+      ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+     enddo
+     i2=i2+npty_ne
+     loc_ymp=loc_ymp+tot_lpy
+    end do
+    npty_layer(ic)=i2
+   end do
+  end if
  else                  !two nanowires filled with n1_over_nc (el+Z1) plasma
   do ic=1,2
    npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
@@ -1793,9 +1809,29 @@
    npty_layer(ic)=npty_ne
    !===========================
   end do
+  if(lpx(4) <= 0)then
+   do ic=7,8
+    npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
+    i2=0
+    loc_ymp= -0.5*tot_lpy
+    dpy=dlpy/real(npty_ne,dp)
+    do i=1,npty_ne
+     ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+    enddo
+    loc_ymp=loc_ymp+lpy(2)       !first layer
+    i2=i2+npty_ne
+    !===========================
+    do i=1,npty_ne
+     ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+    enddo
+    i2=i2+npty_ne
+    !====================
+    npty_layer(ic)=i2
+   end do
+  end if
  endif
  !============= Uniform y-z distribution in layers [5-8]
- do ic=5,8
+ do ic=5,6
   npty_layer(ic)=nyh*npyc(ic)
   npty_ne=npty_layer(ic)
   dpy=(yp_max-yp_min)/real(npty_ne,dp)
@@ -1803,6 +1839,16 @@
    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
   enddo
  end do
+ if(lpx(4)>0)then
+  do ic=7,8
+   npty_layer(ic)=nyh*npyc(ic)
+   npty_ne=npty_layer(ic)
+   dpy=(yp_max-yp_min)/real(npty_ne,dp)
+   do i=1,npty_ne
+    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
+   enddo
+  end do
+ end if
  !========= For all (y,z) coordinates
  do ic=1,8
   npty_ne=npty_layer(ic)
