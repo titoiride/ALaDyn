@@ -25,91 +25,55 @@
   use grid_fields
   implicit none
   contains
-  subroutine env_fluid_curr_accumulate(flx,curr,dt_lp,i1,i2,j1,j2,k1,k2)
+
+  subroutine fluid_curr_accumulate(flx,curr)
  
   real(dp),intent(inout) :: flx(:,:,:,:),curr(:,:,:,:)
-  real(dp),intent(in) :: dt_lp
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2
   integer :: i,j,k,ic,ic1,str,stl,fdim
   real(dp) :: pp(1:3),den,gam2,ch,gam_inv
-  real(dp) :: dt2,qx,qy,qz,b1p,b1m,ar,ai,av2
+  real(dp) :: qx,qy,qz,av2
   real(dp),parameter :: wk1=0.5,eps=1.e-04
 
 ! Enter fluid variables at t^{n+1/2} and flx(fdim+1)= |a|^2/2 at t^{n+1/2}
- ch=dt_lp*wk1*unit_charge(1)
- fdim=curr_ndim+1
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,i2
-     av2= flx(i,j,k,fdim+1)                 !time centered |A|^{n+1/2}/2
-     den= flx(i,j,k,fdim)  !den^{n+1/2}
-     pp(1:curr_ndim)= flx(i,j,k,1:curr_ndim) !p momenta at t^{n+1/2}
-     gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
-     gam2=gam2+av2
-     gam_inv= 1./sqrt(gam2)
-     do ic=1,curr_ndim
-      flx(i,j,k,ic)=den*gam_inv*pp(ic)      !n*v= density flux at t^{n+1/2}
+  ch=dt_loc*wk1*unit_charge(1)
+  fdim=curr_ndim+1
+  if(Envelope)then
+   do k=kz1,kz2
+    do j=jy1,jy2
+     do i=ix1,ix2
+      av2= flx(i,j,k,fdim+1)                 !time centered |A|^{n+1/2}/2
+      den= flx(i,j,k,fdim)  !den^{n+1/2}
+      pp(1:curr_ndim)= flx(i,j,k,1:curr_ndim) !p momenta at t^{n+1/2}
+      gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
+      gam2=gam2+av2
+      gam_inv= 1./sqrt(gam2)
+      do ic=1,curr_ndim
+       flx(i,j,k,ic)=den*gam_inv*pp(ic)      !n*v= density flux at t^{n+1/2}
+      end do
      end do
     end do
    end do
-  end do
-  call fill_ebfield_yzxbdsdata(flx,i1,i2,j1,j2,k1,k2,1,curr_ndim,1,1)
-  do k=k1,k2
-   do j=j1,j2
-    i=i2
-    flx(i+1,j,k,1)=flx(i,j,k,1)
-    do i=i1,i2
-     qx=ch*(flx(i,j,k,1)+flx(i+1,j,k,1))  !Dt*Jx(i+1/2,j,k)
-     qy=ch*(flx(i,j,k,2)+flx(i,j+1,k,2))   !Dt*Jy(i,j+1/2,k)
-     curr(i,j,k,1)=curr(i,j,k,1)+qx
-     curr(i,j,k,2)=curr(i,j,k,2)+qy
-    end do
-   end do
-  end do
-  if(curr_ndim==3)then
-   do k=k1,k2
-    do j=j1,j2
-     do i=i1,i2
-      qz=ch*(flx(i,j,k+1,3)+flx(i,j,k,3))  !Dt*Jz(i,j,k+1/2)
-      curr(i,j,k,3)=curr(i,j,k,3)+qz
+  else
+   do k=kz1,kz2
+    do j=jy1,jy2
+     do i=ix1,ix2
+      den= flx(i,j,k,fdim)  !den^{n+1/2}
+      pp(1:curr_ndim)= flx(i,j,k,1:curr_ndim) !p momenta at t^{n+1/2}
+      gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
+      gam_inv= 1./sqrt(gam2)
+      do ic=1,curr_ndim
+       flx(i,j,k,ic)=den*gam_inv*pp(ic)      !n*v= density flux at t^{n+1/2}
+      end do
      end do
     end do
    end do
   endif
- !In curr(1:curr_ndim) exit  Dt*J^{n+1/2}
- end subroutine env_fluid_curr_accumulate
-!============================
- subroutine fluid_curr_accumulate(flx,curr,dt_lp,i1,i2,j1,j2,k1,k2)
-  real(dp),intent(inout) :: flx(:,:,:,:),curr(:,:,:,:)
-  real(dp),intent(in) :: dt_lp
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2
-  integer :: i,j,k,ic,ic1,str,stl,fdim
-  real(dp) :: pp(1:3),den,gam2,ch,gam_inv
-  real(dp) :: dt2,qx,qy,qz,b1p,b1m
-  real(dp),parameter :: wk1=0.5,eps=1.e-04
-
-! Enter fluid variables at t^{n+1/2} and flx(fdim+1)= |a|^2/2 at t^{n+1/2}
- ch=dt_lp*wk1*unit_charge(1)
- fdim=curr_ndim+1
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,i2
-     den= flx(i,j,k,fdim)  !den^{n+1/2}
-     pp(1:curr_ndim)= flx(i,j,k,1:curr_ndim) !p momenta at t^{n+1/2}
-     gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
-     gam_inv= 1./sqrt(gam2)
-     do ic=1,curr_ndim
-      flx(i,j,k,ic)=den*gam_inv*pp(ic)      !n*v= density flux at t^{n+1/2}
-     end do
-    end do
-   end do
-  end do
-  call fill_ebfield_yzxbdsdata(flx,i1,i2,j1,j2,k1,k2,1,curr_ndim,1,1)
-  do k=k1,k2
-   do j=j1,j2
-    i=i2
+  call fill_ebfield_yzxbdsdata(flx,1,curr_ndim,1,1)
+  do k=kz1,kz2
+   do j=jy1,jy2
+    i=ix2
     flx(i+1,j,k,1)=flx(i,j,k,1)
-    do i=i1,i2
+    do i=ix1,ix2
      qx=ch*(flx(i,j,k,1)+flx(i+1,j,k,1))  !Dt*Jx(i+1/2,j,k)
      qy=ch*(flx(i,j,k,2)+flx(i,j+1,k,2))   !Dt*Jy(i,j+1/2,k)
      curr(i,j,k,1)=curr(i,j,k,1)+qx
@@ -118,9 +82,9 @@
    end do
   end do
   if(curr_ndim==3)then
-   do k=k1,k2
-    do j=j1,j2
-     do i=i1,i2
+   do k=kz1,kz2
+    do j=jy1,jy2
+     do i=ix1,ix2
       qz=ch*(flx(i,j,k+1,3)+flx(i,j,k,3))  !Dt*Jz(i,j,k+1/2)
       curr(i,j,k,3)=curr(i,j,k,3)+qz
      end do
@@ -129,63 +93,61 @@
   endif
  !In curr(1:curr_ndim) exit  Dt*J^{n+1/2}
  end subroutine fluid_curr_accumulate
-!=========================================
- subroutine set_env_momentum_density_flux(uv,ef,curr,eb_tot,flx,i1,i2,j1,j2,k1,k2)
+!============================
+ subroutine set_env_momentum_density_flux(uv,ef,curr,eb_tot,flx)
   real(dp),intent(in) :: uv(:,:,:,:),ef(:,:,:,:)
   real(dp),intent(inout) :: curr(:,:,:,:)
   real(dp),intent(out) :: flx(:,:,:,:),eb_tot(:,:,:,:)
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2
   integer :: fdim,ic,i,j,k
   real(dp) :: den,pp(3),gam2,gam_inv
 !================ set density and momenta flux
   fdim=curr_ndim+1
-  flx(i1:i2,j1:j2,k1:k2,1:fdim)=uv(i1:i2,j1:j2,k1:k2,1:fdim)
+  flx(:,:,:,1:fdim)=uv(:,:,:,1:fdim)
   ! Enter curr(1)= |A|^2/2 and curr(2:4) grad|A|^2/2 at t^n time level
 !=====================
-   !NON CONSERVATIVE flx(1:4)=uv(1:4)=[Px,Py,Pz,den] flx(5:8)=[vx,vy,vz]
   do ic=1,nfield
-   do k=k1,k2
-    do j=j1,j2
-     do i=i1,i2
+   do k=kz1,kz2
+    do j=jy1,jy2
+     do i=ix1,ix2
       eb_tot(i,j,k,ic)=ef(i,j,k,ic)
      end do
     end do
    end do
   end do
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,i2
+  do k=kz1,kz2
+   do j=jy1,jy2
+    do i=ix1,ix2
      den=uv(i,j,k,fdim)
      pp(1:curr_ndim)=uv(i,j,k,1:curr_ndim)      !p momenta
-     gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))+curr(i,j,k,1)
+     gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
+     gam2=gam2+curr(i,j,k,1)
      gam_inv= 1./sqrt(gam2)
      pp(1:curr_ndim)=gam_inv*pp(1:curr_ndim)!(vx,vy,vz)=pp/gam at time t^n
      curr(i,j,k,1)=gam_inv*den         !n/gam fluid contribution of the sorce of envelope equation
      do ic=1,curr_ndim
-      eb_tot(i,j,k,ic)=eb_tot(i,j,k,ic)+0.5*gam_inv*curr(i,j,k,ic+1)  !Envelope grad|A|^2/(4*gam_p)
+      eb_tot(i,j,k,ic)=eb_tot(i,j,k,ic)+0.5*gam_inv*curr(i,j,k,ic+1)  !Envelope grad|A|^2/(4*gam_p):wq
       flx(i,j,k,fdim+ic)=gam_inv*uv(i,j,k,ic)  !(vx,vy,vz)
      end do
     end do
    end do
   end do
+  !Exit flx(1:4)=uv(1:4)=[Px,Py,Pz,den] flx(5:8)=[vx,vy,vz]
+  !======================================
   end subroutine set_env_momentum_density_flux
 !====================
- subroutine set_momentum_density_flux(uv,flx,i1,i2,j1,j2,k1,k2)
+ subroutine set_momentum_density_flux(uv,flx)
   real(dp),intent(in) :: uv(:,:,:,:)
   real(dp),intent(inout) :: flx(:,:,:,:)
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2
   integer :: fdim,ic,i,j,k
   real(dp) :: den,pp(3),gam2,gam_inv
 !================ set density and momenta flux
   fdim=curr_ndim+1
-  flx(i1:i2,j1:j2,k1:k2,1:fdim)=uv(i1:i2,j1:j2,k1:k2,1:fdim)
+  flx(:,:,:,1:fdim)=uv(:,:,:,1:fdim)
   !stores the modentum-density at current time level t^n
 !=====================
-   !NON CONSERVATIVE VARIABLES 
-   !flx(1:4)=uv(1:4)=[Px,Py,Pz,den] flx(5:8)=[vx,vy,vz]
-  do k=k1,k2
-   do j=j1,j2
-    do i=i1,i2
+  do k=kz1,kz2
+   do j=jy1,jy2
+    do i=ix1,ix2
      den=uv(i,j,k,fdim)
      pp(1:curr_ndim)=uv(i,j,k,1:curr_ndim)      !p momenta
      gam2=1.+dot_product(pp(1:curr_ndim),pp(1:curr_ndim))
@@ -197,15 +159,12 @@
     end do
    end do
   end do
+  !Exit non-conservative variables flx(1:4)=uv(1:4)=[Px,Py,Pz,den] flx(5:8)=[vx,vy,vz]
  end subroutine set_momentum_density_flux
 !=======================================
- subroutine update_adam_bash_fluid_variables(u,u0,flx,ef,dt_lp,&
-                                            i1,i2,j1,j2,k1,k2,it_loc,lz0,init_time)
+ subroutine update_adam_bash_fluid_variables(u,u0,flx,ef)
   real(dp),intent(inout) :: u(:,:,:,:),u0(:,:,:,:)
   real(dp),intent(inout) :: ef(:,:,:,:),flx(:,:,:,:)
-  real(dp),intent(in) :: dt_lp,lz0
-  integer,intent(in) :: i1,i2,j1,j2,k1,k2,it_loc
-  logical,intent(in) :: init_time
   integer :: i,j,k,ic,ic1,str,stl,fdim,fldim
   real(dp) :: pp(1:3),den,gam2,ch,gam_inv,lzf,apx,apy,apz
   real(dp) :: ex,ey,ez,bx,by,bz,vx,vy,vz,qx,qy,qz,b1p,b1m
@@ -222,11 +181,8 @@
 !===============================
 ! enter ef=total (E,B) fields on staggered grid at t^n time level
 !================================
-  lzf=lz0*unit_charge(1)*dt_lp
-  apx=-dx_inv*dt_lp
-  apy=-dy_inv*dt_lp
-  apz=-dz_inv*dt_lp
-  ch=dt_lp*unit_charge(1)
+  lzf=Lorentz_fact(1)*unit_charge(1)*dt_loc
+  ch=dt_loc*unit_charge(1)
   fdim=curr_ndim+1              ! three or four components
   fldim=2*curr_ndim+1           !(five or seven components)
   abf_0=-0.5
@@ -239,26 +195,26 @@
    stl=1
    if(prl)then
     !                                     !extends flux data to j1-2,j2+2 and k1-2,k2+2 
-    call fill_ebfield_yzxbdsdata(flx,i1,i2,j1,j2,k1,k2,1,fldim,2,2)
-    call fill_ebfield_yzxbdsdata(ef,i1,i2,j1,j2,k1,k2,1,nfield,str,stl)
+    call fill_ebfield_yzxbdsdata(flx,1,fldim,2,2)
+    call fill_ebfield_yzxbdsdata(ef,1,nfield,str,stl)
    endif
-  if(init_time)then    !a one_step lpf2 update
+  if(initial_time)then    !a one_step lpf2 update
    do ic=1,fdim
-    do k=k1,k2
-     do j=j1,j2
-      do i=i1,i2
+    do k=kz1,kz2
+     do j=jy1,jy2
+      do i=ix1,ix2
        u(i,j,k,ic)=u0(i,j,k,ic)     
        u0(i,j,k,ic)=0.0
       end do
      end do
     end do
    end do
-   call nc_fluid_density_momenta(flx,u0,i1,i2,j1,j2,k1,k2,fdim,apx,apy,apz)
+   call nc_fluid_density_momenta(flx,u0,dt_loc,fdim)
    call add_lorentz_force   !in u_0 is stored Dt*(F_adv(u)+ F_{Lorentz}) at t^n
    do ic=1,fdim
-    do k=k1,k2
-     do j=j1,j2
-      do i=i1,i2
+    do k=kz1,kz2
+     do j=jy1,jy2
+      do i=ix1,ix2
        u(i,j,k,ic)=u(i,j,k,ic)+2.*u0(i,j,k,ic)   !updates u^{n+1}=u^{n-1}+2*Dt*F^n
        flx(i,j,k,ic)=0.5*(flx(i,j,k,ic)+u(i,j,k,ic))   ! (P,den) at t(n+1/2)
       end do
@@ -267,25 +223,25 @@
    end do
   else   !in u_0 enter F^{n-1}
    do ic=1,fdim
-    do k=k1,k2
-     do j=j1,j2
-      do i=i1+1,i2
+    do k=kz1,kz2
+     do j=jy1,jy2
+      do i=ix1,ix2
        u(i,j,k,ic)=u(i,j,k,ic)+abf_0*u0(i,j,k,ic)  
       end do
      end do
     end do
    end do
    u0(:,:,:,:)=0.0
-   call nc_fluid_density_momenta(flx,u0,i1,i2,j1,j2,k1,k2,fdim,apx,apy,apz)
+   call nc_fluid_density_momenta(flx,u0,dt_loc,fdim)
    call add_lorentz_force   !in u_0 is ftored Dt*(F_adv(u)+ F_{Lorentz}) for next timestep
    do ic=1,fdim
-    do k=k1,k2
-     do j=j1,j2
-      u(i1,j,k,ic)=u(i1,j,k,ic)+u0(i1,j,k,ic)   !Euler first order update
-      do i=i1+1,i2
+    do k=kz1,kz2
+     do j=jy1,jy2
+      u(ix1,j,k,ic)=u(ix1,j,k,ic)+u0(ix1,j,k,ic)   !Euler first order update
+      do i=ix1+1,ix2
        u(i,j,k,ic)=u(i,j,k,ic)+abf_1*u0(i,j,k,ic)   !updates u^{n+1}=u^{n}+Dt*(3/2*F^n-1/2F^{n-1})
       end do
-      do i=i1,i2
+      do i=ix1,ix2
        flx(i,j,k,ic)=0.5*(flx(i,j,k,ic)+u(i,j,k,ic))   ! (P,den) at t(n+1/2)
       end do
      end do
@@ -297,9 +253,9 @@
   subroutine add_lorentz_force
    real(dp) :: qp,qm
                            !in u0() -flux derivatives
-   do k=k1,k2
-    do j=j1,j2
-     do i=i1,i2
+   do k=kz1,kz2
+    do j=jy1,jy2
+     do i=ix1,ix2
        den=1.
        if(flx(i,j,k,fdim)<=eps)den=0.0
        ex=wk1*(ef(i,j,k,1)+ef(i-1,j,k,1))  !Ex(i,j,k)
@@ -315,9 +271,9 @@
     end do
    end do
    if(curr_ndim==3)then
-    do k=k1,k2
-     do j=j1,j2
-      do i=i1,i2
+    do k=kz1,kz2
+     do j=jy1,jy2
+      do i=ix1,ix2
        den=1.
        if(flx(i,j,k,fdim)<=eps)den=0.0
        ez=wk1*(ef(i,j,k,3)+ef(i,j,k-1,3))  !Ez(i,j,k)

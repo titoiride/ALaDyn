@@ -30,23 +30,22 @@
  contains
  ! SECTION for Leap-frog integrators in LP regime
  !==========================
- subroutine init_lpf_momenta(sp_loc,pt,n0,np,dt_lp,Lfact)
+ subroutine init_lpf_momenta(sp_loc,pt,np,ic)
  type(species),intent(inout) :: sp_loc
  real(dp),intent(inout) :: pt(:,:)
- integer,intent(in) :: n0,np
- real(dp),intent(in) :: dt_lp,Lfact
+ integer,intent(in) :: np,ic
  integer :: p
  real(dp) :: alp,dth_lp,pp(3),vp(3),efp(6),gam2,gam_inv
 
- dth_lp=0.5*dt_lp
- alp=dth_lp*Lfact     ! Lfact =1./m
- ! Fields are already multiplied by charge
+ dth_lp=0.5*dt_loc
+ alp=dth_lp*Lorentz_fact(ic)     ! Lfact =1./m
+ ! Fields are already multiplied by particle(ic) charge
  !=========================
  ! from p^n to p^{n-1/2}
  !==========================
  select case(curr_ndim)
  case(2)
-  do p=n0,np
+  do p=1,np
    efp(1:3)=-alp*pt(p,1:3)   !-DT/2*charge*(Ex,Ey,Bz)^n
    pp(1:2)=sp_loc%part(p,3:4)  !p_{n}
    gam2=1.+dot_product(pp(1:2),pp(1:2))
@@ -56,7 +55,7 @@
    sp_loc%part(p,4)=sp_loc%part(p,4)+efp(2)-vp(1)*efp(3)
   end do
  case(3)
-  do p=n0,np
+  do p=1,np
    pp(1:3)=sp_loc%part(p,4:6)
    efp(1:6)=-alp*pt(p,1:6)
    gam2=1.+dot_product(pp(1:3),pp(1:3))
@@ -72,27 +71,27 @@
  end select
  end subroutine init_lpf_momenta
  !======================================
- subroutine lpf_momenta_and_positions(sp_loc,pt,n0,np,dt_lp,vb,Lfact)
+ subroutine lpf_momenta_and_positions(sp_loc,pt,np,ic)
 
  type(species),intent(inout) :: sp_loc
  real(dp),intent(inout) :: pt(:,:)
 
- integer,intent(in) :: n0,np
- real(dp),intent(in) :: dt_lp,vb,Lfact
+ integer,intent(in) :: np,ic
  integer :: p,ch
- real(dp) :: alp,dth_lp,bb(3),pp(3),vp(3),vph(3),efp(6),b2,bv,gam02,gam2,gam
+ real(dp) :: alp,dt_lp,dth_lp,bb(3),pp(3),vp(3),vph(3),efp(6),b2,bv,gam02,gam2,gam
  !========================================
  ! uses exact explicit solution for
  ! p^{n}=(p^{n+1/2}+p^{n-1/2})/2 and gamma^n=sqrt( 1+p^n*p^n)
  ! v^n=p^n/gamma^n
  !========================================
- !Enter Fields multiplied by charge
+ !Enter Fields multiplied by particle charge
+ dt_lp=dt_loc
  dth_lp=0.5*dt_lp
- alp=dth_lp*Lfact
+ alp=dth_lp*Lorentz_fact(ic)
  select case(curr_ndim)
  case(2)
   ch=5
-  do p=n0,np
+  do p=1,np
    pp(1:2)=sp_loc%part(p,3:4)  !p_{n-1/2}
    efp(1:3)=alp*pt(p,1:3)         !q*Lfact*(Ex,Ey,Bz)*Dt/2
    vp(1:2)=pp(1:2)+efp(1:2)   !u^{-} in Boris push
@@ -120,7 +119,7 @@
   end do
  case(3)
   ch=7
-  do p=n0,np
+  do p=1,np
    pp(1:3)=sp_loc%part(p,4:6)
    efp(1:6)=alp*pt(p,1:6)      !q*Lfact*(E,B) on p-th-particle
    vp(1:3)=pp(1:3)+efp(1:3)           !p^{-} in Boris push
@@ -153,31 +152,31 @@
  !====================
  if(iform <2)then
   !old charge stored for charge preserving schemes
-  do p=n0,np
+  do p=1,np
    pt(p,ch)=sp_loc%part(p,ch)
   end do
  endif
- if(vb >0.)then
-  do p=n0,np
-   sp_loc%part(p,1)=sp_loc%part(p,1)-dt_lp*vb
-   pt(p,1)=pt(p,1)-dt_lp*vb ! 
+ !In comoving frame vbeam >0
+ if(vbeam >0.)then
+  do p=1,np
+   sp_loc%part(p,1)=sp_loc%part(p,1)-dt_lp*vbeam
+   pt(p,1)=pt(p,1)-dt_lp*vbeam ! 
   end do
  endif
  end subroutine lpf_momenta_and_positions
 !=============================
- subroutine lpf_env_momenta(sp_loc,F_pt,np,dtloc,Lz_fact)
+ subroutine lpf_env_momenta(sp_loc,F_pt,np,ic)
 
  type(species),intent(inout) :: sp_loc
  real(dp),intent(inout) :: F_pt(:,:)
 
- integer,intent(in) :: np
- real(dp),intent(in) :: dtloc,Lz_fact
+ integer,intent(in) :: np,ic
  integer :: p
  real(dp) :: bb(3),pp(3),vp(3),vph(3)
  real(dp) :: b2,bv,alp,dt_lp,efp(6)
 
- dt_lp=dtloc
- alp=0.5*dt_lp*Lz_fact
+ dt_lp=dt_loc
+ alp=0.5*dt_lp*Lorentz_fact(ic)
  !==========================
  !Enter F_pt(1:2)= q*(E+0.5q*grad[F]/gamp) and F_pt(3)=q*B/gamp     where F=|A|^2/2
  select case(curr_ndim)
@@ -221,18 +220,17 @@
  end select
  end subroutine lpf_env_momenta
  !======================
- subroutine lpf_env_positions(sp_loc,F_pt,np,dtloc,vb)
+ subroutine lpf_env_positions(sp_loc,F_pt,np)
 
  type(species),intent(inout) :: sp_loc
  real(dp),intent(inout) :: F_pt(:,:)
 
  integer,intent(in) :: np
- real(dp),intent(in) :: dtloc,vb
  integer :: p,ch
  real(dp) :: pp(3),vp(3)
  real(dp) :: b2,gam2,gam_inv,dt_lp,dth_lp,gam,gam3
 
- dt_lp=dtloc
+ dt_lp=dt_loc
  dth_lp=0.5*dt_lp
  ch=5
  !==========================
@@ -286,10 +284,10 @@
   end do
  endif
  !====================== vb=-wbet > 0 in comoving x-coordinate
- if(vb >0.0)then
+ if(vbeam >0.0)then
   do p=1,np
-   sp_loc%part(p,1)=sp_loc%part(p,1)-dt_lp*vb
-   F_pt(p,1)=F_pt(p,1)-dt_lp*vb   !new x-position
+   sp_loc%part(p,1)=sp_loc%part(p,1)-dt_lp*vbeam
+   F_pt(p,1)=F_pt(p,1)-dt_lp*vbeam   !new x-position
   end do
  endif
  end subroutine lpf_env_positions

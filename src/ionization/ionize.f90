@@ -32,9 +32,9 @@
  contains
 
  !================================
- subroutine set_field_ioniz_wfunction(z0,zm,loc_ion,nz_lev,nz_model,E_max,dt_loc)
+ subroutine set_field_ioniz_wfunction(z0,zm,loc_ion,nz_lev,nz_model,E_max)
  integer,intent(in) :: z0,zm,loc_ion,nz_lev,nz_model
- real(dp),intent(in) :: E_max,dt_loc
+ real(dp),intent(in) :: E_max
  integer :: i,k,j,ic,z,zk,zm_loc,ll
  real(dp) :: Ei,w_bsi,w_adk,ns,fact1,fact2
  real(dp),allocatable :: aw(:,:)

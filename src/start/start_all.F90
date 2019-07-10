@@ -37,7 +37,7 @@
 
  subroutine start
 
- integer :: ic,nxp,nyp,nzp,ncmp
+ integer :: ic,ncmp
 
 
  !enable loop to attach with gdb only if really needed
@@ -89,10 +89,7 @@
  call set_fyzxgrid(npe_yloc,npe_zloc,npe_xloc,sh_ix)  !local grid parameters and
                                                       !coordinate struct  loc_xg,loc_yg,loc_zg
  if (Stretch) call set_str_ind(npe_yloc,npe_zloc,ndim)
- !---------------------------------
- nyp=loc_ygrid(imody)%p_ind(2)  !Ny_loc+2
- nzp=loc_zgrid(imodz)%p_ind(2)  !Nz_loc+2
- nxp=loc_xgrid(imodx)%p_ind(2)  !Nx_loc+2
+ call set_loc_grid_param
 !======================================
  call set_output_grid(jump,nprocx,nprocy,nprocz)   
                         !defines (nhx(nprocx), nhy(nprocy),nhz(nprocz) arrays of grid points
@@ -133,7 +130,8 @@
 !========================
  if(Ionization)then
   do ic=2,nsp_ionz
-   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),ic,ionz_lev,ionz_model,lp_max,dt)
+   call set_field_ioniz_wfunction(ion_min(ic-1),atomic_number(ic-1),&
+                                   ic,ionz_lev,ionz_model,lp_max)
   end do
   if(Pe0) call Ioniz_data(lp_max,ion_min,atomic_number,ionz_lev,ionz_model)
  endif
