@@ -395,18 +395,20 @@
 !====================================
 !=======================
   ! Code Units for laser fields
-  n_plasma=0
-  if(nsp>1)then
-   do i=1,nsp-1
-    n_plasma=n_plasma+concentration(i)*N_mol_atoms(i)*ion_min(i)
-   end do
-   if(n_plasma<epsilon)then
-    np_per_xc(1)=0
-    np_per_yc(1)=0
-    n_plasma=zero_dp
-   end if
-  else if(nsp==1)then
-   n_plasma=one_dp
+  if(Wake)then
+    n_plasma=0
+    if(nsp>1)then
+     do i=1,nsp-1
+      n_plasma=n_plasma+concentration(i)*N_mol_atoms(i)*ion_min(i)
+     end do
+     if(n_plasma<epsilon)then
+      np_per_xc(1)=0
+      np_per_yc(1)=0
+      n_plasma=zero_dp
+     end if
+    else if(nsp==1)then
+     n_plasma=one_dp
+    end if
   end if
   ncrit=pi/(rc0*lam0*lam0)      !critical density in units n0=10^21/cm^3=10^9/mu^3
   n0_ref= 1.e03*ncrit*n_over_nc ! reference density in 10^18/cc=10^6/mu^3 unit

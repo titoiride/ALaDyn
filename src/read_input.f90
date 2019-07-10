@@ -104,6 +104,8 @@
  np_per_zc=-1
  L_disable_rng_seed = .false.
  incid_angle=zero_dp
+ concentration(:) = zero_dp
+ concentration(1) = one_dp
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,TARGET_DESCRIPTION,iostat=nml_ierr)
  nml_error_message='TARGET_DESCRIPTION'
