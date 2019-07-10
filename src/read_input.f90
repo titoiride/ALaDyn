@@ -64,7 +64,7 @@
  NAMELIST/SIMULATION/LPf_ord,der_ord,str_flag,iform,model_id,&
   dmodel_id,ibx,iby,ibz,ibeam,ch_opt,fl_opt
  NAMELIST/TARGET_DESCRIPTION/nsp,nsb,ionz_lev,ionz_model,ion_min,ion_max,atomic_number,&
-  mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,incid_angle,&
+  mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,concentration,lpx,lpy,incid_angle,&
   n_over_nc,np1,np2,r_c,L_disable_rng_seed
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
  lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1,Symmetrization_pulse,a_symm_rat,Enable_ionization,&
@@ -104,6 +104,8 @@
  np_per_zc=-1
  L_disable_rng_seed = .false.
  incid_angle=zero_dp
+ concentration(:) = zero_dp
+ concentration(1) = one_dp
  open(nml_iounit,file=input_namelist_filename, status='old')
  read(nml_iounit,TARGET_DESCRIPTION,iostat=nml_ierr)
  nml_error_message='TARGET_DESCRIPTION'
@@ -309,7 +311,7 @@ end subroutine read_nml_integrated_background_diagnostic
  NAMELIST/SIMULATION/LPf_ord,der_ord,str_flag,iform,model_id,&
   dmodel_id,ibx,iby,ibz,ibeam
  NAMELIST/TARGET_DESCRIPTION/nsp,nsb,ionz_lev,ionz_model,ion_min,ion_max,atomic_number,&
-  mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,lpx,lpy,incid_angle,&
+  mass_number,t0_pl,ppc,np_per_xc,np_per_yc,np_per_zc,concentration,lpx,lpy,incid_angle,&
   n_over_nc,np1,np2,r_c
  NAMELIST/LASER/G_prof,nb_laser,t0_lp,xc_lp,tau_fwhm,w0_y,a0,lam0,lp_delay,&
   lp_offset,t1_lp,tau1_fwhm,w1_y,a1,lam1,Symmetrization_pulse,a_symm_rat,Enable_ionization,&

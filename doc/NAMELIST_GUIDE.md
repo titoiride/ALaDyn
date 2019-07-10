@@ -116,6 +116,12 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
  np_per_yc(4)     = 4,
  np_per_yc(5)     = 4,
  np_per_yc(6)     = 4,
+ concentration(1) = 0.5,
+ concentration(2) = 0.5,
+ concentration(3) = 0,
+ concentration(4) = 0,
+ concentration(5) = 0,
+ concentration(6) = 0,
  lpx(1)           = 0.0,
  lpx(2)           = 0.0,
  lpx(3)           = 2.0,
@@ -167,6 +173,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
   + `dmodel_id=1` : i=1 indicates the number of electrons, i=2 the number of macroparticles of Z_1 species, i=3 the number of macroparticles of Z_2 species and i=4 the number of macroparticles of Z_3 species.
   + `dmodel_id=3,4` : i=1,2 are the number of electrons and ions per cell along x/y in the bulk, i=3,4 refer to the front layer and i=5,6 to the contaminants.
 + `np_per_yc(i)`: the same as `np_per_xc`, this describes the number of particles per cell along transverse directions (valid also for *z* for 3D simulations)
++ `concentration(i)`: concentration of the *i-th* ion species. The sum of all the concentrations must be 1 to result in a consistent description.
 + `dmodel_id=1`
     + `lpx(1)` is the length [μm] of the upstream layer (foam or preplasma), having density `n1/nc`
     + `lpx(2)` is the length [μm] of the ramp (linear or exponential depending on the `mdl`) connecting the upstream layer with the central one (made with bulk particles)
@@ -176,6 +183,9 @@ Copper    (atomic_number = 29) - mass_number = 63.54
     + `lpx(7)` is the offset [μm] between the end of the laser and the beginning of the target (if zero, the target starts right at the end of the laser pulse). In the gaussian case, the end of the pulse is defined as the center position + the FWHM. The offset is calculated *before* laser rotation, so mind the transverse size if `incid_angle ≠ 0`, in order to avoid laser initialization *inside the target*.
     + `n_over_nc` is the density in the central layer (bulk)
     + *LWFA* case: density is in units of critical density
+        + If `nsp=1`, `n_over_nc` is the plasma density
+        + If `nsp>1`, `n_over_nc` is the density of the neutral gas, *e.g.* the gas jet density before the plasma formation.
+        If the background atoms are already ionized, the initial plasma density is computed accordingly.
     + *PWFA* case: the density is in units of (a nominal value) nc=1e18 cm-3
     + `np1` is the density in the upstream layer (foam/preplasma)
     + `np2` is the density in the downstream layer (contaminants)
@@ -309,7 +319,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
   + in general it writes *only* the phase space of the *n-th* species, with `n=npv`; if `n=npv>nps`, it writes the phase spaces of all the particle species
 + `jump`: jump on grid points; if `jump=2`, it means that each processor is going to write only one point every two. Mind that it's extremely important that `jump` is a divisor of the number of grid points *per processor*, otherwise the grid output will be corrupted
 + `pjump`: jump on particles; if `pjump=2`, it means that each processor is going to write the phase space of just one particle every two.
-+ `xp0_out`, `xp1_out` and `yp_out` only particles contained inside the box defined by `xp0 < x < xp1`, `|y| < yp_out` will be printed in the output
++ `xp0_out`, `xp1_out` and `yp_out` only particles contained inside the box defined by `xp0 < x-w_speed t < xp1`, `|y| < yp_out` will be printed in the output
 + `tmax` is the relative time (in μm, because it is multiplied by *c*) that the simulation is going to be evolved. Being relative, it's going to be added to the time eventually already reached before the restart. To obtain the time in fs, you have to divide it by 0.299792458 [speed of light in μm/fs]
 + `cfl` is the Courant–Friedrichs–Lewy parameter ( [Wikipedia CFL-parameter page](http://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition) )
 + `new_sim`: identifies if a simulation is new `new=0` (data is recreated from initial conditions) or if it is a restart `new=1` (dump are going to be read)

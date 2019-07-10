@@ -301,7 +301,7 @@
   if(mp_per_cell(1)==0)ratio_mpfluid=0.0
   if(ny_targ==0)ratio_mpfluid=0.0
  endif
- !j0_norm=j0_norm*ratio_mpfluid
+ j0_norm=j0_norm*ratio_mpfluid
  !========================== multispecies
  ! mass-charge parameters four species: three ion species+ electrons
  ! Ions charges defined by initial conditions.
@@ -320,11 +320,19 @@
  end do
   Lorentz_fact(1:4)=mass_rat(1:4)  !for (E,B) fields in mc2/e/l0(mu) unit
   E0=electron_mass
+ !=====================================
+ ! Check species molecular number
+ !=====================================
+ if(nsp>1)then
+  do i=1,nsp-1
+   call set_atoms_per_molecule(atomic_number(i),N_mol_atoms(i))
+  end do
+ end if
  !======================================
  ! Set ionization param
  ! WARNING  ion ordering in input data must set ionizing species first
  !==========================================================
- wgh_ion=j0_norm
+ !wgh_ion=j0_norm
  nsp_ionz=1
  if(nsp > 1)then
   do i=1, nsp-1          !index of ionizing ion species 2,.. nsp_ionz <= nsp
@@ -337,8 +345,8 @@
   if(ionz_lev >0)Ionization=.true.
   if(Ionization) call set_ionization_coeff(atomic_number,nsp_ionz)
   !uses ion index 1,2,,,nsp-1
-  wgh_ion=1./(real(mp_per_cell(2),dp))
-  if(ion_min(1)>1)wgh_ion=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
+   wgh_ion=concentration(1)/(real(mp_per_cell(2),dp))
+  !if(ion_min(1)>1)wgh_ion=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
  endif
 !=======Moving window
  if(w_speed < 0.0)then
@@ -387,6 +395,21 @@
 !====================================
 !=======================
   ! Code Units for laser fields
+  if(Wake)then
+    n_plasma=0
+    if(nsp>1)then
+     do i=1,nsp-1
+      n_plasma=n_plasma+concentration(i)*N_mol_atoms(i)*ion_min(i)
+     end do
+     if(n_plasma<epsilon)then
+      np_per_xc(1)=0
+      np_per_yc(1)=0
+      n_plasma=zero_dp
+     end if
+    else if(nsp==1)then
+     n_plasma=one_dp
+    end if
+  end if
   ncrit=pi/(rc0*lam0*lam0)      !critical density in units n0=10^21/cm^3=10^9/mu^3
   n0_ref= 1.e03*ncrit*n_over_nc ! reference density in 10^18/cc=10^6/mu^3 unit
   nm_fact=ncrit*(1.e+9)         ! critical density (1/mu^3)

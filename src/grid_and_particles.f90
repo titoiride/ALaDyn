@@ -33,14 +33,14 @@
  integer :: ibx,iby,ibz
  real(dp) :: k0,yx_rat,zx_rat,djc(3),lxb,lyb
  real(dp) :: ch_opt,fl_opt
- integer :: mp_per_cell(6),nref,nb_laser
+ integer :: mp_per_cell(Ref_nlayer),nref,nb_laser
  integer :: np_per_xc(Ref_nlayer),np_per_yc(Ref_nlayer),np_per_zc(Ref_nlayer),ppc(Ref_nlayer)
- integer :: ion_min(3),ion_max(3),atomic_number(3),ionz_lev,ionz_model
+ integer :: ion_min(Ref_nlayer),ion_max(Ref_nlayer),atomic_number(Ref_nlayer),N_mol_atoms(Ref_nlayer),ionz_lev,ionz_model
  integer :: loc_nyc_max,loc_nzc_max,loc_nxc_max,ndim_max
- real(dp) :: ratio_mpc(6),pavg_npart(4),wgh_ion
+ real(dp) :: ratio_mpc(Ref_nlayer),pavg_npart(4),wgh_ion, concentration(Ref_nlayer)
  real(dp) :: mass(4),mass_rat(4),charge_to_mass(4),unit_charge(4),Lorentz_fact(4)
  real(dp) :: mass_number(3)
- real(dp) :: n0_ref,pmass,ompe,vbeam,curr_max(3),t0_pl(4),j0_norm,ratio_mpfluid,chann_fact
+ real(dp) :: n0_ref,pmass,ompe,vbeam,curr_max(3),t0_pl(4),j0_norm,ratio_mpfluid,chann_fact,n_plasma
  real(dp) :: gam_min,gam0,bet0,u0_b, nb_over_np,b_charge
 
  real(dp) :: t0_lp,xc_lp,xf,w0_x,w0_y,lam0,a0

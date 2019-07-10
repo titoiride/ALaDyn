@@ -416,9 +416,10 @@
  integer,intent(in) :: layer_mod,nyh
  real(dp),intent(in) :: xf0
  integer :: p,i,j,i1,i2,ic
- integer :: n_peak,npmax,nxtot
+ integer :: n_peak,npmax,nxtot,len_conc
  real(dp) :: uu,u2,xp_min,xp_max,u3,ramp_prefactor
- real(dp) :: xfsh,un(2),wgh_sp(3)
+ real(dp) :: xfsh,un(2),wgh_sp(nsp)
+ real(dp), allocatable :: conc(:)
  integer :: nxl(6)
  integer :: loc_nptx(4),nps_loc(4),last_particle_index(4),nptx_alloc(4)
  !==========================
@@ -438,6 +439,11 @@
  ! Parameters for particle distribution along the x-coordinate
  !============================
  ! Layers nxl(1:5) all containing the same ion species
+ len_conc=size(concentration)
+ allocate(conc(len_conc))
+ do i=1,len_conc
+  conc(i)=concentration(i)
+ end do
  xtot=0.0
  nxtot=0
  do i=1,6
@@ -473,14 +479,18 @@
  !=====================================================
  ! Longitudinal distribution
  nptx=0
- !Weights for mulpispecies target
- wgh_sp(1:3)=j0_norm
- if(nsp==2)then
-  wgh_sp(2)=1./(real(mp_per_cell(2),dp))
-  if(ion_min(1)>1)wgh_sp(2)=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
- endif
+ !Weights for multispecies target
+ !wgh_sp(1:3)=j0_norm
+ !if(nsp==2)then
+ !wgh_sp(2)=1./(real(mp_per_cell(2),dp))
+ 
+ wgh_sp(1)=j0_norm*n_plasma
+ do i=2,nsp
+  if(mp_per_cell(i)>0) wgh_sp(i)=one_dp/real(mp_per_cell(i),dp)
+  wgh_sp(i)=conc(i-1)*wgh_sp(i)
+ end do
  select case(layer_mod)
-  !================ first uniform layer np1=================
+ !================ first uniform layer np1=================
  case(1)
   if(nxl(1)>0)then
    ramp_prefactor=one_dp-np1
@@ -2492,7 +2502,7 @@
  !=============================
  allocate(fluid_x_profile(nxf))
  !====================
- peak_fluid_density=1.-ratio_mpfluid
+ peak_fluid_density=(one_dp-ratio_mpfluid)*n_plasma
  fluid_x_profile(:)=zero_dp
  fluid_yz_profile(:,:)=one_dp
  np1_loc=0.005
