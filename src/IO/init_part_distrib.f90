@@ -429,9 +429,10 @@
  integer,intent(in) :: layer_mod,nyh
  real(dp),intent(in) :: xf0
  integer :: p,i,j,i1,i2,ic
- integer :: n_peak,npmax,nxtot
+ integer :: n_peak,npmax,nxtot,len_conc
  real(dp) :: uu,u2,xp_min,xp_max,u3,ramp_prefactor
- real(dp) :: xfsh,un(2),wgh_sp(3)
+ real(dp) :: xfsh,un(2),wgh_sp(nsp)
+ real(dp), allocatable :: conc(:)
  integer :: nxl(6)
  integer :: nps_loc(4),last_particle_index(4),nptx_alloc(4)
  !==========================
@@ -451,6 +452,11 @@
  ! Parameters for particle distribution along the x-coordinate
  !============================
  ! Layers nxl(1:5) all containing the same ion species
+ len_conc=size(concentration)
+ allocate(conc(len_conc))
+ do i=1,len_conc
+  conc(i)=concentration(i)
+ end do
  xtot=0.0
  nxtot=0
  do i=1,6
@@ -486,14 +492,18 @@
  !=====================================================
  ! Longitudinal distribution
  nptx=0
- !Weights for mulpispecies target
- wgh_sp(1:3)=j0_norm
- if(nsp==2)then
-  wgh_sp(2)=1./(real(mp_per_cell(2),dp))
-  if(ion_min(1)>1)wgh_sp(2)=1./(real(ion_min(1),dp)*real(mp_per_cell(2),dp))
- endif
+ !Weights for multispecies target
+ !wgh_sp(1:3)=j0_norm
+ !if(nsp==2)then
+ !wgh_sp(2)=1./(real(mp_per_cell(2),dp))
+ 
+ wgh_sp(1)=j0_norm*n_plasma
+ do i=2,nsp
+  if(mp_per_cell(i)>0) wgh_sp(i)=one_dp/real(mp_per_cell(i),dp)
+  wgh_sp(i)=conc(i-1)*wgh_sp(i)
+ end do
  select case(layer_mod)
-  !================ first uniform layer np1=================
+ !================ first uniform layer np1=================
  case(1)
   if(nxl(1)>0)then
    ramp_prefactor=one_dp-np1
@@ -1773,6 +1783,22 @@
    npty_layer(ic)=i2
    !===========================
   end do
+  if(lpx(4) <=0)then
+   do ic=7,8
+    npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
+    i2=0
+    loc_ymp=yp_min+lpy(2)
+    do i1=1,nwires                     !layers of lpy=dlpy(1+rat) length
+     dpy=dlpy/real(npty_ne,dp)
+     do i=1,npty_ne
+      ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+     enddo
+     i2=i2+npty_ne
+     loc_ymp=loc_ymp+tot_lpy
+    end do
+    npty_layer(ic)=i2
+   end do
+  end if
  else                  !two nanowires filled with n1_over_nc (el+Z1) plasma
   do ic=1,2
    npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
@@ -1802,9 +1828,29 @@
    npty_layer(ic)=npty_ne
    !===========================
   end do
+  if(lpx(4) <= 0)then
+   do ic=7,8
+    npty_ne=nlpy*npyc(ic)    !number of yp points in a dlpy layer
+    i2=0
+    loc_ymp= -0.5*tot_lpy
+    dpy=dlpy/real(npty_ne,dp)
+    do i=1,npty_ne
+     ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+    enddo
+    loc_ymp=loc_ymp+lpy(2)       !first layer
+    i2=i2+npty_ne
+    !===========================
+    do i=1,npty_ne
+     ypt(i+i2,ic)=loc_ymp+dpy*(real(i,dp)-0.1)
+    enddo
+    i2=i2+npty_ne
+    !====================
+    npty_layer(ic)=i2
+   end do
+  end if
  endif
  !============= Uniform y-z distribution in layers [5-8]
- do ic=5,8
+ do ic=5,6
   npty_layer(ic)=nyh*npyc(ic)
   npty_ne=npty_layer(ic)
   dpy=(yp_max-yp_min)/real(npty_ne,dp)
@@ -1812,6 +1858,16 @@
    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
   enddo
  end do
+ if(lpx(4)>0)then
+  do ic=7,8
+   npty_layer(ic)=nyh*npyc(ic)
+   npty_ne=npty_layer(ic)
+   dpy=(yp_max-yp_min)/real(npty_ne,dp)
+   do i=1,npty_ne
+    ypt(i,ic)=yp_min+dpy*(real(i,dp)-0.5)
+   enddo
+  end do
+ end if
  !========= For all (y,z) coordinates
  do ic=1,8
   npty_ne=npty_layer(ic)
@@ -2462,5 +2518,22 @@
  end do
  !===============
  end subroutine part_distribute
+ subroutine clean_field(ef,lp1,i1,j1,j2,k1,k2,nc)
+  real(dp),intent(inout) :: ef(:,:,:,:)
+  real(dp),intent(in) :: lp1
+  integer,intent(in) :: i1,j1,j2,k1,k2,nc
+  integer :: ilp,i,j,k,ic
+ 
+  ilp=int(dx_inv*lp1)
+  do ic=1,nc
+   do k=k1,k2
+    do j=j1,j2
+     do i=i1,ilp
+      ef(i,j,k,ic)=0.0
+     end do
+    end do
+   end do
+  end do
+  end subroutine clean_field
  !=========================
  end module init_part_distrib

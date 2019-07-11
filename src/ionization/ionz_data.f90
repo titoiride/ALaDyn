@@ -88,6 +88,43 @@
  end select
  end subroutine set_atomic_weight
  !================================
+ subroutine set_atoms_per_molecule(At_number,N_mol_atoms)
+ integer,intent(in) :: At_number
+ integer,intent(inout) :: N_mol_atoms
+ !========================================
+ ! This subroutine sets if the neutral gas
+ ! Is mono- or diatomic
+ !========================================
+ select case(At_number)
+ case(1)
+  N_mol_atoms=2    !H
+ case(2)
+  N_mol_atoms=1    !He
+ case(7)
+  N_mol_atoms=2    !N
+ case(8)
+  N_mol_atoms=2    !O
+ case(9)
+  N_mol_atoms=2    !F
+ case(10)
+  N_mol_atoms=1    !Ne
+ case(17)
+  N_mol_atoms=2    !Cl
+ case(18)
+  N_mol_atoms=1    !Ar
+ case(35)
+  N_mol_atoms=2    !Br
+ case(36)
+  N_mol_atoms=1    !Kr
+ case(53)
+  N_mol_atoms=2    !I
+ case(54)
+  N_mol_atoms=1    !Xe
+ case DEFAULT
+ N_mol_atoms=1
+ end select
+ end subroutine set_atoms_per_molecule
+ !================================
  subroutine set_ionization_coeff(An,sp_ionz)
  integer,intent(in) :: An(:),sp_ionz
  integer :: i,j,loc_zm
