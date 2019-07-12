@@ -423,7 +423,6 @@
   real(dp) :: ayh1(0:2),ay1(0:2)
   real(dp) :: azh1(0:2),az1(0:2)
   integer :: i,ih,j,jh,i2,j2,k,kh,k2,n
-  real(sp) :: wgh
   integer(kind=2) :: i1,j1,k1
   integer(kind=2),parameter :: stl=2
  !===============================================

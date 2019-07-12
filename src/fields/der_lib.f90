@@ -791,7 +791,7 @@
    end do
 !==============
    do j=j01+2,j02-2
-      =i1,if2
+    do i=i1,if2
      ii=i-2
      fdata(i,j,k,ic)=ww0(ii,j)
     end do

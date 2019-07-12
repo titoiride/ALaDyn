@@ -101,7 +101,8 @@
   integer :: fdim,ic,i,j,k
   real(dp) :: den,pp(3),gam2,gam_inv
 !================ set density and momenta flux
-  fdim=curr_ndim+1
+  !fdim=curr_ndim+1
+  fdim=size(uv,4)
   flx(:,:,:,1:fdim)=uv(:,:,:,1:fdim)
   ! Enter curr(1)= |A|^2/2 and curr(2:4) grad|A|^2/2 at t^n time level
 !=====================
@@ -126,7 +127,7 @@
      curr(i,j,k,1)=gam_inv*den         !n/gam fluid contribution of the sorce of envelope equation
      do ic=1,curr_ndim
       eb_tot(i,j,k,ic)=eb_tot(i,j,k,ic)+0.5*gam_inv*curr(i,j,k,ic+1)  !Envelope grad|A|^2/(4*gam_p):wq
-      flx(i,j,k,fdim+ic)=gam_inv*uv(i,j,k,ic)  !(vx,vy,vz)
+      flx(i,j,k,fdim+ic)=pp(ic)  !(vx,vy,vz)
      end do
     end do
    end do
@@ -182,40 +183,32 @@
 ! enter ef=total (E,B) fields on staggered grid at t^n time level
 !================================
   lzf=Lorentz_fact(1)*unit_charge(1)*dt_loc
-  ch=dt_loc*unit_charge(1)
-  fdim=curr_ndim+1              ! three or four components
-  fldim=2*curr_ndim+1           !(five or seven components)
+  fdim=size( u, 4 )
+  !fdim=curr_ndim+1
+  fldim = size(flx,4)               ! three or four components
+  !fldim=2*curr_ndim+1           !(five or seven components)
   abf_0=-0.5
   abf_1=1.5
-               !================== Enter
+ !================== Enter
                     ! flx[Px,Py,Pz,den,vx,vy,vz]^n fldim components
                     ! ef[1:nfield] = total (E,B) fields and ponderomotive force
  !===============================================
    str=1
    stl=1
    if(prl)then
-    !                                     !extends flux data to j1-2,j2+2 and k1-2,k2+2 
+    !extends flux data to j1-2,j2+2 and k1-2,k2+2 
     call fill_ebfield_yzxbdsdata(flx,1,fldim,2,2)
     call fill_ebfield_yzxbdsdata(ef,1,nfield,str,stl)
    endif
-  if(initial_time)then    !a one_step lpf2 update
-   do ic=1,fdim
-    do k=kz1,kz2
-     do j=jy1,jy2
-      do i=ix1,ix2
-       u(i,j,k,ic)=u0(i,j,k,ic)     
-       u0(i,j,k,ic)=0.0
-      end do
-     end do
-    end do
-   end do
+  if(initial_time)then    !a one_step update   
+   u0(:,:,:,:)=0.0
    call nc_fluid_density_momenta(flx,u0,dt_loc,fdim)
    call add_lorentz_force   !in u_0 is stored Dt*(F_adv(u)+ F_{Lorentz}) at t^n
    do ic=1,fdim
     do k=kz1,kz2
      do j=jy1,jy2
       do i=ix1,ix2
-       u(i,j,k,ic)=u(i,j,k,ic)+2.*u0(i,j,k,ic)   !updates u^{n+1}=u^{n-1}+2*Dt*F^n
+       u(i,j,k,ic)=u(i,j,k,ic)+u0(i,j,k,ic)   !updates u^{n+1}=u^{n-1}+2*Dt*F^n
        flx(i,j,k,ic)=0.5*(flx(i,j,k,ic)+u(i,j,k,ic))   ! (P,den) at t(n+1/2)
       end do
      end do
@@ -232,8 +225,9 @@
     end do
    end do
    u0(:,:,:,:)=0.0
-   call nc_fluid_density_momenta(flx,u0,dt_loc,fdim)
-   call add_lorentz_force   !in u_0 is ftored Dt*(F_adv(u)+ F_{Lorentz}) for next timestep
+   call nc_fluid_density_momenta(flx,u0,dt_loc,fdim) 
+   ! - F_adv(u) = - grad(Flux)
+   call add_lorentz_force   !in u_0 is stored Dt*(-F_adv(u)+ F_{Lorentz}) for next timestep
    do ic=1,fdim
     do k=kz1,kz2
      do j=jy1,jy2
@@ -251,7 +245,6 @@
 !==========================
   contains
   subroutine add_lorentz_force
-   real(dp) :: qp,qm
                            !in u0() -flux derivatives
    do k=kz1,kz2
     do j=jy1,jy2

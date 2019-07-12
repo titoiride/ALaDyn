@@ -62,7 +62,7 @@
  unix_time_last_dump=unix_time_begin
 
  tnow=tstart
- if(tnow==0.0)initial_time=.true.
+ if(abs(tnow-epsilon)<=0.0)initial_time=.true.
  
  ! iter=last_iter
  iter=0
@@ -101,6 +101,7 @@
    exit
   endif
   if (tnow+dt_loc >= tmax) dt_loc=tmax-tnow
+  if (initial_time) initial_time = .false.
  end do
  if (dump>0) call dump_data(iter,tnow)
  end subroutine LP_cycle
@@ -128,6 +129,7 @@
    exit
   endif
   if (tnow+dt_loc >= tmax) dt_loc=tmax-tnow
+  if (initial_time) initial_time = .false.
  end do
  if (dump>0) call dump_data(iter,tnow)
  end subroutine ENV_cycle
@@ -153,6 +155,7 @@
    exit
   endif
   if (tnow+dt_loc >= tmax) dt_loc=tmax-tnow
+  if (initial_time) initial_time = .false.
  end do
  if (dump>0) call dump_data(iter,tnow)
 
