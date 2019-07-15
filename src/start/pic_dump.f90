@@ -500,7 +500,7 @@
    integer :: ip_loc(npe), loc_grid_size(npe), loc2d_grid_size(npe)
    integer :: grid_size_max, grid2d_size_max
    integer :: env_cp, env1_cp, fl_cp, ebf_cp
-   integer :: ndata(10), nps_loc(4), np_max, n1_old
+   integer :: ndata(10), nps_loc(4), n1_old
    integer :: n1_loc, n2_loc, n3_loc, nypt_max, nzpt_max
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
    real (dp) :: rdata(10), x0_new
@@ -591,10 +591,10 @@
 !========================= distribute comm data
    kk = size(rdata)
    k1 = size(ndata)
-   call mpi_bcast(ndata, k1, mpi_integer, pe_min, comm, error)
-   call mpi_bcast(nptx, nsp, mpi_integer, pe_min, comm, error)
-   call mpi_bcast(sptx_max, nsp, mpi_integer, pe_min, comm, error)
-   call mpi_bcast(rdata, kk, mpi_sd, pe_min, comm, error)
+   call MPI_BCAST(ndata, k1, mpi_integer, pe_min, comm, error)
+   call MPI_BCAST(nptx, nsp, mpi_integer, pe_min, comm, error)
+   call MPI_BCAST(sptx_max, nsp, mpi_integer, pe_min, comm, error)
+   call MPI_BCAST(rdata, kk, mpi_sd, pe_min, comm, error)
 
    it_loc = ndata(1)
    nptx_max = ndata(5)
@@ -654,7 +654,7 @@
     end if
    end if
    if (part) then !distributes npart => npt(npe,nsp)
-    call mpi_bcast(npt_arr(1,1), npe*nsp, mpi_integer, pe_min, comm, &
+    call MPI_BCAST(npt_arr(1,1), npe*nsp, mpi_integer, pe_min, comm, &
       error)
     do i = 1, npe
      ip_loc(i) = sum(npt_arr(i,1:nsp))
@@ -671,9 +671,9 @@
      end do
     end do
 !========== distributes npty,nptz initial particle distribution
-    call mpi_bcast(dist_npy(1,1), npe_yloc*nsp, mpi_integer, pe_min, &
+    call MPI_BCAST(dist_npy(1,1), npe_yloc*nsp, mpi_integer, pe_min, &
       comm, error)
-    call mpi_bcast(dist_npz(1,1), npe_zloc*nsp, mpi_integer, pe_min, &
+    call MPI_BCAST(dist_npz(1,1), npe_zloc*nsp, mpi_integer, pe_min, &
       comm, error)
     loc_npty(1:nsp) = dist_npy(imody+1, 1:nsp)
     loc_nptz(1:nsp) = dist_npz(imodz+1, 1:nsp)

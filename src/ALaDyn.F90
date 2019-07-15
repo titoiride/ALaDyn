@@ -92,13 +92,13 @@
   
   subroutine Lp_cycle
    !! LP_CYCLE: collects the Laser-plasma dynamics evolved as a standard PIC.
-   call Data_out( jump )
+   call Data_out
    do while (tnow<tmax)
    !=======================
     call lp_run( tnow, iter )
 
     call timing
-    call Data_out( jump )
+    call Data_out
 
     if (ier /= 0) then
      call error_message
@@ -118,7 +118,7 @@
     call beam_inject
     if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
    end if
-   call Data_out( jump )
+   call Data_out
    !================
    tk_ind = 0
    do while (tnow < tmax)
@@ -126,7 +126,7 @@
     call env_run( tnow, iter )
 
     call timing !iter=iter+1  tnow=tnow+dt_loc
-    call Data_out( jump )
+    call Data_out
 
     if (ier /= 0) then
      call error_message
@@ -145,14 +145,14 @@
    !if(L_intdiagnostics_pwfa) then
    !call bunch_output_struct(tdia,dtdia,tout,dtout)
    !endif
-   call bdata_out( jump )
+   call bdata_out
    t_ind = 0
 
    do while (tnow < tmax)
     call bunch_run( tnow, iter )
 
     call timing
-    call bdata_out( jump )
+    call bdata_out
 
     if (ier /= 0) then
      call error_message
@@ -165,8 +165,7 @@
 
   end subroutine
   !======================
-  subroutine Data_out( jump )
-   integer, intent (in) :: jump
+  subroutine Data_out
    integer :: i, ic, idata
 
 
@@ -192,25 +191,25 @@
      if (mod_ord == 2) then
       if (L_env_modulus) then
        i = 0
-       call env_fields_out( env, tnow, i, jump )
-       if (Two_color) call env_fields_out(env1, tnow, -1, jump) !EXIT |A|
+       call env_fields_out( env, i )
+       if (Two_color) call env_fields_out(env1 , -1 ) !EXIT |A|
       else
        if (Two_color) then
         do i = 1, 2
-         call env_two_fields_out(env, env1, tnow, i, jump)
+         call env_two_fields_out(env, env1, i )
         end do
        else
         do i = 1, 2
-         call env_fields_out(env, tnow, i, jump) !EXIT [Ar,Ai]
+         call env_fields_out( env, i ) !EXIT [Ar,Ai]
         end do
        end if
       end if
      end if
      do i = 1, nvout
       if (l_force_singlefile_output) then
-       call fields_out(ebf, tnow, i, i, jump) !i to label field name
+       call fields_out(ebf, i, i ) !i to label field name
       else
-       call fields_out_new(ebf, tnow, i, i, jump)
+       call fields_out_new( ebf, i, i )
       end if
      end do
     end if
@@ -219,18 +218,18 @@
       do i = 1, nsp
        call prl_den_energy_interp(i)
        do ic = 1, min(2, nden)
-        call den_energy_out(tnow, i, ic, ic, jump)
+        call den_energy_out( i, ic, ic )
        end do
       end do
       if (nden>2) then
        call set_wake_potential
-       call den_energy_out(tnow, 0, nden, 1, jump) !data on jc(1) for wake potential
+       call den_energy_out( 0, nden, 1 ) !data on jc(1) for wake potential
       end if
      end if
     end if
     if (hybrid) then
      do i = 1, nfcomp
-      call fluid_den_mom_out(up, tnow, i, nfcomp, jump)
+      call fluid_den_mom_out(up, i, nfcomp)
      end do
     end if
     if (ionization) call part_ionz_out(tnow)
@@ -269,9 +268,8 @@
   end subroutine
 
   !--------------------------
-  subroutine bdata_out(jump)
+  subroutine bdata_out
 
-   integer, intent (in) :: jump
    integer :: i, ic, idata
 
    idata = iout
@@ -313,45 +311,45 @@
     if (nvout>0) then
      do i = 1, min(nvout, nfield)
       if (l_force_singlefile_output) then
-       call fields_out(ebf, tnow, i, i, jump) ! second index to label field
+       call fields_out(ebf, i, i ) ! second index to label field
       else
-       call fields_out_new(ebf, tnow, i, i, jump)
+       call fields_out_new( ebf, i, i )
       end if
      end do
 
      if (l_print_j_on_grid .and. l_force_singlefile_output) then
-      call fields_out(jc, tnow, 1, 0, jump) ! 0 for Jx current
+      call fields_out(jc, 1, 0 ) ! 0 for Jx current
      else if (l_print_j_on_grid .and. l_force_singlefile_output) then
-      call fields_out_new(jc, tnow, 1, 0, jump) ! 0  to label Jx field
+      call fields_out_new(jc, 1, 0 ) ! 0  to label Jx field
      end if
 
      do i = 1, nbfield
       if (l_force_singlefile_output) then
-       call bfields_out(ebf_bunch, ebf1_bunch, tnow, i, jump)
+       call bfields_out(ebf_bunch, ebf1_bunch, i )
       else
-       call fields_out_new(ebf_bunch, tnow, i, i+6, jump)
+       call fields_out_new(ebf_bunch, i, i+6 )
       end if
      end do
     end if
     if (nden>0) then
      if (hybrid) then
       do i = 1, nfcomp
-       call fluid_den_mom_out(up, tnow, i, nfcomp, jump)
+       call fluid_den_mom_out(up, i, nfcomp)
       end do
      end if
      ic = 0
      call prl_bden_energy_interp(ic)
-     call bden_energy_out(tnow, 1, jump)
+     call bden_energy_out( 1 )
      !============= bunch density
      do i = 1, nsp
       call prl_den_energy_interp(i)
       do ic = 1, min(2, nden)
-       call den_energy_out(tnow, i, ic, ic, jump)
+       call den_energy_out( i, ic, ic )
       end do
      end do
      if (nden>2) then
       call set_wake_potential
-      call den_energy_out(tnow, 0, nden, 1, jump) !data on jc(1) for wake potential
+      call den_energy_out( 0, nden, 1 ) !data on jc(1) for wake potential
      end if
     end if
     if (nbout>0) then

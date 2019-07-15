@@ -67,10 +67,9 @@
    end if
   end subroutine
 
-  subroutine fluid_den_mom_out(fvar, tnow, cmp, flcomp, jump)
+  subroutine fluid_den_mom_out(fvar, cmp, flcomp)
    real (dp), intent (in) :: fvar(:, :, :, :)
-   real (dp), intent (in) :: tnow
-   integer, intent (in) :: cmp, flcomp, jump
+   integer, intent (in) :: cmp, flcomp
    character (9) :: fname = '         '
    character (7), dimension (4), parameter :: flvar = [ 'Fdenout', &
      'Flpxout', 'Flpyout', 'Flpzout' ]
@@ -201,9 +200,8 @@
    end if
   end subroutine
 !--------------------------
-  subroutine den_energy_out(tnow, ns_ind, cmp, cmp_loc, jump)
-   real (dp), intent (in) :: tnow
-   integer, intent (in) :: ns_ind, cmp, cmp_loc, jump
+  subroutine den_energy_out( ns_ind, cmp, cmp_loc )
+   integer, intent (in) :: ns_ind, cmp, cmp_loc
    character (9) :: fname = '         '
    character (7), dimension (1), parameter :: epot = [ 'Wakepot' ]
    character (7), dimension (2), parameter :: el1 = [ 'Edenout', &
@@ -356,10 +354,9 @@
   end subroutine
 
 !--------------------------
-  subroutine bden_energy_out(tnow, cmp_loc, jump)
+  subroutine bden_energy_out( cmp_loc )
 
-   real (dp), intent (in) :: tnow
-   integer, intent (in) :: cmp_loc, jump
+   integer, intent (in) :: cmp_loc
    character (9) :: fname = '         '
 
    integer :: ix, iy, iz, ip, iq, ipe
@@ -485,11 +482,10 @@
    end if
   end subroutine
 !--------------------------
-  subroutine ext_bfield_out(ef, tnow, f_ind, jump)
+  subroutine ext_bfield_out( ef, f_ind )
    real (dp), intent (in) :: ef(:, :, :, :)
-   real (dp), intent (in) :: tnow
    character (8) :: fname = '        '
-   integer, intent (in) :: f_ind, jump
+   integer, intent (in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
@@ -616,11 +612,10 @@
    end if
   end subroutine
 
-  subroutine fields_out(ef, tnow, f_ind, f_var, jump)
+  subroutine fields_out(ef, f_ind, f_var )
    real (dp), intent (in) :: ef(:, :, :, :)
-   real (dp), intent (in) :: tnow
    character (8) :: fname = '        '
-   integer, intent (in) :: f_ind, f_var, jump
+   integer, intent (in) :: f_ind, f_var
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
@@ -761,14 +756,13 @@
 
 !--------------------------
 
-  subroutine fields_out_new(ef, tnow, f_ind, var_ind, jump)
+  subroutine fields_out_new(ef, f_ind, var_ind )
    real (dp), intent (in) :: ef(:, :, :, :)
-   real (dp), intent (in) :: tnow
    character (8) :: fname = '        '
    character (12) :: fnamel = '            '
    character (17) :: fname_out = '                 '
    character (21) :: fname_outl = '                     '
-   integer, intent (in) :: f_ind, var_ind, jump
+   integer, intent (in) :: f_ind, var_ind
    integer :: ix, iy, iz, iq
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
@@ -926,11 +920,10 @@
 
 !--------------------------
 
-  subroutine bfields_out(ef, ef1, tnow, f_ind, jump)
+  subroutine bfields_out(ef, ef1, f_ind )
    real (dp), intent (in) :: ef(:, :, :, :), ef1(:, :, :, :)
-   real (dp), intent (in) :: tnow
    character (8) :: fname = '        '
-   integer, intent (in) :: f_ind, jump
+   integer, intent (in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
@@ -1084,11 +1077,10 @@
   end subroutine
 
 !--------------------------
-  subroutine env_two_fields_out(ef, ef1, tnow, f_ind, jump)
+  subroutine env_two_fields_out(ef, ef1, f_ind )
    real (dp), intent (in) :: ef(:, :, :, :), ef1(:, :, :, :)
-   real (dp), intent (in) :: tnow
    character (9) :: fname = '         '
-   integer, intent (in) :: f_ind, jump
+   integer, intent (in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3)
@@ -1224,11 +1216,10 @@
    end if
   end subroutine
 
-  subroutine env_fields_out(ef, tnow, f_ind, jump)
+  subroutine env_fields_out(ef, f_ind )
    real (dp), intent (in) :: ef(:, :, :, :)
-   real (dp), intent (in) :: tnow
    character (9) :: fname = '         '
-   integer, intent (in) :: f_ind, jump
+   integer, intent (in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3)
@@ -1362,16 +1353,16 @@
    end if
   end subroutine
 !================================
-  subroutine part_pdata_out(tnow, xmin_out, xmax_out, ymax_out, pid, &
+  subroutine part_pdata_out(timenow, xmin_out, xmax_out, ymax_out, pid, &
     jmp)
 
-   character (6), dimension (4), parameter :: part = [ 'Elpout', &
+   character (6), dimension (4), parameter :: part_files = [ 'Elpout', &
      'H1pout', 'Prpout', 'H2pout' ]
    character (8) :: fname
    character (17) :: fname_out
    character (12) :: fnamel
    character (21) :: fname_outl
-   real (dp), intent (in) :: tnow, xmin_out, xmax_out, ymax_out
+   real (dp), intent (in) :: timenow, xmin_out, xmax_out, ymax_out
    integer, intent (in) :: pid, jmp
    real (sp), allocatable :: pdata(:)
    integer (dp) :: nptot_global_reduced
@@ -1457,7 +1448,7 @@
      ik
 
    call endian(i_end)
-   part_real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
+   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
      real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
      real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
@@ -1468,8 +1459,8 @@
      curr_ndim, mp_per_cell(pid), lpf_ord, der_ord, iform, ndv, &
      file_version, i_end, nx_loc, ny_loc, nz_loc, 0, 0 ]
 
-   write (fname, '(a6,i2.2)') part(pid), iout !serve sempre
-   write (fnamel, '(a6,i2.2,a1,i3.3)') part(pid), iout, '_', imodz !usare con mpi_write_part_col
+   write (fname, '(a6,i2.2)') part_files(pid), iout !serve sempre
+   write (fnamel, '(a6,i2.2,a1,i3.3)') part_files(pid), iout, '_', imodz !usare con mpi_write_part_col
    fname_out = foldername // '/' // fname // '.bin'
    fname_outl = foldername // '/' // fnamel // '.bin'
    disp = 0
@@ -1515,14 +1506,14 @@
 
 !--------------------------
 
-  subroutine part_bdata_out(tnow, pid, jmp)
+  subroutine part_bdata_out(timenow, pid, jmp)
 
-   character (9), dimension (5), parameter :: part = [ 'PSBunch1_', &
+   character (9), dimension (5), parameter :: part_files = [ 'PSBunch1_', &
      'PSBunch2_', 'PSBunch3_', 'PSBunch4_', 'PSBunch5_' ]
    character (2) :: num2str
    character (3) :: num3str
    character (20) :: fname_out
-   real (dp), intent (in) :: tnow
+   real (dp), intent (in) :: timenow
    integer, intent (in) :: pid, jmp
    real (sp), allocatable :: pdata(:)
    integer :: ik, p, q, np, ip, ip_max, nptot
@@ -1568,7 +1559,7 @@
    call endian(i_end)
    real_par = 0.0
 
-   real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
+   real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
      real(lam0,sp), real(e0,sp), real(ompe,sp), real(np_per_cell,sp), &
@@ -1581,11 +1572,11 @@
 
    write (num2str, '(i2.2)') iout
    write (num3str, '(i3.3)') imodz
-   fname_out = foldername // '/' // part(pid) // num2str // '.bin'
+   fname_out = foldername // '/' // part_files(pid) // num2str // '.bin'
 
    disp = 0
    if (pe0) then
-    open (10, file=foldername//'/'//part(pid)//num2str//'.dat', &
+    open (10, file=foldername//'/'//part_files(pid)//num2str//'.dat', &
       form='formatted')
     write (10, *) ' Integer parameters'
     write (10, '(4i10)') int_par
@@ -1593,7 +1584,7 @@
     write (10, '(4e14.5)') real_par
     close (10)
     write (6, *) 'Particles param written on file: ' // foldername // &
-      '/' // part(pid) // num2str // '.dat'
+      '/' // part_files(pid) // num2str // '.dat'
    else
     disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write
    end if
@@ -1605,17 +1596,17 @@
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
     write (6, *) 'Particles data written on file: ' // foldername // &
-      '/' // part(pid) // num2str // '.bin'
+      '/' // part_files(pid) // num2str // '.bin'
     write (6, *) ' Output logical flag ', l_force_singlefile_output
    end if
   end subroutine
 !--------------------------
-  subroutine part_high_gamma_out(gam_in, tnow)
+  subroutine part_high_gamma_out(gam_in, timenow)
 
-   character (8), dimension (1), parameter :: part = [ 'E_hg_out' ]
+   character (8), dimension (1), parameter :: part_files = [ 'E_hg_out' ]
    character (10) :: fname
    character (19) :: fname_out
-   real (dp), intent (in) :: gam_in, tnow
+   real (dp), intent (in) :: gam_in, timenow
    real (sp), allocatable :: pdata(:)
    integer (dp) :: nptot_global_reduced
    integer :: id_ch, ik, p, q, ip, ip_max, nptot
@@ -1697,7 +1688,7 @@
    int_par = 0
    call endian(i_end)
 
-   part_real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
+   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
      real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
      real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
@@ -1708,7 +1699,7 @@
      curr_ndim, mp_per_cell(1), lpf_ord, der_ord, iform, ndv, &
      file_version, i_end, nx_loc, ny_loc, nz_loc, 0, 0 ]
 
-   write (fname, '(a8,i2.2)') part(1), iout !serve sempre
+   write (fname, '(a8,i2.2)') part_files(1), iout !serve sempre
    fname_out = foldername // '/' // fname // '.bin'
    disp = 0
    if (pe0) then
@@ -1739,12 +1730,12 @@
    end if
   end subroutine
 !==============================================
-  subroutine part_ionz_out(tnow)
+  subroutine part_ionz_out(timenow)
 
-   character (8), dimension (1), parameter :: part = [ 'Eionzout' ]
+   character (8), dimension (1), parameter :: part_files = [ 'Eionzout' ]
    character (10) :: fname
    character (19) :: fname_out
-   real (dp), intent (in) :: tnow
+   real (dp), intent (in) :: timenow
    real (sp), allocatable :: pdata(:)
    integer (dp) :: nptot_global_reduced
    integer :: id_ch, ik, p, q, ip, ip_max, nptot
@@ -1809,7 +1800,7 @@
    int_par = 0
    call endian(i_end)
 
-   part_real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
+   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
      real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
      real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
@@ -1821,7 +1812,7 @@
      curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, &
      ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, 0 ]
 
-   write (fname, '(a8,i2.2)') part(1), iout !serve sempre
+   write (fname, '(a8,i2.2)') part_files(1), iout !serve sempre
    fname_out = foldername // '/' // fname // '.bin'
    disp = 0
    if (pe0) then

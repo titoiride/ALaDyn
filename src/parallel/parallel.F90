@@ -569,7 +569,7 @@
     end do
    end if
 
-   call mpi_bcast(nc, nproc, mpi_integer, pe_min, comm, error)
+   call MPI_BCAST(nc, nproc, mpi_integer, pe_min, comm, error)
 
   end subroutine
 
@@ -729,14 +729,14 @@
    integer, intent (in) :: nt
    integer, intent (inout) :: mydat(nt)
 
-   call mpi_bcast(mydat, nt, mpi_integer, pe_min, comm, error)
+   call MPI_BCAST(mydat, nt, mpi_integer, pe_min, comm, error)
 
   end subroutine
 
   subroutine int_bcast(mydat)
    integer, intent (in) :: mydat
 
-   call mpi_bcast(mydat, 1, mpi_integer, pe_min, comm, error)
+   call MPI_BCAST(mydat, 1, mpi_integer, pe_min, comm, error)
 
   end subroutine
 
@@ -789,56 +789,56 @@
 #endif
 
 
-  subroutine allreduce_sint(ib, dt0, dt)
+  subroutine allreduce_sint(ib, dt0, dt_tot)
 
    integer, intent (in) :: ib
    integer, intent (in) :: dt0
-   integer, intent (out) :: dt
+   integer, intent (out) :: dt_tot
 
    if (prl) then
     select case (ib)
     case (-1) !---------------------------------------------
 
-     call mpi_reduce(dt0, dt, 1, mpi_integer, mpi_min, pe_min, comm, &
+     call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_min, pe_min, comm, &
        error)
     case (0) 
 
-     call mpi_reduce(dt0, dt, 1, mpi_integer, mpi_sum, pe_min, comm, &
+     call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_sum, pe_min, comm, &
        error)
     case (1) 
 
-     call mpi_reduce(dt0, dt, 1, mpi_integer, mpi_max, pe_min, comm, &
+     call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_max, pe_min, comm, &
        error)
     end select
-    call mpi_bcast(dt, 1, mpi_integer, pe_min, comm, error)
+    call MPI_BCAST(dt_tot, 1, mpi_integer, pe_min, comm, error)
    else
-    dt = dt0
+    dt_tot = dt0
    end if
 !min
   end subroutine
 
-  subroutine allreduce_vint(ib, dt0, dt, nt)
+  subroutine allreduce_vint(ib, dt0, dt_tot, nt)
 !sum
    integer, intent (in) :: ib, nt
    integer, intent (in) :: dt0(nt)
-   integer, intent (out) :: dt(nt)
+   integer, intent (out) :: dt_tot(nt)
 
    if (prl) then
     select case (ib)
     case (-1) !max
 
-     call mpi_reduce(dt0, dt, nt, mpi_integer, mpi_min, pe_min, comm, &
+     call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_min, pe_min, comm, &
        error)
     case (0) 
 !----------------------------------------
-     call mpi_reduce(dt0, dt, nt, mpi_integer, mpi_sum, pe_min, comm, &
+     call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_sum, pe_min, comm, &
        error)
     case (1) 
 
-     call mpi_reduce(dt0, dt, nt, mpi_integer, mpi_max, pe_min, comm, &
+     call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_max, pe_min, comm, &
        error)
     end select
-    call mpi_bcast(dt, nt, mpi_integer, pe_min, comm, error)
+    call MPI_BCAST(dt_tot, nt, mpi_integer, pe_min, comm, error)
    else
     dt = dt0
    end if
@@ -852,49 +852,49 @@
 !sum
    lenw = n1*n2*n3*nc
 
-   call mpi_bcast(dat0(1,1,1,1), lenw, mpi_sd, pe_min, comm, error)
+   call MPI_BCAST(dat0(1,1,1,1), lenw, mpi_sd, pe_min, comm, error)
 !max
   end subroutine
 
-  subroutine bcast_realv_sum(ib, dt_prl, dt, nt)
+  subroutine bcast_realv_sum(ib, dt_prl, dt_tot, nt)
 
    logical, intent (in) :: ib
    integer, intent (in) :: nt
    real (dp), intent (in) :: dt_prl(nt)
-   real (dp), intent (out) :: dt(nt)
+   real (dp), intent (out) :: dt_tot(nt)
 
    if (prl) then
 
-    call mpi_reduce(dt_prl, dt, nt, mpi_sd, mpi_sum, pe_min, comm, &
+    call MPI_REDUCE(dt_prl, dt_tot, nt, mpi_sd, mpi_sum, pe_min, comm, &
       error)
-    if (ib) call mpi_bcast(dt, nt, mpi_sd, pe_min, comm, error)
+    if (ib) call MPI_BCAST(dt_tot, nt, mpi_sd, pe_min, comm, error)
    else
-    dt = dt_prl
+    dt_tot = dt_prl
    end if
 
   end subroutine
 
-  subroutine bcast_int_sum(dt_prl, dt)
+  subroutine bcast_int_sum(dt_prl, dt_tot)
 
    integer, intent (in) :: dt_prl
-   integer, intent (out) :: dt
+   integer, intent (out) :: dt_tot
 
    if (prl) then
 
-    call mpi_reduce(dt_prl, dt, 1, mpi_integer, mpi_sum, pe_min, comm, &
+    call MPI_REDUCE(dt_prl, dt_tot, 1, mpi_integer, mpi_sum, pe_min, comm, &
       error)
-    call mpi_bcast(dt, 1, mpi_integer, pe_min, comm, error)
+    call MPI_BCAST(dt, 1, mpi_integer, pe_min, comm, error)
    else
     dt = dt_prl
    end if
   end subroutine
 
-  subroutine real_bcast(dt, ndt)
+  subroutine real_bcast(dt_tot, ndt)
 
    integer, intent (in) :: ndt
-   real (dp) :: dt(ndt)
+   real (dp) :: dt_tot(ndt)
 
-   call mpi_bcast(dt, ndt, mpi_sd, pe_min, comm, error)
+   call MPI_BCAST(dt_tot, ndt, mpi_sd, pe_min, comm, error)
 
   end subroutine
 

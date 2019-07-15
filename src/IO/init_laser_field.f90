@@ -144,7 +144,7 @@
 
    real (dp), intent (out) :: part_in
    integer :: ic, pw_ind, i1, i2, j1, k1
-   real (dp) :: eps, sigm, xm, tt, tau, tau1, lp1_amp, loc_delay(3)
+   real (dp) :: eps, sigm, xm, tt, tau, tau1, loc_delay(3)
 
    lp_amp = a0
    lp1_amp = a1
