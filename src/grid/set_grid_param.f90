@@ -18,6 +18,9 @@
 !  You should have received a copy of the GNU General Public License                                  !
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
+
+
+
 !===================================================
 !     Local grid structure under mpi domain decomposition
 !============== 
@@ -45,10 +48,10 @@
 
  contains
 
-!--------------------------
-! allocates and defines global (x,y,z)coordinates for uniform or stretched
-! configurations
-!--------------------------
+  !===========================================================
+  ! allocates and defines global (x,y,z)coordinates for uniform or stretched
+  ! configurations
+  !===========================================================
   subroutine set_grid(n1, n2, n3, ib, x_stretch, y_stretch, xres, yxres, &
     zxres)
    integer, intent (in) :: n1, n2, n3, ib, x_stretch, y_stretch
@@ -60,7 +63,7 @@
      dz1(n3+1))
    allocate (dx1h(n1+1), dy1h(n2+1), dz1h(n3+1))
    allocate (xh(n1+1), yh(n2+1), zh(n3+1))
-!-----------------------------------
+   !-----------------------------------
    aph = acos(-1.0)*0.4
    dxi = 1.
    dyi = 1.
@@ -131,11 +134,11 @@
      dy1(i) = 1.
      dy1h(i) = 1.
     end do
-!============== Stretched grid 
-!   index      [1:y_stretch]              [ns1:n2+1] 
-!   coordinate [y(1): sm=y(y_stretch+1]   [sp: y(n2+1)=ymax]
-!   unstretched: [y_stretch+1:ns1-1=n2+1-(y_stretch1)]
-!========================
+    !============== Stretched grid 
+    !   index      [1:y_stretch]              [ns1:n2+1] 
+    !   coordinate [y(1): sm=y(y_stretch+1]   [sp: y(n2+1)=ymax]
+    !   unstretched: [y_stretch+1:ns1-1=n2+1-(y_stretch1)]
+    !========================
     ns1 = n2 + 1 - y_stretch
     if (y_stretch>0) then
      dyi = aph/real(y_stretch, dp)
@@ -223,8 +226,8 @@
     lz_box = zmax - zmin
    end if
   end subroutine
-!================
-!================
+  !================
+  !================
   subroutine mpi_loc_grid(n1_loc, n2_loc, n3_loc, npex, npey, npez)
 
    integer, intent (in) :: n1_loc, n2_loc, n3_loc, npex, npey, npez
@@ -308,8 +311,8 @@
    integer, intent (in) :: npey, npez, npex, sh
    integer :: i, ii, p, ip, n_loc
 
-! Defines initial local p-grid coordinate and loc n_cell
-! y-grid decomposed on n2_loc uniform grid size
+   ! Defines initial local p-grid coordinate and loc n_cell
+   ! y-grid decomposed on n2_loc uniform grid size
    loc_ygrid(0)%gmin = y(1)
    ip = loc_ygrid(0)%ng
    n_loc = ip
@@ -368,7 +371,7 @@
     loc_ygrid(p)%p_ind(2) = n_loc + loc_ygrid(p)%p_ind(1) - 1
 
    end if
-!=========================
+   !=========================
    loc_zgrid(0)%gmin = z(1)
    ip = loc_zgrid(0)%ng
    n_loc = ip
@@ -422,7 +425,7 @@
     loc_zgrid(p)%p_ind(1) = sh
     loc_zgrid(p)%p_ind(2) = n_loc + loc_zgrid(p)%p_ind(1) - 1
    end if
-!======================
+   !======================
    loc_xgrid(0)%gmin = x(1)
    ip = loc_xgrid(0)%ng
    n_loc = ip
@@ -477,7 +480,7 @@
     loc_xgrid(p)%p_ind(2) = n_loc + loc_xgrid(p)%p_ind(1) - 1
    end if
   end subroutine
-!======================
+  !======================
   subroutine set_fxgrid(npex, sh)
    integer, intent (in) :: npex, sh
    integer :: i, ii, p, ip, n_loc
@@ -614,10 +617,7 @@
    nxp = loc_xgrid(imodx)%p_ind(2) !Nx_loc+2
 
   end subroutine
-!=====
-!--------------------------
-
-!--------------------------
+  !====================
   subroutine set_ftgrid(n1, n2, n3)
    integer, intent (in) :: n1, n2, n3
    integer :: i
@@ -637,10 +637,10 @@
    skx(:, 0:2) = 0.0
    sky(:, 0:2) = 0.0
    skz(:, 0:2) = 0.0
-!================
-!  Sets wave number grid for all configurations
-!=============================================
-!case(0)  ! staggered k-grid
+   !================
+   !  Sets wave number grid for all configurations
+   !=============================================
+   !case(0)  ! staggered k-grid
    wkx = 2.*acos(-1.)/lx_box !lxbox=x(n1+1)-x(1)
    wky = 2.*acos(-1.)/ly_box !lybox=y(n2+1)-y(1)
    wkz = wky
@@ -670,7 +670,7 @@
     ak2z(1:n3, 0) = akz(1:n3, 0)*akz(1:n3, 0)
    end if
 
-!case(1)    !standard FT k-grid
+   !case(1)    !standard FT k-grid
    do i = 1, n1/2
     akx(i, 1) = wkx*real(i-1, dp)
     akx(n1+2-i, 1) = -akx(i, 1)
@@ -698,7 +698,7 @@
     ak2z(1:n3, 1) = akz(1:n3, 1)*akz(1:n3, 1)
    end if
 
-!case(2)  ! for the sine/cosine transform
+   !case(2)  ! for the sine/cosine transform
    wkx = acos(-1.0)/lx_box
    wky = acos(-1.0)/ly_box
    wkz = wky
@@ -721,5 +721,5 @@
     ak2z(1:n3, 2) = akz(1:n3, 2)*akz(1:n3, 2)
    end if
   end subroutine
-!=============================
+  !=============================
  end module

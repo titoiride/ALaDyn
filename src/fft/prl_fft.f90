@@ -32,8 +32,8 @@
   subroutine mpi_ftw_alloc(n1, n2, n2_loc, n3, n3_loc)
    integer, intent (in) :: n1, n2, n2_loc, n3, n3_loc
    integer :: n1_xloc, n2_xloc, lenw
-!=======================
-! loc_grid allready define
+   !=======================
+   ! loc_grid allready define
 
 
    n1_xloc = n1/npe_yloc
@@ -44,7 +44,7 @@
    allocate (fp2(n2_xloc,n2_loc,n3))
 
   end subroutine
-!==========================
+  !==========================
   subroutine mpi_ftw_dalloc
 
    if (allocated(faux1)) deallocate (faux1)
@@ -54,7 +54,7 @@
 
   end subroutine
 
-!===================
+  !===================
   subroutine swap_yx_3data(waux, wdata, n1_loc, n2, n3)
 
    integer, intent (in) :: n1_loc, n2, n3
@@ -64,8 +64,8 @@
    integer :: pes, per, ip
    integer :: i1, j1, lenws, lenwr, tag, n2_xloc, iy, ix, iz
    integer :: kk
-!-----------------
-!From waux(1:n1,1:n2_xloc) to wdata(1:n1_loc,1:n2)
+   !-----------------
+   !From waux(1:n1,1:n2_xloc) to wdata(1:n1_loc,1:n2)
    n2_xloc = n2/npe_xloc
 
    do iz = 1, n3
@@ -125,8 +125,8 @@
    integer :: pes, per, ip
    integer :: i1, j1, lenws, lenwr, tag, iy, ix, iz
    integer :: kk
-!-----------------
-!From wp1(1:n1_loc,1:n2) to wp2(1:n1,1:n2_loc,ic)
+   !-----------------
+   !From wp1(1:n1_loc,1:n2) to wp2(1:n1,1:n2_loc,ic)
 
    do iz = 1, n3_loc
     do iy = 1, n2_loc
@@ -185,8 +185,8 @@
    integer :: pes, per, ip
    integer :: i1, lenw, tag, iy, ix, iz, iz1
    integer :: kk
-!-----------------
-!From wp1(1:n1_loc,1:n3) to wp2(1:n1,1:n3_loc)
+   !-----------------
+   !From wp1(1:n1_loc,1:n3) to wp2(1:n1,1:n3_loc)
    do iz = 1, n3_loc
     iz1 = iz + n3_loc*imodz
     do iy = 1, n2_loc
@@ -243,10 +243,10 @@
    integer :: pes, per, ip
    integer :: i1, j1, lenws, lenwr, tag, iy, ix, iz, n2_xloc
    integer :: kk
-!-----------------
-!enters wdata(n1_loc,n2,n3)
-!From wdata(1:n1_loc,1:n2) to waux(1:n1,1:n2_xloc)
-!n2_xloc=n2/npe_xloc
+   !-----------------
+   !enters wdata(n1_loc,n2,n3)
+   !From wdata(1:n1_loc,1:n2) to waux(1:n1,1:n2_xloc)
+   !n2_xloc=n2/npe_xloc
 
    n2_xloc = n2/npe_xloc
    kk = 0
@@ -309,8 +309,8 @@
    integer :: pes, per, ip
    integer :: i1, j1, lenws, lenwr, tag, iy, ix, iz
    integer :: kk
-!-----------------
-!From (1:n1,1:n2_loc) to (1:n1_loc,1:n2)
+   !-----------------
+   !From (1:n1,1:n2_loc) to (1:n1_loc,1:n2)
 
    kk = 0
    do iz = 1, n3_loc
@@ -362,7 +362,7 @@
     end do
    end do
   end subroutine
-!=====================
+  !=====================
   subroutine swap_xz_3data_inv(wp2, wp1, n1_loc, n2_loc, n3_loc)
 
    integer, intent (in) :: n1_loc, n2_loc, n3_loc
@@ -372,8 +372,8 @@
    integer :: pes, per, ip
    integer :: i1, lenw, tag, iy, ix, iz, iz1
    integer :: kk, k1
-!-----------------
-!From (1:n1,1:n3_loc) to (1:n1_loc,1:n3)
+   !-----------------
+   !From (1:n1,1:n3_loc) to (1:n1_loc,1:n3)
 
    do iz = 1, n3_loc
     k1 = iz + imodz*n3_loc
@@ -421,14 +421,14 @@
     end do
    end do
   end subroutine
-!====================================
+  !====================================
   subroutine pftw2d_sc(w, n1, n2, n2_loc, n3, n3_loc, is, sym)
    real (dp), intent (inout) :: w(:, :, :)
    integer, intent (in) :: n1, n2, n2_loc, n3, n3_loc, is, sym
    integer :: n1_loc
-!performs a 2D FFT sin/cosine`on the (y,z) coordinates for a 3D data (x,y,z)
-!sym=1 for a sine transform
-!sym=2 for a cosine transform
+    !performs a 2D FFT sin/cosine`on the (y,z) coordinates for a 3D data (x,y,z)
+    !sym=1 for a sine transform
+    !sym=2 for a cosine transform
 
    select case (is)
    case (-1) !
@@ -442,7 +442,7 @@
     else
      call ftw1d_sc(w, n1, n2, n3_loc, is, 2, sym)
     end if
-!=====================
+    !=====================
     if (n3<=2) return
     if (npe_zloc>1) then
      n1_loc = n1/npe_zloc
@@ -452,10 +452,10 @@
     else
      call ftw1d_sc(w, n1, n2_loc, n3, is, 3, sym)
     end if
-!======== exit w(loc)
+    !======== exit w(loc)
    case (1)
-! enters w(loc)
-!========================
+    ! enters w(loc)
+    !========================
     if (n3>1) then
      if (npe_zloc>1) then
       n1_loc = n1/npe_zloc
@@ -466,7 +466,7 @@
       call ftw1d_sc(w, n1, n2_loc, n3, is, 3, sym)
      end if
     end if
-!=================
+    !=================
     if (n2>1) then
      if (prly) then
       n1_loc = n1/npe_yloc
@@ -478,10 +478,10 @@
      end if
     end if
    end select
-!===================
-!exit w(loc)
+   !===================
+   !exit w(loc)
   end subroutine
-!========================
+  !========================
   subroutine pftw3d_sc(w, n1, n2, n2_loc, n3, n3_loc, is, sym)
    real (dp), intent (inout) :: w(:, :, :)
    integer, intent (in) :: n1, n2, n2_loc, n3, n3_loc, is, sym
@@ -492,15 +492,15 @@
     call ftw1d_sc(w, n1, n2_loc, n3_loc, is, 1, sym)
     call pftw2d_sc(w, n1, n2, n2_loc, n3, n3_loc, is, sym)
    case (1)
-! enters w(loc)
+    ! enters w(loc)
     call pftw2d_sc(w, n1, n2, n2_loc, n3, n3_loc, is, sym)
-!========================
+!   ========================
     call ftw1d_sc(w, n1, n2_loc, n3_loc, is, 1, sym)
    end select
-!===================
-!exit w(loc)
+   !===================
+   !exit w(loc)
   end subroutine
-!============================
+  !============================
   subroutine pftw2d(w, n1, n2, n2_loc, n3, n3_loc, is)
    real (dp), intent (inout) :: w(:, :, :)
    integer, intent (in) :: n1, n2, n2_loc, n3, n3_loc, is
@@ -518,7 +518,7 @@
     else
      call ftw1d(w, n1, n2, n3_loc, is, dir)
     end if
-!=====================
+    !=====================
     if (n3<=2) return
     dir = 3
     if (npe_zloc>1) then
@@ -529,10 +529,10 @@
     else
      call ftw1d(w, n1, n2_loc, n3, is, dir)
     end if
-!======== exit w(loc)
+    !======== exit w(loc)
    case (1)
-! enters w(loc)
-!========================
+    ! enters w(loc)
+    !========================
     if (n3>1) then
      dir = 3
      if (npe_zloc>1) then
@@ -544,7 +544,7 @@
       call ftw1d(w, n1, n2_loc, n3, is, dir)
      end if
     end if
-!=================
+    !=================
     if (n2>1) then
      dir = 2
      if (prly) then
@@ -557,10 +557,10 @@
      end if
     end if
    end select
-!===================
-!exit w(loc)
+   !===================
+   !exit w(loc)
   end subroutine
-!====================================
+  !====================================
   subroutine pftw3d(w, n1, n2, n2_loc, n3, n3_loc, is)
    real (dp), intent (inout) :: w(:, :, :)
    integer, intent (in) :: n1, n2, n2_loc, n3, n3_loc, is
@@ -578,8 +578,7 @@
 
     call ftw1d(w, n1, n2_loc, n3_loc, is, 1)
    end select
-!===================
-!exit w(loc)
+   !===================
+   !exit w(loc)
   end subroutine
  end module
-!================================================================

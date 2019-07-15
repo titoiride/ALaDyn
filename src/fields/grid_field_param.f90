@@ -32,11 +32,11 @@
   real (dp) :: hord_der2, opt_der2, opt_der1, aph_der, avg_cmp, &
     cmp_coeff(2), se_coeff(2), se4_coeff(2), upw(4)
  contains
-!==========================================
+  !==========================================
   subroutine set_field_param
    real (dp) :: nu
    integer :: ndmx, ng
-!---------------
+   !==================
    nu = cfl
    if (ndim>1) nu = cfl*yx_rat/sqrt(yx_rat*yx_rat+float(ndim)-1.)
 
@@ -59,18 +59,18 @@
     aph_der = cmp_coeff(2)*avg_cmp
     opt_der1 = 1.
    case (3)
-!                        nu=cfl*rat/sqrt(rat*rat+nd-1) multi-D optimized
-!                        coefficient
-!=====================================
-!For der_rder=3 opt first derivative on Yee grid
+    !                        nu=cfl*rat/sqrt(rat*rat+nd-1) multi-D optimized
+    !                        coefficient
+    !=====================================
+    !For der_rder=3 opt first derivative on Yee grid
     cmp_coeff(1) = 1. + 0.125*(1.-nu*nu) !rot(E) and rot(B) Modified along x-coord
     cmp_coeff(2) = (1.-cmp_coeff(1))/3. !-(1-nu*nu)/24
     opt_der2 = -(1.-nu*nu)/12.
     hord_der2 = opt_der2
-!For der_order=3 opt second derivative 
+    !For der_order=3 opt second derivative 
     opt_der1 = (4.-nu*nu)/3.
-!For der_rder=3 opt for centered first derivative 
-!=========================
+    !For der_rder=3 opt for centered first derivative 
+    !=========================
     avg_cmp = 1./(cmp_coeff(1)+cmp_coeff(2))
     aph_der = cmp_coeff(2)*avg_cmp
     if (comoving) then
@@ -78,12 +78,12 @@
      cmp_coeff(2) = 1./8.
     end if
    case (4)
-!For forth-order first derivative on Yee grid
+    !For forth-order first derivative on Yee grid
     cmp_coeff(1) = 1.125 !9/8(SE4)
     cmp_coeff(2) = (1.-cmp_coeff(1))/3. !-1./24
-!For forth-order second derivative
+    !For forth-order second derivative
     hord_der2 = -1./12.
-!===================================
+    !===================================
     avg_cmp = 1./(cmp_coeff(1)+cmp_coeff(2))
     aph_der = cmp_coeff(2)*avg_cmp
     se4_coeff(1) = 4./3.
@@ -92,7 +92,7 @@
     upw(2) = 0.5
     upw(3) = -1.
     upw(4) = -(upw(1)+upw(2)+upw(3))
-!------------------------------
+    !------------------------------
    end select
    se_coeff(1:2) = cmp_coeff(1:2)
 

@@ -26,18 +26,18 @@
 
   implicit none
 
-!=======================
+  !=======================
   type (grid), allocatable :: loc_ygrid(:), loc_zgrid(:), loc_xgrid(:)
   type (sgrid) :: str_xgrid, str_ygrid, str_zgrid
   real (sp), allocatable :: wdata(:), gwdata(:)
   integer, allocatable :: nxh(:), nyh(:), nzh(:)
 
-!fft grid
+  !fft grid
   real (dp), allocatable :: akx(:, :), aky(:, :), akz(:, :), sty(:, :)
   real (dp), allocatable :: ak2x(:, :), ak2y(:, :), ak2z(:, :), kern(:), &
     kern2(:, :)
   real (dp), allocatable :: skx(:, :), sky(:, :), skz(:, :)
-!==================
+  !==================
   real (dp), allocatable :: loc_yg(:, :, :), loc_zg(:, :, :), &
     loc_xg(:, :, :)
   real (dp), allocatable :: x(:), xw(:), y(:), z(:), dx1(:), dy1(:), &
@@ -52,10 +52,10 @@
     dzi_inv
   real (dp) :: aph, l_s, lx_s, dxi, dyi, dzi, sy_rat, sz_rat, sx_rat
   real (dp) :: xmn, ymn, zmn
-!=============================
+  !=============================
   integer :: nxp, nyp, nzp
   integer :: loc_ygr_max, loc_zgr_max, loc_xgr_max
   integer :: ix1, ix2, jy1, jy2, kz1, kz2, n_str
-!--------------------------
+  !--------------------------
  end module
 

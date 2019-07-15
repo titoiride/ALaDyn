@@ -27,8 +27,7 @@
   implicit none
 
  contains
-!-------------------
-!+++++++++++++++++++++
+  !=========================================
 
   subroutine lp_pulse(lp_mod, part_in)
 
@@ -36,8 +35,8 @@
    real (dp), intent (out) :: part_in
    integer :: ic, lp_ind, i1, i2
    real (dp) :: angle, shx_lp, sigm, eps, xm, tt, tau, tau1
-!===========================
-! field grid index defined on set_pgrid
+   !===========================
+   ! field grid index defined on set_pgrid
 
    i1 = loc_xgrid(imodx)%p_ind(1)
    i2 = loc_xgrid(imodx)%p_ind(2)
@@ -52,14 +51,14 @@
    end if
    lp_amp = oml*a0
    lp1_amp = om1*a1
-!=====================
+   !=====================
    lp_in(1) = xc_lp - tau
    lp_end(1) = xc_lp + tau
    eps = 1./(oml*w0_y)
    sigm = lam0/w0_x
    angle = incid_angle
    xf = xc_lp + t0_lp
-!=======================
+   !=======================
    lp_ind = lp_mod
    shx_lp = 0.0
    xc_loc(1) = xc_lp
@@ -88,7 +87,7 @@
        z0_cent(ic))
     end do
    end if
-!=================TWO-COLOR
+   !=================TWO-COLOR
    if (Two_color) then
     xc1_lp = xc_loc(nb_laser) - lp_offset
     xf1 = xc1_lp + t1_lp
@@ -101,10 +100,10 @@
       xc1_lp
    end if
 
-!==================================
+   !==================================
    part_in = lp_end(1) + lpx(7)
   end subroutine
-!===========================
+  !===========================
   subroutine cp_pulse(cp_mod, part_in)
 
    real (dp), intent (out) :: part_in
@@ -113,7 +112,7 @@
    real (dp) :: angle, shx_cp, eps, sigm, xm, tau, tt
 
    lp_amp = oml*a0/sqrt(2.)
-!-------------------------
+   !===========================
    i1 = loc_xgrid(imodx)%p_ind(1)
    i2 = loc_xgrid(imodx)%p_ind(2)
    xm = loc_xgrid(imodx)%gmin ! => field index i1
@@ -130,16 +129,16 @@
    if (lp_amp>0.0) then
     cp_ind = cp_mod
     if (plane_wave) cp_ind = 0
-!=======================
+    !=======================
     call init_cp_fields(ebf, lp_amp, tt, t0_lp, w0_x, w0_y, xf, angle, &
       shx_cp, cp_ind, i1, i2)
-!=================def part distr points
+    !=================def part distr points
     lp_end = xm
    end if
-!======================
+   !======================
    part_in = lp_end(1) + lpx(7)
   end subroutine
-!-------------------------
+  !======================
   subroutine set_envelope(part_in)
 
    real (dp), intent (out) :: part_in
@@ -148,15 +147,15 @@
 
    lp_amp = a0
    lp1_amp = a1
-!===========================
-! field grid index defined on set_pgrid
+   !===========================
+   ! field grid index defined on set_pgrid
 
    j1 = jy1
    k1 = kz1
    i1 = ix1
    i2 = nxp
    xm = loc_xgrid(imodx)%gmin
-!=========================
+   !=========================
    tt = 0.0
    pw_ind = 1
    if (plane_wave) pw_ind = 0
@@ -172,7 +171,7 @@
    eps = 1./(oml*w0_y)
    sigm = lam0/w0_x
    xf = xc_lp + t0_lp
-!=======================
+   !=======================
    xc_loc(1) = xc_lp
    xf_loc(1) = xf
    env(:, :, :, :) = 0.0
@@ -183,7 +182,7 @@
     else
      call init_envelope_field(env, a0, dt, tt, t0_lp, w0_x, w0_y, xf, &
        oml, pw_ind, i1, i2, y0_cent(1), z0_cent(1))
-!call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
+     !call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
     end if
    end if
    if (nb_laser>1) then
@@ -208,7 +207,7 @@
     env(i1:i2, j1:nyp, k1:nzp, 3:4) = (env(i1:i2,j1:nyp,k1:nzp,1:2)-env( &
       i1:i2,j1:nyp,k1:nzp,3:4))/dt
    end if
-!=================TWO-COLOR
+   !=================TWO-COLOR
    if (Two_color) then
     env1(:, :, :, :) = 0.0
     xc1_lp = xc_loc(nb_laser) - lp_offset
@@ -226,10 +225,10 @@
      end if
     end if
    end if
-!=======================
-!==========================
+   !=======================
+   !==========================
    ebf = 0.0
-!=====================
+   !=====================
    if (pe0) then
     open (26, file='Initial_env_info.dat')
     write (26, *) 'number ', nb_laser, 'LP envelope injected '
@@ -253,7 +252,7 @@
     close (26)
    end if
    part_in = lp_end(1) + lpx(7)
-!=================def part distr points
+   !=================def part distr points
   end subroutine
 
  end module

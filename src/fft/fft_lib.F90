@@ -43,7 +43,7 @@
    integer :: i, nm
    real (dp) :: wk
 
-!!$PRAGMA C( DFFTW_PLAN_DFT_R2C_1D, DFFTW_PLAN_DFT_C2R_1D )
+   !!$PRAGMA C( DFFTW_PLAN_DFT_R2C_1D, DFFTW_PLAN_DFT_C2R_1D )
 
    select case (ind_ft)
    case (0)
@@ -125,11 +125,11 @@
    integer :: ii, ix, iy, iz, i1, i2, n1_tr, n2_tr
    real (dp) :: sc, wrr, wir, wri, wii
 
-!!$PRAGMA C( DFFTW_EXECUTE )
+   !!$PRAGMA C( DFFTW_EXECUTE )
 
-!=============================
-!staggered (k_x,k_y,k_z)
-!===================
+   !=============================
+   !staggered (k_x,k_y,k_z)
+   !===================
    select case (dir)
    case (1)
     if (is<0) then
@@ -200,7 +200,7 @@
         end do
        end do
       end do
-!=========== reordering as 2D fft
+      !=========== reordering as 2D fft
       do ix = 1, n1/2
        i2 = 2*ix
        i1 = i2 - 1
@@ -280,7 +280,7 @@
         end do
        end do
       end do
-!=========== reordering as 2D fft
+      !=========== reordering as 2D fft
       do iz = 1, n3/2
        do ix = 1, n1/2
         i2 = 2*ix
@@ -298,7 +298,7 @@
      end do
     else
      n2_tr = n3/2 + n3/4
-! First reorders
+     ! First reorders
      do iy = 1, n2
       do ix = 1, n1/2
        i2 = 2*ix
@@ -339,7 +339,7 @@
     if (allocated(cw)) deallocate (cw)
    end select
   end subroutine
-!====================
+  !====================
   subroutine ftw1d(w, n1, n2, n3, is, dir)
    real (dp), intent (inout) :: w(:, :, :)
 
@@ -347,7 +347,7 @@
    integer :: ix, iy, iz, i1, i2, n1_tr, n2_tr
    real (dp) :: sc, wrr, wir, wri, wii
 
-!!$PRAGMA C( DFFTW_EXECUTE )
+   !!$PRAGMA C( DFFTW_EXECUTE )
 
    select case (dir)
    case (1)
@@ -392,7 +392,7 @@
         cw(i2, iy) = sc*w2(iy)
        end do
       end do
-!=========== reordering as 2D fft
+      !=========== reordering as 2D fft
       do ix = 1, n1/2
        i2 = 2*ix
        i1 = i2 - 1
@@ -464,7 +464,7 @@
         cw(i2, iz) = sc*w3(iz)
        end do
       end do
-!=========== reordering as 2D fft
+      !=========== reordering as 2D fft
       do ix = 1, n1/2
        i2 = 2*ix
        i1 = i2 - 1
@@ -524,7 +524,7 @@
     if (allocated(cw)) deallocate (cw)
    end select
   end subroutine
-!================
+  !================
   subroutine ft_kern(w, n1, is)
    real (dp), intent (inout) :: w(:)
    integer, intent (in) :: n1, is
@@ -532,7 +532,7 @@
    real (dp) :: sc
    integer :: ndb
 
-!!$PRAGMA C( DFFTW_EXECUTE )
+   !!$PRAGMA C( DFFTW_EXECUTE )
 
    ndb = 2*n1
    sc = 1.
@@ -560,7 +560,7 @@
     end do
    end if
   end subroutine
-!==========================
+  !==========================
   subroutine ftw1d_sc(w, n1, n2, n3, is, dir, sym)
    real (dp), intent (inout) :: w(:, :, :)
 
@@ -569,7 +569,7 @@
    real (dp) :: sc
    integer :: ndb
 
-!!$PRAGMA C( DFFTW_EXECUTE )
+   !!$PRAGMA C( DFFTW_EXECUTE )
 
    select case (dir)
    case (1)
