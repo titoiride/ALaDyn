@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -27,6 +27,8 @@
   use phys_param
   use parallel
   use grid_param
+  use control_bunch_input, only: reduced_charge, bunch_charge, epsy,&
+   epsz, sxb, syb, gam, dg
 
   implicit none
 
@@ -42,20 +44,19 @@
   real (dp) :: hgam_bavg(500, 18), tgam(500)
 
  contains
-!--------------------------
-  subroutine track_part_pdata_out(tnow, tk)
 
-   character (12), parameter :: tpart = 'El_track_out'
+  subroutine track_part_pdata_out(tk)
+
+   character (12), parameter :: tpart_name = 'El_track_out'
    character (14) :: fname
    character (23) :: fname_out
-   real (dp), intent (in) :: tnow
    integer, intent (in) :: tk
    real (dp), allocatable :: pdata(:)
    integer :: ik, p, q, ip, ip_max, it, tot_tpart
    integer :: lenp, ndv
    integer (offset_kind) :: disp
    character (4) :: foldername
-!integer,parameter :: file_version = 4
+   !integer,parameter :: file_version = 4
 
    write (foldername, '(i4.4)') iout
 
@@ -65,18 +66,17 @@
    else
     ip = loc_tpart(1)
    end if
-!call intvec_distribute(ip,loc_tpart,npe)
-
-!tot_tpart=0
-!nptot_global_reduced=sum(ip_loc(1:npe))
-!do ik=1,npe
+   !call intvec_distribute(ip,loc_tpart,npe)
+   !tot_tpart=0
+   !nptot_global_reduced=sum(ip_loc(1:npe))
+   !do ik=1,npe
    tot_tpart = loc_tpart(1)
-!end do
+   !end do
 
    ip_max = ip
-!if(pe0)ip_max=maxval(loc_tpart(1:npe))
+   !if(pe0)ip_max=maxval(loc_tpart(1:npe))
    lenp = ndv*ip*tk
-   write (fname, '(a12,i2.2)') tpart, iout !serve sempre
+   write (fname, '(a12,i2.2)') tpart_name, iout !serve sempre
    fname_out = foldername // '/' // fname // '.bin'
    disp = 0
    if (pe0) then
@@ -113,7 +113,7 @@
     close (10)
     write (6, *) 'Particles param written on file: ' // foldername // &
       '/' // fname // '.dat'
-!======================
+    !======================
     open (20, file=foldername//'/'//fname//'.bin', form='unformatted')
     write (20) pdata(1:lenp) !(coordinates,pindex,time)=>(coordinates,time,pind)
     close (20)
@@ -122,16 +122,15 @@
       '/' // fname // '.bin'
    end if
   end subroutine
-!==============================================
+  !==============================================
   subroutine energy_spect(np, ekem, gfield)
    integer, intent (in) :: np
    real (dp), intent (in) :: ekem
    real (dp), intent (in) :: gfield(:, :)
-   integer :: p, ix, ne
+   integer :: p, ix
    real (dp) :: xx, de, wght
-! activated only for np>0
+   ! activated only for np>0
 
-   ne = size(nde0)
    de = ekem/real(ne, dp)
    if (ekem<1.e-06) return
    do p = 1, np
@@ -147,11 +146,10 @@
    integer, intent (in) :: np
    real (dp), intent (in) :: ekem, xl, xr
    real (dp), intent (in) :: gfield(:, :)
-   integer :: p, ix, ne
+   integer :: p, ix
    real (dp) :: xx, de, wght
-! activated only for np>0
+   ! activated only for np>0
 
-   ne = size(nde0)
    de = ekem/real(ne, dp)
    if (ekem<1.e-06) return
    do p = 1, np
@@ -169,29 +167,28 @@
 
   end subroutine
 
-!--------------------------
+  !--------------------------
 
-  subroutine energy_momenta(sp_loc, gfield, np, pmass, ek, ekmax)
+  subroutine energy_momenta(sp_loc, gfield, np, ek, ekmax)
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: gfield(:, :)
    integer, intent (in) :: np
-   real (dp), intent (in) :: pmass
    real (dp), intent (out) :: ek(:), ekmax
    integer :: ip, ik
-   real (dp) :: xp(3), vp(3), gam, gam1
+   real (dp) :: xp(3), vp(3), gamm, gam1
 
    ek = 0.0
    ekmax = 0.0
    if (curr_ndim<3) then
     do ip = 1, np
      vp(1:2) = sp_loc%part(ip, 3:4)
-     gam = sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2))
-     gfield(ip, 1) = pmass*(gam-1.)
+     gamm = sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2))
+     gfield(ip, 1) = pmass*(gamm-1.)
      wgh_cmp = sp_loc%part(ip, 5)
      gfield(ip, 2) = wgh
      gfield(ip, 3) = vp(1)
      gfield(ip, 4) = sp_loc%part(ip, 1)
-     gam1 = gam - 1.
+     gam1 = gamm - 1.
      do ik = 1, curr_ndim
       ek(ik) = ek(ik) + wgh*vp(ik)
      end do
@@ -203,13 +200,13 @@
     do ip = 1, np
      xp(1:3) = sp_loc%part(ip, 1:3)
      vp(1:3) = sp_loc%part(ip, 4:6)
-     gam = sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2)+vp(3)*vp(3))
-     gfield(ip, 1) = pmass*(gam-1.)
+     gamm = sqrt(1.+vp(1)*vp(1)+vp(2)*vp(2)+vp(3)*vp(3))
+     gfield(ip, 1) = pmass*(gamm-1.)
      wgh_cmp = sp_loc%part(ip, 7)
      gfield(ip, 2) = wgh
      gfield(ip, 3) = vp(1)
      gfield(ip, 4) = sp_loc%part(ip, 1)
-     gam1 = gam - 1.
+     gam1 = gamm - 1.
      do ik = 1, curr_ndim
       ek(ik) = ek(ik) + vp(ik) !momenta
      end do
@@ -221,7 +218,7 @@
    end if
   end subroutine
 
-!--------------------------
+  !--------------------------
   subroutine laser_struct_data(nst)
 
    integer, intent (in) :: nst
@@ -240,15 +237,15 @@
 
    ekt = 0.0
    xcm = 0.0
-! !data on driver laser field
-! CComputes the COM x- coordinates of nb_laser Ey fields (=> group velocity)
-!===================
+   ! !data on driver laser field
+   ! CComputes the COM x- coordinates of nb_laser Ey fields (=> group velocity)
+   !===================
    ik = 3
    if (ndim<3) ik = 2
    nb_tot = nb_laser
    if (Two_color) nb_tot = nb_laser + 1
    eavg(1:nb_tot, nst) = 0.0
-!================ field component selection
+   !================ field component selection
    do ic = 1, nb_laser
     if (lp_in(ic)>xm) then
      do iz = k1, nzp
@@ -287,7 +284,7 @@
    do ic = 1, nb_tot
     if (eks(ic)>0.0) eavg(ic, nst) = xcms(ic)/eks(ic) !Sum(xE^2)/sum(E^2)
    end do
-!=================
+  !=================
   end subroutine
 
   subroutine envelope_struct_data(nst)
@@ -312,7 +309,7 @@
 
    ekt = 0.0
 
-! env(1)=Re[A], env(2)=Im[A] A in adimensional form
+   ! env(1)=Re[A], env(2)=Im[A] A in adimensional form
    aph1 = 0.5*dx_inv
    aph2 = 0.0
    i01 = i1 + 1
@@ -339,7 +336,7 @@
       ekt(2) = ekt(2) + a2 ! !A|^2
       ekt(6) = dai*env(ix, iy, iz, 1) - dar*env(ix, iy, iz, 2)
       ekt(3) = ekt(3) + oml*oml*a2 + 2.*oml*ekt(6) + dar*dar + dai*dai
-!|Z|^2=(Ey^2+Bz^2)/2= field energy
+      !|Z|^2=(Ey^2+Bz^2)/2= field energy
       ekt(4) = ekt(4) + oml*a2 + ekt(6) ! Action
       ekt(7) = max(ekt(7), sqrt(a2)) ! Max |A|
       kk = kk + 1
@@ -354,7 +351,7 @@
    eavg(2, nst) = ekm(1) !Centroid
    eavg(4, nst) = field_energy*dgvol*ekm(3) !Energy
    eavg(5, nst) = dvol*ekm(4) !Action
-!===============
+   !===============
    i0_lp = i1 + nint(dx_inv*ekm(1))
    ekt(1:2) = 0.0
    do iz = k1, nzp
@@ -379,7 +376,7 @@
     ekm(1) = ekm(1)/ekm(2) ! env radius
    end if
    eavg(3, nst) = ekm(1) !radius
-!===============
+   !===============
    ekt(1) = ekt(7)
    if (ekt(1)>giant_field) then
     write (6, *) ' WARNING: Env field too big ', ekt(1)
@@ -405,7 +402,7 @@
        ekt(2) = ekt(2) + a2 ! !A|^2
        ekt(6) = dai*env1(ix, iy, iz, 1) - dar*env1(ix, iy, iz, 2)
        ekt(3) = ekt(3) + om1*om1*a2 + 2.*om1*ekt(6) + dar*dar + dai*dai
-!|Z|^2=(Ey^2+Bz^2)/2= field energy
+       !|Z|^2=(Ey^2+Bz^2)/2= field energy
        ekt(4) = ekt(4) + om1*a2 + ekt(6) ! Action
        ekt(7) = max(ekt(7), sqrt(a2)) ! Max |A|
        kk = kk + 1
@@ -420,7 +417,7 @@
     eavg1(2, nst) = ekm(1)
     eavg1(4, nst) = field_energy*dgvol*ekm(3) !Energy
     eavg1(5, nst) = dvol*ekm(4) !Action
-!===============
+    !===============
     i0_lp = i1 + nint(dx_inv*ekm(1))
     ekt(1:2) = 0.0
     do iz = k1, nzp
@@ -445,7 +442,7 @@
      ekm(1) = ekm(1)/ekm(2) ! env radius
     end if
     eavg(3, nst) = ekm(1) !radius
-!===============
+    !===============
     ekt(1) = ekt(7)
     if (ekt(1)>giant_field) then
      write (6, *) ' WARNING: Env1 field too big ', ekt(1)
@@ -456,7 +453,7 @@
     eavg1(1, nst) = ekm(1)
    end if
   end subroutine
-!===========================
+  !===========================
   subroutine fields_on_target(nst)
 
    integer, intent (in) :: nst
@@ -490,7 +487,7 @@
    ekt(1:nfield) = dgvol*ekt(1:nfield)
    call allreduce_dpreal(sumv, ekt, ekm, nfield)
    eavg(1:nfield, nst) = field_energy*ekm(1:nfield)
-!=======================
+   !=======================
   end subroutine
 
   subroutine Envar(nst, tnow)
@@ -508,12 +505,12 @@
    integer, parameter :: zg_ind(6) = [ 3, 3, 4, 4, 4, 3 ]
    integer, parameter :: yg_ind(6) = [ 3, 4, 3, 4, 3, 4 ]
    integer, parameter :: xg_ind(6) = [ 4, 3, 3, 3, 4, 4 ]
-!================================================
-! field_energy transforms the energy density u=E^2/2 in adimensional
-! form to energy density in Joule/mu^3
-! field_energy =epsilon_0*(E_0^2)/2 in SI or
-!              =(E_0^2)/8pi         in cgs (Gaussian) units
-!==================================================
+   !================================================
+   ! field_energy transforms the energy density u=E^2/2 in adimensional
+   ! form to energy density in Joule/mu^3
+   ! field_energy =epsilon_0*(E_0^2)/2 in SI or
+   !              =(E_0^2)/8pi         in cgs (Gaussian) units
+   !==================================================
 
    dgvol = dx*dy*dz
    if (ndim==2) dgvol = dx*dy*dy
@@ -554,18 +551,17 @@
      ekt(1) = 0.0
      ekm(1) = 0.0
      if (np>0) then
-      call energy_momenta(spec(ic), ebfp, np, pmass, ekt, ekmax(1))
-!  WARNING: total variables multipied by a weight = 1/nmacro_per cell
-!  Momenta ekt(1:3) are averaged by the macroparticle total number
-!==================================
-!
+      call energy_momenta(spec(ic), ebfp, np, ekt, ekmax(1))
+      !  WARNING: total variables multipied by a weight = 1/nmacro_per cell
+      !  Momenta ekt(1:3) are averaged by the macroparticle total number
+      !==================================
       ekt(4) = pmass*ekt(4) !Total angular momentum (Mev/c^2)
       ekt(7) = pmass*ekt(7) !the ic-species TOTAL energy (MeV)
       ekmax(1) = pmass*ekmax(1)
 
      end if
      call allreduce_dpreal(maxv, ekmax, ek_max, 1)
-!============= spectra section
+     !============= spectra section
      nde0(1:ne) = 0.0
      if (np>0) call energy_spect(np, ek_max(1), ebfp)
      nde1(1:ne) = nde0(1:ne)
@@ -583,12 +579,12 @@
       call allreduce_dpreal(sumv, nde1, nde2, ne)
       nde_sp(1:ne, nst, ic) = nde2(1:ne)
      end if
-!======================= end spectra section
+     !======================= end spectra section
      call allreduce_dpreal(sumv, ekt, ekm, 7)
      do ik = 1, curr_ndim
       ekm(ik) = ekm(ik)*np_norm !Average Momenta
      end do
-!======================= phase space integrated data for each species
+     !======================= phase space integrated data for each species
      eksp_max(nst, ic) = ek_max(1)
      pavg(1, nst, ic) = p_energy_norm*ekm(7) !Total energy of ic species (Joule)
      pavg(2, nst, ic) = ek_max(1) ! Max energy (MeV)
@@ -610,7 +606,7 @@
      ekm(1:3) = np_norm*ekm(1:3)
      do ik = 1, curr_ndim
       pavg(6+ik, nst, ic) = 1.e+03*pmass*ekm(ik) !
-!sigma^2 of particle momenta (in KeV)
+      !sigma^2 of particle momenta (in KeV)
      end do
     end do
    end if
@@ -619,8 +615,8 @@
 
    if (high_gamma) call enb_hgam(nst, tnow, gam_min)
 
-!   END PARTICLE SECTION
-!======================== Field  section
+   !   END PARTICLE SECTION
+   !======================== Field  section
    ekt = 0.0
    ekm = 0.0
    if (stretch) then
@@ -713,7 +709,7 @@
    call allreduce_dpreal(maxv, ekt, ekm, 7)
    favg(4:6, nst) = e0*ekm(1:3) !Max fields in TV/m
    favg(10:12, nst) = e0*ekm(4:6)
-!=====================================
+   !=====================================
    if (beam) then
     i2b = nx + 2
     ekt = 0.0
@@ -761,7 +757,7 @@
      favg(22:24, nst) = ekm(4:6)
      eb_max = 0.0
      if (ekm(7)>0.0) eb_max = sqrt(ekm(7))
-!============================
+     !============================
     case (1)
      do ik = 1, nfield
       kk = 0
@@ -822,14 +818,14 @@
    if (wake) then
     if (envelope) then
      call envelope_struct_data(nst)
-!else
-! call laser_struct_data(nst)
+     !else
+     ! call laser_struct_data(nst)
     end if
    end if
    if (solid_target) call fields_on_target(nst)
 
   end subroutine
-!--------------------------
+  !--------------------------
   subroutine bunch_corr(bch, np_loc, np_norm, bcorr)
    real (dp), intent (in) :: bch(:, :)
    integer, intent (in) :: np_loc
@@ -839,7 +835,7 @@
    integer :: ik, kk, ndv
    real (dp) :: gmb, pp(3), mu(7), ekt(9), ekm(9)
    real (dp) :: corr2(8), emy, emz, dgam, w_norm
-!=====================
+   !=====================
    bcorr = 0.0
    mu = 0.0
    corr2 = 0.0
@@ -877,10 +873,10 @@
    call allreduce_dpreal(sumv, ekt, ekm, 8)
    w_norm = np_norm
    if (ekm(8)>0.0) w_norm = 1./ekm(8)
-!===================
+   !===================
    mu(1:3) = w_norm*ekm(1:3) !weighted averages <(x,y,z)>
    mu(4:7) = w_norm*ekm(4:7) !weighted averages <(Px,Py,Pz,gamma)>
-!=========== 2th moments
+   !=========== 2th moments
    ekm = 0.0
    ekt = 0.0
    if (np_loc>0) then
@@ -922,8 +918,8 @@
    end do
    corr2(7) = ekm(7) - mu(2)*mu(5)
    corr2(8) = ekm(8) - mu(3)*mu(6)
-!    emy^2= corr2_y*corr2_py -mixed
-! <yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
+   !    emy^2= corr2_y*corr2_py -mixed
+   ! <yy><p_yp_y>-(<yp_y>-<y><p_y>)^2
    emy = corr2(2)*corr2(5) - corr2(7)*corr2(7)
    emz = corr2(3)*corr2(6) - corr2(8)*corr2(8)
    gmb = mu(7)*mu(7) ! <gam><gam>
@@ -936,7 +932,7 @@
    bcorr(14) = emz
    bcorr(15) = mu(7)
    bcorr(16) = dgam
-!==========================
+   !==========================
   end subroutine
 
   subroutine enbvar(nst, tnow)
@@ -945,7 +941,7 @@
 
    integer :: ic, np, ndv, p
    real (dp) :: np_norm, bcorr(16), ekt(1), ekm(1)
-!=====================
+   !=====================
    if (nst==0) bavg = 0.0
    tb(nst) = tnow
    ndv = size(ebfb, 2)
@@ -963,7 +959,7 @@
 
     bavg(nst, 1:16, ic) = bcorr(1:16)
    end do
-!==========================
+   !==========================
   end subroutine
 
   subroutine enb_ionz(nst, t_loc, gmm)
@@ -1012,7 +1008,7 @@
    end if
    if (nst==0) ionz_bavg = 0.0
    tionz(nst) = t_loc
-!================================
+   !================================
    ekt(1) = real(ik, dp)
    call allreduce_dpreal(sumv, ekt, ekm, 2)
    ionz_number(nst) = nint(ekm(1))
@@ -1022,7 +1018,7 @@
    ionz_bavg(nst, 1:16) = bcorr(1:16)
    ionz_charge(nst) = e_charge*np_per_cell*ekm(2)
   end subroutine
-!============================
+  !============================
   subroutine enb_hgam(nst, t_loc, gmm)
    integer, intent (in) :: nst
    real (dp), intent (in) :: t_loc, gmm
@@ -1067,7 +1063,7 @@
    end if
    if (nst==0) hgam_bavg = 0.0
    tgam(nst) = t_loc
-!================================
+   !================================
    ekt(1) = real(ik, dp)
    call allreduce_dpreal(sumv, ekt, ekm, 2)
    hgam_number(nst) = nint(ekm(1))
@@ -1076,10 +1072,10 @@
    call bunch_corr(ebfp, ik, np_norm, bcorr)
    hgam_bavg(nst, 1:16) = bcorr(1:16)
    hgam_charge(nst) = e_charge*np_per_cell*ekm(2)
-!==========================
+   !==========================
   end subroutine
-!=====================================
-!   WRITE envar  DATA SECTION
+  !=====================================
+  !   WRITE envar  DATA SECTION
   subroutine en_data(nst, itr, idata)
 
    integer, intent (in) :: nst, itr, idata
@@ -1130,9 +1126,9 @@
    character (18), dimension (5), parameter :: fenv = [ &
      '  Env_max         ', '  Centroid        ', '  Env radius      ', &
      '  Env_energy      ', '  Env_action      ' ]
-!character(14),dimension(5), parameter:: flaser=(/&
-! '  Int_max     ',' Las_energy(J)','  < X_c >     ','   <W_y>      ',&
-! '   < W_z >    '/)
+   !character(14),dimension(5), parameter:: flaser=(/&
+   ! '  Int_max     ',' Las_energy(J)','  < X_c >     ','   <W_y>      ',&
+   ! '   < W_z >    '/)
    character (14), dimension (6), parameter :: flt = [ 'Ex2(J)        ', &
      'Ey2(J)        ', 'Ez2(J)        ', 'Bx2(J)        ', &
      'By2(J)        ', 'Bz2(J)        ' ]
@@ -1140,7 +1136,7 @@
    character (12), dimension (4), parameter :: enspect = [ &
      'Electron NdE', ' A1-ion NdE ', ' A2-ion NdE ', ' A3-ion NdE ' ]
 
-   integer :: ik, ic, nfv, npv, nt, ne, color
+   integer :: ik, ic, nfv, npv, nt, color
    integer, parameter :: lun = 10
 
    nfv = 6
@@ -1149,8 +1145,8 @@
    color = 0
    if (Two_color) color = 1
 
-! if (iout<100) write (fname,'(a4,i2)') 'diag' ,idata
-! if (iout< 10) write (fname,'(a5,i1)') 'diag0',idata
+   ! if (iout<100) write (fname,'(a4,i2)') 'diag' ,idata
+   ! if (iout< 10) write (fname,'(a5,i1)') 'diag0',idata
 
    write (fname, '(a4,i2.2)') 'diag', idata
 
@@ -1308,8 +1304,8 @@
    close (lun)
 
    if (nst>0) then
-! if (iout<100) write (fname,'(a4,i2)') 'spec' ,idata
-! if (iout< 10) write (fname,'(a5,i1)') 'spec0',idata
+    ! if (iout<100) write (fname,'(a4,i2)') 'spec' ,idata
+    ! if (iout< 10) write (fname,'(a5,i1)') 'spec0',idata
     write (fname, '(a4,i2.2)') 'spec', idata
     open (lun, file='diagnostics/'//fname//'.dat', form='formatted')
     write (lun, *) 'mod_id,dmodel_id LP_ord,der_ord'
@@ -1337,7 +1333,6 @@
     write (lun, *) ' iter, nst, nvar npvar'
     write (lun, '(4i6)') itr, nst, nfv, npv
     write (lun, *) '             ENERGY SPECTRA            '
-    ne = size(nde, 1)
     write (lun, '(i4)') ne
     do ik = 1, nsp
      write (lun, *) enspect(ik)
@@ -1357,7 +1352,7 @@
     close (lun)
    end if
   end subroutine
-!--------------------------
+  !--------------------------
   subroutine en_bdata(nst, it, idata)
 
    integer, intent (in) :: nst, it, idata
@@ -1538,5 +1533,5 @@
    end do
    close (lun)
   end subroutine
-!--------------------------
+  !--------------------------
  end module

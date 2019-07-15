@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -29,14 +29,16 @@
   use mpi_curr_interface
   use init_grid_field
   use grid_part_util
+  use code_util, only: maxv, mem_psize
+  use control_bunch_input
 
   implicit none
 
   real (dp), allocatable :: bpart(:, :)
-!--------------------------
+  !--------------------------
 
  contains
-!=========================
+  !=========================
   subroutine beam_data(ndm, np_tot) !generates bpart(7,np_tot)
    integer, intent (in) :: ndm
    integer, intent (out) :: np_tot
@@ -44,11 +46,11 @@
    real (dp) :: cut, xh(5)
    integer :: nch
    logical :: sr
-!==========================================================
-! bconf defines only the configuration of bunch charges
-!=======================
-! default values
-!=======================
+   !==========================================================
+   ! bconf defines only the configuration of bunch charges
+   !=======================
+   ! default values
+   !=======================
    np_tot = 0
    do i = 1, nsb
     np_tot = np_tot + nb_tot(i)
@@ -56,7 +58,7 @@
    cut = 3.
    nch = 2*ndm + 1
    allocate (bpart(nch,np_tot))
-!---!
+   !---!
    i1 = 1
    charge = int(unit_charge(1), hp_int) !nsb electron bunches
    part_ind = -1
@@ -67,7 +69,7 @@
      xh(ip) = xc_bunch(ip)
      wgh = real(j0_norm*jb_norm(ip), sp) !the bunch particle weight
      i2 = i1 + nb_tot(ip) - 1
-!---Original Version---!
+     !---Original Version---!
      call bunch_gen(ndm, i1, i2, sxb(ip), syb(ip), syb(ip), gam(ip), &
        epsy(ip), epsz(ip), cut, dg(ip), bpart)
      do i = i1, i2
@@ -77,13 +79,13 @@
      end do
      i1 = i2 + 1
     end do
-! Pe0 p data are copied to all MPI tasks
+    ! Pe0 p data are copied to all MPI tasks
    case (3)
     do ip = 1, nsb
      xh(ip) = xc_bunch(ip)
      wgh = real(j0_norm*jb_norm(ip), sp) !the bunch particles weights
      i2 = i1 + nb_tot(ip) - 1
-!---Original Version---!
+     !---Original Version---!
      call bunch_gen(ndm, i1, i2, sxb(ip), syb(ip), syb(ip), gam(ip), &
        epsy(ip), epsz(ip), cut, dg(ip), bpart)
      do i = i1, i2
@@ -95,7 +97,7 @@
      i1 = i2 + 1
     end do
    end select
-! Pe0 p data are copied to all MPI tasks
+   ! Pe0 p data are copied to all MPI tasks
    if (pe0) then
     sr = .true.
     do ip = 1, npe - 1
@@ -105,9 +107,9 @@
     sr = .false.
     call exchange_2d_grdata(sr, bpart, nch, np_tot, 0, mype+10)
    end if
-!==============================
+   !==============================
   end subroutine
-!===================
+  !===================
   subroutine mpi_beam_distribute(ndm)
 
    integer, intent (in) :: ndm
@@ -116,9 +118,9 @@
    integer :: ic, p, ip, ipp, nb_loc
    real (dp) :: y1, y2, z1, z2, x1, x2
    integer :: nps_loc(nsb), npmax, np_tot
-!========= count particles on each (yz) MPI domain
+   !========= count particles on each (yz) MPI domain
    np_tot = sum(nb_tot(1:nsb))
-! ALL MPI tasks do
+   ! ALL MPI tasks do
    x1 = loc_xgrid(imodx)%gmin
    x2 = loc_xgrid(imodx)%gmax
    i1 = 0
@@ -156,24 +158,24 @@
       end do
      end do
     end do
-!==================
-! The local MPI task
+    !==================
+    ! The local MPI task
     nps_loc(1:nsb) = loc_nbpart(imody, imodz, imodx, 1:nsb)
     npmax = maxval(nps_loc(1:nsb))
     npmax = max(npmax, 1)
     if (.not. allocated(bunch(1)%part)) then
      allocate (bunch(1)%part(npmax,nd2+1))
     end if
-!=================================
+    !=================================
     nb_loc = nps_loc(1)
     p = imodx
     ip = imodz
     ipp = imody
     y1 = loc_ygrid(ipp)%gmin
     y2 = loc_ygrid(ipp)%gmax
-!=========================
-! Here 2D MPI decomp. allowed
-!===================================
+    !=========================
+    ! Here 2D MPI decomp. allowed
+    !===================================
     i1 = 0
     do ic = 1, nsb
      ii = 0
@@ -228,16 +230,16 @@
       end do
      end do
     end do
-!==================
-! The local MPI task
+    !==================
+    ! The local MPI task
     nps_loc(1:nsb) = loc_nbpart(imody, imodz, imodx, 1:nsb)
     npmax = maxval(nps_loc(1:nsb))
-!++++++++++++++++++++++++++++++++++++++
+    !==================
     npmax = max(npmax, 1)
     if (.not. allocated(bunch(1)%part)) then
      allocate (bunch(1)%part(npmax,nd2+1))
     end if
-!=================================
+    !=================================
     nb_loc = nps_loc(1)
     p = imodx
     ip = imodz
@@ -246,9 +248,9 @@
     ipp = imody
     y1 = loc_ygrid(ipp)%gmin
     y2 = loc_ygrid(ipp)%gmax
-!=========================
-! Here 3D MPI decomp. allowed
-!===================================
+    !=========================
+    ! Here 3D MPI decomp. allowed
+    !===================================
     i1 = 0
     do ic = 1, nsb
      ii = 0
@@ -266,9 +268,9 @@
      i1 = i1 + nb_tot(ic)
     end do
    end select
-!=================================
+   !=================================
   end subroutine
-!========================
+  !========================
   subroutine beam_model_pot(pot, sx, sy, sz, b_am, i1, i2, j1, j2, k1, &
     k2)
 
@@ -278,7 +280,7 @@
    integer :: i, j, k, jj, kk
    real (dp) :: r2, brad2, sx2_inv, fact, r2max, pot0
    real (dp) :: xx, yy, zz
-!-----------------------
+   !-----------------------
    brad2 = sy*sy + sz*sz
    r2max = ymax*ymax + zmax*zmax
    pot0 = log(r2max/brad2)
@@ -302,7 +304,7 @@
     end do
    end do
   end subroutine
-!=========================
+  !=========================
   subroutine beam_inject
 
    integer :: id_ch, nptot, np, nb, ic, ft_mod, ft_sym
@@ -312,8 +314,7 @@
 
    gam2 = gam0*gam0
    id_ch = nd2 + 1
-!=======================
-!!!!!!!!!!!!!!
+   !=======================
    n1_alc = size(ebf, 1)
    n2_alc = size(ebf, 2)
    n3_alc = size(ebf, 3)
@@ -321,16 +322,16 @@
     allocate (ebf_bunch(n1_alc,n2_alc,n3_alc,nbfield))
     ebf_bunch(:, :, :, :) = 0.0
    end if
-!=============================
-! The fields of a moving e-bunch in vacuum
-! E_x=-(DPhi/Dx)/gamma^2  , E_y=-DPhi/Dy   E_z=-DPhi/Dz
-! Poisson eq.  D_xE_x+D_yE_y+D_zE_z=omp^2\rho (x-V_b*t_0,y,z)
-! B_x=0   B_y=-V_b*E_z    B_z= V_b*E_y
-!=========================================
+   !=============================
+   ! The fields of a moving e-bunch in vacuum
+   ! E_x=-(DPhi/Dx)/gamma^2  , E_y=-DPhi/Dy   E_z=-DPhi/Dz
+   ! Poisson eq.  D_xE_x+D_yE_y+D_zE_z=omp^2\rho (x-V_b*t_0,y,z)
+   ! B_x=0   B_y=-V_b*E_z    B_z= V_b*E_y
+   !=========================================
    call beam_data(ndim, nptot)
-! Generates phase space coordinates for beam on bpart(7,np_tot)
-! bpart() provisional storage in common to all MPI tasks
-!=======================
+   ! Generates phase space coordinates for beam on bpart(7,np_tot)
+   ! bpart() provisional storage in common to all MPI tasks
+   !=======================
    call mpi_beam_distribute(ndim) !local bpart data are stored in bunch(1)%part struct for each MPI task
    nb = loc_nbpart(imody, imodz, imodx, 1)
    if (nb>0) then
@@ -374,13 +375,13 @@
     end if
    end if
    if (allocated(bunch(1)%part)) deallocate (bunch(1)%part)
-!==================== Computes the bunch inumber density
+   !==================== Computes the bunch inumber density
    jc(:, :, :, 1) = 0.0
    do ic = 1, nsb
     np = loc_nbpart(imody, imodz, imodx, ic)
     if (np>0) call set_grid_charge(spec(ic), ebfp, jc, np, 1)
    end do
-!generates injc(1)=den(i,j,k)  jc(2)= Jx(i,j,k)
+   !generates injc(1)=den(i,j,k)  jc(2)= Jx(i,j,k)
    if (prl) call fill_curr_yzxbdsdata(jc, 1)
    dmax(1) = 0.0
    do iz = kz1, kz2
@@ -392,13 +393,13 @@
    end do
    all_dmax(1) = dmax(1)
    if (prl) call allreduce_dpreal(maxv, dmax, all_dmax, 1)
-!============================
-! BUNCH grid DENSITY and current already normalized
-!In jc(1) beam density  in jc(2) beam Jx current
+   !============================
+   ! BUNCH grid DENSITY and current already normalized
+   !In jc(1) beam density  in jc(2) beam Jx current
    jc(:, :, :, 2) = bet0*jc(:, :, :, 1)
-!=====================================================
-! UNIFORM GRIDS ASSUMED
-!======================
+   !=====================================================
+   ! UNIFORM GRIDS ASSUMED
+   !======================
    if (allocated(bpart)) deallocate (bpart)
    ft_mod = 2 !A sine transform along each coordinate
    ft_sym = 1
@@ -406,23 +407,23 @@
      nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
    if (ndim==3) call fft_psolv(jc, gam2, ompe, nx, nx_loc, ny, ny_loc, &
      nz, nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
-!Solves Laplacian[pot]=ompe*rho
-!Beam potential in jc(1) 
-!===================
-!====================
+   !Solves Laplacian[pot]=ompe*rho
+   !Beam potential in jc(1) 
+   !===================
+   !====================
    call fill_ebfield_yzxbdsdata(jc, 1, 2, 1, 1)
    call initial_beam_fields(jc, ebf_bunch, gam2, bet0)
-! generates (Ex,Ey,Ez,By,Bz) bunch fields  Bx=ebf_bunc(4)=0
+   ! generates (Ex,Ey,Ez,By,Bz) bunch fields  Bx=ebf_bunc(4)=0
    ebf_bunch(:, :, :, 4) = 0.0
-!========================================= Collect data
+   !========================================= Collect data
    ebf(:, :, :, 1:nfield) = ebf(:, :, :, 1:nfield) + &
      ebf_bunch(:, :, :, 1:nfield)
    deallocate (ebf_bunch)
-!========================================
+   !========================================
    lp_end(1) = xc_bunch(1) + 2.*sxb(1)
-!=====================================
+   !=====================================
    if (pe0) then
-!==================
+    !==================
     open (16, file='Initial_bunch_info.dat')
     write (16, '(a27,e11.4)') 'Initial target x-position =', targ_in
     write (16, '(a20,e11.4)') 'Plasma wave-length =', lambda_p
@@ -442,46 +443,45 @@
     close (16)
    end if
   end subroutine
-!=====================================
+  !=====================================
   subroutine bpulse(part_in)
 
    real (dp), intent (out) :: part_in
    integer :: nptot, np, ic, ft_mod, ft_sym
    real (dp) :: gam2
-!======================================
+   !======================================
    if (.not. part) part = .true.
-!!!!!!!!!!!!!!
-!=============================
-! The fields of moving bunches in vacuum
-! E_x=-(DPhi/Dx)/gamma^2  , E_y=-DPhi/Dy   E_z=-DPhi/Dz
-! Poisson eq.  D_xE_x+D_yE_y+D_zE_z=omp^2\rho (x-V_b*t_0,y,z)
-! B_x=0   B_y=-V_b*E_z    B_z= V_b*E_y
-!=========================================
+   !=============================
+   ! The fields of moving bunches in vacuum
+   ! E_x=-(DPhi/Dx)/gamma^2  , E_y=-DPhi/Dy   E_z=-DPhi/Dz
+   ! Poisson eq.  D_xE_x+D_yE_y+D_zE_z=omp^2\rho (x-V_b*t_0,y,z)
+   ! B_x=0   B_y=-V_b*E_z    B_z= V_b*E_y
+   !=========================================
    gam2 = gam0*gam0
-!=======================
+   !=======================
    call beam_data(ndim, nptot)
-! Generates phase space coordinateis for all beams on bpart(7,np_tot)
-! bpart in common to all MPI tasks
+   ! Generates phase space coordinateis for all beams on bpart(7,np_tot)
+   ! bpart in common to all MPI tasks
    call mpi_beam_distribute(ndim) !bpart are loaded on bunc() struct for each MPI task
-!==================== Computes the total bunches density
+   !==================== Computes the total bunches density
    jc(:, :, :, 1) = 0.0
    do ic = 1, nsb
     np = loc_nbpart(imody, imodz, imodx, ic)
     call set_grid_charge(bunch(ic), ebfb, jc, np, 1)
    end do
-!generates ebf_bunc(1)=den(i,j,k)
-!on local MPI computational grid[i2,nyp,nzb]
+   !generates ebf_bunc(1)=den(i,j,k)
+   !on local MPI computational grid[i2,nyp,nzb]
    if (prl) call fill_curr_yzxbdsdata(jc, 1)
-!============================
-! BUNCH grid DENSITY already normalized
-! index=3 for bunch current: a same bet0 assumed for all bunches
-!===========================================
+   !============================
+   ! BUNCH grid DENSITY already normalized
+   ! index=3 for bunch current: a same bet0 assumed for all bunches
+   !===========================================
    jc(:, :, :, 2) = bet0*jc(:, :, :, 1)
-!Beam Ax potential in jc(2)    Ay=Az=0 assumed
-!In jc(1) beam density  in jc(2) beam Jx current
-!=====================================================
-! UNIFORM GRIDS ASSUMED
-!======================
+   !Beam Ax potential in jc(2)    Ay=Az=0 assumed
+   !In jc(1) beam density  in jc(2) beam Jx current
+   !=====================================================
+   ! UNIFORM GRIDS ASSUMED
+   !======================
    if (allocated(bpart)) deallocate (bpart)
    ft_mod = 2 !A sine transform along each coordinate
    ft_sym = 1
@@ -489,27 +489,26 @@
      nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
    if (ndim==3) call fft_psolv(jc, gam2, ompe, nx, nx_loc, ny, ny_loc, &
      nz, nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
-!Solves Laplacian[pot]=ompe*rho
-!Beam potential in jc(1) 
-!===================
-!====================
+   !Solves Laplacian[pot]=ompe*rho
+   !Beam potential in jc(1) 
+   !===================
+   !====================
    call fill_ebfield_yzxbdsdata(jc, 1, 2, 1, 1)
    call initial_beam_fields(jc, ebf_bunch, gam2, bet0)
-! generates (Ex,Ey,Ez,By,Bz) bunch fields
+   ! generates (Ex,Ey,Ez,By,Bz) bunch fields
    if (ibeam>0) then
     ebf1_bunch(:, :, :, :) = 0.0
    end if
-!========================================
+   !========================================
    lp_end(1) = xc_bunch(1) + 2.*sxb(1)
-!=====================================
+   !=====================================
    if (l_bpoloidal) call set_poloidal_ex_fields(ebf0_bunch, ix1, ix2, &
      jy1, jy2, kz1, kz2, b_ex_poloidal*t_unit, radius_poloidal)
-!=====================================
+   !=====================================
    part_in = lpx(7) + lp_end(1)
-!============================
-!----------------------
+   !============================
    if (pe0) then
-!==================
+    !==================
     open (16, file='Initial_bunch_info.dat')
     write (16, '(a22,i4,e11.4)') ' Plasma macro per cell', &
       mp_per_cell(1), j0_norm
@@ -536,5 +535,5 @@
     close (16)
    end if
   end subroutine
-!========================
+  !========================
  end module

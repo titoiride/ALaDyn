@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -37,7 +37,7 @@
   integer :: time2dump(1) = 0
   integer :: mem_size, mem_psize
   integer :: last_iter, iter_max
-  integer :: t_ind, ic, inject_ind, tk_ind
+  integer :: t_ind, inject_ind, tk_ind
   integer :: ienout, iout, iter, ier
   real (dp) :: mem_psize_max, dump_t0, dump_t1
   real (dp) :: unix_time_begin, unix_time_now

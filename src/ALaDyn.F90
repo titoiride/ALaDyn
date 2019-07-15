@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -18,7 +18,10 @@
 !  You should have received a copy of the GNU General Public License                                  !
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
-
+ !! author: The ALaDyn Collaboration
+ !! version: v7.6
+ !!
+ !! Program: ALaDyn. Main file that executes the dynamics.
  program aladyn
 
   use start_all
@@ -86,9 +89,9 @@
  contains
 
   !--------------------------
-
+  
   subroutine Lp_cycle
-
+   !! LP_CYCLE: collects the Laser-plasma dynamics evolved as a standard PIC.
    call Data_out( jump )
    do while (tnow<tmax)
    !=======================

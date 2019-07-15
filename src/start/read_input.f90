@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -22,6 +22,7 @@
  module read_input
 
   use common_param
+  use control_bunch_input
   use code_util
   use mpi_var
 
@@ -53,14 +54,11 @@
 
 
   subroutine read_input_nml
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C
-!C Reads the input namelist
-!C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-   integer :: nb_1
-   real (dp) :: xc_1, gam_1, sxb_1, syb_1, epsy_1, epsz_1, dg_1, &
-     charge_1
+!===========================================================
+!=
+!= Reads the input namelist
+!=
+!===========================================================
 
    namelist /grid/nx, ny, nz, ny_targ, k0, yx_rat, zx_rat
    namelist /simulation/lpf_ord, der_ord, str_flag, iform, model_id, &

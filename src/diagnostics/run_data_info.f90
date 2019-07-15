@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -27,6 +27,8 @@
   use grid_param
   use ionz_data
   use parallel
+  use control_bunch_input, only: reduced_charge, bunch_charge, epsy,&
+  epsz, sxb, syb, gam, rhob, jb_norm
 
   implicit none
 
@@ -49,7 +51,7 @@
     if (pe0) then
      write (6, '(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ', iter, ' t = ', &
        tnow, ' dt = ', dt_loc
-     call tot_num_part(nptot_global)
+     call tot_num_part
      call CPU_TIME( unix_time_now )
      write (6, '(a16,f12.3,a10,i15)') ' Time elapsed = ', &
        unix_time_now - unix_time_begin, ', nptot = ', nptot_global
@@ -76,7 +78,7 @@
    end if
   end subroutine
 
-!---------------------------
+  !---------------------------
 
   subroutine error_message
 
@@ -86,7 +88,7 @@
     if (ier==1) write (6, *) 'error: fields values too big: ', ier
    end if
   end subroutine
-!======================================
+  !======================================
   subroutine Part_numbers
    integer :: ip, iz, ix, pp, ic, np_new, nploc(npe)
 
@@ -172,20 +174,19 @@
    end if
   end subroutine
 
-  subroutine tot_num_part(nptot_global)
+  subroutine tot_num_part
 
-   integer (dp), intent (out) :: nptot_global
    integer (dp) :: nptot_local
    integer :: iterator_x, iterator_y, iterator_z
    integer :: iterator_species
 
    nptot_global = 0
 
-!! WARNING: allreduce_big_int is unsupported on many architectures: MPI_SUM not available for MPI_LONG_INT datatype
-!do iterator_species=1,nsp_run
-! nptot_local = loc_npart(imody, imodz, imodx, nsp_run)
-!end do
-!call allreduce_big_int(nptot_local, nptot_global)
+   !! WARNING: allreduce_big_int is unsupported on many architectures: MPI_SUM not available for MPI_LONG_INT datatype
+   !do iterator_species=1,nsp_run
+   ! nptot_local = loc_npart(imody, imodz, imodx, nsp_run)
+   !end do
+   !call allreduce_big_int(nptot_local, nptot_global)
 
    if (pe0) then
     do iterator_y = 0, npe_yloc - 1
@@ -201,7 +202,7 @@
     end do
    end if
   end subroutine
-!---------------------------
+  !---------------------------
 
   subroutine initial_run_info(nw)
    integer, intent (in) :: nw
@@ -224,13 +225,13 @@
     write (6, '(a13,e11.4)') ' restart time', tstart
     write (6, *) ' diag ienout', ienout
    end if
-!write(6,*)' kind of dp and int data',kind(tstart),kind(nx)
-!======================================
+   !write(6,*)' kind of dp and int data',kind(tstart),kind(nx)
+   !======================================
 
    open (60, file=output_data_in)
    write (60, *) ' data bsize'
    write (60, *) huge(chsize), huge(wgsize)
-!============================================
+   !============================================
    if (nw==0) then
     write (60, *) '********** INITIAL DATA INFO************* '
    else
@@ -604,19 +605,19 @@
      1.e-06*real(mem_psize, dp)*kind(electron_charge_norm)
    if (prl) then
     write (6, '(a24,e12.5)') ' Max part memory (MB) = ', mem_psize_max
-!write(6,'(a20,e12.5)')' Max part  address= ',mem_max_addr
+    !write(6,'(a20,e12.5)')' Max part  address= ',mem_max_addr
    end if
    write (6, *) ' Particle min/max distr. '
    write (6, '(i10,a1,i10)') np_min, ' ', np_max
    write (6, '(a18,2i8)') ' where pmin/pmax  ', pe_npmin, pe_npmax
    write (6, *) '******************************************************'
   end subroutine
-!================================
+  !================================
   subroutine ioniz_data(ef_max, z0, an, zlev, zmod)
 
    real (dp), intent (in) :: ef_max
    integer, intent (in) :: z0(:), an(:), zlev, zmod
-   integer :: i, ic, k, zmax, zm_loc
+   integer :: i, ic, k, zm_loc, lev_max
 
    if (zlev==1) open (10, file='diag_one_level_ionz.dat')
    if (zlev==2) open (10, file='diag_two_level_ionz.dat')
@@ -636,17 +637,17 @@
     write (10, *) ' z0,     zmax'
     write (10, '(2i6)') z0(ic), an(ic)
     write (10, *) ' E_c       E_b           V_norm(a.u.)  '
-    zmax = an(ic)
-    do i = 1, zmax
+    lev_max = an(ic)
+    do i = 1, lev_max
      write (10, '(3E12.4)') e_c(i, ic), e_b(i, ic), v_norm(i, ic)
     end do
-    zm_loc = zmax - z0(ic)
+    zm_loc = lev_max - z0(ic)
     write (10, *) 'ionization rate :Wi(Ef,1:zmax-z0,ic) in fs^{-1}'
     do i = 1, zm_loc
      write (10, *) i
      write (10, '(6e12.4)') wi(1:n_ge, i, ic)
     end do
-!==!========================= cumulative distribution wsp
+    !=========================== cumulative distribution wsp
     if (zlev==1) then
      write (10, *) 'ionization one level probability  wsp(Ne_g,z0:zmax)'
      do i = 0, zm_loc - 1
@@ -667,13 +668,13 @@
    end do
    close (10)
   end subroutine
-!====================================
+  !====================================
   subroutine Final_run_info
 
    if (pe0) then
     write (6, '(a14,i6,a5,e11.4,a11,e11.4)') ' final iter = ', iter, &
       ' t = ', tnow, ' last dt = ', dt_loc
-!call tot_num_part(nptot_global)
+    !call tot_num_part
     call CPU_TIME( unix_time_now )
     write (6, '(a22,f12.3,a10,i15)') ' Total time elapsed = ', &
       unix_time_now - unix_time_begin
@@ -681,7 +682,7 @@
    end if
   end subroutine
 
-!---------------------------
+  !---------------------------
   subroutine submem(rmem)
    real (dp), intent (out) :: rmem
    integer (kind=8) :: addr
@@ -692,14 +693,14 @@
    deallocate (am)
    rmem = addr
   end subroutine
-!---------------------------
+  !---------------------------
 
   subroutine Max_pmemory_check()
 
    integer :: ndv1, ndv2
    integer :: ic
    real (dp) :: mem_loc(1), max_mem(1)
-!real(dp) :: adr
+   !real(dp) :: adr
 
    mem_loc = 0.
    max_mem = 0.
@@ -742,11 +743,11 @@
    call allreduce_dpreal(maxv, mem_loc, max_mem, 1)
    mem_psize_max = kind(electron_charge_norm)*1.e-06*max_mem(1)
 
-!call submem(adr)
-!mem_loc(1)=adr
-!call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
-!mem_max_addr=1.e-06*max_mem(1)
+   !call submem(adr)
+   !mem_loc(1)=adr
+   !call allreduce_dpreal(MAXV,mem_loc,max_mem,1)
+   !mem_max_addr=1.e-06*max_mem(1)
 
   end subroutine
-!---------------------------
+  !---------------------------
  end module

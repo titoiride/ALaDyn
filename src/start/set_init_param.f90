@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -25,6 +25,9 @@
   use common_param
   use set_grid_param
   use ionz_data
+  use control_bunch_input, only: lorentz_bfact, gam, jb_norm, nb_tot, &
+   bunch_volume, syb, rhob, sxb, bunch_shape, charge_right, ppc_bunch, &
+   charge_left, l_particles, bunch_charge, reduced_charge, bunch_type
 
   implicit none
 

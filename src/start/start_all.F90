@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2018  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -35,6 +35,9 @@
 
  contains
 
+  !> Start subroutine. It reads the input file, initializes
+  !> the variables and allocates the needed arrays before to start the
+  !> simulation.
   subroutine Start
 
    integer :: ic, ncmp
