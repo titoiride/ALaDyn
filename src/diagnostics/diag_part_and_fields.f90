@@ -974,7 +974,7 @@
       pp(1:2) = spec(1)%part(p, 3:4)
       gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
       if (part_ind < 0) then
-       if (gam > gmm) then
+       if (gamma > gmm) then
         ekt(2) = ekt(2) + wgh
         ik = ik + 1
         do q = 1, nd2 + 1
@@ -989,7 +989,7 @@
       pp(1:3) = spec(1)%part(p, 4:6)
       gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
       if (part_ind < 0) then
-       if (gam > gmm) then
+       if (gamma > gmm) then
         ekt(2) = ekt(2) + wgh
         ik = ik + 1
         do q = 1, nd2 + 1
@@ -1359,8 +1359,11 @@
      '   <Emzsq>    ', '   <Gam>      ', '   DGam/Gam   ' ]
 
 
-   integer :: ib, nbvar, ik
+   integer :: ib, nbvar, ik, color
    integer, parameter :: lun = 10
+
+   color = 0
+   if (Two_color) color = 1
 
    nbvar = 16
    write (bfname, '(a5,i2.2)') 'bdiag', idata

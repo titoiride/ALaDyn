@@ -840,7 +840,7 @@
     end select
     call MPI_BCAST(dt_tot, nt, mpi_integer, pe_min, comm, error)
    else
-    dt = dt0
+    dt_tot = dt0
    end if
 !min
   end subroutine
