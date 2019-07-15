@@ -222,16 +222,14 @@
   subroutine laser_struct_data(nst)
 
    integer, intent (in) :: nst
-   integer :: i1, j1, k1, i2, nyp, nzp, ic, nb_tot
+   integer :: i1, j1, k1, i2, ic, nb_tot
    integer :: ik, ix, iy, iz
    real (dp) :: xm, a2, ekt(10), xcm(10), eks(10), xcms(10)
 
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   i2 = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
+   i2 = nxp
    xm = loc_xgrid(imodx)%gmin
 
 
@@ -290,7 +288,7 @@
   subroutine envelope_struct_data(nst)
 
    integer, intent (in) :: nst
-   integer :: i1, j1, k1, i2, nyp, nzp, kk
+   integer :: i1, j1, k1, i2, kk
    integer :: ik, ix, iy, iz, i01, i02, i0_lp, j, k
    real (dp) :: ekt(7), ekm(7)
    real (dp) :: dvol, dgvol, rr, yy, zz
@@ -299,12 +297,10 @@
 
    dgvol = dx*dy*dz
    if (ndim==2) dgvol = dx*dy*dy
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   i2 = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
+   i2 = nxp
 
 
    ekt = 0.0
@@ -457,7 +453,7 @@
   subroutine fields_on_target(nst)
 
    integer, intent (in) :: nst
-   integer :: i1, j1, k1, i2, nyp, nzp, ii
+   integer :: i1, j1, k1, i2, ii
    integer :: ik, ix, iy, iz
    real (dp) :: ekt(7), ekm(7)
    real (dp) :: dgvol
@@ -465,12 +461,10 @@
 
    dgvol = dx*dy*dz
    if (ndim==2) dgvol = dx*dy*dy
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   i2 = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
+   i2 = nxp
    ekt = 0.0
    do ix = i1, i2
     ii = ix - 2
@@ -490,15 +484,14 @@
    !=======================
   end subroutine
 
-  subroutine Envar(nst, tnow)
+  subroutine Envar(nst)
 
    integer, intent (in) :: nst
-   real (dp), intent (in) :: tnow
 
    integer :: np, ik, ix, iy, iz, ic, i1, i2, i2b, ndv
-   integer :: j1, k1, nyp, nzp, ii, jj, kk, j, k, l
+   integer :: j1, k1, ii, jj, kk, j, k, l
    real (dp) :: ek_max(1), ekt(7), ekm(7), ekmax(1)
-   real (dp) :: pmass, dvol, dgvol, sgz, sg, ef2
+   real (dp) :: dvol, dgvol, sgz, sg, ef2
    real (dp) :: np_norm, p_energy_norm
    real (dp), parameter :: mev_to_joule = 1.602e-13
    real (dp), parameter :: field_energy = 1.156e-06
@@ -515,12 +508,10 @@
    dgvol = dx*dy*dz
    if (ndim==2) dgvol = dx*dy*dy
    ndv = nd2 + 1
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   i2 = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
+   i2 = nxp
 
    tloc(nst) = tnow
    tsp(nst) = tnow
@@ -935,9 +926,8 @@
    !==========================
   end subroutine
 
-  subroutine enbvar(nst, tnow)
+  subroutine enbvar(nst)
    integer, intent (in) :: nst
-   real (dp), intent (in) :: tnow
 
    integer :: ic, np, ndv, p
    real (dp) :: np_norm, bcorr(16), ekt(1), ekm(1)
@@ -968,7 +958,7 @@
 
    integer :: ik, np, p, q, id_ch
    real (dp) :: np_norm, bcorr(16), ekt(2), ekm(2)
-   real (dp) :: pp(3), gam
+   real (dp) :: pp(3), gamma
    real (sp) :: ch_ion
 
    ik = 0
@@ -982,26 +972,30 @@
      do p = 1, np
       wgh_cmp = spec(1)%part(p, id_ch)
       pp(1:2) = spec(1)%part(p, 3:4)
-      gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
-      if (part_ind<0 .and. gam>gmm) then
-       ekt(2) = ekt(2) + wgh
-       ik = ik + 1
-       do q = 1, nd2 + 1
-        ebfp(ik, q) = spec(1)%part(p, q)
-       end do
+      gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
+      if (part_ind < 0) then
+       if (gam > gmm) then
+        ekt(2) = ekt(2) + wgh
+        ik = ik + 1
+        do q = 1, nd2 + 1
+         ebfp(ik, q) = spec(1)%part(p, q)
+        end do
+       end if
       end if
      end do
     case (3)
      do p = 1, np
       wgh_cmp = spec(1)%part(p, id_ch)
       pp(1:3) = spec(1)%part(p, 4:6)
-      gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
-      if (part_ind<0 .and. gam>gmm) then
-       ekt(2) = ekt(2) + wgh
-       ik = ik + 1
-       do q = 1, nd2 + 1
-        ebfp(ik, q) = spec(1)%part(p, q)
-       end do
+      gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
+      if (part_ind < 0) then
+       if (gam > gmm) then
+        ekt(2) = ekt(2) + wgh
+        ik = ik + 1
+        do q = 1, nd2 + 1
+         ebfp(ik, q) = spec(1)%part(p, q)
+        end do
+       end if
       end if
      end do
     end select
@@ -1025,7 +1019,7 @@
 
    integer :: ik, np, p, q, id_ch
    real (dp) :: np_norm, bcorr(16), ekt(2), ekm(2)
-   real (dp) :: pp(3), gam
+   real (dp) :: pp(3), gamma
 
    ik = 0
    np = loc_npart(imody, imodz, imodx, 1)
@@ -1037,8 +1031,8 @@
      do p = 1, np
       wgh_cmp = spec(1)%part(p, id_ch)
       pp(1:2) = spec(1)%part(p, 3:4)
-      gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
-      if (gam>gmm) then
+      gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
+      if (gamma > gmm) then
        ekt(2) = ekt(2) + wgh
        ik = ik + 1
        do q = 1, nd2 + 1
@@ -1050,8 +1044,8 @@
      do p = 1, np
       wgh_cmp = spec(1)%part(p, id_ch)
       pp(1:3) = spec(1)%part(p, 4:6)
-      gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
-      if (gam>gmm) then
+      gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
+      if (gamma > gmm) then
        ekt(2) = ekt(2) + wgh
        ik = ik + 1
        do q = 1, nd2 + 1

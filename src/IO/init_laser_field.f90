@@ -143,7 +143,7 @@
   subroutine set_envelope(part_in)
 
    real (dp), intent (out) :: part_in
-   integer :: ic, pw_ind, i1, i2, j1, nyp, k1, nzp
+   integer :: ic, pw_ind, i1, i2, j1, k1
    real (dp) :: eps, sigm, xm, tt, tau, tau1, lp1_amp, loc_delay(3)
 
    lp_amp = a0
@@ -151,12 +151,10 @@
 !===========================
 ! field grid index defined on set_pgrid
 
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   i2 = loc_xgrid(imodx)%p_ind(2)
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
+   i2 = nxp
    xm = loc_xgrid(imodx)%gmin
 !=========================
    tt = 0.0

@@ -174,7 +174,7 @@
    if (diag) then
     if (tnow >= tdia) then
      ienout = ienout + 1
-     call Envar( ienout, tnow )
+     call Envar( ienout )
      tdia = tdia + dtdia
      if (pe0) write (6, '(a10,i3,a10,e11.4)') ' rms data ', ienout, &
        ' at time =', tnow
@@ -287,9 +287,9 @@
       call collect_bunch_and_plasma_density(0, 1)
      end if
      !---!
-     call enbvar(ienout, tnow)
+     call enbvar( ienout )
      !---!
-     call Envar( ienout, tnow )
+     call Envar( ienout )
      tdia = tdia + dtdia
      if (pe0) then
       write (6, '(a10,i3,a10,e11.4)') ' rms data ', ienout, &

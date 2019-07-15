@@ -40,7 +40,7 @@
 
   integer :: comm, status(mpi_status_size), error, mpi_sd
   logical :: pex0, pex1
-  integer :: coor(3), comm_col(3), color(3)
+  integer :: coor(3), comm_col(3), col_or(3)
 
  contains
 !-------------------
@@ -127,17 +127,17 @@
 ! imodyx=imody+npe_yloc*npe_zloc*imodx
 !===================
 ! mype=imodyz+npe_yloc*npe_zloc*imodx
-   color(1) = dims(1)*(imodz+dims(2)*imodx)
+   col_or(1) = dims(1)*(imodz+dims(2)*imodx)
 ! imodyz=imody+npe_yloc*imodz
-   color(2) = imody + dims(1)*dims(2)*imodx
+   col_or(2) = imody + dims(1)*dims(2)*imodx
 !==========================
-   color(3) = imody + dims(1)*imodz
+   col_or(3) = imody + dims(1)*imodz
 !======================
-   call mpi_comm_split(comm, color(1), imody, comm_col(1), error)
+   call mpi_comm_split(comm, col_or(1), imody, comm_col(1), error)
    call mpi_comm_rank(comm_col(1), coor(1), error)
-   call mpi_comm_split(comm, color(2), imodz, comm_col(2), error)
+   call mpi_comm_split(comm, col_or(2), imodz, comm_col(2), error)
    call mpi_comm_rank(comm_col(2), coor(2), error)
-   call mpi_comm_split(comm, color(3), imodx, comm_col(3), error)
+   call mpi_comm_split(comm, col_or(3), imodx, comm_col(3), error)
    call mpi_comm_rank(comm_col(3), coor(3), error)
 !imodzx=>> all pes in the (imodz,imodx) plane for given imody
 !imodyx=> all pes in the (imody,imodx) plane for given imodz

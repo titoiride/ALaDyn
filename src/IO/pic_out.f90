@@ -78,7 +78,7 @@
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3), i_end, cmp_name
-   integer :: lun, i1, j1, k1, nxp, nyp, nzp
+   integer :: lun, i1, j1, k1
    logical :: sd
    character (4) :: foldername
    integer, parameter :: file_version = 2
@@ -92,12 +92,9 @@
    int_par = 0
    real_par = 0.0
    lun = 0
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    do iz = k1, nzp, jump
@@ -221,7 +218,7 @@
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3), i_end
-   integer :: lun, i1, j1, k1, nxp, nyp, nzp
+   integer :: lun, i1, j1, k1
    logical :: sd
    character (4) :: foldername
    integer, parameter :: file_version = 2
@@ -235,12 +232,9 @@
    int_par = 0
    real_par = 0.0
    lun = 0
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    do iz = k1, nzp, jump
@@ -370,7 +364,7 @@
 
    integer :: ix, iy, iz, ip, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
-   integer :: i_end, i1, j1, k1, nxp, nyp, nzp
+   integer :: i_end, i1, j1, k1
    integer :: lun, gr_dim(3)
    character (4) :: foldername
    integer, parameter :: file_version = 2
@@ -381,12 +375,9 @@
    int_par = 0
    real_par = 0.0
    lun = 10
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    do iz = k1, nzp, jump
@@ -501,7 +492,7 @@
    integer, intent (in) :: f_ind, jump
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
-   integer :: i1, j1, k1, nxp, nyp, nzp, i_end
+   integer :: i1, j1, k1, i_end
    integer :: gr_dim(3)
    logical :: sd
    character (4) :: foldername
@@ -513,12 +504,9 @@
    real_par = 0.0
    lun = 0
 
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    do iz = k1, nzp, jump
@@ -635,7 +623,7 @@
    integer, intent (in) :: f_ind, f_var, jump
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
-   integer :: i1, j1, k1, nxp, nyp, nzp, i_end
+   integer :: i1, j1, k1, i_end
    integer :: gr_dim(3)
    logical :: sd
    character (4) :: foldername
@@ -647,12 +635,9 @@
    real_par = 0.0
    lun = 0
 
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    do iz = k1, nzp, jump
@@ -786,7 +771,7 @@
    integer, intent (in) :: f_ind, var_ind, jump
    integer :: ix, iy, iz, iq
    integer :: lenw, kk, nx1, ny1, nz1
-   integer :: i1, j1, k1, nxp, nyp, nzp, i_end
+   integer :: i1, j1, k1, i_end
    integer (offset_kind) :: disp, disp_col
    integer :: num_header_int, gr_dim(3), header(3)
    real (dp), allocatable :: ascii_grid(:)
@@ -800,12 +785,9 @@
    real_par = 0.0
    gr_dim = 0
 
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
 
@@ -951,7 +933,7 @@
    integer, intent (in) :: f_ind, jump
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
-   integer :: i1, j1, k1, nxp, nyp, nzp, i_end
+   integer :: i1, j1, k1, i_end
    integer :: gr_dim(3)
    logical :: sd
    character (4) :: foldername
@@ -963,12 +945,9 @@
    real_par = 0.0
    lun = 0
 
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    select case (ibeam)
@@ -1113,7 +1092,7 @@
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3)
-   integer :: i1, j1, k1, nxp, nyp, nzp, lun
+   integer :: i1, j1, k1, lun
    logical :: sd
    real (dp) :: a2, avec
    character (4) :: foldername
@@ -1125,12 +1104,9 @@
    real_par = 0.0
    lun = 0
 
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    if (f_ind==0) then
@@ -1256,7 +1232,7 @@
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3)
-   integer :: i1, j1, k1, nxp, nyp, nzp, lun
+   integer :: i1, j1, k1, lun
    logical :: sd
    character (4) :: foldername
    integer, parameter :: file_version = 2
@@ -1268,12 +1244,9 @@
    real_par = 0.0
    lun = 0
 
-   j1 = loc_ygrid(imody)%p_ind(1)
-   nyp = loc_ygrid(imody)%p_ind(2)
-   k1 = loc_zgrid(imodz)%p_ind(1)
-   nzp = loc_zgrid(imodz)%p_ind(2)
-   i1 = loc_xgrid(imodx)%p_ind(1)
-   nxp = loc_xgrid(imodx)%p_ind(2)
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
 
    kk = 0
    if (f_ind<1) then
