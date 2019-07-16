@@ -344,8 +344,8 @@
    !===========================
    call curr_mpi_collect(jc)
    if (hybrid) then
-   !In flux(1:curr_ndim+1) are stored fluid (P,den) at t^{n+1/2}
-   !In flux(curr_ndim+2) is stored |A|^2/2 at t^{n+1/2}
+    !In flux(1:curr_ndim+1) are stored fluid (P,den) at t^{n+1/2}
+    !In flux(curr_ndim+2) is stored |A|^2/2 at t^{n+1/2}
 
     call fluid_curr_accumulate(flux, jc)
 
