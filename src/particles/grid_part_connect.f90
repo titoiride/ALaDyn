@@ -1173,8 +1173,8 @@
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
    integer, intent (in) :: np
    real (dp) :: dvol, dvolh
-   real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp0(3)
-   real (dp) :: ax1(0:2), ay1(0:2), az1(0:2), xp1(3)
+   real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp0(1:3)
+   real (dp) :: ax1(0:2), ay1(0:2), az1(0:2), xp1(1:3)
    real (dp) :: axh(0:4), ayh(0:4), azh(0:4)
    real (dp) :: axh0(0:4), axh1(0:4), ayh0(0:4), ayh1(0:4)
    real (dp) :: currx(0:4), curry(0:4), currz(0:4)
@@ -1345,8 +1345,8 @@
    real (dp) :: gam_inv
    real (dp) :: axh0(0:2), ayh0(0:2)
    real (dp) :: axh1(0:2), ayh1(0:2)
-   real (dp) :: ax0(0:2), ay0(0:2), xp0(0:2)
-   real (dp) :: ax1(0:2), ay1(0:2), xp1(0:2)
+   real (dp) :: ax0(0:2), ay0(0:2), xp0(1:2)
+   real (dp) :: ax1(0:2), ay1(0:2), xp1(1:2)
    real (dp) :: vp(3), dvol(3)
    real (sp) :: wght
    integer :: i, j, i0, j0, i1, j1, i2, j2, n
