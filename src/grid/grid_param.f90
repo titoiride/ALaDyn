@@ -56,6 +56,7 @@
   integer :: nxp, nyp, nzp
   integer :: loc_ygr_max, loc_zgr_max, loc_xgr_max
   integer :: ix1, ix2, jy1, jy2, kz1, kz2, n_str
+  integer :: nx_stretch, ny_stretch, nz_stretch
   !--------------------------
  end module
 

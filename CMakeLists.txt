@@ -47,6 +47,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/fields/init_grid_fields.f90
   src/grid/grid_param.f90
   src/grid/set_grid_param.f90
+  src/grid/stretched_grid.f90
   src/ionization/ionize.f90
   src/ionization/ionz_data.f90
   src/IO/pic_in.f90

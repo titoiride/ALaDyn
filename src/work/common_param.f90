@@ -71,7 +71,7 @@
     nx_alloc
   integer :: loc_npty(8), loc_nptz(8), nptx(8), loc_nptx(8), &
     sptx_max(4), nxf, npt_buffer(4)
-  integer :: sh_targ, nx_stretch, ny_stretch, nz_stretch
+  integer :: sh_targ
   integer :: mp_per_cell(ref_nlayer), nref, np_per_zc(ref_nlayer), &
     ppc(ref_nlayer)
   integer :: loc_nyc_max, loc_nzc_max, loc_nxc_max, ndim_max

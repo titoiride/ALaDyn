@@ -23,6 +23,7 @@
 
   use code_util
   use common_param
+  use grid_param, only : nx_stretch, ny_stretch, nz_stretch
   use set_grid_param
   use ionz_data
   use control_bunch_input, only: lorentz_bfact, gam, jb_norm, nb_tot, &
