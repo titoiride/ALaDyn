@@ -71,12 +71,14 @@ list(APPEND ALaDyn_Fortran_sources
   src/start/start_all.F90
   src/start/system_utilities.f90
   src/work/array_alloc.f90
-  src/work/array_wspace.f90
   src/work/code_util.f90
   src/work/common_param.f90
   src/work/control_bunch_input.f90
+  src/work/fstruct_data.f90
   src/work/phys_param.f90
   src/work/precision_def.F90
+  src/work/pstruct_data.f90
+  src/work/struct_def.f90
   src/work/util.f90
 )
 

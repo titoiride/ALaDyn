@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!             Copyright 2008-2016 Pasquale Londrillo, Stefano Sinigardi, Andrea Sgattoni              !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -18,74 +18,29 @@
 !  You should have received a copy of the GNU General Public License                                  !
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
- module struct_def
-  use precision_def
-  implicit none
-
-  type species
-   real (dp), allocatable :: part(:, :)
-  end type
 
 
-  type grid
-   integer :: ng, p_ind(2)
-   real (dp) :: gmin, gmax
-  end type
+  integer fftw_forward, fftw_backward
+  parameter (fftw_forward=-1, fftw_backward=1)
 
-  type sgrid
-   integer :: sind(2)
-   real (dp) :: smin, smax
-  end type
+  integer fftw_real_to_complex, fftw_complex_to_real
+  parameter (fftw_real_to_complex=-1, fftw_complex_to_real=1)
 
- end module
-!=======================
- module fstruct_data
+  integer fftw_estimate, fftw_measure
+  parameter (fftw_estimate=0, fftw_measure=1)
 
-  use precision_def
+  integer fftw_out_of_place, fftw_in_place, fftw_use_wisdom
+  parameter (fftw_out_of_place=0)
+  parameter (fftw_in_place=8, fftw_use_wisdom=16)
 
-  implicit none
+  integer fftw_threadsafe
+  parameter (fftw_threadsafe=128)
 
-  real (dp), allocatable :: ebf(:, :, :, :), ebf_bunch(:, :, :, :), &
-    jc(:, :, :, :)
-  real (dp), allocatable :: ebf0(:, :, :, :), ebf1(:, :, :, :)
-  real (dp), allocatable :: ebf0_bunch(:, :, :, :), &
-    ebf1_bunch(:, :, :, :), jb(:, :, :, :)
-  real (dp), allocatable :: env(:, :, :, :), env0(:, :, :, :), &
-    env1(:, :, :, :)
-  real (dp), allocatable :: up(:, :, :, :), up0(:, :, :, :), &
-    up1(:, :, :, :), flux(:, :, :, :)
-  real (dp), allocatable :: pot(:, :, :, :), fluid_x_profile(:), &
-    fluid_yz_profile(:, :)
-  real (dp), allocatable :: aux1(:), aux2(:)
- end module
-!--------------------------
- module pstruct_data
-
-  use precision_def
-
-  use struct_def
-
-  implicit none
-
-  real (dp), allocatable :: ebfp(:, :), ebfb(:, :)
-  real (dp), allocatable :: ebfp0(:, :), ebfp1(:, :)
-  real (dp), allocatable :: pdata_tracking(:, :, :)
-  real (dp), allocatable :: track_aux(:)
-!
-  real (dp), allocatable :: xpt(:, :), ypt(:, :), zpt(:, :), wghpt(:, :)
-  real (dp), allocatable :: loc_ypt(:, :), loc_zpt(:, :), &
-    loc_wghyz(:, :, :)
-  real (dp), allocatable :: loc_xpt(:, :), loc_wghx(:, :)
-  type (species) :: spec(4), bunch(5)
-  integer (hp_int), parameter :: ihx = 3
-
-!=====================
- end module
-!===================
- module array_wspace
-
-  use pstruct_data
-  use fstruct_data
-
- end module
+! Constants for the MPI wrappers:
+  integer fftw_transposed_order, fftw_normal_order
+  integer fftw_scrambled_input, fftw_scrambled_output
+  parameter (fftw_transposed_order=1, fftw_normal_order=0)
+  parameter (fftw_scrambled_input=8192)
+  parameter (fftw_scrambled_output=16384)
+  integer fftw_redft00
 
