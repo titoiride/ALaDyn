@@ -40,8 +40,8 @@
   real (dp), parameter :: t_unit = 0.299792458/0.510998928 !Tesla in GV/m units
   real (dp), parameter :: mg_unit = 0.299792458/5.10998928 !MegaGauss in TV/m units
   real (dp), parameter :: fe_unit = 0.514 !field atomic unit TV/m
-!======================================
-!10 eV =>  beta = 0.00625603 => gamma = 1.0000196 => beta*gamma = 0.00625615
-!20 eV =>  beta = 0.00884723 => gamma = 1.0000391 => beta*gamma = 0.00884758
-!30 eV =>  beta = 0.01083544 => gamma = 1.0000587 => beta*gamma = 0.01083608
+  !======================================
+  !10 eV =>  beta = 0.00625603 => gamma = 1.0000196 => beta*gamma = 0.00625615
+  !20 eV =>  beta = 0.00884723 => gamma = 1.0000391 => beta*gamma = 0.00884758
+  !30 eV =>  beta = 0.01083544 => gamma = 1.0000587 => beta*gamma = 0.01083608
  end module

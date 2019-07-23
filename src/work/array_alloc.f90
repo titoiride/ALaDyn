@@ -34,7 +34,8 @@
 !===================================
  module array_alloc
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   implicit none
 
  contains
@@ -71,7 +72,7 @@
    ng = n1p*n2p*n3p
    fsize_loc = 0
 
-! allocates common arrays
+   ! allocates common arrays
    allocate (ebf(n1p,n2p,n3p,ncomp), stat=allocstatus)
    allocate (jc(n1p,n2p,n3p,njc), stat=allocstatus)
    fsize_loc = fsize_loc + ng*ncomp + ng*njc
@@ -103,7 +104,7 @@
      ebf1 = 0.0
     end if
    end if
-!=============ENV allocation section
+   !=============ENV allocation section
    if (envlp) then
     njdim = 4
     allocate (env(n1p,n2p,n3p,njdim), stat=allocstatus)
@@ -123,7 +124,7 @@
    fsize = fsize + fsize_loc !sums all over memory alloc
   end subroutine
 
-!--------------------------
+  !--------------------------
 
   subroutine bv_alloc(n1, n2, n3, bcomp, ndm, ibch, fsize)
 
@@ -147,9 +148,9 @@
     ebf1_bunch = 0.0
     fsize = fsize + ng*bcomp
    end if
-! In 3D  nbcomp=6    in 2D nbcomp=nfield+1=4
+   ! In 3D  nbcomp=6    in 2D nbcomp=nfield+1=4
   end subroutine
-!==================
+  !==================
   subroutine fluid_alloc(n1, n2, n3, fcomp, ndm, lp, fsize)
 
    integer, intent (in) :: n1, n2, n3, fcomp, ndm, lp
@@ -177,7 +178,7 @@
     fsize = fsize + ng*fcomp
    end if
   end subroutine
-!============ external B-field allocated
+  !============ external B-field allocated
   subroutine bext_alloc(n1, n2, n3, bcomp, fsize)
 
    integer, intent (in) :: n1, n2, n3, bcomp
@@ -192,7 +193,7 @@
    ebf0_bunch = 0.0
    fsize = fsize + bcomp*ng
   end subroutine
-!===========================
+  !===========================
   subroutine p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
 
    integer, intent (in) :: npt_max, ncmp, np_s(:), ns, lp, mid, r_type
@@ -241,8 +242,8 @@
     msize = msize + nsize
    end select
   end subroutine
-!--------------------------
-!DIR$ ATTRIBUTES INLINE :: p_realloc
+  !============================
+  !DIR$ ATTRIBUTES INLINE :: p_realloc
   subroutine p_realloc(pdata, npt_new, ndv)
    type (species), intent (inout) :: pdata
    integer, intent (in) :: npt_new, ndv
@@ -259,7 +260,7 @@
    end if
    pdata%part(:, :) = 0.0
   end subroutine
-!========================
+  !========================
   subroutine v_realloc(vdata, npt_new, ndv)
    real (dp), allocatable, intent (inout) :: vdata(:, :)
    integer, intent (in) :: npt_new, ndv
@@ -275,6 +276,6 @@
    end if
    vdata(:, :) = 0.0
   end subroutine
-!===========================
+  !===========================
  end module
 

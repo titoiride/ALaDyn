@@ -32,7 +32,7 @@
   public :: map2dy_part_sind, map3d_part_sind
   
  contains
- !============== Mapping for stretched grids==========
+  !============== Mapping for stretched grids==========
 
   pure function invert_stretched_grid(yp_in) result(stretched)
    real(dp), intent(in) :: yp_in
@@ -52,12 +52,12 @@
    real (dp), intent (inout) :: pt(:, :)
    real (dp) :: yp, yp_loc
    integer :: n
- !========================
- !  enter the y=part(ic1,n) particle position in stretched grid
- !            y=y(xi)
- !  exit      xi=part(ic1,n) the  particle position in uniform grid
- !               normalized to the Dxi cell size
- !==========================================
+   !========================
+   !  enter the y=part(ic1,n) particle position in stretched grid
+   !            y=y(xi)
+   !  exit      xi=part(ic1,n) the  particle position in uniform grid
+   !               normalized to the Dxi cell size
+   !==========================================
    const = one_dp*ny*dy/2
    smin = str_ygrid%smin
    smax = str_ygrid%smax
@@ -83,12 +83,12 @@
    real (dp), intent (inout) :: pt(:, :)
    real (dp) :: yp, ys, ximn, yp_loc
    integer :: n
- !========================
- !  enter the y=part(ic1,n) particle position in stretched grid
- !            y=y(xi)
- !  exit      xi=part(ic1,n) the  particle position in uniform grid
- !               normalized to the Dxi cell size
- !==========================================
+   !========================
+   !  enter the y=part(ic1,n) particle position in stretched grid
+   !            y=y(xi)
+   !  exit      xi=part(ic1,n) the  particle position in uniform grid
+   !               normalized to the Dxi cell size
+   !==========================================
    const = one_dp*ny*dy/2
    smin = str_ygrid%smin
    smax = str_ygrid%smax
@@ -125,12 +125,12 @@
    real (dp), intent (inout) :: pt(:, :)
    real (dp) :: zp, zs, zimn, zp_loc
    integer :: n
- !========================
- !  enter the y=part(ic1,n) particle position in stretched grid
- !            y=y(xi)
- !  exit      xi=part(ic1,n) the  particle position in uniform grid
- !               normalized to the Dxi cell size
- !==========================================
+   !========================
+   !  enter the y=part(ic1,n) particle position in stretched grid
+   !            y=y(xi)
+   !  exit      xi=part(ic1,n) the  particle position in uniform grid
+   !               normalized to the Dxi cell size
+   !==========================================
    const = one_dp*ny*dy/2
    smin = str_ygrid%smin
    smax = str_ygrid%smax
@@ -160,7 +160,6 @@
     end do
    end select
   end subroutine
- !--------------------------
 
   subroutine map3d_part_sind(pt, np, sind, ic1, ic2, ym, zm)
    integer, intent (in) :: np, sind, ic1, ic2
@@ -168,13 +167,13 @@
    real (dp), intent (inout) :: pt(:, :)
    real (dp) :: yp, zp, yp_loc, zp_loc, ys, zs, ximn, zimn
    integer :: n
- !========================
- !  enter the y=part(n,ic1) z=part(n,ic2) particle positions
- !        in stretched grids    y=y(xi), z(zi)
- !  exit   xi=part(n,ic1) zi=part(n,ic2)
- !    particle positions in uniform grid
- !    normalized to the (Dxi Dzi) cell sizes
- !==========================================
+   !========================
+   !  enter the y=part(n,ic1) z=part(n,ic2) particle positions
+   !        in stretched grids    y=y(xi), z(zi)
+   !  exit   xi=part(n,ic1) zi=part(n,ic2)
+   !    particle positions in uniform grid
+   !    normalized to the (Dxi Dzi) cell sizes
+   !==========================================
    const = one_dp*ny*dy/2
    smin = str_ygrid%smin
    smax = str_ygrid%smax
@@ -310,5 +309,5 @@
     end do
    end select
   end subroutine
- !========================================
+  !========================================
  end module

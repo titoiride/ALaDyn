@@ -25,11 +25,12 @@
   use mpi_curr_interface
   use mpi_field_interface
   use psolve
+  use phys_param, only: electron_mass
 
   implicit none
-!=====Contains functions to prepare selected output variables=======
+  !=====Contains functions to prepare selected output variables=======
  contains
-!=============== Tracking particles============
+  !=============== Tracking particles============
   subroutine initial_tparticles_select(dt_loc, tx1, ty1)
 
    real (dp), intent (in) :: dt_loc, tx1, ty1
@@ -38,17 +39,17 @@
    integer (hp_int) :: plab, last_ind
    integer, parameter :: tp_numb = 10
    real (dp) :: yy(tp_numb), ym, ymx
-!========================
-! Define track_tot_nstep
+   !========================
+   ! Define track_tot_nstep
    p = 0
    if (dt_loc>0.0) p = nint((t_out-t_in)/dt_loc)
    track_tot_nstep = nint(real(p,dp)/real(tkjump,dp))
    ndv = nd2 + 1
 
-! Select particles on each mpi_task
-! xp defined by tx1
-! yp [-4,-3,-2.-1.,0,1,2,3,4], 9 test particles allocated
-!
+   ! Select particles on each mpi_task
+   ! xp defined by tx1
+   ! yp [-4,-3,-2.-1.,0,1,2,3,4], 9 test particles allocated
+   !
    yy(1) = ty1
    do p = 2, tp_numb
     yy(p) = yy(p-1) + 1.
@@ -97,7 +98,7 @@
    last_ind = 0
    if (mype==1) last_ind = loc_tpart(1)
    if (mype>1) last_ind = sum(loc_tpart(1:mype))
-!if(loc_tpart(mype+1)>0)write(6,*)'last particle index',mype,last_ind
+   !if(loc_tpart(mype+1)>0)write(6,*)'last particle index',mype,last_ind
    if (np>0) then
     do p = 1, np
      wgh_cmp = spec(1)%part(p, ndv)
@@ -118,8 +119,7 @@
       1.e-06*real(4*ndv*track_tot_nstep*track_tot_part, dp)
    end if
   end subroutine
-!================================
-!============================================
+  !============================================
   subroutine t_particles_collect(time_ind)
 
    integer, intent (in) :: time_ind
@@ -137,10 +137,10 @@
    ndv = nd2 + 1
    ndvp = ndv
    if (stretch) nst = str_indx(imody, imodz)
-!===================
+   !===================
    np = loc_npart(imody, imodz, imodx, 1)
    ik = 0
-!=========== each pe counts track particle number
+   !=========== each pe counts track particle number
    do p = 1, np
     wgh_cmp = spec(1)%part(p, ndv)
     if (part_ind>0) ik = ik + 1
@@ -152,7 +152,7 @@
     deallocate (track_aux)
     allocate (track_aux(ndvp*ik_max))
    end if
-!========= each pe stores tpart data in track_aux(ndv,loc_tpart)
+   !========= each pe stores tpart data in track_aux(ndv,loc_tpart)
    kk = 0
    do p = 1, np
     wgh_cmp = spec(1)%part(p, ndv)
@@ -163,8 +163,8 @@
      end do
     end if
    end do
-!=================
-!  all data are gathered onto pe0 
+   !=================
+   !  all data are gathered onto pe0 
    if (pe0) then
     sr = .false.
     ik1 = 0
@@ -172,14 +172,14 @@
      ik = loc_tpart(ipe+1)
      if (ik>0) then
       call exchange_1d_grdata(sr, track_aux, ik*ndvp, ipe, ipe+10)
-!pe0 receives from ipe ik sp_aux data and collects on track array
+      !pe0 receives from ipe ik sp_aux data and collects on track array
       kk = 0
       do p = 1, ik
        ik2 = ik1 + p
        do ip = 1, ndv - 1
         kk = kk + 1
         pdata_tracking(ip, ik2, time_ind) = track_aux(kk)
-!pdata_tracking(ip,ik2,time_ind)=track_aux(kk)
+        !pdata_tracking(ip,ik2,time_ind)=track_aux(kk)
        end do
        kk = kk + 1
        wgh_cmp = track_aux(kk)
@@ -197,7 +197,7 @@
     end if
    end if
   end subroutine
-!=================================================
+  !=================================================
   subroutine fill_density_data(den, ic)
    real (dp), intent (inout) :: den(:, :, :, :)
    integer, intent (in) :: ic
@@ -227,11 +227,11 @@
     end if
    end do
   end subroutine
-!=============================================
+  !=============================================
   subroutine collect_bunch_and_plasma_density(this_bunch, isp)
 
-!========== bunch density and particles of species isp added on jc(ic)
-!=========================================
+   !========== bunch density and particles of species isp added on jc(ic)
+   !=========================================
    integer, intent (in) :: this_bunch, isp
    real (dp) :: dery, derz
    integer :: np, nb, ik, i, j, k, jj, kk
@@ -255,8 +255,8 @@
      call set_grid_charge(bunch(ik), ebfb, jc, nb, 1)
     end if
    end if
-!=========== bunch data on jc(1)
-!==================== data of isp species on jc(2)
+   !=========== bunch data on jc(1)
+   !==================== data of isp species on jc(2)
    if (np>0) then
     call set_grid_charge(spec(isp), ebfp, jc, np, 2)
    end if
@@ -267,7 +267,7 @@
    end if
    jc(ix1:ix2, jy1:jy2, kz1:kz2, 1) = jc(ix1:ix2, jy1:jy2, kz1:kz2, 1) + &
      jc(ix1:ix2, jy1:jy2, kz1:kz2, 2)
-!============ on jc(1) bunch+ particles
+   !============ on jc(1) bunch+ particles
    if (stretch) then
     kk = 1
     do k = kz1, kz2
@@ -284,7 +284,7 @@
      kk = kk + 1
     end do
    end if
-!=============================
+   !=============================
   end subroutine
 
   subroutine prl_bden_energy_interp(ic)
@@ -293,7 +293,7 @@
    real (dp) :: dery, derz
    integer :: np, ik, i, j, k, jj, kk
 
-!curr_clean
+   !curr_clean
    do i = 1, 2
     jc(:, :, :, i) = 0.0
    end do
@@ -311,13 +311,13 @@
      call set_grid_den_energy(bunch(ik), ebfb, jc, np)
     end if
    end if
-!========= den on [i1-1:i2+2,j1-1:nyp+2,k1-1:nzp+2]
+   !========= den on [i1-1:i2+2,j1-1:nyp+2,k1-1:nzp+2]
    if (prl) then
     call fill_curr_yzxbdsdata(jc, 2)
    end if
-!do ik=1,2
-! call den_zyxbd(jc,i1,i2,j1,nyf,k1,nzf,ik)
-!end do
+   !do ik=1,2
+   ! call den_zyxbd(jc,i1,i2,j1,nyf,k1,nzf,ik)
+   !end do
    jc(:, :, :, 1) = -jc(:, :, :, 1) !positive for electrons
 
    if (stretch) then
@@ -336,24 +336,23 @@
      kk = kk + 1
     end do
    end if
-!======================
-!=============================
+   !=============================
   end subroutine
-!============================
+  !============================
   subroutine prl_den_energy_interp(ic)
    integer, intent (in) :: ic
    real (dp) :: dery, derz, ar, ai
    integer :: np, i, j, k, jj, kk, cmp_out
 
-!=============================
-! nden=1 only charge density
-! nden =2 charge and energy <n(gamma-1)> density
-!=============================
+   !=============================
+   ! nden=1 only charge density
+   ! nden =2 charge and energy <n(gamma-1)> density
+   !=============================
    cmp_out = nden
    do i = 1, cmp_out
     jc(:, :, :, i) = 0.0
    end do
-!===========================
+   !===========================
    np = loc_npart(imody, imodz, imodx, ic)
    select case (cmp_out)
    case (1)
@@ -375,13 +374,13 @@
      if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
      call set_grid_env_den_energy(spec(ic), ebfp, jc, np, 3)
 
-! in jc(1) is the plasma density in jc(2) (gam-1)density with env-gamma component
+     ! in jc(1) is the plasma density in jc(2) (gam-1)density with env-gamma component
 
     else
      call set_grid_den_energy(spec(ic), ebfp, jc, np)
 
-! in jc(1) is plasma norm density in jc(2) <(gam-1)density>  with
-! kineticagamma
+     ! in jc(1) is plasma norm density in jc(2) <(gam-1)density>  with
+     ! kineticagamma
     end if
    end select
 
@@ -392,7 +391,7 @@
    if (ic==1) jc(:, :, :, 1) = -jc(:, :, :, 1)
    if (cmp_out==2) jc(:, :, :, 2) = mass(ic)*electron_mass* &
      jc(:, :, :, 2)
-!=========== energy density in Mev*n/n_0
+   !=========== energy density in Mev*n/n_0
 
    if (stretch) then
     select case (ndim)
@@ -419,20 +418,20 @@
      end do
     end select
    end if
-!======================
+   !======================
   end subroutine
-!
+  !=====================
   subroutine set_wake_potential
 
    integer :: np, ic, ft_mod, ft_sym
 
    jc(:, :, :, 1:2) = 0.0
-!curr_clean
+   !curr_clean
    do ic = 1, nsp
     np = loc_npart(imody, imodz, imodx, ic)
     if (np>0) call set_grid_charge_and_jx(spec(ic), ebfp, jc, np)
    end do
-!========= jc(1)=charge density jc(2)= Jx at the same current t^{n} time
+   !========= jc(1)=charge density jc(2)= Jx at the same current t^{n} time
    if (prl) then
     call fill_curr_yzxbdsdata(jc, 2)
    end if
@@ -443,15 +442,14 @@
    end if
    jc(ix1:ix2, jy1:jy2, kz1:kz2, 1) = jc(ix1:ix2, jy1:jy2, kz1:kz2, 1) - &
      jc(ix1:ix2, jy1:jy2, kz1:kz2, 2)
-!============== jc(1)=rho-Jx=======================
+   !============== jc(1)=rho-Jx=======================
 
    ft_mod = 2 !for cosine transform
    ft_sym = 2
-!-------------------------------------------
    call fft_2d_psolv(jc, ompe, nx, nx_loc, ny, ny_loc, nz, nz_loc, ix1, &
      ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
 
-!==================================
+   !==================================
   end subroutine
-!============================
+  !============================
  end module

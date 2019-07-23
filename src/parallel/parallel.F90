@@ -43,7 +43,7 @@
   integer :: coor(3), comm_col(3), col_or(3)
 
  contains
-!-------------------
+  !==================
 
   subroutine check_decomposition
 
@@ -77,7 +77,7 @@
    call mpi_comm_rank(mpi_comm_world, mpi_rank, error)
 
    call check_decomposition
-!===================================
+   !===================================
    npe_xloc = nprocx
    npe_yloc = nprocy
    npe_zloc = nprocz
@@ -103,12 +103,12 @@
    call mpi_type_commit(partype, error)
 
 
-!================
+   !================
    ndims = 3
    dims(1) = npe_yloc
    dims(2) = npe_zloc
    dims(3) = npe_xloc
-!================
+   !================
    imodzx = mype/npe_yloc
    imody = mod(mype, npe_yloc)
    imodz = mod(imodzx, npe_zloc)
@@ -116,40 +116,40 @@
 
    imodyx = imody + npe_yloc*npe_zloc*imodx
    imodyz = imody + npe_yloc*imodz
-!======================
-!=================
+   !======================
+   !=================
 
-!================= MPI cartesiantopology with (imody,imodz,imodx) coordinates
-! mype=imody+npe_yloc*imodzx
-! imodzx=imodz+npe_zloc*imodx
-!----------------------------
-! mype=imodyx+npe_yloc*imodz
-! imodyx=imody+npe_yloc*npe_zloc*imodx
-!===================
-! mype=imodyz+npe_yloc*npe_zloc*imodx
+   !================= MPI cartesiantopology with (imody,imodz,imodx) coordinates
+   ! mype=imody+npe_yloc*imodzx
+   ! imodzx=imodz+npe_zloc*imodx
+   !----------------------------
+   ! mype=imodyx+npe_yloc*imodz
+   ! imodyx=imody+npe_yloc*npe_zloc*imodx
+   !===================
+   ! mype=imodyz+npe_yloc*npe_zloc*imodx
    col_or(1) = dims(1)*(imodz+dims(2)*imodx)
-! imodyz=imody+npe_yloc*imodz
+   ! imodyz=imody+npe_yloc*imodz
    col_or(2) = imody + dims(1)*dims(2)*imodx
-!==========================
+   !==========================
    col_or(3) = imody + dims(1)*imodz
-!======================
+   !======================
    call mpi_comm_split(comm, col_or(1), imody, comm_col(1), error)
    call mpi_comm_rank(comm_col(1), coor(1), error)
    call mpi_comm_split(comm, col_or(2), imodz, comm_col(2), error)
    call mpi_comm_rank(comm_col(2), coor(2), error)
    call mpi_comm_split(comm, col_or(3), imodx, comm_col(3), error)
    call mpi_comm_rank(comm_col(3), coor(3), error)
-!imodzx=>> all pes in the (imodz,imodx) plane for given imody
-!imodyx=> all pes in the (imody,imodx) plane for given imodz
-!all pes in the (imody,imodz) plane for given imodx
-!============ for diagnostic
+   !imodzx=>> all pes in the (imodz,imodx) plane for given imody
+   !imodyx=> all pes in the (imody,imodx) plane for given imodz
+   !all pes in the (imody,imodz) plane for given imodx
+   !============ for diagnostic
    pe0y = imody == 0
    pe1y = imody == npe_yloc - 1
    pe0z = imodz == 0
    pe1z = imodz == npe_zloc - 1
    pex0 = imodx == 0
    pex1 = imodx == npe_xloc - 1
-!===========================
+   !===========================
    xl_bd = .false.
    xr_bd = .false.
    yl_bd = .false.
@@ -164,13 +164,13 @@
    if (pe1z) zr_bd = .true.
    pe0x = pex0
    pe1x = pex1
-! Logical idensification of mpi boundary coordinates
+   ! Logical idensification of mpi boundary coordinates
    pkind = max(1, p_ind)
    bkind = max(1, b_ind)
-!====================
+   !====================
    allocate (loc_npart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1,1:pkind))
    loc_npart(0:npe_yloc-1, 0:npe_zloc-1, 0:npe_xloc-1, 1:pkind) = 0
-!========================================
+   !========================================
    allocate (loc_ne_ionz(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1))
    loc_ne_ionz(0:npe_yloc-1, 0:npe_zloc-1, 0:npe_xloc-1) = 0
    allocate (loc_tpart(npe))
@@ -189,7 +189,7 @@
     do ipe = 1, npe_yloc - 1
      pen = imody + ipe
      yp_next(ipe) = mod(pen, npe_yloc)
-!============================
+     !============================
      pen = imody - ipe
      if (pen<0) pen = pen + npe_yloc
      yp_prev(ipe) = pen
@@ -213,7 +213,7 @@
     do ipe = 1, npe_xloc - 1
      pen = imodx + ipe
      xp_next(ipe) = mod(pen, npe_xloc)
-!============= output arrays
+     !============= output arrays
      pen = imodx - ipe
      if (pen<0) pen = pen + npe_xloc
      xp_prev(ipe) = pen
@@ -223,7 +223,7 @@
 
   end subroutine
 
-!call processor_grid_diag
+  !call processor_grid_diag
 
   subroutine mpi_write_dp(buf, bufsize, disp, nchar, fout)
 
@@ -231,9 +231,9 @@
    integer, intent (in) :: bufsize, nchar
    integer (offset_kind), intent (in) :: disp
    character (nchar), intent (in) :: fout
-!===========================
+   !===========================
    integer :: ierr, thefile
-!========================
+   !========================
    call mpi_file_open(comm, fout, mpi_mode_wronly+mpi_mode_create, &
      mpi_info_null, thefile, ierr)
 
@@ -243,7 +243,7 @@
    call mpi_file_close(thefile, ierr)
 
   end subroutine
-!======== each process acces thefile and writes at disp(byte) coordinate
+  !======== each process acces thefile and writes at disp(byte) coordinate
   subroutine mpi_write_row_dp(buf, bufsize, disp, nchar, fout)
 
    real (dp), intent (in) :: buf(:)
@@ -252,19 +252,19 @@
    character (nchar), intent (in) :: fout
 
    integer :: ierr, thefile
-!=======================================
+   !=======================================
    call mpi_file_open(comm_col(2), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
 
 
 
-!call mpi_file_set_view(thefile, disp, mpi_sd, &
+   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_write_at(thefile, disp, buf, bufsize, mpi_sd, &
      mpi_status_ignore, ierr)
-! mpi_sd, 'native', &
+   ! mpi_sd, 'native', &
    call mpi_file_close(thefile, ierr)
   end subroutine
-!mpi_info_null, ierr)
+  !mpi_info_null, ierr)
   subroutine mpi_write_col_dp(buf, bufsize, disp, nchar, fout)
 
    real (dp), intent (in) :: buf(:)
@@ -273,19 +273,19 @@
    character (nchar), intent (in) :: fout
 
    integer :: ierr, thefile
-!===================
+   !===================
    call mpi_file_open(comm_col(1), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
 
 
 
 
-!call mpi_file_set_view(thefile, disp, mpi_sd, &
+   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_write_at(thefile, disp, buf, bufsize, &
      mpi_double_precision, mpi_status_ignore, ierr)
-! mpi_sd, 'native', &
+   ! mpi_sd, 'native', &
    call mpi_file_close(thefile, ierr)
-! mpi_info_null, ierr)
+   ! mpi_info_null, ierr)
   end subroutine
 
   subroutine mpi_read_col_dp(buf, bufsize, disp, nchar, fout)
@@ -296,19 +296,19 @@
    character (nchar), intent (in) :: fout
 
    integer :: ierr, thefile
-!========================
+   !========================
    call mpi_file_open(comm_col(1), fout, mpi_mode_rdonly, mpi_info_null, &
      thefile, ierr)
 
 
 
 
-!call mpi_file_set_view(thefile, disp, mpi_sd, &
+   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_read_at(thefile, disp, buf, bufsize, mpi_sd, &
      mpi_status_ignore, ierr)
-!mpi_sd, 'native', &
+   !mpi_sd, 'native', &
    call mpi_file_close(thefile, ierr)
-!mpi_info_null, ierr)
+   !mpi_info_null, ierr)
   end subroutine
 
   subroutine mpi_read_dp(buf, bufsize, disp, nchar, fout)
@@ -319,7 +319,7 @@
    character (nchar), intent (in) :: fout
 
    integer :: ierr, thefile
-!=======================================
+   !=======================================
    call mpi_file_open(comm, fout, mpi_mode_rdonly, mpi_info_null, &
      thefile, ierr)
 
@@ -327,11 +327,11 @@
 
    call mpi_file_read_at(thefile, disp, buf, bufsize, mpi_sd, &
      mpi_status_ignore, ierr)
-!call mpi_file_set_view(thefile, disp, mpi_sd, &
+   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_close(thefile, ierr)
-! mpi_sd, 'native', mpi_info_null, ierr)
+   ! mpi_sd, 'native', mpi_info_null, ierr)
   end subroutine
-!call mpi_file_seek(thefile,disp,whence,ierr)
+  !call mpi_file_seek(thefile,disp,whence,ierr)
   subroutine mpi_write_part(buf, bufsize, loc_np, disp, nchar, fout)
 
    real (sp), intent (in) :: buf(:)
@@ -340,7 +340,7 @@
    character (nchar), intent (in) :: fout
 
    integer :: ierr, thefile
-!===============================
+   !===============================
    call mpi_file_open(comm, fout, mpi_mode_wronly+mpi_mode_create, &
      mpi_info_null, thefile, ierr)
 
@@ -354,9 +354,9 @@
    call mpi_file_write(thefile, buf, bufsize, mpi_real, &
      mpi_status_ignore, ierr)
    call mpi_file_close(thefile, ierr)
-!mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
+   !mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
   end subroutine
-!please disable any binary output in Windows/IFORT if it doesn't work for you
+  !please disable any binary output in Windows/IFORT if it doesn't work for you
 
   subroutine mpi_write_part_col(buf, bufsize, disp, nchar, fout)
 
@@ -364,9 +364,9 @@
    integer, intent (in) :: bufsize, nchar
    integer (offset_kind), intent (in) :: disp
    character (nchar), intent (in) :: fout
-!========================
+   !========================
    integer :: ierr, thefile
-!========================
+   !========================
    call mpi_file_open(comm_col(1), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
 
@@ -377,9 +377,9 @@
 
    call mpi_file_write(thefile, buf, bufsize, mpi_real, &
      mpi_status_ignore, ierr)
-!mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
+   !mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
    call mpi_file_close(thefile, ierr)
-!please disable any binary output in Windows/IFORT if it doesn't work for you
+   !please disable any binary output in Windows/IFORT if it doesn't work for you
   end subroutine
 
   subroutine mpi_write_field(buf, bufsize, header, header_size, disp, &
@@ -391,7 +391,7 @@
    character (nchar), intent (in) :: fout
 
    integer :: ierr, thefile
-!========================
+   !========================
    call mpi_file_open(comm, fout, mpi_mode_wronly+mpi_mode_create, &
      mpi_info_null, thefile, ierr)
 
@@ -402,25 +402,23 @@
 
    call mpi_file_write(thefile, header, header_size, mpi_integer, &
      mpi_status_ignore, ierr)
-!mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
+   !mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
    call mpi_file_write(thefile, buf, bufsize, mpi_real, &
      mpi_status_ignore, ierr)
-!please disable any binary output in Windows/IFORT if it doesn't work for you
+   !please disable any binary output in Windows/IFORT if it doesn't work for you
    call mpi_file_close(thefile, ierr)
   end subroutine
 
   subroutine mpi_write_field_col(buf, bufsize, header, header_size, &
     disp, nchar, fout)
-
-
-!========================
+   !========================
    real (sp), intent (in) :: buf(:)
    integer, intent (in) :: bufsize, nchar, header_size, header(:)
    integer (offset_kind), intent (in) :: disp
    character (nchar), intent (in) :: fout
-!different from mpi_write_field because of the different communicator in
+   !different from mpi_write_field because of the different communicator in
    integer :: ierr, thefile
-!mpi_file_open
+   !mpi_file_open
    call mpi_file_open(comm_col(1), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
 
@@ -431,10 +429,10 @@
 
    call mpi_file_write(thefile, header, header_size, mpi_integer, &
      mpi_status_ignore, ierr)
-!mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
+   !mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
    call mpi_file_write(thefile, buf, bufsize, mpi_real, &
      mpi_status_ignore, ierr)
-!please disable any binary output in Windows/IFORT if it doesn't work for you
+   !please disable any binary output in Windows/IFORT if it doesn't work for you
    call mpi_file_close(thefile, ierr)
   end subroutine
 
@@ -451,9 +449,9 @@
    logical, intent (in) :: sr
 
    if (sr) then
-!----------------
+    !=======================
     call mpi_send(idat(1), lenw, mpi_integer, ipe, tag, comm, error)
-!=====================================
+    !=====================================
    else
 
     call mpi_recv(idat(1), lenw, mpi_integer, ipe, tag, comm, status, &
@@ -472,7 +470,7 @@
    if (sr) then
 
     call mpi_send(dat0(1,1,1), lenw, mpi_real, ipe, tag, comm, error)
-!====================
+    !====================
    else
 
     call mpi_recv(dat0(1,1,1), lenw, mpi_real, ipe, tag, comm, status, &
@@ -491,7 +489,7 @@
     call mpi_send(dat0(1), lenw, mpi_sd, ipe, tag, comm, error)
 
    else
-!====================
+    !====================
     call mpi_recv(dat0(1), lenw, mpi_sd, ipe, tag, comm, status, error)
    end if
 
@@ -507,7 +505,7 @@
    if (sr) then
 
     call mpi_send(dat0(1,1), lenw, mpi_sd, ipe, tag, comm, error)
-!
+
    else
 
     call mpi_recv(dat0(1,1), lenw, mpi_sd, ipe, tag, comm, status, &
@@ -527,7 +525,7 @@
 
     call mpi_send(dat0(1,1,1,1), lenw, mpi_sd, ipe, tag, comm_col(dir), &
       error)
-!---------------------------------
+    !=========================
    else
 
     call mpi_recv(dat0(1,1,1,1), lenw, mpi_sd, ipe, tag, comm_col(dir), &
@@ -608,15 +606,15 @@
    end select
    call mpi_sendrecv(ns, 1, mpi_integer, pes, tag, nr, 1, mpi_integer, &
      per, tag, comm_col(dir), status, error)
-!receives from right nr daata
+   !receives from right nr daata
   end subroutine
-!sends to right ns data
+  !sends to right ns data
   subroutine sr_pdata(sdata, rdata, ns, nr, dir, side)
    real (dp), intent (in) :: sdata(:)
    real (dp), intent (out) :: rdata(:)
    integer, intent (in) :: ns, nr, dir, side
    integer :: tag, pes, per
-!receives form left nr data
+   !receives form left nr data
    tag = 1000 + dir
    select case (dir)
    case (1)
@@ -660,7 +658,7 @@
    integer, intent (in) :: sidat(n2, n3)
    integer, intent (out) :: ridat(n2, n3)
    integer :: tag, pes, per, nq
-!==================
+   !==================
    tag = 10 + dir
    nq = n2*n3
    select case (dir)
@@ -692,7 +690,7 @@
 
    call mpi_sendrecv(sidat(1,1), nq, mpi_integer, pes, tag, ridat(1,1), &
      nq, mpi_integer, per, tag, comm_col(dir), status, error)
-!====================
+   !====================
   end subroutine
 
   subroutine exchange_pdata(sr, pdata, lenw, ipe, tag)
@@ -724,7 +722,7 @@
    end if
 
   end subroutine
-!----------------------------
+  !=======================
   subroutine vint_bcast(mydat, nt)
    integer, intent (in) :: nt
    integer, intent (inout) :: mydat(nt)
@@ -769,7 +767,7 @@
    else
     rv = rv_loc
    end if
-!max
+
   end subroutine
 
 
@@ -784,7 +782,7 @@
 
     call mpi_allreduce(n0, n1, 1, mpi_long_int, mpi_sum, comm, error)
    end if
-!---------------------------------------------
+   !===========================
   end subroutine
 #endif
 
@@ -814,11 +812,11 @@
    else
     dt_tot = dt0
    end if
-!min
+
   end subroutine
 
   subroutine allreduce_vint(ib, dt0, dt_tot, nt)
-!sum
+
    integer, intent (in) :: ib, nt
    integer, intent (in) :: dt0(nt)
    integer, intent (out) :: dt_tot(nt)
@@ -830,7 +828,7 @@
      call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_min, pe_min, comm, &
        error)
     case (0) 
-!----------------------------------------
+     !==============================
      call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_sum, pe_min, comm, &
        error)
     case (1) 
@@ -842,18 +840,18 @@
    else
     dt_tot = dt0
    end if
-!min
+
   end subroutine
 
   subroutine bcast_grdata(dat0, n1, n2, n3, nc)
    integer, intent (in) :: n1, n2, n3, nc
    real (dp), intent (inout) :: dat0(:, :, :, :)
    integer :: lenw
-!sum
+
    lenw = n1*n2*n3*nc
 
    call MPI_BCAST(dat0(1,1,1,1), lenw, mpi_sd, pe_min, comm, error)
-!max
+
   end subroutine
 
   subroutine bcast_realv_sum(ib, dt_prl, dt_tot, nt)
@@ -929,7 +927,7 @@
    integer (hp_int), intent (in) :: side
    integer pes, per, tag
 
-!===============================
+   !===============================
    tag = 610
 
    select case (dir)
@@ -964,7 +962,7 @@
   end subroutine
 
   subroutine processor_grid_diag
-!============================
+   !============================
    integer :: i
    character (10) :: fname = '          '
    integer, parameter :: lun = 10
@@ -990,6 +988,6 @@
    close (lun)
 
   end subroutine
-!================== side <0 receives from left   side >0 receives from right
+  !================== side <0 receives from left   side >0 receives from right
  end module
 

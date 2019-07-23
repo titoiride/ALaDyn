@@ -27,11 +27,14 @@
   use util
 
   implicit none
+  private
+  public :: ionization_cycle, set_field_ioniz_wfunction, de_inv, &
+   deb_inv
   integer, allocatable :: el_ionz_count(:)
   real (dp), allocatable :: efp_aux(:, :)
  contains
 
-!================================
+  !================================
   subroutine set_field_ioniz_wfunction(z0, zm, loc_ion, nz_lev, &
     nz_model, e_max)
    integer, intent (in) :: z0, zm, loc_ion, nz_lev, nz_model
@@ -40,10 +43,10 @@
    real (dp) :: ei, w_bsi, w_adk, ns, fact1, fact2
    real (dp), allocatable :: aw(:, :)
    real (dp) :: p2, efact, avg_fact
-!=============================
-! uses stored coefficients nstar(z,ic), vfact(z,ic),C_nstar(z,ic)
-! ionz_model, ionz_lev,nsp_ionz z0=z_ion(), zmax=atn() in common
-!===============================
+   !=============================
+   ! uses stored coefficients nstar(z,ic), vfact(z,ic),C_nstar(z,ic)
+   ! ionz_model, ionz_lev,nsp_ionz z0=z_ion(), zmax=atn() in common
+   !===============================
    wi = 0.0
    dge = e_max/real(n_ge, dp)
    d2ge = dge*dge
@@ -60,7 +63,7 @@
       fact2 = (2.*vfact(k,ic)/ei) !Vfact= (V/V_H)^{3/2}
       fact1 = (fact2)**ns
       w_adk = c_nstar(k, ic)*fact1*exp(-fact2/3.)
-!=============
+      !=============
       if (w_adk<tiny) w_adk = 0.0
       wi(i, j, ic) = w_adk !Wi(Ei,j,ic)  for j=1,zm-z0
      end do
@@ -75,7 +78,7 @@
       fact1 = (fact2)**ns
       fact1 = fact1*sqrt(3.*ei/(pig*vfact(k,ic)))
       w_adk = c_nstar(k, ic)*fact1*exp(-fact2/3.)
-!=============
+      !=============
       if (w_adk<tiny) w_adk = 0.0
       wi(i, j, ic) = w_adk
      end do
@@ -92,7 +95,7 @@
       w_adk = c_nstar(k, ic)*fact1*exp(-fact2/3.)
       if (w_adk<tiny) w_adk = 0.0
       wi(i, j, ic) = w_adk
-!=============
+      !=============
       if (ei>e_c(k,ic)) then !w_adk(Ei=Ec)
        fact2 = (2.*vfact(k,ic)/e_c(k,ic))
        fact1 = (fact2)**ns
@@ -123,7 +126,7 @@
       fact1 = fact1*sqrt(3.*ei/(pig*vfact(k,ic)))
       w_adk = c_nstar(k, ic)*fact1*exp(-fact2/3.)
       if (w_adk<tiny) w_adk = 0.0
-!=============
+      !=============
       wi(i, j, ic) = w_adk
       efact = 1. - e_c(k, ic)/ei
       w_bsi = vfact(k, ic)*efact/(4.*pig*real(k,dp))
@@ -143,7 +146,7 @@
       w_adk = c_nstar(k, ic)*fact1*exp(-fact2/3.)
       if (w_adk<tiny) w_adk = 0.0
       wi(i, j, ic) = w_adk
-!=============
+      !=============
       if (ei>e_c(k,ic)) then
        fact2 = (2.*vfact(k,ic)/e_c(k,ic))
        fact1 = sqrt(3.*e_c(k,ic)/(pig*vfact(k,ic)))*(fact2)**ns
@@ -154,42 +157,42 @@
      end do
     end do
    end select
-!=================== ordering================
-! k=0
-!V(z0+1) for n[z0]=> n[z0+1] transition with probability W[1]
-! k=1,2,...
-!V(z0+k+1) for n[z0+k]=> n[z0+k+1] transition with probability W(k+1)
-! k=zmax-z0-1
-!V(zmax) for n[zmax-1]=> n[zmax] transition with probability W[zmax-z0]
-!===============================================
-! dt in unit l0/c= 10/3. fs  dt_fs in fs unit
+   !=================== ordering================
+   ! k=0
+   !V(z0+1) for n[z0]=> n[z0+1] transition with probability W[1]
+   ! k=1,2,...
+   !V(z0+k+1) for n[z0+k]=> n[z0+k+1] transition with probability W(k+1)
+   ! k=zmax-z0-1
+   !V(zmax) for n[zmax-1]=> n[zmax] transition with probability W[zmax-z0]
+   !===============================================
+   ! dt in unit l0/c= 10/3. fs  dt_fs in fs unit
    dt_fs = 10.*dt_loc/3.
    wi = omega_a*wi
    zm_loc = zm - z0
    if (nz_lev==1) then ! one level ionization
-!W_one_level(Ef,k=z0:zm,ic) P(k.k+1) ionization
-!Wi(Ef,zk=1,zm-z0,ic) Rate of ionization zk+z0-1=> zk+z0
+    !W_one_level(Ef,k=z0:zm,ic) P(k.k+1) ionization
+    !Wi(Ef,zk=1,zm-z0,ic) Rate of ionization zk+z0-1=> zk+z0
     w_one_lev(0:n_ge, zm, ic) = 0.0
     do z = 0, zm_loc - 1
      zk = z + 1
      k = z + z0
-!z0 is the initial ion charge status
-!k=z0,z0+1,..,zm-1  zk=k-z0+1
+     !z0 is the initial ion charge status
+     !k=z0,z0+1,..,zm-1  zk=k-z0+1
      do i = 1, n_ge
       w_one_lev(i, k, ic) = 1. - exp(-dt_fs*wi(i,zk,ic))
      end do
     end do
     return
    end if
-!===================
+   !===================
    allocate (aw(0:zm_loc,0:zm_loc))
    do i = 1, n_ge
     do z = 0, zm_loc - 1
      zk = z + 1
-!z is the initial ion charge status
-!z=z0,z0+1,..,zmax-1
-!for fixed z0=0,   zmax-1
-!with inization potential v(1),...,V(zmax)
+     !z is the initial ion charge status
+     !z=z0,z0+1,..,zmax-1
+     !for fixed z0=0,   zmax-1
+     !with inization potential v(1),...,V(zmax)
      aw(0, 0) = 1.
      k = 0
      wsp(i, k, z+z0, ic) = aw(0, 0)*exp(-dt_fs*wi(i,zk,ic))
@@ -241,12 +244,12 @@
      wsp(i, zm_loc+1-zk, z+z0, ic) = 1.
     end do
    end do
-!============================
-! EXIT the cumulative DF F_j= u_0, u_0+u_1,.., u_0+u_1+ u_zmax-1
-! ndexed with j=1,2,1
+   !============================
+   ! EXIT the cumulative DF F_j= u_0, u_0+u_1,.., u_0+u_1+ u_zmax-1
+   ! ndexed with j=1,2,1
   end subroutine
 
-!========================================
+  !========================================
   subroutine ionization_electrons_inject(ion_ch_inc, ic, np, np_el, &
     new_np_el)
 
@@ -257,11 +260,9 @@
    real (dp) :: u, temp(3)
 
    integer :: n, i, ii
-!========== Enter sp_field(n,1)= the rms momenta Delta*a (n) for env model
-!                 inc=ion_ch_inc(n) the number of ionization electrons
+   !========== Enter sp_field(n,1)= the rms momenta Delta*a (n) for env model
+   !                 inc=ion_ch_inc(n) the number of ionization electrons
    id_ch = nd2 + 1
-
-!==========
    ii = np_el
    temp(1) = t0_pl(1)
    temp(2:3) = temp(1)
@@ -311,9 +312,9 @@
     end do
    end select
    loc_npart(imody, imodz, imodx, 1) = np_el
-!============ Now create new_np_el electrons
+   !============ Now create new_np_el electrons
   end subroutine
-!=======================================
+  !=======================================
   subroutine env_ionization_electrons_inject(sp_field, ion_ch_inc, ic, &
     np, np_el, new_np_el)
 
@@ -325,14 +326,14 @@
    real (dp) :: u, temp(3), a_symm
 
    integer :: n, i, ii
-!========== Enter sp_field(n,1)= the rms momenta Delta*a (n) for env model
-!                 inc=ion_ch_inc(n) the number of ionization electrons
+   !========== Enter sp_field(n,1)= the rms momenta Delta*a (n) for env model
+   !                 inc=ion_ch_inc(n) the number of ionization electrons
    id_ch = nd2 + 1
 
    temp(1) = t0_pl(1)
    temp(2:3) = temp(1)
    ii = np_el
-!if(ii==0)write(6,'(a33,2I6)')'warning, no electrons before ionz',imody,imodz
+   !if(ii==0)write(6,'(a33,2I6)')'warning, no electrons before ionz',imody,imodz
    select case (curr_ndim)
    case (2)
     do n = 1, np
@@ -377,9 +378,9 @@
     end do
    end select
    loc_npart(imody, imodz, imodx, 1) = np_el
-!============ Now create new_np_el electrons
+   !============ Now create new_np_el electrons
   end subroutine
-!===============================
+  !===============================
   subroutine part_ionize(sp_loc, amp_aux, np, ic, new_np_el, ion_ch_inc)
 
    type (species), intent (inout) :: sp_loc
@@ -393,28 +394,28 @@
    integer :: n, nk, kk, z0
    integer :: kf, loc_inc, id_ch, sp_ion
    real (dp) :: energy_norm, ef_ion
-!=====================
-! Units Ef_ion is in unit mc^2/e=2 MV/m
-! Hence E0*Ef_ion, E0=0.51 is the electric field in MV/m
-! The reference value in ADK formula is Ea= 1a.u. 0.514 MV/m,
-! then Ef_ion/Ea= Ef_approximates the field in code units.
-! Vfact(z,ic)=(V/V_H)^(3/2) where V_H is the Hydrogen ionization energy
-!              V(z,ic) is the potential  to ionize ion(ic) z-1 => z
-!===============================
-! enters nk=ion_ch_inc(n) the index of field modulus on ion n=1,np
-! exit  ion_ch_inc(n)= the number(0,1, ionz_lev) of ionization electrons of ion n=1,np
-! exit sp_aux(n,id_ch)=Delta*a= sqrt(1.5*Ef/Vfact(Z,ic))*a_n for envelope model
-!=======================
+   !=====================
+   ! Units Ef_ion is in unit mc^2/e=2 MV/m
+   ! Hence E0*Ef_ion, E0=0.51 is the electric field in MV/m
+   ! The reference value in ADK formula is Ea= 1a.u. 0.514 MV/m,
+   ! then Ef_ion/Ea= Ef_approximates the field in code units.
+   ! Vfact(z,ic)=(V/V_H)^(3/2) where V_H is the Hydrogen ionization energy
+   !              V(z,ic) is the potential  to ionize ion(ic) z-1 => z
+   !===============================
+   ! enters nk=ion_ch_inc(n) the index of field modulus on ion n=1,np
+   ! exit  ion_ch_inc(n)= the number(0,1, ionz_lev) of ionization electrons of ion n=1,np
+   ! exit sp_aux(n,id_ch)=Delta*a= sqrt(1.5*Ef/Vfact(Z,ic))*a_n for envelope model
+   !=======================
 
-!energy_norm=1./energy_unit
+   !energy_norm=1./energy_unit
    id_ch = nd2 + 1
    kf = curr_ndim
    sp_ion = ic - 1
    kk = 0
-!===========================
+   !===========================
    select case (ionz_lev)
    case (1)
-!========= Only one level ionization usining  adk model
+    !========= Only one level ionization usining  adk model
     do n = 1, np
      nk = ion_ch_inc(n) !the ioniz field grid value on the n-th ion E_f=nk*dge
      wgh_cmp = sp_loc%part(n, id_ch)
@@ -430,19 +431,19 @@
       if (ef_ion>0.0) amp_aux(n, 1) = sqrt(ef_ion)*amp_aux(n, 2) !Delta*|A| on ion(n,ic)
       kk = kk + 1
      end if
-!ion_ch_inc(n)=0 or 1
+     !ion_ch_inc(n)=0 or 1
     end do
     new_np_el = kk
-!============= old ion charge stored in ebfp(id_ch)
+    !============= old ion charge stored in ebfp(id_ch)
    case (2)
     new_np_el = 0
     write (6, *) 'WARNING :    two-step ionization no yet activated'
     return
    end select
-!============= old ion charge stored in ebfp(id_ch)
-!================= Exit
+   !============= old ion charge stored in ebfp(id_ch)
+   !================= Exit
   end subroutine
-!
+  !====================
   subroutine ionization_cycle(sp_loc, sp_aux, np, ic, itloc, mom_id, &
     def_inv)
    type (species), intent (inout) :: sp_loc
@@ -454,17 +455,16 @@
 
    new_np_el = 0
    id_ch = nd2 + 1
-!==================
-! In sp_aux(id_ch) enters the |E|^2 env field assigned  to each ion
-! np is the number of ions
-!==================
-! sp_loc(np,1:id_ch) is the array structure of ions coordinates, charge and weight
-!==========================
-!mom_id=1  select ionization procedure for envelope
-!mom_id=0 for other models
-!==============================
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!======== First check memory for auxiliary arrays=============
+   !==================
+   ! In sp_aux(id_ch) enters the |E|^2 env field assigned  to each ion
+   ! np is the number of ions
+   !==================
+   ! sp_loc(np,1:id_ch) is the array structure of ions coordinates, charge and weight
+   !==========================
+   !mom_id=1  select ionization procedure for envelope
+   !mom_id=0 for other models
+   !==============================
+   !======== First check memory for auxiliary arrays=============
    if (allocated(el_ionz_count)) then
     if (size(el_ionz_count,1)<np) then
      deallocate (el_ionz_count)
@@ -485,10 +485,10 @@
    efp_aux(:, :) = 0.0
    efp_aux(1:np, 1) = sp_aux(1:np, id_ch)
    efp_aux(1:np, 2) = sp_aux(1:np, id_ch-1)
-!=========================
-! In efp_aux(n,1) is the ionizing field squared |E|^2 on ions n=1,np
-! For envelope model : in efp_aux(n,2) is the env |A| value on ions n=1,np
-!=========================
+   !=========================
+   ! In efp_aux(n,1) is the ionizing field squared |E|^2 on ions n=1,np
+   ! For envelope model : in efp_aux(n,2) is the env |A| value on ions n=1,np
+   !=========================
 
    do n = 1, np
     ef2_ion = efp_aux(n, 1) !the interpolated E^2 field
@@ -497,30 +497,30 @@
      nk = nint(def_inv*ef_ion)
      efp_aux(n, 1) = ef_ion
      el_ionz_count(n) = nk
-!for each ion index n nk(n) is the ionizing fiels grid index
+     !for each ion index n nk(n) is the ionizing fiels grid index
     end if
    end do
-!=====================
-! The ionizing field ef_ion=|E| discretized to a grid.
-!            Ef(n)=nk*DE=nk*dge=nk/def_inv
-! Grid index nk stored in el_ionz_count(n)
-!====================
+   !=====================
+   ! The ionizing field ef_ion=|E| discretized to a grid.
+   !            Ef(n)=nk*DE=nk*dge=nk/def_inv
+   ! Grid index nk stored in el_ionz_count(n)
+   !====================
    call part_ionize(sp_loc, efp_aux, np, ic, new_np_el, el_ionz_count)
-!======= In part_ionize:
-! The transition probality from ion charge z_0 => z_0 +1 is evaluated using
-! the probability table W_one_lev(nk,z0,sp_ion)
-!=====================
-!EXIT in el_ionz_count(n) the numeber of ionization electrons (=0 or =1) on each ion(n)
-! For envelope model in efp_aux(n,1)=sqrt(1.5*E_f/Vfact(z1))*|A|
-! To modelize the rms P_y moment of ionization electron
-!==========================
-!=========== CHECK FOR MEMORYof electron struct array ================
+   !======= In part_ionize:
+   ! The transition probality from ion charge z_0 => z_0 +1 is evaluated using
+   ! the probability table W_one_lev(nk,z0,sp_ion)
+   !=====================
+   !EXIT in el_ionz_count(n) the numeber of ionization electrons (=0 or =1) on each ion(n)
+   ! For envelope model in efp_aux(n,1)=sqrt(1.5*E_f/Vfact(z1))*|A|
+   ! To modelize the rms P_y moment of ionization electron
+   !==========================
+   !=========== CHECK FOR MEMORYof electron struct array ================
    if (new_np_el>0) then
     old_np_el = loc_npart(imody, imodz, imodx, 1)
     new_np_alloc = old_np_el + new_np_el
     loc_ne_ionz(imody, imodz, imodx) = loc_ne_ionz(imody, imodz, imodx) &
       + new_np_el
-!==========
+    !==========
     if (allocated(spec(1)%part)) then
      if (size(spec(1)%part,1)<new_np_alloc) then
       do n = 1, old_np_el
@@ -538,7 +538,7 @@
        'warning, electron array not previously allocated', imody, imodz
     end if
     call v_realloc(ebfp, new_np_alloc, id_ch)
-!=========== and then Inject new electrons================
+    !=========== and then Inject new electrons================
     select case (mom_id)
     case (0)
      call ionization_electrons_inject(el_ionz_count, ic, np, old_np_el, &
@@ -548,7 +548,7 @@
        np, old_np_el, new_np_el)
     end select
    end if
-!Ionization energy to be added to the plasma particles current
+   !Ionization energy to be added to the plasma particles current
   end subroutine
-!=======================================
+  !=======================================
  end module

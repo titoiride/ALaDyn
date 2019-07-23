@@ -21,7 +21,8 @@
 
  module pic_out
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use code_util
   use common_param
   use grid_param
@@ -29,29 +30,28 @@
 
   implicit none
 
-  integer, parameter :: par_dim = 20
-  integer :: int_par(par_dim), part_int_par(par_dim)
-  real (sp) :: real_par(par_dim), part_real_par(par_dim)
+  integer, parameter, private :: par_dim = 20
+  integer, private :: int_par(par_dim), part_int_par(par_dim)
+  real(sp), private :: real_par(par_dim), part_real_par(par_dim)
 
 
-  character (13), dimension (20), parameter :: rpar = [ ' time =      ', &
+  character(13), dimension(20), parameter, private :: rpar = [ ' time =      ', &
     ' xmin =      ', ' xmax =      ', ' ymin =      ', ' ymax =      ', &
     ' zmin =      ', ' zmax =      ', ' w0_x =      ', ' w0_y =      ', &
     ' a0 =        ', ' lam0 =      ', ' mc2(MeV) =  ', ' n0(e18) =   ', &
     ' np/cell =   ', ' weight =    ', ' mass =      ', ' xmin_out =  ', &
     ' xmax_out =  ', ' ymax_out =  ', ' gam_min =   ' ]
 
-  character (12), dimension (20), parameter :: ipar = [ ' npe =      ', &
+  character(12), dimension(20), parameter, private :: ipar = [ ' npe =      ', &
     ' nx =       ', ' ny =       ', ' nz =       ', ' model =    ', &
     ' dmodel =   ', ' nsp =      ', ' curr_ndim =', ' mp/cell =  ', &
     ' ion_ch =   ', ' tsch_ord = ', ' der_ord =  ', ' iform =    ', &
     ' ph_sp_nc = ', ' f_version =', ' i_end =    ', ' nx_loc =   ', &
     ' ny_loc =   ', ' nz_loc =   ', ' null  =    ' ]
-!--------------------------
+
 
  contains
 
-!--------------------------
 
   subroutine endian(iend)
    implicit none
@@ -81,10 +81,10 @@
    logical :: sd
    character (4) :: foldername
    integer, parameter :: file_version = 2
-!========================
-! ns_index select ion species
-! cmp select components (density, energy,..)
-! cmp_loc is the index of output data:  jc(cmp_loc)
+   !========================
+   ! ns_index select ion species
+   ! cmp select components (density, energy,..)
+   ! cmp_loc is the index of output data:  jc(cmp_loc)
 
    write (foldername, '(i4.4)') iout
 
@@ -199,7 +199,7 @@
       foldername // '/' // fname // '.bin'
    end if
   end subroutine
-!--------------------------
+  !==================================
   subroutine den_energy_out( ns_ind, cmp, cmp_loc )
    integer, intent (in) :: ns_ind, cmp, cmp_loc
    character (9) :: fname = '         '
@@ -220,10 +220,10 @@
    logical :: sd
    character (4) :: foldername
    integer, parameter :: file_version = 2
-!========================
-! ns_index select ion species
-! cmp select components (density, energy,..)
-! cmp_loc is the index of output data:  jc(cmp_loc)
+   !========================
+   ! ns_index select ion species
+   ! cmp select components (density, energy,..)
+   ! cmp_loc is the index of output data:  jc(cmp_loc)
 
    write (foldername, '(i4.4)') iout
 
@@ -353,7 +353,7 @@
    end if
   end subroutine
 
-!--------------------------
+  !============================
   subroutine bden_energy_out( cmp_loc )
 
    integer, intent (in) :: cmp_loc
@@ -481,7 +481,7 @@
       '/' // fname // '.bin'
    end if
   end subroutine
-!--------------------------
+  !==========================
   subroutine ext_bfield_out( ef, f_ind )
    real (dp), intent (in) :: ef(:, :, :, :)
    character (8) :: fname = '        '
@@ -754,7 +754,7 @@
    end if
   end subroutine
 
-!--------------------------
+  !==========================
 
   subroutine fields_out_new(ef, f_ind, var_ind )
    real (dp), intent (in) :: ef(:, :, :, :)
@@ -793,7 +793,7 @@
      end do
     end do
    end do
-!================================
+   !================================
    call endian(i_end)
    ny1 = sum(nyh(1:npe_yloc))
    nz1 = sum(nzh(1:npe_zloc))
@@ -918,7 +918,7 @@
 
   end subroutine
 
-!--------------------------
+  !==========================
 
   subroutine bfields_out(ef, ef1, f_ind )
    real (dp), intent (in) :: ef(:, :, :, :), ef1(:, :, :, :)
@@ -1076,7 +1076,7 @@
    end if
   end subroutine
 
-!--------------------------
+  !==========================
   subroutine env_two_fields_out(ef, ef1, f_ind )
    real (dp), intent (in) :: ef(:, :, :, :), ef1(:, :, :, :)
    character (9) :: fname = '         '
@@ -1352,7 +1352,7 @@
       fname // '.bin'
    end if
   end subroutine
-!================================
+  !================================
   subroutine part_pdata_out(timenow, xmin_out, xmax_out, ymax_out, pid, &
     jmp)
 
@@ -1415,10 +1415,10 @@
    call intvec_distribute(ip, ip_loc, npe)
 
 
-! this differs from nptot_global since it represents just the reduced number of particles
-! that will be present in the output (should be equal to nptot_global for p_jump=1)!
+   ! this differs from nptot_global since it represents just the reduced number of particles
+   ! that will be present in the output (should be equal to nptot_global for p_jump=1)!
    nptot_global_reduced = 0
-!nptot_global_reduced=sum(ip_loc(1:npe))
+   !nptot_global_reduced=sum(ip_loc(1:npe))
    do ik = 1, npe
     nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
@@ -1504,7 +1504,7 @@
    end if
   end subroutine
 
-!--------------------------
+  !==========================
 
   subroutine part_bdata_out(timenow, pid, jmp)
 
@@ -1600,7 +1600,7 @@
     write (6, *) ' Output logical flag ', l_force_singlefile_output
    end if
   end subroutine
-!--------------------------
+  !==========================
   subroutine part_high_gamma_out(gam_in, timenow)
 
    character (8), dimension (1), parameter :: part_files = [ 'E_hg_out' ]
@@ -1656,7 +1656,7 @@
    ip = ip_loc(mype+1)
    call intvec_distribute(ip, ip_loc, npe)
    nptot_global_reduced = 0
-!nptot_global_reduced=sum(ip_loc(1:npe))
+   !nptot_global_reduced=sum(ip_loc(1:npe))
    do ik = 1, npe
     nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
@@ -1729,7 +1729,7 @@
       '/' // fname // '.bin'
    end if
   end subroutine
-!==============================================
+  !==============================================
   subroutine part_ionz_out(timenow)
 
    character (8), dimension (1), parameter :: part_files = [ 'Eionzout' ]
@@ -1768,7 +1768,7 @@
    ip = ip_loc(mype+1)
    call intvec_distribute(ip, ip_loc, npe)
    nptot_global_reduced = 0
-!nptot_global_reduced=sum(ip_loc(1:npe))
+   !nptot_global_reduced=sum(ip_loc(1:npe))
    do ik = 1, npe
     nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
@@ -1842,6 +1842,6 @@
       '/' // fname // '.bin'
    end if
   end subroutine
-!================================
+  !================================
 
  end module

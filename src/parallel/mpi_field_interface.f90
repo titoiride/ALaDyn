@@ -38,26 +38,27 @@
 
  module mpi_field_interface
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use parallel
   use grid_param
 
   implicit none
-  integer, parameter :: x_parity(6) = [ -1, 1, 1, -1, 1, 1 ]
-  integer, parameter :: y_parity(6) = [ 1, -1, 1, 1, -1, 1 ]
-  integer, parameter :: z_parity(6) = [ 1, 1, -1, 1, 1, -1 ]
+  integer, parameter, private :: x_parity(6) = [ -1, 1, 1, -1, 1, 1 ]
+  integer, parameter, private :: y_parity(6) = [ 1, -1, 1, 1, -1, 1 ]
+  integer, parameter, private :: z_parity(6) = [ 1, 1, -1, 1, 1, -1 ]
   integer (hp_int), parameter :: lft = -1, rgt = 1
 
  contains
-!===========================
+  !===========================
   subroutine field_xyzbd(ef, nc, stl, str)
    real (dp), intent (inout) :: ef(:, :, :, :)
    integer, intent (in) :: nc, stl, str
    integer :: ik, iy, ix, iz
    integer :: i1, i2, j1, j2, k1, k2
-!==========================
-! enter fields(1:n1,j01-1:j02+1,k01-1:k02+1,nc)
-! Only for NON-PERIODIC boundaries
+   !==========================
+   ! enter fields(1:n1,j01-1:j02+1,k01-1:k02+1,nc)
+   ! Only for NON-PERIODIC boundaries
    j1 = jy1
    j2 = jy2
    k1 = kz1
@@ -200,7 +201,7 @@
     end if
    end if
   end subroutine
-!-----------------------------------------------
+  !========================================
   subroutine fluid_left_xshift(fld, den_x, den_yz, i1, i2, ic1, ic2, &
     xsh)
 
@@ -219,8 +220,8 @@
 
    lenws = (ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
    if (prlx) then
-!Sends to x-left side xsh data (i1:i1+xsh-1)
-!Recvs from x-right data(i2+1:i2+xsh)       i2=n1p-xsh
+    !Sends to x-left side xsh data (i1:i1+xsh-1)
+    !Recvs from x-right data(i2+1:i2+xsh)       i2=n1p-xsh
     kk = 0
     do ic = ic1, ic2
      do iz = k1, k2
@@ -236,8 +237,8 @@
     lenws = kk
     call exchange_bdx_data(aux1, aux2, lenws, lenws, 3, rgt)
    end if
-!
-! shifts (i1+xsx:i2+xsh=n1p)=>(i1:i2)
+   !
+   ! shifts (i1+xsx:i2+xsh=n1p)=>(i1:i2)
    do ic = ic1, ic2 - 1
     do iz = k1, k2
      do iy = j1, j2
@@ -265,7 +266,7 @@
      end do
     end do
    end do
-! now replaces (i2+1:i2+xsh=n1p)
+   ! now replaces (i2+1:i2+xsh=n1p)
    if (prlx) then
     if (pex1) aux2(1:lenws) = 0.0
     kk = 0
@@ -283,7 +284,7 @@
    end if
 
   end subroutine
-!==================================
+  !==================================
   subroutine fields_left_xshift(fld, i1, i2, ic1, ic2, xsh)
 
    integer, intent (in) :: i1, i2, ic1, ic2, xsh
@@ -299,8 +300,8 @@
    k2 = kz2
    lenws = (ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
    if (prlx) then
-!Sends to x-left side xsh data (i1:i1+xsh-1)
-!Recvs from x-right data(i2+1:i2+xsh)       i2=n1p-sh
+    !Sends to x-left side xsh data (i1:i1+xsh-1)
+    !Recvs from x-right data(i2+1:i2+xsh)       i2=n1p-sh
     kk = 0
     do ic = ic1, ic2
      do iz = k1, k2
@@ -316,8 +317,8 @@
     lenws = kk
     call exchange_bdx_data(aux1, aux2, lenws, lenws, 3, rgt)
    end if
-!
-! shifts (i1+xsh:i2+xsh=n1p)=>(i1:i2)
+   !
+   ! shifts (i1+xsh:i2+xsh=n1p)=>(i1:i2)
    do ic = ic1, ic2
     do iz = k1, k2
      do iy = j1, j2
@@ -328,7 +329,7 @@
      end do
     end do
    end do
-! now replaces (i2+1:i2+xsh=n1p)
+   ! now replaces (i2+1:i2+xsh=n1p)
    if (prlx) then
     if (pex1) aux2(1:lenws) = 0.0
     kk = 0
@@ -346,7 +347,7 @@
    end if
 
   end subroutine
-!=================================
+  !=================================
   subroutine fill_ebfield_yzxbdsdata(fld, ic1, ic2, str, stl)
 
    real (dp) :: fld(:, :, :, :)
@@ -407,12 +408,12 @@
      end do
      iy1 = j1 - str
     end if
-!---------------------
+    !=========================
     if (stl>0) then
-!=======================
-! Extends data to the y-right, stl>2 allowed
-!Sends to the left stl data[j1:j1+stl-1]
-!Recvs from right [j2+1:j2+stl] f_data sign=+1
+     !=======================
+     ! Extends data to the y-right, stl>2 allowed
+     !Sends to the left stl data[j1:j1+stl-1]
+     !Recvs from right [j2+1:j2+stl] f_data sign=+1
 
      kk = 0
      do ic = ic1, ic2
@@ -429,7 +430,7 @@
      lenws = kk
      lenwr = lenws
 
-!======================= next indx=1 cart dim=1 sign=+1
+     !======================= next indx=1 cart dim=1 sign=+1
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, rgt)
      if (pe1y) then
       if (iby<2) then
@@ -451,13 +452,13 @@
      iy2 = j2 + stl
     end if
    end if
-!========================
+   !========================
    if (prlz) then
-!=======================
-! Extends data to the z-left
-! sends to the right iz=[k2:k2-str+1]
-!recvs from the left iz=[k1-1:k1-str] sign=-1
-!============================================
+    !=======================
+    ! Extends data to the z-left
+    ! sends to the right iz=[k2:k2-str+1]
+    !recvs from the left iz=[k1-1:k1-str] sign=-1
+    !============================================
 
     if (str>0) then
      kk = 0
@@ -495,9 +496,9 @@
      iz1 = k1 - str
     end if
     if (stl>0) then
-! Extends data to the z-right
-!Sends to the left stl data[k1:k1+stl-1]
-!Recvs from right [k2+1:k2+stl] f_data sign=+1
+     ! Extends data to the z-right
+     !Sends to the left stl data[k1:k1+stl-1]
+     !Recvs from right [k2+1:k2+stl] f_data sign=+1
      kk = 0
      do ic = ic1, ic2
       do j = 0, stl - 1
@@ -533,7 +534,7 @@
      iz2 = k2 + stl
     end if
    end if
-!===============================
+   !===============================
    if (.not. prlx) then
     if (ibx==2) then
      if (str>0) then
@@ -561,11 +562,11 @@
     end if
     return
    end if
-!====================================
-! Extends data to the x-left
-! sends to the right ix=[i2:i2-str+1]
-!recvs from the left ix=[i1-1:i1-str] sign=-1
-!============================================
+   !====================================
+   ! Extends data to the x-left
+   ! sends to the right ix=[i2:i2-str+1]
+   !recvs from the left ix=[i1-1:i1-str] sign=-1
+   !============================================
    if (str>0) then
     kk = 0
     do ic = ic1, ic2
@@ -600,12 +601,12 @@
      end do
     end do
    end if
-!---------------------
+   !=======================
    if (stl>0) then
-!=======================
-! Extends data to the x-right
-!Sends to the left stl data[i1:i1+stl-1]
-!Recvs from right [i2+1:i2+stl] f_data sign=+1
+    !=======================
+    ! Extends data to the x-right
+    !Sends to the left stl data[i1:i1+stl-1]
+    !Recvs from right [i2+1:i2+stl] f_data sign=+1
 
     kk = 0
     do ic = ic1, ic2
@@ -641,16 +642,16 @@
      end do
     end do
    end if
-! end data transfer
-!===========================
+   ! end data transfer
+   !===========================
   end subroutine
-!===============================
+  !===============================
   subroutine fill_ebfield_xbdsdata(fld, ic1, ic2, str, stl)
    real (dp) :: fld(:, :, :, :)
    integer, intent (in) :: ic1, ic2, str, stl
    integer :: ic, ix, j, iy, iz, kk, lenws, lenwr
    integer :: i1, i2, j1, j2, k1, k2
-!----------------------------
+   !============================
    i1 = ix1
    i2 = ix2
    j1 = jy1
@@ -685,10 +686,10 @@
     end if
     return
    end if
-!====================================
+   !====================================
    if (str>0) then
-!Sends to x-right str data(i2+1-str)
-!Recvs from the x-left str data(i1-str) sign=-1
+    !Sends to x-right str data(i2+1-str)
+    !Recvs from the x-left str data(i1-str) sign=-1
     kk = 0
     do ic = ic1, ic2
      do iz = k1, k2
@@ -721,8 +722,8 @@
     end do
    end if
    if (stl>0) then
-!Sends to left data(ii1:i1+stl-1)
-!Recvs from the right str data(i2:i2+stl)
+    !Sends to left data(ii1:i1+stl-1)
+    !Recvs from the right str data(i2:i2+stl)
     kk = 0
     do ic = ic1, ic2
      do iz = k1, k2
@@ -754,8 +755,8 @@
      end do
     end do
    end if
-! end data transfer
-!===========================
+   ! end data transfer
+   !===========================
   end subroutine
-!=====================
+  !=====================
  end module

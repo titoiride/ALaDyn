@@ -28,11 +28,10 @@
   implicit none
 
   real (dp) :: xf0
-!--------------------------
 
  contains
   subroutine init
-!======================================
+   !======================================
    if (model_id<3) then
     call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2) 
    else
@@ -41,17 +40,17 @@
      call cp_pulse(model_id, xf0) !Circular polarization
     case (4)
      call set_envelope(xf0) !Envelope  approximation for laser
-! vector potential Ay
+     ! vector potential Ay
     case (5)
-! Beam driven wakefield
+     ! Beam driven wakefield
      call bpulse(xf0)
     end select
    end if
-!if(Part)
+   !if(Part)
    call part_distribute(dmodel_id, xf0)
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
 
   end subroutine
-!+++++++++++++++++++++++++++++++++++++++
+
  end module

@@ -27,11 +27,12 @@
   use mpi_var
 
   implicit none
-!--- ---!
-  integer, public :: nml_iounit, nml_ierr
-  character (100), public :: nml_error_message
-  data nml_iounit, nml_ierr, nml_error_message/1, 0, ''/
-!--- ---!
+  private
+  public :: read_main_input, write_read_nml
+
+  integer :: nml_iounit=1, nml_ierr=0
+  character (100) :: nml_error_message=''
+
  contains
 
 
@@ -54,11 +55,11 @@
 
 
   subroutine read_input_nml
-!===========================================================
-!=
-!= Reads the input namelist
-!=
-!===========================================================
+   !===========================================================
+   !=
+   != Reads the input namelist
+   !=
+   !===========================================================
 
    namelist /grid/nx, ny, nz, ny_targ, k0, yx_rat, zx_rat
    namelist /simulation/lpf_ord, der_ord, str_flag, iform, model_id, &
@@ -82,7 +83,7 @@
      tzmax, t_in, t_out, p_tracking
    namelist /mpiparams/nprocx, nprocy, nprocz
 
-!--- reading grid parameters ---!
+   !--- reading grid parameters ---!
    yx_rat = -1.
    zx_rat = -1.
    r_c = 0.0
@@ -93,14 +94,14 @@
    if (nml_ierr>0) call print_at_screen_nml_error
    call consistency_check_grid
 
-!--- reading sim parameters ---!
+   !--- reading sim parameters ---!
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, simulation, iostat=nml_ierr)
    nml_error_message = 'SIMULATION'
    close (nml_iounit)
    if (nml_ierr>0) call print_at_screen_nml_error
 
-!--- reading target parameters ---!
+   !--- reading target parameters ---!
    mass_number(1:3) = 1.0
    ppc = -1
    np_per_xc = -1
@@ -114,10 +115,10 @@
    nml_error_message = 'TARGET_DESCRIPTION'
    close (nml_iounit)
    if (nml_ierr>0) call print_at_screen_nml_error
-!call consistency_check_number_of_particles
+   !call consistency_check_number_of_particles
    call consistency_check_number_of_particles_comp
 
-!--- reading laser parameters ---!
+   !--- reading laser parameters ---!
    symmetrization_pulse = .false.
    a_symm_rat = 0.
    enable_ionization(:) = .true.
@@ -133,7 +134,7 @@
    if (nml_ierr>0) call print_at_screen_nml_error
 
    if (nsb>0) then
-!--- reading injected beam parameters ---!
+    !--- reading injected beam parameters ---!
     open (nml_iounit, file=input_namelist_filename, status='old')
     read (nml_iounit, beam_inject, iostat=nml_ierr)
     nml_error_message = 'BEAM'
@@ -151,7 +152,7 @@
     bunch_charge(1) = charge_1
    end if
 
-!--- reading moving window parameters ---!
+   !--- reading moving window parameters ---!
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, moving_window, iostat=nml_ierr)
    nml_error_message = 'MOVING_WINDOW'
@@ -159,7 +160,7 @@
    if (nml_ierr>0) call print_at_screen_nml_error
 
 
-!--- reading output parameters ---!
+   !--- reading output parameters ---!
    time_interval_dumps = -1. !if -1 use classical output
    l_force_singlefile_output = .true.
    l_first_output_on_restart = .false.
@@ -177,7 +178,7 @@
    close (nml_iounit)
    if (nml_ierr>0) call print_at_screen_nml_error
 
-!--- reading mpi decomposition ---!
+   !--- reading mpi decomposition ---!
    nprocx = -1
    nprocy = -1
    nprocz = -1
@@ -192,13 +193,13 @@
 
 
   subroutine read_bunch_namelist
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C
-!C Reads bunch namelist for PWFA
-!C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !C
+   !C Reads bunch namelist for PWFA
+   !C
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
-!--- *** namelist *** ---!
+   !--- *** namelist *** ---!
    namelist /number_bunches/n_bunches, l_particles, &
      l_intdiagnostics_pwfa, l_intdiagnostics_classic, &
      l_embunchevolution, number_of_slices
@@ -208,7 +209,7 @@
      ppc_y_bunch, ppc_z_bunch
 
 
-!--- reading number of bunches ---!
+   !--- reading number of bunches ---!
    open (nml_iounit, file=input_namelist_filename, status='old')
    l_particles = .false.
    l_intdiagnostics_pwfa = .false.
@@ -221,14 +222,14 @@
    if (nml_ierr>0) call print_at_screen_nml_error
 
 
-!--> initialization
+   !--> initialization
    yc_bunch = 0.0
    zc_bunch = 0.0
    bunch_type = 1 !electron bunch
    bunch_shape = 1 !shape 1: bi-giassian
-!shape 2: trapezoidal (linear in Z, uniform with cutoff in R)
-!shape 3: trapezoidal-gaussian (linear in Z, gaussian in R)
-!shape 4: cylinder
+   !shape 2: trapezoidal (linear in Z, uniform with cutoff in R)
+   !shape 3: trapezoidal-gaussian (linear in Z, gaussian in R)
+   !shape 4: cylinder
    particle_charge = -1.
    rhob = 1.0 !relative density n_bunch/n_plasmabackground
    charge_right = -1.0
@@ -238,7 +239,7 @@
    ppc_z_bunch = -1 !number of particle per cell 'x' direction :: this implies weighted option
    nb_tot = -1 !total number of bunch particles :: implies particle with same weight
    sigma_cut_bunch = 3. !standard cut at 3-rms
-!-->
+
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, bunches, iostat=nml_ierr)
    nml_error_message = 'BUNCHES'
@@ -249,11 +250,11 @@
   end subroutine
 
   subroutine read_bunch_twiss_namelist
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C
-!C Reads TWISS parameter for PWFA
-!C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !C
+   !C Reads TWISS parameter for PWFA
+   !C
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
    namelist /twiss/l_twiss, alpha_twiss, beta_twiss
 
@@ -267,11 +268,11 @@
 
 
   subroutine read_poloidal_field_namelist
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C
-!C Reads Poloidal Field parameters for PWFA
-!C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !C
+   !C Reads Poloidal Field parameters for PWFA
+   !C
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
    namelist /bpoloidal/l_bpoloidal, b_ex_poloidal, radius_poloidal
 
@@ -287,11 +288,11 @@
 
   subroutine write_read_nml
    character (len=12) :: output_filename
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C
-!C write namelist on a file 'input_  .nml'
-!C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+   !C
+   !C write namelist on a file 'input_  .nml'
+   !C
+   !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
    namelist /grid/nx, ny, nz, ny_targ, k0, yx_rat, zx_rat
    namelist /simulation/lpf_ord, der_ord, str_flag, iform, model_id, &
      dmodel_id, ibx, iby, ibz, ibeam
@@ -339,13 +340,13 @@
    close (nml_iounit)
   end subroutine
 
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-!C
-!C old namelist format
-!C
-!CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+  !C
+  !C old namelist format
+  !C
+  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
   subroutine read_input_data
-!Default initialization like in input.nml
+   !Default initialization like in input.nml
    yx_rat = -1.
    zx_rat = -1.
    mass_number(1:3) = 1.0
@@ -406,8 +407,8 @@
    read (10, *) new_sim, id_new, dump
    read (10, *)
    close (10)
-!the following parameters were not used in original input.data and, for compatibility reasons,
-!have not been added since input.data is deprecated in favour of the input.nml
+   !the following parameters were not used in original input.data and, for compatibility reasons,
+   !have not been added since input.data is deprecated in favour of the input.nml
    zx_rat = yx_rat
    call consistency_check_grid
    call consistency_check_number_of_particles_comp
@@ -429,31 +430,31 @@
 
    if (zx_rat<0. .and. yx_rat>0.) then
     zx_rat = yx_rat
-!write(6,'(A)') "force zx_rat equal to yx_rat"
+    !write(6,'(A)') "force zx_rat equal to yx_rat"
    else if (zx_rat>0. .and. yx_rat<0.) then
     yx_rat = zx_rat
-!write(6,'(A)') "force yx_rat equal to zx_rat"
+    !write(6,'(A)') "force yx_rat equal to zx_rat"
    else if (zx_rat<0. .and. yx_rat<0.) then
     yx_rat = 1.
     zx_rat = 1.
-!write(6,'(A)') "force yx_rat=1 and zx_rat=1"
+    !write(6,'(A)') "force yx_rat=1 and zx_rat=1"
    end if
   end subroutine
 
-!------------------------------------------------------!
+  !------------------------------------------------------!
   subroutine consistency_check_number_of_particles !excluded temporarily because it doesn't deal with few cases, most of all np_per_xc=0
 
-!--->case 0: ppc is the only defined (new nml)
+   !--->case 0: ppc is the only defined (new nml)
    if (all(ppc>=1) .and. all(np_per_xc==-1) .and. &
      all(np_per_yc==-1) .and. all(np_per_zc==-1)) then
     call from_ppc_to_npx_npy_npz
 
-!--->case 1: np_per_zc not defined: copy from np_per_yc
+   !--->case 1: np_per_zc not defined: copy from np_per_yc
    else if (all(ppc==-1) .and. all(np_per_xc>=0) .and. &
       all(np_per_yc>=0) .and. all(np_per_zc==-1)) then
     np_per_zc = np_per_yc
 
-!--->case 3: new and old methods both defined
+   !--->case 3: new and old methods both defined
    else if (all(ppc>=1) .and. (all(np_per_xc>=1) .or. all(np_per_yc>= &
       1) .or. all(np_per_zc>=1))) then
     np_per_xc = -1
@@ -461,7 +462,7 @@
     np_per_zc = -1
     call from_ppc_to_npx_npy_npz
 
-!--->case default
+   !--->case default
    else
     ppc = 8
     call from_ppc_to_npx_npy_npz
@@ -469,29 +470,29 @@
 
   end subroutine
 
-!------> Particle organisation
+  !------> Particle organisation
   subroutine from_ppc_to_npx_npy_npz
-!--->Subdivide ppc into np_per_xc,np_per_yc and theoretically into np_per_zc
-!logical isprime
+   !--->Subdivide ppc into np_per_xc,np_per_yc and theoretically into np_per_zc
+   !logical isprime
    integer i, number_of_factors
    integer, allocatable, dimension (:) :: factors
 
-!verify input 'ppc' are not prime numbers
+   !verify input 'ppc' are not prime numbers
    do i = 1, 6
     do while (isprime(ppc(i)))
-!if(pe0) write(6,'(A,I1,A,I3)')'The input parameter ppc(',i,') is prime - corrected to >',ppc(i)+1
+    !if(pe0) write(6,'(A,I1,A,I3)')'The input parameter ppc(',i,') is prime - corrected to >',ppc(i)+1
      ppc(i) = ppc(i) + 1
     end do
    end do
 
-!subdivide ppc into np_per_xc,yc,zc
+   !subdivide ppc into np_per_xc,yc,zc
    do i = 1, 6
     allocate (factors(ppc(i)/2))
     call primefactors(ppc(i), factors, number_of_factors)
     if (ndim==2) then
      np_per_xc(i) = factors(1)
      np_per_yc(i) = product(factors(2:number_of_factors))
-!if(pe0) write(6,'(A,I2,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),' particles'
+    !if(pe0) write(6,'(A,I2,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),' particles'
     else if (ndim==3) then
      if (number_of_factors>2) then
       np_per_xc(i) = factors(1)
@@ -502,7 +503,7 @@
       np_per_yc(i) = factors(1)
       np_per_zc(i) = factors(2)
      end if
-!if(pe0) write(6,'(A,I2,A,I3,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),'*',np_per_zc(i),' particles'
+     !if(pe0) write(6,'(A,I2,A,I3,A,I3,A,I3,A)') 'layer:',i,' > ',np_per_xc(i),'*',np_per_yc(i),'*',np_per_zc(i),' particles'
     end if
     deallocate (factors)
    end do
@@ -541,29 +542,29 @@
      i = i + 1 !Not a factor. Move to next number
     end if
     if (n==1) then
-!Since f is incremented after a factor is found
+     !Since f is incremented after a factor is found
      number_factors = number_factors - 1 !its value will be one more than the number of factors
-!Hence the value of number_factors is decremented
+     !Hence the value of number_factors is decremented
      exit
     end if
    end do
   end subroutine
 
-!--- *** *** *** ---!
+  !--- *** *** *** ---!
   subroutine print_at_screen_nml_error
-!character(100) :: line
-!backspace(nml_iounit)
-!read(nml_iounit,fmt='(A)') line
+   !character(100) :: line
+   !backspace(nml_iounit)
+   !read(nml_iounit,fmt='(A)') line
    write (*, '(A)') '*** *** *** *** *** *** *** *** *** *** *** ***'
    write (*, '(A)') 'Error in namelist:      ' // &
      trim(nml_error_message)
-!write(*,'(A)')    'Invalid namelist entry: '//trim(line)
+   !write(*,'(A)')    'Invalid namelist entry: '//trim(line)
    write (*, '(A,I5)') 'iostat type of error:   ', nml_ierr
    write (*, '(A)') '*** *** *** *** *** *** *** *** *** *** *** ***'
-!stop
+   !stop
   end subroutine
 
-!--- *** *** *** ---!
+  !--- *** *** *** ---!
   subroutine select_number_of_bunch_particles()
    integer :: i
 

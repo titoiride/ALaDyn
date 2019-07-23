@@ -21,7 +21,8 @@
 
  module diag_part_and_fields
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use code_util
   use common_param
   use phys_param

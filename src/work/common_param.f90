@@ -25,12 +25,12 @@
 !================================
 
  module common_param
-  use phys_param
+  use precision_def
   
   implicit none
 
   integer, parameter :: ref_nlayer = 6, ref_nlas = 8
-!namelist input parameters
+  !namelist input parameters
   integer :: nx, ny, nz, ny_targ
   real (dp) :: k0, yx_rat, zx_rat
   integer :: ibx, iby, ibz, ibeam
@@ -50,11 +50,11 @@
   integer :: nouts, iene, nvout, nden, npout, nbout, jump, pjump
   integer :: new_sim, id_new, dump
   real (dp) :: gam_min, xp0_out, xp1_out, yp_out
-!====================
+  !====================
   real (dp) :: w_speed, wi_time, wf_time
   real (dp) :: tnow, tmax, tscale, dt_loc, dt, cfl
   logical :: initial_time
-!====================
+  !====================
   integer :: tkjump, nkjump, track_tot_nstep
   real (dp) :: txmin, txmax, tymin, tymax, tzmin, tzmax, t_in, t_out
   integer :: nprocx, nprocy, nprocz
@@ -96,7 +96,7 @@
   real (dp) :: y0_cent(ref_nlas), z0_cent(ref_nlas), y1_cent, z1_cent, &
     incid_angle
   real (dp) :: ymin_t, ymax_t, zmin_t, zmax_t, rmin_t, rmax_t
-! tracking param
+  ! tracking param
   integer :: track_tot_part
 
   integer :: pot_ndim, nb_max, pe_nbmax, nb_min, pe_nbmin

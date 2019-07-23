@@ -42,4 +42,3 @@
   logical :: xl_bd, yl_bd, zl_bd, xr_bd, yr_bd, zr_bd
   logical :: pe0x, pe1x
  end module
-!---------------------------

@@ -21,7 +21,8 @@
 
  module run_data_info
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use code_util
   use common_param
   use grid_param
@@ -29,7 +30,7 @@
   use parallel
   use control_bunch_input, only: reduced_charge, bunch_charge, epsy,&
   epsz, sxb, syb, gam, rhob, jb_norm
-
+  use phys_param, only: electron_charge_norm
   implicit none
 
 

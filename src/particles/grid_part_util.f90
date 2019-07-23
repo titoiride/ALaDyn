@@ -2,17 +2,35 @@
 !                            Copyright 2008-2019  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
+!*****************************************************************************************************!
+!  This file is part of ALaDyn.                                                                       !
+!                                                                                                     !
+!  ALaDyn is free software: you can redistribute it and/or modify                                     !
+!  it under the terms of the GNU General Public License as published by                               !
+!  the Free Software Foundation, either version 3 of the License, or                                  !
+!  (at your option) any later version.                                                                !
+!                                                                                                     !
+!  ALaDyn is distributed in the hope that it will be useful,                                          !
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !
+!  GNU General Public License for more details.                                                       !
+!                                                                                                     !
+!  You should have received a copy of the GNU General Public License                                  !
+!  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
+!*****************************************************************************************************!
+
  module grid_part_util
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use grid_part_lib
 
   implicit none
 
  contains
 
-!DIR$ ATTRIBUTES INLINE :: set_local_positions
-!================================
+  !DIR$ ATTRIBUTES INLINE :: set_local_positions
+  !================================
   subroutine set_part_gamma(pt_loc, np, nc)
    real (dp), intent (inout) :: pt_loc(:, :)
    integer, intent (in) :: np, nc
@@ -32,9 +50,9 @@
      pt_loc(n, 4) = sqrt(1.+gam2)
     end do
    end select
-!============exit gamma
+   !============exit gamma
   end subroutine
-!===================
+  !===================
   subroutine set_part_velocities(pt_loc, np, njc)
    real (dp), intent (inout) :: pt_loc(:, :)
    integer, intent (in) :: np, njc
@@ -60,7 +78,7 @@
     end do
    end select
   end subroutine
-!==========================
+  !==========================
   subroutine set_grid_charge(sp_loc, pt, den, np, ic)
 
    type (species), intent (in) :: sp_loc
@@ -70,9 +88,9 @@
    real (dp) :: xp(3), dvol, ax0(0:2), ay0(0:2), az0(0:2)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
    real (sp) :: wght
-!======================
-! Computes charge density on a grid
-!================================= 
+   !======================
+   ! Computes charge density on a grid
+   !================================= 
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp
    az0(0:2) = zero_dp
@@ -105,7 +123,7 @@
      pt(n, 4) = charge*wgh
     end do
     call set_local_2d_positions(pt, 1, np)
-!==========================
+    !==========================
     do n = 1, np
      wght = real(pt(n,4), sp)
      xp(1:2) = pt(n, 1:2)
@@ -153,11 +171,11 @@
       end do
      end do
     end do
-! charge density on den(ic)
+    ! charge density on den(ic)
    end select
   end subroutine
-!+++++++++++++++++++++++++++++++
-!==========================
+  !==========================
+  !==========================
   subroutine set_grid_env_den_energy(sp_loc, pt, eden, np, icp)
 
    type (species), intent (in) :: sp_loc
@@ -167,9 +185,9 @@
    real (dp) :: dvol, gam2, gam_p
    real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp(3), pp(3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
-!======================
-!   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
-!================================================
+   !======================
+   !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
+   !================================================
    ax0(0:2) = 0.0
    ay0(0:2) = 0.0
    az0(0:2) = 0.0
@@ -251,7 +269,7 @@
       call qden_2d_wgh(xp, ax0, ay0, i, j)
       i = i - 1
       j = j - 1
-!============ adds iparticle assigned [A^2/2]_p contribution
+      !============ adds iparticle assigned [A^2/2]_p contribution
       do j1 = 0, 2
        j2 = j + j1
        do i1 = 0, 2
@@ -319,9 +337,9 @@
      end do
     end do
    end select
-!+++++++++++++++++++++++++++++++
+   !===========================
   end subroutine
-!=================================================
+  !=================================================
   subroutine set_grid_den_energy(sp_loc, pt, eden, np)
 
    type (species), intent (in) :: sp_loc
@@ -331,9 +349,9 @@
    real (dp) :: dvol, gam
    real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp(3), pp(3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
-!======================
-!   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
-!================================================
+   !======================
+   !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
+   !================================================
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp
    az0(0:2) = zero_dp
@@ -402,7 +420,6 @@
 
      call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
      ax0(0:2) = wgh*ax0(0:2)
-!---------------
      i = i - 1
      j = j - 1
      k = k - 1
@@ -421,9 +438,9 @@
      end do
     end do
    end select
-!+++++++++++++++++++++++++++++++
+   !============================
   end subroutine
-!==============================================
+  !==============================================
   subroutine set_grid_charge_and_jx(sp_loc, pt, eden, np)
 
    type (species), intent (in) :: sp_loc
@@ -434,9 +451,9 @@
    real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), vx, xp(3), pp(3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
    real (sp) :: wght
-!======================
-!   Computes charge density and Jx current density at t^n current time
-!================================================
+   !======================
+   !   Computes charge density and Jx current density at t^n current time
+   !================================================
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp
    az0(0:2) = zero_dp
@@ -486,7 +503,6 @@
 
      call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
      ax0(0:2) = wght*ax0(0:2)
-!---------------
      i = i - 1
      j = j - 1
      k = k - 1

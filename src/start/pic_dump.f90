@@ -29,9 +29,9 @@
 
   implicit none
 
-  real (dp), allocatable :: send_buff(:), recv_buff(:)
+  real (dp), allocatable, private :: send_buff(:), recv_buff(:)
  contains
-!----------------------
+
   subroutine dump_data(it_loc, tloc)
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
@@ -44,9 +44,9 @@
    character (9) :: fname_bunchpart = '         '
    character (9) :: fname_bunch0 = '        '
    character (9) :: fname_bunch1 = '        '
-!=== BE CAREFUL: FILE NAMES HAVE BEEN INITIALIZED TO ONLY ALLOW A MAXIMUM
-! 99 CORES ALONG Z. IF MORE ARE NEEDED, IT IS NECESSARY TO CHANGE FROM
-! CHARACTER(11) TO CHARACTER(12) (OR MORE) ===
+   !=== BE CAREFUL: FILE NAMES HAVE BEEN INITIALIZED TO ONLY ALLOW A MAXIMUM
+   ! 99 CORES ALONG Z. IF MORE ARE NEEDED, IT IS NECESSARY TO CHANGE FROM
+   ! CHARACTER(11) TO CHARACTER(12) (OR MORE) ===
    character (11) :: fnamel_part = '           '
    character (11) :: fnamel_bunchpart = '           '
    character (11) :: fnamel_bunch0 = '           '
@@ -70,7 +70,7 @@
    real (dp) :: rdata(10)
    integer :: ndata(10), nps_loc(4)
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
-!==============
+   !==============
    write (fname, '(a9)') 'Comm-data'
    write (fname_yz, '(a9)') 'Dist-wgyz'
    write (fname_ebf, '(a9)') 'EB-fields'
@@ -81,7 +81,7 @@
    write (fname_bunch0, '(a9)') 'Bunch-EB0'
    write (fname_bunch1, '(a9)') 'Bunch-EB1'
    write (foldername, '(a11)') 'dumpRestart'
-!================field array sizes
+   !================field array sizes
    nxf_loc = size(ebf, 1)
    nyf_loc = size(ebf, 2)
    nzf_loc = size(ebf, 3)
@@ -104,12 +104,12 @@
     call intvec_distribute(kk, loc2d_grid_size, npe)
     grid2d_size_max = maxval(loc2d_grid_size(1:npe))
    end if
-!===============================
+   !===============================
    kk = loc_grid_size(mype+1)
    call intvec_distribute(kk, loc_grid_size, npe)
    grid_size_max = maxval(loc_grid_size(1:npe))
    lenbuff = lenbuff*grid_size_max + grid2d_size_max
-!===============================
+   !===============================
    if (part) then
     ndv = size(ebfp, 2)
     do i = 1, nsp
@@ -137,7 +137,7 @@
      max_npt_size = ndvb*maxval(ip_loc_bunch(1:npe))
      lenbuff = max(lenbuff, max_npt_size)
     end if
-!=============================
+    !=============================
     dist_npy(:, :) = 0
     dist_npz(:, :) = 0
     dist_npy(imody+1, 1:nsp) = loc_npty(1:nsp)
@@ -162,12 +162,12 @@
       dist_npz(ipe+1, 1:nsp) = loc_nptz(1:nsp)
      end do
     end if
-!===================
+    !===================
    end if
-!=========================
+   !=========================
    ndata = 0
    rdata = 0.0
-!====================
+   !====================
    rdata(1) = tloc
    rdata(2) = j0_norm
    rdata(3) = ompe
@@ -186,8 +186,8 @@
    ndata(6) = size(x)
    ndata(7) = nxf
    ndata(8) = nd2
-!==========================
-!==============
+   !==========================
+   !==============
    lun = 10
    if (pe0) then
     open (lun, file='dumpRestart/'//fname//'.bin', form='unformatted', &
@@ -196,7 +196,7 @@
     write (lun) ndata(1:10)
     write (lun) nptx(1:nsp) !the index of particles inside the box
     write (lun) sptx_max(1:nsp) !the max index inside the target
-!=====================
+    !=====================
     if (targ_end>xmax) then
      do i = 1, nsp
       do j = 1, nptx_max
@@ -214,15 +214,15 @@
      write (lun) dist_npy(1:npe_yloc, 1:nsp)
      write (lun) dist_npz(1:npe_zloc, 1:nsp)
     end if
-!==================
+    !==================
     close (lun)
    end if !end pe0 write on fname
    if (pe0) write (6, *) 'End write Common data'
-!===========================
+   !===========================
    allocate (send_buff(lenbuff)) !to be used for all mpi_write()
-!=====================
+   !=====================
 
-!=== PARTICLES DUMP SECTION ====
+   !=== PARTICLES DUMP SECTION ====
    if (part) then
     write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
     fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
@@ -273,9 +273,9 @@
      if (pe0) write (6, *) 'Bunch particles data dumped'
     end if
    end if
-!=== END PARTICLES DUMP SECTION ===
+   !=== END PARTICLES DUMP SECTION ===
 
-!=== ELECTROMAGNETIC FIELD DUMP SECTION ===
+   !=== ELECTROMAGNETIC FIELD DUMP SECTION ===
    write (fnamel_ebf, '(a9,i2.2)') 'EB-fields', imodz
    fnamel_out = 'dumpRestart/' // fnamel_ebf // '.bin'
    lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
@@ -297,9 +297,9 @@
    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
      fnamel_out)
    if (pe0) write (6, *) 'Electromagnetic fields data dumped'
-!=== END ELECTROMAGNETIC FIELD DUMP SECTION ===
+   !=== END ELECTROMAGNETIC FIELD DUMP SECTION ===
 
-!=== ENVELOPE FIELD DUMP SECTION ===
+   !=== ENVELOPE FIELD DUMP SECTION ===
    if (envelope) then
     write (fnamel_env, '(a9,i2.2)') 'ENVfields', imodz
     fnamel_out = 'dumpRestart/' // fnamel_env // '.bin'
@@ -334,9 +334,9 @@
       fnamel_out)
     if (pe0) write (6, *) 'Envelope field data dumped'
    end if
-!=== END ENVELOPE FIELD DUMP SECTION ===
+   !=== END ENVELOPE FIELD DUMP SECTION ===
 
-!=== FLUID DUMP SECTION ===
+   !=== FLUID DUMP SECTION ===
    if (hybrid) then
     write (fnamel_fl, '(a9,i2.2)') 'FL-fields', imodz
     fnamel_out = 'dumpRestart/' // fnamel_fl // '.bin'
@@ -376,9 +376,9 @@
     if (pe0) write (6, *) 'Fluid density and momentum data dumped'
    end if
 
-!=== END FLUID DUMP SECTION ===
+   !=== END FLUID DUMP SECTION ===
 
-!=== BUNCH FIELD DUMP SECTION ===
+   !=== BUNCH FIELD DUMP SECTION ===
    if (beam) then
     write (fnamel_bunch0, '(a9,i2.2)') 'Bunch-EB0', imodz
     fnamel_out = 'dumpRestart/' // fnamel_bunch0 // '.bin'
@@ -422,9 +422,9 @@
     end if
     if (pe0) write (6, *) 'Bunch fields data dumped'
    end if
-!=== END BUNCH FIELD DUMP SECTION ===
+   !=== END BUNCH FIELD DUMP SECTION ===
 
-!============== write (y,z,wghyz initial part distribution
+   !============== write (y,z,wghyz initial part distribution
    if (part) then
     fname_out = 'dumpRestart/' // fname_yz // '.bin'
     kk = 0
@@ -444,7 +444,7 @@
       end do
      end if
     end do
-!===============================
+    !===============================
     do ic = 1, nsp
      if (loc_nptz(ic)>0) then
       do j = 1, loc_nptz(ic)
@@ -466,12 +466,11 @@
       'Incoming plasma target transverse distribution data dumped'
    end if
    deallocate (send_buff)
-!====================
-!----------------------- FIELD DUMP
+   !====================
    unix_time_last_dump = unix_time_now
    if (pe0) write (6, *) 'END TOTAL DUMP WRITE'
   end subroutine
-!==============================================================
+  !==============================================================
   subroutine restart(it_loc, tloc)
    integer, intent (out) :: it_loc
    real (dp), intent (out) :: tloc
@@ -505,7 +504,7 @@
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
    real (dp) :: rdata(10), x0_new
 
-!==============
+   !==============
    write (fname, '(a9)') 'Comm-data'
    write (fname_ebf, '(a9)') 'EB-fields'
    write (fname_env, '(a9)') 'ENVfields'
@@ -516,12 +515,12 @@
    write (fname_bunchpart, '(a9)') 'BunchPart'
    write (foldername, '(a11)') 'dumpRestart'
    write (fname_yz, '(a9)') 'Dist-wgyz'
-!==============       Already defined data
+   !==============       Already defined data
    n1_loc = size(ebf, 1)
    n2_loc = size(ebf, 2)
    n3_loc = size(ebf, 3)
    ebf_cp = size(ebf, 4)
-!===================
+   !===================
    loc_grid_size(mype+1) = n1_loc*n2_loc*n3_loc
    loc2d_grid_size(mype+1) = n2_loc*n3_loc
    lenbuff = ebf_cp
@@ -543,7 +542,7 @@
    call intvec_distribute(kk, loc_grid_size, npe)
    grid_size_max = maxval(loc_grid_size(1:npe))
    lenbuff = lenbuff*grid_size_max + grid2d_size_max
-!===================
+   !===================
    if (pe0) write (6, *) 'Max size of recieve buffer', lenbuff
    lun = 10
    if (pe0) then
@@ -559,13 +558,13 @@
     n1_old = ndata(6)
     nxf = ndata(7)
     ndv = ndata(8) + 1
-!=========================
+    !=========================
     tloc = rdata(1)
     targ_in = rdata(4)
     targ_end = rdata(5)
     lp_in(1) = rdata(6)
     x0_new = rdata(9)
-!=============================
+    !=============================
     if (targ_end>xmax+x0_new) then
      allocate (xpt(nptx_max,nsp))
      allocate (wghpt(nptx_max,nsp))
@@ -588,7 +587,7 @@
     end if
     close (lun)
    end if !end pe0 read on fname
-!========================= distribute comm data
+   !========================= distribute comm data
    kk = size(rdata)
    k1 = size(ndata)
    call MPI_BCAST(ndata, k1, mpi_integer, pe_min, comm, error)
@@ -601,7 +600,7 @@
    n1_old = ndata(6)
    nxf = ndata(7)
    ndv = ndata(8) + 1
-!=========================
+   !=========================
    tloc = rdata(1)
    targ_in = rdata(4)
    targ_end = rdata(5)
@@ -638,7 +637,7 @@
      call mpi_recv(wghpt(1,1), nptx_max*nsp, mpi_double_precision, &
        pe_min, 400+mype, comm, status, error)
     end if
-!===========================
+    !===========================
     if (hybrid) then
      if (nxf>0) then
       if (pe0) then
@@ -670,7 +669,7 @@
       end do
      end do
     end do
-!========== distributes npty,nptz initial particle distribution
+    !========== distributes npty,nptz initial particle distribution
     call MPI_BCAST(dist_npy(1,1), npe_yloc*nsp, mpi_integer, pe_min, &
       comm, error)
     call MPI_BCAST(dist_npz(1,1), npe_zloc*nsp, mpi_integer, pe_min, &
@@ -683,17 +682,17 @@
     allocate (loc_zpt(nzpt_max,nsp))
     allocate (loc_wghyz(nypt_max,nzpt_max,nsp))
    end if !end n_part distribut
-! x() defined on the grid module starting from x(1)=0.0
-!---------- Particle read
-!============================================
+   ! x() defined on the grid module starting from x(1)=0.0
+   !---------- Particle read
+   !============================================
    allocate (recv_buff(lenbuff))
    recv_buff(:) = 0.0
-!=== FLUID RESTART SECTION ===
+   !=== FLUID RESTART SECTION ===
    if (hybrid) then
     write (fnamel_fl, '(a9,i2.2)') 'FL-fields', imodz
     fnamel_out = 'dumpRestart/' // fnamel_fl // '.bin'
     lenw(1:npe) = 2*fl_cp*loc_grid_size(1:npe) + loc2d_grid_size(1:npe)
-!==========================
+    !==========================
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
@@ -728,20 +727,20 @@
     end do
     if (pe0) write (6, *) 'Fluid density and momentum data read'
    end if
-!=== END FLUID RESTART SECTION ===
+   !=== END FLUID RESTART SECTION ===
 
-!=== ENVELOPE RESTART SECTION ===
+   !=== ENVELOPE RESTART SECTION ===
    if (envelope) then
     write (fnamel_env, '(a9,i2.2)') 'ENVfields', imodz
     fnamel_out = 'dumpRestart/' // fnamel_env // '.bin'
     lenw(1:npe) = (env_cp+env1_cp)*loc_grid_size(1:npe)
-!==================
+    !==================
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
       fnamel_out)
-!======================
+    !======================
     kk = 0
     do ic = 1, env_cp
      do k = 1, n3_loc
@@ -767,20 +766,20 @@
     end if
     if (pe0) write (6, *) 'Envelope field data read'
    end if
-!=== END ENVELOPE RESTART SECTION ===
+   !=== END ENVELOPE RESTART SECTION ===
 
-!=== FIELD RESTART SECTION ===
+   !=== FIELD RESTART SECTION ===
    write (fnamel_ebf, '(a9,i2.2)') 'EB-fields', imodz
    fnamel_out = 'dumpRestart/' // fnamel_ebf // '.bin'
    lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
-!=========================
+   !=========================
    disp = lenw(1+mype)
    disp_col = imody*disp
    disp_col = 8*disp_col
 
    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
      fnamel_out)
-!===========================
+   !===========================
    kk = 0
    do ic = 1, ebf_cp
     do k = 1, n3_loc
@@ -793,20 +792,20 @@
     end do
    end do
    if (pe0) write (6, *) 'Electromagnetic fields data read'
-!=== END FIELD RESTART SECTION===
+   !=== END FIELD RESTART SECTION===
 
-!=== BUNCH FIELD RESTART SECTION ===
+   !=== BUNCH FIELD RESTART SECTION ===
    if (beam) then
     write (fnamel_bunch0, '(a9,i2.2)') 'Bunch-EB0', imodz
     fnamel_out = 'dumpRestart/' // fnamel_bunch0 // '.bin'
     lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
-! =========================
+    !=========================
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
       fnamel_out)
-! ===========================
+    !===========================
     kk = 0
     do ic = 1, ebf_cp
      do k = 1, n3_loc
@@ -822,13 +821,13 @@
      write (fnamel_bunch1, '(a9,i2.2)') 'Bunch-EB1', imodz
      fnamel_out = 'dumpRestart/' // fnamel_bunch1 // '.bin'
      lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
-!  =========================
+     !=========================
      disp = lenw(1+mype)
      disp_col = imody*disp
      disp_col = 8*disp_col
      call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
        fnamel_out)
-!  ===========================
+     !===========================
      kk = 0
      do ic = 1, ebf_cp
       do k = 1, n3_loc
@@ -844,7 +843,7 @@
     if (pe0) write (6, *) 'Bunch fields data read'
    end if
 
-!=== END BUNCH FIELD RESTART SECTION ===
+   !=== END BUNCH FIELD RESTART SECTION ===
    if (part) then
     write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
     fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
@@ -854,14 +853,14 @@
     np_max = maxval(nps_loc(1:nsp))
     call p_alloc(np_max, ndv, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
     lenw(1:npe) = ndv*ip_loc(1:npe)
-!=======================
+    !=======================
     disp_col = 0
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype) &
       )
     disp_col = 8*disp_col
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
       fnamel_out)
-!==============================
+    !==============================
     kk = 0
     do ic = 1, nsp
      np = loc_npart(imody, imodz, imodx, ic)
@@ -875,7 +874,7 @@
      end if
     end do
    end if
-!=================================
+   !=================================
    if (part) then
     fname_out = 'dumpRestart/' // fname_yz // '.bin'
     kk = 0
@@ -932,11 +931,10 @@
     end do
     if (pe0) write (6, *) 'Particles data read'
    end if !end of part read
-!============================================
+   !============================================
    deallocate (recv_buff)
-!===============================
+   !===============================
    if (pe0) write (6, *) 'END TOTAL DUMP READ'
   end subroutine
-!===========================
+  !===========================
  end module
-!===================================

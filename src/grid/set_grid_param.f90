@@ -57,7 +57,7 @@
    integer, intent (in) :: n1, n2, n3, ib, x_stretch, y_stretch
    real (dp), intent (in) :: xres, yxres, zxres
    integer :: i, ns1
-   real (dp) :: yy, yyh, sm, sp
+   real (dp) :: yy, yyh, smin, smax
 
    allocate (x(n1+1), xw(n1+1), dx1(n1+1), y(n2+1), z(n3+1), dy1(n2+1), &
      dz1(n3+1))
@@ -71,8 +71,8 @@
    sx_rat = 1.
    sy_rat = 1.
    sz_rat = 1.
-   sm = 0.0
-   sp = 0.0
+   smin = 0.0
+   smax = 0.0
    dx = 1.
    if (xres>0.0) dx = 1./xres
    dx_inv = 1.0/dx
@@ -90,12 +90,12 @@
     dxi_inv = 1./dxi
     lx_s = dx*dxi_inv
     sx_rat = dxi*dx_inv
-    sp = x(ns1)
+    smax = x(ns1)
     do i = ns1, n1 + 1
      yy = dxi*real(i-ns1, dp)
      yyh = yy + dxi*0.5
-     x(i) = sp + lx_s*tan(yy)
-     xh(i) = sp + lx_s*tan(yyh)
+     x(i) = smax + lx_s*tan(yy)
+     xh(i) = smax + lx_s*tan(yyh)
      dx1h(i) = cos(yyh)*cos(yyh)
      dx1(i) = cos(yy)*cos(yy)
     end do
@@ -136,7 +136,7 @@
     end do
     !============== Stretched grid 
     !   index      [1:y_stretch]              [ns1:n2+1] 
-    !   coordinate [y(1): sm=y(y_stretch+1]   [sp: y(n2+1)=ymax]
+    !   coordinate [y(1): smin=y(y_stretch+1]   [smax: y(n2+1)=ymax]
     !   unstretched: [y_stretch+1:ns1-1=n2+1-(y_stretch1)]
     !========================
     ns1 = n2 + 1 - y_stretch
@@ -145,25 +145,25 @@
      dyi_inv = 1./dyi
      l_s = dy*dyi_inv
      sy_rat = dyi*dy_inv
-     sm = y(y_stretch+1)
-     sp = y(ns1)
+     smin = y(y_stretch+1)
+     smax = y(ns1)
      str_ygrid%sind(1) = y_stretch
      str_ygrid%sind(2) = ns1
-     str_ygrid%smin = sm
-     str_ygrid%smax = sp
+     str_ygrid%smin = smin
+     str_ygrid%smax = smax
      do i = 1, y_stretch
       yy = dyi*real(i-1-y_stretch, dp)
       yyh = yy + 0.5*dyi
-      y(i) = sm + l_s*tan(yy) !y(xi)=y_s +(Dy/Dxi)*tan(xi) Dy=L_s*dxi uniform
-      yh(i) = sm + l_s*tan(yyh)
+      y(i) = smin + l_s*tan(yy) !y(xi)=y_s +(Dy/Dxi)*tan(xi) Dy=L_s*dxi uniform
+      yh(i) = smin + l_s*tan(yyh)
       dy1h(i) = cos(yyh)*cos(yyh) ! dy(xi)= L_s/cos^2(xi)=(Dy/Dxi)/cos^2(xi) 
       dy1(i) = cos(yy)*cos(yy) ! dy1=cos^2(xi)=(dy/dxi)^{-1}*(Dy0/Dxi)
      end do
      do i = ns1, n2 + 1
       yy = dyi*real(i-ns1, dp)
       yyh = yy + dyi*0.5
-      y(i) = sp + l_s*tan(yy)
-      yh(i) = sp + l_s*tan(yyh)
+      y(i) = smax + l_s*tan(yy)
+      yh(i) = smax + l_s*tan(yyh)
       dy1h(i) = cos(yyh)*cos(yyh)
       dy1(i) = cos(yy)*cos(yy)
      end do
@@ -198,25 +198,25 @@
      dzi_inv = 1./dzi
      l_s = dz*dzi_inv
      sz_rat = dzi*dz_inv
-     sm = z(y_stretch+1)
-     sp = z(ns1)
+     smin = z(y_stretch+1)
+     smax = z(ns1)
      str_zgrid%sind(1) = y_stretch
      str_zgrid%sind(2) = ns1
-     str_zgrid%smin = sm
-     str_zgrid%smax = sp
+     str_zgrid%smin = smin
+     str_zgrid%smax = smax
      do i = 1, y_stretch
       yy = dzi*real(i-1-y_stretch, dp)
       yyh = yy + 0.5*dzi
-      z(i) = sm + l_s*tan(yy)
-      zh(i) = sm + l_s*tan(yyh)
+      z(i) = smin + l_s*tan(yy)
+      zh(i) = smin + l_s*tan(yyh)
       dz1h(i) = cos(yyh)*cos(yyh)
       dz1(i) = cos(yy)*cos(yy)
      end do
      do i = ns1, n3 + 1
       yy = dzi*real(i-ns1, dp)
       yyh = yy + dzi*0.5
-      z(i) = sp + l_s*tan(yy)
-      zh(i) = sp + l_s*tan(yyh)
+      z(i) = smax + l_s*tan(yy)
+      zh(i) = smax + l_s*tan(yyh)
       dz1h(i) = cos(yyh)*cos(yyh)
       dz1(i) = cos(yy)*cos(yy)
      end do
@@ -263,16 +263,16 @@
 
    integer, intent (in) :: jmp, npex, npey, npez
    integer :: i1, j1, k1, i2, j2, k2
-   integer :: ipe, ix, ix1, iy1, iz1, ngyzx(3), ngout
+   integer :: ipe, ix, iix1, iy1, iz1, ngyzx(3), ngout
 
    do ipe = 0, npex - 1
     i1 = loc_xgrid(ipe)%p_ind(1)
     i2 = loc_xgrid(ipe)%p_ind(2)
-    ix1 = 0
+    iix1 = 0
     do ix = i1, i2, jmp
-     ix1 = ix1 + 1
+     iix1 = iix1 + 1
     end do
-    nxh(ipe+1) = ix1
+    nxh(ipe+1) = iix1
    end do
    do ipe = 0, npey - 1
     j1 = loc_ygrid(ipe)%p_ind(1)

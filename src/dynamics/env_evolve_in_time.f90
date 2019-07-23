@@ -25,8 +25,7 @@
   use boris_push
   use curr_and_fields_util
   use mpi_part_interface, only: cell_part_dist
-  use ionize, only: set_field_ioniz_wfunction,&
-   env_ionization_electrons_inject, ionization_cycle, de_inv
+  use ionize, only: set_field_ioniz_wfunction, ionization_cycle, de_inv
   use fluid_density_momenta, only: fluid_curr_accumulate,&
    set_env_momentum_density_flux, update_adam_bash_fluid_variables
   use util, only: init_random_seed

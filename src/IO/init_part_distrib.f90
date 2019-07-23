@@ -27,8 +27,11 @@
   use array_alloc
   use mpi_var
   use code_util, only: maxv, mem_psize
+  use phys_param, only: pi
 
   implicit none
+  private
+  public :: part_distribute
 
   integer, allocatable :: loc_imax(:, :), loc_jmax(:, :), loc_kmax(:, :)
 

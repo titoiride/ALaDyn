@@ -31,6 +31,7 @@
   use grid_part_util
   use code_util, only: maxv, mem_psize
   use control_bunch_input
+  use phys_param, only: t_unit
 
   implicit none
 

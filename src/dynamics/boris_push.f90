@@ -22,7 +22,8 @@
 
  module boris_push
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use common_param
 
   implicit none

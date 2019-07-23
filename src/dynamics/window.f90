@@ -22,7 +22,8 @@
 
  module window
   use util, only: init_random_seed, gasdev
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use common_param
   use grid_param
   use mpi_field_interface

@@ -27,10 +27,10 @@
   implicit none
   private
   public :: gasdev, init_random_seed, bunch_gen
-!--------------------------
+
  contains
 
-!--------------------------
+
   subroutine ran_number(idum, ran2)
    integer, intent (inout) :: idum
    real (dp), intent (out) :: ran2
@@ -66,7 +66,7 @@
    ran2 = min(am*iy, rnmx)
   end subroutine
 
-!--------------------------
+  !===========================
 
   subroutine init_random_seed(myrank)
    integer, intent (in) :: myrank
@@ -80,16 +80,16 @@
 
    if (.not. l_disable_rng_seed) then
     un = 123
-! First try if the OS provides a random number generator
+    ! First try if the OS provides a random number generator
     open (unit=un, file='/dev/urandom', access='stream', &
       form='unformatted', action='read', status='old', iostat=istat)
     if (istat==0) then
      read (un) seed
      close (un)
     else
-! Fallback to XOR:ing the current time and pid. The PID is
-! useful in case one launches multiple instances of the same
-! program in parallel.
+     ! Fallback to XOR:ing the current time and pid. The PID is
+     ! useful in case one launches multiple instances of the same
+     ! program in parallel.
      call system_clock(count)
      if (count/=0) then
       t = transfer(count, t)
@@ -119,7 +119,7 @@
    end if
    call random_seed(put=seed)
   end subroutine
-!--------------------------
+  !========================
 
   subroutine gasdev(dev)
 
@@ -147,7 +147,7 @@
    end if
   end subroutine
 
-!--------------------------
+  !==========================
 
   subroutine set_x2_distrib(xb, nxb)
    integer, intent (in) :: nxb
@@ -163,7 +163,7 @@
    end do
   end subroutine
 
-!--------------------------
+  !===============================
 
   subroutine set_pden(xp, x0, nx0, rat, id, isp)
    integer, intent (in) :: nx0(:), id, isp
@@ -238,7 +238,7 @@
    end select
   end subroutine
 
-!--------------------------
+  !============================
 
   subroutine ludcmp(am, n)
    integer, intent (in) :: n
@@ -283,7 +283,7 @@
 
   end subroutine
 
-!--------------------------
+  !=============================
 
   subroutine trid0(a, b, c, u, n)
 
@@ -308,7 +308,7 @@
    end do
   end subroutine
 
-!--------------------------
+  !===========================
 
   subroutine cycl0(a, b, c, x, n)
 
@@ -346,7 +346,7 @@
    end do
   end subroutine
 
-!--------------------------
+  !===========================
 
   subroutine sort(part, np)
 
@@ -427,7 +427,7 @@
 
   end subroutine
 
-!--------------------------
+  !=========================
 
   subroutine vsort(part, np, ndv, dir)
 
@@ -507,7 +507,7 @@
 
   end subroutine
 
-!--------------------------
+  !===========================
   subroutine bunch_gen(ndm, n1, n2, sx, sy, sz, gm, ey, ez, cut, dg, &
     bunch)
    integer, intent (in) :: ndm, n1, n2
@@ -518,14 +518,14 @@
    real (dp) :: xm, ym, zm, pxm, pym, pzm
    real (dp) :: v1, v2, rnd, a
 
-!============= ey,ez are emittances (in mm-microns)
-! FIX emittances are ALWAYS a dimension times an angle...
-! so this (in mm-micron) doesn't make any sense
-! dg=d(gamma)/gamma (%)
-! dp_y=ey/s_y dp_z=ez/s_z dp_x=d(gamma)
-!=============================================
+   !============= ey,ez are emittances (in mm-microns)
+   ! FIX emittances are ALWAYS a dimension times an angle...
+   ! so this (in mm-micron) doesn't make any sense
+   ! dg=d(gamma)/gamma (%)
+   ! dp_y=ey/s_y dp_z=ez/s_z dp_x=d(gamma)
+   !=============================================
 
-!Distribute (x,y,z,px,py,pz) centered on 0; px=> px+gamma
+   !Distribute (x,y,z,px,py,pz) centered on 0; px=> px+gamma
 
    select case (ndm)
    case (2)
@@ -568,7 +568,7 @@
     ym = 0.0
     pxm = 0.0
     pym = 0.0
-! Reset centering
+    ! Reset centering
     do i = n1, n2
      xm = xm + bunch(1, i)
      ym = ym + bunch(2, i)
@@ -633,7 +633,7 @@
     pym = 0.0
     pzm = 0.0
 
-! Reset centering
+    ! Reset centering
     do i = n1, n2
      xm = xm + bunch(1, i)
      ym = ym + bunch(2, i)
@@ -669,8 +669,8 @@
    real (dp) :: ym, zm, pzm, pym
    real (dp) :: v1, v2, rnd
 
-!Distribute (z,y,pz,py) centered on 0;
-!Distribute (x,px) uniformly
+   !Distribute (z,y,pz,py) centered on 0;
+   !Distribute (x,px) uniformly
 
    np = n2 + 1 - n1
    sigs(1) = lx/real(np, dp) !x-distrution
@@ -679,12 +679,12 @@
    sigs(4) = 0.0 !dpz
    sigs(5) = betx*ey/sy
    sigs(6) = betx*ez/sz
-! =====================
+   ! =====================
    do i = n1, n2
     bunch(1, i) = sigs(1)*real(i-1, dp)
     bunch(4, i) = betx
    end do
-!======================= transverse (py,pz) iand (sy,sz) are gaussian
+   !======================= transverse (py,pz) iand (sy,sz) are gaussian
    select case (stp)
    case (1) !Gaussian distributions
     do i = n1, n2
@@ -730,14 +730,14 @@
    pym = 0.0
    pzm = 0.0
 
-! Reset centering
+   ! Reset centering
    do i = n1, n2
     ym = ym + bunch(2, i)
     zm = zm + bunch(3, i)
     pym = pym + bunch(5, i)
     pzm = pzm + bunch(6, i)
    end do
-!==================== uniform x distribution dx=Lx/np
+   !==================== uniform x distribution dx=Lx/np
    ym = ym/real(np, dp)
    zm = zm/real(np, dp)
    pym = pym/real(np, dp)
@@ -770,13 +770,13 @@
     r = sqrt(-2.*log(s)/s)
     randnormal(i) = x*r
    end do
-!--- convergence to N(0,1) ---!
+   !--- convergence to N(0,1) ---!
    mu = sum(randnormal)/(1.*len-1.)
    std = sqrt(sum((randnormal-mu)**2)/(1.*len-1.))
    randnormal = (randnormal-mu)/std
   end subroutine
 
-!Box-Muller with cut in the distribution
+  !Box-Muller with cut in the distribution
   subroutine boxmuller_vector_cut(randnormal, len, cut)
    integer, intent (in) :: len
    real (8), intent (inout) :: randnormal(len)
@@ -801,7 +801,7 @@
    randnormal = randnormal - sum(randnormal)/(1.*max(1,size(randnormal)) &
      )
   end subroutine
-!=======================================
+  !=======================================
   subroutine bunch_twissrotation(n1, n2, generated_bunch, alpha_y_t, &
     beta_y_t, alpha_z_t, beta_z_t, s_y, s_z, eps_y, eps_z, x_cm, y_cm, &
     z_cm)
@@ -812,13 +812,13 @@
    integer :: i
    real (dp) :: ay11, ay12, az11, az12
 
-!twiss-rotation-matrix
+   !twiss-rotation-matrix
    ay11 = sqrt(eps_y*beta_y_t/(eps_y**2+s_y**2*alpha_y_t**2))
    az11 = sqrt(eps_z*beta_z_t/(eps_z**2+s_z**2*alpha_z_t**2))
    ay12 = -ay11*alpha_y_t*s_y**2/eps_y
    az12 = -az11*alpha_z_t*s_z**2/eps_z
 
-!twiss-rotation
+   !twiss-rotation
    do i = n1, n2
     generated_bunch(2, i) = generated_bunch(2, i) - y_cm
     generated_bunch(2, i) = ay11*generated_bunch(2, i) + &
@@ -831,6 +831,5 @@
    end do
   end subroutine
 
-!=====================
+  !=====================
  end module
-!=====================

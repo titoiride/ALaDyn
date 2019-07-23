@@ -30,7 +30,7 @@
   real (dp) :: loc_pstore(7)
 
  contains
-!=================
+  !=================
   subroutine traffic_size_eval(sp_loc, xl, xr, pel, per, ibd, ind, &
     npold, nsr, npnew)
 
@@ -60,9 +60,9 @@
    nr_send = p
    nl_send = q
    call sr_idata(nr_send, nl_recv, cdir, left)
-!sends to right nr_send receives from left nl_recv
+   !sends to right nr_send receives from left nl_recv
    call sr_idata(nl_send, nr_recv, cdir, right)
-!sends to left nl_send  receives from right nr_recv
+   !sends to left nl_send  receives from right nr_recv
 
    if (ibd<2) then !NOT PERIODIC BD
     if (pel) nl_recv = 0
@@ -72,16 +72,16 @@
     end if
    end if
    npnew = npold + nl_recv + nr_recv - nl_send - nr_send
-!================================
-!if(pel)nl_send=0
-!if(per)nr_send=0
+   !================================
+   !if(pel)nl_send=0
+   !if(per)nr_send=0
    nsr(1) = nl_send
    nsr(2) = nr_send
    nsr(3) = nl_recv
    nsr(4) = nr_recv
-!================================
+   !================================
   end subroutine
-!======================================
+  !======================================
   subroutine part_prl_exchange(sp_loc, pstore, xl, xr, xlmin, xrmax, &
     pel, per, ibd, dir, ndv, old_np, n_sr, npt)
 
@@ -95,8 +95,8 @@
    integer :: k, kk, n, p, q, ns, nr, cdir
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
    real (dp) :: xp
-!================ dir are cartesian coordinate index (x,y,z)
-!================ cdir are mpi-cartesian index (y,z,x)
+   !================ dir are cartesian coordinate index (x,y,z)
+   !================ cdir are mpi-cartesian index (y,z,x)
 
    nl_send = n_sr(1)
    nr_send = n_sr(2)
@@ -105,7 +105,7 @@
    cdir = dir - 1
    if (dir==1) cdir = 3 !for x-direction
    vxdir = dir + ndim
-!================== checks memory
+   !================== checks memory
    p = ndv*max(nl_send, nr_send)
    if (p>0) then
     if (size(aux1)<p) then
@@ -122,7 +122,7 @@
      aux2 = 0.0
     end if
    end if
-!==================== copy remaining part => ebfp
+   !==================== copy remaining part => ebfp
    p = max(nr_send, 1)
    q = max(nl_send, 1)
    allocate (right_pind(p))
@@ -156,7 +156,7 @@
      pstore(npt, 1:ndv) = sp_loc%part(n, 1:ndv)
     end if
    end do
-!=======================
+   !=======================
    ns = ndv*nr_send
    nr = ndv*nl_recv
    if (ibd<2) then !NON PERIODIC CASE
@@ -166,7 +166,7 @@
    if (ns>0) then
     kk = 0
     if (per) then
-!sends to the right only for Periodic boundary
+     !sends to the right only for Periodic boundary
      do k = 1, nr_send
       n = right_pind(k)
       loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
@@ -188,7 +188,7 @@
     end if
    end if
    if (max(ns,nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
-! sends ns data to the right
+   ! sends ns data to the right
    if (nr>0) then !receives nr data from left
     kk = 0
     p = npt
@@ -231,7 +231,7 @@
     end if
    end if
    if (max(ns,nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, right)
-! sends ns data to the left recieves nr data from right
+   ! sends ns data to the left recieves nr data from right
    if (nr>0) then
     p = npt
     kk = 0
@@ -247,8 +247,8 @@
    if (allocated(left_pind)) deallocate (left_pind)
    if (allocated(right_pind)) deallocate (right_pind)
   end subroutine
-!================
-!=============================
+  !================
+  !=============================
   subroutine reset_all_part_dist(loc_sp, pstore, xl, xr, ib, np, ndv, &
     cin, ndm, np_new)
    type (species), intent (inout) :: loc_sp
@@ -258,7 +258,7 @@
    integer, intent (out) :: np_new
    real (dp) :: xp, dxp
    integer :: n, p, pout
-!-----------------------
+   !===========================
    np_new = np
    p = 0
    pout = 0
@@ -300,10 +300,10 @@
     np_new = p
    end if
   end subroutine
-!==============
+  !==============
   subroutine cell_part_dist(moving_wind)
    logical, intent (in) :: moving_wind
-   integer :: ic, nspx, n, np, np_new, npout, np_new_allocate, ndv, &
+   integer :: ic, nspx, n, np, np_new, np_new_allocate, ndv, &
      np_rs
    integer :: n_sr(4)
    real (dp) :: ymm, ymx, lbd_min, rbd_max
@@ -311,15 +311,15 @@
    real (dp) :: xmm, xmx
 
    ndv = nd2 + 1
-!===================================
-! In traffic_size_eval() Counts numbers of left-right exchanges
-!nsr(1)=nl_send
-!nsr(2)=nr_send
-!nsr(3)=nl_recv
-!nsr(4)=nr_recv
-! ==> new particle number np_new= nl_recv-nl_send+ nr_recv-nr_send
-!      In part_prl_exchange()    exchanges particle data by mpi_send_recv
-!=====================================
+   !===================================
+   ! In traffic_size_eval() Counts numbers of left-right exchanges
+   !nsr(1)=nl_send
+   !nsr(2)=nr_send
+   !nsr(3)=nl_recv
+   !nsr(4)=nr_recv
+   ! ==> new particle number np_new= nl_recv-nl_send+ nr_recv-nr_send
+   !      In part_prl_exchange()    exchanges particle data by mpi_send_recv
+   !=====================================
    if (.not. moving_wind) then
     ymm = loc_ygrid(imody)%gmin
     ymx = loc_ygrid(imody)%gmax
@@ -410,10 +410,10 @@
      end if
     end if
    end if !end of moving_window=false
-!=====================
-!In moving window all species leaving the computational box at the left
-!x-boundary are removed
-!==========================================
+   !=====================
+   !In moving window all species leaving the computational box at the left
+   !x-boundary are removed
+   !==========================================
    nspx = nsp
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
@@ -459,10 +459,10 @@
     end do
    end if
   end subroutine
-!=========================
+  !=========================
   subroutine cell_bpart_dist(moving_wind)
    logical, intent (in) :: moving_wind
-   integer :: ic, n, np, np_new, np_new_allocate, npout, ndv, np_rs
+   integer :: ic, n, np, np_new, np_new_allocate, ndv, np_rs
    integer :: n_sr(4)
    real (dp) :: ymm, ymx
    real (dp) :: zmm, zmx
@@ -470,7 +470,7 @@
    real (dp) :: lbd_min, rbd_max
 
    ndv = nd2 + 1
-!====================
+   !====================
    if (.not. moving_wind) then
     ymm = loc_ygrid(imody)%gmin
     ymx = loc_ygrid(imody)%gmax
@@ -563,7 +563,7 @@
      end if
     end if
    end if !end of moving_window=false
-!=====================
+   !=====================
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
    lbd_min = loc_xgrid(0)%gmin
@@ -608,6 +608,5 @@
     end do
    end if
   end subroutine
-!=====================
+  !=====================
  end module
-!==================================

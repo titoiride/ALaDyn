@@ -21,7 +21,8 @@
 !*****************************************************************************************************!
 
  module curr_and_fields_util
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use grid_param
   use mpi_curr_interface
   use mpi_field_interface

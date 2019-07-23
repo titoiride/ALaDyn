@@ -33,16 +33,16 @@
   integer (kind=2) :: err_ind
 
  contains
-!    Templates of spl=1,2,3 order shape functions for grid-particle  connection
-!==================================================
-! Computes 
+  !    Templates of spl=1,2,3 order shape functions for grid-particle  connection
+  !==================================================
+  ! Computes 
   subroutine set_int_pshape(spl, xx, ax, ind)
    integer, intent (in) :: spl
    real (dp), intent (in) :: xx
    real (dp), intent (out) :: ax(0:3)
    integer, intent (out) :: ind
    real (dp) :: sx, sx2, sx3
-!To integer grid points
+   !To integer grid points
    ax(0:3) = 0.0
    select case (spl)
    case (1)
@@ -67,14 +67,14 @@
     ax(0) = 1. - ax(1) - ax(2) - ax(3)
    end select
   end subroutine
-!========================
+  !========================
   subroutine set_hint_pshape(spl, xx, ax, ind)
    integer, intent (in) :: spl
    real (dp), intent (in) :: xx
    integer, intent (out) :: ind
    real (dp), intent (out) :: ax(0:3)
    real (dp) :: sx, sx2, sx3
-!To half-integer grid points
+   !To half-integer grid points
    ax(0:3) = 0.0
    select case (spl)
    case (1)
@@ -100,19 +100,19 @@
     ax(0) = 1. - ax(1) - ax(2) - ax(3) ! to (i-1/2,i+1/2,i+3/2,i+5/2) half-int
    end select
   end subroutine
-!=======================
+  !=======================
 
-!===========================================
-!     Computes particle density charge on grid integer points
-!==============================================
-!DIR$ ATTRIBUTES INLINE :: ql_interpolate,qq_interpolate
-!====================
+  !===========================================
+  !     Computes particle density charge on grid integer points
+  !==============================================
+  !DIR$ ATTRIBUTES INLINE :: ql_interpolate,qq_interpolate
+  !====================
   subroutine qlh_2d_spline(xp, ax, axh, ay, ayh, ix, ihx, iy, ihy)
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), axh(0:1), ay(0:2), ayh(0:1)
    integer, intent (inout) :: ix, ihx, iy, ihy
    real (sp) :: xx, sx, sx2
-!======================
+   !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
    sx = xx - real(ix, dp)
@@ -141,13 +141,13 @@
    ihy = iy
 
   end subroutine
-!====================
+  !====================
   subroutine qqh_1d_spline(xp, ax, axh, ix, ihx)
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), axh(0:2)
    integer, intent (inout) :: ix, ihx
    real (sp) :: xx, sx, sx2
-!======================
+   !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
    sx = xx - real(ix, dp)
@@ -166,13 +166,13 @@
    ihx = ihx - 1
 
   end subroutine
-!=======================
+  !=======================
   subroutine qqh_2d_spline(xp, ax, axh, ay, ayh, ix, ihx, iy, ihy)
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), axh(0:2), ay(0:2), ayh(0:2)
    integer, intent (inout) :: ix, ihx, iy, ihy
    real (sp) :: xx, sx, sx2
-!======================
+   !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
    sx = xx - real(ix, dp)
@@ -208,7 +208,7 @@
    iy = iy - 1
    ihy = ihy - 1
   end subroutine
-!=======================================
+  !=======================================
   subroutine qlh_3d_spline(xp, ax, axh, ay, ayh, az, azh, ix, ihx, iy, &
     ihy, iz, ihz)
    real (dp), intent (in) :: xp(:)
@@ -216,7 +216,7 @@
      az(0:2), azh(0:1)
    integer, intent (inout) :: ix, ihx, iy, ihy, iz, ihz
    real (sp) :: xx, sx, sx2
-!======================
+   !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
    sx = xx - real(ix, dp)
@@ -257,7 +257,7 @@
    iz = iz - 1
    ihz = iz
   end subroutine
-!=================================
+  !=================================
   subroutine qqh_3d_spline(xp, ax, axh, ay, ayh, az, azh, ix, ihx, iy, &
     ihy, iz, ihz)
    real (dp), intent (in) :: xp(:)
@@ -324,7 +324,7 @@
    integer, intent (inout) :: ix
    real (dp), intent (inout) :: ax(0:2)
    real (sp) :: xx, sx, sx2
-!======================
+   !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
    sx = xx - real(ix, dp)
@@ -339,7 +339,7 @@
    real (dp), intent (inout) :: ax(0:2), ay(0:2)
    integer, intent (inout) :: ix, iy
    real (sp) :: xx, sx, sx2
-!======================
+   !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
    sx = xx - real(ix, dp)
@@ -356,13 +356,13 @@
    ay(2) = 0.5*(0.25+sx2+sx)
    ay(0) = 1. - ay(1) - ay(2)
   end subroutine
-!------------------------------
+  !==========================
   subroutine qden_3d_wgh(xp, ax, ay, az, ix, iy, iz)
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), ay(0:2), az(0:2)
    integer, intent (inout) :: ix, iy, iz
    real (sp) :: xx, sx, sx2
-!======================
+   !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
    sx = xx - real(ix, dp)
@@ -387,15 +387,15 @@
    az(2) = 0.5*(0.25+sx2+sx)
    az(0) = 1. - az(1) - az(2)
   end subroutine
-!====================================
+  !====================================
 
-!DIR$ ATTRIBUTES INLINE :: ql_interpolate
+  !DIR$ ATTRIBUTES INLINE :: ql_interpolate
   subroutine set_local_2d_positions(pt_loc, n1, np)
 
    real (dp), intent (inout) :: pt_loc(:, :)
    integer, intent (in) :: n1, np
    integer :: n
-!=========================
+   !=========================
    do n = 1, np
     pt_loc(n, 1) = dx_inv*(pt_loc(n,1)-xmn)
    end do
@@ -421,12 +421,12 @@
    end if
 
   end subroutine
-!======================
+  !======================
   subroutine set_local_3d_positions(pt_loc, n1, np)
    real (dp), intent (inout) :: pt_loc(:, :)
    integer, intent (in) :: n1, np
    integer :: n
-!=========================
+   !=========================
    do n = 1, np
     pt_loc(n, 1) = dx_inv*(pt_loc(n,1)-xmn)
    end do
@@ -454,4 +454,3 @@
   end subroutine
 
  end module
-!==========================

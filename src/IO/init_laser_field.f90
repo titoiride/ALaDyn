@@ -21,7 +21,8 @@
 
  module init_laser_field
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use init_grid_field
 
   implicit none
@@ -177,10 +178,10 @@
    env(:, :, :, :) = 0.0
    if (lp_end(1)>xm) then
     if (g_prof) then
-     call init_gprof_envelope_field(env, a0, dt, tt, t0_lp, w0_x, w0_y, &
+     call init_gprof_envelope_field(env, a0, tt, t0_lp, w0_x, w0_y, &
        xf, oml, pw_ind, i1, i2, y0_cent(1), z0_cent(1))
     else
-     call init_envelope_field(env, a0, dt, tt, t0_lp, w0_x, w0_y, xf, &
+     call init_envelope_field(env, a0, tt, t0_lp, w0_x, w0_y, xf, &
        oml, pw_ind, i1, i2, y0_cent(1), z0_cent(1))
      !call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
     end if
@@ -193,11 +194,11 @@
      xf_loc(ic) = xc_loc(ic) + t0_lp
      if (lp_end(ic)>xm) then
       if (g_prof) then
-       call init_gprof_envelope_field(env, a0, dt, tt, t0_lp, w0_x, &
+       call init_gprof_envelope_field(env, a0, tt, t0_lp, w0_x, &
          w0_y, xf_loc(ic), oml, pw_ind, i1, i2, y0_cent(ic), &
          z0_cent(ic))
       else
-       call init_envelope_field(env, a0, dt, tt, t0_lp, w0_x, w0_y, &
+       call init_envelope_field(env, a0, tt, t0_lp, w0_x, w0_y, &
          xf_loc(ic), oml, pw_ind, i1, i2, y0_cent(ic), z0_cent(ic))
       end if
      end if
@@ -217,10 +218,10 @@
     lp_ionz_end = xc1_lp + tau1
     if (lp_ionz_end>xm) then
      if (g_prof) then
-      call init_gprof_envelope_field(env1, a1, dt, tt, t1_lp, w1_x, &
+      call init_gprof_envelope_field(env1, a1, tt, t1_lp, w1_x, &
         w1_y, xf1, om1, pw_ind, i1, i2, y1_cent, z1_cent)
      else
-      call init_envelope_field(env1, a1, dt, tt, t1_lp, w1_x, w1_y, xf1, &
+      call init_envelope_field(env1, a1, tt, t1_lp, w1_x, w1_y, xf1, &
         om1, pw_ind, i1, i2, y1_cent, z1_cent)
      end if
     end if

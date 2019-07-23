@@ -21,7 +21,8 @@
 
  module grid_part_connect
 
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use grid_part_lib
 
   implicit none
@@ -419,8 +420,8 @@
    real (dp), intent (in) :: dt_step
 
    real (dp) :: dvol, dvol1
-   real (dp) :: xp1(3), up(3), ap(12)
-   real (dp) :: a1, b1, dgam, gam_inv, gam, gam2, dth
+   real (dp) :: xp1(3), upart(3), ap(12)
+   real (dp) :: aa1, b1, dgam, gam_inv, gam, gam2, dth
    real (dp) :: axh1(0:2), ax1(0:2)
    real (dp) :: ayh1(0:2), ay1(0:2)
    real (dp) :: azh1(0:2), az1(0:2)
@@ -462,7 +463,7 @@
     do n = 1, np
      ap(1:6) = 0.0
      xp1(1:2) = pt(n, 1:2) !the current particle positions
-     up(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
+     upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
      wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
 
      call qqh_2d_spline(xp1, ax1, axh1, ay1, ayh1, i, ih, j, jh)
@@ -502,14 +503,14 @@
       end do
      end do
      !=========================
-     gam2 = 1. + up(1)*up(1) + up(2)*up(2) + ap(6) !gamma^{n-1/2}
+     gam2 = 1. + upart(1)*upart(1) + upart(2)*upart(2) + ap(6) !gamma^{n-1/2}
      ap(1:3) = charge*ap(1:3)
      ap(4:5) = 0.5*charge*charge*ap(4:5)
      !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
-     a1 = dth*dot_product(ap(1:2), up(1:2)) !Dt*(qE_ip_i)/2 ==> a
-     b1 = dth*dot_product(ap(4:5), up(1:2)) !Dt*(qD_iFp_i)/4 ===> c
+     aa1 = dth*dot_product(ap(1:2), upart(1:2)) !Dt*(qE_ip_i)/2 ==> a
+     b1 = dth*dot_product(ap(4:5), upart(1:2)) !Dt*(qD_iFp_i)/4 ===> c
      gam = sqrt(gam2)
-     dgam = (a1*gam-b1)/gam2
+     dgam = (aa1*gam-b1)/gam2
      gam_inv = (gam-dgam)/gam2
      ap(3:5) = ap(3:5)*gam_inv !ap(3)=q*B/gamp, ap(4:5)= q*Grad[F]/2*gamp
 
@@ -532,7 +533,7 @@
     do n = 1, np
      ap = zero_dp
      xp1(1:3) = pt(n, 1:3)
-     up(1:3) = sp_loc%part(n, 4:6) !the current particle  momenta
+     upart(1:3) = sp_loc%part(n, 4:6) !the current particle  momenta
      wgh_cmp = sp_loc%part(n, 7) !the current particle (weight,charge)
 
      call qqh_3d_spline(xp1, ax1, axh1, ay1, ayh1, az1, azh1, i, ih, j, &
@@ -597,14 +598,15 @@
       end do
      end do
      !=================================
-     gam2 = 1. + up(1)*up(1) + up(2)*up(2) + up(3)*up(3) + ap(10) !gamma^{n-1/2}
+     gam2 = 1. + upart(1)*upart(1) + upart(2)*upart(2) + &
+      upart(3)*upart(3) + ap(10) !gamma^{n-1/2}
      ap(1:6) = charge*ap(1:6)
      ap(7:9) = 0.5*charge*charge*ap(7:9)
      !  ap(1:3)=q(Ex,Ey,Ez)   ap(4:6)=q(Bx,By,Bz),ap(7:9)=q[Dx,Dy,Dz]F/2
-     a1 = dth*dot_product(ap(1:3), up(1:3))
-     b1 = dth*dot_product(ap(7:9), up(1:3))
+     aa1 = dth*dot_product(ap(1:3), upart(1:3))
+     b1 = dth*dot_product(ap(7:9), upart(1:3))
      gam = sqrt(gam2)
-     dgam = (a1*gam-b1)/gam2
+     dgam = (aa1*gam-b1)/gam2
      gam_inv = (gam-dgam)/gam2
 
      ap(4:9) = ap(4:9)*gam_inv !ap(4:6)=B/gamp, ap(7:9)= Grad[F]/2*gamp
@@ -966,7 +968,7 @@
    real (dp) :: axh(0:4), axh0(0:4), axh1(0:4), ayh(0:4)
    real (dp) :: currx(0:4), curry(0:4)
    real (sp) :: wght
-   integer :: i, j, i0, j0, i1, j1, i2, j2, n
+   integer :: i, j, ii0, jj0, i1, j1, i2, j2, n
    integer :: ih, jh, x0, x1, y0, y1
    !==========================
    !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
@@ -987,8 +989,8 @@
      end do
      call set_local_2d_positions(pt, 2, np)
      !========================
-     i0 = 0
-     j0 = 0
+     ii0 = 0
+     jj0 = 0
      i = 0
      j = 0
 
@@ -997,11 +999,11 @@
       xp0(1:2) = pt(n, 3:4) !x-y  -old
       wght = real(pt(n,5), sp) !w*q
       !=====================
-      call qden_2d_wgh(xp0, ax0, ay0, i0, j0)
+      call qden_2d_wgh(xp0, ax0, ay0, ii0, jj0)
       call qden_2d_wgh(xp1, ax1, ay1, i, j)
 
       axh(0:4) = zero_dp
-      ih = i - i0 + 1
+      ih = i - ii0 + 1
       do i1 = 0, 2
        axh(ih+i1) = ax1(i1)
       end do
@@ -1017,7 +1019,7 @@
       x0 = min(ih, 1)
       x1 = max(ih+2, 3)
       !-------
-      jh = j - j0 + 1
+      jh = j - jj0 + 1
       ayh(0:4) = zero_dp
       do i1 = 0, 2
        ayh(jh+i1) = ay1(i1)
@@ -1035,13 +1037,13 @@
       y0 = min(jh, 1)
       y1 = max(jh+2, 3)
       !================dt*J_x
-      j0 = j0 - 1
+      jj0 = jj0 - 1
       j = j - 1
-      jh = j0 - 1
+      jh = jj0 - 1
 
       i = i - 1
-      i0 = i0 - 1
-      ih = i0 - 1
+      ii0 = ii0 - 1
+      ih = ii0 - 1
 
       do j1 = y0, y1
        j2 = jh + j1
@@ -1076,11 +1078,11 @@
       vp(3) = xp1(3) - xp0(3) !dt*v_z(n+1/2)
       vp(3) = wght*vp(3)/3. !dt*q*w*vz/3
       !=====================
-      call qden_2d_wgh(xp0, ax0, ay0, i0, j0)
+      call qden_2d_wgh(xp0, ax0, ay0, ii0, jj0)
       call qden_2d_wgh(xp1, ax1, ay1, i, j)
 
       axh(0:4) = zero_dp
-      ih = i - i0 + 1
+      ih = i - ii0 + 1
       x0 = min(ih, 1)
       x1 = max(ih+2, 3)
       do i1 = 0, 2
@@ -1105,9 +1107,9 @@
       end do
       !-------
       i = i - 1
-      i0 = i0 - 1
+      ii0 = ii0 - 1
 
-      jh = j - j0 + 1
+      jh = j - jj0 + 1
       y0 = min(jh, 1)
       y1 = max(jh+2, 3)
 
@@ -1125,11 +1127,11 @@
        ayh(i1) = ayh(i1) + ay0(i1-1)
       end do
       !-----------
-      j0 = j0 - 1
+      jj0 = jj0 - 1
       j = j - 1
       !================dt*J_x= currx*(Wy^0+Wy^1) to be multiplied by dx/2
-      ih = i0 - 1
-      jh = j0 - 1
+      ih = ii0 - 1
+      jh = jj0 - 1
       do j1 = y0, y1
        j2 = jh + j1
        do i1 = x0, x1
@@ -1147,7 +1149,7 @@
       end do
       !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
       do j1 = 0, 2
-       j2 = j0 + j1
+       j2 = jj0 + j1
        dvol = ay0(j1)*vp(3)
        do i1 = x0, x1
         i2 = i1 + ih
@@ -1179,7 +1181,7 @@
    real (dp) :: axh0(0:4), axh1(0:4), ayh0(0:4), ayh1(0:4)
    real (dp) :: currx(0:4), curry(0:4), currz(0:4)
    real (sp) :: wght
-   integer :: i, j, k, i0, j0, k0, i1, j1, k1, i2, j2, k2, n
+   integer :: i, j, k, ii0, jj0, kk0, i1, j1, k1, i2, j2, k2, n
    integer :: x0, x1, y0, y1, z0, z1, ih, jh, kh
    !=======================
    !Enter pt(4:6) old positions sp_loc(1:3) new positions
@@ -1212,11 +1214,11 @@
     wght = real(pt(n,7), sp)
     xp1(1:3) = pt(n, 1:3) !increments of the new positions
     xp0(1:3) = pt(n, 4:6) !increments of old positions
-    call qden_3d_wgh(xp0, ax0, ay0, az0, i0, j0, k0)
+    call qden_3d_wgh(xp0, ax0, ay0, az0, ii0, jj0, kk0)
     call qden_3d_wgh(xp1, ax1, ay1, az1, i, j, k)
 
     axh(0:4) = zero_dp
-    ih = i - i0 + 1
+    ih = i - ii0 + 1
     !========== direct Jx-inversion
     do i1 = 0, 2
      axh(ih+i1) = ax1(i1)
@@ -1239,10 +1241,10 @@
     x1 = max(ih+2, 3)
     !-------
     i = i - 1
-    i0 = i0 - 1
+    ii0 = ii0 - 1
 
     !========== direct Jy-inversion
-    jh = j - j0 + 1 !=[0,1,2]
+    jh = j - jj0 + 1 !=[0,1,2]
     ayh(0:4) = zero_dp
     do i1 = 0, 2
      ayh(jh+i1) = ay1(i1)
@@ -1266,11 +1268,11 @@
     y0 = min(jh, 1) ![0,1]
     y1 = max(jh+2, 3) ![3,4]
     !-----------
-    j0 = j0 - 1
+    jj0 = jj0 - 1
     j = j - 1
 
     ! Direct Jz inversion
-    kh = k - k0 + 1
+    kh = k - kk0 + 1
     azh(0:4) = zero_dp
     do i1 = 0, 2
      azh(kh+i1) = az1(i1)
@@ -1282,14 +1284,14 @@
     currz(4) = currz(3) - azh(4)
     currz(0:4) = wght*currz(0:4)
     !----------
-    k0 = k0 - 1
+    kk0 = kk0 - 1
     k = k - 1
     z0 = min(kh, 1)
     z1 = max(kh+2, 3)
     !================Jx=DT*drho_x to be inverted==================
-    jh = j0 - 1
+    jh = jj0 - 1
     !====================
-    ih = i0 - 1
+    ih = ii0 - 1
     do k1 = 0, 2
      do j1 = y0, y1
       j2 = jh + j1
@@ -1297,7 +1299,7 @@
       dvolh = ayh1(j1)*az1(k1)
       do i1 = x0, x1
        i2 = ih + i1
-       jcurr(i2, j2, k0+k1, 1) = jcurr(i2, j2, k0+k1, 1) + &
+       jcurr(i2, j2, kk0+k1, 1) = jcurr(i2, j2, kk0+k1, 1) + &
          dvol*currx(i1)
        jcurr(i2, j2, k+k1, 1) = jcurr(i2, j2, k+k1, 1) + dvolh*currx(i1)
       end do
@@ -1311,13 +1313,13 @@
       dvolh = curry(j1)*az1(k1)
       do i1 = x0, x1
        i2 = ih + i1
-       jcurr(i2, j2, k0+k1, 2) = jcurr(i2, j2, k0+k1, 2) + axh0(i1)*dvol
+       jcurr(i2, j2, kk0+k1, 2) = jcurr(i2, j2, kk0+k1, 2) + axh0(i1)*dvol
        jcurr(i2, j2, k+k1, 2) = jcurr(i2, j2, k+k1, 2) + axh1(i1)*dvolh
       end do
      end do
     end do
     !================Jz
-    kh = k0 - 1
+    kh = kk0 - 1
 
     do k1 = z0, z1
      k2 = kh + k1
@@ -1326,7 +1328,7 @@
       dvolh = ay1(j1)*currz(k1)
       do i1 = x0, x1
        i2 = ih + i1
-       jcurr(i2, j0+j1, k2, 3) = jcurr(i2, j0+j1, k2, 3) + axh0(i1)*dvol
+       jcurr(i2, jj0+j1, k2, 3) = jcurr(i2, jj0+j1, k2, 3) + axh0(i1)*dvol
        jcurr(i2, j+j1, k2, 3) = jcurr(i2, j+j1, k2, 3) + axh1(i1)*dvolh
       end do
      end do
@@ -1349,7 +1351,7 @@
    real (dp) :: ax1(0:2), ay1(0:2), xp1(1:2)
    real (dp) :: vp(3), dvol(3)
    real (sp) :: wght
-   integer :: i, j, i0, j0, i1, j1, i2, j2, n
+   integer :: i, j, ii0, jj0, i1, j1, i2, j2, n
    integer :: jh0, jh, ih0, ih
    !=======================
    !Enter pt(3:4) old x-y positions
@@ -1367,7 +1369,7 @@
 
     xp1(1:2) = pt(n, 1:2)
     xp0(1:2) = pt(n, 3:4)
-    call qlh_2d_spline(xp0, ax0, axh0, ay0, ayh0, i0, ih0, j0, jh0)
+    call qlh_2d_spline(xp0, ax0, axh0, ay0, ayh0, ii0, ih0, jj0, jh0)
     !====================
     call qlh_2d_spline(xp1, ax1, axh1, ay1, ayh1, i, ih, j, jh)
 
@@ -1379,7 +1381,7 @@
       i2 = ih + i1
       jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + dvol(1)*axh1(i1)
      end do
-     j2 = j0 + j1
+     j2 = jj0 + j1
      dvol(1) = vp(1)*ay0(j1)
      do i1 = 0, 1
       i2 = ih0 + i1
@@ -1391,7 +1393,7 @@
      j2 = jh0 + j1
      dvol(2) = vp(2)*ayh0(j1)
      do i1 = 0, 2
-      i2 = i0 + i1
+      i2 = ii0 + i1
       jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + dvol(2)*ax0(i1)
      end do
      j2 = jh + j1
@@ -1417,7 +1419,7 @@
    real (dp) :: axh1(0:1), ayh1(0:1), azh1(0:1)
    real (dp) :: vp(3)
    real (sp) :: wght
-   integer :: i, j, k, i0, j0, k0, i1, j1, k1, i2, j2, k2, n
+   integer :: i, j, k, ii0, jj0, kk0, i1, j1, k1, i2, j2, k2, n
    integer :: ih, jh, kh, ih0, jh0, kh0
    !=======================
    ! Current densities defined by alternating order (quadratic/linear) shapes
@@ -1443,8 +1445,8 @@
     xp1(1:3) = pt(n, 1:3) !new relative coordinates
     xp0(1:3) = pt(n, 4:6) !old relative coordinates
 
-    call qlh_3d_spline(xp0, ax0, axh0, ay0, ayh0, az0, azh0, i0, ih0, &
-      j0, jh0, k0, kh0)
+    call qlh_3d_spline(xp0, ax0, axh0, ay0, ayh0, az0, azh0, ii0, ih0, &
+      jj0, jh0, kk0, kh0)
     !====================
     call qlh_3d_spline(xp1, ax1, axh1, ay1, ayh1, az1, azh1, i, ih, j, &
       jh, k, kh)
@@ -1459,9 +1461,9 @@
        jcurr(i2, j2, k2, 1) = jcurr(i2, j2, k2, 1) + dvol(1)*axh1(i1)
       end do
      end do
-     k2 = k0 + k1
+     k2 = kk0 + k1
      do j1 = 0, 2
-      j2 = j0 + j1
+      j2 = jj0 + j1
       dvol(1) = vp(1)*ay0(j1)*az0(k1)
       do i1 = 0, 1
        i2 = ih0 + i1
@@ -1471,12 +1473,12 @@
     end do
     !================Jy-Jz=============
     do k1 = 0, 2
-     k2 = k0 + k1
+     k2 = kk0 + k1
      do j1 = 0, 1
       j2 = jh0 + j1
       dvol(2) = vp(2)*ayh0(j1)*az0(k1)
       do i1 = 0, 2
-       i2 = i0 + i1
+       i2 = ii0 + i1
        jcurr(i2, j2, k2, 2) = jcurr(i2, j2, k2, 2) + dvol(2)*ax0(i1)
       end do
      end do
@@ -1493,10 +1495,10 @@
     do k1 = 0, 1
      k2 = kh0 + k1
      do j1 = 0, 2
-      j2 = j0 + j1
+      j2 = jj0 + j1
       dvol(3) = vp(3)*ay0(j1)*azh0(k1)
       do i1 = 0, 2
-       i2 = i0 + i1
+       i2 = ii0 + i1
        jcurr(i2, j2, k2, 3) = jcurr(i2, j2, k2, 3) + dvol(3)*ax0(i1)
       end do
      end do

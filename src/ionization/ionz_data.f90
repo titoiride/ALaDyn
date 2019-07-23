@@ -91,14 +91,14 @@
     w_number = 63.54
    end select
   end subroutine
-!================================
+  !================================
   subroutine set_atoms_per_molecule(at_number, n_mol_atoms)
    integer, intent (in) :: at_number
    integer, intent (inout) :: n_mol_atoms
-!========================================
-! This subroutine sets if the neutral gas
-! Is mono- or diatomic
-!========================================
+   !========================================
+   ! This subroutine sets if the neutral gas
+   ! Is mono- or diatomic
+   !========================================
    select case (at_number)
    case (1)
     n_mol_atoms = 2 !H
@@ -128,15 +128,15 @@
     n_mol_atoms = 1
    end select
   end subroutine
-!================================
+  !================================
   subroutine set_ionization_coeff(an, sp_ionz)
    integer, intent (in) :: an(:), sp_ionz
    integer :: i, j, loc_zm
-! The atomin number An identifies the element
-! Z_max <= An indicates the local max ionization level allowed
-!==============================================
+   ! The atomin number An identifies the element
+   ! Z_max <= An indicates the local max ionization level allowed
+   !==============================================
    loc_zm = maxval(an(1:sp_ionz-1))
-!===========================
+   !===========================
    allocate (wi(n_ge+1,loc_zm+1,sp_ionz))
    allocate (wsp(0:n_ge+1,0:loc_zm,0:loc_zm,1:sp_ionz))
    allocate (w_one_lev(0:n_ge+1,0:loc_zm,1:sp_ionz))
@@ -148,13 +148,13 @@
    nl_fact(0:an_max) = 1
    be(1:10, 0:an_max) = 0.0
    p_nl(1:10, 1:an_max) = 0.0
-!Ne_shell(nl,z)= electrons in suborbitals s,p,d of shell n=1,2,3
-!=================================
-! Potentials V(i) to ionize from state Z=i-1 to Z= i
-!            V(i) from i=1, atomic number = Z_max
-!==========================================================
+   !Ne_shell(nl,z)= electrons in suborbitals s,p,d of shell n=1,2,3
+   !=================================
+   ! Potentials V(i) to ionize from state Z=i-1 to Z= i
+   !            V(i) from i=1, atomic number = Z_max
+   !==========================================================
    do j = 1, sp_ionz - 1
-!=========== cycles over all ion species to be ionized sp_ionz=1,2,3
+    !=========== cycles over all ion species to be ionized sp_ionz=1,2,3
     select case (an(j)) !The atomic number
     case (1) !H: 1s
      v(1) = 13.5984
@@ -181,10 +181,10 @@
      l_fact(1:2) = 3 ! the 2p shell
      v(3) = 47.8878
      v(4) = 64.4939
-!=========== L shell
+     !=========== L shell
      v(5) = 392.087
      v(6) = 489.993
-!=========== K shell
+     !=========== K shell
     case (7) !N [He] 2s^2 2p^3
      v(1) = 14.53
      v(2) = 29.601
@@ -193,12 +193,12 @@
      v(4) = 77.473
      v(5) = 97.89
      nl_fact(1:5) = 2
-!========= L-shell
+     !========= L-shell
      v(6) = 552.07
      v(7) = 667.046
      nl_fact(6:7) = 1 ! the 1s shell
-!========= K-shell
-!========= Binding energies
+     !========= K-shell
+     !========= Binding energies
      z1_coll = 0
      be(1, 0) = 411 !N^0+
      be(2, 0) = 22
@@ -207,7 +207,7 @@
      ne_shell(1, 0) = 2
      ne_shell(2, 0) = 2
      ne_shell(3, 0) = 3
-!N^1+
+     !N^1+
      be(1, 1) = 433
      be(2, 1) = 39
      be(3, 1) = 27
@@ -243,7 +243,7 @@
      ne_shell(1, 6) = 1
      ne_shell(2, 5:6) = 0
      nl_indx(5:6) = 1
-!====================
+     !====================
     case (10) !Ne: [He]2s^2 2p^6
      v(1) = 21.5646
      v(2) = 40.9633
@@ -255,12 +255,12 @@
      v(7) = 207.276
      v(8) = 239.099 ! the 2s shell
      nl_fact(1:8) = 2
-!========= L-shell
+     !========= L-shell
      v(9) = 1195.8286
      v(10) = 1362.199
      nl_fact(9:10) = 1
-!========= K-shell
-!========= Binding energies
+     !========= K-shell
+     !========= Binding energies
      z1_coll = 0
 
      be(1, 0) = 869 !Ne^0+
@@ -271,7 +271,7 @@
      ne_shell(1, 0) = 2
      ne_shell(2, 0) = 2
      ne_shell(3, 0) = 6
-!Ne^1+
+     !Ne^1+
      be(1, 1) = 895
      be(2, 1) = 66
      be(3, 1) = 40
@@ -280,7 +280,7 @@
      ne_shell(1, 1) = 2
      ne_shell(2, 1) = 2
      ne_shell(3, 1) = 5
-!Ne^2+
+     !Ne^2+
      be(1, 1) = 925
      be(2, 2) = 87
      be(3, 2) = 67
@@ -289,7 +289,7 @@
      ne_shell(1, 2) = 2
      ne_shell(2, 2) = 2
      ne_shell(3, 2) = 4
-!Ne^3+
+     !Ne^3+
      be(1, 3) = 962
      be(2, 3) = 113
      be(3, 3) = 94
@@ -298,7 +298,7 @@
      ne_shell(1, 3) = 2
      ne_shell(2, 3) = 2
      ne_shell(3, 3) = 3
-!Ne^4+
+     !Ne^4+
      be(1, 4) = 1004
      be(2, 4) = 143
      be(3, 4) = 123
@@ -307,7 +307,7 @@
      ne_shell(1, 4) = 2
      ne_shell(2, 4) = 2
      ne_shell(3, 4) = 2
-!Ne^5+
+     !Ne^5+
      be(1, 5) = 1048
      be(2, 5) = 169
      be(3, 5) = 158
@@ -316,39 +316,39 @@
      ne_shell(1, 5) = 2
      ne_shell(2, 5) = 2
      ne_shell(3, 5) = 1
-!Ne^6+
+     !Ne^6+
      be(1, 6) = 1099
      be(2, 6) = 204
      p_nl(1:2, 6) = be(1:2, 6) + v(7) - be(2, 6)
      ne_shell(1, 6) = 2
      ne_shell(2, 6) = 2
      ne_shell(3, 6:9) = 0
-!Ne^7+
+     !Ne^7+
      be(1, 7) = 1143
      be(2, 7) = 239
      p_nl(1:2, 7) = be(1:2, 7) + v(8) - be(2, 7)
      nl_indx(6:7) = 2
      ne_shell(1, 7) = 2
      ne_shell(2, 7) = 1
-!Ne^8+
+     !Ne^8+
      be(1, 8) = 1195
      p_nl(1, 8) = v(9)
      ne_shell(1, 8) = 2
      ne_shell(2, 8:9) = 0
-!Ne^9+
+     !Ne^9+
      be(1, 9) = 1362
      p_nl(1, 9) = v(10)
      ne_shell(1, 9) = 1
      nl_indx(8:9) = 1
-!============================
+     !============================
     case (13) !Al [Ne] 3s^2 3p^1
      v(1) = 5.98577
      l_fact(1) = 3 ! 3p shell
      v(2) = 18.8285
      v(3) = 28.4476
-! 3s shell
+     ! 3s shell
      nl_fact(1:3) = 3
-!============ M shell
+     !============ M shell
      v(4) = 119.992
      v(5) = 153.825
      v(6) = 190.40
@@ -359,12 +359,12 @@
      v(10) = 398.75
      v(11) = 442.0
      nl_fact(4:11) = 2
-!======= L-shell
+     !======= L-shell
      v(12) = 2085.98
      v(13) = 2304.14
      nl_fact(12:13) = 1
-!=================== K-shell
-!========= Binding energies
+     !=================== K-shell
+     !========= Binding energies
      z1_coll = 2
      ne_shell(1, 2:9) = 2 !1s^2
      ne_shell(2, 2:9) = 2 !2s^2
@@ -384,73 +384,73 @@
      nl_indx(3) = 4
      ne_shell(3, 3) = 6 !2p^6
      ne_shell(4, 3:11) = 0 !3s^1
-!A^4+
+     !A^4+
      be(1, 4) = 1653
      be(2, 4) = 193
      be(3, 4) = 153
      p_nl(1:3, 4) = be(1:3, 4) + v(5) - be(3, 4)
      nl_indx(4) = 3
      ne_shell(3, 4) = 5 !2p^5
-!A^5+
+     !A^5+
      be(1, 5) = 1703
      be(2, 5) = 227
      be(3, 5) = 196
      p_nl(1:3, 5) = be(1:3, 5) + v(6) - be(3, 5)
      nl_indx(5) = 3
      ne_shell(3, 5) = 4 !2p^4
-!A^6+
+     !A^6+
      be(1, 6) = 1760
      be(2, 6) = 265
      be(3, 6) = 237
      p_nl(1:3, 6) = be(1:3, 6) + v(7) - be(3, 6)
      nl_indx(6) = 3
      ne_shell(3, 6) = 3 !2p^3
-!A^7+
+     !A^7+
      be(1, 7) = 1822
      be(2, 7) = 309
      be(3, 7) = 280
      p_nl(1:3, 7) = be(1:3, 7) + v(8) - be(3, 7)
      nl_indx(7) = 3
      ne_shell(3, 7) = 2 !2p^2
-!A^8+
+     !A^8+
      be(1, 8) = 1885
      be(2, 8) = 346
      be(3, 8) = 331
      p_nl(1:3, 8) = be(1:3, 8) + v(9) - be(3, 8)
      nl_indx(8) = 3
      ne_shell(3, 8) = 1 !2p^1
-!A^9
+     !A^9
      be(1, 9) = 1957
      be(2, 9) = 394
      p_nl(1:2, 9) = be(1:2, 9) + v(10) - be(2, 9)
      nl_indx(9) = 2
      ne_shell(3, 9:11) = 0 !2p^1
-!A^10+
+     !A^10+
      be(1, 10) = 2016
      be(2, 10) = 442
      p_nl(1:2, 10) = be(1:2, 10) + v(11) - be(2, 10)
      nl_indx(10) = 2
      ne_shell(1, 10) = 2
      ne_shell(2, 10) = 1
-!A^11+
+     !A^11+
      be(1, 11) = 2085
      p_nl(1, 11) = v(12)
      nl_indx(11) = 1
      ne_shell(1, 11) = 2
      ne_shell(2, 11:12) = 0
-!A^12+
+     !A^12+
      be(1, 12) = 2304
      p_nl(1, 12) = v(13)
      nl_indx(12) = 1
      ne_shell(1, 12) = 1
-!============================
+     !============================
     case (14) !Si [Ne] 3s^2 3p^2
      v(1) = 8.1516
      v(2) = 16.3458
      v(3) = 33.4930
      v(4) = 45.1418
      nl_fact(1:4) = 3
-!========== M-shell 3s,3p
+     !========== M-shell 3s,3p
      v(5) = 166.767
      v(6) = 205.27
      v(7) = 246.5
@@ -459,12 +459,12 @@
      v(10) = 401.37
      v(11) = 476.36
      v(12) = 523.42
-!================= L-shell
+     !================= L-shell
      nl_fact(5:12) = 2
      v(13) = 2437.63
      v(14) = 2673.18
      nl_fact(13:14) = 1
-!================= K-shell
+     !================= K-shell
     case (18) !Ar =  [Ne] 3s^2 3p^6
      v(1) = 15.75962
      v(2) = 27.62967
@@ -476,7 +476,7 @@
      v(7) = 124.323
      v(8) = 143.460
      nl_fact(1:8) = 3
-!==================== M shell nl=3  3s^2  3p^6
+     !==================== M shell nl=3  3s^2  3p^6
      v(9) = 422.45
      v(10) = 478.69
      v(11) = 538.96
@@ -487,17 +487,17 @@
      v(15) = 854.77
      v(16) = 918.03
      nl_fact(9:16) = 2
-!===========================L shell nl=2 2s^2 2p^6
+     !===========================L shell nl=2 2s^2 2p^6
      v(17) = 4120.8857
      v(18) = 4426.2296
-!K-shell nl=1 1s^2 shell
+     !K-shell nl=1 1s^2 shell
      nl_fact(17:18) = 1
-!============================
-!========================
+     !============================
+     !========================
     case (22) !Ti [Ar] 3d^2 4s^2
      v(1) = 6.82
      v(2) = 13.57
-! the 4s shell
+     ! the 4s shell
      v(3) = 27.49
      v(4) = 43.26
      l_fact(3:4) = 5 ! 3d shell
@@ -511,7 +511,7 @@
      v(11) = 265.07
      v(12) = 291.5
      nl_fact(3:12) = 3 !the 3 (s,p,d)shell
-!========== M-shell 3s,3p, 3d
+     !========== M-shell 3s,3p, 3d
      v(13) = 787.84
      v(14) = 863.1
      v(15) = 941.9
@@ -522,16 +522,16 @@
      v(19) = 1346.
      v(20) = 1425.4
      nl_fact(13:20) = 2
-!========== L-shell 2s,2p
+     !========== L-shell 2s,2p
      v(21) = 6249.
      v(22) = 6625.
      nl_fact(21:22) = 1
-!========== K-shell
-!========= Binding energies
+     !========== K-shell
+     !========= Binding energies
      z1_coll = 2
-!==================
-!=====================
-!A2+
+     !==================
+     !=====================
+     !A2+
      be(1, 2) = 4994 ! 1s
      be(2, 2) = 591 ! 2s
      be(3, 2) = 490 ! 2p
@@ -570,7 +570,7 @@
      ne_shell(6, 2) = 2 !3d^2
      ne_shell(6, 3) = 1 !3d^2
      ne_shell(6, 4:21) = 0
-!===============
+     !===============
      be(1, 3) = 5014 !A^3+
      be(2, 3) = 612
      be(3, 3) = 503
@@ -645,60 +645,60 @@
      be(3, 12) = 786
      p_nl(1:3, 12) = be(1:3, 12) + v(13) - be(3, 12)
      nl_indx(12) = 3
-!A^13+
+     !A^13+
      be(1, 13) = 5421
      be(2, 13) = 951
      be(3, 13) = 864
      p_nl(1:3, 13) = be(1:3, 13) + v(14) - be(3, 13)
      nl_indx(13) = 3
-!A^14+
+     !A^14+
      be(1, 14) = 5529
      be(2, 14) = 1020
      be(3, 14) = 953
      p_nl(1:3, 14) = be(1:3, 14) + v(15) - be(3, 14)
      nl_indx(14) = 3
-!A^15+
+     !A^15+
      be(1, 15) = 5645
      be(2, 15) = 1097
      be(3, 15) = 1036
      p_nl(1:3, 15) = be(1:3, 15) + v(16) - be(3, 15)
      nl_indx(15) = 3
-!A^16+
+     !A^16+
      be(1, 16) = 5768
      be(2, 16) = 1181
      be(3, 16) = 1126
      p_nl(1:3, 16) = be(1:3, 16) + v(17) - be(3, 16)
      nl_indx(16) = 3
-!A^17+
+     !A^17+
      be(1, 17) = 5888
      be(2, 17) = 1251
      be(3, 17) = 1222
      p_nl(1:3, 17) = be(1:3, 17) + v(18) - be(3, 17)
      nl_indx(17) = 3
-!A18^
+     !A18^
      be(1, 18) = 6020
      be(2, 18) = 1340
      p_nl(1:2, 18) = be(1:2, 18) + v(19) - be(2, 18)
      nl_indx(18) = 2
-!A^19+
+     !A^19+
      be(1, 19) = 6126
      be(2, 19) = 1425
      p_nl(1:2, 19) = be(1:2, 19) + v(20) - be(2, 19)
      nl_indx(19) = 2
-!A^20+
+     !A^20+
      be(1, 20) = 6248
      p_nl(1, 20) = v(21)
      nl_indx(20) = 1
-!A^21+
+     !A^21+
      be(1, 21) = 6626
      p_nl(1, 21) = v(22)
      nl_indx(21) = 1
-!==============================
+     !==============================
     case (28) !Ni   [Ar] 3d^8 4s^2
      z1_coll = 3
      v(1) = 7.6398
      v(2) = 18.1688
-!============a       the 4s shell
+     !============a       the 4s shell
      v(3) = 35.19
      v(4) = 54.9
      v(5) = 76.06
@@ -718,7 +718,7 @@
      v(17) = 571.08
      v(18) = 607.06
      nl_fact(3:18) = 3
-!==================    the M shell nl=3 3s^2  3p^6  3d^8
+     !==================    the M shell nl=3 3s^2  3p^6  3d^8
      v(19) = 1541.0
      v(20) = 1648.0
      v(21) = 1756.0
@@ -729,16 +729,16 @@
      v(25) = 2295.0
      v(26) = 2399.2 !2s^2 shell
      nl_fact(19:26) = 2
-!===============      !L shell nl=2 2s^2 2p^6
+     !===============      !L shell nl=2 2s^2 2p^6
      v(27) = 10288.8
      v(28) = 10775.4 !1s shell
      nl_fact(27:28) = 1
-!========== K-shell
-!=====================
+     !========== K-shell
+     !=====================
     case (29) !Cu =[Ar] 3d^10 4s^1
      z1_coll = 2
      v(1) = 7.726
-!============       the 4s shell, nl=4
+     !============       the 4s shell, nl=4
      v(2) = 20.29
      v(3) = 36.84
      v(4) = 57.38
@@ -759,9 +759,9 @@
      l_fact(12:17) = 3 !3p shell
      v(18) = 557.0
      v(19) = 670.6
-!3s shell
+     !3s shell
      nl_fact(2:19) = 3
-!===============      !M shell nl=3  3s^2 3p^6 3d^10
+     !===============      !M shell nl=3  3s^2 3p^6 3d^10
      v(20) = 1697.0
      v(21) = 1804.0
      v(22) = 1916.0
@@ -772,17 +772,17 @@
      v(26) = 2478.0 !2s shell
      v(27) = 2587.8
      nl_fact(20:27) = 2
-!===============      !L shell nl=2  2s^2 2p^6
+     !===============      !L shell nl=2  2s^2 2p^6
      v(28) = 11062.0
      v(29) = 11567.0 !K-shell nl=1 1s
      nl_fact(28:29) = 1
-!========== K-shell
+     !========== K-shell
     case default
      write (6, *) 'set_ionization_coeff -> atomic number unknown'
      stop
     end select
-!========:====== Coefficients for field ionization
-! in common coefficients functions of(z,sp_ioniz)
+    !=============== Coefficients for field ionization
+    ! in common coefficients functions of(z,sp_ioniz)
     do i = 1, an(j) !V(i) is the potential for z=i-1 => z=i  ionization transition
      v_norm(i, j) = v(i)/v_h
      e_c(i, j) = v_norm(i, j)*v_norm(i, j)/(16.*real(i,dp))
@@ -798,12 +798,12 @@
      c_nstar(i, j) = c_nstar(i, j)*l_fact(i)/(2.*pig*nstar(i,j))
      c_nstar(i, j) = 0.5*v_norm(i, j)*c_nstar(i, j)
     end do
-!============= m=0 assumed
-!================================
+    !============= m=0 assumed
+    !================================
    end do
-!===================================
+   !===================================
   end subroutine
-!================================
+  !================================
   subroutine set_impact_ioniz_wfunction(zm, imod)
    integer, intent (in) :: zm, imod
    integer :: i, k, j, m, bc
@@ -812,11 +812,11 @@
    real (dp) :: eta(6), etap(6), qnl(6), sbell(7), efact, efact1
    real (dp) :: a_bell(0:7, 6), mby(6), f_ion
    real (dp), parameter :: lam = 0.067
-!=================== zm is the atomic number
+   !=================== zm is the atomic number
    select case (imod)
 
    case (1)
-!             Implements GKLV scheme
+    !             Implements GKLV scheme
     eta(1) = 0.499
     eta(2) = 0.4
     eta(3) = 0.57
@@ -864,49 +864,49 @@
         g2 = 0.5*g2*g2
         g3 = (2.*ei+1.)/(g0*g0)
         sigma_m = efact*g1*(1.-(1.-g2+g3*log(uu))/uu)
-!================
+        !================
         g3 = 1.243*(ei+2.)/p_nl(j, k)
         sigma_a = efact1*g1*(log(g3)-ei*(ei+2.)/(g0*g0))
-!Ei=Ei+etap(j)*P_nl(j,k)/sqrt(1.+qnl(j))
+        !Ei=Ei+etap(j)*P_nl(j,k)/sqrt(1.+qnl(j))
         sigma_a = fs*sigma_a
         sigma_coll(i, j, k) = ne_shell(j, k)*rf*(sigma_a+sigma_m)
        end if
       end do
      end do
     end do
-!Implements (R)MBELL scheme
+    !Implements (R)MBELL scheme
    case (2)
-!============ the empirical MBEL coefficients in 10^{-13}(eV)^2 cm^2
+    !============ the empirical MBEL coefficients in 10^{-13}(eV)^2 cm^2
     a_bell(6:7, 1:4) = 0.0
-! 1s  subshell
+    ! 1s  subshell
     a_bell(0, 1) = 0.5250
     a_bell(1, 1) = -0.510
     a_bell(2, 1) = 0.200
     a_bell(3, 1) = 0.050
     a_bell(4, 1) = -0.0250
     a_bell(5, 1) = -0.100
-! 2s  subshell
+    ! 2s  subshell
     a_bell(0, 2) = 0.530
     a_bell(1, 2) = -0.410
     a_bell(2, 2) = 0.150
     a_bell(3, 2) = 0.150
     a_bell(4, 2) = -0.020
     a_bell(5, 2) = -0.150
-! 2p  subshell
+    ! 2p  subshell
     a_bell(0, 3) = 0.600
     a_bell(1, 3) = -0.400
     a_bell(2, 3) = 0.710
     a_bell(3, 3) = 0.655
     a_bell(4, 3) = 0.425
     a_bell(5, 3) = -0.750
-! 3s  subshell
+    ! 3s  subshell
     a_bell(0, 4) = 0.130
     a_bell(1, 4) = 0.250
     a_bell(2, 4) = -1.500
     a_bell(3, 4) = 2.400
     a_bell(4, 4) = 3.220
     a_bell(5, 4) = -3.667
-! 3p  subshell
+    ! 3p  subshell
     a_bell(0, 5) = 0.388
     a_bell(1, 5) = -0.200
     a_bell(2, 5) = -0.2356
@@ -915,7 +915,7 @@
     a_bell(5, 5) = -8.500
     a_bell(6, 5) = 5.050
     a_bell(7, 5) = 0.370
-! 3d  subshell
+    ! 3d  subshell
     a_bell(0, 6) = 0.350
     a_bell(1, 6) = 1.600
     a_bell(2, 6) = -3.000
@@ -929,7 +929,7 @@
     mby(6) = 0.95
     mby(4) = mby(1)
     mby(5) = mby(3)
-!========================
+    !========================
     dgi = 0.1
     do k = z1_coll, zm - 1 !the ionization state
      qnl(1) = zm - ne_shell(1, k)
@@ -960,9 +960,9 @@
         g2 = (1.+uu)*(uu+2.*g0)*(1.+g0)*(1.+g0)
         g3 = g0*g0*(1.+2.*g0) + uu*(uu+2.*g0)*(1.+g0)*(1.+g0)
         gr = g1*(g2/g3)**1.5
-!==============
+        !==============
         f_ion = 1. + 3.*(qnl(j)/(uu*zm))**mby(j)
-!=====================
+        !=====================
         efact = dot_product(a_bell(1:bc,j), sbell(1:bc))
         sigma_coll(i, j, k) = (a_bell(0,j)*log(uu)+efact)/(p_nl(j,k)*ei)
         sigma_coll(i, j, k) = gr*f_ion*ne_shell(j, k)* &
@@ -973,5 +973,5 @@
     end do
    end select
   end subroutine
-!---------------------------
+  !====================
  end module

@@ -942,27 +942,27 @@
 
    !============================
    subroutine explicit_mat_inv
-    integer :: ic
+    integer :: iic
     !================== Uses three-point numerical secon derivative
-    do ic = 1, 2
+    do iic = 1, 2
      do k = kz1, kz2
       do j = jy1, jy2
        i = ix1
        ii = i - 2
-       ww0(ii, 1) = dx2_norm*(curr(i,j,k,ic)-2.*curr(i+1,j,k,ic)+curr(i+ &
-         2,j,k,ic))
+       ww0(ii, 1) = dx2_norm*(curr(i,j,k,iic)-2.*curr(i+1,j,k,iic)+curr(i+ &
+         2,j,k,iic))
        do i = ix1 + 1, ix2 - 1
         ii = i - 2
-        ww0(ii, 1) = dx2_norm*(curr(i+1,j,k,ic)-2.*curr(i,j,k,ic)+curr(i &
-          -1,j,k,ic))
+        ww0(ii, 1) = dx2_norm*(curr(i+1,j,k,iic)-2.*curr(i,j,k,iic)+curr(i &
+          -1,j,k,iic))
        end do
        i = ix2
        ii = i - 2
-       ww0(ii, 1) = dx2_norm*(curr(i,j,k,ic)-2.*curr(i-1,j,k,ic)+curr(i- &
-         2,j,k,ic))
+       ww0(ii, 1) = dx2_norm*(curr(i,j,k,iic)-2.*curr(i-1,j,k,iic)+curr(i- &
+         2,j,k,iic))
        do i = ix1, ix2
         ii = i - 2
-        curr(i, j, k, ic) = (curr(i,j,k,ic)-ww0(ii,1))/om2
+        curr(i, j, k, iic) = (curr(i,j,k,iic)-ww0(ii,1))/om2
        end do
       end do
      end do

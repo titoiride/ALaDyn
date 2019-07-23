@@ -20,13 +20,18 @@
 !*****************************************************************************************************!
 
  module psolve
-  use array_wspace
+  use pstruct_data
+  use fstruct_data
   use common_param
   use grid_param
   use prl_fft
+
   implicit none
+  private
+  public :: fft_psolv, fft_2d_psolv
+ 
   real (dp), allocatable :: wb(:, :, :)
-!--------------------------
+  !==========================
 
  contains
   subroutine pwfa_density(wp, kp, i2, j2, k2, dir)
@@ -36,7 +41,7 @@
    integer :: ii, ik, i, j, k
    real (dp) :: kpx, sum0(2), skx
 
-! in wp enters the beam charge density at staggered x-coordinate
+   ! in wp enters the beam charge density at staggered x-coordinate
    select case (dir)
    case (1)
     allocate (kern(i2))
@@ -55,8 +60,8 @@
      end do
     end do
     call ftw1d_sc(wp, i2, j2, k2, 1, 1, 1)
-!=============== use n(x)=sin(kp*x)*sum_y<x[cos(kp*y)*nb(y)]
-!                         +cos(kp*x)*sum_y>x[sin(kp*y)*nb(y)]
+    !=============== use n(x)=sin(kp*x)*sum_y<x[cos(kp*y)*nb(y)]
+    !                         +cos(kp*x)*sum_y>x[sin(kp*y)*nb(y)]
    case (2)
     kpx = kp*dx
     skx = kp*sin(0.5*kpx)/(0.5*kpx)
@@ -82,17 +87,17 @@
     end do
    end select
   end subroutine
-!--------------------------
+  !==========================
   subroutine beam_2d_potential(pot, nxf, n2_loc, n3_loc, ft_ind)
    real (dp), intent (inout) :: pot(:, :, :)
    integer, intent (in) :: nxf, n2_loc, n3_loc, ft_ind
    real (dp) :: ak2p
    integer :: ix, iy, iy1, iz, iz1
-!_________________________________
-! Laplacian(y,z)(pot)=-rho =>  [k^2_y+k^2_z][pot(ky,kz)]=rho[ky,kz]
-! Solves Poisson equation in Fourier space
-! ft_ind >1  sin/cosine transform
-! ft_mod=0,1   periodic fft
+   !_________________________________
+   ! Laplacian(y,z)(pot)=-rho =>  [k^2_y+k^2_z][pot(ky,kz)]=rho[ky,kz]
+   ! Solves Poisson equation in Fourier space
+   ! ft_ind >1  sin/cosine transform
+   ! ft_mod=0,1   periodic fft
    do iz = 1, n3_loc
     iz1 = iz + imodz*n3_loc
     do iy = 1, n2_loc
@@ -109,17 +114,17 @@
     end do
    end do
   end subroutine
-!==========================
+  !==========================
   subroutine beam_potential(pot, gam2, nxf, n2_loc, n3_loc, ft_ind)
    real (dp), intent (inout) :: pot(:, :, :)
    real (dp), intent (in) :: gam2
    integer, intent (in) :: nxf, n2_loc, n3_loc, ft_ind
    real (dp) :: ak2, ak2p
    integer :: ix, iy, iy1, iz, iz1
-!_________________________________
-! ft_ind=0,1 solves Poisson equation in Fourier space (kx/gam,ky,kz)
-! ft_ind=2 solves Poisson equation in sin/cosine Fourier space (kx/gam,ky,kz)
-! Laplacian(pot)=-rho =>  K^2[pot(kx,ky,kz]=rho[kx,ky,kz]
+   !_________________________________
+   ! ft_ind=0,1 solves Poisson equation in Fourier space (kx/gam,ky,kz)
+   ! ft_ind=2 solves Poisson equation in sin/cosine Fourier space (kx/gam,ky,kz)
+   ! Laplacian(pot)=-rho =>  K^2[pot(kx,ky,kz]=rho[kx,ky,kz]
    if (n3_loc==1) then
     iz = 1
     do iy = 1, n2_loc
@@ -158,9 +163,9 @@
      end do
     end do
    end if
-!=================
+   !=================
   end subroutine
-!===============================================
+  !===============================================
   subroutine fft_psolv(rho, g2, omp0, n1, n1_loc, n2, n2_loc, n3, &
     n3_loc, i1, i2, j1, j2, k1, k2, ft_mod, sym)
    real (dp), intent (inout) :: rho(:, :, :, :)
@@ -168,11 +173,11 @@
    integer, intent (in) :: n1, n1_loc, n2, n2_loc, n3, n3_loc
    integer, intent (in) :: i1, i2, j1, j2, k1, k2, ft_mod, sym
    integer :: i, ii, j, k
-! ft_mod=0,1 for standard fft in periodic BC
-! ft_mod=2  for sin(sym=1) cos(sym=2) transforms
-! In rho(1) enters charge density rho(x,y,z)=q*n(x,y,z)
-! In rho(1) exit pot(x,y,z)
-!===========================
+   ! ft_mod=0,1 for standard fft in periodic BC
+   ! ft_mod=2  for sin(sym=1) cos(sym=2) transforms
+   ! In rho(1) enters charge density rho(x,y,z)=q*n(x,y,z)
+   ! In rho(1) exit pot(x,y,z)
+   !===========================
 
    allocate (wb(n1,n2_loc,n3_loc))
    call mpi_ftw_alloc(n1, n2, n2_loc, n3, n3_loc)
@@ -198,16 +203,16 @@
    if (ft_mod>1) then
     call pftw3d_sc(wb, n1, n2, n2_loc, n3, n3_loc, -1, sym)
     wb(1:n1, 1:n2_loc, 1:n3_loc) = omp0*wb(1:n1, 1:n2_loc, 1:n3_loc)
-!+++++++++++++++++++++++++++
+    !==========================
     call beam_potential(wb, g2, n1, n2_loc, n3_loc, ft_mod)
-!exit sin/cos fourier components for beam potential
+    !exit sin/cos fourier components for beam potential
     call pftw3d_sc(wb, n1, n2, n2_loc, n3, n3_loc, 1, sym)
    else
     call pftw3d(wb, n1, n2, n2_loc, n3, n3_loc, -1)
     wb(1:n1, 1:n2_loc, 1:n3_loc) = omp0*wb(1:n1, 1:n2_loc, 1:n3_loc)
-!+++++++++++++++++++++++++++
+    !==========================
     call beam_potential(wb, g2, n1, n2_loc, n3_loc, ft_mod)
-!exit fourier components for beam potential
+    !exit fourier components for beam potential
     call pftw3d(wb, n1, n2, n2_loc, n3, n3_loc, 1)
    end if
 
@@ -223,12 +228,12 @@
    else
     rho(i1:i2, j1:j2, k1:k2, 1) = wb(1:n1, 1:n2_loc, 1:n3_loc)
    end if
-!EXIT rho(1) 3D beam potential
+   !EXIT rho(1) 3D beam potential
    if (allocated(wb)) deallocate (wb)
    call ftw_end
    call mpi_ftw_dalloc
   end subroutine
-!===============================
+  !===============================
   subroutine fft_2d_psolv(rho, omp0, n1, n1_loc, n2, n2_loc, n3, n3_loc, &
     i1, i2, j1, j2, k1, k2, ft_mod, sym)
    real (dp), intent (inout) :: rho(:, :, :, :)
@@ -259,20 +264,20 @@
     wb(1:n1, 1:n2_loc, 1:n3_loc) = rho(i1:i2, j1:j2, k1:k2, 1)
    end if
    if (ft_mod>1) then
-!sin/cosine transform
+    !sin/cosine transform
     call pftw2d_sc(wb, n1, n2, n2_loc, n3, n3_loc, -1, sym)
     wb(1:n1, 1:n2_loc, 1:n3_loc) = omp0*wb(1:n1, 1:n2_loc, 1:n3_loc)
-!+++++++++++++++++++++++++++
+    !==========================
     call beam_2d_potential(wb, n1, n2_loc, n3_loc, ft_mod)
-!exit fourier components for potential
+    !exit fourier components for potential
     call pftw2d_sc(wb, n1, n2, n2_loc, n3, n3_loc, 1, sym)
    else
-!periodic fft transform
+    !periodic fft transform
     call pftw2d(wb, n1, n2, n2_loc, n3, n3_loc, -1)
     wb(1:n1, 1:n2_loc, 1:n3_loc) = omp0*wb(1:n1, 1:n2_loc, 1:n3_loc)
-!+++++++++++++++++++++++++++
+    !==========================
     call beam_2d_potential(wb, n1, n2_loc, n3_loc, ft_mod)
-!exit fourier components for potential
+    !exit fourier components for potential
     call pftw2d(wb, n1, n2, n2_loc, n3, n3_loc, 1)
    end if
    if (prlx) then
@@ -287,11 +292,11 @@
    else
     rho(i1:i2, j1:j2, k1:k2, 1) = wb(1:n1, 1:n2_loc, 1:n3_loc)
    end if
-!EXIT rho(1) 2D beam potential
+   !EXIT rho(1) 2D beam potential
    if (allocated(wb)) deallocate (wb)
    call ftw_end
    call mpi_ftw_dalloc
   end subroutine
-!--------------------------
+  !==========================
  end module
-!======================================
+
