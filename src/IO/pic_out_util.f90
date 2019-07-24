@@ -31,9 +31,9 @@
   !=====Contains functions to prepare selected output variables=======
  contains
   !=============== Tracking particles============
-  subroutine initial_tparticles_select(dt_loc, tx1, ty1)
+  subroutine initial_tparticles_select(tx1, ty1)
 
-   real (dp), intent (in) :: dt_loc, tx1, ty1
+   real (dp), intent (in) :: tx1, ty1
 
    integer :: np, p, ik, ndv, ik_max
    integer (hp_int) :: plab, last_ind

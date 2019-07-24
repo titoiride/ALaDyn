@@ -39,7 +39,7 @@
    real (dp), intent (in) :: kp
    integer, intent (in) :: i2, j2, k2, dir
    integer :: ii, ik, i, j, k
-   real (dp) :: kpx, sum0(2), skx
+   real (dp) :: kpx, sum0(2), temp
 
    ! in wp enters the beam charge density at staggered x-coordinate
    select case (dir)
@@ -64,7 +64,7 @@
     !                         +cos(kp*x)*sum_y>x[sin(kp*y)*nb(y)]
    case (2)
     kpx = kp*dx
-    skx = kp*sin(0.5*kpx)/(0.5*kpx)
+    temp = kp*sin(0.5*kpx)/(0.5*kpx)
     allocate (kern2(i2,2))
     do i = 1, i2
      kern2(i, 1) = sin(kp*x(i))
@@ -72,7 +72,7 @@
     end do
     do k = 1, k2
      do j = 1, j2
-      w1(1:i2) = skx*wp(1:i2, j, k)
+      w1(1:i2) = temp*wp(1:i2, j, k)
       wp(1:i2, j, k) = 0.0
       do i = 1, i2
        sum0 = 0.0
@@ -88,13 +88,13 @@
    end select
   end subroutine
   !==========================
-  subroutine beam_2d_potential(pot, nxf, n2_loc, n3_loc, ft_ind)
-   real (dp), intent (inout) :: pot(:, :, :)
-   integer, intent (in) :: nxf, n2_loc, n3_loc, ft_ind
+  subroutine beam_2d_potential(poten, nxf_in, n2_loc, n3_loc, ft_ind)
+   real (dp), intent (inout) :: poten(:, :, :)
+   integer, intent (in) :: nxf_in, n2_loc, n3_loc, ft_ind
    real (dp) :: ak2p
    integer :: ix, iy, iy1, iz, iz1
    !_________________________________
-   ! Laplacian(y,z)(pot)=-rho =>  [k^2_y+k^2_z][pot(ky,kz)]=rho[ky,kz]
+   ! Laplacian(y,z)(poten)=-rho =>  [k^2_y+k^2_z][poten(ky,kz)]=rho[ky,kz]
    ! Solves Poisson equation in Fourier space
    ! ft_ind >1  sin/cosine transform
    ! ft_mod=0,1   periodic fft
@@ -105,40 +105,40 @@
      ak2p = skz(iz1, ft_ind)*skz(iz1, ft_ind) + sky(iy1, ft_ind)*sky(iy1 &
        , ft_ind)
      if (ak2p>0.0) then
-      do ix = 1, nxf
-       pot(ix, iy, iz) = pot(ix, iy, iz)/ak2p !pot
+      do ix = 1, nxf_in
+       poten(ix, iy, iz) = poten(ix, iy, iz)/ak2p !poten
       end do
      else
-      pot(1:nxf, iy, iz) = 0.0
+      poten(1:nxf_in, iy, iz) = 0.0
      end if
     end do
    end do
   end subroutine
   !==========================
-  subroutine beam_potential(pot, gam2, nxf, n2_loc, n3_loc, ft_ind)
-   real (dp), intent (inout) :: pot(:, :, :)
+  subroutine beam_potential(poten, gam2, nxf_in, n2_loc, n3_loc, ft_ind)
+   real (dp), intent (inout) :: poten(:, :, :)
    real (dp), intent (in) :: gam2
-   integer, intent (in) :: nxf, n2_loc, n3_loc, ft_ind
+   integer, intent (in) :: nxf_in, n2_loc, n3_loc, ft_ind
    real (dp) :: ak2, ak2p
    integer :: ix, iy, iy1, iz, iz1
    !_________________________________
    ! ft_ind=0,1 solves Poisson equation in Fourier space (kx/gam,ky,kz)
    ! ft_ind=2 solves Poisson equation in sin/cosine Fourier space (kx/gam,ky,kz)
-   ! Laplacian(pot)=-rho =>  K^2[pot(kx,ky,kz]=rho[kx,ky,kz]
+   ! Laplacian(poten)=-rho =>  K^2[poten(kx,ky,kz]=rho[kx,ky,kz]
    if (n3_loc==1) then
     iz = 1
     do iy = 1, n2_loc
      iy1 = iy + imody*n2_loc
      ak2p = sky(iy1, ft_ind)*sky(iy1, ft_ind)
      if (ak2p>0.0) then
-      do ix = 1, nxf
+      do ix = 1, nxf_in
        ak2 = ak2p + skx(ix, ft_ind)*skx(ix, ft_ind)/gam2
-       pot(ix, iy, iz) = pot(ix, iy, iz)/ak2 !pot_b
+       poten(ix, iy, iz) = poten(ix, iy, iz)/ak2 !pot_b
       end do
      else
-      do ix = 2, nxf
+      do ix = 2, nxf_in
        ak2 = skx(ix, ft_ind)*skx(ix, ft_ind)/gam2
-       pot(ix, iy, iz) = pot(ix, iy, iz)/ak2 !pot_b
+       poten(ix, iy, iz) = poten(ix, iy, iz)/ak2 !pot_b
       end do
      end if
     end do
@@ -150,14 +150,14 @@
       ak2p = skz(iz1, ft_ind)*skz(iz1, ft_ind) + &
         sky(iy1, ft_ind)*sky(iy1, ft_ind)
       if (ak2p>0.0) then
-       do ix = 1, nxf
+       do ix = 1, nxf_in
         ak2 = ak2p + skx(ix, ft_ind)*skx(ix, ft_ind)/gam2
-        pot(ix, iy, iz) = pot(ix, iy, iz)/ak2 !pot_b
+        poten(ix, iy, iz) = poten(ix, iy, iz)/ak2 !pot_b
        end do
       else
-       do ix = 2, nxf
+       do ix = 2, nxf_in
         ak2 = skx(ix, ft_ind)*skx(ix, ft_ind)/gam2
-        pot(ix, iy, iz) = pot(ix, iy, iz)/ak2 !pot_b
+        poten(ix, iy, iz) = poten(ix, iy, iz)/ak2 !pot_b
        end do
       end if
      end do

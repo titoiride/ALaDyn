@@ -222,9 +222,9 @@
    end do
   end subroutine
   !=====================================
-  subroutine mpi_yz_part_distrib(nc, ky2, kz2, nyc, nzc, ymt, zmt, whyz)
+  subroutine mpi_yz_part_distrib(nc, ky2_in, kz2_in, nyc, nzc, ymt, zmt, whyz)
 
-   integer, intent (in) :: nc, ky2(:), kz2(:), nyc(:), nzc(:)
+   integer, intent (in) :: nc, ky2_in(:), kz2_in(:), nyc(:), nzc(:)
    real (dp), intent (in) :: ymt, zmt, whyz(:, :, :)
    integer :: ic, i2, k1, j1, j2
    real (dp) :: loc_ym, loc_zm
@@ -237,7 +237,7 @@
      do i2 = 1, nyc(ic)
       if (ypt(i2,ic)<loc_ym) k1 = i2
      end do
-     do i2 = 1, ky2(ic)
+     do i2 = 1, ky2_in(ic)
       k1 = k1 + 1
       loc_ypt(i2, ic) = ypt(k1, ic)
       loc_wghyz(i2, 1, ic) = whyz(k1, 1, ic)
@@ -257,14 +257,14 @@
     do i2 = 1, nzc(ic)
      if (zpt(i2,ic)<loc_zm) k1 = i2
     end do
-    do i2 = 1, kz2(ic)
+    do i2 = 1, kz2_in(ic)
      k1 = k1 + 1
      loc_zpt(i2, ic) = zpt(k1, ic)
      j1 = 0
      do j2 = 1, nyc(ic)
       if (ypt(j2,ic)<loc_ym) j1 = j2
      end do
-     do j2 = 1, ky2(ic)
+     do j2 = 1, ky2_in(ic)
       j1 = j1 + 1
       loc_ypt(j2, ic) = ypt(j1, ic)
       loc_wghyz(j2, i2, ic) = whyz(j1, k1, ic)
@@ -273,9 +273,9 @@
    end do
   end subroutine
   !--------------------------
-  subroutine set_uniform_yz_distrib(nyh, nc)
+  subroutine set_uniform_yz_distrib(nyh_in, nc)
 
-   integer, intent (in) :: nyh, nc
+   integer, intent (in) :: nyh_in, nc
    integer :: j, i, i1, i2, ic
    integer :: npyc(6), npzc(6), npty_ne, nptz_ne
    real (dp) :: yy, zz, dxip, dpy, dpz
@@ -284,22 +284,22 @@
    real (dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
    !=================
    !========= gridding the transverse target size
-   nyl1 = 1 + ny/2 - nyh/2 !=1 if nyh=ny
-   nzl1 = 1 + nz/2 - nyh/2 !=1 if nyh=nz
+   nyl1 = 1 + ny/2 - nyh_in/2 !=1 if nyh_in=ny
+   nzl1 = 1 + nz/2 - nyh_in/2 !=1 if nyh_in=nz
    yp_min = ymin_t
    yp_max = ymax_t
    !=============================
    ! Multispecies
    !=============================
    do ic = 1, nc
-    npyc(ic) = nyh*np_per_yc(ic)
+    npyc(ic) = nyh_in*np_per_yc(ic)
    end do
    npty = maxval(npyc(1:nc))
    nptz = 1
    zp_min = zero_dp
    zp_max = zero_dp
    if (ndim==3) then
-    npzc(1:nc) = nyh*np_per_zc(1:nc)
+    npzc(1:nc) = nyh_in*np_per_zc(1:nc)
     zp_min = zmin_t !-Lz
     zp_max = zmax_t !+Lz
     nptz = maxval(npzc(1:nc))
@@ -426,9 +426,9 @@
    !==================
   end subroutine
   !===========================================
-  subroutine multi_layer_gas_target(layer_mod, nyh, xf0)
+  subroutine multi_layer_gas_target(layer_mod, nyh_in, xf0)
 
-   integer, intent (in) :: layer_mod, nyh
+   integer, intent (in) :: layer_mod, nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, i, j, i1, i2, ic
    integer :: n_peak, npmax, nxtot, len_conc
@@ -444,7 +444,7 @@
    i1 = 0
    i2 = 0
    ic = 0
-   call set_uniform_yz_distrib(nyh, nsp)
+   call set_uniform_yz_distrib(nyh_in, nsp)
    !==========================
    xp_min = xmin
    xp_max = xmax
@@ -940,9 +940,9 @@
   end subroutine
   !=============================
   !===============================
-  subroutine preplasma_multisp(nyh, xf0)
+  subroutine preplasma_multisp(nyh_in, xf0)
 
-   integer, intent (in) :: nyh
+   integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
    integer :: l, i, i1, i2, ic
@@ -958,7 +958,7 @@
    xp_max = xmax
    nxl = 0
    !========== uniform y-z distribution of El-Ion layers
-   call set_uniform_yz_distrib(nyh, 6)
+   call set_uniform_yz_distrib(nyh_in, 6)
    !===============
    xtot = 0.0
    do i = 1, 5
@@ -1204,9 +1204,9 @@
    !============
   end subroutine
   !=====================
-  subroutine multi_layer_twosp_target(nyh, xf0)
+  subroutine multi_layer_twosp_target(nyh_in, xf0)
 
-   integer, intent (in) :: nyh
+   integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip, l, i, i1, i2, ic, n_peak, nptx_loc(6)
    integer :: npmax, nps_loc(4)
@@ -1217,7 +1217,7 @@
    !=================
    xp_min = xmin
    xp_max = xmax
-   call set_uniform_yz_distrib(nyh, 6)
+   call set_uniform_yz_distrib(nyh_in, 6)
    !==============================
    nxl = 0
    !x- distribution
@@ -1456,9 +1456,9 @@
    !============
   end subroutine
   !=======================
-  subroutine multi_layer_threesp_target(nyh, xf0)
+  subroutine multi_layer_threesp_target(nyh_in, xf0)
 
-   integer, intent (in) :: nyh
+   integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
    integer :: l, i, i1, i2, ic
@@ -1469,7 +1469,7 @@
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
    !=================
-   call set_uniform_yz_distrib(nyh, 7)
+   call set_uniform_yz_distrib(nyh_in, 7)
    !===========================
    xp_min = xmin
    xp_max = xmax
@@ -1705,9 +1705,9 @@
    !============
   end subroutine
   !=====================
-  subroutine one_layer_nano_wires(nyh, xf0)
+  subroutine one_layer_nano_wires(nyh_in, xf0)
 
-   integer, intent (in) :: nyh
+   integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
    integer :: l, i, i1, i2, ic
@@ -1732,7 +1732,7 @@
    nxl = 0
    z2 = ion_min(nsp-1)
    !========= gridding the transverese target size
-   nyl1 = 1 + ny/2 - nyh/2 !=1 if nyh=ny
+   nyl1 = 1 + ny/2 - nyh_in/2 !=1 if nyh_in=ny
    yp_min = ymin_t
    yp_max = ymax_t
 
@@ -1749,14 +1749,14 @@
    ! Multispecies
    !=============================
    npty = maxval(np_per_yc(1:6))
-   npty = nyh*npty
+   npty = nyh_in*npty
    nptz = 1
    if (ndim==3) then
     np_per_zcell(1:6) = np_per_yc(1:6)
     zp_min = zmin_t !-Lz
     zp_max = zmax_t !+Lz
     nptz = maxval(np_per_zc(1:6))
-    nptz = nyh*nptz
+    nptz = nyh_in*nptz
    end if
    allocate (ypt(npty+1,8))
    allocate (zpt(nptz+1,8))
@@ -1878,7 +1878,7 @@
    end if
    !============= Uniform y-z distribution in layers [5-8]
    do ic = 5, 6
-    npty_layer(ic) = nyh*npyc(ic)
+    npty_layer(ic) = nyh_in*npyc(ic)
     npty_ne = npty_layer(ic)
     dpy = (yp_max-yp_min)/real(npty_ne, dp)
     do i = 1, npty_ne
@@ -1887,7 +1887,7 @@
    end do
    if (lpx(4)>0) then
     do ic = 7, 8
-     npty_layer(ic) = nyh*npyc(ic)
+     npty_layer(ic) = nyh_in*npyc(ic)
      npty_ne = npty_layer(ic)
      dpy = (yp_max-yp_min)/real(npty_ne, dp)
      do i = 1, npty_ne
@@ -2169,9 +2169,9 @@
 
   end subroutine
   !============
-  subroutine one_layer_nano_tubes(nyh, xf0)
+  subroutine one_layer_nano_tubes(nyh_in, xf0)
 
-   integer, intent (in) :: nyh
+   integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p
    integer :: i, j, i1, i2, ic, k1, k2
@@ -2182,8 +2182,8 @@
    real (dp) :: zp_min, zp_max, yp_min, yp_max, xp_min, xp_max
    real (dp) :: loc_ym, loc_ymx, loc_zm, loc_zmx
    real (dp) :: xfsh, r_int, r_ext, ffactor
-   integer :: nxl(5), loc_nptx(4), npt_nano(4)
-   integer :: nlpy, loc_npty(6)
+   integer :: nxl(5), npt_nano(4)
+   integer :: nlpy
    integer :: npty_layer(2), nptz_layer(2)
    real (dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
    real (dp), allocatable :: yc(:), ypt_nano(:, :), zpt_nano(:, :)
@@ -2206,14 +2206,14 @@
    !=============================
 
    npty = maxval(np_per_yc(1:2))
-   npty = nyh*npty !particles number in 3 nlpy slabs
+   npty = nyh_in*npty !particles number in 3 nlpy slabs
    nptz = 1
    if (ndim==3) then
     np_per_zcell(1:2) = np_per_zc(1:2)
     zp_min = yp_min !-Lz
     zp_max = yp_max !+Lz
     nptz = maxval(np_per_zc(1:6))
-    nptz = nyh*nptz
+    nptz = nyh_in*nptz
    end if
    allocate (ypt(npty,2))
    allocate (wy(npty,2))
@@ -2227,7 +2227,7 @@
    !====================
    ! Uniform yp grid of size npty_ne
    do ic = 1, 2
-    npty_ne = nyh*np_per_yc(ic) !number of yp points in 2*ymax size
+    npty_ne = nyh_in*np_per_yc(ic) !number of yp points in 2*ymax size
     dpy = (yp_max-yp_min)/real(npty_ne, dp)
     do i = 1, npty_ne
      ypt(i, ic) = yp_min + dpy*(real(i,dp)-0.5)
@@ -2284,8 +2284,8 @@
    ffactor = acos(-1.)*(r_ext*r_ext-r_int*r_int)/(lpy(2)+1.5*dlpy)**2
    !=============================
    do ic = 1, 2
-    npty_ne = nyh*np_per_yc(ic) !number of yp points in Ly=2*ymax size
-    nptz_ne = nyh*np_per_zc(ic) !number of zp points in Lz=2*zmax size
+    npty_ne = nyh_in*np_per_yc(ic) !number of yp points in Ly=2*ymax size
+    nptz_ne = nyh_in*np_per_zc(ic) !number of zp points in Lz=2*zmax size
     npt_nano(ic) = 0
     do k1 = 1, ntubes
      do k2 = 1, ntubes
@@ -2307,8 +2307,8 @@
    loc_zm = loc_zgrid(imodz)%gmin
    loc_zmx = loc_zgrid(imodz)%gmax
    do ic = 1, 2
-    npty_ne = nyh*np_per_yc(ic) !number of yp points in 2*ymax size
-    nptz_ne = nyh*np_per_zc(ic) !number of yp points in 2*ymax size
+    npty_ne = nyh_in*np_per_yc(ic) !number of yp points in 2*ymax size
+    nptz_ne = nyh_in*np_per_zc(ic) !number of yp points in 2*ymax size
     i2 = 0
     do k1 = 1, ntubes
      do k2 = 1, ntubes

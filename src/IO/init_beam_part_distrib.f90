@@ -44,7 +44,7 @@
    integer, intent (in) :: ndm
    integer, intent (out) :: np_tot
    integer :: i, i1, i2, ip
-   real (dp) :: cut, xh(5)
+   real (dp) :: cut, xb(5)
    integer :: nch
    logical :: sr
    !==========================================================
@@ -67,14 +67,14 @@
    select case (ndm)
    case (2)
     do ip = 1, nsb
-     xh(ip) = xc_bunch(ip)
+     xb(ip) = xc_bunch(ip)
      wgh = real(j0_norm*jb_norm(ip), sp) !the bunch particle weight
      i2 = i1 + nb_tot(ip) - 1
      !---Original Version---!
      call bunch_gen(ndm, i1, i2, sxb(ip), syb(ip), syb(ip), gam(ip), &
        epsy(ip), epsz(ip), cut, dg(ip), bpart)
      do i = i1, i2
-      bpart(1, i) = bpart(1, i) + xh(ip) !x-shifting
+      bpart(1, i) = bpart(1, i) + xb(ip) !x-shifting
       bpart(2, i) = bpart(2, i) + yc_bunch(ip) !y-shifting
       bpart(nch, i) = wgh_cmp
      end do
@@ -83,14 +83,14 @@
     ! Pe0 p data are copied to all MPI tasks
    case (3)
     do ip = 1, nsb
-     xh(ip) = xc_bunch(ip)
+     xb(ip) = xc_bunch(ip)
      wgh = real(j0_norm*jb_norm(ip), sp) !the bunch particles weights
      i2 = i1 + nb_tot(ip) - 1
      !---Original Version---!
      call bunch_gen(ndm, i1, i2, sxb(ip), syb(ip), syb(ip), gam(ip), &
        epsy(ip), epsz(ip), cut, dg(ip), bpart)
      do i = i1, i2
-      bpart(1, i) = bpart(1, i) + xh(ip) !x-shifting
+      bpart(1, i) = bpart(1, i) + xb(ip) !x-shifting
       bpart(2, i) = bpart(2, i) + yc_bunch(ip) !y-shifting
       bpart(3, i) = bpart(3, i) + zc_bunch(ip) !z-shifting
       bpart(nch, i) = wgh_cmp
@@ -272,10 +272,10 @@
    !=================================
   end subroutine
   !========================
-  subroutine beam_model_pot(pot, sx, sy, sz, b_am, i1, i2, j1, j2, k1, &
+  subroutine beam_model_pot(poten, sx, sy, sz, b_am, i1, i2, j1, j2, k1, &
     k2)
 
-   real (dp), intent (inout) :: pot(:, :, :, :)
+   real (dp), intent (inout) :: poten(:, :, :, :)
    real (dp), intent (in) :: sx, sy, sz, b_am
    integer, intent (in) :: i1, i2, j1, j2, k1, k2
    integer :: i, j, k, jj, kk
@@ -300,7 +300,7 @@
      end if
      do i = i1, i2
       xx = (x(i1)-xc_bunch(1))
-      pot(i, j, k, 1) = 0.25*brad2*b_am*fact*exp(-xx*xx*sx2_inv)
+      poten(i, j, k, 1) = 0.25*brad2*b_am*fact*exp(-xx*xx*sx2_inv)
      end do
     end do
    end do
@@ -408,7 +408,7 @@
      nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
    if (ndim==3) call fft_psolv(jc, gam2, ompe, nx, nx_loc, ny, ny_loc, &
      nz, nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
-   !Solves Laplacian[pot]=ompe*rho
+   !Solves Laplacian[poten]=ompe*rho
    !Beam potential in jc(1) 
    !===================
    !====================
@@ -490,7 +490,7 @@
      nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
    if (ndim==3) call fft_psolv(jc, gam2, ompe, nx, nx_loc, ny, ny_loc, &
      nz, nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
-   !Solves Laplacian[pot]=ompe*rho
+   !Solves Laplacian[poten]=ompe*rho
    !Beam potential in jc(1) 
    !===================
    !====================
