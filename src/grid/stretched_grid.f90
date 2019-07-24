@@ -26,7 +26,13 @@
 
   implicit none
   private
-  real(dp) :: const, smin, smax, xs
+
+  type str_params
+   real(dp) :: const, smin, smax, nl_stretch, xs, dl_inv, ratio
+  end type
+
+  type(str_params) :: y_params, z_params
+
   real(dp), parameter :: SYMM_CENTER = zero_dp
   
   public :: map2dy_part_sind, map3d_part_sind
@@ -34,21 +40,35 @@
  contains
   !============== Mapping for stretched grids==========
 
-  pure function invert_stretched_grid(yp_in) result(stretched)
+  pure function invert_stretched_grid(yp_in, params) result(stretched)
    real(dp), intent(in) :: yp_in
+   type(str_params), intent(in) :: params
    real(dp) :: stretched
-   stretched = dyi_inv*atan(sy_rat*(yp_in+const-xs))+ny_stretch
+   real(dp) :: const, nl_stretch, xs, dl_inv, ratio
+
+   const = params%const
+   nl_stretch = params%nl_stretch
+   xs = params%xs
+   dl_inv = params%dl_inv
+   ratio = params%ratio
+
+   stretched = dl_inv*atan(ratio*(yp_in+const-xs))+nl_stretch
+
   end function
 
-  pure function invert_uniform_grid(yp_in) result(uniform)
+  pure function invert_uniform_grid(yp_in, params) result(uniform)
    real(dp), intent(in) :: yp_in
-   real(dp) :: uniform
-   uniform = (yp_in + const)*dy_inv
+   type(str_params), intent(in) :: params
+   real(dp) :: uniform, const, dl_inv
+
+   const = params%const
+   dl_inv = params%dl_inv
+   uniform = (yp_in + const)*dl_inv
+
   end function
 
-  subroutine map2dy_part_sind(np, sind, ic1, ym, pt)
-   integer, intent (in) :: np, sind, ic1
-   real (dp), intent (in) :: ym
+  subroutine map2dy_part_sind(np, ic1, pt)
+   integer, intent (in) :: np, ic1
    real (dp), intent (inout) :: pt(:, :)
    real (dp) :: yp, yp_loc
    integer :: n
@@ -58,30 +78,33 @@
    !  exit      xi=part(ic1,n) the  particle position in uniform grid
    !               normalized to the Dxi cell size
    !==========================================
-   const = one_dp*ny*dy/2
-   smin = str_ygrid%smin
-   smax = str_ygrid%smax
-   xs = ny_stretch*dy
+   y_params%const = one_dp*ny*dy/2
+   y_params%smin = str_ygrid%smin
+   y_params%smax = str_ygrid%smax
+   y_params%xs = ny_stretch*dy
+   y_params%dl_inv = dyi_inv
+   y_params%ratio = sy_rat
+   y_params%nl_stretch = ny_stretch
+
    do n = 1, np
     yp = pt(n, ic1)
-    if (yp <= smin) then
-     yp_loc = invert_stretched_grid(yp)
-    else if (yp >= smax) then
+    if (yp <= y_params%smin) then
+     yp_loc = invert_stretched_grid(yp, y_params)
+    else if (yp >= y_params%smax) then
      yp = 2*SYMM_CENTER - yp
-     yp_loc = invert_stretched_grid(yp)
+     yp_loc = invert_stretched_grid(yp, y_params)
      yp_loc = ny - yp_loc
     else
-     yp_loc = invert_uniform_grid(yp)
+     yp_loc = invert_uniform_grid(yp, y_params)
     end if
     pt(n, ic1) = yp_loc
    end do
   end subroutine
 
-  subroutine map2dy_part_sind_old(np, sind, ic1, ym, pt)
-   integer, intent (in) :: np, sind, ic1
-   real (dp), intent (in) :: ym
+  subroutine map2dz_part_sind(np, ic1, pt)
+   integer, intent (in) :: np, ic1
    real (dp), intent (inout) :: pt(:, :)
-   real (dp) :: yp, ys, ximn, yp_loc
+   real (dp) :: zp, zp_loc
    integer :: n
    !========================
    !  enter the y=part(ic1,n) particle position in stretched grid
@@ -89,84 +112,33 @@
    !  exit      xi=part(ic1,n) the  particle position in uniform grid
    !               normalized to the Dxi cell size
    !==========================================
-   const = one_dp*ny*dy/2
-   smin = str_ygrid%smin
-   smax = str_ygrid%smax
-   xs = ny_stretch*dy
-   select case (sind)
-   case (1) !y<0
-    ys = str_ygrid%smin
-    ximn = -dyi_inv*atan(sy_rat*(ym-ys))
-    do n = 1, np
-     yp = pt(n, ic1)
-     yp_loc = ximn + dy_inv*(yp-ys)
-     if (yp<=ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     pt(n, ic1) = yp_loc
-    end do
-   case (2) !y>0
-    ys = str_ygrid%smax
-    if (ym>ys) then
-     ximn = dyi_inv*atan(sy_rat*(ys-ym))
+   z_params%const = one_dp*nz*dz/2
+   z_params%smin = str_zgrid%smin
+   z_params%smax = str_zgrid%smax
+   z_params%xs = nz_stretch*dz
+   z_params%dl_inv = dzi_inv
+   z_params%ratio = sz_rat
+   z_params%nl_stretch = nz_stretch
+
+   do n = 1, np
+    zp = pt(n, ic1)
+    if (zp <= z_params%smin) then
+     zp_loc = invert_stretched_grid(zp, z_params)
+    else if (zp >= z_params%smax) then
+     zp = 2*SYMM_CENTER - zp
+     zp_loc = invert_stretched_grid(zp, z_params)
+     zp_loc = nz - zp_loc
     else
-     ximn = dy_inv*(ys-ym)
+     zp_loc = invert_uniform_grid(zp, z_params)
     end if
-    do n = 1, np
-     yp = pt(n, ic1)
-     yp_loc = dy_inv*(yp-ym)
-     if (yp>ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     pt(n, ic1) = yp_loc
-    end do
-   end select
+    pt(n, ic1) = zp_loc
+   end do
   end subroutine
 
-  subroutine map2dz_part_sind(np, sind, ic1, zm, pt)
-   integer, intent (in) :: np, sind, ic1
-   real (dp), intent (in) :: zm
+  subroutine map3d_part_sind(pt, np, ic1, ic2)
+   integer, intent (in) :: np, ic1, ic2
    real (dp), intent (inout) :: pt(:, :)
-   real (dp) :: zp, zs, zimn, zp_loc
-   integer :: n
-   !========================
-   !  enter the y=part(ic1,n) particle position in stretched grid
-   !            y=y(xi)
-   !  exit      xi=part(ic1,n) the  particle position in uniform grid
-   !               normalized to the Dxi cell size
-   !==========================================
-   const = one_dp*ny*dy/2
-   smin = str_ygrid%smin
-   smax = str_ygrid%smax
-   xs = ny_stretch*dy
-   select case (sind)
-   case (1) !z<0
-    zs = str_zgrid%smin
-    zimn = -dzi_inv*atan(sz_rat*(zm-zs))
-    do n = 1, np
-     zp = pt(n, ic1)
-     zp_loc = zimn + dz_inv*(zp-zs)
-     if (zp<=zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic1) = zp_loc
-    end do
-   case (2) !z>0
-    zs = str_zgrid%smax
-    if (zm>zs) then
-     zimn = dzi_inv*atan(sz_rat*(zs-zm))
-    else
-     zimn = dz_inv*(zs-zm)
-    end if
-    do n = 1, np
-     zp = pt(n, ic1)
-     zp_loc = dz_inv*(zp-zm)
-     if (zp>zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic1) = zp_loc
-    end do
-   end select
-  end subroutine
 
-  subroutine map3d_part_sind(pt, np, sind, ic1, ic2, ym, zm)
-   integer, intent (in) :: np, sind, ic1, ic2
-   real (dp), intent (in) :: ym, zm
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp) :: yp, zp, yp_loc, zp_loc, ys, zs, ximn, zimn
-   integer :: n
    !========================
    !  enter the y=part(n,ic1) z=part(n,ic2) particle positions
    !        in stretched grids    y=y(xi), z(zi)
@@ -174,140 +146,10 @@
    !    particle positions in uniform grid
    !    normalized to the (Dxi Dzi) cell sizes
    !==========================================
-   const = one_dp*ny*dy/2
-   smin = str_ygrid%smin
-   smax = str_ygrid%smax
-   xs = ny_stretch*dy
-   select case (sind)
-   case (1) !y<0 z<0 corner ys>ymn
-    ys = str_ygrid%smin
-    ximn = -dyi_inv*atan(sy_rat*(ym-ys))
-    zs = str_zgrid%smin
-    zimn = -dzi_inv*atan(sz_rat*(zm-zs))
-    do n = 1, np
-     yp = pt(n, ic1)
-     zp = pt(n, ic2)
-     yp_loc = ximn + dy_inv*(yp-ys)
-     zp_loc = zimn + dz_inv*(zp-zs)
-     if (yp<ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     if (zp<zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic1) = yp_loc
-     pt(n, ic2) = zp_loc
-    end do
-   case (2) !z<0
-    zs = str_zgrid%smin
-    zimn = -dzi_inv*atan(sz_rat*(zm-zs))
-    do n = 1, np
-     yp = pt(n, ic1)
-     pt(n, ic1) = dy_inv*(yp-ym)
-     zp = pt(n, ic2)
-     zp_loc = zimn + dz_inv*(zp-zs)
-     if (zp<zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic2) = zp_loc
-    end do
-   case (3) !y>0 z<0 corner
-    ys = str_ygrid%smax
-    if (ym>ys) then
-     ximn = dyi_inv*atan(sy_rat*(ys-ym))
-    else
-     ximn = dy_inv*(ys-ym)
-    end if
-    zs = str_zgrid%smin
-    zimn = -dzi_inv*atan(sz_rat*(zm-zs))
-    do n = 1, np
-     yp = pt(n, ic1)
-     zp = pt(n, ic2)
-     yp_loc = dy_inv*(yp-ym)
-     zp_loc = zimn + dz_inv*(zp-zs)
-     if (yp>ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     if (zp<zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic1) = yp_loc
-     pt(n, ic2) = zp_loc
-    end do
-   case (4) !y>0
-    ys = str_ygrid%smax
-    if (ym>ys) then
-     ximn = dyi_inv*atan(sy_rat*(ys-ym))
-    else
-     ximn = dy_inv*(ys-ym)
-    end if
-    do n = 1, np
-     yp = pt(n, ic1)
-     zp = pt(n, ic2)
-     yp_loc = dy_inv*(yp-ym)
-     if (yp>ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     pt(n, ic1) = yp_loc
-     pt(n, ic2) = dz_inv*(zp-zm)
-    end do
-   case (5) !y>0 z>0 corner
-    ys = str_ygrid%smax
-    if (ym>ys) then
-     ximn = dyi_inv*atan(sy_rat*(ys-ym))
-    else
-     ximn = dy_inv*(ys-ym)
-    end if
-    zs = str_zgrid%smax
-    if (zm>zs) then
-     zimn = dzi_inv*atan(sz_rat*(zs-zm))
-    else
-     zimn = dz_inv*(zs-zm)
-    end if
-    do n = 1, np
-     yp = pt(n, ic1)
-     zp = pt(n, ic2)
-     yp_loc = dy_inv*(yp-ym)
-     zp_loc = dz_inv*(zp-zm)
-     if (yp>ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     if (zp>zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic1) = yp_loc
-     pt(n, ic2) = zp_loc
-    end do
-   case (6) !z>0
-    zs = str_zgrid%smax
-    if (zm>zs) then
-     zimn = dzi_inv*atan(sz_rat*(zs-zm))
-    else
-     zimn = dz_inv*(zs-zm)
-    end if
-    do n = 1, np
-     yp = pt(n, ic1)
-     pt(n, ic1) = dy_inv*(yp-ym)
-     zp = pt(n, ic2)
-     zp_loc = dz_inv*(zp-zm)
-     if (zp>zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic2) = zp_loc
-    end do
-   case (7) !y<0 z>0 corner
-    ys = str_ygrid%smin
-    ximn = -dyi_inv*atan(sy_rat*(ym-ys))
-    zs = str_zgrid%smax
-    if (zm>zs) then
-     zimn = dzi_inv*atan(sz_rat*(zs-zm))
-    else
-     zimn = dz_inv*(zs-zm)
-    end if
-    do n = 1, np
-     yp = pt(n, ic1)
-     zp = pt(n, ic2)
-     yp_loc = ximn + dy_inv*(yp-ys)
-     zp_loc = dz_inv*(zp-zm)
-     if (yp<ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     if (zp>zs) zp_loc = zimn + dzi_inv*atan(sz_rat*(zp-zs))
-     pt(n, ic1) = yp_loc
-     pt(n, ic2) = zp_loc
-    end do
-   case (8) !y<0
-    ys = str_ygrid%smin
-    ximn = -dyi_inv*atan(sy_rat*(ym-ys))
-    do n = 1, np
-     yp = pt(n, ic1)
-     zp = pt(n, ic2)
-     yp_loc = ximn + dy_inv*(yp-ys)
-     if (yp<ys) yp_loc = ximn + dyi_inv*atan(sy_rat*(yp-ys))
-     pt(n, ic1) = yp_loc
-     pt(n, ic2) = dz_inv*(zp-zm)
-    end do
-   end select
+
+   call map2dy_part_sind( np, ic1, pt)
+   call map2dz_part_sind( np, ic2, pt)
+
   end subroutine
   !========================================
  end module

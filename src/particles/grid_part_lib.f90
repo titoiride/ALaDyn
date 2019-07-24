@@ -405,7 +405,7 @@
      pt_loc(n, 2) = dy_inv*(pt_loc(n,2)-ymn) !
     end do
    else
-    call map2dy_part_sind(np, n_str, 2, ymn, pt_loc)
+    call map2dy_part_sind(np, 2, pt_loc)
    end if
    if (n1==1) return
 
@@ -417,7 +417,7 @@
      pt_loc(n, 4) = dy_inv*(pt_loc(n,4)-ymn) !
     end do
    else
-    call map2dy_part_sind(np, n_str, 4, ymn, pt_loc)
+    call map2dy_part_sind(np, 4, pt_loc)
    end if
 
   end subroutine
@@ -436,7 +436,7 @@
      pt_loc(n, 3) = dz_inv*(pt_loc(n,3)-zmn)
     end do
    else
-    call map3d_part_sind(pt_loc, np, n_str, 2, 3, ymn, zmn)
+    call map3d_part_sind( pt_loc, np, 2, 3 )
    end if
    if (n1==1) return
    do n = 1, np
@@ -448,7 +448,7 @@
      pt_loc(n, 6) = dz_inv*(pt_loc(n,6)-zmn)
     end do
    else
-    call map3d_part_sind(pt_loc, np, n_str, 5, 6, ymn, zmn)
+    call map3d_part_sind( pt_loc, np, 5, 6 )
    end if
 
   end subroutine
