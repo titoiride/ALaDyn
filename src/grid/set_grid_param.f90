@@ -319,6 +319,8 @@
    loc_ygrid(0)%gmax = y(ip+1)
    loc_ygrid(0)%p_ind(1) = min(sh, n_loc)
    loc_ygrid(0)%p_ind(2) = n_loc + loc_ygrid(0)%p_ind(1) - 1
+   loc_ygrid(0)%min_cell = 0
+   loc_ygrid(0)%max_cell = loc_ygrid(0)%min_cell + n_loc - 1
 
    p = 0
    do i = 1, n_loc + 1
@@ -349,6 +351,8 @@
 
       loc_ygrid(p)%p_ind(1) = sh
       loc_ygrid(p)%p_ind(2) = n_loc + loc_ygrid(p)%p_ind(1) - 1
+      loc_ygrid(p)%min_cell = loc_ygrid(p-1)%min_cell + n_loc
+      loc_ygrid(p)%max_cell = loc_ygrid(p-1)%max_cell + n_loc
 
      end do
     end if
@@ -369,6 +373,8 @@
     loc_ygrid(p)%gmax = y(ip+1)
     loc_ygrid(p)%p_ind(1) = sh
     loc_ygrid(p)%p_ind(2) = n_loc + loc_ygrid(p)%p_ind(1) - 1
+    loc_ygrid(p)%min_cell = loc_ygrid(p-1)%min_cell + n_loc
+    loc_ygrid(p)%max_cell = loc_ygrid(p-1)%max_cell + n_loc
 
    end if
    !=========================

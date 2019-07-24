@@ -30,6 +30,7 @@
   type grid
    integer :: ng, p_ind(2)
    real (dp) :: gmin, gmax
+   integer :: min_cell, max_cell
   end type
 
   type sgrid

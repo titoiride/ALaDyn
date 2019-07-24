@@ -23,12 +23,14 @@
 
   use common_param
   use grid_param
+  use mpi_var, only: mype
 
   implicit none
   private
 
   type str_params
-   real(dp) :: const, smin, smax, nl_stretch, xs, dl_inv, ratio
+   real(dp) :: const, smin, smax, nl_stretch, xs, dli_inv, ratio, &
+    dl_inv, init_cell
   end type
 
   type(str_params) :: y_params, z_params
@@ -44,15 +46,15 @@
    real(dp), intent(in) :: yp_in
    type(str_params), intent(in) :: params
    real(dp) :: stretched
-   real(dp) :: const, nl_stretch, xs, dl_inv, ratio
+   real(dp) :: const, nl_stretch, xs, dli_inv, ratio, init_cell
 
    const = params%const
    nl_stretch = params%nl_stretch
    xs = params%xs
-   dl_inv = params%dl_inv
+   dli_inv = params%dli_inv
    ratio = params%ratio
 
-   stretched = dl_inv*atan(ratio*(yp_in+const-xs))+nl_stretch
+   stretched = dli_inv*atan(ratio*(yp_in+const-xs)) + nl_stretch
 
   end function
 
@@ -63,6 +65,7 @@
 
    const = params%const
    dl_inv = params%dl_inv
+
    uniform = (yp_in + const)*dl_inv
 
   end function
@@ -82,20 +85,22 @@
    y_params%smin = str_ygrid%smin
    y_params%smax = str_ygrid%smax
    y_params%xs = ny_stretch*dy
-   y_params%dl_inv = dyi_inv
+   y_params%dl_inv = dy_inv
+   y_params%dli_inv = dyi_inv
    y_params%ratio = sy_rat
    y_params%nl_stretch = ny_stretch
+   y_params%init_cell = loc_ygrid(mype)%min_cell
 
    do n = 1, np
     yp = pt(n, ic1)
     if (yp <= y_params%smin) then
-     yp_loc = invert_stretched_grid(yp, y_params)
+     yp_loc = invert_stretched_grid(yp, y_params) - y_params%init_cell
     else if (yp >= y_params%smax) then
      yp = 2*SYMM_CENTER - yp
      yp_loc = invert_stretched_grid(yp, y_params)
-     yp_loc = ny - yp_loc
+     yp_loc = ny - yp_loc - y_params%init_cell
     else
-     yp_loc = invert_uniform_grid(yp, y_params)
+     yp_loc = invert_uniform_grid(yp, y_params) - y_params%init_cell
     end if
     pt(n, ic1) = yp_loc
    end do
@@ -116,7 +121,8 @@
    z_params%smin = str_zgrid%smin
    z_params%smax = str_zgrid%smax
    z_params%xs = nz_stretch*dz
-   z_params%dl_inv = dzi_inv
+   z_params%dl_inv = dz_inv
+   z_params%dli_inv = dzi_inv
    z_params%ratio = sz_rat
    z_params%nl_stretch = nz_stretch
 
