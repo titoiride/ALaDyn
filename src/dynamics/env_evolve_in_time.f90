@@ -36,17 +36,17 @@
   !============================
   ! ENVELOPE model in LP regime
   !============================
-  subroutine env_den_collect(eden)
+  subroutine env_den_collect(source_in)
 
-   real (dp), intent (inout) :: eden(:, :, :, :)
+   real (dp), intent (inout) :: source_in(:, :, :, :)
    integer :: i, j, k, kk, jj, ic
    real (dp) :: dery, derz
 
    ic = 1
    if (prl) then
-    call fill_curr_yzxbdsdata(eden, ic)
+    call fill_curr_yzxbdsdata(source_in, ic)
    end if
-   call den_zyxbd(eden, ic)
+   call den_zyxbd(source_in, ic)
    !=======Enters normalized <w*n/gam> > 0
    !==================================
    if (stretch) then
@@ -57,7 +57,7 @@
       jj = j - 2
       dery = loc_yg(jj, 3, imody)
       do i = ix1, ix2
-       eden(i, j, k, ic) = dery*eden(i, j, k, ic)
+       source_in(i, j, k, ic) = dery*source_in(i, j, k, ic)
       end do
      end do
      return
@@ -69,13 +69,13 @@
       jj = j - 2
       dery = derz*loc_yg(jj, 3, imody)
       do i = ix1, ix2
-       eden(i, j, k, ic) = dery*eden(i, j, k, ic)
+       source_in(i, j, k, ic) = dery*source_in(i, j, k, ic)
       end do
      end do
     end do
    end if
    !=========================
-   !exit in eden(ic)  the source terms chi() >0 of the envelope equation
+   !exit in source_in(ic)  the source terms chi() >0 of the envelope equation
    !-----------------------------------------------
   end subroutine
   !=========================
