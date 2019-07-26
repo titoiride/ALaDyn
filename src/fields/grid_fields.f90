@@ -1631,7 +1631,7 @@
     integer, intent (in) :: nc, i1, np
     logical, intent (in) :: lbd, rbd
     !  enter data [i1,np]  
-    integer :: l
+    integer :: l, ii, iic
 
     !=======ENTER DATA [i1,np]
     !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 
@@ -1642,15 +1642,15 @@
     !            R-Boundary    Dw^L[np-1] uses the [np-3:np1] stencil
     !===========================================
 
-    ic = nc - 1
-    do i = i1, np
-     var(i, nc+1) = var(i, ic)*var(i, nc) !in den array var(nc+1) => den*v
+    iic = nc - 1
+    do ii = i1, np
+     var(ii, nc+1) = var(ii, iic)*var(ii, nc) !in den array var(nc+1) => den*v
     end do
     !================= reconstruct nc primitives (Px,Py,Pz,Den,V)
-    do ic = 1, nc
-     do i = i1 + 1, np - 1
-      dw(1) = var(i, ic) - var(i-1, ic) !DW_{i-1/2}
-      dw(2) = var(i+1, ic) - var(i, ic) !DW_{i+1/2}
+    do iic = 1, nc
+     do ii = i1 + 1, np - 1
+      dw(1) = var(ii, iic) - var(ii-1, iic) !DW_{i-1/2}
+      dw(2) = var(ii+1, iic) - var(ii, iic) !DW_{i+1/2}
       omgl(1) = 1./(dw(1)*dw(1)+EPS)**P_EXP
       omgl(2) = 1./(dw(2)*dw(2)+EPS)**P_EXP
       sl(1) = W03(1)*omgl(1)
@@ -1658,82 +1658,82 @@
       sr(1) = W03(2)*omgl(1)
       sr(2) = W03(1)*omgl(2)
       s0 = sl(1) + sl(2)
-      wl(i, ic) = var(i, ic) + 0.5*(dw(1)*sl(1)+dw(2)*sl(2))/s0
+      wl(ii, iic) = var(ii, iic) + 0.5*(dw(1)*sl(1)+dw(2)*sl(2))/s0
       s0 = sr(1) + sr(2)
-      wr(i-1, ic) = var(i, ic) - 0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
+      wr(ii-1, iic) = var(ii, iic) - 0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
      end do
     end do
     !===================================
     !upwind boundary derivatives
     if (lbd) then
-     do ic = 1, nc - 2
-      i = i1
-      ww0(i, ic) = 0.0
-      vv = var(i, nc)
-      if (vv<0.0) ww0(i, ic) = vv*(var(i+1,ic)-var(i,ic))
-      i = i1 + 1
-      vv = var(i, nc)
-      ww0(i, ic) = vv*(var(i,ic)-var(i-1,ic))
-      if (vv<0.0) ww0(i, ic) = vv*dot_product(RDER(1:3), var(i:i+2,ic))
+     do iic = 1, nc - 2
+      ii = i1
+      ww0(ii, iic) = 0.0
+      vv = var(ii, nc)
+      if (vv<0.0) ww0(ii, iic) = vv*(var(ii+1,iic)-var(ii,iic))
+      ii = i1 + 1
+      vv = var(ii, nc)
+      ww0(ii, iic) = vv*(var(ii,iic)-var(ii-1,iic))
+      if (vv<0.0) ww0(ii, iic) = vv*dot_product(RDER(1:3), var(ii:ii+2,iic))
      end do
-     ic = nc - 1
-     i = i1
-     ww0(i, ic) = 0.0
-     vv = var(i, nc)
-     if (vv<0.0) ww0(i, ic) = var(i+1, nc+1) - var(i, nc+1)
-     i = i1 + 1
-     vv = var(i, nc)
-     ww0(i, ic) = var(i, nc+1) - var(i-1, nc+1)
-     if (vv<0.0) ww0(i, ic) = dot_product(RDER(1:3), var(i:i+2,nc+1))
+     iic = nc - 1
+     ii = i1
+     ww0(ii, iic) = 0.0
+     vv = var(ii, nc)
+     if (vv<0.0) ww0(ii, iic) = var(ii+1, nc+1) - var(ii, nc+1)
+     ii = i1 + 1
+     vv = var(ii, nc)
+     ww0(ii, iic) = var(ii, nc+1) - var(ii-1, nc+1)
+     if (vv<0.0) ww0(ii, iic) = dot_product(RDER(1:3), var(ii:ii+2,nc+1))
     end if
     if (rbd) then
-     do ic = 1, nc - 2
-      i = np - 1
-      vv = var(i, nc)
-      ww0(i, ic) = vv*(var(i+1,ic)-var(i,ic))
-      if (vv>0.0) ww0(i, ic) = vv*dot_product(LDER(1:3), var(i-2:i,ic))
-      i = np
-      vv = var(i, nc)
-      ww0(i, ic) = 0.0
-      if (vv>0.0) ww0(i, ic) = vv*(var(i,ic)-var(i-1,ic))
+     do iic = 1, nc - 2
+      ii = np - 1
+      vv = var(ii, nc)
+      ww0(ii, iic) = vv*(var(ii+1,iic)-var(ii,iic))
+      if (vv>0.0) ww0(ii, iic) = vv*dot_product(LDER(1:3), var(ii-2:ii,iic))
+      ii = np
+      vv = var(ii, nc)
+      ww0(ii, iic) = 0.0
+      if (vv>0.0) ww0(ii, iic) = vv*(var(ii,iic)-var(ii-1,iic))
      end do
-     ic = nc - 1
-     i = np - 1
-     vv = var(i, nc)
-     ww0(i, ic) = var(i+1, nc+1) - var(i, nc+1)
-     if (vv>0.0) ww0(i, ic) = dot_product(LDER(1:3), var(i-2:i,nc+1))
-     i = np
-     vv = var(i, nc)
-     ww0(i, ic) = 0.0
-     if (vv>0.0) ww0(i, ic) = var(i, nc+1) - var(i-1, nc+1)
+     iic = nc - 1
+     ii = np - 1
+     vv = var(ii, nc)
+     ww0(ii, iic) = var(ii+1, nc+1) - var(ii, nc+1)
+     if (vv>0.0) ww0(ii, iic) = dot_product(LDER(1:3), var(ii-2:ii,nc+1))
+     ii = np
+     vv = var(ii, nc)
+     ww0(ii, iic) = 0.0
+     if (vv>0.0) ww0(ii, iic) = var(ii, nc+1) - var(ii-1, nc+1)
     end if
     !===================================
     !   UPWINDING at interior points
     !          Momenta
-    do ic = 1, nc - 2
-     do i = i1 + 1, np - 2
-      vv = wr(i, nc) + wl(i, nc)
+    do iic = 1, nc - 2
+     do ii = i1 + 1, np - 2
+      vv = wr(ii, nc) + wl(ii, nc)
       s0 = sign(1., vv) !s0=1*sign(vv)
-      var(i, ic) = max(0., s0)*wl(i, ic) - min(0., s0)*wr(i, ic)
+      var(ii, iic) = max(0., s0)*wl(ii, iic) - min(0., s0)*wr(ii, iic)
      end do
-     do i = i1 + 2, np - 2
-      ww0(i, ic) = var(i, nc)*(var(i,ic)-var(i-1,ic))
+     do ii = i1 + 2, np - 2
+      ww0(ii, iic) = var(ii, nc)*(var(ii,iic)-var(ii-1,iic))
      end do
     end do
     ! LxF flux for density variable
     !   F=nv=> 1/2(F_L+F_R)-|V_{max}|(den_R-den_L)]
-    ic = nc - 1
-    do i = i1 + 1, np - 2
-     dw(1) = var(i-1, nc)
-     dw(2) = var(i, nc)
-     dw(3) = var(i+1, nc)
+    iic = nc - 1
+    do ii = i1 + 1, np - 2
+     dw(1) = var(ii-1, nc)
+     dw(2) = var(ii, nc)
+     dw(3) = var(ii+1, nc)
      vv = maxval(abs(dw(1:3)))
-     var(i, ic) = wr(i, nc)*wr(i, ic) + wl(i, nc)*wl(i, ic) - &
-       vv*(wr(i,ic)-wl(i,ic))
-     var(i, ic) = 0.5*var(i, ic)
+     var(ii, iic) = wr(ii, nc)*wr(ii, iic) + wl(ii, nc)*wl(ii, iic) - &
+       vv*(wr(ii,iic)-wl(ii,iic))
+     var(ii, iic) = 0.5*var(ii, iic)
     end do
-    do i = i1 + 2, np - 2
-     ww0(i, ic) = var(i, ic) - var(i-1, ic)
+    do ii = i1 + 2, np - 2
+     ww0(ii, iic) = var(ii, iic) - var(ii-1, iic)
     end do
    end subroutine
   end subroutine
