@@ -27,7 +27,13 @@
   implicit none
 
   !=======================
-  type (grid), allocatable :: loc_ygrid(:), loc_zgrid(:), loc_xgrid(:)
+  type (grid), allocatable :: loc_ygrid(:)
+  !!Contains the local (to the MPI process) y grid informations 
+  type (grid), allocatable :: loc_zgrid(:)
+  !!Contains the local (to the MPI process) x grid informations
+  type (grid), allocatable :: loc_xgrid(:)
+  !!Contains the local (to the MPI process) x grid informations
+  
   type (sgrid) :: str_xgrid, str_ygrid, str_zgrid
   real (sp), allocatable :: wdata(:), gwdata(:)
   integer, allocatable :: nxh(:), nyh(:), nzh(:)
