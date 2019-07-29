@@ -57,9 +57,9 @@
     call Max_pmemory_check()
    end if
   end if
-  !if (pe0)then
-  ! call initial_run_info(new_sim)
-  !endif
+  if (pe0)then
+   call initial_run_info(new_sim)
+  endif
   !=============================
   call CPU_TIME( unix_time_now )
   unix_time_begin = unix_time_now

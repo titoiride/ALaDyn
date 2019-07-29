@@ -40,7 +40,7 @@
   !> simulation.
   subroutine Start
 
-   integer :: ic, ncmp
+   integer :: iic, ncmp
 
   !enable loop to attach with gdb only if really needed
   !WARNING if enabled with no need, the program sleeps at start without doing anything!
@@ -126,9 +126,9 @@
    end if
    !============
    if (ionization) then
-    do ic = 2, nsp_ionz
-     call set_field_ioniz_wfunction(ion_min(ic-1), atomic_number(ic-1), &
-       ic, ionz_lev, ionz_model, lp_max)
+    do iic = 2, nsp_ionz
+     call set_field_ioniz_wfunction(ion_min(iic-1), atomic_number(iic-1), &
+       iic, ionz_lev, ionz_model, lp_max)
     end do
     if (pe0) call ioniz_data(lp_max, ion_min, atomic_number, ionz_lev, &
       ionz_model)
