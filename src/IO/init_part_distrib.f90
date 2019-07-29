@@ -456,9 +456,7 @@
    ! Layers nxl(1:5) all containing the same ion species
    len_conc = size(concentration)
    allocate (conc(len_conc))
-   do i = 1, len_conc
-    conc(i) = concentration(i)
-   end do
+   conc(:) = concentration(:)   
    xtot = 0.0
    nxtot = 0
    do i = 1, 6

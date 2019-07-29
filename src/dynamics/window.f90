@@ -344,8 +344,10 @@
     call cell_part_dist(mw) !particles are redistributes along the
     ! right-shifted x-coordinate in MPI domains
     if (pex1) then
-     if (targ_in<=xmax .and. targ_end>xmax) then
-      call particles_inject(xmax)
+     if (targ_in<=xmax) then
+      if (targ_end>xmax) then
+       call particles_inject(xmax)
+      end if
      end if
     end if
    end if

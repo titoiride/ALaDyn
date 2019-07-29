@@ -23,7 +23,7 @@
 
   use common_param
   use grid_param
-  use mpi_var, only: mype
+  use mpi_var, only: imody, imodz
 
   implicit none
   private
@@ -89,7 +89,7 @@
    y_params%dli_inv = dyi_inv
    y_params%ratio = sy_rat
    y_params%nl_stretch = ny_stretch
-   y_params%init_cell = loc_ygrid(mype)%min_cell
+   y_params%init_cell = loc_ygrid(imody)%min_cell
 
    do n = 1, np
     yp = pt(n, ic1)
@@ -125,6 +125,7 @@
    z_params%dli_inv = dzi_inv
    z_params%ratio = sz_rat
    z_params%nl_stretch = nz_stretch
+   z_params%init_cell = loc_zgrid(imodz)%min_cell
 
    do n = 1, np
     zp = pt(n, ic1)
