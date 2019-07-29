@@ -166,7 +166,7 @@
   end subroutine
   !======================
   subroutine Data_out
-   integer :: i, ic, idata
+   integer :: i, iic, idata
 
 
    idata = iout
@@ -217,8 +217,8 @@
      if (nden>0) then
       do i = 1, nsp
        call prl_den_energy_interp(i)
-       do ic = 1, min(2, nden)
-        call den_energy_out( i, ic, ic )
+       do iic = 1, min(2, nden)
+        call den_energy_out( i, iic, iic )
        end do
       end do
       if (nden>2) then
@@ -253,9 +253,9 @@
      write (6, '(a16,f12.3)') ' Time elapsed = ', &
        unix_time_now - unix_time_begin
     end if
-    !if (dump>0 .and. time_interval_dumps < 0.0) then
-    ! if (iter>0) call dump_data(iter,tnow)
-    !endif
+    if (dump>0 .and. time_interval_dumps < 0.0) then
+     if (iter>0) call dump_data(iter,tnow)
+    endif
     iout = iout + 1
    end if
 
@@ -270,7 +270,7 @@
   !--------------------------
   subroutine bdata_out
 
-   integer :: i, ic, idata
+   integer :: i, iic, idata
 
    idata = iout
 
@@ -337,14 +337,14 @@
        call fluid_den_mom_out(up, i, nfcomp)
       end do
      end if
-     ic = 0
-     call prl_bden_energy_interp(ic)
+     iic = 0
+     call prl_bden_energy_interp(iic)
      call bden_energy_out( 1 )
      !============= bunch density
      do i = 1, nsp
       call prl_den_energy_interp(i)
-      do ic = 1, min(2, nden)
-       call den_energy_out( i, ic, ic )
+      do iic = 1, min(2, nden)
+       call den_energy_out( i, iic, iic )
       end do
      end do
      if (nden>2) then
