@@ -615,6 +615,7 @@
     loc_xgrid(imodx)%gmax = loc_xgrid(imodx)%gmax + x0_new
     xp0_out = xp0_out + x0_new
     xp1_out = xp1_out + x0_new
+    xmn = loc_xgrid(imodx)%gmin
    end if
    if (targ_end>xmax) then
     if (mype>0) then
