@@ -66,7 +66,7 @@
   unix_time_last_dump = unix_time_begin
 
   tnow = tstart
-  if ((tnow-dt_loc ) <= 0.0) initial_time = .true.
+  if ( tnow <= dt_loc ) initial_time = .true.
 
   ! iter=last_iter
   iter = 0
