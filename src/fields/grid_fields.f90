@@ -1545,7 +1545,7 @@
    real(dp) :: shy, shz
    real(dp) :: dw(3), sl(2), sr(2), omgl(2), vv, s0
    real(dp), parameter :: EPS = 1.e-06
-   integer, parameter :: P_EXP = 1
+
    real(dp), dimension(2), parameter :: W03 = [ 1./3., 2./3. ]
    real(dp), dimension(3), parameter :: LDER = [ 0.5, -2., 1.5 ]
    real(dp), dimension(3), parameter :: RDER = [ -1.5, 2., -0.5 ]
@@ -1651,8 +1651,9 @@
      do ii = i1 + 1, np - 1
       dw(1) = var(ii, iic) - var(ii-1, iic) !DW_{i-1/2}
       dw(2) = var(ii+1, iic) - var(ii, iic) !DW_{i+1/2}
-      omgl(1) = 1./(dw(1)*dw(1)+EPS)**P_EXP
-      omgl(2) = 1./(dw(2)*dw(2)+EPS)**P_EXP
+      omgl(1) = 1./(dw(1)*dw(1)+EPS)
+      omgl(2) = 1./(dw(2)*dw(2)+EPS)
+      omgl(:) = omgl(:) * omgl(:)
       sl(1) = W03(1)*omgl(1)
       sl(2) = W03(2)*omgl(2)
       sr(1) = W03(2)*omgl(1)
