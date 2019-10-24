@@ -226,8 +226,7 @@
     do ic = 1, fdim
      do k = kz1, kz2
       do j = jy1, jy2
-       u(ix1, j, k, ic) = u(ix1, j, k, ic) + u0(ix1, j, k, ic) !Euler first order update
-       do i = ix1 + 1, ix2
+       do i = ix1, ix2
         u(i, j, k, ic) = u(i, j, k, ic) + abf_1*u0(i, j, k, ic) !updates u^{n+1}=u^{n}+Dt*(3/2*F^n-1/2F^{n-1})
        end do
        do i = ix1, ix2
