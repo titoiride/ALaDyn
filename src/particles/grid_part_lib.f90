@@ -111,7 +111,7 @@
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), axh(0:1), ay(0:2), ayh(0:1)
    integer, intent (inout) :: ix, ihx, iy, ihy
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
    !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
@@ -146,7 +146,7 @@
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), axh(0:2)
    integer, intent (inout) :: ix, ihx
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
    !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
@@ -171,7 +171,7 @@
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), axh(0:2), ay(0:2), ayh(0:2)
    integer, intent (inout) :: ix, ihx, iy, ihy
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
    !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
@@ -215,7 +215,7 @@
    real (dp), intent (inout) :: ax(0:2), axh(0:1), ay(0:2), ayh(0:1), &
      az(0:2), azh(0:1)
    integer, intent (inout) :: ix, ihx, iy, ihy, iz, ihz
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
    !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
@@ -264,7 +264,7 @@
    real (dp), intent (inout) :: ax(0:2), axh(0:2), ay(0:2), ayh(0:2), &
      az(0:2), azh(0:2)
    integer, intent (inout) :: ix, ihx, iy, ihy, iz, ihz
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
 
    xx = shx + xp(1)
    ix = int(xx+0.5)
@@ -323,7 +323,7 @@
    real (dp), intent (in) :: xp(:)
    integer, intent (inout) :: ix
    real (dp), intent (inout) :: ax(0:2)
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
    !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
@@ -338,7 +338,7 @@
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), ay(0:2)
    integer, intent (inout) :: ix, iy
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
    !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)
@@ -361,7 +361,7 @@
    real (dp), intent (in) :: xp(:)
    real (dp), intent (inout) :: ax(0:2), ay(0:2), az(0:2)
    integer, intent (inout) :: ix, iy, iz
-   real (sp) :: xx, sx, sx2
+   real (dp) :: xx, sx, sx2
    !======================
    xx = shx + xp(1)
    ix = int(xx+0.5)

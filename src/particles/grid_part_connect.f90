@@ -467,10 +467,6 @@
      wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
 
      call qqh_2d_spline(xp1, ax1, axh1, ay1, ayh1, i, ih, j, jh)
-     if (i<=0) then
-      write (6, '(a4,e11.4,a5,e11.4)') 'xp1=', xmn, 'sploc', &
-        sp_loc%part(n, 1)
-     end if
      !==========================
      do j1 = 0, stl
       j2 = j + j1
