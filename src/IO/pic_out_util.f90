@@ -354,48 +354,48 @@
    end do
    !===========================
    np = loc_npart(imody, imodz, imodx, ic)
-   select case (cmp_out)
-   case (1)
-    call set_grid_charge(spec(ic), ebfp, jc, np, 1)
+   if(part)then
+    select case (cmp_out)
+    case (1)
+     call set_grid_charge(spec(ic), ebfp, jc, np, 1)
 
-   case (2)
+    case (2)
 
-    if (envelope) then
-
-     do k = kz1, kz2
-      do j = jy1, jy2
-       do i = ix1, ix2
-        ar = .5*(env(i,j,k,1)+env(i,j,k,3))
-        ai = .5*(env(i,j,k,2)+env(i,j,k,4))
-        jc(i, j, k, 3) = 0.5*(ar*ar+ai*ai)
+     if (envelope) then
+      do k = kz1, kz2
+       do j = jy1, jy2
+        do i = ix1, ix2
+         ar = .5*(env(i,j,k,1)+env(i,j,k,3))
+         ai = .5*(env(i,j,k,2)+env(i,j,k,4))
+         jc(i, j, k, 3) = 0.5*(ar*ar+ai*ai)
+        end do
        end do
       end do
-     end do
-     if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
-     call set_grid_env_den_energy(spec(ic), ebfp, jc, np, 3)
+      if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
+      call set_grid_env_den_energy(spec(ic), ebfp, jc, np, 3)
 
      ! in jc(1) is the plasma density in jc(2) (gam-1)density with env-gamma component
 
-    else
-     call set_grid_den_energy(spec(ic), ebfp, jc, np)
+     else
+      call set_grid_den_energy(spec(ic), ebfp, jc, np)
 
      ! in jc(1) is plasma norm density in jc(2) <(gam-1)density>  with
      ! kineticagamma
-    end if
-   end select
+     end if
+    end select
 
-   if (prl) call fill_curr_yzxbdsdata(jc, cmp_out)
-   do kk = 1, cmp_out
-    call den_zyxbd(jc, kk)
-   end do
-   if (ic==1) jc(:, :, :, 1) = -jc(:, :, :, 1)
-   if (cmp_out==2) jc(:, :, :, 2) = mass(ic)*electron_mass* &
+    if (prl) call fill_curr_yzxbdsdata(jc, cmp_out)
+    do kk = 1, cmp_out
+     call den_zyxbd(jc, kk)
+    end do
+    if (ic==1) jc(:, :, :, 1) = -jc(:, :, :, 1)
+    if (cmp_out==2) jc(:, :, :, 2) = mass(ic)*electron_mass* &
      jc(:, :, :, 2)
    !=========== energy density in Mev*n/n_0
 
-   if (stretch) then
-    select case (ndim)
-    case (2)
+    if (stretch) then
+     select case (ndim)
+     case (2)
      k = 1
      do j = jy1, jy2
       jj = j - 2
@@ -404,7 +404,7 @@
        jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
       end do
      end do
-    case (3)
+     case (3)
      do k = kz1, kz2
       kk = k - 2
       derz = loc_zg(kk, 3, imodz)
@@ -416,8 +416,9 @@
        end do
       end do
      end do
-    end select
-   end if
+     end select
+    end if
+   endif
    !======================
   end subroutine
   !=====================

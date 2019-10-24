@@ -334,10 +334,10 @@
    ! bpart() provisional storage in common to all MPI tasks
    !=======================
    call mpi_beam_distribute(ndim) !local bpart data are stored in bunch(1)%part struct for each MPI task
-   nb = loc_nbpart(imody, imodz, imodx, 1)
-   if (nb>0) then
-    if (allocated(spec(1)%part)) then
-     np = size(spec(1)%part, 1)
+   nb=loc_nbpart(imody,imodz,imodx,1)
+   if (allocated(spec(1)%part)) then
+    np = loc_npart(imody, imodz, imodx, 1)
+    if(nb >0)then
      do n = 1, np
       ebfp(n, 1:id_ch) = spec(1)%part(n, 1:id_ch)
      end do
@@ -356,30 +356,30 @@
       do iz = 0, npe_zloc - 1
        do iy = 0, npe_yloc - 1
         loc_npart(iy, iz, ix, 1) = loc_npart(iy, iz, ix, 1) + &
-          loc_nbpart(iy, iz, ix, 1)
+         loc_nbpart(iy, iz, ix, 1)
        end do
       end do
      end do
-    else
-     nb_loc(1) = nb
-     call p_alloc(nb, nd2+1, nb_loc, nsb, lpf_ord, 1, 1, mem_psize)
-     do n = 1, nb
-      spec(1)%part(n, 1:id_ch) = bunch(1)%part(n, 1:id_ch)
-     end do
-     do ix = 0, npe_xloc - 1
-      do iz = 0, npe_zloc - 1
-       do iy = 0, npe_yloc - 1
-        loc_npart(iy, iz, ix, 1) = loc_nbpart(iy, iz, ix, 1)
-       end do
+    endif
+   else
+    nb_loc(1) = nb
+    call p_alloc(nb, nd2+1, nb_loc, nsb, lpf_ord, 1, 1, mem_psize)
+    do n = 1, nb
+     spec(1)%part(n, 1:id_ch) = bunch(1)%part(n, 1:id_ch)
+    end do
+    do ix = 0, npe_xloc - 1
+     do iz = 0, npe_zloc - 1
+      do iy = 0, npe_yloc - 1
+       loc_npart(iy, iz, ix, 1) = loc_nbpart(iy, iz, ix, 1)
       end do
      end do
-    end if
+    end do
    end if
    if (allocated(bunch(1)%part)) deallocate (bunch(1)%part)
    !==================== Computes the bunch inumber density
    jc(:, :, :, 1) = 0.0
    do ic = 1, nsb
-    np = loc_nbpart(imody, imodz, imodx, ic)
+    np = loc_npart(imody, imodz, imodx, ic)
     if (np>0) call set_grid_charge(spec(ic), ebfp, jc, np, 1)
    end do
    !generates injc(1)=den(i,j,k)  jc(2)= Jx(i,j,k)
@@ -418,7 +418,7 @@
    ebf_bunch(:, :, :, 4) = 0.0
    !========================================= Collect data
    ebf(:, :, :, 1:nfield) = ebf(:, :, :, 1:nfield) + &
-     ebf_bunch(:, :, :, 1:nfield)
+                            ebf_bunch(:, :, :, 1:nfield)
    deallocate (ebf_bunch)
    !========================================
    lp_end(1) = xc_bunch(1) + 2.*sxb(1)
@@ -529,8 +529,7 @@
      write (16, '(a23,2e11.4)') ' Transverse emittances=', epsy(ic), &
        epsz(ic)
      write (16, '(a21,e11.4)') ' Initial xc-position=', xc_bunch(ic)
-     write (16, '(a20,2e11.4)') ' b charge [pC],Qch =', &
-       bunch_charge(ic), reduced_charge(ic)
+     write (16, '(a18,e11.4)') ' b charge [pC] =   ',bunch_charge(ic)
      write (16, '(a22,e11.4)') ' bcharge_over_pcharge ', rhob(ic)
     end do
     close (16)

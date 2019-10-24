@@ -28,6 +28,7 @@
   use grid_param
   use mpi_field_interface
   use mpi_part_interface
+  use run_data_info, only : part_numbers
 
   implicit none
   !===============================
@@ -188,6 +189,7 @@
      loc_npart(imody, imodz, imodx, ic) = np_new
     end if
    end do
+   call part_numbers
    !=======================
   end subroutine
   !=======================

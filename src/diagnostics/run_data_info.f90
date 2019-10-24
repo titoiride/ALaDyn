@@ -42,13 +42,12 @@
 
    if (mod(iter,write_every)==0) then
     mem_psize_max = 0.0
-    if (part) then
-     if (prl) then
-      call Part_numbers
-      call Max_pmemory_check()
-     end if
+    if (prl) then
+     call Part_numbers
+     call Max_pmemory_check()
     end if
-
+   endif
+   if(part)then
     if (pe0) then
      write (6, '(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ', iter, ' t = ', &
        tnow, ' dt = ', dt_loc
@@ -82,7 +81,6 @@
   !---------------------------
 
   subroutine error_message
-
    if (pe0) then
     if (ier>0) write (6, *) 'error occurred: '
     if (ier==20) write (6, *) 'error: negative density: ', ier
@@ -121,6 +119,9 @@
    end do
    np_max = maxval(nploc(1:npe))
    np_min = minval(nploc(1:npe))
+   if(.not.part)then
+    if(np_max >0)part=.true.
+   endif
 
 
    do ip = 0, npe - 1

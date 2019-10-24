@@ -51,11 +51,9 @@
    diag = .false.
    iene = 1
   end if
-  if (part) then
-   if (prl) then
-    call Part_numbers
-    call Max_pmemory_check()
-   end if
+  if (prl) then
+   call Part_numbers
+   call Max_pmemory_check()
   end if
   if (pe0)then
    call initial_run_info(new_sim)
@@ -66,7 +64,7 @@
   unix_time_last_dump = unix_time_begin
 
   tnow = tstart
-  if ( tnow <= dt_loc ) initial_time = .true.
+  if (tnow < dt_loc) initial_time = .true.
 
   ! iter=last_iter
   iter = 0
@@ -114,10 +112,13 @@
 
   subroutine Env_cycle
 
-   if (inject_ind == iter) then
-    call beam_inject
-    if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
-   end if
+   if(inject_beam)then
+    if(tnow <= t_inject.and.tnow+dt_loc >t_inject)then
+     call beam_inject
+     call Part_numbers
+     if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
+    end if
+   endif
    call Data_out
    !================
    tk_ind = 0
@@ -213,18 +214,16 @@
       end if
      end do
     end if
-    if (part) then
-     if (nden>0) then
-      do i = 1, nsp
-       call prl_den_energy_interp(i)
-       do iic = 1, min(2, nden)
-        call den_energy_out( i, iic, iic )
-       end do
+    if (nden>0) then
+     do i = 1, nsp
+      call prl_den_energy_interp(i)
+      do iic = 1, min(2, nden)
+       call den_energy_out( i, iic, iic )
       end do
-      if (nden>2) then
-       call set_wake_potential
-       call den_energy_out( 0, nden, 1 ) !data on jc(1) for wake potential
-      end if
+     end do
+     if (nden>2) then
+      call set_wake_potential
+      call den_energy_out( 0, nden, 1 ) !data on jc(1) for wake potential
      end if
     end if
     if (hybrid) then
@@ -265,7 +264,7 @@
    ! call dump_data(iter,tnow)
    !endif
 
-  end subroutine
+  end subroutine data_out
 
   !--------------------------
   subroutine bdata_out

@@ -110,10 +110,8 @@
    grid_size_max = maxval(loc_grid_size(1:npe))
    lenbuff = lenbuff*grid_size_max + grid2d_size_max
    !===============================
-   if (part) then
-    ndv = size(ebfp, 2)
+   ndv = nd2+1
     do i = 1, nsp
-     nps_loc(i) = size(spec(i)%part, 1)
      kk = loc_npart(imody, imodz, imodx, i)
      call intvec_distribute(kk, ip_loc, npe)
      npt_arr(1:npe, i) = ip_loc(1:npe)
@@ -123,10 +121,10 @@
     end do
     max_npt_size = ndv*maxval(ip_loc(1:npe))
     lenbuff = max(lenbuff, max_npt_size)
+   !===============================
     if (beam) then
      ndvb = size(ebfb, 2)
      do i = 1, nsp
-      nps_loc(i) = size(bunch(i)%part, 1)
       kk = loc_nbpart(imody, imodz, imodx, i)
       call intvec_distribute(kk, ip_loc, npe)
       npt_arr(1:npe, i) = ip_loc(1:npe)
@@ -163,7 +161,6 @@
      end do
     end if
     !===================
-   end if
    !=========================
    ndata = 0
    rdata = 0.0
@@ -209,11 +206,9 @@
       end if
      end if
     end if
-    if (part) then
      write (lun) npt_arr(1:npe, 1:nsp)
      write (lun) dist_npy(1:npe_yloc, 1:nsp)
      write (lun) dist_npz(1:npe_zloc, 1:nsp)
-    end if
     !==================
     close (lun)
    end if !end pe0 write on fname
@@ -221,9 +216,8 @@
    !===========================
    allocate (send_buff(lenbuff)) !to be used for all mpi_write()
    !=====================
-
    !=== PARTICLES DUMP SECTION ====
-   if (part) then
+   if(max_npt_size >0)then
     write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
     fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
     lenw(1:npe) = ndv*ip_loc(1:npe)
@@ -247,6 +241,7 @@
     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
       fnamel_out)
     if (pe0) write (6, *) 'Particles data dumped'
+!============================
     if (beam) then
      write (fnamel_part, '(a9,i2.2)') 'BunchPart', imodz
      fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
@@ -580,11 +575,10 @@
       end if
      end if
     end if
-    if (part) then
+!==================== dumped by pe0 even if no particles are present
      read (lun) npt_arr(1:npe, 1:nsp)
      read (lun) dist_npy(1:npe_yloc, 1:nsp)
      read (lun) dist_npz(1:npe_zloc, 1:nsp)
-    end if
     close (lun)
    end if !end pe0 read on fname
    !========================= distribute comm data
@@ -653,7 +647,7 @@
      end if
     end if
    end if
-   if (part) then !distributes npart => npt(npe,nsp)
+   !Pe0 distributes npart => npt(npe,nsp)
     call MPI_BCAST(npt_arr(1,1), npe*nsp, mpi_integer, pe_min, comm, &
       error)
     do i = 1, npe
@@ -682,7 +676,6 @@
     allocate (loc_ypt(nypt_max,nsp))
     allocate (loc_zpt(nzpt_max,nsp))
     allocate (loc_wghyz(nypt_max,nzpt_max,nsp))
-   end if !end n_part distribut
    ! x() defined on the grid module starting from x(1)=0.0
    !---------- Particle read
    !============================================
@@ -843,15 +836,14 @@
     end if
     if (pe0) write (6, *) 'Bunch fields data read'
    end if
-
    !=== END BUNCH FIELD RESTART SECTION ===
-   if (part) then
-    write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
     do i = 1, nsp
      nps_loc(i) = maxval(npt_arr(1:npe,i))
     end do
     np_max = maxval(nps_loc(1:nsp))
+   if(np_max >0)then                    !READS particles (if any)
+    write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
+    fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
     call p_alloc(np_max, ndv, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
     lenw(1:npe) = ndv*ip_loc(1:npe)
     !=======================
@@ -876,7 +868,6 @@
     end do
    end if
    !=================================
-   if (part) then
     fname_out = 'dumpRestart/' // fname_yz // '.bin'
     kk = 0
     do ic = 1, nsp
@@ -905,6 +896,9 @@
      end if
     end do
     call intvec_distribute(kk, lenw, npe)
+    np_max=maxval(lenw(1:npe))
+    if(np_max >0)then
+    
     disp = 0
     if (mype>0) disp = sum(lenw(1:mype))
     disp = 8*disp
@@ -930,8 +924,8 @@
       end do
      end do
     end do
+    end if !end of part read
     if (pe0) write (6, *) 'Particles data read'
-   end if !end of part read
    !============================================
    deallocate (recv_buff)
    !===============================

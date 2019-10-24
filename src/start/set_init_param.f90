@@ -137,7 +137,6 @@
    channel = .false.
    nm_fact = 1.
    if (np_per_xc(1)>0 .and. np_per_yc(1)>0) part = .true.
-   if (nsp>1) part = .true.
    if (nsp>1) ions = .true.
    if (model_id<5) then
     lp_active = .true.
@@ -357,7 +356,7 @@
      else
       bunch_volume(1) = pi2*sqrt(pi2)*sxb(1)*syb(1)*syb(1) !the bunch volume (mu^3) in 3D Gussian bunch
      end if
-     rhob(1) = bunch_charge(1)/(e_charge*bunch_volume(1)) !bunch density (1/mu^3)
+     rhob(1) = bunch_charge(1)/(e_charge*bunch_volume(1)) !physical bunch density (1/mu^3)
 
      n0_ref = nm_fact*n_over_nc ! background plasma density (1/mu^3)
      rhob(1) = rhob(1)/n0_ref !ratio beam density/background plasma density

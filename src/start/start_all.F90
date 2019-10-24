@@ -121,9 +121,6 @@
    end if
    tpart = .false.
    inject_ind = -1
-   if (inject_beam) then
-    inject_ind = nint(t_inject/dt)
-   end if
    !============
    if (ionization) then
     do iic = 2, nsp_ionz
