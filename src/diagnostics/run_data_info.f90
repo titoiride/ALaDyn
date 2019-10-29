@@ -38,8 +38,6 @@
 
   subroutine timing
 
-   integer, parameter :: write_every = 100
-
    if (mod(iter,write_every)==0) then
     mem_psize_max = 0.0
     if (prl) then

@@ -150,6 +150,7 @@
      iter_max = int(tmax/dt)
      dt_loc = tmax/float(iter_max)
     end if
+    write_every = max(nint(iter_max/100.), 1)
 
    case (1) 
     if (.not. l_first_output_on_restart) then
@@ -166,6 +167,7 @@
      iter_max = int(tmax/dt)
      dt_loc = tmax/float(iter_max)
     end if
+    write_every = max(nint(iter_max/100.), 1)
     dtout = tmax/nouts
     dtdia = tmax/iene
     tmax = tmax + tstart
