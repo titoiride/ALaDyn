@@ -63,6 +63,28 @@
     call End_parallel
     stop
    end if
+   if ( mod(nx, nprocx) /= 0 ) then
+    if (pe0) write (6, *) ' ==================================================='
+    if (pe0) write (6, *) ' WARNING: Number of cells in the X direction is not '
+    if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
+    if (pe0) write (6, *) ' ==================================================='
+   end if
+   if ( ndim > 1 ) then
+    if ( mod(ny, nprocy) /= 0 ) then
+     if (pe0) write (6, *) ' ==================================================='
+     if (pe0) write (6, *) ' WARNING: Number of cells in the Y direction is not '
+     if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
+     if (pe0) write (6, *) ' ==================================================='
+    end if
+   end if
+   if ( ndim > 2 ) then
+    if ( mod(nz, nprocz) /= 0 ) then
+     if (pe0) write (6, *) ' ==================================================='
+     if (pe0) write (6, *) ' WARNING: Number of cells in the Z direction is not '
+     if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
+     if (pe0) write (6, *) ' ==================================================='
+    end if
+   end if
    !sets parameters related to initial condition
    !=== Ascii art generated on http://patorjk.com/software/taag using the Star Wars font ===
    if (pe0) then
