@@ -47,7 +47,7 @@
     ' dmodel =   ', ' nsp =      ', ' curr_ndim =', ' mp/cell =  ', &
     ' ion_ch =   ', ' tsch_ord = ', ' der_ord =  ', ' iform =    ', &
     ' ph_sp_nc = ', ' f_version =', ' i_end =    ', ' nx_loc =   ', &
-    ' ny_loc =   ', ' nz_loc =   ', ' null  =    ' ]
+    ' ny_loc =   ', ' nz_loc =   ', ' pjump  =   ' ]
 
 
  contains
@@ -1456,8 +1456,8 @@
      real(xmax_out,sp), real(ymax_out,sp), real(gam_min,sp) ]
 
    part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(pid), lpf_ord, der_ord, iform, ndv, &
-     file_version, i_end, nx_loc, ny_loc, nz_loc, 0, 0 ]
+     curr_ndim, mp_per_cell(pid), 0, lpf_ord, der_ord, iform, ndv, &
+     file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
 
    write (fname, '(a6,i2.2)') part_files(pid), iout !serve sempre
    write (fnamel, '(a6,i2.2,a1,i3.3)') part_files(pid), iout, '_', imodz !usare con mpi_write_part_col
@@ -1696,8 +1696,8 @@
      real(xp1_out,sp), real(yp_out,sp), real(gam_in,sp) ]
 
    part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(1), lpf_ord, der_ord, iform, ndv, &
-     file_version, i_end, nx_loc, ny_loc, nz_loc, 0, 0 ]
+     curr_ndim, mp_per_cell(1), 0, lpf_ord, der_ord, iform, ndv, &
+     file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
 
    write (fname, '(a8,i2.2)') part_files(1), iout !serve sempre
    fname_out = foldername // '/' // fname // '.bin'
@@ -1810,7 +1810,7 @@
 
    part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
      curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, &
-     ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, 0 ]
+     ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
 
    write (fname, '(a8,i2.2)') part_files(1), iout !serve sempre
    fname_out = foldername // '/' // fname // '.bin'
