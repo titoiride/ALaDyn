@@ -44,31 +44,27 @@
      call Part_numbers
      call Max_pmemory_check()
     end if
-   endif
-   if(part)then
     if (pe0) then
-     write (6, '(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ', iter, ' t = ', &
-       tnow, ' dt = ', dt_loc
      call tot_num_part
-     call CPU_TIME( unix_time_now )
-     write (6, '(a16,f12.3,a10,i15)') ' Time elapsed = ', &
+     write (6, '(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ', iter, ' t = ', &
+      tnow, ' dt = ', dt_loc
+      call CPU_TIME( unix_time_now )
+      write (6, '(a16,f12.3,a10,i15)') ' Time elapsed = ', &
        unix_time_now - unix_time_begin, ', nptot = ', nptot_global
-     if (prl) then
-      if (part) then
-       write (6, '(a21,i10,a1,i10)') ' part min/max distr. ', np_min, &
+      if (prl) then
+       if (part) then
+        write (6, '(a21,i10,a1,i10)') ' part min/max distr. ', np_min, &
          ' ', np_max
-       write (6, '(a18,2i8)') ' where pmin/pmax  ', pe_npmin, pe_npmax
-       if (prl) then
-        write (6, '(a24,e12.5)') ' max part memory in MB= ', &
+        write (6, '(a18,2i8)') ' where pmin/pmax  ', pe_npmin, pe_npmax
+       endif
+       write (6, '(a24,e12.5)') ' max part memory in MB= ', &
           mem_psize_max
-        write (6, '(a20,e12.5)') ' Max part  address= ', mem_max_addr
-       end if
+       write (6, '(a20,e12.5)') ' Max part  address= ', mem_max_addr
       end if
-     end if
-     write (6, '(a13,2E11.4)') ' xmin/xmax   ', xmin, xmax
-     write (6, *) '========================'
-    end if !end Pe0 write
-   end if
+      write (6, '(a13,2E11.4)') ' xmin/xmax   ', xmin, xmax
+      write (6, *) '========================'
+     end if !end Pe0 write
+    end if  !end mod(write_every)
 
    if (tnow<tmax) then
     tnow = tnow + dt_loc
@@ -94,23 +90,12 @@
     np_new = loc_npart(imody, imodz, imodx, ic)
     call intvec_distribute(np_new, nploc, npe)
     pp = 0
+                          !loc_npart() distribution on each MPI task
     do ix = 0, npe_xloc - 1
      do iz = 0, npe_zloc - 1
       do ip = 0, npe_yloc - 1
        pp = pp + 1
-       loc_npart(ip, iz, ix, ic) = nploc(pp)
-      end do
-     end do
-    end do
-   end do
-   nploc = 0
-   do ic = 1, nsp
-    pp = 0
-    do ix = 0, npe_xloc - 1
-     do iz = 0, npe_zloc - 1
-      do ip = 0, npe_yloc - 1
-       pp = pp + 1
-       nploc(pp) = nploc(pp) + loc_npart(ip, iz, ix, ic)
+       loc_npart(ip, iz, ix, ic)=nploc(pp)
       end do
      end do
     end do
@@ -120,58 +105,10 @@
    if(.not.part)then
     if(np_max >0)part=.true.
    endif
-
-
    do ip = 0, npe - 1
     if (nploc(ip+1)==np_min) pe_npmin = ip
     if (nploc(ip+1)==np_max) pe_npmax = ip
    end do
-   if (beam) then
-    do ic = 1, nsb
-     nploc = 0
-     np_new = loc_nbpart(imody, imodz, imodx, ic)
-     call intvec_distribute(np_new, nploc, npe)
-     pp = 0
-     do ix = 0, npe_xloc - 1
-      do iz = 0, npe_zloc - 1
-       do ip = 0, npe_yloc - 1
-        pp = pp + 1
-        loc_nbpart(ip, iz, ix, ic) = nploc(pp)
-       end do
-      end do
-     end do
-    end do
-    nploc = 0
-    do ic = 1, nsb
-     pp = 0
-     do ix = 0, npe_xloc - 1
-      do iz = 0, npe_zloc - 1
-       do ip = 0, npe_yloc - 1
-        pp = pp + 1
-        nploc(pp) = nploc(pp) + loc_nbpart(ip, iz, ix, ic)
-       end do
-      end do
-     end do
-    end do
-    nploc = 0
-    do ic = 1, nsb
-     pp = 0
-     do ix = 0, npe_xloc - 1
-      do iz = 0, npe_zloc - 1
-       do ip = 0, npe_yloc - 1
-        pp = pp + 1
-        nploc(pp) = nploc(pp) + loc_nbpart(ip, iz, ix, ic)
-       end do
-      end do
-     end do
-    end do
-    nb_max = maxval(nploc(1:npe))
-    nb_min = minval(nploc(1:npe))
-    do ip = 0, npe - 1
-     if (nploc(ip+1)==nb_min) pe_nbmin = ip
-     if (nploc(ip+1)==nb_max) pe_nbmax = ip
-    end do
-   end if
   end subroutine
 
   subroutine tot_num_part
