@@ -90,7 +90,7 @@
     np_new = loc_npart(imody, imodz, imodx, ic)
     call intvec_distribute(np_new, nploc, npe)
     pp = 0
-                          !loc_npart() distribution on each MPI task
+    !loc_npart() distribution on each MPI task
     do ix = 0, npe_xloc - 1
      do iz = 0, npe_zloc - 1
       do ip = 0, npe_yloc - 1

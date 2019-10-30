@@ -1490,11 +1490,7 @@
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
    disp_col = disp_col*4
 
-   if ((ndim<3) .or. (l_force_singlefile_output)) then
-    call mpi_write_part(pdata, lenp, ip, disp, 17, fname_out)
-   else
-    call mpi_write_part_col(pdata, lenp, disp_col, 21, fname_outl)
-   end if
+   call mpi_write_part(pdata, lenp, ip, disp, 17, fname_out)
 
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then

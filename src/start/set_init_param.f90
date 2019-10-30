@@ -136,7 +136,6 @@
    solid_target = .false.
    channel = .false.
    nm_fact = 1.
-   if (np_per_xc(1)>0 .and. np_per_yc(1)>0) part = .true.
    if (nsp>1) ions = .true.
    if (model_id<5) then
     lp_active = .true.
