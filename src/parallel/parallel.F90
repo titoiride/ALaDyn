@@ -22,6 +22,7 @@
  module parallel
   use mpi_var
   use common_param
+  use util, only: init_random_seed
 
 #if !defined (_CRESCO)
 #define ENABLE_MPI_LONG_INT
@@ -219,8 +220,13 @@
      xp_prev(ipe) = pen
     end do
    end if
+  
+   !==========================================
+   ! INITIALIZE THE RANDOM SEED FOR EVERY MYPE
+   !==========================================
 
-
+   call init_random_seed(mype)
+ 
   end subroutine
 
   !call processor_grid_diag
