@@ -149,8 +149,6 @@ matrix:
       addons:
         apt:
           update: true
-          sources:
-            - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
             - gfortran
@@ -167,7 +165,6 @@ matrix:
         apt:
           update: true
           sources:
-            - llvm-toolchain-trusty-6.0
             - ubuntu-toolchain-r-test
           packages:
             - clang-6.0
@@ -383,8 +380,6 @@ matrix:
       addons:
         apt:
           update: true
-          sources:
-            - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
             - gfortran
@@ -401,7 +396,6 @@ matrix:
         apt:
           update: true
           sources:
-            - llvm-toolchain-trusty-6.0
             - ubuntu-toolchain-r-test
           packages:
             - clang-6.0
