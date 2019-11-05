@@ -25,7 +25,7 @@
   implicit none
   character (10), dimension (0:28), parameter :: species_name = [ &
     ' Electron ', ' Hydrogen ', '  Helium  ', ' Lithium  ', &
-    'Berillium ', ' Boron    ', '  Carbon  ', ' Nytrogen ', &
+    'Berillium ', ' Boron    ', '  Carbon  ', ' Nitrogen ', &
     ' Oxygen   ', ' Florine  ', '   Neon   ', ' Sodium   ', &
     'Magnesium ', ' Aluminium', ' Silicon  ', 'Phosphorus', &
     ' Solfur   ', ' Chlorine ', ' Argon    ', 'Potassium ', &

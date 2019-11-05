@@ -1751,7 +1751,7 @@
    if (ne>0) then
     do p = 1, ne
      wgh_cmp = spec(1)%part(p, id_ch)
-     if (part_ind<0) then
+     if (part_ind < 0) then
       ip = ip + 1
       do q = 1, nd2 + 1
        ebfp(ip, q) = spec(1)%part(p, q)

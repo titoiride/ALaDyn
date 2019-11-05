@@ -274,8 +274,8 @@
      inc = ion_ch_inc(n)
      if (inc>0) then
       wgh_cmp = spec(ic)%part(n, id_ch)
-      charge = -1
-      part_ind = -1
+      charge = -one_int_hp
+      part_ind = -one_int_hp
       wgh = wgh*n_mol_atoms(ic-1)
       do i = 1, inc
        ii = ii + 1
@@ -294,8 +294,8 @@
      inc = ion_ch_inc(n)
      if (inc>0) then
       wgh_cmp = spec(ic)%part(n, id_ch)
-      charge = -1
-      part_ind = -1
+      charge = -one_int_hp
+      part_ind = -one_int_hp
       do i = 1, inc
        ii = ii + 1
        spec(1)%part(ii, 1:3) = spec(ic)%part(n, 1:3)
@@ -340,8 +340,8 @@
      inc = ion_ch_inc(n)
      if (inc>0) then
       wgh_cmp = spec(ic)%part(n, id_ch)
-      charge = -1
-      part_ind = -1
+      charge = -one_int_hp
+      part_ind = -one_int_hp
       wgh = wgh*n_mol_atoms(ic-1)
       do i = 1, inc
        ii = ii + 1
@@ -360,8 +360,8 @@
      inc = ion_ch_inc(n)
      if (inc>0) then
       wgh_cmp = spec(ic)%part(n, id_ch)
-      charge = -1
-      part_ind = -1
+      charge = -one_int_hp
+      part_ind = -one_int_hp
       do i = 1, inc
        ii = ii + 1
        spec(1)%part(ii, 1:3) = spec(ic)%part(n, 1:3)
@@ -423,7 +423,7 @@
      ion_ch_inc(n) = 0
      call random_number(p)
      if (p<w_one_lev(nk,z0,sp_ion)) then
-      charge = charge + 1
+      charge = charge + one_int_hp
       ion_ch_inc(n) = 1 !the ionization electron count
       z0 = z0 + 1
       sp_loc%part(n, id_ch) = wgh_cmp !the new ion (id,z-chargei,wgh)

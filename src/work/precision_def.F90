@@ -45,6 +45,7 @@
   real (sp), parameter :: one_sp = real(1.0, sp)
   integer, parameter :: zero = 0
   integer, parameter :: one = 1
+  integer(hp_int), parameter :: one_int_hp = int(1, hp_int)
 
  contains
 
