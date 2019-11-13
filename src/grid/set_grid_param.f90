@@ -384,6 +384,8 @@
    loc_zgrid(0)%gmax = z(ip+1)
    loc_zgrid(0)%p_ind(1) = min(sh, n_loc)
    loc_zgrid(0)%p_ind(2) = n_loc + loc_zgrid(0)%p_ind(1) - 1
+   loc_zgrid(0)%min_cell = 0
+   loc_zgrid(0)%max_cell = loc_zgrid(0)%min_cell + n_loc - 1
 
    p = 0
    do i = 1, n_loc + 1
@@ -412,6 +414,8 @@
       loc_zgrid(p)%gmax = z(ip+1)
       loc_zgrid(p)%p_ind(1) = sh
       loc_zgrid(p)%p_ind(2) = n_loc + loc_zgrid(p)%p_ind(1) - 1
+      loc_zgrid(p)%min_cell = loc_zgrid(p-1)%min_cell + n_loc
+      loc_zgrid(p)%max_cell = loc_zgrid(p-1)%max_cell + n_loc
      end do
     end if
     p = npez - 1
@@ -430,6 +434,8 @@
     loc_zgrid(p)%gmax = z(ip+1)
     loc_zgrid(p)%p_ind(1) = sh
     loc_zgrid(p)%p_ind(2) = n_loc + loc_zgrid(p)%p_ind(1) - 1
+    loc_zgrid(p)%min_cell = loc_zgrid(p-1)%min_cell + n_loc
+    loc_zgrid(p)%max_cell = loc_zgrid(p-1)%max_cell + n_loc
    end if
    !======================
    loc_xgrid(0)%gmin = x(1)
@@ -438,7 +444,8 @@
    loc_xgrid(0)%gmax = x(ip+1)
    loc_xgrid(0)%p_ind(1) = min(sh, n_loc)
    loc_xgrid(0)%p_ind(2) = n_loc + loc_xgrid(0)%p_ind(1) - 1
-
+   loc_xgrid(0)%min_cell = 0
+   loc_xgrid(0)%max_cell = loc_xgrid(0)%min_cell + n_loc - 1
    p = 0
    do i = 1, n_loc + 1
     loc_xg(i, 1, p) = x(i)
@@ -466,6 +473,8 @@
       loc_xgrid(p)%gmax = x(ip+1)
       loc_xgrid(p)%p_ind(1) = sh
       loc_xgrid(p)%p_ind(2) = n_loc + loc_xgrid(p)%p_ind(1) - 1
+      loc_xgrid(p)%min_cell = loc_xgrid(p-1)%min_cell + n_loc
+      loc_xgrid(p)%max_cell = loc_xgrid(p-1)%max_cell + n_loc
      end do
     end if
     p = npex - 1
@@ -484,6 +493,8 @@
     loc_xgrid(p)%gmax = x(ip+1)
     loc_xgrid(p)%p_ind(1) = sh
     loc_xgrid(p)%p_ind(2) = n_loc + loc_xgrid(p)%p_ind(1) - 1
+    loc_xgrid(p)%min_cell = loc_xgrid(p-1)%min_cell + n_loc
+    loc_xgrid(p)%max_cell = loc_xgrid(p-1)%max_cell + n_loc
    end if
   end subroutine
   !======================
