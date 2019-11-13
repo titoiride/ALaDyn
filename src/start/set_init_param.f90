@@ -27,9 +27,7 @@
   use grid_param, only : nx_stretch, ny_stretch, nz_stretch
   use set_grid_param
   use ionz_data
-  use control_bunch_input, only: lorentz_bfact, gam, jb_norm, nb_tot, &
-   bunch_volume, syb, rhob, sxb, bunch_shape, charge_right, ppc_bunch, &
-   charge_left, l_particles, bunch_charge, reduced_charge, bunch_type
+  use control_bunch_input
 
   implicit none
 
@@ -57,6 +55,7 @@
    nx_stretch = 0
    stretch = .false.
    ny_stretch = 0
+   nz_stretch = 0
    if (ndim<2) str_flag = 0
    if (model_id>4) str_flag = 0
    !===================
@@ -68,6 +67,7 @@
     stretch = .true.
     ny_stretch = nint(real(ny,dp)*1.5*size_of_stretch_along_y) !set to ny/4
    end if
+   nz_stretch = ny_stretch
    loc_nyc_max = loc_ygr_max
    loc_nzc_max = loc_zgr_max
    loc_nxc_max = loc_xgr_max
@@ -137,11 +137,7 @@
    channel = .false.
    nm_fact = 1.
    if (nsp>1) ions = .true.
-   if (model_id<5) then
-    lp_active = .true.
-   else
-    beam = .true.
-   end if
+   lp_active = .true.
    if (ibeam==2) hybrid = .true.
    !===============================
    ! Multispecies target with max 3 ionic species (nsp=4)
@@ -226,7 +222,6 @@
    end if
    !==========================
    ! Target parameters  enter n_over_nc
-   if (lp_active) then
     if (iby==2) plane_wave = .true.
     mod_ord = 1
     if (model_id<3) lin_lp = .true.
@@ -340,167 +335,34 @@
     if (nsb>0) inject_beam = .true.
     !=====================
     if (inject_beam) then
+    beam=.true.
      !ON input phase space coordinates, beam size, 
      !         total macro-particle number nb_tot(1), total charge (pC)
      !====================================
-     gam0 = gam(1) !the initial gamma factor
-     u0_b = sqrt(gam0*gam0-1.) !the beam x-momentum
-     bet0 = u0_b/gam0 !the beam velocity
+    n0_ref = nm_fact*n_over_nc 
+    do i=1,nsb
+     jb_norm(i)=1.
+     gam0 = gam(i) !the initial gamma factor
+     u0_b = sqrt(gam0*gam0-1.) !the uniform beam x-momentum
+     bet0 = u0_b/gam0 !the uniform beam velocity
      !==================
-     b_charge = nb_tot(1)*e_charge !the charge of bunch macro-particle
-     np_per_nmacro = bunch_charge(1)/b_charge !real particles/macro particles=real charge/macro charge
+     b_charge = nb_tot(i)*e_charge !the charge of bunch macro-particle
+     np_per_nmacro = bunch_charge(i)/b_charge !real particles/macro particles=real charge/macro charge
      !===============
      if (ndim<3) then
-      bunch_volume(1) = pi2*sxb(1)*syb(1)*dy !the bunch volume (mu^3) in 2D Gaussian
-     else
-      bunch_volume(1) = pi2*sqrt(pi2)*sxb(1)*syb(1)*syb(1) !the bunch volume (mu^3) in 3D Gussian bunch
-     end if
-     rhob(1) = bunch_charge(1)/(e_charge*bunch_volume(1)) !physical bunch density (1/mu^3)
-
-     n0_ref = nm_fact*n_over_nc ! background plasma density (1/mu^3)
-     rhob(1) = rhob(1)/n0_ref !ratio beam density/background plasma density
-     ncell = bunch_volume(1)*gvol_inv
-     nb_per_cell = nb_tot(1)/ncell
-     jb_norm(1) = rhob(1)/nb_per_cell !
-    end if
-   end if !END Laser-driven section
-   !===================================
-   if (beam) then !  e-Beams section
-    !========================================
-    ! uses l0=1mu
-    ! for fields E_u=GV/m = 1.e-03*mc^2/(l0*e*E0)  (A,phi) in kVolt unit
-    ! n0= 10^18/cc =10^6/mu^3
-    !========================================
-    ! the electron radius r_e=rc0*10^{-8}mu
-    !the squared adimensional plasma frequency on n0 density
-    !   r_e*l0*l0*n0= 10^{-3}*rc0
-    !omp^2=   4*pi*l0*l0*rc*n0=4*pi*rc0*1.e-03*E0/
-    !=============================
-    nm_fact = 1.e+06 !electron density[mu^{-3}] in the n0=10^18/cm^3 plasma
-    ncrit = 1.0
-    wake = .true.
-    solid_target = .false.
-    n0_ref = n_over_nc
-    !======================
-    eb_max = 0.0
-    nc0 = 2.*e0*pi2*rc0
-    !======================
-    ompe = nc0*n_over_nc
-    !======================
-    jb_norm = 1.
-    b_charge = 1.
-    gam0 = 1.
-    lorentz_fact(1:4) = 1.e-03*lorentz_fact(1:4)/e0
-    omega_p = 0.02*sqrt(10.*pi*rc0*n0_ref)
-    el_lp = 1./omega_p
-    nb_over_np = rhob(1)
-    lam0 = 1. !Is the unit of length
-    gam0 = gam(1)
-    u0_b = sqrt(gam0*gam0-1.) !the beam x-momentum
-    bet0 = u0_b/gam0 !the beam velocity
-    lorentz_bfact(1:5) = lorentz_fact(1)
-    lambda_p = pi2*el_lp
-    lpvol = el_lp*el_lp*el_lp
-    nfield = 3
-    nbfield = 4
-    if (ndim==3) then
-     nfield = 6
-     nbfield = nfield
-    end if
-    curr_ndim = ndim
-    do i = 1, 5
-     if (bunch_type(i)==3) lorentz_bfact(i) = lorentz_fact(1)/ &
-       proton_mass_norm
-    end do
-    mod_ord = 3
-    bunch_volume = 1.
-    do i = 1, nsb
-     !bunch_volume(i)=pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i)    !the bunch volume (mu^3) !ciao
-     !bunch_charge_density=rhob(i)*n_over_nc*nm_fact*e_charge  !pC/mu^3
-     !bunch_charge(i)=bunch_charge_density*bunch_volume(i)  !bunch charge in [pC]
-     !reduced_charge(i)=rhob(i)*bunch_volume(i)/lpvol
-
-     !---------------------------!
-     if (bunch_shape(i)==1) then !--- nomi da verificare e aggiungere
-      if (ndim==3) then
-       bunch_volume(i) = pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i) !the bunch volume (mu^3) in 3D Gussian
-      else
        bunch_volume(i) = pi2*sxb(i)*syb(i)*dy !the bunch volume (mu^3) in 2D Gaussian
-      end if
-      bunch_charge_density = rhob(i)*n_over_nc*nm_fact*e_charge !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i) = rhob(i)*bunch_volume(i)/lpvol
+     else
+      bunch_volume(i) = pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i) !the bunch volume (mu^3) in 3D Gussian bunch
      end if
+     rhob(i) = bunch_charge(i)/(e_charge*bunch_volume(i)) !physical bunch density (1/mu^3)
 
-     if (bunch_shape(i)==2) then
-      bunch_volume(i) = pi*syb(i)*syb(i)*sxb(i)
-      bunch_charge_density = (charge_left(i)+charge_right(i))/2.0* &
-        n_over_nc*nm_fact*e_charge !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i) = (charge_left(i)+charge_right(i))/2.0* &
-        bunch_volume(i)/lpvol
-     end if
-
-     if (bunch_shape(i)==3) then
-      bunch_volume(i) = pi2*syb(i)*syb(i)*sxb(i)
-      bunch_charge_density = (charge_left(i)+charge_right(i))/2.0* &
-        n_over_nc*nm_fact*e_charge !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i) = (charge_left(i)+charge_right(i))/2.0* &
-        bunch_volume(i)/lpvol
-     end if
-
-     if (bunch_shape(i)==4) then
-      bunch_volume(i) = pi*syb(i)*syb(i)*sxb(i)
-      bunch_charge_density = rhob(i)*n_over_nc*nm_fact*e_charge !pC/mu^3
-      bunch_charge(i) = bunch_charge_density*bunch_volume(i)
-      reduced_charge(i) = rhob(i)*bunch_volume(i)/lpvol
-     end if
-
-    end do
-    if (l_particles) then
-     do i = 1, nsb
-      nb_tot(i) = nint(gvol_inv*bunch_volume(i)/j0_norm)
+     rhob(i) = rhob(i)/n0_ref !ratio beam density/background plasma density
+     ncell = bunch_volume(i)*gvol_inv
+     nb_per_cell(i) = nint(nb_tot(i)/ncell)
+     if(nb_per_cell(i) >0)jb_norm(i) = rhob(i)/nb_per_cell(i) !
      end do
     end if
-    do i = 1, nsb
-     if (bunch_shape(i)==1 .and. nb_tot(i)>0) then
-      jb_norm(i) = rhob(i)*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
-     end if
-     if (bunch_shape(i)==1 .and. nb_tot(i)==-1) then
-      jb_norm(i) = 1.0_dp/(product(ppc_bunch(i,:))*j0_norm)
-     end if
-     if (bunch_shape(i)==2 .and. nb_tot(i)>0) then
-      jb_norm(i) = (charge_left(i)+charge_right(i))/2.0*gvol_inv* &
-        bunch_volume(i)/(nb_tot(i)*j0_norm)
-     end if
-     if (bunch_shape(i)==1 .and. nb_tot(i)==-1) then
-      jb_norm(i) = 1.0_dp/(product(ppc_bunch(i,:))*j0_norm)
-     end if
-     if (bunch_shape(i)==3 .and. nb_tot(i)>0) then
-      jb_norm(i) = (charge_left(i)+charge_right(i))/2.0*gvol_inv* &
-        bunch_volume(i)/(nb_tot(i)*j0_norm)
-     end if
-     if (bunch_shape(i)==3 .and. nb_tot(i)==-1) then
-      jb_norm(i) = 1.0_dp/(product(ppc_bunch(i,:))*j0_norm)
-     end if
-     if (bunch_shape(i)==4 .and. nb_tot(i)>0) then
-      jb_norm(i) = rhob(i)*gvol_inv*bunch_volume(i)/(nb_tot(i)*j0_norm)
-     end if
-     if (bunch_shape(i)==1 .and. nb_tot(i)==-1) then
-      jb_norm(i) = 1.0_dp/(product(ppc_bunch(i,:))*j0_norm)
-     end if
-    end do
-
-    !--- I am forcing this part to be again with the correct input values ---!
-    do i = 1, nsb
-     if (ppc_bunch(i,1)>0) nb_tot(i) = -1
-    end do
-    !--- *** ---!
-
-    b_charge = bunch_charge(1)
-   end if
-   !============================
+   !===================================
    !  SET PARAM all cases
    if (hybrid) nfcomp = curr_ndim + 1
    nsp_run = nsp

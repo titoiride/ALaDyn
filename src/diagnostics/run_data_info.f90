@@ -236,9 +236,13 @@
    end if
    if (stretch) then
     write (60, *) &
-      '  y=tan(a*xi) stretched layers on the transverse coordinates'
-    write (60, '(a22,i6,a2,2e11.4)') '  stretched grid size=', &
-      ny_stretch, '  ', y(ny_stretch+1)
+      ' Grid is stretched on the transverse coordinates: y=tan(a*xi)'
+    write (60, '(a28,f8.2,a8,f8.2)') '  Y grid is uniform from y =', &
+      str_ygrid%smin, ' to y = ', str_ygrid%smax
+    write (60,'(a34, i4)') '  Number of stretched cells n_y = ', ny_stretch
+    write (60, '(a28,f8.2,a8,f8.2)') '  Z grid is uniform from z =', &
+      str_zgrid%smin, ' to z = ', str_zgrid%smax
+    write (60,'(a34, i4)') '  Number of stretched cells n_z = ', nz_stretch
    end if
    write (60, *) '***************PHYSICAL MODEL**********************'
    if (model_id<4) then

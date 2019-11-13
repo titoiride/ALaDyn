@@ -130,15 +130,15 @@
    do n = 1, np
     zp = pt(n, ic1)
     if (zp <= z_params%smin) then
-     zp_loc = invert_stretched_grid(zp, z_params)
+     zp_loc = invert_stretched_grid(zp, z_params) - z_params%init_cell
     else if (zp >= z_params%smax) then
      zp = 2*SYMM_CENTER - zp
      zp_loc = invert_stretched_grid(zp, z_params)
-     zp_loc = nz - zp_loc
+     zp_loc = nz - zp_loc - z_params%init_cell
     else
      zp_loc = invert_uniform_grid(zp, z_params)
     end if
-    pt(n, ic1) = zp_loc
+    pt(n, ic1) = zp_loc - z_params%init_cell
    end do
   end subroutine
 
