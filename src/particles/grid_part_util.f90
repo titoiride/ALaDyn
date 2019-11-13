@@ -296,7 +296,7 @@
     do n = 1, np
      pt(n, 1:ch) = sp_loc%part(n, 1:ch)
     end do
-    call set_local_3d_positions(pt, 1, np)
+    call set_local_3d_positions(pt, 1, np, 0)
     do n = 1, np
      pp(1:3) = sp_loc%part(n, 4:6)
      gam2 = pp(1)*pp(1) + pp(2)*pp(2) + pp(3)*pp(3)

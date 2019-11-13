@@ -24,6 +24,7 @@
   use common_param
   use grid_param
   use stretched_grid
+  use mpi_var
 
   implicit none
 
@@ -422,11 +423,15 @@
 
   end subroutine
   !======================
-  subroutine set_local_3d_positions(pt_loc, n1, np)
-   real (dp), intent (inout) :: pt_loc(:, :)
+  subroutine set_local_3d_positions(pt_loc_in, n1, np, debug_flag)
+   real (dp), intent (in) :: pt_loc_in(:, :)
    integer, intent (in) :: n1, np
    integer :: n
+   real(dp) :: x, y, z
+   real(dp), allocatable :: pt_loc(:,:)
+   integer, optional :: debug_flag
    !=========================
+   allocate(pt_loc, source=pt_loc_in)
    do n = 1, np
     pt_loc(n, 1) = dx_inv*(pt_loc(n,1)-xmn)
    end do
@@ -437,6 +442,19 @@
     end do
    else
     call map3d_part_sind( pt_loc, np, 2, 3 )
+   end if
+   if (present(debug_flag))then
+    do n = 1, np
+     x = pt_loc(n, 1)
+     y = pt_loc(n, 2)
+     z = pt_loc(n, 3)
+     if (abs(x - nx/2) < 0.5) then
+      if (y < 1 .or. y > (ny/npe_yloc + 5) .or. z < 1 .or. z > (nz/npe_zloc + 5)) then
+       write(6,'((a4,i4),2(a6,i4,a7,f7.2))') ' P= ', mype,&
+       '  y=  ', int(y) , ' y_or= ', pt_loc_in(n, 2), '  z=  ', int(z), ' z_or= ', pt_loc_in(n, 3)
+      end if
+     end if
+    end do
    end if
    if (n1==1) return
    do n = 1, np
