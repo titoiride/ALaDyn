@@ -34,7 +34,6 @@ list(APPEND ALaDyn_Fortran_sources
   src/diagnostics/diag_part_and_fields.f90
   src/diagnostics/run_data_info.f90
   src/dynamics/boris_push.f90
-  src/dynamics/bunch_evolve_in_time.f90
   src/dynamics/curr_and_fields_util.f90
   src/dynamics/env_evolve_in_time.f90
   src/dynamics/fluid_density_momenta.f90
