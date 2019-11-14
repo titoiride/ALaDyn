@@ -23,7 +23,6 @@
 
   use init_laser_field
   use init_part_distrib
-  use init_beam_part_distrib
 
   implicit none
 
@@ -41,12 +40,8 @@
     case (4)
      call set_envelope(xf0) !Envelope  approximation for laser
      ! vector potential Ay
-    case (5)
-     ! Beam driven wakefield
-     call bpulse(xf0)
     end select
    end if
-   !if(Part)
    call part_distribute(dmodel_id, xf0)
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)

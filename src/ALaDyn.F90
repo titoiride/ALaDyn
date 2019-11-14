@@ -25,13 +25,13 @@
  program aladyn
 
   use start_all
-  use diag_part_and_fields, only: En_data, Envar, Enbvar, en_bdata
+  use diag_part_and_fields, only: En_data, Envar
   use run_data_info
   use pic_out_util
   use pic_out
+  use init_beam_part_distrib,only : beam_inject
   use pic_evolve, only: Lp_run
   use env_evolve, only: Env_run
-  use bunch_evolve, only: Bunch_run
 
   implicit none
 
@@ -74,8 +74,6 @@
    call Lp_cycle
   case (2)
    call Env_cycle
-  case (3)
-   call Bunch_cycle
   end select
 
   !call timing
@@ -138,35 +136,8 @@
    end do
    if (dump > 0) call dump_data(iter, tnow)
   end subroutine
-
-  !--------------------------
-
-  subroutine Bunch_cycle
-
-   !if(L_intdiagnostics_pwfa) then
-   !call bunch_output_struct(tdia,dtdia,tout,dtout)
-   !endif
-   call bdata_out
-   t_ind = 0
-
-   do while (tnow < tmax)
-    call bunch_run( tnow, iter )
-
-    call timing
-    call bdata_out
-
-    if (ier /= 0) then
-     call error_message
-     exit
-    end if
-    if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
-    if (initial_time) initial_time = .false.
-   end do
-   if (dump > 0) call dump_data(iter, tnow)
-
-  end subroutine
   !======================
-  subroutine Data_out
+  subroutine data_out
    integer :: i, iic, idata
 
 
@@ -176,8 +147,11 @@
      ienout = ienout + 1
      call Envar( ienout )
      tdia = tdia + dtdia
-     if (pe0) write (6, '(a10,i3,a10,e11.4)') ' rms data ', ienout, &
+     if (pe0) then
+      write (6, '(a10,i3,a10,e11.4)') ' rms data ', ienout, &
        ' at time =', tnow
+      write(6,*)'=========================='
+     endif
     end if
    end if
 
@@ -233,9 +207,11 @@
     end if
     if (ionization) call part_ionz_out(tnow)
     if (gam_min>1.) call part_high_gamma_out(gam_min, tnow)
+    if (nbout>0) call part_bdata_out(tnow,1,pjump)
     if (npout>0) then
-     if (npout<=nsp) then
-      call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, npout, pjump)
+     iic=npout
+     if (iic<=nsp) then
+      call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, iic, pjump)
      else
       do i = 1, nsp
        call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, i, pjump)
@@ -265,128 +241,5 @@
    !endif
 
   end subroutine data_out
-
-  !--------------------------
-  subroutine bdata_out
-
-   integer :: i, iic, idata
-
-   idata = iout
-
-   if (diag) then
-    if (tnow>=tdia) then
-     ienout = ienout + 1
-     !uncomment for extracting lineout in enbvar
-     !call collect_bunch_and_plasma_density(nsb,1) !data is now stored on jc(1)
-     !---gather data for lineout---!
-     !---> lineout total density
-     if (l_intdiagnostics_pwfa) then
-      call collect_bunch_and_plasma_density(0, 1)
-     end if
-     !---!
-     call enbvar( ienout )
-     !---!
-     call Envar( ienout )
-     tdia = tdia + dtdia
-     if (pe0) then
-      write (6, '(a10,i3,a10,e11.4)') ' rms data ', ienout, &
-        ' at time =', tnow
-     end if
-    end if
-   end if
-
-   if (tnow>=tout) then
-    tout = tout + dtout
-
-    call create_timestep_folder(iout)
-
-    if (diag) then
-     if (pe0) then
-      call en_data(ienout, iter, idata)
-      call en_bdata(ienout, iter, idata)
-     end if
-    end if
-
-    if (nvout>0) then
-     do i = 1, min(nvout, nfield)
-      if (l_force_singlefile_output) then
-       call fields_out(ebf, i, i ) ! second index to label field
-      else
-       call fields_out_new( ebf, i, i )
-      end if
-     end do
-
-     if (l_print_j_on_grid .and. l_force_singlefile_output) then
-      call fields_out(jc, 1, 0 ) ! 0 for Jx current
-     else if (l_print_j_on_grid .and. l_force_singlefile_output) then
-      call fields_out_new(jc, 1, 0 ) ! 0  to label Jx field
-     end if
-
-     do i = 1, nbfield
-      if (l_force_singlefile_output) then
-       call bfields_out(ebf_bunch, ebf1_bunch, i )
-      else
-       call fields_out_new(ebf_bunch, i, i+6 )
-      end if
-     end do
-    end if
-    if (nden>0) then
-     if (hybrid) then
-      do i = 1, nfcomp
-       call fluid_den_mom_out(up, i, nfcomp)
-      end do
-     end if
-     iic = 0
-     call prl_bden_energy_interp(iic)
-     call bden_energy_out( 1 )
-     !============= bunch density
-     do i = 1, nsp
-      call prl_den_energy_interp(i)
-      do iic = 1, min(2, nden)
-       call den_energy_out( i, iic, iic )
-      end do
-     end do
-     if (nden>2) then
-      call set_wake_potential
-      call den_energy_out( 0, nden, 1 ) !data on jc(1) for wake potential
-     end if
-    end if
-    if (nbout>0) then
-     do i = 1, nsb
-      call part_bdata_out(tnow, i, pjump)
-     end do
-    end if
-    if (part) then
-     if (ionization) call part_ionz_out(tnow)
-     if (gam_min>1.) call part_high_gamma_out(gam_min, tnow)
-     if (npout>0) then
-      if (npout<=nsp) then
-       call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, npout, pjump)
-      else
-       do i = 1, nsp
-        call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, i, pjump)
-       end do
-      end if
-     end if
-    end if
-    if (pe0) then
-     write (6, '(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ', iter, ' t = ', &
-       tnow, ' dt = ', dt_loc
-     write (6, *) ' END B-DATA WRITE'
-    end if
-    if (dump>0 .and. time_interval_dumps<0.) then
-     if (iter>0) call dump_data(iter, tnow)
-    end if
-    iout = iout + 1
-   end if
-
-   call CPU_TIME( unix_time_now )
-
-   if ((unix_time_now-unix_time_last_dump)>time_interval_dumps .and. &
-     time_interval_dumps>0.0) then
-    if (pe0) write (6, *) '3D dump data being written'
-    call dump_data(iter, tnow)
-   end if
-  end subroutine
   !--------------------------
  end program

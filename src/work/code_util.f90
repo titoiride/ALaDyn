@@ -36,11 +36,9 @@
   integer, parameter :: sh_ix = 3
   integer :: time2dump(1) = 0
   integer :: mem_size, mem_psize
-  integer :: last_iter, iter_max
+  integer :: last_iter, iter_max,write_every
   integer :: t_ind, inject_ind, tk_ind
   integer :: ienout, iout, iter, ier
-  integer :: write_every
-
   real (dp) :: mem_psize_max, dump_t0, dump_t1
   real (dp) :: unix_time_begin, unix_time_now
   real (dp) :: time_interval_dumps, unix_time_last_dump

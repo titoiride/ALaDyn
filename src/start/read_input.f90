@@ -73,7 +73,7 @@
      symmetrization_pulse, a_symm_rat, enable_ionization, y0_cent, &
      z0_cent, y1_cent, z1_cent, incid_angle
    namelist /beam_inject/nb_1, xc_1, gam_1, sxb_1, syb_1, epsy_1, &
-     epsz_1, dg_1, charge_1, t_inject
+     epsz_1, dg_1, charge_1, ap1_twiss,bt1_twiss,t_inject
    namelist /moving_window/w_sh, wi_time, wf_time, w_speed
    namelist /output/nouts, iene, nvout, nden, npout, nbout, jump, pjump, &
      gam_min, xp0_out, xp1_out, yp_out, tmax, cfl, new_sim, id_new, &
@@ -150,6 +150,8 @@
     epsz(1) = epsz_1
     dg(1) = dg_1
     bunch_charge(1) = charge_1
+    alpha_twiss(1)=ap1_twiss
+    beta_twiss(1)=bt1_twiss
    end if
 
    !--- reading moving window parameters ---!

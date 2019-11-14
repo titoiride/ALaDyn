@@ -1414,13 +1414,11 @@
    ip = ip_loc(mype+1)
    call intvec_distribute(ip, ip_loc, npe)
 
-
    ! this differs from nptot_global since it represents just the reduced number of particles
    ! that will be present in the output (should be equal to nptot_global for p_jump=1)!
    nptot_global_reduced = 0
-   !nptot_global_reduced=sum(ip_loc(1:npe))
-   do ik = 1, npe
-    nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
+   do ik=1,npe
+    nptot_global_reduced = nptot_global_reduced +ip_loc(ik)
    end do
    if (nptot_global<1e9) then
     nptot = int(nptot_global_reduced)
@@ -1430,10 +1428,10 @@
 
    ip_max = ip
    if (pe0) ip_max = maxval(ip_loc(1:npe))
-   lenp = ndv*ip
+   lenp = ndv*ip_loc(mype+1)
    allocate (pdata(lenp))
    ik = 0
-   do p = 1, ip
+   do p = 1, ip_loc(mype+1)
     do q = 1, nd2
      ik = ik + 1
      pdata(ik) = real(ebfp(p,q), sp)
@@ -1456,7 +1454,7 @@
      real(xmax_out,sp), real(ymax_out,sp), real(gam_min,sp) ]
 
    part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(pid), 0, lpf_ord, der_ord, iform, ndv, &
+     curr_ndim, mp_per_cell(pid), ion_min(1), lpf_ord, der_ord, iform, ndv, &
      file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
 
    write (fname, '(a6,i2.2)') part_files(pid), iout !serve sempre
@@ -1500,103 +1498,7 @@
    end if
   end subroutine
 
-  !==========================
-
-  subroutine part_bdata_out(timenow, pid, jmp)
-
-   character (9), dimension (5), parameter :: part_files = [ 'PSBunch1_', &
-     'PSBunch2_', 'PSBunch3_', 'PSBunch4_', 'PSBunch5_' ]
-   character (2) :: num2str
-   character (3) :: num3str
-   character (20) :: fname_out
-   real (dp), intent (in) :: timenow
-   integer, intent (in) :: pid, jmp
-   real (sp), allocatable :: pdata(:)
-   integer :: ik, p, q, np, ip, ip_max, nptot
-   integer :: lenp, ip_loc(npe), ndv, i_end
-   integer (offset_kind) :: disp
-   character (4) :: foldername
-   integer, parameter :: file_version = 4
-
-   write (foldername, '(i4.4)') iout
-
-   ndv = nd2 + 2
-   np = loc_nbpart(imody, imodz, imodx, pid)
-   ip = 0
-   do p = 1, np, jmp
-    ip = ip + 1
-    do q = 1, nd2 + 1
-     ebfb(ip, q) = bunch(pid)%part(p, q)
-    end do
-   end do
-   ip_loc(mype+1) = ip
-
-   ip = ip_loc(mype+1)
-   call intvec_distribute(ip, ip_loc, npe)
-   nptot = sum(ip_loc(1:npe))
-   ip_max = ip
-   if (pe0) ip_max = maxval(ip_loc(1:npe))
-   lenp = ndv*ip
-   allocate (pdata(lenp))
-   ik = 0
-   do p = 1, ip
-    do q = 1, nd2
-     ik = ik + 1
-     pdata(ik) = real(ebfb(p,q), sp)
-    end do
-    wgh_cmp = ebfb(p, nd2+1)
-    ik = ik + 1
-    pdata(ik) = wgh
-    ik = ik + 1
-    pdata(ik) = real(charge, sp)
-   end do
-
-   int_par = 0
-   call endian(i_end)
-   real_par = 0.0
-
-   real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
-     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-     real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-     real(lam0,sp), real(e0,sp), real(ompe,sp), real(np_per_cell,sp), &
-     real(targ_in,sp), real(targ_end,sp), real(unit_charge(1),sp), &
-     real(mass(1),sp), 0.0_sp ]
-
-   int_par(1:20) = [ npe, nx, ny_loc, nz_loc, jmp, iby, iform, model_id, &
-     dmodel_id, nsb, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, iform, &
-     pid, nptot, ndv, file_version, i_end ]
-
-   write (num2str, '(i2.2)') iout
-   write (num3str, '(i3.3)') imodz
-   fname_out = foldername // '/' // part_files(pid) // num2str // '.bin'
-
-   disp = 0
-   if (pe0) then
-    open (10, file=foldername//'/'//part_files(pid)//num2str//'.dat', &
-      form='formatted')
-    write (10, *) ' Integer parameters'
-    write (10, '(4i10)') int_par
-    write (10, *) ' Real parameters'
-    write (10, '(4e14.5)') real_par
-    close (10)
-    write (6, *) 'Particles param written on file: ' // foldername // &
-      '/' // part_files(pid) // num2str // '.dat'
-   else
-    disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write
-   end if
-
-   disp = disp*4 ! sia gli int che i float sono di 4 bytes
-
-   call mpi_write_part(pdata, lenp, ip, disp, 20, fname_out)
-
-   if (allocated(pdata)) deallocate (pdata)
-   if (pe0) then
-    write (6, *) 'Particles data written on file: ' // foldername // &
-      '/' // part_files(pid) // num2str // '.bin'
-    write (6, *) ' Output logical flag ', l_force_singlefile_output
-   end if
-  end subroutine
-  !==========================
+!==========================
   subroutine part_high_gamma_out(gam_in, timenow)
 
    character (8), dimension (1), parameter :: part_files = [ 'E_hg_out' ]
@@ -1692,8 +1594,8 @@
      real(xp1_out,sp), real(yp_out,sp), real(gam_in,sp) ]
 
    part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(1), 0, lpf_ord, der_ord, iform, ndv, &
-     file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
+     curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, &
+     ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, 0 ]
 
    write (fname, '(a8,i2.2)') part_files(1), iout !serve sempre
    fname_out = foldername // '/' // fname // '.bin'
@@ -1719,6 +1621,118 @@
 
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
    call mpi_write_part(pdata, lenp, ip, disp, 19, fname_out)
+   if (allocated(pdata)) deallocate (pdata)
+   if (pe0) then
+    write (6, *) 'Particles data written on file: ' // foldername // &
+      '/' // fname // '.bin'
+   end if
+  end subroutine
+
+  subroutine part_bdata_out(timenow,pid,jmp)
+
+   character (11), dimension (1), parameter :: part_files = [ 'E_bunch_out' ]
+   character (13) :: fname
+   character (22) :: fname_out
+   real (dp), intent (in) :: timenow
+   integer,intent(in) :: pid,jmp
+   real (sp), allocatable :: pdata(:)
+   integer (dp) :: nptot_global_reduced
+   integer :: id_ch, ik, p, q, ip, ip_max, nptot
+   integer :: ne, lenp, ip_loc(npe), ndv, i_end
+   integer (offset_kind) :: disp
+   real (sp) :: ch_ion
+   character (4) :: foldername
+   integer, parameter :: file_version = 4
+
+   write (foldername, '(i4.4)') iout
+   id_ch = nd2 + 1
+   ndv = nd2 + 2
+   ne = loc_npart(imody, imodz, imodx, 1)
+   ip = 0
+   if (ne>0) then
+    do p = 1, ne,jmp
+     wgh_cmp = spec(1)%part(p, id_ch)
+     if (part_ind ==pid) then
+      ip = ip + 1
+      do q = 1, nd2 + 1
+       ebfp(ip, q) = spec(1)%part(p, q)
+      end do
+     end if
+    end do
+   end if
+   ip_loc(mype+1) = ip
+
+   ip = ip_loc(mype+1)
+   call intvec_distribute(ip, ip_loc, npe)
+   nptot_global_reduced = 0
+   !nptot_global_reduced=sum(ip_loc(1:npe))
+   do ik = 1, npe
+    nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
+   end do
+   if (nptot_global<1e9) then
+    nptot = int(nptot_global_reduced)
+   else
+    nptot = -1
+   end if
+   ip_max = ip
+   if (pe0) ip_max = maxval(ip_loc(1:npe))
+   lenp = ndv*ip
+   ik = max(1, lenp)
+   allocate (pdata(lenp))
+   ik = 0
+   do p = 1, ip
+    do q = 1, nd2
+     ik = ik + 1
+     pdata(ik) = real(ebfp(p,q), sp)
+    end do
+    wgh_cmp = ebfp(p, nd2+1)
+    ik = ik + 1
+    pdata(ik) = wgh
+    ik = ik + 1
+    pdata(ik) = real(charge, sp)
+   end do
+   if (ik/=lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
+     ik
+
+   int_par = 0
+   call endian(i_end)
+
+   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
+     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
+     real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
+     real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
+     real(wgh_ion,sp), real(mass(1),sp), real(xp0_out,sp), &
+     real(xp1_out,sp), real(yp_out,sp), real(gam_min,sp) ]
+
+
+   part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
+     curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, ndv, &
+     file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
+
+   write (fname, '(a11,i2.2)') part_files(1), iout !serve sempre
+   fname_out = foldername // '/' // fname // '.bin'
+   disp = 0
+   if (pe0) then
+    open (10, file=foldername//'/'//fname//'.dat', form='formatted')
+    write (10, *) ' Real parameters'
+    do q = 1, 20
+     write (10, '(a13,e11.4)') rpar(q), part_real_par(q)
+    end do
+    write (10, *) ' Integer parameters'
+    do p = 1, 20
+     write (10, '(a12,i8)') ipar(p), part_int_par(p)
+    end do
+    write (10, *) ' Number of particles in the output box'
+    write (10, '(4i20)') nptot_global_reduced
+    close (10)
+    write (6, *) 'Particles param written on file: ' // foldername // &
+      '/' // fname // '.dat'
+   else
+    disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
+   end if
+
+   disp = disp*4 ! sia gli int che i float sono di 4 bytes
+   call mpi_write_part(pdata, lenp, ip, disp, 22, fname_out)
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
     write (6, *) 'Particles data written on file: ' // foldername // &

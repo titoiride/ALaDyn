@@ -131,9 +131,6 @@
     call fluid_alloc(nxp, nyp, nzp, nfcomp, ndim, lpf_ord, mem_size)
     ncmp = max(ncmp, nfcomp)
    end if
-   if (beam) then
-    call bv_alloc(nxp, nyp, nzp, nbfield, ndim, ibeam, mem_size)
-   end if
    call mpi_buffer_alloc(nx_loc, ny_loc, nz_loc, ncmp)
    !local arrays and coefficients for space derivatives
    diag = .true.
@@ -143,6 +140,8 @@
    end if
    tpart = .false.
    inject_ind = -1
+   !========================
+   write_every=100
    !============
    if (ionization) then
     do iic = 2, nsp_ionz
@@ -172,7 +171,8 @@
      iter_max = int(tmax/dt)
      dt_loc = tmax/float(iter_max)
     end if
-    write_every = max(nint(iter_max/100.), 1)
+    if(iter_max <1000)write_every=nint(0.1*iter_max)
+    if(pe0)write(*,*)'write_every param =',write_every
 
    case (1) 
     if (.not. l_first_output_on_restart) then
@@ -189,7 +189,7 @@
      iter_max = int(tmax/dt)
      dt_loc = tmax/float(iter_max)
     end if
-    write_every = max(nint(iter_max/100.), 1)
+    if(iter_max <1000)write_every=nint(0.1*iter_max)
     dtout = tmax/nouts
     dtdia = tmax/iene
     tmax = tmax + tstart

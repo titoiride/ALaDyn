@@ -68,7 +68,7 @@
    integer :: grid_size_max, grid2d_size_max
    integer :: env_cp, env1_cp, fl_cp, ebf_cp
    real (dp) :: rdata(10)
-   integer :: ndata(10), nps_loc(4)
+   integer :: ndata(10)
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
    !==============
    write (fname, '(a9)') 'Comm-data'
@@ -206,9 +206,9 @@
       end if
      end if
     end if
-     write (lun) npt_arr(1:npe, 1:nsp)
-     write (lun) dist_npy(1:npe_yloc, 1:nsp)
-     write (lun) dist_npz(1:npe_zloc, 1:nsp)
+    write (lun) npt_arr(1:npe, 1:nsp)
+    write (lun) dist_npy(1:npe_yloc, 1:nsp)
+    write (lun) dist_npz(1:npe_zloc, 1:nsp)
     !==================
     close (lun)
    end if !end pe0 write on fname
@@ -576,9 +576,9 @@
      end if
     end if
 !==================== dumped by pe0 even if no particles are present
-     read (lun) npt_arr(1:npe, 1:nsp)
-     read (lun) dist_npy(1:npe_yloc, 1:nsp)
-     read (lun) dist_npz(1:npe_zloc, 1:nsp)
+    read (lun) npt_arr(1:npe, 1:nsp)
+    read (lun) dist_npy(1:npe_yloc, 1:nsp)
+    read (lun) dist_npz(1:npe_zloc, 1:nsp)
     close (lun)
    end if !end pe0 read on fname
    !========================= distribute comm data
@@ -899,31 +899,31 @@
     np_max=maxval(lenw(1:npe))
     if(np_max >0)then
     
-    disp = 0
-    if (mype>0) disp = sum(lenw(1:mype))
-    disp = 8*disp
-    call mpi_read_dp(recv_buff, lenw(mype+1), disp, 25, fname_out)
-    kk = 0
-    do ic = 1, nsp
-     do i = 1, loc_npty(ic)
-      kk = kk + 1
-      loc_ypt(i, ic) = recv_buff(kk)
-     end do
-    end do
-    do ic = 1, nsp
-     do j = 1, loc_nptz(ic)
-      kk = kk + 1
-      loc_zpt(j, ic) = recv_buff(kk)
-     end do
-    end do
-    do ic = 1, nsp
-     do j = 1, loc_nptz(ic)
+     disp = 0
+     if (mype>0) disp = sum(lenw(1:mype))
+     disp = 8*disp
+     call mpi_read_dp(recv_buff, lenw(mype+1), disp, 25, fname_out)
+     kk = 0
+     do ic = 1, nsp
       do i = 1, loc_npty(ic)
        kk = kk + 1
-       loc_wghyz(i, j, ic) = recv_buff(kk)
+       loc_ypt(i, ic) = recv_buff(kk)
       end do
      end do
-    end do
+     do ic = 1, nsp
+      do j = 1, loc_nptz(ic)
+       kk = kk + 1
+       loc_zpt(j, ic) = recv_buff(kk)
+      end do
+     end do
+     do ic = 1, nsp
+      do j = 1, loc_nptz(ic)
+       do i = 1, loc_npty(ic)
+        kk = kk + 1
+        loc_wghyz(i, j, ic) = recv_buff(kk)
+       end do
+      end do
+     end do
     end if !end of part read
     if (pe0) write (6, *) 'Particles data read'
    !============================================

@@ -46,7 +46,7 @@
     lp_delay(ref_nlas)
   real (dp) :: lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, a_symm_rat
   real (dp) :: xc_1, gam_1, sxb_1, syb_1, epsy_1, epsz_1, dg_1, &
-    charge_1, t_inject
+    charge_1, ap1_twiss,bt1_twiss, t_inject
   integer :: nouts, iene, nvout, nden, npout, nbout, jump, pjump
   integer :: new_sim, id_new, dump
   real (dp) :: gam_min, xp0_out, xp1_out, yp_out

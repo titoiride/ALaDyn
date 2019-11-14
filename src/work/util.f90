@@ -516,7 +516,7 @@
    integer :: i, j, np
    real (dp) :: sigs(6)
    real (dp) :: xm, ym, zm, pxm, pym, pzm
-   real (dp) :: v1, v2, rnd, a
+   real (dp) :: v1, v2, rnd, a, np_norm
 
    !============= ey,ez are emittances (in mm-microns)
    ! FIX emittances are ALWAYS a dimension times an angle...
@@ -534,7 +534,6 @@
     sigs(3) = sqrt(3.0)*0.01*dg*gm !dpz
     sigs(4) = ey/sy
     do i = n1, n2
-     j = 2
      do
       call random_number(v1)
       call random_number(v2)
@@ -544,47 +543,42 @@
       if (rnd<1.0) exit
      end do
      rnd = sqrt(-2.0*log(rnd)/rnd)
-     bunch(j, i) = v1*rnd
-     bunch(j+2, i) = v2*rnd
-     j = 1
+     bunch(i, 2) = v1*rnd
+     bunch(i, 4) = v2*rnd
      call gasdev(rnd)
-     bunch(j, i) = rnd
-     j = 3
+     bunch(i, 1) = rnd
      do
       call random_number(rnd)
       rnd = 2.*rnd - 1.
       a = cut*rnd
       if (a*a<1.) exit
      end do
-     bunch(j, i) = a
+     bunch(i,3) = a
     end do
-    do i = n1, n2
-     do j = 1, 4
-      bunch(j, i) = sigs(j)*bunch(j, i)
-     end do
+    do j = 1, 4
+     bunch(n1:n2, j) = sigs(j)*bunch(n1:n2, j)
     end do
-    bunch(3, n1:n2) = bunch(3, n1:n2) + gm
+    bunch(n1:n2, 3) = bunch(n1:n2, 3) + gm
     xm = 0.0
     ym = 0.0
     pxm = 0.0
     pym = 0.0
     ! Reset centering
-    do i = n1, n2
-     xm = xm + bunch(1, i)
-     ym = ym + bunch(2, i)
-     pxm = pxm + bunch(3, i)
-     pym = pym + bunch(4, i)
-    end do
+    xm = sum(bunch(n1:n2,1))
+    ym = sum(bunch(n1:n2,2))
+    pxm = sum(bunch(n1:n2,3))
+    pym = sum(bunch(n1:n2,4))
+
     np = n2 + 1 - n1
     xm = xm/real(np, dp)
     ym = ym/real(np, dp)
     pxm = pxm/real(np, dp)
     pym = pym/real(np, dp)
     do i = n1, n2
-     bunch(1, i) = bunch(1, i) - xm
-     bunch(2, i) = bunch(2, i) - ym
-     bunch(3, i) = bunch(3, i) - (pxm-gm)
-     bunch(4, i) = bunch(4, i) - pym
+     bunch(i, 1) = bunch(i, 1) - xm
+     bunch(i, 2) = bunch(i, 2) - ym
+     bunch(i, 3) = bunch(i, 3) - (pxm - gm)
+     bunch(i, 4) = bunch(i, 4) - pym
     end do
    case (3)
     sigs(1) = sx
@@ -593,8 +587,8 @@
     sigs(4) = sqrt(3.0)*0.01*dg*gm !dpz
     sigs(5) = ey/sy
     sigs(6) = ez/sz
-    do i = n1, n2
-     do j = 2, 5, 3
+    do j = 2, 5, 3
+     do i = n1, n2
       do
        call random_number(v1)
        call random_number(v2)
@@ -604,27 +598,29 @@
        if (rnd<1.0) exit
       end do
       rnd = sqrt(-2.0*log(rnd)/rnd)
-      bunch(j, i) = v1*rnd
-      bunch(j+1, i) = v2*rnd
+      bunch(i, j) = v1*rnd
+      bunch(i, j+1) = v2*rnd
      end do
-     j = 1
+    enddo
+    j = 1
+    do i = n1, n2
      call gasdev(rnd)
-     bunch(j, i) = rnd
-     j = 4
+     bunch(i, j) = rnd
      do
       call random_number(rnd)
       rnd = 2.*rnd - 1.
       a = cut*rnd
       if (a*a<1.) exit
      end do
-     bunch(j, i) = a
+     bunch(i, j+3) = a
     end do
-    do i = n1, n2
-     do j = 1, 6
-      bunch(j, i) = sigs(j)*bunch(j, i)
+!======================
+    do j = 1, 6
+     do i = n1, n2
+      bunch(i, j) = sigs(j)*bunch(i, j)
      end do
     end do
-    bunch(4, n1:n2) = bunch(4, n1:n2) + gm
+    bunch(n1:n2, 4) = bunch(n1:n2, 4) + gm
 
     xm = 0.0
     ym = 0.0
@@ -634,28 +630,22 @@
     pzm = 0.0
 
     ! Reset centering
-    do i = n1, n2
-     xm = xm + bunch(1, i)
-     ym = ym + bunch(2, i)
-     zm = zm + bunch(3, i)
-     pxm = pxm + bunch(4, i)
-     pym = pym + bunch(5, i)
-     pzm = pzm + bunch(6, i)
-    end do
     np = n2 + 1 - n1
-    xm = xm/real(np, dp)
-    ym = ym/real(np, dp)
-    zm = zm/real(np, dp)
-    pxm = pxm/real(np, dp)
-    pym = pym/real(np, dp)
-    pzm = pzm/real(np, dp)
+    np_norm=1./real(np, dp)
+    xm = np_norm*sum(bunch(n1:n2, 1))
+    ym = np_norm*sum(bunch(n1:n2, 2))
+    zm = np_norm*sum(bunch(n1:n2, 3))
+    pxm = np_norm*sum(bunch(n1:n2, 4))
+    pym = np_norm*sum(bunch(n1:n2, 5))
+    pzm = np_norm*sum(bunch(n1:n2, 6))
+
     do i = n1, n2
-     bunch(1, i) = bunch(1, i) - xm
-     bunch(2, i) = bunch(2, i) - ym
-     bunch(3, i) = bunch(3, i) - zm
-     bunch(4, i) = bunch(4, i) - (pxm-gm)
-     bunch(5, i) = bunch(5, i) - pym
-     bunch(6, i) = bunch(6, i) - pzm
+     bunch(i, 1) = bunch(i, 1) - xm
+     bunch(i, 2) = bunch(i, 2) - ym
+     bunch(i, 3) = bunch(i, 3) - zm
+     bunch(i, 4) = bunch(i, 4) - (pxm - gm)
+     bunch(i, 5) = bunch(i, 5) - pym
+     bunch(i, 6) = bunch(i, 6) - pzm
     end do
    end select
   end subroutine

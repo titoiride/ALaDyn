@@ -226,20 +226,10 @@
      end if
     end if
     msize = msize + nsize
-   case (2) !bunch particles
-    nsize = 0
-    do ic = 1, ns
-     npt = np_s(ic)
-     if (npt>0) allocate (bunch(ic)%part(npt,ncmp), stat=allocstatus)
-     nsize = nsize + ncmp*npt
-     bunch(ic)%part(1:npt, 1:ncmp) = 0.0
-    end do
-    if (mid>0) then
-     allocate (ebfb(npt_max,ncmp), stat=allocstatus)
-     nsize = nsize + ncmp*npt_max
-     ebfb(1:npt_max, 1:ncmp) = 0.0
-    end if
+   case (2) !bunch particles are inside spec(1)%npart
+    nsize=0
     msize = msize + nsize
+    return
    end select
   end subroutine
   !============================

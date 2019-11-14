@@ -24,7 +24,6 @@
   use pstruct_data
   use fstruct_data
   use code_util
-  use common_param
   use phys_param
   use parallel
   use grid_param
@@ -39,9 +38,9 @@
   real (dp) :: nde0(ne), nde1(ne), nde2(ne)
   real (dp) :: nde(ne, 500, 4), eksp_max(500, 4), nde_sm(ne, 500, 4), &
     nde_sp(ne, 500, 4)
-  integer :: ionz_number(500), hgam_number(500)
-  real (dp) :: ionz_bavg(500, 18), bavg(1000, 16, 8), tb(1000), &
-    tionz(500), hgam_charge(500), ionz_charge(500)
+  integer :: ionz_number(500), hgam_number(500),bunch_number(500,5)
+  real (dp) :: ionz_bavg(500, 18), bunch_bavg(500, 18,5), tbunch(1000), &
+    tionz(500), hgam_charge(500), ionz_charge(500),bcharge(500,5)
   real (dp) :: hgam_bavg(500, 18), tgam(500)
 
  contains
@@ -489,7 +488,7 @@
 
    integer, intent (in) :: nst
 
-   integer :: np, ik, ix, iy, iz, ic, i1, i2, i2b, ndv
+   integer :: np, ik, ix, iy, iz, ic, i1, i2, ndv
    integer :: j1, k1, ii, jj, kk, j, k, l
    real (dp) :: ek_max(1), ekt(7), ekm(7), ekmax(1)
    real (dp) :: dvol, dgvol, sgz, sg, ef2
@@ -607,6 +606,14 @@
 
    if (high_gamma) call enb_hgam(nst, tnow, gam_min)
 
+   if (inject_beam) then
+    bunch_bavg(nst,:,:) = 0.0
+    tbunch(nst) = tnow
+    do ik=1,nsb
+     call enb_bunch(nst,ik)
+    end do
+   endif
+
    !   END PARTICLE SECTION
    !======================== Field  section
    ekt = 0.0
@@ -702,111 +709,6 @@
    favg(4:6, nst) = e0*ekm(1:3) !Max fields in TV/m
    favg(10:12, nst) = e0*ekm(4:6)
    !=====================================
-   if (beam) then
-    i2b = nx + 2
-    ekt = 0.0
-    select case (ibeam)
-    case (0)
-     do ik = 1, nfield
-      kk = 0
-      do iz = k1, nzp
-       do iy = j1, nyp
-        do ix = i1, i2b
-         ekt(ik) = ekt(ik) + ebf_bunch(ix, iy, iz, ik)*ebf_bunch(ix, iy, &
-           iz, ik)
-         kk = kk + 1
-        end do
-       end do
-      end do
-      if (kk>0) ekt(ik) = ekt(ik)/real(kk, dp)
-     end do
-     ekt(1:nfield) = 0.5*ekt(1:nfield) ! rms variables
-     ekm(1:nfield) = ekt(1:nfield)
-     if (prl) call allreduce_dpreal(sumv, ekt, ekm, nfield)
-     favg(13:15, nst) = ekm(1:3)/real(npe, dp)
-     favg(19:21, nst) = ekm(4:6)/real(npe, dp)
-     ekm = 0.0
-     ekt = 0.0
-     do iz = k1, nzp
-      do iy = j1, nyp
-       do ix = i1, i2
-        ef2 = dot_product(ebf(ix,iy,iz,1:curr_ndim), &
-          ebf(ix,iy,iz,1:curr_ndim))
-        ekt(7) = max(ekt(7), ef2)
-       end do
-      end do
-     end do
-     do ik = 1, nfield
-      ekt(ik) = maxval(abs(ebf_bunch(i1:i2b,j1:nyp,k1:nzp,ik)))
-     end do
-     if (maxval(ekt(1:nfield))>giant_field) then
-      write (6, *) ' WARNING: Bunch field too big'
-      write (6, '(a23,3i4)') ' At the mpi_task=', imodx, imody, imodz
-     end if
-     ekm(1:nfield) = ekt(1:nfield)
-     if (prl) call allreduce_dpreal(maxv, ekt, ekm, 7)
-     favg(16:18, nst) = ekm(1:3)
-     favg(22:24, nst) = ekm(4:6)
-     eb_max = 0.0
-     if (ekm(7)>0.0) eb_max = sqrt(ekm(7))
-     !============================
-    case (1)
-     do ik = 1, nfield
-      kk = 0
-      do iz = k1, nzp
-       do iy = j1, nyp
-        do ix = i1, i2b
-         ekt(ik) = ekt(ik) + (ebf_bunch(ix,iy,iz,ik)+ebf1_bunch(ix,iy,iz &
-           ,ik))*(ebf_bunch(ix,iy,iz,ik)+ebf1_bunch(ix,iy,iz,ik))
-         kk = kk + 1
-        end do
-       end do
-      end do
-      if (kk>0) ekt(ik) = ekt(ik)/real(kk, dp)
-     end do
-     ekt(1:nfield) = 0.5*ekt(1:nfield) ! rms variables
-     ekm(1:nfield) = ekt(1:nfield)
-     if (prl) call allreduce_dpreal(sumv, ekt, ekm, nfield)
-     favg(13:15, nst) = ekm(1:3)/real(npe, dp)
-     favg(19:21, nst) = ekm(4:6)/real(npe, dp)
-     ekm = 0.0
-     ekt = 0.0
-     do iz = k1, nzp
-      do iy = j1, nyp
-       do ix = i1, i2
-        ef2 = 0.0
-        do ik = 1, curr_ndim
-         ef2 = ef2 + (ebf_bunch(ix,iy,iz,ik)+ebf1_bunch(ix,iy,iz,ik))*( &
-           ebf_bunch(ix,iy,iz,ik)+ebf1_bunch(ix,iy,iz,ik))
-        end do
-        ekt(7) = max(ekt(7), ef2)
-       end do
-      end do
-     end do
-     do ik = 1, nfield
-      ef2 = 0.0
-      do iz = k1, nzp
-       do iy = j1, nyp
-        do ix = i1, i2
-         ef2 = max(ef2, abs((ebf_bunch(ix,iy,iz,ik)+ &
-           ebf1_bunch(ix,iy,iz,ik))))
-        end do
-       end do
-      end do
-      ekt(ik) = ef2
-     end do
-     if (maxval(ekt(1:nfield))>giant_field) then
-      write (6, *) ' WARNING: Bunch field too big'
-      write (6, '(a23,3i4)') ' At the mpi_task=', imodx, imody, imodz
-     end if
-     ekm(1:nfield) = ekt(1:nfield)
-     if (prl) call allreduce_dpreal(maxv, ekt, ekm, 7)
-     favg(16:18, nst) = ekm(1:3)
-     favg(22:24, nst) = ekm(4:6)
-     eb_max = 0.0
-     if (ekm(7)>0.0) eb_max = sqrt(ekm(7))
-    end select
-   end if
    if (wake) then
     if (envelope) then
      call envelope_struct_data(nst)
@@ -926,38 +828,58 @@
    bcorr(16) = dgam
    !==========================
   end subroutine
+!===========================
+  subroutine enb_bunch(nst, ib)
+   integer, intent (in) :: nst,ib
 
-  subroutine enbvar(nst)
-   integer, intent (in) :: nst
+   integer :: ik, np, p, q
+   real (dp) :: np_norm, bcorr(16), ekt(2), ekm(2)
 
-   integer :: ic, np, ndv, p
-   real (dp) :: np_norm, bcorr(16), ekt(1), ekm(1)
-   !=====================
-   if (nst==0) bavg = 0.0
-   tb(nst) = tnow
-   ndv = size(ebfb, 2)
-   do ic = 1, nsb
-    np = loc_nbpart(imody, imodz, imodx, ic)
-    do p = 1, np
-     ebfb(p, 1:ndv) = bunch(ic)%part(p, 1:ndv)
-    end do
-    ekt(1) = real(np, dp)
-    call allreduce_dpreal(sumv, ekt, ekm, 1)
-    np_norm = 1.
-    if (ekm(1)>0.0) np_norm = 1./ekm(1)
-
-    call bunch_corr(ebfb, np, np_norm, bcorr)
-
-    bavg(nst, 1:16, ic) = bcorr(1:16)
-   end do
-   !==========================
+   ik = 0
+   np = loc_npart(imody, imodz, imodx, 1)
+   ekt = 0.0
+   if (np>0) then
+    select case (curr_ndim)
+    case (2)
+     do p = 1, np
+      wgh_cmp = spec(1)%part(p, 5)
+      if (part_ind ==ib) then
+       ekt(2) = ekt(2) + wgh
+       ik = ik + 1
+       do q = 1, nd2 + 1
+        ebfp(ik, q) = spec(1)%part(p, q)
+       end do
+      end if
+     end do
+    case (3)
+     do p = 1, np
+      wgh_cmp = spec(1)%part(p, 7)
+      if (part_ind ==ib) then
+       ekt(2) = ekt(2) + wgh
+       ik = ik + 1
+       do q = 1, nd2 + 1
+        ebfp(ik, q) = spec(1)%part(p, q)
+       end do
+      end if
+     end do
+    end select
+   end if
+   !================================
+   ekt(1) = real(ik, dp)
+   call allreduce_dpreal(sumv, ekt, ekm, 2)
+   bunch_number(nst,ib) = nint(ekm(1))
+   np_norm = 1.
+   if (ekm(1)>0.0) np_norm = 1./ekm(1)
+   call bunch_corr(ebfp, ik, np_norm, bcorr)
+   bunch_bavg(nst, 1:16,ib) = bcorr(1:16)
+   bcharge(nst,ib) = e_charge*np_per_cell*ekm(2)
   end subroutine
-
+!============================================
   subroutine enb_ionz(nst, t_loc, gmm)
    integer, intent (in) :: nst
    real (dp), intent (in) :: t_loc, gmm
 
-   integer :: ik, np, p, q, id_ch
+   integer :: ik, np, p, q
    real (dp) :: np_norm, bcorr(16), ekt(2), ekm(2)
    real (dp) :: pp(3), gamma
    real (sp) :: ch_ion
@@ -965,13 +887,12 @@
    ik = 0
    ch_ion = real(wgh_ion, sp)
    np = loc_npart(imody, imodz, imodx, 1)
-   id_ch = size(ebfp, 2)
    ekt = 0.0
    if (np>0) then
     select case (curr_ndim)
     case (2)
      do p = 1, np
-      wgh_cmp = spec(1)%part(p, id_ch)
+      wgh_cmp = spec(1)%part(p, 5)
       pp(1:2) = spec(1)%part(p, 3:4)
       gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
       if (part_ind < 0) then
@@ -986,7 +907,7 @@
      end do
     case (3)
      do p = 1, np
-      wgh_cmp = spec(1)%part(p, id_ch)
+      wgh_cmp = spec(1)%part(p, 7)
       pp(1:3) = spec(1)%part(p, 4:6)
       gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
       if (part_ind < 0) then
@@ -1001,7 +922,7 @@
      end do
     end select
    end if
-   if (nst==0) ionz_bavg = 0.0
+   ionz_bavg(nst,:) = 0.0
    tionz(nst) = t_loc
    !================================
    ekt(1) = real(ik, dp)
@@ -1018,19 +939,18 @@
    integer, intent (in) :: nst
    real (dp), intent (in) :: t_loc, gmm
 
-   integer :: ik, np, p, q, id_ch
+   integer :: ik, np, p, q
    real (dp) :: np_norm, bcorr(16), ekt(2), ekm(2)
    real (dp) :: pp(3), gamma
 
    ik = 0
    np = loc_npart(imody, imodz, imodx, 1)
-   id_ch = size(ebfp, 2)
    ekt = 0.0
    if (np>0) then
     select case (curr_ndim)
     case (2)
      do p = 1, np
-      wgh_cmp = spec(1)%part(p, id_ch)
+      wgh_cmp = spec(1)%part(p, 5)
       pp(1:2) = spec(1)%part(p, 3:4)
       gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
       if (gamma > gmm) then
@@ -1043,7 +963,7 @@
      end do
     case (3)
      do p = 1, np
-      wgh_cmp = spec(1)%part(p, id_ch)
+      wgh_cmp = spec(1)%part(p, 7)
       pp(1:3) = spec(1)%part(p, 4:6)
       gamma = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
       if (gamma > gmm) then
@@ -1056,7 +976,7 @@
      end do
     end select
    end if
-   if (nst==0) hgam_bavg = 0.0
+   hgam_bavg(nst,:) = 0.0
    tgam(nst) = t_loc
    !================================
    ekt(1) = real(ik, dp)
@@ -1131,7 +1051,7 @@
    character (12), dimension (4), parameter :: enspect = [ &
      'Electron NdE', ' A1-ion NdE ', ' A2-ion NdE ', ' A3-ion NdE ' ]
 
-   integer :: ik, ic, nfv, npv, nt, color
+   integer :: ik, nfv, npv, nt, color
    integer, parameter :: lun = 10
 
    nfv = 6
@@ -1178,93 +1098,21 @@
     write (lun, *) ' iter, nst, nvar npvar'
     write (lun, '(4i6)') itr, nst, nfv, npv
    end if
-   if (model_id>4) then
-    write (lun, *) ' Fields are in units GV/m'
-    write (lun, *) ' The driving bunches'
-    write (lun, *) ' plvol      lambda_p   '
-    write (lun, '(2e12.3)') lpvol, lambda_p
-    do ik = 1, nsb
-     write (lun, *) ' Qcharge    b_charge     sigmx      sigmy'
-     write (lun, '(4e12.3)') reduced_charge(ik), bunch_charge(ik), &
-       sxb(ik), syb(ik)
-     write (lun, *) ' eps_y       eps_z       gamma      dg/g'
-     write (lun, '(4e12.3)') epsy(ik), epsz(ik), gam(ik), dg(ik)
-    end do
-    write (lun, *) 'np/nc[10^18/cm3]           n_b/n_p'
-    write (lun, '(e12.4,a8,e11.4)') n_over_nc, '        ', nb_over_np
-    write (lun, *) ' targ_x1  targ_x2     n/nc       el_lp        '
-    write (lun, '(4e12.4)') targ_in, targ_end, n_over_nc, el_lp
-    write (lun, *) ' lx1        lx2        lx3        lx4        lx5 '
-    write (lun, '(5e12.4)') lpx(1:5)
-    write (lun, *) ' ompe2       nmacro       np_per_cell    '
-    write (lun, '(3e12.4)') ompe, nmacro, np_per_cell
-    write (lun, *) '    Nx      Ny      Nz    n_cell   Nsp  Nsb'
-    write (lun, '(6i8)') nx, ny, nz, mp_per_cell(1), nsp, nsb
-    write (lun, *) ' iter, nst, nvar npvar'
-    write (lun, '(4i6)') itr, nst, nfv, npv
-   end if
-   write (lun, *) '====================================='
-   write (lun, *) 'time'
-   write (lun, '(5e18.10)') tloc(1:nst)
-   if (part) then
-    write (lun, *) '========== Particle section======='
-    do ic = 1, nsp
-     write (lun, '(a14)') sp_type(ic)
-     write (lun, '(6a14)') pe(1:6)
-     do ik = 1, nst
-      write (lun, '(6e18.10)') pavg(1:6, ik, ic)
-     end do
-     write (lun, '(5a14)') pe(7:11)
-     do ik = 1, nst
-      write (lun, '(5e18.10)') pavg(7:11, ik, ic)
-     end do
-    end do
-   end if !END particle section
    write (lun, *) '========== Fields section======='
    if (nfield<6) then
-    if (beam) then
-     write (lun, '(6a18)') feb2(1:6)
-    else
-     write (lun, '(6a18)') fe2(1:6)
-    end if
+    write (lun, '(6a18)') fe2(1:6)
     do ik = 1, nst
      write (lun, '(6e18.10)') favg(1:6, ik)
     end do
    else
-    if (beam) then
-     write (lun, '(6a18)') feb(1:6)
-    else
-     write (lun, '(6a18)') fe(1:6)
-    end if
+    write (lun, '(6a18)') fe(1:6)
     do ik = 1, nst
      write (lun, '(6e18.10)') favg(1:6, ik)
     end do
-    if (beam) then
-     write (lun, '(6a18)') feb(7:12)
-    else
-     write (lun, '(6a18)') fe(7:12)
-    end if
+    write (lun, '(6a18)') fe(7:12)
     do ik = 1, nst
      write (lun, '(6e18.10)') favg(7:12, ik)
     end do
-   end if
-   if (beam) then
-    write (lun, *) '========== BUNCH fields section======='
-    if (nfield<6) then
-     write (lun, '(6a18)') feb2(1:6)
-     do ik = 1, nst
-      write (lun, '(6e18.10)') favg(13:18, ik)
-     end do
-    else
-     write (lun, '(6a18)') feb(1:6)
-     do ik = 1, nst
-      write (lun, '(6e18.10)') favg(13:18, ik)
-     end do
-     write (lun, '(6a14)') feb(7:12)
-     do ik = 1, nst
-      write (lun, '(6e18.10)') favg(19:24, ik)
-     end do
-    end if
    end if
    if (wake) then
     if (envelope) then
@@ -1385,19 +1233,23 @@
    write (lun, '(3i6)') it, nst, nbvar
    write (lun, *) '====================================='
    write (lun, *) 'time'
-   write (lun, '(6e13.4)') tb(1:nst)
+   write (lun, '(6e13.4)') tbunch(1:nst)
    do ib = 1, nsb
+    write (lun, *) ' bunch numbers '
+    write (lun, '(6i10)') bunch_number(1:nst,ib)
+    write (lun, *) ' bunch charge(pC)'
+    write (lun, '(6e13.4)') bcharge(1:nst,ib)
     write (lun, '(6a14)') fb(1:6)
     do ik = 1, nst
-     write (lun, '(6e13.4)') bavg(ik, 1:6, ib)
+     write (lun, '(6e13.4)') bunch_bavg(ik, 1:6, ib)
     end do
     write (lun, '(6a14)') fb(7:12)
     do ik = 1, nst
-     write (lun, '(6e13.4)') bavg(ik, 7:12, ib)
+     write (lun, '(6e13.4)') bunch_bavg(ik, 7:12, ib)
     end do
     write (lun, '(4a14)') fb(13:16)
     do ik = 1, nst
-     write (lun, '(4e13.4)') bavg(ik, 13:16, ib)
+     write (lun, '(4e13.4)') bunch_bavg(ik, 13:16, ib)
     end do
    end do
    close (lun)
