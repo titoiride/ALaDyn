@@ -123,7 +123,7 @@
    lp_inject = .false.
    ionization = .false.
    charge_cons = .false.
-   if (iform>1) charge_cons = .true.
+   if (iform < 2) charge_cons = .true.
    inject_beam = .false.
    beam = .false.
    relativistic = .false.
@@ -220,137 +220,137 @@
     comoving = .false.
     vbeam = 0.0
    end if
+   !====================================
+    ! Code units for background plasma number density
+    ! Enter n0_ref= in 10^18/cc= 10^6/mu^3 units
+    ncrit = pi/(rc0*lam0*lam0) !critical density in units n0=10^21/cm^3=10^9/mu^3
+    nm_fact = ncrit*(1.e+9) ! critical density in (1/mu^3) units
+    n_over_nc=1.e-03*n0_ref/ncrit
    !==========================
    ! Target parameters  enter n_over_nc
-    if (iby==2) plane_wave = .true.
-    mod_ord = 1
-    if (model_id<3) lin_lp = .true.
-    if (model_id==3) circ_lp = .true.
-    if (model_id==4) then
-     mod_ord = 2
-     envelope = .true.
-    end if
-    if (n_over_nc>1.) then
-     solid_target = .true.
-    else
-     wake = .true.
-    end if
-    relativistic = .true.
-    nfield = 3
-    curr_ndim = 2
-    nbfield = 4
-    if (ndim>2) then
-     nfield = 6
-     curr_ndim = ndim
-     nbfield = 6
-    end if
-    if (circ_lp) then
-     nfield = 6
-     curr_ndim = 3
-    end if
-    if (lp_offset>0.0) Two_color = .true.
-    !====================
-    !to be multiplied by the particle charge in the equation of motion
-    !E=in unit mc^2/(e*l0)=[TV/m]/E0; E0*E in [TV/m]=[MV/mu] unit
-    !E0(A,phi) in MV unit
-    !==========================================
-    np_per_cell = 1
-    !====================================
-    !=======================
-    ! Code Units for laser fields
-    if (wake) then
-     n_plasma = 0
-     if (nsp>1) then
-      do i = 1, nsp - 1
-       n_plasma = n_plasma + concentration(i)*n_mol_atoms(i)*ion_min(i)
-      end do
-      if (n_plasma<epsilon) then
-       np_per_xc(1) = 0
-       np_per_yc(1) = 0
-       n_plasma = zero_dp
-      end if
-     else if (nsp==1) then
-      n_plasma = one_dp
+   if (iby==2) plane_wave = .true.
+   mod_ord = 1
+   if (model_id<3) lin_lp = .true.
+   if (model_id==3) circ_lp = .true.
+   if (model_id==4) then
+    mod_ord = 2
+    envelope = .true.
+   end if
+   if (n_over_nc>1.) then
+    solid_target = .true.
+   else
+    wake = .true.
+   end if
+   relativistic = .true.
+   nfield = 3
+   curr_ndim = 2
+   nbfield = 4
+   if (ndim>2) then
+    nfield = 6
+    curr_ndim = ndim
+    nbfield = 6
+   end if
+   if (circ_lp) then
+    nfield = 6
+    curr_ndim = 3
+   end if
+   if (lp_offset>0.0) Two_color = .true.
+   !====================
+   !to be multiplied by the particle charge in the equation of motion
+   !E=in unit mc^2/(e*l0)=[TV/m]/E0; E0*E in [TV/m]=[MV/mu] unit
+   !E0(A,phi) in MV unit
+   !==========================================
+   np_per_cell = 1
+   !=======================
+   ! Code Units for laser fields
+   if (wake) then
+    n_plasma = 0
+    if (nsp>1) then
+     do i = 1, nsp - 1
+      n_plasma = n_plasma + concentration(i)*n_mol_atoms(i)*ion_min(i)
+     end do
+     if (n_plasma<epsilon) then
+      np_per_xc(1) = 0
+      np_per_yc(1) = 0
+      n_plasma = zero_dp
      end if
+    else if (nsp==1) then
+     n_plasma = one_dp
     end if
-    ncrit = pi/(rc0*lam0*lam0) !critical density in units n0=10^21/cm^3=10^9/mu^3
-    n0_ref = 1.e03*ncrit*n_over_nc ! reference density in 10^18/cc=10^6/mu^3 unit
-    nm_fact = ncrit*(1.e+9) ! critical density (1/mu^3)
-    !n_over_nc*nm_fact = n0_ref*1.e+06=  background density in [1/mu^3]
+   end if
     !===================================     
-    oml = pi2/lam0 !laser frequency in unit c/l0
-    om1 = pi2/lam1 !laser frequency in unit c/l0
-    lp_amp = a0*oml
-    lp1_amp = a1*om1 !field in unit 0.51 MV/m
-    lp_max = 1.5*lp_amp
-    if (Two_color) lp_max = max(lp_max, 1.5*lp1_amp)
+   oml = pi2/lam0 !laser frequency in unit c/l0
+   om1 = pi2/lam1 !laser frequency in unit c/l0
+   lp_amp = a0*oml
+   lp1_amp = a1*om1 !field in unit 0.51 MV/m
+   lp_max = 1.5*lp_amp
+   if (Two_color) lp_max = max(lp_max, 1.5*lp1_amp)
     !=============================
-    nc0 = oml*oml !nc0=(2*pi/lam0)** 2
-    ompe = nc0*n_over_nc !squared adimensional plasma frequency :
-    !===============================
-    ! Parabolic plasma channel profile const  r_c=w0_y matched condition
-    chann_fact = 0.0
-    if (r_c>0.0) then
+   nc0 = oml*oml !nc0=(2*pi/lam0)** 2
+   ompe = nc0*n_over_nc !squared adimensional plasma frequency :
+   !===============================
+   ! Parabolic plasma channel profile const  r_c=w0_y matched condition
+   chann_fact = 0.0
+   if (r_c>0.0) then
      channel = .true.
-     c1_fact = w0_y*w0_y/(r_c*r_c)
-     c2_fact = lam0*lam0/(r_c*r_c)
-     chann_fact = c1_fact*c2_fact/(pi*pi*n_over_nc)
-    end if
+    c1_fact = w0_y*w0_y/(r_c*r_c)
+    c2_fact = lam0*lam0/(r_c*r_c)
+    chann_fact = c1_fact*c2_fact/(pi*pi*n_over_nc)
+   end if
     !========== Laser parameters
-    lp_intensity = 1.37*(a0/lam0)*(a0/lam0) !in units 10^18 W/cm^2
-    lp_rad = w0_y*sqrt(2.*log(2.)) !FWHM focal spot
-    zr = pi*w0_y*w0_y/lam0
-    lp1_rad = w1_y*sqrt(2.*log(2.)) !FWHM focal spot
-    zr1 = pi*w1_y*w1_y/lam1
-    lp_pow = 0.5*pi*lp_intensity*w0_y*w0_y !in units 10^10 W
-    if (ndim==2) lp_pow = 0.5*dy*lp_intensity*w0_y !in units 10^10 W
-    lp_pow = 0.01*lp_pow !in TW= 1.e-03[J/fs]  units
-    if (plane_wave) then !plane LP wave
-     lp_pow = 0.01*lp_intensity*ly_box*lz_box !in TW = 10^{-3}J/fs
-     zr = 0.0
-    end if
-    !======= Defines scales (w0_x,w1_x) in longitudinal (t-x) pulse profile
-    if (g_prof) then
-     aph_fwhm = sqrt(2.*log(2.))
-    else
-     aph_fwhm = 2.*acos(sqrt(0.5*sqrt(2.)))/pi
-    !aph_fwhm=2.*acos(sqrt(sqrt(0.5*sqrt(2.))))/pi this is only valid for cos^4 pulse shape
-    end if
-    lx_fwhm = tau_fwhm*speed_of_light ! In micron unit
-    w0_x = lx_fwhm/aph_fwhm
-    w1_x = speed_of_light*tau1_fwhm/aph_fwhm
-    !=================
-    lp_energy = 1.e-03*tau_fwhm*lp_pow
-    energy_in_targ = 0.0
-    el_lp = lam0
-    if (n_over_nc>0.0) then
-     p_c = 0.0174/n_over_nc !Critical power in TW
-     lambda_p = lam0/sqrt(n_over_nc)
-     el_lp = lambda_p/pi2
-     el_d = t0_pl(1)*el_lp !Debye length t0_pl(1)= V_T/c at t=0
-     omega_p = 1./el_lp
-    end if
-    bet0 = 0.0
-    lpvol = el_lp*el_lp*el_lp
-    if (nsb>0) inject_beam = .true.
-    !=====================
-    if (inject_beam) then
+   lp_intensity = 1.37*(a0/lam0)*(a0/lam0) !in units 10^18 W/cm^2
+   lp_rad = w0_y*sqrt(2.*log(2.)) !FWHM focal spot
+   zr = pi*w0_y*w0_y/lam0
+   lp1_rad = w1_y*sqrt(2.*log(2.)) !FWHM focal spot
+   zr1 = pi*w1_y*w1_y/lam1
+   lp_pow = 0.5*pi*lp_intensity*w0_y*w0_y !in units 10^10 W
+   if (ndim==2) lp_pow = 0.5*dy*lp_intensity*w0_y !in units 10^10 W
+   lp_pow = 0.01*lp_pow !in TW= 1.e-03[J/fs]  units
+   if (plane_wave) then !plane LP wave
+    lp_pow = 0.01*lp_intensity*ly_box*lz_box !in TW = 10^{-3}J/fs
+    zr = 0.0
+   end if
+   !======= Defines scales (w0_x,w1_x) in longitudinal (t-x) pulse profile
+   if (g_prof) then
+    aph_fwhm = sqrt(2.*log(2.))
+   else
+    aph_fwhm = 2.*acos(sqrt(0.5*sqrt(2.)))/pi
+   !aph_fwhm=2.*acos(sqrt(sqrt(0.5*sqrt(2.))))/pi this is only valid for cos^4 pulse shape
+   end if
+   lx_fwhm = tau_fwhm*speed_of_light ! In micron unit
+   w0_x = lx_fwhm/aph_fwhm
+   w1_x = speed_of_light*tau1_fwhm/aph_fwhm
+   !=================
+   lp_energy = 1.e-03*tau_fwhm*lp_pow
+   energy_in_targ = 0.0
+   el_lp = lam0
+   if (n_over_nc>0.0) then
+    p_c = 0.0174/n_over_nc !Critical power in TW
+    lambda_p = lam0/sqrt(n_over_nc)
+    el_lp = lambda_p/pi2
+    el_d = t0_pl(1)*el_lp !Debye length t0_pl(1)= V_T/c at t=0
+    omega_p = 1./el_lp
+   end if
+   bet0 = 0.0
+   lpvol = el_lp*el_lp*el_lp
+   if (nsb>0) inject_beam = .true.
+   !=====================
+   if (inject_beam) then
     beam=.true.
      !ON input phase space coordinates, beam size, 
      !         total macro-particle number nb_tot(1), total charge (pC)
      !====================================
-    n0_ref = nm_fact*n_over_nc 
     do i=1,nsb
      jb_norm(i)=1.
      gam0 = gam(i) !the initial gamma factor
      u0_b = sqrt(gam0*gam0-1.) !the uniform beam x-momentum
      bet0 = u0_b/gam0 !the uniform beam velocity
-     !==================
+    !==================
      b_charge = nb_tot(i)*e_charge !the charge of bunch macro-particle
      np_per_nmacro = bunch_charge(i)/b_charge !real particles/macro particles=real charge/macro charge
      !===============
      if (ndim<3) then
-       bunch_volume(i) = pi2*sxb(i)*syb(i)*dy !the bunch volume (mu^3) in 2D Gaussian
+      bunch_volume(i) = pi2*sxb(i)*syb(i)*dy !the bunch volume (mu^3) in 2D Gaussian
      else
       bunch_volume(i) = pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i) !the bunch volume (mu^3) in 3D Gussian bunch
      end if
@@ -360,8 +360,8 @@
      ncell = bunch_volume(i)*gvol_inv
      nb_per_cell(i) = nint(nb_tot(i)/ncell)
      if(nb_per_cell(i) >0)jb_norm(i) = rhob(i)/nb_per_cell(i) !
-     end do
-    end if
+    end do
+   end if
    !===================================
    !  SET PARAM all cases
    if (hybrid) nfcomp = curr_ndim + 1
