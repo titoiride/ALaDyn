@@ -89,7 +89,7 @@
 
   real (dp) :: t0_b, el_lp, el_d, lambda_p, omega_p, lpvol
   real (dp) :: nc0, ncrit, n1_over_n, n2_over_n
-  real (dp) :: np_per_cell, nb_per_cell, np_per_nmacro, nmacro
+  real (dp) :: np_per_cell, np_per_nmacro, nmacro
   real (dp) :: targ_in, targ_end, lx_fwhm
   real (dp) :: lp_in(ref_nlas), lp_end(ref_nlas), lp_ionz_in, &
     lp_ionz_end, xf_loc(ref_nlas), xc_loc(ref_nlas)

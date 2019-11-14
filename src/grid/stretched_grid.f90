@@ -102,7 +102,7 @@
     else
      yp_loc = invert_uniform_grid(yp, y_params) - y_params%init_cell
     end if
-    pt(n, ic1) = yp_loc
+    pt(n, ic1) = yp_loc + 1
    end do
   end subroutine
 
@@ -112,8 +112,8 @@
    real (dp) :: zp, zp_loc
    integer :: n
    !========================
-   !  enter the y=part(ic1,n) particle position in stretched grid
-   !            y=y(xi)
+   !  enter the z=part(ic1,n) particle position in stretched grid
+   !            z=y(xi)
    !  exit      xi=part(ic1,n) the  particle position in uniform grid
    !               normalized to the Dxi cell size
    !==========================================
@@ -136,9 +136,9 @@
      zp_loc = invert_stretched_grid(zp, z_params)
      zp_loc = nz - zp_loc - z_params%init_cell
     else
-     zp_loc = invert_uniform_grid(zp, z_params)
+     zp_loc = invert_uniform_grid(zp, z_params) - z_params%init_cell
     end if
-    pt(n, ic1) = zp_loc - z_params%init_cell
+    pt(n, ic1) = zp_loc + 1
    end do
   end subroutine
 
