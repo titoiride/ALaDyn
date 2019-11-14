@@ -45,8 +45,6 @@
 
    if (exist_nml) then
     call read_input_nml
-   else if (exist_data) then
-    call read_input_data
    else
     write (6, *) 'No usable input file (.nml or .data) has been found'
     stop 5
@@ -66,7 +64,7 @@
      dmodel_id, ibx, iby, ibz, ibeam
    namelist /target_description/nsp, nsb, ionz_lev, ionz_model, ion_min, &
      ion_max, atomic_number, mass_number, t0_pl, ppc, np_per_xc, &
-     np_per_yc, np_per_zc, concentration, lpx, lpy, n_over_nc, np1, np2, &
+     np_per_yc, np_per_zc, concentration, lpx, lpy, n0_ref, np1, np2, &
      r_c, l_disable_rng_seed
    namelist /laser/g_prof, nb_laser, t0_lp, xc_lp, tau_fwhm, w0_y, a0, &
      lam0, lp_delay, lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, &
@@ -110,6 +108,7 @@
    l_disable_rng_seed = .false.
    concentration(:) = zero_dp
    concentration(1) = one_dp
+   n0_ref = 1.e18
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, target_description, iostat=nml_ierr)
    nml_error_message = 'TARGET_DESCRIPTION'
@@ -300,7 +299,7 @@
      dmodel_id, ibx, iby, ibz, ibeam
    namelist /target_description/nsp, nsb, ionz_lev, ionz_model, ion_min, &
      ion_max, atomic_number, mass_number, t0_pl, ppc, np_per_xc, &
-     np_per_yc, np_per_zc, concentration, lpx, lpy, n_over_nc, np1, np2, &
+     np_per_yc, np_per_zc, concentration, lpx, lpy, n0_ref, np1, np2, &
      r_c
    namelist /laser/g_prof, nb_laser, t0_lp, xc_lp, tau_fwhm, w0_y, a0, &
      lam0, lp_delay, lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, &
@@ -341,82 +340,6 @@
 110 continue
    close (nml_iounit)
   end subroutine
-
-  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-  !C
-  !C old namelist format
-  !C
-  !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-  subroutine read_input_data
-   !Default initialization like in input.nml
-   yx_rat = -1.
-   zx_rat = -1.
-   mass_number(1:3) = 1.0
-   ppc = -1
-   np_per_xc = -1
-   np_per_yc = -1
-   np_per_zc = -1
-   l_disable_rng_seed = .false.
-   time_interval_dumps = -1. !if -1 use classical output
-   l_force_singlefile_output = .true.
-   l_first_output_on_restart = .false.
-   l_print_j_on_grid = .true.
-   nprocx = -1
-   nprocy = -1
-   nprocz = -1
-
-   open (10, file=input_data_filename)
-   read (10, *) nx, ny, nz, ny_targ
-   read (10, *)
-   read (10, *) k0, yx_rat
-   read (10, *)
-   read (10, *) lpf_ord, der_ord, str_flag, iform
-   read (10, *)
-   read (10, *) model_id, dmodel_id, ibeam
-   read (10, *)
-   read (10, *) ibx, iby, ibz, nsp, nsb
-   read (10, *)
-   read (10, *) ion_min(1), ion_max(1), atomic_number(1), mass_number(1)
-   read (10, *)
-   read (10, *) ion_min(2), ion_max(2), atomic_number(2), mass_number(2)
-   read (10, *)
-   read (10, *) ionz_lev, ionz_model
-   read (10, *)
-   read (10, *) t0_pl(1), t0_pl(2), t0_pl(3), t0_pl(4)
-   read (10, *)
-   read (10, *) np_per_xc(1:6)
-   read (10, *)
-   read (10, *) np_per_yc(1:6)
-   read (10, *)
-   read (10, *) t0_lp, xc_lp, w0_x, w0_y, a0, lam0
-   read (10, *)
-   read (10, *) lpx(1), lpx(2), lpx(3), lpx(4), lpx(5), lpx(6), lpx(7)
-   read (10, *)
-   read (10, *) lpy(1), lpy(2)
-   read (10, *)
-   read (10, *) n_over_nc, n1_over_n, n2_over_n
-   read (10, *)
-   read (10, *) w_sh, wi_time, wf_time, w_speed
-   read (10, *)
-   read (10, *) nouts, iene, nvout, nden, npout, nbout
-   read (10, *)
-   read (10, *) jump, pjump
-   read (10, *)
-   read (10, *) xp0_out, xp1_out, yp_out
-   read (10, *)
-   read (10, *) tmax, cfl
-   read (10, *)
-   read (10, *) new_sim, id_new, dump
-   read (10, *)
-   close (10)
-   !the following parameters were not used in original input.data and, for compatibility reasons,
-   !have not been added since input.data is deprecated in favour of the input.nml
-   zx_rat = yx_rat
-   call consistency_check_grid
-   call consistency_check_number_of_particles_comp
-
-  end subroutine
-
 
   subroutine consistency_check_number_of_particles_comp
 

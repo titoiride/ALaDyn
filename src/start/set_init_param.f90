@@ -189,6 +189,7 @@
    if (nsp>1) then
     do i = 1, nsp - 1
      call set_atoms_per_molecule(atomic_number(i), n_mol_atoms(i))
+     !Defined in ionz_data module
     end do
    end if
    !======================================
@@ -354,7 +355,7 @@
      else
       bunch_volume(i) = pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i) !the bunch volume (mu^3) in 3D Gussian bunch
      end if
-     rhob(i) = bunch_charge(i)/(e_charge*bunch_volume(i)) !physical bunch density (1/mu^3)
+     rhob(i) = 1.e06*bunch_charge(i)/(e_charge*bunch_volume(i)) !physical bunch density (1/cm^3)
 
      rhob(i) = rhob(i)/n0_ref !ratio beam density/background plasma density
      ncell = bunch_volume(i)*gvol_inv
