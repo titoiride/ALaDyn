@@ -228,12 +228,12 @@
     ! omp^2_norm=(l_u/c)^2*[4*pi *n0_ref*e^2/m_e]=4*pi*rc0*n0_ref
     ! rc0= class elect. radius in 10^{-9}\mu units
     !====================================================== 
-    ompe = 4.*pi*rc0         !squared adimensional plasma frequency 
+    ompe = 4.*pi*rc0*(reference_density*1.e-6)         !squared adimensional plasma frequency 
     ompe=1.e-03*ompe
     !==========================================
     ncrit = pi/(rc0*lam0*lam0) !critical density in units n0=10^21/cm^3=10^9/mu^3
     nm_fact = ncrit*(1.e+9) ! critical density in (1/mu^3) units
-    n_over_nc=1.e-03*n0_ref/ncrit
+    n_over_nc=1.e-03*n0_ref*(reference_density*1.e-6)/ncrit
    !==========================
    ! Target parameters  enter n_over_nc
    if (iby==2) plane_wave = .true.

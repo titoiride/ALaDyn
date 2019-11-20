@@ -3,6 +3,7 @@ src_dir: ./src
 output_dir: ./doc_ford
 include: /usr/include
          /usr/local/include
+         /usr/include/mpi
 summary: A High-Accuracy PIC Code for the Maxwell-Vlasov Equations
 author: The ALaDyn Collaboration
 author_description:

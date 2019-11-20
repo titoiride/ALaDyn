@@ -108,7 +108,7 @@
    l_disable_rng_seed = .false.
    concentration(:) = zero_dp
    concentration(1) = one_dp
-   n0_ref = 1.e18
+   n0_ref = 1.
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, target_description, iostat=nml_ierr)
    nml_error_message = 'TARGET_DESCRIPTION'
