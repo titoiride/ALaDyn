@@ -122,20 +122,6 @@
     max_npt_size = ndv*maxval(ip_loc(1:npe))
     lenbuff = max(lenbuff, max_npt_size)
    !===============================
-    if (beam) then
-     ndvb = size(ebfb, 2)
-     do i = 1, nsp
-      kk = loc_nbpart(imody, imodz, imodx, i)
-      call intvec_distribute(kk, ip_loc, npe)
-      npt_arr(1:npe, i) = ip_loc(1:npe)
-     end do
-     do i = 1, npe
-      ip_loc_bunch(i) = sum(npt_arr(i,1:nsp))
-     end do
-     max_npt_size = ndvb*maxval(ip_loc_bunch(1:npe))
-     lenbuff = max(lenbuff, max_npt_size)
-    end if
-    !=============================
     dist_npy(:, :) = 0
     dist_npz(:, :) = 0
     dist_npy(imody+1, 1:nsp) = loc_npty(1:nsp)
@@ -241,33 +227,7 @@
     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
       fnamel_out)
     if (pe0) write (6, *) 'Particles data dumped'
-!============================
-    if (beam) then
-     write (fnamel_part, '(a9,i2.2)') 'BunchPart', imodz
-     fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
-     lenw(1:npe) = ndvb*ip_loc_bunch(1:npe)
-     max_npt_size = maxval(lenw(1:npe))
-     kk = 0
-     do ic = 1, nsp
-      np = loc_nbpart(imody, imodz, imodx, ic)
-      if (np>0) then
-       do j = 1, ndvb
-        do i = 1, np
-         kk = kk + 1
-         send_buff(kk) = bunch(ic)%part(i, j)
-        end do
-       end do
-      end if
-     end do
-     disp_col = 0
-     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype &
-       ))
-     disp_col = 8*disp_col
-     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
-       fnamel_out)
-     if (pe0) write (6, *) 'Bunch particles data dumped'
-    end if
-   end if
+   endif
    !=== END PARTICLES DUMP SECTION ===
 
    !=== ELECTROMAGNETIC FIELD DUMP SECTION ===
@@ -372,53 +332,6 @@
    end if
 
    !=== END FLUID DUMP SECTION ===
-
-   !=== BUNCH FIELD DUMP SECTION ===
-   if (beam) then
-    write (fnamel_bunch0, '(a9,i2.2)') 'Bunch-EB0', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_bunch0 // '.bin'
-    lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
-    kk = 0
-    do ic = 1, ebf_cp
-     do k = 1, nzf_loc
-      do j = 1, nyf_loc
-       do i = 1, nxf_loc
-        kk = kk + 1
-        send_buff(kk) = ebf_bunch(i, j, k, ic)
-       end do
-      end do
-     end do
-    end do
-    disp = lenw(1+mype)
-    disp_col = imody*disp
-    disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
-      fnamel_out)
-    if (ibeam==1) then
-     write (fnamel_bunch1, '(a9,i2.2)') 'Bunch-EB1', imodz
-     fnamel_out = 'dumpRestart/' // fnamel_bunch1 // '.bin'
-     lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
-     kk = 0
-     do ic = 1, ebf_cp
-      do k = 1, nzf_loc
-       do j = 1, nyf_loc
-        do i = 1, nxf_loc
-         kk = kk + 1
-         send_buff(kk) = ebf1_bunch(i, j, k, ic)
-        end do
-       end do
-      end do
-     end do
-     disp = lenw(1+mype)
-     disp_col = imody*disp
-     disp_col = 8*disp_col
-     call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
-       fnamel_out)
-    end if
-    if (pe0) write (6, *) 'Bunch fields data dumped'
-   end if
-   !=== END BUNCH FIELD DUMP SECTION ===
-
    !============== write (y,z,wghyz initial part distribution
    if (part) then
     fname_out = 'dumpRestart/' // fname_yz // '.bin'
@@ -788,55 +701,6 @@
    if (pe0) write (6, *) 'Electromagnetic fields data read'
    !=== END FIELD RESTART SECTION===
 
-   !=== BUNCH FIELD RESTART SECTION ===
-   if (beam) then
-    write (fnamel_bunch0, '(a9,i2.2)') 'Bunch-EB0', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_bunch0 // '.bin'
-    lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
-    !=========================
-    disp = lenw(1+mype)
-    disp_col = imody*disp
-    disp_col = 8*disp_col
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
-      fnamel_out)
-    !===========================
-    kk = 0
-    do ic = 1, ebf_cp
-     do k = 1, n3_loc
-      do j = 1, n2_loc
-       do i = 1, n1_loc
-        kk = kk + 1
-        ebf_bunch(i, j, k, ic) = recv_buff(kk)
-       end do
-      end do
-     end do
-    end do
-    if (ibeam==1) then
-     write (fnamel_bunch1, '(a9,i2.2)') 'Bunch-EB1', imodz
-     fnamel_out = 'dumpRestart/' // fnamel_bunch1 // '.bin'
-     lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
-     !=========================
-     disp = lenw(1+mype)
-     disp_col = imody*disp
-     disp_col = 8*disp_col
-     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
-       fnamel_out)
-     !===========================
-     kk = 0
-     do ic = 1, ebf_cp
-      do k = 1, n3_loc
-       do j = 1, n2_loc
-        do i = 1, n1_loc
-         kk = kk + 1
-         ebf1_bunch(i, j, k, ic) = recv_buff(kk)
-        end do
-       end do
-      end do
-     end do
-    end if
-    if (pe0) write (6, *) 'Bunch fields data read'
-   end if
-   !=== END BUNCH FIELD RESTART SECTION ===
     do i = 1, nsp
      nps_loc(i) = maxval(npt_arr(1:npe,i))
     end do
