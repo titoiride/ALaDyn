@@ -224,6 +224,13 @@
    !====================================
     ! Code units for background plasma number density
     ! Enter n0_ref= in 10^18/cc= 10^6/mu^3 units
+    ! L_u =1mu
+    ! omp^2_norm=(l_u/c)^2*[4*pi *n0_ref*e^2/m_e]=4*pi*rc0*n0_ref
+    ! rc0= class elect. radius in 10^{-9}\mu units
+    !====================================================== 
+    ompe = 4.*pi*rc0         !squared adimensional plasma frequency 
+    ompe=1.e-03*ompe
+    !==========================================
     ncrit = pi/(rc0*lam0*lam0) !critical density in units n0=10^21/cm^3=10^9/mu^3
     nm_fact = ncrit*(1.e+9) ! critical density in (1/mu^3) units
     n_over_nc=1.e-03*n0_ref/ncrit
@@ -288,7 +295,6 @@
    if (Two_color) lp_max = max(lp_max, 1.5*lp1_amp)
     !=============================
    nc0 = oml*oml !nc0=(2*pi/lam0)** 2
-   ompe = nc0*n_over_nc !squared adimensional plasma frequency :
    !===============================
    ! Parabolic plasma channel profile const  r_c=w0_y matched condition
    chann_fact = 0.0
@@ -337,7 +343,6 @@
    if (nsb>0) inject_beam = .true.
    !=====================
    if (inject_beam) then
-    beam=.true.
      !ON input phase space coordinates, beam size, 
      !         total macro-particle number nb_tot(1), total charge (pC)
      !====================================
@@ -355,9 +360,9 @@
      else
       bunch_volume(i) = pi2*sqrt(pi2)*sxb(i)*syb(i)*syb(i) !the bunch volume (mu^3) in 3D Gussian bunch
      end if
-     rhob(i) = 1.e06*bunch_charge(i)/(e_charge*bunch_volume(i)) !physical bunch density (1/cm^3)
+     rhob(i) = bunch_charge(i)/(e_charge*bunch_volume(i)) !physical bunch density (1/mu^3)
 
-     rhob(i) = rhob(i)/n0_ref !ratio beam density/background plasma density
+     rhob(i) = 1.e-06*rhob(i)/n0_ref !ratio beam density/background plasma density
      ncell = bunch_volume(i)*gvol_inv
      nb_per_cell(i) = nint(nb_tot(i)/ncell)
      if(nb_per_cell(i) >0)jb_norm(i) = rhob(i)/nb_per_cell(i) !
@@ -407,13 +412,6 @@
    nd2 = 2*curr_ndim
    nj_dim = curr_ndim
    if (envelope) nj_dim = curr_ndim + 1
-   if (beam) then
-    if (ibeam==2) then
-     nj_dim = curr_ndim + 1
-     pot_ndim = nj_dim + 1
-    end if
-   end if
-
 
   end subroutine
 

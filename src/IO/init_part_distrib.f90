@@ -498,9 +498,9 @@
    !if(nsp==2)then
    !wgh_sp(2)=1./(real(mp_per_cell(2),dp))
 
-   wgh_sp(1) = j0_norm*n_plasma
+   wgh_sp(1) = j0_norm*n0_ref*n_plasma
    do i = 2, nsp
-    if (mp_per_cell(i)>0) wgh_sp(i) = one_dp/real(mp_per_cell(i), dp)
+    if (mp_per_cell(i)>0) wgh_sp(i) = n0_ref/real(mp_per_cell(i), dp)
     wgh_sp(i) = conc(i-1)*wgh_sp(i)
    end do
    select case (layer_mod)
