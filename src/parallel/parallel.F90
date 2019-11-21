@@ -28,9 +28,13 @@
 #define ENABLE_MPI_LONG_INT
 #endif
 
-  implicit none
-  include 'mpif.h'
-
+#if !defined (USE_MPI_MODULE)
+ implicit none
+ include 'mpif.h'
+#else
+ use mpi
+ implicit none
+#endif
 
   integer, parameter :: offset_kind = mpi_offset_kind, &
     whence = mpi_seek_set
