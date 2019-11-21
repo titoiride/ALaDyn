@@ -19,33 +19,24 @@
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
 
- module pic_in
+!--------------------------
+ module pstruct_data
 
-  use init_laser_field
-  use init_part_distrib
+  use precision_def
+
+  use struct_def
 
   implicit none
 
-  real (dp) :: xf0
-
- contains
-  subroutine init
-   !======================================
-   if (model_id<3) then
-    call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2) 
-   else
-    select case (model_id)
-    case (3)
-     call cp_pulse(model_id, xf0) !Circular polarization
-    case (4)
-     call set_envelope(xf0) !Envelope  approximation for laser
-     ! vector potential Ay
-    end select
-   end if
-   call part_distribute(dmodel_id, xf0)
-
-   if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
-
-  end subroutine
+  real (dp), allocatable :: ebfp(:, :), ebfb(:, :)
+  real (dp), allocatable :: ebfp0(:, :), ebfp1(:, :)
+  real (dp), allocatable :: pdata_tracking(:, :, :)
+  real (dp), allocatable :: track_aux(:)
+  real (dp), allocatable :: xpt(:, :), ypt(:, :), zpt(:, :), wghpt(:, :)
+  real (dp), allocatable :: loc_ypt(:, :), loc_zpt(:, :), &
+    loc_wghyz(:, :, :)
+  real (dp), allocatable :: loc_xpt(:, :), loc_wghx(:, :)
+  type (species) :: spec(4), bunch(5)
+  integer (hp_int), parameter :: ihx = 3
 
  end module

@@ -18,34 +18,39 @@
 !  You should have received a copy of the GNU General Public License                                  !
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
-
- module pic_in
-
-  use init_laser_field
-  use init_part_distrib
-
+ module struct_def
+  use precision_def
   implicit none
+  public
 
-  real (dp) :: xf0
+  type species
+   real (dp), allocatable :: part(:, :)
+  end type
 
- contains
-  subroutine init
-   !======================================
-   if (model_id<3) then
-    call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2) 
-   else
-    select case (model_id)
-    case (3)
-     call cp_pulse(model_id, xf0) !Circular polarization
-    case (4)
-     call set_envelope(xf0) !Envelope  approximation for laser
-     ! vector potential Ay
-    end select
-   end if
-   call part_distribute(dmodel_id, xf0)
 
-   if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
+  type grid
+   integer :: ng
+   !!Number of cells in a given direction of the grid
+   integer :: p_ind(2)
+   !!Minimum and maximum cell number of the grid
+   real (dp) :: gmin
+   !!Value of the corresponding axis at the minimum cell
+   real (dp) :: gmax
+   !!Value of the corresponding axis at the maximum cell
+   integer :: min_cell
+   !!Initial cell of the grid in absolute units (i.e. respect to the total grid)
+   integer :: max_cell
+   !!Final cell of the grid in absolute units (i.e. respect to the total grid)
+  end type
 
-  end subroutine
+  type sgrid
+   integer :: sind(2)
+   !!Initial and final stretched cell (sind(1) also coincides with the number of
+   !!stretched cells)
+   real (dp) :: smin
+   !!Axis value on the boundary between stretched and unstretched grid (left side of the box)
+   real (dp) :: smax
+   !!Axis value on the boundary between stretched and unstretched grid (right side of the box)
+  end type
 
  end module

@@ -18,34 +18,22 @@
 !  You should have received a copy of the GNU General Public License                                  !
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
+ module fstruct_data
 
- module pic_in
-
-  use init_laser_field
-  use init_part_distrib
+  use precision_def
 
   implicit none
 
-  real (dp) :: xf0
-
- contains
-  subroutine init
-   !======================================
-   if (model_id<3) then
-    call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2) 
-   else
-    select case (model_id)
-    case (3)
-     call cp_pulse(model_id, xf0) !Circular polarization
-    case (4)
-     call set_envelope(xf0) !Envelope  approximation for laser
-     ! vector potential Ay
-    end select
-   end if
-   call part_distribute(dmodel_id, xf0)
-
-   if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
-
-  end subroutine
-
+  real (dp), allocatable :: ebf(:, :, :, :), ebf_bunch(:, :, :, :), &
+    jc(:, :, :, :)
+  real (dp), allocatable :: ebf0(:, :, :, :), ebf1(:, :, :, :)
+  real (dp), allocatable :: ebf0_bunch(:, :, :, :), &
+    ebf1_bunch(:, :, :, :), jb(:, :, :, :)
+  real (dp), allocatable :: env(:, :, :, :), env0(:, :, :, :), &
+    env1(:, :, :, :)
+  real (dp), allocatable :: up(:, :, :, :), up0(:, :, :, :), &
+    up1(:, :, :, :), flux(:, :, :, :)
+  real (dp), allocatable :: pot(:, :, :, :), fluid_x_profile(:), &
+    fluid_yz_profile(:, :)
+  real (dp), allocatable :: aux1(:), aux2(:)
  end module

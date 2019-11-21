@@ -34,7 +34,6 @@ list(APPEND ALaDyn_Fortran_sources
   src/diagnostics/diag_part_and_fields.f90
   src/diagnostics/run_data_info.f90
   src/dynamics/boris_push.f90
-  src/dynamics/bunch_evolve_in_time.f90
   src/dynamics/curr_and_fields_util.f90
   src/dynamics/env_evolve_in_time.f90
   src/dynamics/fluid_density_momenta.f90
@@ -47,6 +46,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/fields/init_grid_fields.f90
   src/grid/grid_param.f90
   src/grid/set_grid_param.f90
+  src/grid/stretched_grid.f90
   src/ionization/ionize.f90
   src/ionization/ionz_data.f90
   src/IO/pic_in.f90
@@ -70,12 +70,14 @@ list(APPEND ALaDyn_Fortran_sources
   src/start/start_all.F90
   src/start/system_utilities.f90
   src/work/array_alloc.f90
-  src/work/array_wspace.f90
   src/work/code_util.f90
   src/work/common_param.f90
   src/work/control_bunch_input.f90
+  src/work/fstruct_data.f90
   src/work/phys_param.f90
   src/work/precision_def.F90
+  src/work/pstruct_data.f90
+  src/work/struct_def.f90
   src/work/util.f90
 )
 
@@ -101,7 +103,7 @@ elseif(Fortran_COMPILER_NAME MATCHES "gfor*")
     string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fbacktrace -fbounds-check -mavx512f -mavx512cd -mavx512er -mavx512pf -Og -g")
   else()
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -funroll-all-loops -O3")
-    string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fbacktrace -fbounds-check -Og -g")
+    string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fbacktrace -fbounds-check -O0 -g")
   endif()
 elseif(Fortran_COMPILER_NAME MATCHES "ifor*" OR Fortran_COMPILER_NAME MATCHES "ftn*")
   message(STATUS "ALaDyn: Using Intel Compiler")
