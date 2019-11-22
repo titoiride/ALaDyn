@@ -37,6 +37,7 @@
   integer :: partype
   integer :: imodzx, imodyz, imodyx
   integer :: pe_min, pe_max
+  integer :: pe_min_y, pe_max_y, pe_min_z, pe_max_z, pe_min_x, pe_max_x
   integer :: ndims, dims(3)
   logical :: pe0y, pe0z, pe1y, pe1z, pe0, pe1, prl, prlx, prly, prlz
   logical :: xl_bd, yl_bd, zl_bd, xr_bd, yr_bd, zr_bd

@@ -29,7 +29,8 @@
   
   implicit none
 
-  integer, parameter :: ref_nlayer = 6, ref_nlas = 8
+  integer, parameter :: ref_nlayer = 6, ref_nlas = 8, &
+   ref_nspec = 8
   !namelist input parameters
   integer :: nx, ny, nz, ny_targ
   real (dp) :: k0, yx_rat, zx_rat
@@ -69,8 +70,8 @@
 
   integer :: nx_loc, ny_loc, nz_loc, npty, nptz, nptx_max, ncmp_max, &
     nx_alloc
-  integer :: loc_npty(8), loc_nptz(8), nptx(8), loc_nptx(8), &
-    sptx_max(4), nxf, npt_buffer(4)
+  integer :: loc_npty(ref_nspec), loc_nptz(ref_nspec), nptx(ref_nspec), &
+   loc_nptx(ref_nspec), sptx_max(ref_nspec), nxf, npt_buffer(ref_nspec)
   integer :: sh_targ
   integer :: mp_per_cell(ref_nlayer), nref, np_per_zc(ref_nlayer), &
     ppc(ref_nlayer)
