@@ -296,6 +296,7 @@
       wgh_cmp = spec(ic)%part(n, id_ch)
       charge = -one_int_hp
       part_ind = -one_int_hp
+      wgh = wgh*n_mol_atoms(ic-1)
       do i = 1, inc
        ii = ii + 1
        spec(1)%part(ii, 1:3) = spec(ic)%part(n, 1:3)
@@ -324,7 +325,6 @@
    integer, intent (inout) :: np_el
    integer (sp) :: inc, id_ch
    real (dp) :: u, temp(3), a_symm
-
    integer :: n, i, ii
    !========== Enter sp_field(n,1)= the rms momenta Delta*a (n) for env model
    !                 inc=ion_ch_inc(n) the number of ionization electrons
@@ -362,6 +362,7 @@
       wgh_cmp = spec(ic)%part(n, id_ch)
       charge = -one_int_hp
       part_ind = -one_int_hp
+      wgh = wgh*n_mol_atoms(ic-1)
       do i = 1, inc
        ii = ii + 1
        spec(1)%part(ii, 1:3) = spec(ic)%part(n, 1:3)

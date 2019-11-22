@@ -210,7 +210,7 @@
     end if
     id_ch = nd2 + 1
     if (enable_ionization(1)) then
-     if (prl) call fill_ebfield_yzxbdsdata(env1, 1, 2, 2, 2)
+     if (prl) call fill_ebfield_yzxbdsdata(env, 1, 2, 2, 2)
      do ic = 2, nsp_ionz
       np = loc_npart(imody, imodz, imodx, ic)
       if (np>0) then
@@ -231,7 +231,7 @@
     end if
     if (Two_color) then
      if (enable_ionization(2)) then
-      if (prl) call fill_ebfield_yzxbdsdata(env, 1, 2, 2, 2)
+      if (prl) call fill_ebfield_yzxbdsdata(env1, 1, 2, 2, 2)
       do ic = 2, nsp_ionz
        np = loc_npart(imody, imodz, imodx, ic)
        if (np>0) then
