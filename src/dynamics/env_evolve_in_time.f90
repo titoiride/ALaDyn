@@ -199,6 +199,7 @@
    integer, intent (in) :: it_loc
    integer :: np, ic, id_ch
    real (dp) :: ef2_ion, loc_ef2_ion(2)
+   logical, parameter :: mw = .false.
    !============================
    ef2_ion = zero_dp
    !====================
@@ -328,7 +329,7 @@
    end if
    call set_env_grad_interp(jc, spec(ic), ebfp, np, curr_ndim)
    !=============================
-   ! Exit p-interpolated field variables
+   ! Exit p-interpolated |A| field variables
    ! at time level t^{n+1/2} and positions at time t^n
    ! in ebfp(1:3)=grad|A|^2/2 ebfp(4)=|A|^2/2 in 3D
    ! in ebfp(1:2)=grad|A|^2/2 ebfp(3)=|A|^2/2 in 2D
@@ -337,6 +338,9 @@
    !===========================
    ! ebfp(1:3) dt*V^{n+1/2}  ebfp(4:6) old positions for curr J^{n+1/2}
    ! ebfp(7)=dt*gam_inv
+   if (part) call cell_part_dist(mw)
+!  particle number has changed
+   np = loc_npart(imody, imodz, imodx, ic)
    !=======collects in jc(1:curr_ndim) currents due to electrons
    jc(:, :, :, :) = 0.0
    call curr_accumulate(spec(ic), ebfp, jc, np)
@@ -361,7 +365,6 @@
 
    real (dp), intent (in) :: t_loc
    integer, intent (in) :: iter_loc
-   logical, parameter :: mw = .false.
    !+++++++++++++++++++++++++++++++++
    !for vbeam >0 uses the xw=(x+vbeam*t)
    !x=xi=(xw-vbeam*t) fixed
@@ -388,7 +391,6 @@
    !=========================
    call env_lpf2_evolve(iter_loc)
    !================================
-   if (part) call cell_part_dist(mw)
   end subroutine
   !============================
   ! END ENVELOPE MODULE
