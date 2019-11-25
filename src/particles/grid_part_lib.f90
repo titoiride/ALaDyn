@@ -397,12 +397,12 @@
    integer :: n
    !=========================
    do n = 1, np
-    pt_loc(n, 1) = dx_inv*(pt_loc(n,1)-xmn) + 1
+    pt_loc(n, 1) = dx_inv*(pt_loc(n,1)-xmn)
    end do
    if (n1==0) return
    if (n_str==0) then
     do n = 1, np
-     pt_loc(n, 2) = dy_inv*(pt_loc(n,2)-ymn) + 1
+     pt_loc(n, 2) = dy_inv*(pt_loc(n,2)-ymn)
     end do
    else
     call map2dy_part_sind(np, 2, pt_loc)
@@ -410,11 +410,11 @@
    if (n1==1) return
 
    do n = 1, np
-    pt_loc(n, 3) = dx_inv*(pt_loc(n,3)-xmn) + 1
+    pt_loc(n, 3) = dx_inv*(pt_loc(n,3)-xmn)
    end do
    if (n_str==0) then
     do n = 1, np
-     pt_loc(n, 4) = dy_inv*(pt_loc(n,4)-ymn) + 1
+     pt_loc(n, 4) = dy_inv*(pt_loc(n,4)-ymn)
     end do
    else
     call map2dy_part_sind(np, 4, pt_loc)
@@ -428,24 +428,24 @@
    integer :: n
    !=========================
    do n = 1, np
-    pt_loc(n, 1) = dx_inv*(pt_loc(n,1)-xmn) + 1
+    pt_loc(n, 1) = dx_inv*(pt_loc(n,1)-xmn)
    end do
    if (n_str==0) then
     do n = 1, np
-     pt_loc(n, 2) = dy_inv*(pt_loc(n,2)-ymn) + 1
-     pt_loc(n, 3) = dz_inv*(pt_loc(n,3)-zmn) + 1
+     pt_loc(n, 2) = dy_inv*(pt_loc(n,2)-ymn)
+     pt_loc(n, 3) = dz_inv*(pt_loc(n,3)-zmn)
     end do
    else
     call map3d_part_sind( pt_loc, np, 2, 3 )
    end if
    if (n1==1) return
    do n = 1, np
-    pt_loc(n, 4) = dx_inv*(pt_loc(n,4)-xmn) + 1
+    pt_loc(n, 4) = dx_inv*(pt_loc(n,4)-xmn)
    end do
    if (n_str==0) then
     do n = 1, np
-     pt_loc(n, 5) = dy_inv*(pt_loc(n,5)-ymn) + 1
-     pt_loc(n, 6) = dz_inv*(pt_loc(n,6)-zmn) + 1
+     pt_loc(n, 5) = dy_inv*(pt_loc(n,5)-ymn)
+     pt_loc(n, 6) = dz_inv*(pt_loc(n,6)-zmn)
     end do
    else
     call map3d_part_sind( pt_loc, np, 5, 6 )
