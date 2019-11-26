@@ -146,7 +146,7 @@
    if (ionization) then
     do iic = 2, nsp_ionz
      call set_field_ioniz_wfunction(ion_min(iic-1), atomic_number(iic-1), &
-       iic, ionz_lev, ionz_model, lp_max)
+       iic, ionz_lev, ionz_model, lp_max, dt)
     end do
     if (pe0) call ioniz_data(lp_max, ion_min, atomic_number, ionz_lev, &
       ionz_model)

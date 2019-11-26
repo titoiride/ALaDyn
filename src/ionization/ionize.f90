@@ -36,13 +36,14 @@
 
   !================================
   subroutine set_field_ioniz_wfunction(z0, zm, loc_ion, nz_lev, &
-    nz_model, e_max)
+    nz_model, e_max, dt_in)
    integer, intent (in) :: z0, zm, loc_ion, nz_lev, nz_model
    real (dp), intent (in) :: e_max
    integer :: i, k, j, ic, z, zk, zm_loc, ll
-   real (dp) :: ei, w_bsi, w_adk, ns, fact1, fact2
+   real (dp) :: ei, w_bsi, w_adk, ns, fact1, fact2, dt_temp
    real (dp), allocatable :: aw(:, :)
    real (dp) :: p2, efact, avg_fact
+   real (dp), optional :: dt_in
    !=============================
    ! uses stored coefficients nstar(z,ic), vfact(z,ic),C_nstar(z,ic)
    ! ionz_model, ionz_lev,nsp_ionz z0=z_ion(), zmax=atn() in common
@@ -53,6 +54,10 @@
    de_inv = 1./dge
    deb_inv = de_inv/514. !For fields in GV/m unit
    ic = loc_ion - 1
+   dt_temp = dt_loc
+   if(present(dt_in)) then
+    dt_temp = dt_in
+   end if
    select case (nz_model)
    case (1) !Only ADK: W_DC in chen et al (2013)
     do k = z0 + 1, zm !V(k,ic) to ionize ion(ic) A(k-1)=> A(k),
@@ -166,13 +171,13 @@
    !V(zmax) for n[zmax-1]=> n[zmax] transition with probability W[zmax-z0]
    !===============================================
    ! dt in unit l0/c= 10/3. fs  dt_fs in fs unit
-   dt_fs = 10.*dt_loc/3.
+   dt_fs = 10.*dt_temp/3.
    wi = omega_a*wi
    zm_loc = zm - z0
    if (nz_lev==1) then ! one level ionization
     !W_one_level(Ef,k=z0:zm,ic) P(k.k+1) ionization
     !Wi(Ef,zk=1,zm-z0,ic) Rate of ionization zk+z0-1=> zk+z0
-    w_one_lev(0:n_ge, zm, ic) = 0.0
+    w_one_lev(0:n_ge, zm, ic) = zero_dp
     do z = 0, zm_loc - 1
      zk = z + 1
      k = z + z0
@@ -193,7 +198,7 @@
      !z=z0,z0+1,..,zmax-1
      !for fixed z0=0,   zmax-1
      !with inization potential v(1),...,V(zmax)
-     aw(0, 0) = 1.
+     aw(0, 0) = one_dp
      k = 0
      wsp(i, k, z+z0, ic) = aw(0, 0)*exp(-dt_fs*wi(i,zk,ic))
      if (wi(i,zk,ic)>0.0) then
