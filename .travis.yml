@@ -527,7 +527,7 @@ before_install:
 before_script:
   - mkdir build
   - cd build
-  - cmake .. -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_Fortran_COMPILER=$FC ${ADDITIONAL_CMAKE_SETTINGS}
+  - cmake .. -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_Fortran_COMPILER=$FC ${ADDITIONAL_CMAKE_SETTINGS} -DFORCE_OLD_MPI:BOOL=ON
 
 script:
   - cmake --build . --target install

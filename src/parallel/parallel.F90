@@ -28,7 +28,7 @@
 #define ENABLE_MPI_LONG_INT
 #endif
 
-#if !defined (USE_MPI_MODULE)
+#if defined (FORCE_OLD_MPI) && !defined (USE_MPI_MODULE)
  implicit none
  include 'mpif.h'
 #else
