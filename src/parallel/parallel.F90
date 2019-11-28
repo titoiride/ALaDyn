@@ -602,7 +602,6 @@
      nc(ipe+1) = nr
     end do
    end if
-   call MPI_BARRIER( comm, error )
    call MPI_BCAST(nc, nproc, mpi_integer, pe_min, comm, error)
 
   end subroutine

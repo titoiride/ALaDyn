@@ -359,7 +359,7 @@
   subroutine cell_part_dist(moving_wind)
    logical, intent (in) :: moving_wind
    integer :: ic, nspx, n, np, np_new, np_new_allocate, ndv, &
-     np_rs
+     np_rs,np_out
    integer :: n_sr(4)
    real (dp) :: ymm, ymx, lbd_min, rbd_max
    real (dp) :: zmm, zmx
@@ -395,9 +395,9 @@
        allocate(sp1_aux(np_new,ndv))
 
        call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
-         rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, npout)
-       if (npout/=np_new) then
-        write (6, *) 'error in y-part count', mype, npout, np_new
+         rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
+       if (np_out/=np_new) then
+        write (6, *) 'error in y-part count', mype, np_out, np_new
         ier = 99
        end if
        call p_realloc(spec(ic), np_new, ndv)
@@ -445,9 +445,9 @@
         call v_realloc(sp1_aux, np_new, ndv)
         !================
         call part_prl_exchange(spec(ic), ebfp, zmm, zmx, lbd_min, &
-          rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, npout)
-        if (npout/=np_new) then
-         write (6, *) 'error in z-part count', mype, npout, np_new
+          rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, np_out)
+        if (np_out/=np_new) then
+         write (6, *) 'error in z-part count', mype, np_out, np_new
          ier = 99
         end if
         call p_realloc(spec(ic), np_new, ndv)
@@ -476,8 +476,8 @@
       end do
      end if
     end if
-    if(allocated(sp_aux)) deallocate(sp_aux)
-    if(allocated(sp1_aux)) deallocate(sp1_aux)
+    if(allocated(sp_aux))deallocate(sp_aux)
+    if(allocated(sp1_aux))deallocate(sp1_aux)
    end if !end of moving_window=false
    !=====================
    !In moving window box (xmm,xmx) are right shifted
@@ -502,9 +502,9 @@
       allocate(sp_aux(np_new,ndv))
       allocate(sp1_aux(np_new,ndv))
       call part_prl_exchange(spec(ic), ebfp, xmm, xmx, lbd_min, rbd_max, &
-        pex0, pex1, ibx, 1, ndv, np, n_sr, npout)
-      if (npout/=np_new) then
-       write (6, *) 'error in x-part count', mype, npout, np_new
+        pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
+      if (np_out/=np_new) then
+       write (6, *) 'error in x-part count', mype, np_out, np_new
        ier = 99
       end if
       call p_realloc(spec(ic), np_new, ndv)
