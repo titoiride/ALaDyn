@@ -33,6 +33,8 @@
    ref_nspec = 8
   !namelist input parameters
   integer :: nx, ny, nz, ny_targ
+  integer :: n1ft, n2ft, n3ft
+  integer :: n1ft_loc, n2ft_loc, n3ft_loc
   real (dp) :: k0, yx_rat, zx_rat
   integer :: ibx, iby, ibz, ibeam
   integer :: lpf_ord, der_ord, str_flag, iform, model_id, dmodel_id

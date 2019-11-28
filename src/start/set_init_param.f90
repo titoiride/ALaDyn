@@ -399,7 +399,7 @@
     npt_buffer(i) = nx_alloc*ny_loc*nz_loc*mp_per_cell(i)
    end do
    !===============================
-   call set_ftgrid(nx, ny, nz)
+   call set_ftgrid(stretch,nprocx,nprocy,nprocz)
    !===============================================================
    !density per macroparticle: np_per_nmacro=nm_fact*n_over_nc/nmacro
 

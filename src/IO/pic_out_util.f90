@@ -339,7 +339,7 @@
    !=============================
   end subroutine
   !============================
-  subroutine prl_den_energy_interp(ic)
+  subroutine prl_den_energy_interp(ic,cmp_out)
    integer, intent (in) :: ic
    real (dp) :: dery, derz, ar, ai
    integer :: np, i, j, k, jj, kk, cmp_out
@@ -348,7 +348,6 @@
    ! nden=1 only charge density
    ! nden =2 charge and energy <n(gamma-1)> density
    !=============================
-   cmp_out = nden
    do i = 1, cmp_out
     jc(:, :, :, i) = 0.0
    end do
@@ -360,31 +359,30 @@
      call set_grid_charge(spec(ic), ebfp, jc, np, 1)
 
     case (2)
-
      if (envelope) then
-      do k = kz1, kz2
-       do j = jy1, jy2
-        do i = ix1, ix2
-         ar = .5*(env(i,j,k,1)+env(i,j,k,3))
-         ai = .5*(env(i,j,k,2)+env(i,j,k,4))
-         jc(i, j, k, 3) = 0.5*(ar*ar+ai*ai)
+      if(ic==1)then
+       do k = kz1, kz2
+        do j = jy1, jy2
+         do i = ix1, ix2
+          ar = .5*(env(i,j,k,1)+env(i,j,k,3))
+          ai = .5*(env(i,j,k,2)+env(i,j,k,4))
+          jc(i, j, k, 3) = 0.5*(ar*ar+ai*ai)
+         end do
         end do
        end do
-      end do
-      if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
-      call set_grid_env_den_energy(spec(ic), ebfp, jc, np, 3)
-
-     ! in jc(1) is the plasma density in jc(2) (gam-1)density with env-gamma component
-
+       if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
+       call set_grid_env_den_energy(spec(ic), ebfp, jc, np, 3)
+      endif
+      ! in jc(1) is the plasma density in jc(2) (gam-1)density with env-gamma component
+      !ONLY for electrons
      else
       call set_grid_den_energy(spec(ic), ebfp, jc, np)
 
      ! in jc(1) is plasma norm density in jc(2) <(gam-1)density>  with
-     ! kineticagamma
+     ! kineticagamma for each species
      end if
     end select
-
-    if (prl) call fill_curr_yzxbdsdata(jc, cmp_out)
+    if (prl) call fill_curr_yzxbdsdata(jc,cmp_out)
     do kk = 1, cmp_out
      call den_zyxbd(jc, kk)
     end do
@@ -447,8 +445,8 @@
 
    ft_mod = 2 !for cosine transform
    ft_sym = 2
-   call fft_2d_psolv(jc, ompe, nx, nx_loc, ny, ny_loc, nz, nz_loc, ix1, &
-     ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
+   call fft_2d_psolv(jc, ompe, nx, nx_loc, ny, ny_loc, nz, nz_loc, &
+     ft_mod, ft_sym)
 
    !==================================
   end subroutine
