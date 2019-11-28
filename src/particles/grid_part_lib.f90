@@ -356,6 +356,34 @@
    ay(2) = 0.5*(0.25+sx2+sx)
    ay(0) = 1. - ay(1) - ay(2)
   end subroutine
+!======================
+  subroutine cden_2d_wgh(xp, ax, ay, ix, iy)
+   real (dp), intent (in) :: xp(:)
+   real (dp), intent (inout) :: ax(0:3), ay(0:3)
+   integer, intent (inout) :: ix, iy
+   real (dp) :: xx, sx, sx2,sx3
+   !======================
+   !cubic spline to integer index
+    xx = shy + xp(1)
+    ix = int(xx)
+    sx = xx - real(ix, dp)
+    sx2 = sx*sx
+    sx3 = sx2*sx
+    ax(1) = two_third - sx2 + 0.5*sx3
+    ax(2) = one_sixth + 0.5*(sx+sx2-sx3)
+    ax(3) = one_sixth*sx3
+    ax(0) = 1. - ax(1) - ax(2) - ax(3)
+
+    xx = shy + xp(2)
+    iy = int(xx)
+    sx = xx - real(iy, dp)
+    sx2 = sx*sx
+    sx3 = sx2*sx
+    ay(1) = two_third - sx2 + 0.5*sx3
+    ay(2) = one_sixth + 0.5*(sx+sx2-sx3)
+    ay(3) = one_sixth*sx3
+    ay(0) = 1. - ay(1) - ay(2) - ay(3)
+  end subroutine
   !==========================
   subroutine qden_3d_wgh(xp, ax, ay, az, ix, iy, iz)
    real (dp), intent (in) :: xp(:)
@@ -386,6 +414,43 @@
    az(1) = 0.75 - sx2
    az(2) = 0.5*(0.25+sx2+sx)
    az(0) = 1. - az(1) - az(2)
+  end subroutine
+!---------------------
+  subroutine cden_3d_wgh(xp, ax, ay, az, ix, iy, iz)
+   real (dp), intent (in) :: xp(:)
+   real (dp), intent (inout) :: ax(0:3), ay(0:3), az(0:3)
+   integer, intent (inout) :: ix, iy, iz
+   real (dp) :: xx, sx, sx2,sx3
+   !======================
+   !cubic spline to integer index
+    xx = shx + xp(1)
+    ix = int(xx)
+    sx = xx - real(ix, dp)
+    sx2 = sx*sx
+    sx3 = sx2*sx
+    ax(1) = two_third - sx2 + 0.5*sx3
+    ax(2) = one_sixth + 0.5*(sx+sx2-sx3)
+    ax(3) = one_sixth*sx3
+    ax(0) = 1. - ax(1) - ax(2) - ax(3)
+
+    xx = shy + xp(2)
+    iy = int(xx)
+    sx = xx - real(iy, dp)
+    sx2 = sx*sx
+    sx3 = sx2*sx
+    ay(1) = two_third - sx2 + 0.5*sx3
+    ay(2) = one_sixth + 0.5*(sx+sx2-sx3)
+    ay(3) = one_sixth*sx3
+    ay(0) = 1. - ay(1) - ay(2) - ay(3)
+
+    xx = shz + xp(3)
+    iz = int(xx)
+    sx = xx - real(iz, dp)
+    sx2 = sx*sx
+    az(1) = two_third - sx2 + 0.5*sx3
+    az(2) = one_sixth + 0.5*(sx+sx2-sx3)
+    az(3) = one_sixth*sx3
+    az(0) = 1. - az(1) - az(2) - az(3)
   end subroutine
   !====================================
 
