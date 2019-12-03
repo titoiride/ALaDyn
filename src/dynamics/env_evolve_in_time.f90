@@ -370,7 +370,6 @@
    !x=xi=(xw-vbeam*t) fixed
    !+++++++++++++++++++++++++++++++++
    if (w_speed>0.0) then ! moves the computational box with w_speed>0.
-    if (iter_loc==0) call lp_window_xshift(w_sh, iter_loc)
     if (t_loc >= wi_time) then
      if (t_loc < wf_time) then
       if (mod(iter_loc,w_sh) == 0) then

@@ -341,8 +341,9 @@
    end do
    pout = p
    if (pout>0) then
-    call v_realloc(sp_aux, np, ndv)
-    call v_realloc(sp1_aux, np, ndv)
+    np_new = np - pout
+    call v_realloc(sp_aux, np_new, ndv)
+    call v_realloc(sp1_aux, np_new, ndv)
     p = 0
     do n = 1, np
      xp = loc_sp%part(n, cin)

@@ -140,11 +140,11 @@
     end if
     if (.not. pe0z) then
      sd = .true.
-     call exchange_rdata_int(loc_nptz, sd, nsp, pe_min_z, 1, 100 + imodz)
+     call exchange_rdata_int(loc_nptz, sd, nsp, pe_min_z, 2, 100 + imodz)
     else
      sd = .false.
      do ipe = 1, npe_zloc - 1
-      call exchange_rdata_int(loc_nptz, sd, nsp, ipe, 1, 100 + ipe)
+      call exchange_rdata_int(loc_nptz, sd, nsp, ipe, 2, 100 + ipe)
       dist_npz(ipe+1, 1:nsp) = loc_nptz(1:nsp)
      end do
     end if

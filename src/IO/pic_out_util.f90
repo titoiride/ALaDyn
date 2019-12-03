@@ -340,9 +340,9 @@
   end subroutine
   !============================
   subroutine prl_den_energy_interp(ic,cmp_out)
-   integer, intent (in) :: ic
+   integer, intent (in) :: ic, cmp_out
    real (dp) :: dery, derz, ar, ai
-   integer :: np, i, j, k, jj, kk, cmp_out
+   integer :: np, i, j, k, jj, kk
 
    !=============================
    ! nden=1 only charge density

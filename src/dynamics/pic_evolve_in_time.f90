@@ -118,7 +118,6 @@
    !================================
    ts = t_loc
    if (w_speed>0.0) then ! moves the computational box with w_speed>0.
-    if (iter_loc==0) call lp_window_xshift(w_sh, iter_loc)
     if (ts>=wi_time .and. ts<wf_time) then
      if (mod(iter_loc,w_sh)==0) then
       call lp_window_xshift(w_sh, iter_loc)
