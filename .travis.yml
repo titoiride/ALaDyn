@@ -50,7 +50,7 @@ matrix:
 
     - os: linux
       compiler: gcc
-      name: ubuntu - PGI 19.04 - openmpi
+      name: ubuntu - PGI 19.4 - openmpi
       addons:
         apt:
           update: true
