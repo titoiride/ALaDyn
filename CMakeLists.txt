@@ -42,7 +42,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/dynamics/fluid_density_momenta.f90
   src/dynamics/pic_evolve_in_time.f90
   src/dynamics/window.f90
-  src/fft/fft_lib.F90
+  src/fft/legacy_fft_lib.F90
   src/fft/prl_fft.f90
   src/fields/grid_field_param.f90
   src/fields/grid_fields.f90

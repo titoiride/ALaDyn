@@ -21,7 +21,7 @@
 
  module prl_fft
   use parallel
-  use fft_lib
+  use legacy_fft_lib
   implicit none
 
   real (dp), allocatable :: fp1(:, :, :), fp2(:, :, :), faux1(:), &
@@ -494,7 +494,7 @@
    case (1)
     ! enters w(loc)
     call pftw2d_sc(w, n1, n2, n2_loc, n3, n3_loc, is, sym)
-!   ========================
+    !========================
     call ftw1d_sc(w, n1, n2_loc, n3_loc, is, 1, sym)
    end select
    !===================
