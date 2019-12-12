@@ -102,7 +102,7 @@
     else
      yp_loc = invert_uniform_grid(yp, y_params) - y_params%init_cell
     end if
-    pt(n, ic1) = yp_loc + 1
+    pt(n, ic1) = yp_loc
    end do
   end subroutine
 
@@ -138,7 +138,7 @@
     else
      zp_loc = invert_uniform_grid(zp, z_params) - z_params%init_cell
     end if
-    pt(n, ic1) = zp_loc + 1
+    pt(n, ic1) = zp_loc
    end do
   end subroutine
 

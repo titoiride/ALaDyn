@@ -86,7 +86,7 @@
    integer :: ip, iz, ix, pp, ic, np_new, nploc(npe)
 
    do ic = 1, nsp
-    nploc = 0
+    nploc(:) = 0
     np_new = loc_npart(imody, imodz, imodx, ic)
     call intvec_distribute(np_new, nploc, npe)
     pp = 0
@@ -95,7 +95,7 @@
      do iz = 0, npe_zloc - 1
       do ip = 0, npe_yloc - 1
        pp = pp + 1
-       loc_npart(ip, iz, ix, ic)=nploc(pp)
+       loc_npart(ip, iz, ix, ic) = nploc(pp)
       end do
      end do
     end do
@@ -103,11 +103,11 @@
    np_max = maxval(nploc(1:npe))
    np_min = minval(nploc(1:npe))
    if(.not.part)then
-    if(np_max >0)part=.true.
+    if(np_max > 0) part=.true.
    endif
    do ip = 0, npe - 1
-    if (nploc(ip+1)==np_min) pe_npmin = ip
-    if (nploc(ip+1)==np_max) pe_npmax = ip
+    if (nploc(ip+1) == np_min) pe_npmin = ip
+    if (nploc(ip+1) == np_max) pe_npmax = ip
    end do
   end subroutine
 

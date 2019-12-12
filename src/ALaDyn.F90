@@ -190,7 +190,7 @@
     end if
     if (nden>0) then
      do i = 1, nsp
-      call prl_den_energy_interp(i)
+      call prl_den_energy_interp(i,nden)
       do iic = 1, min(2, nden)
        call den_energy_out( i, iic, iic )
       end do
@@ -206,11 +206,11 @@
      end do
     end if
     if (ionization) call part_ionz_out(tnow)
-    if (gam_min>1.) call part_high_gamma_out(gam_min, tnow)
-    if (nbout>0) call part_bdata_out(tnow,1,pjump)
-    if (npout>0) then
-     iic=npout
-     if (iic<=nsp) then
+    if (gam_min > 1.) call part_high_gamma_out(gam_min, tnow)
+    if (nbout > 0) call part_bdata_out(tnow,1,pjump)
+    if (npout > 0) then
+     iic = npout
+     if (iic <= nsp) then
       call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, iic, pjump)
      else
       do i = 1, nsp

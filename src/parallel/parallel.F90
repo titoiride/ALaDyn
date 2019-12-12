@@ -28,7 +28,7 @@
 #define ENABLE_MPI_LONG_INT
 #endif
 
-#if !defined (USE_MPI_MODULE)
+#if defined (FORCE_OLD_MPI) && !defined (USE_MPI_MODULE)
  implicit none
  include 'mpif.h'
 #else
@@ -88,6 +88,9 @@
    npe_zloc = nprocz
    npe = mpi_size
 
+   pe_min = 0
+   pe_max = npe - 1
+
    mype = mpi_rank
    pe0 = (mype==0)
    pe1 = (mype==pe_max)
@@ -96,9 +99,6 @@
    prlx = (npe_xloc>1)
    prly = (npe_yloc>1)
    prlz = (npe_zloc>1)
-
-   pe_min = 0
-   pe_max = npe - 1
 
    comm = mpi_comm_world
 
@@ -154,6 +154,13 @@
    pe1z = imodz == npe_zloc - 1
    pex0 = imodx == 0
    pex1 = imodx == npe_xloc - 1
+   !===========================
+   pe_min_y = 0
+   pe_max_y = npe_yloc - 1
+   pe_min_z = 0
+   pe_max_z = npe_zloc - 1
+   pe_min_x = 0
+   pe_max_x = npe_xloc - 1
    !===========================
    xl_bd = .false.
    xr_bd = .false.
@@ -470,6 +477,25 @@
 
   end subroutine
 
+  subroutine exchange_2d_idata(sr, idat, n1, n2, ipe, tag)
+   logical, intent (in) :: sr
+   integer, intent (inout) :: idat(:, :)
+   integer, intent (in) :: n1, n2, ipe, tag
+   integer :: lenw
+
+   lenw = n1*n2
+   if (sr) then
+
+    call mpi_send(idat(1,1), lenw, mpi_integer, ipe, tag, comm, error)
+
+   else
+
+    call mpi_recv(idat(1,1), lenw, mpi_integer, ipe, tag, comm, status, &
+      error)
+   end if
+
+  end subroutine
+
   subroutine exchange_3d_sp_data(sr, dat0, n1, n2, n3, ipe, tag)
    integer, intent (in) :: n1, n2, n3, ipe, tag
    real (sp), intent (inout) :: dat0(:, :, :)
@@ -576,7 +602,6 @@
      nc(ipe+1) = nr
     end do
    end if
-   call MPI_BARRIER( comm, error )
    call MPI_BCAST(nc, nproc, mpi_integer, pe_min, comm, error)
 
   end subroutine
@@ -732,7 +757,31 @@
    end if
 
   end subroutine
+
+  subroutine exchange_rdata_int(buff, sr, lenw, ipe, dir, tag)
+   integer, intent (inout) :: buff(:)
+   logical, intent (in) :: sr
+   integer, intent (in) :: lenw, ipe, dir, tag
+
+   if (sr) then
+    call mpi_send(buff(1), lenw, mpi_integer, ipe, tag, comm_col(dir), error)
+   else
+    call mpi_recv(buff(1), lenw, mpi_integer, ipe, tag, comm_col(dir), &
+      status, error)
+   end if
+
+  end subroutine
   !=======================
+  subroutine vint_2d_bcast(mydat, n1, n2)
+   integer, intent (in) :: n1, n2
+   integer, intent (inout), dimension(:, :) :: mydat
+   integer :: nt
+
+   nt = n1*n2
+   call MPI_BCAST(mydat(1, 1), nt, mpi_integer, pe_min, comm, error)
+
+  end subroutine
+
   subroutine vint_bcast(mydat, nt)
    integer, intent (in) :: nt
    integer, intent (inout) :: mydat(nt)

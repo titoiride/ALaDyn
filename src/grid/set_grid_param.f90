@@ -635,12 +635,30 @@
 
   end subroutine
   !====================
-  subroutine set_ftgrid(n1, n2, n3)
-   integer, intent (in) :: n1, n2, n3
+  subroutine set_ftgrid(str,npe1,npe2,npe3)
+   logical,intent(in) :: str
+   integer,intent(in) :: npe1,npe2,npe3
+   integer :: n1, n2, n3
    integer :: i
    real (dp) :: wkx, wky, wkz
-
-
+ 
+   n1=nx
+   n2=ny
+   n3=nz
+   if(str)then
+    n2=nint(dy_inv*ly_box)
+    n3=nint(dz_inv*lz_box)
+    if(mod(n2,2) >0)n2=n2+1
+    if(mod(n3,2) >0)n3=n3+1
+   endif
+!============= set in common.param
+   n1ft=n1
+   n2ft=n2
+   n3ft=n3
+   n1ft_loc=n1ft/npe1
+   n2ft_loc=n2ft/npe2
+   n3ft_loc=n3ft/npe3
+!=======================
    allocate (aky(n2+2,0:2), akz(n3+2,0:2))
    allocate (sky(n2+2,0:2), skz(n3+2,0:2))
    allocate (ak2y(n2+2,0:2), ak2z(n3+2,0:2), ak2x(n1+1,0:2))

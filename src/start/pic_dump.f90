@@ -70,6 +70,7 @@
    real (dp) :: rdata(10)
    integer :: ndata(10)
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
+   logical :: sd
    !==============
    write (fname, '(a9)') 'Comm-data'
    write (fname_yz, '(a9)') 'Dist-wgyz'
@@ -126,27 +127,27 @@
     dist_npz(:, :) = 0
     dist_npy(imody+1, 1:nsp) = loc_npty(1:nsp)
     dist_npz(imodz+1, 1:nsp) = loc_nptz(1:nsp)
-    if (imody>0) then
-     call mpi_send(loc_npty, nsp, mpi_integer, pe0y, 100+imody, &
-       comm_col(1), error)
+   !===============================
+    if (.not. pe0y) then
+     sd = .true.
+     call exchange_rdata_int(loc_npty, sd, nsp, pe_min_y, 1, 100 + imody)
     else
+     sd = .false.
      do ipe = 1, npe_yloc - 1
-      call mpi_recv(loc_npty, nsp, mpi_integer, ipe, 100+ipe, &
-        comm_col(1), status, error)
+      call exchange_rdata_int(loc_npty, sd, nsp, ipe, 1, 100 + ipe)
       dist_npy(ipe+1, 1:nsp) = loc_npty(1:nsp)
      end do
     end if
-    if (imodz>0) then
-     call mpi_send(loc_nptz, nsp, mpi_integer, pe0z, 10+imodz, &
-       comm_col(2), error)
+    if (.not. pe0z) then
+     sd = .true.
+     call exchange_rdata_int(loc_nptz, sd, nsp, pe_min_z, 2, 100 + imodz)
     else
+     sd = .false.
      do ipe = 1, npe_zloc - 1
-      call mpi_recv(loc_nptz, nsp, mpi_integer, ipe, 10+ipe, &
-        comm_col(2), status, error)
+      call exchange_rdata_int(loc_nptz, sd, nsp, ipe, 2, 100 + ipe)
       dist_npz(ipe+1, 1:nsp) = loc_nptz(1:nsp)
      end do
     end if
-    !===================
    !=========================
    ndata = 0
    rdata = 0.0
@@ -403,7 +404,8 @@
    character (27) :: fnamel_out = '                           '
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, ipe, npt_arr(npe, nsp)
-   integer :: k1, ndv, np, ic, lun, i, j, k, kk, lenw(npe), lenbuff
+   integer :: k1, ndv, np, ic, lun, i, j, k, kk, lenw(npe), lenbuff, &
+    k2, k3
    integer :: ip_loc(npe), loc_grid_size(npe), loc2d_grid_size(npe)
    integer :: grid_size_max, grid2d_size_max
    integer :: env_cp, env1_cp, fl_cp, ebf_cp
@@ -411,6 +413,7 @@
    integer :: n1_loc, n2_loc, n3_loc, nypt_max, nzpt_max
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
    real (dp) :: rdata(10), x0_new
+   logical :: sd
 
    !==============
    write (fname, '(a9)') 'Comm-data'
@@ -497,11 +500,12 @@
    !========================= distribute comm data
    kk = size(rdata)
    k1 = size(ndata)
-   call MPI_BCAST(ndata, k1, mpi_integer, pe_min, comm, error)
-   call MPI_BCAST(nptx, nsp, mpi_integer, pe_min, comm, error)
-   call MPI_BCAST(sptx_max, nsp, mpi_integer, pe_min, comm, error)
-   call MPI_BCAST(rdata, kk, mpi_sd, pe_min, comm, error)
-
+   k2 = size(nptx)
+   k3 = size(sptx_max)
+   call vint_bcast(ndata, k1)
+   call vint_bcast(nptx, k2)
+   call vint_bcast(sptx_max, k3)
+   call real_bcast(rdata, kk)
    it_loc = ndata(1)
    nptx_max = ndata(5)
    n1_old = ndata(6)
@@ -533,62 +537,57 @@
      end if
     end if
     if (pe0) then
+     sd = .true.
      do ipe = 1, npe - 1
-      call mpi_send(xpt(1,1), nptx_max*nsp, mpi_double_precision, ipe, &
-        100+ipe, comm, error)
-      call mpi_send(wghpt(1,1), nptx_max*nsp, mpi_double_precision, ipe, &
-        400+ipe, comm, error)
+      call exchange_2d_grdata(sd, xpt, nptx_max, nsp, ipe, ipe + 100)
+      call exchange_2d_grdata(sd, wghpt, nptx_max, nsp, ipe, ipe + 400)
      end do
     else
-     call mpi_recv(xpt(1,1), nptx_max*nsp, mpi_double_precision, pe_min, &
-       100+mype, comm, status, error)
-     call mpi_recv(wghpt(1,1), nptx_max*nsp, mpi_double_precision, &
-       pe_min, 400+mype, comm, status, error)
-    end if
+     sd = .false.
+     call exchange_2d_grdata(sd, xpt, nptx_max, nsp, pe_min, mype + 100)
+     call exchange_2d_grdata(sd, wghpt, nptx_max, nsp, pe_min, mype + 400)
+    endif
     !===========================
     if (hybrid) then
      if (nxf>0) then
       if (pe0) then
+       sd = .true.
        do ipe = 1, npe - 1
-        call mpi_send(fluid_x_profile(1), nxf, mpi_double_precision, &
-          ipe, 10+ipe, comm, error)
+        call exchange_1d_grdata(sd, fluid_x_profile, nxf, ipe, ipe + 10)
        end do
       else
-       call mpi_recv(fluid_x_profile(1), nxf, mpi_double_precision, &
-         pe_min, 10+mype, comm, status, error)
-      end if
+       sd = .false.
+       call exchange_1d_grdata(sd, fluid_x_profile, nxf, pe_min, mype + 10)
+      endif
      end if
     end if
    end if
    !Pe0 distributes npart => npt(npe,nsp)
-    call MPI_BCAST(npt_arr(1,1), npe*nsp, mpi_integer, pe_min, comm, &
-      error)
-    do i = 1, npe
-     ip_loc(i) = sum(npt_arr(i,1:nsp))
-    end do
-    max_npt_size = ndv*maxval(ip_loc(1:npe))
-    lenbuff = max(lenbuff, max_npt_size)
-    ipe = 0
-    do i = 0, npe_xloc - 1
-     do j = 0, npe_zloc - 1
-      do k = 0, npe_yloc - 1
-       loc_npart(k, j, i, 1:nsp) = npt_arr(ipe+1, 1:nsp)
-       ipe = ipe + 1
-      end do
+   call vint_2d_bcast(npt_arr, npe, nsp)
+   do i = 1, npe
+    ip_loc(i) = sum(npt_arr(i,1:nsp))
+   end do
+   max_npt_size = ndv*maxval(ip_loc(1:npe))
+   lenbuff = max(lenbuff, max_npt_size)
+   ipe = 0
+   do i = 0, npe_xloc - 1
+    do j = 0, npe_zloc - 1
+     do k = 0, npe_yloc - 1
+      loc_npart(k, j, i, 1:nsp) = npt_arr(ipe+1, 1:nsp)
+      ipe = ipe + 1
      end do
     end do
-    !========== distributes npty,nptz initial particle distribution
-    call MPI_BCAST(dist_npy(1,1), npe_yloc*nsp, mpi_integer, pe_min, &
-      comm, error)
-    call MPI_BCAST(dist_npz(1,1), npe_zloc*nsp, mpi_integer, pe_min, &
-      comm, error)
-    loc_npty(1:nsp) = dist_npy(imody+1, 1:nsp)
-    loc_nptz(1:nsp) = dist_npz(imodz+1, 1:nsp)
-    nypt_max = maxval(loc_npty(1:nsp))
-    nzpt_max = maxval(loc_nptz(1:nsp))
-    allocate (loc_ypt(nypt_max,nsp))
-    allocate (loc_zpt(nzpt_max,nsp))
-    allocate (loc_wghyz(nypt_max,nzpt_max,nsp))
+   end do
+   !========== distributes npty,nptz initial particle distribution
+   call vint_2d_bcast(dist_npy, npe_yloc, nsp)
+   call vint_2d_bcast(dist_npz, npe_zloc, nsp)
+   loc_npty(1:nsp) = dist_npy(imody+1, 1:nsp)
+   loc_nptz(1:nsp) = dist_npz(imodz+1, 1:nsp)
+   nypt_max = maxval(loc_npty(1:nsp))
+   nzpt_max = maxval(loc_nptz(1:nsp))
+   allocate (loc_ypt(nypt_max,nsp))
+   allocate (loc_zpt(nzpt_max,nsp))
+   allocate (loc_wghyz(nypt_max,nzpt_max,nsp))
    ! x() defined on the grid module starting from x(1)=0.0
    !---------- Particle read
    !============================================

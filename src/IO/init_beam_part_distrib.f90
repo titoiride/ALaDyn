@@ -273,7 +273,6 @@
      i1 = i1 + nb_tot(ic)
     end do
    end select
-   deallocate(ebfb)
    !=================================
   end subroutine
   !========================
@@ -316,6 +315,8 @@
    integer :: id_ch, np, nb, ic, ft_mod, ft_sym
    integer :: nps_loc(nsb),nb_loc(1), i1, ix, iy, iz
    real (dp) :: gam2, dmax(1), all_dmax(1)
+   real (dp) :: y1, y2, z1, z2, x1, x2
+   
    integer :: n, n1_alc, n2_alc, n3_alc
 
    gam2 = gam0*gam0
@@ -336,7 +337,7 @@
    !=========================================
    call init_random_seed(mype)
    call beam_data(ndim)
-   ! Generates phase space coordinates for bparticles on bpart(7,np_tot)
+   ! Generates phase space coordinates for bparticles on ebfb(np_tot,7)
    ! bpart() provisional storage in common to all MPI tasks
    !=======================
    call mpi_beam_distribute(ndim) !local bpart data are stored in bunch(1)%part struct for each MPI task
@@ -372,54 +373,32 @@
     end do
     loc_npart(imody,imodz,imodx,1) = nb_loc(1)
    end if
-   !==================== Computes the bunch number density
-   jc(:, :, :, 1) = 0.0
-   do ic = 1, nsb
-    np = loc_nbpart(imody, imodz, imodx, ic)
-    call set_grid_charge(bunch(1), ebfp, jc, np, 1)
-   end do
-   !generates ebf_bunc(1)=den(i,j,k)
-   !on local MPI computational grid[i2,nyp,nzb]
-   if (prl) call fill_curr_yzxbdsdata(jc, 1)
-   !============================
-   ! BUNCH grid DENSITY already normalized
-   ! index=3 for bunch current: a same bet0 assumed for all bunches
-   !===========================================
-   jc(:, :, :, 2) = bet0*jc(:, :, :, 1)
-   !Beam Ax potential in jc(2)    Ay=Az=0 assumed
-   !In jc(1) beam density  in jc(2) beam Jx current
-   !=====================================================
-   if (allocated(bunch(1)%part)) deallocate (bunch(1)%part)
-!=======================================
-   !generates injc(1)=den(i,j,k)  jc(2)= Jx(i,j,k)
-   if (prl) call fill_curr_yzxbdsdata(jc, 1)
-   dmax(1) = 0.0
-   do iz = kz1, kz2
-    do iy = jy1, jy2
-     do ix = ix1, ix2
-      dmax(1) = max(dmax(1), abs(jc(ix,iy,iz,1)))
-     end do
+   ! Solves for beam potential UNIFORM GRIDS NEEDED
+   !==================================================
+    ft_mod = 2 !A sine transform along each coordinate
+    ft_sym = 1
+    jc(:, :, :, 1) = 0.0
+    do ic = 1, nsb
+     np = loc_nbpart(imody, imodz, imodx, ic)
+     call set_grid_charge(bunch(1), ebfp, jc, np, 1)
     end do
-   end do
-   all_dmax(1) = dmax(1)
-   if (prl) call allreduce_dpreal(maxv, dmax, all_dmax, 1)
-   !============================
-   ! BUNCH grid DENSITY and current already normalized
-   !In jc(1) beam density  in jc(2) beam Jx current
-   !=====================================================
-   ! UNIFORM GRIDS ASSUMED
-   !======================
-   ft_mod = 2 !A sine transform along each coordinate
-   ft_sym = 1
-   if (ndim==2) call fft_2d_psolv(jc, ompe, nx, nx_loc, ny, ny_loc, nz, &
-     nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
-   if (ndim==3) call fft_psolv(jc, gam2, ompe, nx, nx_loc, ny, ny_loc, &
-     nz, nz_loc, ix1, ix2, jy1, jy2, kz1, kz2, ft_mod, ft_sym)
-   !Solves Laplacian[poten]=ompe*rho
-   !Beam potential in jc(1) 
-   !===================
-   !====================
-   call fill_ebfield_yzxbdsdata(jc, 1, 2, 1, 1)
+    if (prl) call fill_curr_yzxbdsdata(jc,1)
+    !============================
+    jc(:, :, :, 2) = bet0*jc(:, :, :, 1)
+    !In jc(1) beam density  in jc(2) beam Jx current
+    !=====================================================
+    if (ndim==2) call fft_2d_psolv(jc, ompe, n1ft, n1ft_loc, n2ft, n2ft_loc, n3ft, &
+     n3ft_loc,ft_mod, ft_sym)
+    if (ndim==3) call fft_3d_psolv(jc, gam2,ompe, n1ft, n1ft_loc, n2ft, n2ft_loc, n3ft, &
+     n3ft_loc,ft_mod, ft_sym)
+   !Solves Laplacian[poten]=ompe*rho in Fourier space using sin() transform
+   !Exit beam potential in jc(1) 
+   !uniform to stretched grid interpolation inside
+   !==========================
+   if(allocated(bunch(1)%part))deallocate(bunch(1)%part)
+   if(allocated(ebfb))deallocate(ebfb)
+   !===========================
+   call fill_ebfield_yzxbdsdata(jc, 1, 2,1,1)
    call initial_beam_fields(jc, ebf_bunch, gam2, bet0)
    ! generates (Ex,Ey,Ez,By,Bz) bunch fields  Bx=ebf_bunc(4)=0
    ebf_bunch(:, :, :, 4) = 0.0
@@ -447,7 +426,6 @@
     write (16, '(a21,e11.4)') 'Initial xc-position= ', xc_bunch(i1)
     write (16, '(a20,e11.4)') 'B charge    [pC] =  ', bunch_charge(i1)
     write (16, '(a21,e11.4)') 'B_density/P_density  ', rhob(i1)
-    write (16, '(a19,e11.4)') 'Bunch max density  ', all_dmax(i1)
     end do
     close (16)
    end if

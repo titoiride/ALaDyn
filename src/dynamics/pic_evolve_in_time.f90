@@ -38,6 +38,7 @@
    integer, intent (in) :: iter_loc
    integer :: lp, ic, np, id_ch
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
+   logical, parameter :: mw = .false.
    !============================
    call pfields_prepare(ebf, nfield, 2, 2)
    if (ionization) then
@@ -73,7 +74,6 @@
    !curr_clean
    do ic = 1, nsp_run
     np = loc_npart(imody, imodz, imodx, ic)
-    if (np>0) then
      !============
      call set_lpf_acc(ebf, spec(ic), ebfp, np, nfield)
      call field_charge_multiply(spec(ic), ebfp, np, nfield)
@@ -83,10 +83,11 @@
      ! For each species :
      ! ebfp(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
      ! ebfp(4:7) store old x^n positions and dt/gam at t^{n+1/2}
+     if (part) call cell_part_dist(mw)
      !
+     np = loc_npart(imody, imodz, imodx, ic)
      call curr_accumulate(spec(ic), ebfp, jc, np)
      !================= only old ion charge saved
-    end if
    end do
    !==========================================
    if (part) call curr_mpi_collect(jc)
@@ -114,11 +115,9 @@
    real (dp), intent (in) :: t_loc
    integer, intent (in) :: iter_loc
    real (dp) :: ts
-   logical, parameter :: mw = .false.
    !================================
    ts = t_loc
    if (w_speed>0.0) then ! moves the computational box with w_speed>0.
-    if (iter_loc==0) call lp_window_xshift(w_sh, iter_loc)
     if (ts>=wi_time .and. ts<wf_time) then
      if (mod(iter_loc,w_sh)==0) then
       call lp_window_xshift(w_sh, iter_loc)
@@ -140,7 +139,6 @@
    !=========================
    call lpf2_evolve(iter_loc)
    !===================================
-   if (part) call cell_part_dist(mw)
   end subroutine
 
  end module
