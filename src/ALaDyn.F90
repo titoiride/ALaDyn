@@ -196,7 +196,7 @@
       end do
      end do
      if (nden>2) then
-      call set_wake_potential
+      !call set_wake_potential
       call den_energy_out( 0, nden, 1 ) !data on jc(1) for wake potential
      end if
     end if

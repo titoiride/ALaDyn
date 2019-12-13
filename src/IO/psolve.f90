@@ -72,14 +72,14 @@
     end do
     do k = 1, k2
      do j = 1, j2
-      w1(1:i2) = temp*wp(1:i2, j, k)
+      w1_re(1:i2) = temp*wp(1:i2, j, k)
       wp(1:i2, j, k) = 0.0
       do i = 1, i2
        sum0 = 0.0
        ik = max(i, i2/2)
        do ii = ik, i2
-        sum0(1) = sum0(1) + kern2(ii, 1)*w1(ii)
-        sum0(2) = sum0(2) + kern2(ii, 2)*w1(ii)
+        sum0(1) = sum0(1) + kern2(ii, 1)*w1_re(ii)
+        sum0(2) = sum0(2) + kern2(ii, 2)*w1_re(ii)
        end do
        wp(i, j, k) = sum0(1)*kern2(i, 2) - sum0(2)*kern2(i, 1)
       end do
