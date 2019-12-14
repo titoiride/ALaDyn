@@ -35,6 +35,7 @@
 
  contains
   subroutine pwfa_density(wp, kp, i2, j2, k2, dir)
+   !! WARNING: To be checked (Not used in the code)
    real (dp), intent (inout) :: wp(:, :, :)
    real (dp), intent (in) :: kp
    integer, intent (in) :: i2, j2, k2, dir
@@ -62,30 +63,30 @@
     call ftw1d_sc(wp, i2, j2, k2, 1, 1, 1)
     !=============== use n(x)=sin(kp*x)*sum_y<x[cos(kp*y)*nb(y)]
     !                         +cos(kp*x)*sum_y>x[sin(kp*y)*nb(y)]
-   case (2)
-    kpx = kp*dx
-    temp = kp*sin(0.5*kpx)/(0.5*kpx)
-    allocate (kern2(i2,2))
-    do i = 1, i2
-     kern2(i, 1) = sin(kp*x(i))
-     kern2(i, 2) = cos(kp*x(i))
-    end do
-    do k = 1, k2
-     do j = 1, j2
-      w1_re(1:i2) = temp*wp(1:i2, j, k)
-      wp(1:i2, j, k) = 0.0
-      do i = 1, i2
-       sum0 = 0.0
-       ik = max(i, i2/2)
-       do ii = ik, i2
-        sum0(1) = sum0(1) + kern2(ii, 1)*w1_re(ii)
-        sum0(2) = sum0(2) + kern2(ii, 2)*w1_re(ii)
-       end do
-       wp(i, j, k) = sum0(1)*kern2(i, 2) - sum0(2)*kern2(i, 1)
-      end do
-     end do
-    end do
-   end select
+   ! case (2)
+   !  kpx = kp*dx
+   !  temp = kp*sin(0.5*kpx)/(0.5*kpx)
+   !  allocate (kern2(i2,2))
+   !  do i = 1, i2
+   !   kern2(i, 1) = sin(kp*x(i))
+   !   kern2(i, 2) = cos(kp*x(i))
+   !  end do
+   !  do k = 1, k2
+   !   do j = 1, j2
+   !    w1_re(1:i2) = temp*wp(1:i2, j, k)
+   !    wp(1:i2, j, k) = 0.0
+   !    do i = 1, i2
+   !     sum0 = 0.0
+   !     ik = max(i, i2/2)
+   !     do ii = ik, i2
+   !      sum0(1) = sum0(1) + kern2(ii, 1)*w1_re(ii)
+   !      sum0(2) = sum0(2) + kern2(ii, 2)*w1_re(ii)
+   !     end do
+   !     wp(i, j, k) = sum0(1)*kern2(i, 2) - sum0(2)*kern2(i, 1)
+   !    end do
+   !   end do
+   !  end do
+    end select
   end subroutine
   !==========================
   subroutine beam_2d_potential(poten, nxf_in, n2_loc, n3_loc, ft_ind)
