@@ -496,8 +496,8 @@
        do ix = 1, n1/2
         i2 = 2*ix
         i1 = 2*ix - 1
-        w(i1, iy, iz) = sc*w1_cplx(ix)%re
-        w(i2, iy, iz) = sc*w1_cplx(ix)%im
+        w(i1, iy, iz) = sc*real(w1_cplx(ix))
+        w(i2, iy, iz) = sc*imag(w1_cplx(ix))
        end do
       end do
      end do
@@ -509,8 +509,7 @@
        do ix = 1, n1_tr/2
         i2 = 2*ix
         i1 = 2*ix - 1
-        w1_cplx(ix)%re = w(i1, iy, iz)
-        w1_cplx(ix)%im = w(i2, iy, iz)
+        w1_cplx(ix) = cmplx(w(i1, iy, iz), w(i2, iy, iz))
        end do
        call fftw_execute_dft_c2r(iplan1, w1_cplx, w1_re)
        w(1:n1, iy, iz) = w1_re(1:n1)
@@ -530,8 +529,8 @@
        do iy = 1, n2/2
         j2 = 2*iy
         j1 = 2*iy - 1
-        cw(i1, j1) = sc*w2_cplx(iy)%re
-        cw(i1, j2) = sc*w2_cplx(iy)%im
+        cw(i1, j1) = sc*real(w2_cplx(iy))
+        cw(i1, j2) = sc*imag(w2_cplx(iy))
        end do
        w2_re(1:n2) = w(i2, 1:n2, iz)
        call fftw_execute_dft_r2c(plan2, w2_re, w2_cplx)
@@ -837,7 +836,7 @@
         end do
         call fftw_execute_dft_r2c(plan1, w1_re, w1_cplx)
         do ix = 1, n1
-         w(ix, iy, iz) = sc*w1_cplx(ix)%im
+         w(ix, iy, iz) = sc*imag(w1_cplx(ix))
         end do
        end do
       end do
@@ -851,7 +850,7 @@
         w1_re(n1+1) = 0.5*(w1_re(n1)+w1_re(n1+2))
         call fftw_execute_dft_r2c(plan1, w1_re, w1_cplx)
         do ix = 1, n1
-         w(ix, iy, iz) = sc*w1_cplx(ix)%re
+         w(ix, iy, iz) = sc*real(w1_cplx(ix))
         end do
        end do
       end do
@@ -863,7 +862,7 @@
        do iy = 1, n2
         w1_cplx(:) = 0.0
         do ix = 1, n1
-         w1_cplx(ix)%im = w(ix, iy, iz)
+         w1_cplx(ix) = cmplx(zero_dp, w(ix, iy, iz))
         end do
         call fftw_execute_dft_c2r(iplan1, w1_cplx, w1_re)
         w(1:n1, iy, iz) = w1_re(1:n1)
@@ -874,7 +873,7 @@
        do iy = 1, n2
         w1_cplx(:) = 0.0
         do ix = 1, n1
-         w1_cplx(ix)%re = w(ix, iy, iz)
+         w1_cplx(ix) = cmplx(w(ix, iy, iz), zero_dp)
         end do
         call fftw_execute_dft_c2r(iplan1, w1_cplx, w1_re)
         w(1:n1, iy, iz) = w1_re(1:n1)
@@ -898,7 +897,7 @@
        end do
        call fftw_execute_dft_r2c(plan2, w2_re, w2_cplx)
        do iy = 1, n2
-        cw(ix, iy) = sc*w2_cplx(iy)%im
+        cw(ix, iy) = sc*imag(w2_cplx(iy))
        end do
       end do
       do iy = 1, n2
@@ -913,7 +912,7 @@
       do ix = 1, n1
        w2_cplx(:) = 0.0
        do iy = 1, n2
-        w2_cplx(iy)%im = w(ix, iy, iz)
+        w2_cplx(iy) = cmplx(zero_dp, w(ix, iy, iz))
        end do
        call fftw_execute_dft_c2r(iplan2, w2_cplx, w2_re)
        do iy = 1, n2
@@ -940,7 +939,7 @@
        end do
        call fftw_execute_dft_r2c(plan3, w3_re, w3_cplx)
        do iz = 1, n3
-        cw(ix, iz) = sc*w3_cplx(iz)%im
+        cw(ix, iz) = sc*imag(w3_cplx(iz))
        end do
       end do
       do iz = 1, n3
@@ -955,7 +954,7 @@
       do ix = 1, n1
        w3_cplx(:) = 0.0
        do iz = 1, n3
-        w3_cplx(iz)%im = w(ix, iy, iz)
+        w3_cplx(iz) = cmplx(zero_dp, w(ix, iy, iz))
        end do
        call fftw_execute_dft_c2r(iplan3, w3_cplx, w3_re)
        do iz = 1, n3
