@@ -189,7 +189,6 @@
      loc_npart(imody, imodz, imodx, ic) = np_new
     end if
    end do
-   call part_numbers
    !=======================
   end subroutine
   !=======================
@@ -326,7 +325,7 @@
    !===========================
    call fields_left_xshift(ebf, i1, wi2, 1, nfield, nshx)
    if (hybrid) then
-    do ix = wi2, nxf - nshx
+    do ix = 1, nxf - nshx
      fluid_x_profile(ix) = fluid_x_profile(ix+nshx)
     end do
     nxf = nxf - nshx
@@ -352,6 +351,7 @@
       end if
      end if
     end if
+   call part_numbers
    end if
   end subroutine
   !==============================

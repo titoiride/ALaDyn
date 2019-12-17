@@ -37,7 +37,7 @@
    real (dp) :: sdhy, sdhz
 
    ! Enter
-   ! in poten(1) enters poten_b(i,j,k) => (Ex,Ey, Ez)
+   ! in poten(1) enters beam potential(i,j,k) => (Ex,Ey, Ez)
    ! in poten(2) enters Jx(i,j,k)=bet*rho => efb[4]=jx[i+1/2,j,k]
    !Computes
    !Ey=-Dy[poten] Ez=-Dz[poten]  Ex=-Dx[poten]/gam2
@@ -129,6 +129,7 @@
     end do
    end do
    !  By[i+1/2,j+1/2,k=--bet*Ez
+   !  EXIT pot(i,j,k,1) unmodified
    !======================================
   end subroutine
   !===========================================
@@ -2134,12 +2135,13 @@
    integer, intent (in) :: dmodel
    real (dp), intent (in) :: part_in
    integer :: i, i0, j, k, ic, nxl(6), ntot, i0_targ, i1_targ
-   integer :: i1, i2, j1, j2, k1, k2
+   integer :: n1, ix, i1, i2, j1, j2, k1, k2
    integer :: j01, j02, k01, k02, jj, kk
    real (dp) :: uu, tot_x, l_inv, np1_loc, peak_fluid_density, u2, u3, &
      ramp_prefactor
    real (dp) :: yy, zz, r2
    !==================================
+   n1 = loc_xgrid(imodx)%ng
    i1 = loc_xgrid(imodx)%p_ind(1)
    i2 = loc_xgrid(imodx)%p_ind(2)
    j1 = loc_ygrid(imody)%p_ind(1)
@@ -2367,9 +2369,10 @@
    ic = size(up, 4) !the particle number density
    do k = k1, k2
     do j = j1, j2
-     do i = 1, i2
-      up(i, j, k, ic) = fluid_x_profile(i)*fluid_yz_profile(j, k)
-      up0(i, j, k, ic) = up(i, j, k, ic)
+     do ix = i1, i2
+      i = ix - 2 + imodx*n1
+      up(ix, j, k, ic) = fluid_x_profile(i)*fluid_yz_profile(j, k)
+      up0(ix, j, k, ic) = up(ix, j, k, ic)
      end do
     end do
    end do

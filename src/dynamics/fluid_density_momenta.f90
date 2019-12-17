@@ -69,10 +69,16 @@
     end do
    end if
    call fill_ebfield_yzxbdsdata(flx, 1, curr_ndim, 1, 1)
+   if(pe1x)then
+    do k = kz1, kz2
+     do j = jy1, jy2
+      i = ix2
+      flx(i+1, j, k, 1) = flx(i, j, k, 1)
+     end do
+    end do
+   endif
    do k = kz1, kz2
     do j = jy1, jy2
-     i = ix2
-     flx(i+1, j, k, 1) = flx(i, j, k, 1)
      do i = ix1, ix2
       qx = ch*(flx(i,j,k,1)+flx(i+1,j,k,1)) !Dt*Jx(i+1/2,j,k)
       qy = ch*(flx(i,j,k,2)+flx(i,j+1,k,2)) !Dt*Jy(i,j+1/2,k)

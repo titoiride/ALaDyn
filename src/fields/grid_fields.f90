@@ -548,7 +548,7 @@
   subroutine env_grad(envg)
 
    real (dp), intent (inout) :: envg(:, :, :, :)
-   integer :: i, j, k, j01, j02, k01, k02
+   integer :: i, j, k, i01, i02, j01, j02, k01, k02
    real (dp) :: ax1, ax2, ay1, ay2, az1, az2, shz, shy, shp, shm
    real (dp), parameter :: a_hcd = 13./12., b_hcd = -1./24.
    !=== second or fourth order central flux derivatives
@@ -570,28 +570,44 @@
     ay2 = dy_inv*b_hcd
     az2 = dz_inv*b_hcd
    end if
+   i01 = ix1
+   i02 = ix2
    j01 = jy1
    j02 = jy2
    k01 = kz1
    k02 = kz2
    !================
+   if(pe0x)then
+    i = ix1
+    do k = kz1, kz2
+     do j = jy1, jy2
+      envg(i, j, k, 2) = dx_inv*(envg(i+1,j,k,1)-envg(i,j,k,1)) !at i+1/2
+     end do
+    end do
+    i01=ix1+1
+   endif
+   if(pe1x)then
+    do k = kz1, kz2
+     do j = jy1, jy2
+      i = ix2 - 1
+      envg(i, j, k, 2) = dx_inv*(envg(i+1,j,k,1)-envg(i,j,k,1))
+      envg(i+1, j, k, 2) = dx_inv*(2.*envg(i,j,k,1)-3.*envg(i-1,j,k,1)+ &
+                                   envg(i-2,j,k,1))
+     end do
+    end do
+    i02=ix2-2
+   endif
    do k = kz1, kz2
     do j = jy1, jy2
-     i = ix1
-     envg(i, j, k, 2) = dx_inv*(envg(i+1,j,k,1)-envg(i,j,k,1)) !at i+1/2
-     do i = ix1 + 1, ix2 - 2
-      envg(i, j, k, 2) = ax1*(envg(i+1,j,k,1)-envg(i,j,k,1)) !at i+1/2
+     do i = i01, i02 
+       envg(i, j, k, 2) = ax1*(envg(i+1,j,k,1)-envg(i,j,k,1)) !at i+1/2
      end do
-     i = ix2 - 1
-     envg(i, j, k, 2) = dx_inv*(envg(i+1,j,k,1)-envg(i,j,k,1))
-     envg(i+1, j, k, 2) = dx_inv*(2.*envg(i,j,k,1)-3.*envg(i-1,j,k,1)+ &
-       envg(i-2,j,k,1))
     end do
    end do
    if (der_ord==4) then
     do k = kz1, kz2
      do j = jy1, jy2
-      do i = ix1 + 1, ix2 - 2
+      do i = i01, i02
        envg(i, j, k, 2) = envg(i, j, k, 2) + ax2*(envg(i+2,j,k,1)-envg(i &
          +1,j,k,1)+envg(i,j,k,1)-envg(i-1,j,k,1))
       end do
@@ -764,57 +780,88 @@
   contains
    subroutine first_ader
    !============
+   integer :: i01,i02
    ! explicit second order [-2isin(k0dx)*Dx]A and add to S(A)
+    i01 = ix1
+    i02 = ix2
     if (der_ord<3) then
-     do k = kz1, kz2
-      do j = jy1, jy2
-       i = ix1
+     if(pe0x)then
+      i = ix1
+      do k = kz1, kz2
+       do j = jy1, jy2
        curr(i, j, k, 1) = curr(i, j, k, 1) - dhx1_inv*(evf(i+1,j,k,2)- &
          evf(i,j,k,2))
        curr(i, j, k, 2) = curr(i, j, k, 2) + dhx1_inv*(evf(i+1,j,k,1)- &
          evf(i,j,k,1))
-       do i = ix1 + 1, ix2 - 1
+       end do
+      end do
+      i01=ix1+1
+     endif
+     if(pe1x)then
+      i = ix2
+      do k = kz1, kz2
+       do j = jy1, jy2
+        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i,j,k,2)-evf(i &
+         -1,j,k,2))
+        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i,j,k,1)-evf(i &
+         -1,j,k,1))
+       end do
+      end do
+      i02=ix2-1
+     endif
+     do k = kz1, kz2
+      do j = jy1, jy2
+       do i = i01,i02
         curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)- &
           evf(i-1,j,k,2))
         curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)- &
           evf(i-1,j,k,1))
        end do
-       i = ix2
-       curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i,j,k,2)-evf(i &
-         -1,j,k,2))
-       curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i,j,k,1)-evf(i &
-         -1,j,k,1))
       end do
      end do
     else
+     if(pe0x)then
+      do k = kz1, kz2
+       do j = jy1, jy2
+        i = ix1
+        curr(i, j, k, 1) = curr(i, j, k, 1) - dhx1_inv*(evf(i+1,j,k,2)- &
+         evf(i,j,k,2))
+        curr(i, j, k, 2) = curr(i, j, k, 2) + dhx1_inv*(evf(i+1,j,k,1)- &
+         evf(i,j,k,1))
+        i = ix1+ 1
+        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)-evf &
+         (i-1,j,k,2))
+        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)-evf &
+         (i-1,j,k,1))
+        end do
+       end do
+       i01=ix1+2
+      endif
+      if(pe1x)then
+       do k = kz1, kz2
+        do j = jy1, jy2
+         i = ix2 - 1
+         curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)-evf &
+          (i-1,j,k,2))
+         curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)-evf &
+          (i-1,j,k,1))
+         i = ix2
+         curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i,j,k,2)-evf(i &
+          -1,j,k,2))
+         curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i,j,k,1)-evf(i &
+         -1,j,k,1))
+        end do
+       end do
+      i02=ix2-2
+     endif
      do k = kz1, kz2
       do j = jy1, jy2
-       i = ix1
-       curr(i, j, k, 1) = curr(i, j, k, 1) - dhx1_inv*(evf(i+1,j,k,2)- &
-         evf(i,j,k,2))
-       curr(i, j, k, 2) = curr(i, j, k, 2) + dhx1_inv*(evf(i+1,j,k,1)- &
-         evf(i,j,k,1))
-       i = i + 1
-       curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)-evf &
-         (i-1,j,k,2))
-       curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)-evf &
-         (i-1,j,k,1))
-       do i = ix1 + 2, ix2 - 2
+       do i = i01, i02
         curr(i, j, k, 1) = curr(i, j, k, 1) - aph_opt(1)*(evf(i+1,j,k,2) &
           -evf(i-1,j,k,2)) - aph_opt(2)*(evf(i+2,j,k,2)-evf(i-2,j,k,2))
         curr(i, j, k, 2) = curr(i, j, k, 2) + aph_opt(1)*(evf(i+1,j,k,1) &
           -evf(i-1,j,k,1)) + aph_opt(2)*(evf(i+2,j,k,1)-evf(i-2,j,k,1))
        end do
-       i = ix2 - 1
-       curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)-evf &
-         (i-1,j,k,2))
-       curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)-evf &
-         (i-1,j,k,1))
-       i = ix2
-       curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i,j,k,2)-evf(i &
-         -1,j,k,2))
-       curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i,j,k,1)-evf(i &
-         -1,j,k,1))
       end do
      end do
     end if
@@ -1596,7 +1643,7 @@
 
    integer(kind=4) :: flux_ind
    real(dp) :: aphx, aphy, aphz
-   integer :: i, j, k, ic, j01, j02, k01, k02, fcomp_tot
+   integer :: i, j, k, ic, i01, i02, j01, j02, k01, k02, fcomp_tot
    real(dp) :: shy, shz
    real(dp) :: dw(3), sl(2), sr(2), omgl(2), vv, s0
    real(dp), parameter :: EPS = 1.e-06
@@ -1613,6 +1660,10 @@
    ! fcomp=curr_ndim+1 components
    flux_ind = 1 !=1 for pure upwind   
    !=2 for LxF fluxin density equation
+   i01 = ix1
+   if (xl_bd) i01 = ix1 + 2
+   i02 = ix2
+   if (xr_bd) i02 = ix2 - 2
    j01 = jy1
    if (yl_bd) j01 = jy1 + 2
    j02 = jy2
@@ -1630,10 +1681,14 @@
    fcomp_tot = fcomp +1
    do k = kz1, kz2
     do j = jy1, jy2
-     var(ix1:ix2, 1:fcomp_tot) = flx(ix1:ix2, j, k, 1:fcomp_tot)
-     call weno3_nc(fcomp_tot, ix1, ix2, xl_bd, xr_bd)
+     do ic=1,fcomp_tot
+      do i=i01-2,i02+2
+       var(i, ic) = flx(i, j, k, ic)
+      end do
+     end do
+     call weno3_nc(fcomp_tot, i01-2, i02+2, xl_bd, xr_bd)
      do ic = 1, fcomp !var=momenta
-      do i = ix1, ix2
+      do i = i01, i02
        ef(i, j, k, ic) = ef(i, j, k, ic) - aphx*ww0(i, ic)
       end do
      end do

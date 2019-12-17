@@ -341,9 +341,8 @@
    end do
    pout = p
    if (pout>0) then
-    np_new = np - pout
-    call v_realloc(sp_aux, np_new, ndv)
-    call v_realloc(sp1_aux, np_new, ndv)
+    call v_realloc(sp_aux, np-pout, ndv)
+    call v_realloc(sp1_aux, np-pout, ndv)
     p = 0
     do n = 1, np
      xp = loc_sp%part(n, cin)
@@ -376,7 +375,63 @@
    ! ==> new particle number np_new= nl_recv-nl_send+ nr_recv-nr_send
    !      In part_prl_exchange()    exchanges particle data by mpi_send_recv
    !=====================================
-   if (.not. moving_wind) then
+   !In moving window box (xmm,xmx) are right shifted
+   !all species leaving the computational box at the left
+   !x-boundary are removed
+   !==========================================
+   nspx=nsp_run
+   if(moving_wind)nspx = nsp
+   xmm = loc_xgrid(imodx)%gmin
+   xmx = loc_xgrid(imodx)%gmax
+   lbd_min = loc_xgrid(0)%gmin
+   rbd_max = loc_xgrid(npe_xloc-1)%gmax
+   if (prlx) then
+    do ic = 1, nspx
+     np = loc_npart(imody, imodz, imodx, ic)
+     np_new = np
+     n_sr = 0
+     call traffic_size_eval(spec(ic), xmm, xmx, pex0, pex1, ibx, 1, np, &
+       n_sr, np_new)
+     np_new_allocate = max(1, np_new)
+     np_rs = maxval(n_sr(1:4))
+     if (np_rs>0) then
+      allocate(sp_aux(np_new,ndv))
+      allocate(sp1_aux(np_new,ndv))
+      call part_prl_exchange(spec(ic), ebfp, xmm, xmx, lbd_min, rbd_max, &
+        pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
+      if (np_out/=np_new) then
+       write (6, *) 'error in x-part count', mype, np_out, np_new
+       ier = 99
+      end if
+       call p_realloc(spec(ic), np_new, ndv)
+       call v_realloc(ebfp, np_new, ndv)
+       do n = 1, np_new
+        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+       end do
+      loc_npart(imody, imodz, imodx, ic) = np_new
+     end if
+    end do
+   else
+    do ic = 1, nspx
+     np = loc_npart(imody, imodz, imodx, ic)
+     if (np>0) then
+      call reset_all_part_dist(spec(ic), ebfp, xmm, xmx, ibx, np, ndv, &
+        1, ndim, np_new)
+      if (np_new<np) then
+       loc_npart(imody, imodz, imodx, ic) = np_new
+       do n = 1, np_new
+        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+       end do
+      end if
+     end if
+    end do
+   end if
+   if(allocated(sp_aux)) deallocate(sp_aux)
+   if(allocated(sp1_aux)) deallocate(sp1_aux)
+   if (moving_wind)return
+!==========================
     ymm = loc_ygrid(imody)%gmin
     ymx = loc_ygrid(imody)%gmax
     lbd_min = loc_ygrid(0)%gmin
@@ -426,6 +481,8 @@
       end if
      end do
     end if
+    if(allocated(sp_aux)) deallocate(sp_aux)
+    if(allocated(sp1_aux)) deallocate(sp1_aux)
     if (ndim>2) then
      zmm = loc_zgrid(imodz)%gmin
      zmx = loc_zgrid(imodz)%gmax
@@ -476,63 +533,10 @@
        end if
       end do
      end if
+     if(allocated(sp_aux))deallocate(sp_aux)
+     if(allocated(sp1_aux))deallocate(sp1_aux)
     end if
-    if(allocated(sp_aux))deallocate(sp_aux)
-    if(allocated(sp1_aux))deallocate(sp1_aux)
-   end if !end of moving_window=false
    !=====================
-   !In moving window box (xmm,xmx) are right shifted
-   !all species leaving the computational box at the left
-   !x-boundary are removed
-   !==========================================
-   nspx = nsp
-   xmm = loc_xgrid(imodx)%gmin
-   xmx = loc_xgrid(imodx)%gmax
-   lbd_min = loc_xgrid(0)%gmin
-   rbd_max = loc_xgrid(npe_xloc-1)%gmax
-   if (prlx) then
-    do ic = 1, nspx
-     np = loc_npart(imody, imodz, imodx, ic)
-     np_new = np
-     n_sr = 0
-     call traffic_size_eval(spec(ic), xmm, xmx, pex0, pex1, ibx, 1, np, &
-       n_sr, np_new)
-     np_new_allocate = max(1, np_new)
-     np_rs = maxval(n_sr(1:4))
-     if (np_rs>0) then
-      allocate(sp_aux(np_new,ndv))
-      allocate(sp1_aux(np_new,ndv))
-      call part_prl_exchange(spec(ic), ebfp, xmm, xmx, lbd_min, rbd_max, &
-        pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
-      if (np_out/=np_new) then
-       write (6, *) 'error in x-part count', mype, np_out, np_new
-       ier = 99
-      end if
-      call p_realloc(spec(ic), np_new, ndv)
-      do n = 1, np_new
-       spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-      end do
-      loc_npart(imody, imodz, imodx, ic) = np_new
-     end if
-    end do
-   else
-    do ic = 1, nspx
-     np = loc_npart(imody, imodz, imodx, ic)
-     if (np>0) then
-      call reset_all_part_dist(spec(ic), ebfp, xmm, xmx, ibx, np, ndv, &
-        1, ndim, np_new)
-      if (np_new<np) then
-       loc_npart(imody, imodz, imodx, ic) = np_new
-       do n = 1, np_new
-        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-       end do
-      end if
-     end if
-    end do
-    if(allocated(sp_aux)) deallocate(sp_aux)
-    if(allocated(sp1_aux)) deallocate(sp1_aux)
-   end if
   end subroutine
   !=========================
  end module
