@@ -552,7 +552,7 @@
     allocate(ebfb(nb,nd2+1))
     do ic = 1, nsb
      np = loc_nbpart(imody, imodz, imodx, ic)
-     ! call set_charge_on_ftgrid(bunch(1), ebfb, pot, np, 1)
+     call set_charge_on_ftgrid(bunch(1), ebfb, pot, np, 1)
     end do
     if (prl) call fill_ftcurr_yzbdsdata(pot,1)
     !============================
@@ -586,7 +586,7 @@
     z2 = kz2
     if (ndim == 2) call fft_2d_psolv(jc, jc, ompe, nx, nx_loc, ny, ny_loc, nz, &
      nz_loc, ix1, ix2, y1, y2, z1, z2, ft_mod, ft_sym, 0)
-    if (ndim == 3) call fft_3d_psolv(jc,jc, gam2, ompe, nx, nx_loc, ny, ny_loc, nz, &
+    if (ndim == 3) call fft_3d_psolv(jc, jc, gam2, ompe, nx, nx_loc, ny, ny_loc, nz, &
      nz_loc, ix1, ix2, y1, y2, z1, z2, ft_mod, ft_sym, 0)
     !Solves Laplacian[poten]=ompe*rho in Fourier space using sin() transform
     !Exit beam potential in jc(1) 

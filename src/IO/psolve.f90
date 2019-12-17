@@ -218,7 +218,7 @@
    end if
    call mpi_ftw_dalloc
    if(s_ind>0)then
-                                                    !Two new routines added
+    !Two new routines added
     allocate (wa(n1,4*n2_loc,4*n3_loc))
     if(.not.allocated(fp1))allocate(fp1(n1,n2_loc,n3_loc))
     call mpi_yzft_ord(n2_loc,n3_loc)
@@ -284,7 +284,7 @@
    end if
    call mpi_ftw_dalloc
    if(sind>0)then
-                                                    !Two new routines added
+    !Two new routines added
     allocate (wa(n1,4*n2_loc,n3_loc))
     if(.not.allocated(fp1))allocate(fp1(n1,n2_loc,n3_loc))
     call mpi_yzft_ord(n2_loc,n3_loc)
