@@ -37,7 +37,7 @@
    real (dp) :: sdhy, sdhz
 
    ! Enter
-   ! in poten(1) enters poten_b(i,j,k) => (Ex,Ey, Ez)
+   ! in poten(1) enters beam potential(i,j,k) => (Ex,Ey, Ez)
    ! in poten(2) enters Jx(i,j,k)=bet*rho => efb[4]=jx[i+1/2,j,k]
    !Computes
    !Ey=-Dy[poten] Ez=-Dz[poten]  Ex=-Dx[poten]/gam2
@@ -129,6 +129,7 @@
     end do
    end do
    !  By[i+1/2,j+1/2,k=--bet*Ez
+   !  EXIT pot(i,j,k,1) unmodified
    !======================================
   end subroutine
   !===========================================

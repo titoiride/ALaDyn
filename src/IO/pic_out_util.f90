@@ -446,8 +446,8 @@
 
    ft_mod = 2 !for cosine transform
    ft_sym = 2
-   ! call fft_2d_psolv(jc, ompe, nx, nx_loc, ny, ny_loc, nz, nz_loc, &
-   !   i1, i2, j1, j2, k1, k2, ft_mod, ft_sym)
+   call fft_2d_psolv(jc, jc, ompe, nx, nx_loc, ny, ny_loc, nz, nz_loc, &
+     i1, i2, j1, j2, k1, k2, ft_mod, ft_sym, 0)
 
    !==================================
   end subroutine

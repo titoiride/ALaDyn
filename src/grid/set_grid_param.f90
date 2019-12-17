@@ -307,7 +307,7 @@
 
   end subroutine
 !============================
-  subroutine set_ftyzgrid(npey, npez,sh)
+  subroutine set_ftyzgrid(npey, npez, sh)
    integer, intent (in) :: npey, npez, sh
    integer :: i, ii, p, ip, n_loc,last_ind
 
@@ -831,7 +831,7 @@
 
   end subroutine
   !====================
-  subroutine set_ftgrid(str,npe1,npe2,npe3)
+  subroutine set_ftgrid(str, npe1, npe2, npe3)
    logical,intent(in) :: str
    integer,intent(in) :: npe1,npe2,npe3
    integer :: n1, n2, n3
@@ -876,8 +876,8 @@
     loc_zftgrid(ip)%ng=n3ft_loc
    end do
 !===================
-   call set_ftyzgrid(npe2, npe3,sh)
-!------------------
+   call set_ftyzgrid(npe2, npe3, sh)
+!===================
 
    yft_min = loc_yftgrid(imody)%gmin
    zft_min = loc_zftgrid(imodz)%gmin
