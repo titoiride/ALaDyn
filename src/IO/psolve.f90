@@ -25,12 +25,13 @@
   use common_param
   use grid_param
   use prl_fft
+  use grid_fields
 
   implicit none
   private
   public :: fft_3d_psolv, fft_2d_psolv
  
-  real (dp), allocatable :: wb(:, :, :)
+  real (dp), allocatable :: wb(:, :, :),wa(:,:,:)
   !==========================
 
  contains
@@ -167,22 +168,18 @@
    !=================
   end subroutine
   !===============================================
-  subroutine fft_3d_psolv(rho, g2, omp0, n1, n1_loc, n2, n2_loc, n3, &
-    n3_loc, ft_mod, sym)
-   real (dp), intent (inout) :: rho(:, :, :, :)
+  subroutine fft_3d_psolv(rho, pot1, g2, omp0, n1, n1_loc, n2, n2_loc, n3, &
+    n3_loc, i1, i2, j1, j2, k1, k2, ft_mod, sym, s_ind)
+   real (dp), intent (inout) :: rho(:, :, :, :),pot1(:,:,:,:)
    real (dp), intent (in) :: g2, omp0
-   integer, intent (in) :: n1, n1_loc, n2, n2_loc, n3, n3_loc,ft_mod,sym
-   integer :: i1, i2, j1, j2, k1, k2
+   integer, intent (in) :: n1, n1_loc, n2, n2_loc, n3, n3_loc, ft_mod, sym, s_ind
+   integer, intent(in) :: i1, i2, j1, j2, k1, k2
    integer :: i, ii, j, k
    ! ft_mod=0,1 for standard fft in periodic BC
    ! ft_mod=2  for sin(sym=1) cos(sym=2) transforms
    ! In rho(1) enters charge density rho(x,y,z)=q*n(x,y,z)
    ! In rho(1) exit pot(x,y,z)
    !===========================
-   i1=3;i2=n1+2
-   j1=3;j2=n2_loc+2
-   k1=3;k2=n3_loc+2
-
    allocate (wb(n1,n2_loc,n3_loc))
    call mpi_ftw_alloc(n1, n2, n2_loc, n3, n3_loc)
    call ftw_init(n1, n2, n3, ft_mod) !set wavenumber grid
@@ -219,40 +216,37 @@
     !exit fourier components for beam potential
     call pftw3d(wb, n1, n2, n2_loc, n3, n3_loc, 1)
    end if
-
-   if (prlx) then
-    do k = k1, k2
-     do j = j1, j2
-      do i = i1, i2
-       ii = i - 2 + imodx*n1_loc
-       rho(i, j, k, 1) = wb(ii, j-2, k-2)
-      end do
-     end do
-    end do
+   call mpi_ftw_dalloc
+   if(s_ind>0)then
+                                                    !Two new routines added
+    allocate (wa(n1,4*n2_loc,4*n3_loc))
+    if(.not.allocated(fp1))allocate(fp1(n1,n2_loc,n3_loc))
+    call mpi_yzft_ord(n2_loc,n3_loc)
+    call ft_overset_grid(wb,wa,n1,n2_loc,n3_loc)    !in fft/prl_fft  module
+    call unif_to_str_field_interp(wa,pot1,1)           !put data in in fields/grid_fields module
+    if (allocated(wa)) deallocate (wa)
+    deallocate(fp1)
    else
     rho(i1:i2, j1:j2, k1:k2, 1) = wb(1:n1, 1:n2_loc, 1:n3_loc)
    end if
    !EXIT rho(1) 3D beam potential
    if (allocated(wb)) deallocate (wb)
    call ftw_end
-   call mpi_ftw_dalloc
   end subroutine
   !===============================
-  subroutine fft_2d_psolv(rho, omp0, n1, n1_loc, n2, n2_loc, n3, n3_loc, &
-    ft_mod, sym)
-   real (dp), intent (inout) :: rho(:, :, :, :)
+  subroutine fft_2d_psolv(rho, pot1, omp0, n1, n1_loc, n2, n2_loc, n3, n3_loc, &
+    i1, i2, j1, j2, k1, k2, ft_mod, sym, sind)
+   real (dp), intent (inout) :: rho(:, :, :, :),pot1(:,:,:,:)
    real (dp), intent (in) :: omp0
    integer, intent (in) :: n1, n1_loc, n2, n2_loc, n3, n3_loc
-   integer, intent (in) :: ft_mod, sym
-   integer :: i1, i2, j1, j2, k1, k2
+   integer, intent (in) :: ft_mod, sym, sind
+   integer, intent(in) :: i1, i2, j1, j2, k1, k2
    integer :: i, ii, j, k
 
    allocate (wb(n1,n2_loc,n3_loc))
    call mpi_ftw_alloc(n1, n2, n2_loc, n3, n3_loc)
    call ftw_init(n1, n2, n3, ft_mod)
-   i1=3;i2=n1+2
-   j1=3;j2=n2_loc+2
-   k1=1;k2=1
+
    wb = 0.0
    if (prlx) then
     do k = k1, k2
@@ -288,22 +282,22 @@
     !exit fourier components for potential
     call pftw2d(wb, n1, n2, n2_loc, n3, n3_loc, 1)
    end if
-   if (prlx) then
-    do k = k1, k2
-     do j = j1, j2
-      do i = i1, i2
-       ii = i - 2 + imodx*n1_loc
-       rho(i, j, k, 1) = wb(ii, j-2, k-2)
-      end do
-     end do
-    end do
+   call mpi_ftw_dalloc
+   if(sind>0)then
+                                                    !Two new routines added
+    allocate (wa(n1,4*n2_loc,n3_loc))
+    if(.not.allocated(fp1))allocate(fp1(n1,n2_loc,n3_loc))
+    call mpi_yzft_ord(n2_loc,n3_loc)
+    call ft_overset_grid(wb,wa,n1,n2_loc,n3_loc)    !in fft/prl_fft  module
+    call unif_to_str_field_interp(wa,pot1,1)           !in fields/grid_fields module
+    if (allocated(wa)) deallocate (wa)
+    deallocate(fp1)
    else
     rho(i1:i2, j1:j2, k1:k2, 1) = wb(1:n1, 1:n2_loc, 1:n3_loc)
    end if
    !EXIT rho(1) 2D beam potential
    if (allocated(wb)) deallocate (wb)
    call ftw_end
-   call mpi_ftw_dalloc
   end subroutine
   !==========================
  end module

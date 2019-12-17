@@ -26,6 +26,7 @@
 
   real (dp), allocatable :: fp1(:, :, :), fp2(:, :, :), faux1(:), &
     faux2(:)
+  integer,allocatable :: loc_yft_ord(:),loc_zft_ord(:)
 
 
  contains
@@ -45,6 +46,41 @@
 
   end subroutine
   !==========================
+  subroutine mpi_yzft_ord(ny_ft,nz_ft)
+   integer, intent (in) :: ny_ft,nz_ft
+   integer :: ip,nh
+ 
+   allocate(loc_yft_ord(0:npe_yloc-1))
+   allocate(loc_zft_ord(0:npe_zloc-1))
+   nh=npe_yloc/2-1
+   if(npe_yloc >4)then
+    do ip=0,nh              ![ x  |   |   |   ]
+     loc_yft_ord(ip)=1
+    end do
+    do ip=nh+1,nh+3
+     loc_yft_ord(ip)=loc_yft_ord(ip-1)+ny_ft
+    end do
+    ![   | x  |   |   ]   ![   |   | x  |   ] ![   |   |   | x  ]
+    do ip=nh+4,npe_yloc-1
+     loc_yft_ord(ip)=loc_yft_ord(nh+3)
+    end do
+   endif
+    loc_zft_ord(0:npe_zloc-1)=1
+   if(npe_zloc >4)then
+    do ip=0,npe_zloc/2-1            ![ x  |   |   |   ]
+     loc_zft_ord(ip)=1
+    end do
+    do ip=npe_zloc/2,npe_zloc/2+2
+     loc_zft_ord(ip)=loc_zft_ord(ip-1)+nz_ft
+    end do
+    ![   | x  |   |   ]   ![   |   | x  |   ] ![   |   |   | x  ]
+    do ip=npe_zloc/2+3,npe_zloc-1
+     loc_zft_ord(ip)=loc_zft_ord(npe_zloc/2+2)
+    end do
+   endif
+  end subroutine
+   
+
   subroutine mpi_ftw_dalloc
 
    if (allocated(faux1)) deallocate (faux1)
@@ -55,6 +91,131 @@
   end subroutine
 
   !===================
+  subroutine ft_overset_grid(w_s,w_r,nft1,nft2,nft3)
+   real(dp),intent(inout) :: w_s(:,:,:)
+   real(dp),intent(out) :: w_r(:,:,:)
+   integer,intent(in) :: nft1,nft2,nft3
+   integer :: lenw,dd,nhy,nhz
+   integer :: j1,j2,k1,k2,jl,jr,kl,kr
+   integer :: ybd,zbd,kkr,jjr
+   integer ::  tag,ip,per,pes
+   !=========== gather on w_r data along y-coordinate using 3 neighbors
+   ! imody(+1,+2,+3)-> imody for imody < npe_yloc/2-1
+   ! imody(-1,+1,+2)-> imody for imody= npe_yloc/2-1
+   ! imody(-2,-1,+1)-> imody for imody= npe_yloc/2
+   ! imody(-3,-2,-1)-> imody for imody> npe_yloc/2+1
+   !======================================================
+   lenw=nft1*nft2*nft3
+   dd=1
+   nhy=npe_yloc/2-1
+   nhz=npe_zloc/2-1
+   jl=min(imody,3)
+   jr=min(nhy+3-imody,3)
+   ybd=min(3,npe_yloc-1-imody)
+   k1=loc_zft_ord(imodz)
+   k2=k1+nft3-1
+   j1=loc_yft_ord(imody)
+   j2=j1+nft2-1
+   w_r(1:nft1,j1:j2,k1:k2)=w_s(1:nft1,1:nft2,1:nft3)
+!====================
+   !imody=[1,nh+3] sends to ipe=imody-1,imody-2,imody-3  => ipe=[0,nh]
+   !                 
+!===================
+                          !sends to next(ip)  recieves from prev(ip)
+   if(imody < nhy+4)then 
+    if(imody >0)then
+     do ip=1,jl
+      tag=200+ip
+      pes=yp_prev(ip)
+      call mpi_send(w_s(1,1,1), lenw, mpi_sd, pes, tag, comm_col(dd), error)
+     end do
+    endif 
+    j1=loc_yft_ord(imody)
+    do ip=1,jr
+     per=yp_next(ip)
+     tag=200+ip
+     call mpi_recv(fp1(1,1,1), lenw, &
+      mpi_sd, per, tag, comm_col(dd), status, error)
+     j1=j1+nft2
+     j2=j1+nft2-1
+     w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
+    end do
+   endif
+   !sends imody=nh to (nh+1,nh+2,nh+3) up to
+   !imody=npe_yloc-3 to npe_yloc-2,npe_yloc-1) ybd=2
+   !imody=npe_yloc-2 to npe_yloc-1)            ybd=1
+   if(imody > (nhy-1))then
+    j1=loc_yft_ord(imody)
+    jjr=imody-nhy
+    jjr=min(jjr,3)
+    do ip=1,ybd
+     tag=200-ip
+     pes=yp_next(ip)
+     call mpi_send(w_s(1,1,1), lenw, mpi_sd, pes, tag, comm_col(dd), error)
+    end do
+    j1=loc_yft_ord(imody)
+    do ip=1,jjr
+     tag=200-ip
+     per=yp_prev(ip)
+     call mpi_recv(fp1(1,1,1), lenw, &
+      mpi_sd, per, tag, comm_col(dd), status, error)
+     j1=j1-nft2
+     j2=j1+nft2-1
+     w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
+    end do
+   endif
+!================== end prly====================
+!=============
+  if(prlz)then 
+   zbd=min(3,npe_zloc-1-imodz)
+   kl=min(imodz,3)
+   kr=min(nhz+3-imodz,3)
+   dd=2
+   j1=loc_yft_ord(imody)
+   j2=j1+nft2-1
+!================= imodz sends to  imodz-1,-2,-3
+   if(imodz<nhz+4)then
+    if(imodz >0)then
+     do ip=1,kl
+      tag=100+ip
+      pes=zp_prev(ip)
+      call mpi_send(w_s(1,1,1), lenw, mpi_sd, pes, tag, comm_col(dd), error)
+     end do
+    endif
+    k1=loc_zft_ord(imodz)
+    do ip=1,kr
+     tag=100+ip
+     per=zp_next(ip)
+     call mpi_recv(fp1(1,1,1), lenw, &
+      mpi_sd, per, tag, comm_col(dd), status, error)
+     k1=k1+nft3
+     k2=k1+nft3-1
+     w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
+    end do
+   endif
+   !sends nhz => (nhz+1,nhz+2,nhz+3)      => npe_zloc-2 > npe_zloc-1 (zbd=1)
+   if(imodz > (nhz-1))then
+    kkr=imodz-nhz
+    kkr=min(kkr,3)
+    do ip=1,zbd
+     tag=100-ip
+     pes=zp_next(ip)
+     call mpi_send(w_s(1,1,1), lenw, mpi_sd, pes, tag, comm_col(dd), error)
+    end do
+    k1=loc_zft_ord(imodz)
+    do ip=1,kkr
+     per=zp_prev(ip)
+     tag=100-ip
+     call mpi_recv(fp1(1,1,1), lenw, &
+      mpi_sd, per, tag, comm_col(dd), status, error)
+     k1=k1-nft3
+     k2=k1+nft3-1
+     w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
+    end do
+   endif
+  endif
+  end subroutine
+   
   subroutine swap_yx_3data(waux, wdata, n1_loc, n2, n3)
 
    integer, intent (in) :: n1_loc, n2, n3

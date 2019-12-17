@@ -348,6 +348,207 @@
    !=============================
   end subroutine
  !===============================
+  subroutine fill_ftcurr_yzbdsdata(curr, nc)
+   real (dp), intent (inout) :: curr(:, :, :, :)
+   integer, intent (in) :: nc
+   integer :: s1, s2, r1, r2, y1, y2, z1, z2, x1, x2
+   integer :: ic, ix, j, iy, iz, kk, lenws, lenwr
+   integer :: j1,j2,k1,k2
+   integer, parameter :: str = 3, stl = 2
+   !================ PREDEFINED MAX 
+   ! enter currents on a five-point extended stencil
+   !===========================
+   k1=loc_zftgrid(imodz)%p_ind(1)
+   k2=loc_zftgrid(imodz)%p_ind(2)
+
+   j1=loc_yftgrid(imody)%p_ind(1)
+   j2=loc_yftgrid(imody)%p_ind(2)
+
+   z1 = k1 - stl
+   z2 = k2 + str
+   y1 = j1 - stl
+   y2 = j2 + str
+   if (ndim<3) then
+    z1 = k1
+    z2 = k2
+   end if
+   x1 = ix1 - stl
+   x2 = ix2 + str
+
+   lenwr = str*nc*(x2+1-x1)*max(z2+1-z1, y2+1-y1)
+   if (size(aux1)<lenwr) then
+    deallocate (aux1, aux2)
+    allocate (aux1(lenwr))
+    allocate (aux2(lenwr))
+   end if
+   if (prly) then
+    !=====================
+    ! for stl=2
+    ! sends y=[j1-2;j1-1] stl data to left
+    !receives from right and adds data on y=[nyc-1:nyc] sign=+1
+    !=========================
+    s1 = j1 - stl
+    kk = 0
+    do ic = 1, nc
+     do iz = z1, z2
+      do j = 0, stl-1
+       iy = s1 + j
+       do ix = x1, x2
+        kk = kk + 1
+        aux1(kk) = curr(ix, iy, iz, ic)
+       end do
+      end do
+     end do
+    end do
+    lenws = kk
+    lenwr = lenws
+    call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, rt)
+    r1 = j2 - stl
+    kk = 0
+    if (pe1y) then
+     if (iby<2) then
+      aux2(1:lenwr) = 0.0
+     end if
+    end if
+    do ic = 1, nc
+     do iz = z1, z2
+      do j = 1, stl
+       iy = j + r1
+       do ix = x1, x2
+        kk = kk + 1
+        curr(ix, iy, iz, ic) = curr(ix, iy, iz, ic) + aux2(kk)
+       end do
+      end do
+     end do
+    end do
+!========================================
+    ! sends y=[nyc+1:nyc+str] str=3 data to the right
+    !receives from left and adds data on y=[j1:j1+str-1] sign=-1
+    s2 = j2
+    kk = 0
+    do ic = 1, nc
+     do iz = z1, z2
+      do j = 1, str
+       iy = j + s2
+       do ix = x1, x2
+        kk = kk + 1
+        aux1(kk) = curr(ix, iy, iz, ic)
+       end do
+      end do
+     end do
+    end do
+    lenws = kk
+    lenwr = lenws
+    call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, lt)
+    !=====================
+    r2 = j1
+    kk = 0
+    if (pe0y) then
+     if (iby<2) then
+      aux2(1:lenwr) = 0.0
+     end if
+    end if
+    do ic = 1, nc
+     do iz = z1, z2
+      do j = 0, str-1
+       iy = j + r2
+       do ix = x1, x2
+        kk = kk + 1
+        curr(ix, iy, iz, ic) = curr(ix, iy, iz, ic) + aux2(kk)
+       end do
+      end do
+     end do
+    end do
+   end if
+   ! The reduced stencil of summed data
+   y1 = j1
+   y2 = j2
+   !================
+   if (prlz) then
+    !================
+    ! sends z=[k1-2;k1-1] stl data to left
+    ! receives from right and adds data on y=[nzc-1:nzc] sign=+1
+
+    s1 = k1 - stl
+    kk = 0
+    do ic = 1, nc
+     do j = 0, stl-1
+      iz = s1 + j
+      do iy = y1, y2
+       do ix = x1, x2
+        kk = kk + 1
+        aux1(kk) = curr(ix, iy, iz, ic)
+       end do
+      end do
+     end do
+    end do
+    lenws = kk
+    lenwr = lenws
+    call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, rt)
+
+    r1 = k2 - stl
+    if (pe1z) then
+     if (ibz<2) then
+      aux2(1:lenwr) = 0.0
+     end if
+    end if
+    kk = 0
+    do ic = 1, nc
+     do j = 1, stl
+      iz = j + r1
+      do iy = y1, y2
+       do ix = x1, x2
+        kk = kk + 1
+        curr(ix, iy, iz, ic) = curr(ix, iy, iz, ic) + aux2(kk)
+       end do
+      end do
+     end do
+    end do
+    !
+    !================
+    ! sends z=[nzc+1:nzc+str] str=3 data to the right
+    !receives from left and adds data on z=[k1:k1+str-1] sign=-1
+    s2 = k2
+    kk = 0
+    do ic = 1, nc
+     do j = 1, str
+      iz = j + s2
+      do iy = y1, y2
+       do ix = x1, x2
+        kk = kk + 1
+        aux1(kk) = curr(ix, iy, iz, ic)
+       end do
+      end do
+     end do
+    end do
+    lenws = kk
+    lenwr = lenws
+    call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, lt)
+    !================
+    r2 = k1
+    if (pe0z) then
+     if (ibz<2) then
+      aux2(1:lenwr) = 0.0
+     end if
+    end if
+    kk = 0
+    do ic = 1, nc
+     do j = 0, str-1
+      iz = j + r2
+      do iy = y1, y2
+       do ix = x1, x2
+        kk = kk + 1
+        curr(ix, iy, iz, ic) = curr(ix, iy, iz, ic) + aux2(kk)
+       end do
+      end do
+     end do
+    end do
+    ! The reduced stencil of summed data
+    z1 = k1
+    z2 = k2
+   end if
+  end subroutine
+!=====================================
   subroutine jc_xyzbd(curr, nc)
    real (dp), intent (inout) :: curr(:, :, :, :)
    integer, intent (in) :: nc

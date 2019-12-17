@@ -202,8 +202,9 @@
   !==================================
   subroutine den_energy_out( ns_ind, cmp, cmp_loc )
    integer, intent (in) :: ns_ind, cmp, cmp_loc
+!================ 
    character (9) :: fname = '         '
-   character (7), dimension (1), parameter :: epot = [ 'Wakepot' ]
+   character (7), dimension (1), parameter :: bpot = [ 'Beampot' ]
    character (7), dimension (2), parameter :: el1 = [ 'Edenout', &
      'Elenout' ]
    character (7), dimension (2), parameter :: pr1 = [ 'Pdenout', &
@@ -221,9 +222,11 @@
    character (4) :: foldername
    integer, parameter :: file_version = 2
    !========================
-   ! ns_index select ion species
-   ! cmp select components (density, energy,..)
-   ! cmp_loc is the index of output data:  jc(cmp_loc)
+   ! ns_index select ion species (electron,ions)
+   ! cmp select components name in output script for each species
+   ! [Eden,Elen],[H1dn,H1en].....
+   ! cmp_loc is the index where output data are stored in jc(cmp_loc) array
+   !============================
 
    write (foldername, '(i4.4)') iout
 
@@ -264,7 +267,7 @@
 
     select case (ns_ind)
     case (0)
-     write (fname, '(a7,i2.2)') epot, iout
+     write (fname, '(a7,i2.2)') bpot, iout
     case (1)
      write (fname, '(a7,i2.2)') el1(cmp), iout
     case (2)

@@ -306,6 +306,172 @@
    end if
 
   end subroutine
+!============================
+  subroutine set_ftyzgrid(npey, npez,sh)
+   integer, intent (in) :: npey, npez, sh
+   integer :: i, ii, p, ip, n_loc,last_ind
+
+   ! defines local yftgrid and zftgrid
+   loc_yftgrid(0)%gmin = yft(1)
+   ip = loc_yftgrid(0)%ng
+   n_loc = ip
+   loc_yftgrid(0)%gmax = yft(ip+1)
+   loc_yftgrid(0)%p_ind(1) = min(sh, n_loc)
+   loc_yftgrid(0)%p_ind(2) = n_loc + loc_yftgrid(0)%p_ind(1) - 1
+   loc_yftgrid(0)%min_cell = 0
+   loc_yftgrid(0)%max_cell = loc_yftgrid(0)%min_cell + n_loc - 1
+
+   p = 0
+   do i = 1, n_loc + 1
+    loc_yft(i, p) = yft(i)
+   end do
+
+   if (npey>1) then
+    ip = loc_yftgrid(0)%ng
+    if (npey>2) then
+     do p = 1, npey - 2
+      n_loc = loc_yftgrid(p-1)%ng
+      n_loc = loc_yftgrid(p)%ng
+      do i = 1, n_loc + 1
+       ii = i + ip
+       loc_yft(i, p) = yft(ii)
+      end do
+      loc_yftgrid(p)%gmin = loc_yftgrid(p-1)%gmax
+
+      ip = ip + n_loc
+      loc_yftgrid(p)%gmax = yft(ip+1)
+
+      loc_yftgrid(p)%p_ind(1) = sh
+      loc_yftgrid(p)%p_ind(2) = n_loc + loc_yftgrid(p)%p_ind(1) - 1
+      loc_yftgrid(p)%min_cell = loc_yftgrid(p-1)%min_cell + n_loc
+      loc_yftgrid(p)%max_cell = loc_yftgrid(p-1)%max_cell + n_loc
+
+     end do
+    end if
+    p = npey - 1
+    n_loc = loc_yftgrid(p)%ng
+    do i = 1, n_loc + 1
+     ii = i + ip
+     loc_yft(i, p) = yft(ii)
+    end do
+    loc_yftgrid(p)%gmin = loc_yftgrid(p-1)%gmax
+    ip = ip + n_loc
+    loc_yftgrid(p)%gmax = yft(ip+1)
+    loc_yftgrid(p)%p_ind(1) = sh
+    loc_yftgrid(p)%p_ind(2) = n_loc + loc_yftgrid(p)%p_ind(1) - 1
+    loc_yftgrid(p)%min_cell = loc_yftgrid(p-1)%min_cell + n_loc
+    loc_yftgrid(p)%max_cell = loc_yftgrid(p-1)%max_cell + n_loc
+
+   end if
+!      Now redefine loc_yft coordinate on an extended grid to be overset the
+!      strethed grid
+   if(npey >3)then
+    n_loc = loc_yftgrid(0)%ng
+    last_ind=0
+    do p= 0,npey/2-1
+     do i=1,4*n_loc
+      ii=i+last_ind
+      loc_yft(i,p)=yft(ii)
+     end do
+    last_ind=last_ind+n_loc
+    enddo
+!========================
+    last_ind=last_ind-n_loc
+    do p =npey/2,npey/2+1
+     do i=1,4*n_loc
+      ii=i+last_ind
+      loc_yft(i,p)=yft(ii)
+     end do
+    end do
+!==================
+    do p= npey/2+2,npey-1
+     do i=1,4*n_loc
+      ii=i+last_ind
+      loc_yft(i,p)=yft(ii)
+     end do
+     last_ind=last_ind+n_loc
+    enddo
+   endif
+!=========================
+   loc_zftgrid(0)%gmin = zft(1)
+   ip = loc_zftgrid(0)%ng
+   n_loc = ip
+   loc_zftgrid(0)%gmax = zft(ip+1)
+   loc_zftgrid(0)%p_ind(1) = min(sh, n_loc)
+   loc_zftgrid(0)%p_ind(2) = n_loc + loc_zftgrid(0)%p_ind(1) - 1
+   loc_zftgrid(0)%min_cell = 0
+   loc_zftgrid(0)%max_cell = loc_zftgrid(0)%min_cell + n_loc - 1
+
+   p = 0
+   do i = 1, n_loc + 1
+    loc_zft(i, p) = zft(i)
+   end do
+
+   if (npez>1) then
+    ip = loc_zftgrid(0)%ng
+    if (npez>2) then
+     do p = 1, npez - 2
+      n_loc = loc_zftgrid(p-1)%ng
+      n_loc = loc_zftgrid(p)%ng
+      do i = 1, n_loc + 1
+       ii = i + ip
+       loc_zft(i, p) = zft(ii)
+      end do
+      loc_zftgrid(p)%gmin = loc_zftgrid(p-1)%gmax
+
+      ip = ip + n_loc
+      loc_zftgrid(p)%gmax = zft(ip+1)
+
+      loc_zftgrid(p)%p_ind(1) = sh
+      loc_zftgrid(p)%p_ind(2) = n_loc + loc_zftgrid(p)%p_ind(1) - 1
+      loc_zftgrid(p)%min_cell = loc_zftgrid(p-1)%min_cell + n_loc
+      loc_zftgrid(p)%max_cell = loc_zftgrid(p-1)%max_cell + n_loc
+
+     end do
+    end if
+    p = npez - 1
+    n_loc = loc_zftgrid(p)%ng
+    do i = 1, n_loc + 1
+     ii = i + ip
+     loc_zft(i,  p) = zft(ii)
+    end do
+    loc_zftgrid(p)%gmin = loc_zftgrid(p-1)%gmax
+    ip = ip + n_loc
+    loc_zftgrid(p)%gmax = zft(ip+1)
+    loc_zftgrid(p)%p_ind(1) = sh
+    loc_zftgrid(p)%p_ind(2) = n_loc + loc_zftgrid(p)%p_ind(1) - 1
+    loc_zftgrid(p)%min_cell = loc_zftgrid(p-1)%min_cell + n_loc
+    loc_zftgrid(p)%max_cell = loc_zftgrid(p-1)%max_cell + n_loc
+
+   end if
+   if(npez >3)then
+    n_loc = loc_zftgrid(0)%ng
+    last_ind=0
+    do p= 0,npez/2-1
+     do i=1,4*n_loc
+
+      ii=i+last_ind
+      loc_zft(i,p)=zft(ii)
+     end do
+     last_ind=last_ind+n_loc
+    enddo
+    last_ind=last_ind-n_loc
+    do p=npez/2,npez/2+1
+     do i=1,4*n_loc
+      ii=i+last_ind
+      loc_zft(i,p)=zft(ii)
+     end do
+    end do
+    do p= npez/2+2,npez-1
+     do i=1,4*n_loc
+      ii=i+last_ind
+      loc_zft(i,p)=zft(ii)
+     end do
+     last_ind=last_ind+n_loc
+    enddo
+   endif
+
+   end subroutine
 
   subroutine set_fyzxgrid(npey, npez, npex, sh)
    integer, intent (in) :: npey, npez, npex, sh
@@ -614,6 +780,36 @@
     end do
    end do
   end subroutine
+!
+  subroutine select_str_to_ft_grid(npey,npez)
+
+   integer,intent(in) :: npey,npez
+   integer :: ip,iy,ii,iz,nloc,loc_nft
+   real(dp) :: yy
+
+   loc_nft=4*loc_yftgrid(0)%ng   !the local size of uniform grid
+   do ip=0,npey-1     !from negative to positive y coordinate 
+    nloc=loc_ygrid(ip)%ng     !the local size of stretched grid
+    do iy=1,nloc
+     yy=loc_yg(iy, 1, ip)
+     do ii=1,loc_nft
+      if(yy < loc_yft(ii,ip))exit
+     end do
+     yft_ind(iy,ip)=ii-1
+    end do
+   end do
+   loc_nft=4*loc_zftgrid(0)%ng
+   do ip=0,npez-1     !from negative to positive z coordinate 
+    nloc=loc_zgrid(ip)%ng
+    do iy=1,nloc
+     yy=loc_zg(iy, 1, ip)
+     do ii=1,loc_nft
+      if(yy < loc_zft(ii,ip))exit
+     end do
+     zft_ind(iy,ip)=ii-1
+    end do
+   end do
+  end subroutine
 
   subroutine set_loc_grid_param
 
@@ -639,25 +835,55 @@
    logical,intent(in) :: str
    integer,intent(in) :: npe1,npe2,npe3
    integer :: n1, n2, n3
-   integer :: i
+   integer :: i, ip
    real (dp) :: wkx, wky, wkz
- 
+   integer,parameter :: sh=3
+
    n1=nx
    n2=ny
    n3=nz
    if(str)then
     n2=nint(dy_inv*ly_box)
     n3=nint(dz_inv*lz_box)
-    if(mod(n2,2) >0)n2=n2+1
-    if(mod(n3,2) >0)n3=n3+1
+    if(mod(n2,npe2)>0) n2=n2+npe2-mod(n2,npe2)
+    if(mod(n3,npe3)>0) n3=n3+npe3-mod(n3,npe3)
    endif
-!============= set in common.param
+!============= set grid point numbers in common.param
    n1ft=n1
    n2ft=n2
    n3ft=n3
    n1ft_loc=n1ft/npe1
    n2ft_loc=n2ft/npe2
    n3ft_loc=n3ft/npe3
+!======= set global ft (y,z) coorinates
+   allocate(yft(n2+1))
+   allocate(zft(n3+1))
+   do i = 1, n2 + 1
+    yft(i) = dy*real(i-1-n2/2, dp)
+   end do
+   do i = 1, n3 + 1
+    zft(i) = dz*real(i-1-n3/2, dp)
+   end do
+!=======  set loca locy_ftgrid loc_zftgrid parameters
+   allocate (loc_yftgrid(0:npe2-1), loc_zftgrid(0:npe3-1))
+   allocate (loc_yft(1:4*n2ft_loc,0:npe2-1), loc_zft(1:4*n3ft_loc,0:npe3-1))
+   allocate(yft_ind(ny_loc,0:npe2-1))
+   allocate(zft_ind(nz_loc,0:npe3-1))
+   do ip=0,npe2-1
+    loc_yftgrid(ip)%ng=n2ft_loc
+   end do
+   do ip=0,npe3-1
+    loc_zftgrid(ip)%ng=n3ft_loc
+   end do
+!===================
+   call set_ftyzgrid(npe2, npe3,sh)
+!------------------
+
+   yft_min = loc_yftgrid(imody)%gmin
+   zft_min = loc_zftgrid(imodz)%gmin
+
+   call select_str_to_ft_grid(nprocy,nprocz)
+   ! exit ii=yft_ind(y_str,pe) index  yft(ii) < y_str(pe) < yft(ii+1)
 !=======================
    allocate (aky(n2+2,0:2), akz(n3+2,0:2))
    allocate (sky(n2+2,0:2), skz(n3+2,0:2))
