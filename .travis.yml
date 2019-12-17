@@ -295,6 +295,25 @@ matrix:
 
     - os: linux
       compiler: gcc
+      name: ubuntu - gcc@9.0 - openmpi
+      addons:
+        apt:
+          update: true
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - gfortran-9
+            - gfortran
+            - libopenmpi-dev
+            - libboost-all-dev
+            - libfftw3-dev
+            - libfftw3-mpi-dev
+      env:
+        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9 && FC=/usr/bin/gfortran-9"
+
+    - os: linux
+      compiler: gcc
       name: ubuntu - PGI 19.4 - mpich
       addons:
         apt:
@@ -537,6 +556,25 @@ matrix:
             - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && FC=/usr/bin/gfortran-8"
+
+    - os: linux
+      compiler: gcc
+      name: ubuntu - gcc@9.0 - mpich
+      addons:
+        apt:
+          update: true
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - gfortran-9
+            - gfortran
+            - libmpich-dev
+            - libboost-all-dev
+            - libfftw3-dev
+            - libfftw3-mpi-dev
+      env:
+        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9 && FC=/usr/bin/gfortran-9"
 
   #do not consider known failing builds for the whole build status
   allow_failures:
