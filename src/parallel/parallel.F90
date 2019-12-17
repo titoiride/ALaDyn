@@ -43,9 +43,7 @@
 
   real (dp), allocatable :: fp0x(:, :, :, :), fp1x(:, :, :, :)
 
-  integer :: comm, status(mpi_status_size), error, mpi_sd
-  logical :: pex0, pex1
-  integer :: coor(3), comm_col(3), col_or(3)
+  integer :: status(mpi_status_size), error, mpi_sd
 
  contains
   !==================

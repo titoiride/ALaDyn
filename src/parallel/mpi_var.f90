@@ -41,5 +41,6 @@
   integer :: ndims, dims(3)
   logical :: pe0y, pe0z, pe1y, pe1z, pe0, pe1, prl, prlx, prly, prlz
   logical :: xl_bd, yl_bd, zl_bd, xr_bd, yr_bd, zr_bd
-  logical :: pe0x, pe1x
+  logical :: pe0x, pe1x, pex0, pex1
+  integer :: comm, coor(3), comm_col(3), col_or(3)
  end module
