@@ -678,7 +678,7 @@
    !case(0)  ! staggered k-grid
    wkx = 2.*acos(-1.)/lx_box !lxbox=x(n1+1)-x(1)
    wky = 2.*acos(-1.)/ly_box !lybox=y(n2+1)-y(1)
-   wkz = wky
+   wkz = 2.*acos(-1.)/lz_box !lzbox=z(n2+1)-z(1)
    do i = 1, n1/2
     akx(i, 0) = wkx*(real(i,dp)-0.5)
     skx(i, 0) = 2.*sin(0.5*dx*akx(i,0))/dx
@@ -736,21 +736,21 @@
    !case(2)  ! for the sine/cosine transform
    wkx = acos(-1.0)/lx_box
    wky = acos(-1.0)/ly_box
-   wkz = wky
+   wkz = acos(-1.0)/lz_box
    do i = 1, n1 + 1
-    akx(i, 2) = wkx*real(i-1, dp)
+    akx(i, 2) = wkx*real(i, dp)
     skx(i, 2) = 2.*sin(0.5*dx*akx(i,2))/dx
    end do
    if (n2>1) then
     do i = 1, n2 + 1
-     aky(i, 2) = wky*real(i-1, dp)
+     aky(i, 2) = wky*real(i, dp)
      sky(i, 2) = 2.*sin(0.5*dy*aky(i,2))/dy
     end do
     ak2y(1:n2, 2) = aky(1:n2, 2)*aky(1:n2, 2)
    end if
    if (n3>1) then
     do i = 1, n3 + 1
-     akz(i, 2) = wkz*real(i-1, dp)
+     akz(i, 2) = wkz*real(i, dp)
      skz(i, 2) = 2.*sin(0.5*dz*akz(i,2))/dz
     end do
     ak2z(1:n3, 2) = akz(1:n3, 2)*akz(1:n3, 2)
