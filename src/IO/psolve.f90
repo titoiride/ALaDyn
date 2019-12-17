@@ -206,7 +206,7 @@
    end if
    if (ft_mod>1) then
     call pftw3d_sc(wb, n1, n2, n2_loc, n3, n3_loc, -1, sym)
-    wb(1:n1, 1:n2_loc, 1:n3_loc) = omp0*wb(1:n1, 1:n2_loc, 1:n3_loc)
+    wb(1:n1_loc, 1:n2_loc, 1:n3_loc) = omp0*wb(1:n1_loc, 1:n2_loc, 1:n3_loc)
     !==========================
     call beam_potential(wb, g2, n1, n2_loc, n3_loc, ft_mod)
     !exit sin/cos fourier components for beam potential
