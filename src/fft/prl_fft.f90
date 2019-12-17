@@ -21,7 +21,7 @@
 
  module prl_fft
   use parallel
-  use mpi_fft_lib
+  use modern_fft_lib
   implicit none
 
   real (dp), allocatable :: fp1(:, :, :), fp2(:, :, :), faux1(:), &

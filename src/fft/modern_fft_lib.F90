@@ -19,13 +19,13 @@
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
 
- module mpi_fft_lib
+ module modern_fft_lib
 
   use precision_def
   use, intrinsic :: iso_c_binding
 
   implicit none
-  include 'fftw3-mpi.f03'
+  include 'fftw3.f03'
 
   !=== Real arrays for the r2r transforms
   real(C_DOUBLE), pointer :: in1_1d(:)
