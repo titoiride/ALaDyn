@@ -109,6 +109,167 @@
   !==============================
   end subroutine
   !===================
+  subroutine mpi_beam_ftgrid_distribute(ndm)
+
+   integer, intent (in) :: ndm
+
+   integer :: i, ii, i1, j
+   integer :: ic, p, ip, ipp, nb_loc
+   real (dp) :: y1, y2, z1, z2, x1, x2
+   integer :: nps_loc(nsb), npmax, np_tot
+   !========= count bunch particles on each (yz) MPI domain in uniform ftgrid
+   np_tot = sum(nb_tot(1:nsb))
+   ! ALL MPI tasks do
+   x1 = loc_xgrid(imodx)%gmin
+   x2 = loc_xgrid(imodx)%gmax
+   i1 = 0
+   select case (ndm)
+!================== 1:   counts local bunch particles of each bunch
+   case (2)
+    ip = npe_zloc - 1
+    do ic = 1, nsb
+     do p = 0, npe_xloc - 1
+      do ipp = 0, npe_yloc - 1
+       y1 = loc_yftgrid(ipp)%gmin
+       y2 = loc_yftgrid(ipp)%gmax
+       loc_nbpart(ipp, ip, p, ic) = 0
+       do j = 1, nb_tot(ic)
+        i = i1 + j
+        if (ebfb(i,2)>y1 .and. ebfb(i,2)<=y2) then
+         if (ebfb(i,1)>x1 .and. ebfb(i,1)<=x2) then
+          loc_nbpart(ipp, ip, p, ic) = loc_nbpart(ipp, ip, p, ic) + 1
+         end if
+        end if
+       end do
+      end do
+     end do
+     i1 = i1 + nb_tot(ic)
+    end do
+    nb_max = maxval(loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1, &
+      1:nsb))
+    nb_min = minval(loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1, &
+      1:nsb))
+    do ic = 1, nsb
+     do p = 0, npe_xloc - 1
+      do ipp = 0, npe_yloc - 1
+       i = ipp + npe_yloc*(ip+p*npe_zloc)
+       if (loc_nbpart(ipp,ip,p,ic)==nb_max) pe_nbmax = i
+       if (loc_nbpart(ipp,ip,p,ic)==nb_min) pe_nbmin = i
+      end do
+     end do
+    end do
+    !==================
+    ! The local particle number of each bunch 
+    nps_loc(1:nsb) = loc_nbpart(imody, imodz, imodx, 1:nsb)
+    npmax = maxval(nps_loc(1:nsb))
+    npmax = max(npmax, 1)
+    if (.not. allocated(bunch(1)%part)) then
+     allocate (bunch(1)%part(npmax,nd2+1))
+    else
+     deallocate (bunch(1)%part)
+     allocate (bunch(1)%part(npmax,nd2+1))
+    end if
+    !=================================
+    !                            2: selected particle coordinates are copied in
+    !                            bunch%part array
+    nb_loc = nps_loc(1)
+    p = imodx
+    ip = imodz
+    ipp = imody
+    y1 = loc_yftgrid(ipp)%gmin
+    y2 = loc_yftgrid(ipp)%gmax
+    !=========================
+    ! Here 2D MPI decomp. allowed
+    !===================================
+    i1 = 0
+    do ic = 1, nsb
+     ii = 0
+     do i = 1, nb_tot(ic)
+      j = i + i1
+      if (ebfb(i,2)>y1 .and. ebfb(i,2)<=y2) then
+       if (ebfb(i,1)>x1 .and. ebfb(i,1)<=x2) then
+        ii = ii + 1
+        bunch(1)%part(ii, 1:nd2+1) = ebfb(j,1:nd2+1)
+       end if
+      end if
+     end do
+     i1 = i1 + nb_tot(ic)
+    end do
+!================== 1:   counts local bunch particles of each bunch
+   case (3)
+    do ic = 1, nsb
+     do p = 0, npe_xloc - 1
+      do ip = 0, npe_zloc - 1
+       z1 = loc_zftgrid(ip)%gmin
+       z2 = loc_zftgrid(ip)%gmax
+       do ipp = 0, npe_yloc - 1
+        y1 = loc_yftgrid(ipp)%gmin
+        y2 = loc_yftgrid(ipp)%gmax
+        loc_nbpart(ipp, ip, p, ic) = 0
+        do j = 1, nb_tot(ic)
+         i = i1 + j
+         if (ebfb(i,2)>y1 .and. ebfb(i,2)<=y2) then
+          if (ebfb(i,3)>z1 .and. ebfb(i,3)<=z2) then
+           if (ebfb(i,1)>x1 .and. ebfb(i,1)<=x2) then
+            loc_nbpart(ipp, ip, p, ic) = loc_nbpart(ipp, ip, p, ic) + 1
+           end if
+          end if
+         end if
+        end do
+       end do
+      end do
+     end do
+     i1 = i1 + nb_tot(ic)
+    end do
+    nb_max = maxval(loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1, &
+      1:nsb))
+    nb_min = minval(loc_nbpart(0:npe_yloc-1,0:npe_zloc-1,0:npe_xloc-1, &
+      1:nsb))
+    !==================
+    ! The local MPI task
+    nps_loc(1:nsb) = loc_nbpart(imody, imodz, imodx, 1:nsb)
+    npmax = maxval(nps_loc(1:nsb))
+    !==================
+    npmax = max(npmax, 1)
+    if (.not. allocated(bunch(1)%part)) then
+     allocate (bunch(1)%part(npmax,nd2+1))
+    else
+     deallocate (bunch(1)%part)
+     allocate (bunch(1)%part(npmax,nd2+1))
+    end if
+    !=================================
+    !                            2: selected particle coordinates are copied in
+    !                            bunch%part array
+    nb_loc = nps_loc(1)
+    p = imodx
+    ip = imodz
+    z1 = loc_zftgrid(ip)%gmin
+    z2 = loc_zftgrid(ip)%gmax
+    ipp = imody
+    y1 = loc_yftgrid(ipp)%gmin
+    y2 = loc_yftgrid(ipp)%gmax
+    !=========================
+    ! Here 3D MPI decomp. allowed
+    !===================================
+    i1 = 0
+    do ic = 1, nsb
+     ii = 0
+     do i = 1, nb_tot(ic)
+      j = i + i1
+      if (ebfb(i,2)>y1 .and. ebfb(i,2)<=y2) then
+       if (ebfb(i,3)>z1 .and. ebfb(i,3)<=z2) then
+        if (ebfb(i,1)>x1 .and. ebfb(i,1)<=x2) then
+         ii = ii + 1
+         bunch(ic)%part(ii, 1:nd2+1) = ebfb(j,1:nd2+1)
+        end if
+       end if
+      end if
+     end do
+     i1 = i1 + nb_tot(ic)
+    end do
+   end select
+  end subroutine
+  !=================================
   subroutine mpi_beam_distribute(ndm)
 
    integer, intent (in) :: ndm
@@ -167,7 +328,7 @@
      allocate (bunch(1)%part(npmax,nd2+1))
     end if
     !=================================
-    !                            2: selected particle coordinates are copied in
+    !              2: selected particle coordinates are copied in
     !                            bunch%part array
     nb_loc = nps_loc(1)
     p = imodx
@@ -313,11 +474,10 @@
   subroutine beam_inject
 
    integer :: id_ch, np, nb, ic, ft_mod, ft_sym
-   integer :: nps_loc(nsb),nb_loc(1), i1, ix, iy, iz
-   real (dp) :: gam2, dmax(1), all_dmax(1)
-   real (dp) :: y1, y2, z1, z2, x1, x2
-   
+   integer :: nps_loc(nsb),nb_loc(1), i1
+   integer :: y1, y2, z1, z2
    integer :: n, n1_alc, n2_alc, n3_alc
+   real(dp) :: gam2
 
    gam2 = gam0*gam0
    id_ch = nd2 + 1
@@ -375,28 +535,66 @@
    end if
    ! Solves for beam potential UNIFORM GRIDS NEEDED
    !==================================================
-    ft_mod = 2 !A sine transform along each coordinate
-    ft_sym = 1
-    jc(:, :, :, 1) = 0.0
+   jc(:, :, :, 1) = 0.0
+   ft_mod = 2 !A sine transform along each coordinate
+   ft_sym = 1
+   if(stretch)then
+    if(ndim >2 )then
+     allocate(pot(n1ft+5,n2ft_loc+5,n3ft_loc+5,1))
+    else
+     allocate(pot(n1ft+5,n2ft_loc+5,n3ft_loc,1))
+    endif
+    pot(:, :, :, 1) = 0.0
+    call mpi_beam_ftgrid_distribute(ndim) !local bpart data are stored in bunch(1)%part in ftgrid
+    nps_loc(1:nsb) = loc_nbpart(imody, imodz, imodx, 1:nsb)
+    nb = sum(nps_loc(1:nsb))                     !the total bunch particle number
+    if(allocated(ebfb))deallocate(ebfb)
+    allocate(ebfb(nb,nd2+1))
+    do ic = 1, nsb
+     np = loc_nbpart(imody, imodz, imodx, ic)
+     call set_charge_on_ftgrid(bunch(1), ebfb, pot, np, 1)
+    end do
+    if (prl) call fill_ftcurr_yzbdsdata(pot,1)
+    !============================
+    !In pot(1) beam density
+    !=====================================================
+    y1 = loc_yftgrid(imody)%p_ind(1)
+    y2 = loc_yftgrid(imody)%p_ind(2)
+    z1 = loc_zftgrid(imodz)%p_ind(1)
+    z2 = loc_zftgrid(imodz)%p_ind(2)
+    !============ ft uniform grid
+    if (ndim == 2) call fft_2d_psolv(pot, jc, ompe, n1ft, n1ft_loc, n2ft, n2ft_loc, n3ft, &
+     n3ft_loc, ix1, ix2, y1, y2, z1, z2, ft_mod, ft_sym, 1)
+    if (ndim == 3) call fft_3d_psolv(pot, jc,gam2, ompe, n1ft, n1ft_loc, n2ft, n2ft_loc, n3ft, &
+     n3ft_loc, ix1, ix2, y1, y2, z1, z2, ft_mod, ft_sym, 1)
+    !Solves Laplacian[poten]=ompe*rho in Fourier space using sin() transform
+    !Exit beam potential in jc(1) 
+    !uniform to stretched grid interpolation inside
+    !======================================
+   else
     do ic = 1, nsb
      np = loc_nbpart(imody, imodz, imodx, ic)
      call set_grid_charge(bunch(1), ebfp, jc, np, 1)
     end do
     if (prl) call fill_curr_yzxbdsdata(jc,1)
     !============================
-    jc(:, :, :, 2) = bet0*jc(:, :, :, 1)
-    !In jc(1) beam density  in jc(2) beam Jx current
+    !In jc(1) beam density
     !=====================================================
-    if (ndim==2) call fft_2d_psolv(jc, ompe, n1ft, n1ft_loc, n2ft, n2ft_loc, n3ft, &
-     n3ft_loc,ft_mod, ft_sym)
-    if (ndim==3) call fft_3d_psolv(jc, gam2,ompe, n1ft, n1ft_loc, n2ft, n2ft_loc, n3ft, &
-     n3ft_loc,ft_mod, ft_sym)
-   !Solves Laplacian[poten]=ompe*rho in Fourier space using sin() transform
-   !Exit beam potential in jc(1) 
-   !uniform to stretched grid interpolation inside
+    y1 = jy1
+    y2 = jy2
+    z1 = kz1
+    z2 = kz2
+    if (ndim == 2) call fft_2d_psolv(jc, jc, ompe, nx, nx_loc, ny, ny_loc, nz, &
+     nz_loc, ix1, ix2, y1, y2, z1, z2, ft_mod, ft_sym, 0)
+    if (ndim == 3) call fft_3d_psolv(jc, jc, gam2, ompe, nx, nx_loc, ny, ny_loc, nz, &
+     nz_loc, ix1, ix2, y1, y2, z1, z2, ft_mod, ft_sym, 0)
+    !Solves Laplacian[poten]=ompe*rho in Fourier space using sin() transform
+    !Exit beam potential in jc(1) 
+   endif
+   jc(:,:,:,2) = bet0*jc(:,:,:,1)
    !==========================
-   if(allocated(bunch(1)%part))deallocate(bunch(1)%part)
    if(allocated(ebfb))deallocate(ebfb)
+   if(allocated(bunch(1)%part))deallocate(bunch(1)%part)
    !===========================
    call fill_ebfield_yzxbdsdata(jc, 1, 2,1,1)
    call initial_beam_fields(jc, ebf_bunch, gam2, bet0)
@@ -404,7 +602,7 @@
    ebf_bunch(:, :, :, 4) = 0.0
    !========================================= Collect data
    ebf(:, :, :, 1:nfield) = ebf(:, :, :, 1:nfield) + &
-                            ebf_bunch(:, :, :, 1:nfield)
+    ebf_bunch(:, :, :, 1:nfield)
    !========================================
    lp_end(1) = xc_bunch(1) + 2.*sxb(1)
    !=====================================
@@ -415,7 +613,7 @@
     write (16, '(a20,e11.4)') 'Plasma wave-length =', lambda_p
     write (16, *) '-------------------------------------'
     write (16, '(a17,i4)') 'Number of bunches', nsb
-    do i1=1,nsb
+    do i1=1, nsb
     write(16,*)'bunch number =',i1
     write (16, '(a25,i6)') 'Bunch particles per cell ', nb_per_cell(i1)
     write (16, '(a23,i8)') 'Bunch particle number  ', nb_tot(i1)

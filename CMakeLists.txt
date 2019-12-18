@@ -42,7 +42,8 @@ list(APPEND ALaDyn_Fortran_sources
   src/dynamics/fluid_density_momenta.f90
   src/dynamics/pic_evolve_in_time.f90
   src/dynamics/window.f90
-  src/fft/fft_lib.F90
+  src/fft/legacy_fft_lib.F90
+  src/fft/modern_fft_lib.F90
   src/fft/prl_fft.f90
   src/fields/grid_field_param.f90
   src/fields/grid_fields.f90
@@ -191,7 +192,7 @@ if(USING_INTEL_COMPILER AND NOT FORCE_FFTW)
   find_package(MKL REQUIRED)
   set(MKL_FFTW_INCLUDE_DIR "${MKL_INCLUDE_DIR}/fftw/")
 else()
-  find_package(FFTW REQUIRED)
+  find_package(FFTW REQUIRED OPTIONAL_COMPONENTS MPI)
 endif()
 
 string(APPEND CMAKE_CXX_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS}")
@@ -204,8 +205,21 @@ if(APPLE AND USING_PGI_COMPILER)
   #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-include_directories(${OTHER_INCLUDE_DIR} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${FFTW_INCLUDE_DIR} ${MKL_INCLUDE_DIR} ${MKL_FFTW_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+include_directories(
+  ${OTHER_INCLUDE_DIR}
+  ${MPI_INCLUDE_PATH}
+  ${MPI_Fortran_INCLUDE_PATH}
+  ${FFTW_INCLUDE_DIR}
+  ${MKL_INCLUDE_DIR}
+  ${MKL_FFTW_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIR}
+)
 
+if(FFTW_MPI_FOUND)
+  include_directories(
+   ${FFTW_MPI_INCLUDE_DIR}
+  )
+endif()
 add_executable(ALaDyn
   ${ALaDyn_Fortran_sources}
 )
@@ -219,6 +233,24 @@ target_link_libraries(ALaDyn
   find_last_addr
   enable_gdb_attach
 )
+
+if(FFTW_MPI_LIBRARY)
+  target_link_libraries(ALaDyn
+    ${FFTW_MPI_LIBRARY}
+  )
+endif()
+
+if(FFTW_LIBRARY)
+  target_link_libraries(ALaDyn
+    ${FFTW_LIBRARY}
+  )
+endif()
+
+if(MKL_LIBRARIES)
+  target_link_libraries(ALaDyn
+    ${MKL_LIBRARIES}
+  )
+endif()
 
 if(MPI_Fortran_LIBRARIES)
   target_link_libraries(ALaDyn
@@ -235,18 +267,6 @@ endif()
 if(Boost_LIBRARIES)
   target_link_libraries(ALaDyn
     ${Boost_LIBRARIES}
-  )
-endif()
-
-if(MKL_LIBRARIES)
-  target_link_libraries(ALaDyn
-    ${MKL_LIBRARIES}
-  )
-endif()
-
-if(FFTW_LIBRARY)
-  target_link_libraries(ALaDyn
-    ${FFTW_LIBRARY}
   )
 endif()
 

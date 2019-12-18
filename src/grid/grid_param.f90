@@ -39,6 +39,11 @@
   integer, allocatable :: nxh(:), nyh(:), nzh(:)
 
   !fft grid
+  type (grid), allocatable :: loc_yftgrid(:)
+  type (grid), allocatable :: loc_zftgrid(:)
+  real (dp), allocatable :: yft(:), zft(:)
+  real (dp), allocatable :: loc_yft(:,:), loc_zft(:,:)
+!-------------------
   real (dp), allocatable :: akx(:, :), aky(:, :), akz(:, :), sty(:, :)
   real (dp), allocatable :: ak2x(:, :), ak2y(:, :), ak2z(:, :), kern(:), &
     kern2(:, :)
@@ -50,7 +55,7 @@
     dz1(:)
   real (dp), allocatable :: xh(:), yh(:), zh(:), dx1h(:), dy1h(:), &
     dz1h(:)
-  integer, allocatable :: str_indx(:, :)
+  integer, allocatable :: str_indx(:, :),yft_ind(:,:),zft_ind(:,:)
   real (dp), allocatable :: rpt(:), wgp(:)
   real (dp) :: xtot, xmax, xmin, ymax, ymin, zmax, zmin, xw_min, xw_max
   real (dp) :: lx_box, ly_box, lz_box
@@ -58,6 +63,7 @@
     dzi_inv
   real (dp) :: aph, l_s, lx_s, dxi, dyi, dzi, sy_rat, sz_rat, sx_rat
   real (dp) :: xmn, ymn, zmn
+  real (dp) :: yft_min, zft_min
   !=============================
   integer :: nxp, nyp, nzp
   integer :: loc_ygr_max, loc_zgr_max, loc_xgr_max

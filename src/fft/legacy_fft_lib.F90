@@ -19,7 +19,7 @@
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
 
- module fft_lib
+ module legacy_fft_lib
 
   use precision_def
   use, intrinsic :: iso_c_binding

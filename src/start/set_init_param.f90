@@ -399,15 +399,12 @@
     npt_buffer(i) = nx_alloc*ny_loc*nz_loc*mp_per_cell(i)
    end do
    !===============================
-   call set_ftgrid(stretch,nprocx,nprocy,nprocz)
-   !===============================================================
    !density per macroparticle: np_per_nmacro=nm_fact*n_over_nc/nmacro
 
    !np_per_nmacro= electron density over el_macro density
    !multiplied by nb_over_np gives the bunch elecron density over bunch macro
    !under the condition :np_per_cell is the same for plasma and bunch macro
    !-----------------------------
-   !========================= driving beams parameters
    pot_ndim = 0
    nd2 = 2*curr_ndim
    nj_dim = curr_ndim

@@ -40,7 +40,7 @@
   !> simulation.
   subroutine Start
 
-   integer :: iic, ncmp
+   integer :: iic, ncmp, n, i
 
   !enable loop to attach with gdb only if really needed
   !WARNING if enabled with no need, the program sleeps at start without doing anything!
@@ -109,8 +109,59 @@
    call set_fyzxgrid(npe_yloc, npe_zloc, npe_xloc, sh_ix)
    if (stretch) call set_str_ind(npe_yloc, npe_zloc, ndim)
    call set_loc_grid_param
-                        
    call set_output_grid(jump, nprocx, nprocy, nprocz)
+
+   if(inject_beam)then
+    call set_ftgrid(stretch,nprocx,nprocy,nprocz)
+                        
+    if(pe0)then
+     if(stretch)then
+      open (10, file='beam_overset_grid.dat')
+      write(10,*)'str to uniform grid',ny,n2ft,n2ft_loc,nz,n3ft,n3ft_loc
+      iic=0
+      do i=1,ny_loc
+       n=yft_ind(i,iic)
+       write(10,*)i,n,loc_yg(i,1,iic),loc_yft(n,iic)
+      end do
+      do iic=0,nprocy/2-1
+       n=loc_yftgrid(iic)%ng
+       write(10,*)'pey',iic
+       write(10,*)n,4*n
+       write(10,*)loc_ygrid(iic)%gmin,loc_ygrid(iic)%gmax
+       write(10,*)loc_yftgrid(iic)%gmin,loc_yftgrid(iic+3)%gmax
+       write(10,*)loc_yft(1,iic),loc_yft(4*n,iic)
+       write(10,*)'===================='
+      end do
+      iic=nprocy/2
+       n=loc_yftgrid(iic)%ng
+       write(10,*)'pey',iic
+       write(10,*)n,4*n
+       write(10,*)loc_ygrid(iic)%gmin,loc_ygrid(iic)%gmax
+       write(10,*)loc_yftgrid(iic-1)%gmin,loc_yftgrid(iic+2)%gmax
+       write(10,*)loc_yft(1,iic),loc_yft(4*n,iic)
+       write(10,*)'===================='
+      iic=nprocy/2+1
+       n=loc_yftgrid(iic)%ng
+       write(10,*)'pey',iic
+       write(10,*)n,4*n
+       write(10,*)loc_ygrid(iic)%gmin,loc_ygrid(iic)%gmax
+       write(10,*)loc_yftgrid(iic-2)%gmin,loc_yftgrid(iic+1)%gmax
+       write(10,*)loc_yft(1,iic),loc_yft(4*n,iic)
+       write(10,*)'===================='
+      do iic=nprocy/2+2,nprocy-1
+       n=loc_yftgrid(iic)%ng
+       write(10,*)'pey',iic
+       write(10,*)n,4*n
+       write(10,*)loc_ygrid(iic)%gmin,loc_ygrid(iic)%gmax
+       write(10,*)loc_yftgrid(iic-3)%gmin,loc_yftgrid(iic)%gmax
+       write(10,*)loc_yft(1,iic),loc_yft(4*n,iic)
+       write(10,*)'===================='
+      end do
+      close(10)
+     endif
+    endif
+   endif
+     
    !Exit
    !loc_xgrid(nprocx),loc_ygrid(nprocy),loc_ygrid(nprocz) local grid data
    !local grid parameters and

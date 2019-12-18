@@ -43,9 +43,7 @@
 
   real (dp), allocatable :: fp0x(:, :, :, :), fp1x(:, :, :, :)
 
-  integer :: comm, status(mpi_status_size), error, mpi_sd
-  logical :: pex0, pex1
-  integer :: coor(3), comm_col(3), col_or(3)
+  integer :: status(mpi_status_size), error, mpi_sd
 
  contains
   !==================
@@ -549,7 +547,25 @@
    end if
 
   end subroutine
+!====================
+  subroutine exchange_3d_grdata(sr, dat0, lenw, dir, ipe)
+   integer, intent (in) :: lenw, dir, ipe
+   real (dp), intent (inout) :: dat0(:, :, :)
+   logical, intent (in) :: sr
+   integer :: tag
 
+   tag = 10 + ipe
+   if (sr) then
+
+    call mpi_send(dat0(1,1,1), lenw, mpi_sd, ipe, tag, comm_col(dir), &
+      error)
+    !=========================
+   else
+
+    call mpi_recv(dat0(1,1,1), lenw, mpi_sd, ipe, tag, comm_col(dir), &
+      status, error)
+   end if
+  end subroutine
   subroutine exchange_grdata(sr, dat0, lenw, dir, ipe)
    integer, intent (in) :: lenw, dir, ipe
    real (dp), intent (inout) :: dat0(:, :, :, :)
@@ -975,6 +991,48 @@
     pes = xp_next(ip)
    end select
    call mpi_sendrecv(buff1(1), lenws, mpi_sd, pes, tag, buff2(1), lenws, &
+     mpi_sd, per, tag, comm_col(dir), status, error)
+
+  end subroutine
+
+  subroutine exchange_bd_3d_data(buff1, lenws, buff2, lenwr, dir, side)
+   real (dp), intent (in) :: buff1(:,:,:)
+   real (dp), intent (out) :: buff2(:,:,:)
+   integer, intent (in) :: lenws, lenwr, dir
+   integer (hp_int), intent (in) :: side
+   integer pes, per, tag
+
+   !===============================
+   ! side > recievies next sends left
+   tag = 610
+
+   select case (dir)
+   case (1)
+    if (side>0) then
+     pes = yp_prev(side)
+     per = yp_next(side)
+    else
+     pes = yp_next(-side)
+     per = yp_prev(-side)
+    end if
+   case (2)
+    if (side>0) then
+     pes = zp_prev(side)
+     per = zp_next(side)
+    else
+     pes = zp_next(-side)
+     per = zp_prev(-side)
+    end if
+   case (3)
+    if (side>0) then
+     pes = xp_prev(side)
+     per = xp_next(side)
+    else
+     pes = xp_next(-side)
+     per = xp_prev(-side)
+    end if
+   end select
+   call mpi_sendrecv(buff1(1,1,1), lenws, mpi_sd, pes, tag, buff2(1,1,1), lenwr, &
      mpi_sd, per, tag, comm_col(dir), status, error)
 
   end subroutine

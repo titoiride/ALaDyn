@@ -156,6 +156,87 @@
    end select
   end subroutine
   !==========================
+  subroutine set_charge_on_ftgrid(sp_loc, pt, den, np, ic)
+
+   type (species), intent (in) :: sp_loc
+   real (dp), intent (inout) :: pt(:, :)
+   real (dp), intent (inout) :: den(:, :, :, :)
+   integer, intent (in) :: np, ic
+   real (dp) :: xp(3), dvol, ax0(0:2), ay0(0:2), az0(0:2)
+   integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
+   real (sp) :: wght
+   real(dp) :: x1_loc,y1_loc,z1_loc
+   !======================
+   ! Computes charge density on the superposed uniform ftgrid
+   !================================= 
+   ax0(0:2) = zero_dp
+   ay0(0:2) = zero_dp
+   az0(0:2) = zero_dp
+   spl = 2
+   x1_loc=xmn
+   y1_loc=yft_min
+   z1_loc=zft_min
+   select case (ndim)
+   case (2)
+    ch = 5
+    do n = 1, np
+     pt(n, 1) = dx_inv*(sp_loc%part(n, 1)-x1_loc)
+     pt(n, 2) = dy_inv*(sp_loc%part(n, 2)-y1_loc)
+     wgh_cmp = sp_loc%part(n, 5)
+     pt(n, 4) = charge*wgh
+    end do
+    !==========================
+    do n = 1, np
+     wght = real(pt(n,4), sp)
+     xp(1:2) = pt(n, 1:2)
+
+     call qden_2d_wgh(xp, ax0, ay0, i, j)
+     ax0(0:2) = wght*ax0(0:2)
+     i = i - 1
+     j = j - 1
+     do j1 = 0, 2
+      j2 = j + j1
+      do i1 = 0, 2
+       i2 = i + i1
+       dvol = ax0(i1)*ay0(j1)
+       den(i2, j2, 1, ic) = den(i2, j2, 1, ic) + dvol
+      end do
+     end do
+    end do
+   case (3)
+    ch = 7
+    do n = 1, np
+     pt(n, 1) = dx_inv*(sp_loc%part(n, 1)-x1_loc)
+     pt(n, 2) = dy_inv*(sp_loc%part(n, 2)-y1_loc)
+     pt(n, 3) = dz_inv*(sp_loc%part(n, 3)-z1_loc)
+     wgh_cmp = sp_loc%part(n, 7)
+     wght = charge*wgh
+     pt(n, 4) = wght
+    end do
+    do n = 1, np
+     xp(1:3) = pt(n, 1:3)
+     wght = real(pt(n,4), sp)
+     call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
+     ax0(0:2) = wght*ax0(0:2)
+     i = i - 1
+     j = j - 1
+     k = k - 1
+     do k1 = 0, spl
+      k2 = k + k1
+      do j1 = 0, spl
+       j2 = j + j1
+       dvol = az0(k1)*ay0(j1)
+       do i1 = 0, spl
+        i2 = i + i1
+        den(i2, j2, k2, ic) = den(i2, j2, k2, ic) + ax0(i1)*dvol
+       end do
+      end do
+     end do
+    end do
+    ! charge density on den(ic)
+   end select
+  end subroutine
+!=================================
   subroutine set_grid_charge(sp_loc, pt, den, np, ic)
 
    type (species), intent (in) :: sp_loc
@@ -166,7 +247,7 @@
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
    real (sp) :: wght
    !======================
-   ! Computes charge density on a grid
+   ! Computes charge density of species ic on a grid
    !================================= 
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp

@@ -189,16 +189,13 @@
      end do
     end if
     if (nden>0) then
+     !if(inject_beam)call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
      do i = 1, nsp
       call prl_den_energy_interp(i,nden)
       do iic = 1, min(2, nden)
        call den_energy_out( i, iic, iic )
       end do
      end do
-     if (nden>2) then
-      call set_wake_potential
-      call den_energy_out( 0, nden, 1 ) !data on jc(1) for wake potential
-     end if
     end if
     if (hybrid) then
      do i = 1, nfcomp
@@ -207,7 +204,6 @@
     end if
     if (ionization) call part_ionz_out(tnow)
     if (gam_min > 1.) call part_high_gamma_out(gam_min, tnow)
-    if (nbout > 0) call part_bdata_out(tnow,1,pjump)
     if (npout > 0) then
      iic = npout
      if (iic <= nsp) then
@@ -218,6 +214,8 @@
       end do
      end if
     end if
+    if (nbout>0) call part_bdata_out(tnow,1,pjump)
+                                                 !if(tnow>0.)write(6,*)'exit pdata',mype
 
     call CPU_TIME( unix_time_now )
 

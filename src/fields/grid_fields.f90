@@ -69,6 +69,61 @@
     end do
    end do
   end subroutine
+!=================================
+  subroutine unif_to_str_field_interp(unif_field,str_field,ic)
+
+   real (dp), intent (in) :: unif_field(:, :, :)
+   real (dp), intent (inout) :: str_field(:, :, :,:)
+   integer,intent(in) :: ic
+   real (dp) :: shy, shz,shy2,shz2
+   integer :: i, ii, j, jj,k, kk
+   integer :: jsize,ksize
+   !=======================================
+   jsize=size(unif_field,2)
+   ksize=size(unif_field,3)
+!=====================
+   select case(ndim)
+   case(2)
+    k=kz1
+    kk=1
+    do j=jy1,jy2
+     jj=yft_ind(j-2,imody)
+     shy = dy_inv*(loc_yg(j-2, 1, imody)-loc_yft(jj,imody))
+     shy2=0.5*shy*shy
+     shy=0.5*shy
+     do i=ix1,ix2
+      ii=i-2
+      str_field(i,j,k,ic)=unif_field(ii,jj,kk)+&
+                        shy*(unif_field(ii,jj+1,kk)-unif_field(ii,jj-1,kk))+&
+                        shy2*(unif_field(ii,jj+1,kk)+unif_field(ii,jj-1,kk)-2*unif_field(ii,jj,kk))
+      end do
+     end do
+    case(3)
+    do k=kz1,kz2
+     kk=zft_ind(k-2,imodz)
+     shz = dz_inv*(loc_zg(k-2, 1, imodz)-loc_zft(kk,imodz))
+     shz2=0.5*shz*shz
+     shz=0.5*shz
+     do j=jy1,jy2
+      jj=yft_ind(j-2,imody)
+      shy = dy_inv*(loc_yg(j-2, 1, imody)-loc_yft(jj,imody))
+      shy2=0.5*shy*shy
+      shy=0.5*shy
+      do i=ix1,ix2
+       ii=i-2
+       str_field(i,j,k,ic)=unif_field(ii,jj,kk)+&
+                          shy*(unif_field(ii,jj+1,kk)-unif_field(ii,jj-1,kk))+&
+                          shz*(unif_field(ii,jj,kk+1)-unif_field(ii,jj,kk-1))
+       str_field(i,j,k,ic)=str_field(i,j,k,ic)+&
+                          shy2*(unif_field(ii,jj+1,kk)+unif_field(ii,jj-1,kk)-2*unif_field(ii,jj,kk))
+       str_field(i,j,k,ic)=str_field(i,j,k,ic)+&
+                          shz2*(unif_field(ii,jj,kk+1)+unif_field(ii,jj,kk-1)-2*unif_field(ii,jj,kk))
+      end do
+     end do
+    end do
+  end select
+
+  end subroutine
 
   subroutine enforce_continuity(curr)
 
