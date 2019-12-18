@@ -186,8 +186,8 @@
    ! A LPF order Lpf with time-centered source term
    !=============================
    if (prl) then
-    str = 0
-    stl = 1
+    str = 1
+    stl = 2
     call fill_ebfield_yzxbdsdata(ef, 1, curr_ndim, str, stl)
     ! To fill electric field data
     ! sends stl to the left,
@@ -209,8 +209,8 @@
    !=============================
    !============== central step for advance of E-field
    if (prl) then
-    str = 1
-    stl = 0
+    str = 2
+    stl = 1
     call fill_ebfield_yzxbdsdata(ef, curr_ndim+1, nfield, str, stl)
     ! sends nyp+1-str to the right
     ! recvs str points from left at (1-str)
@@ -241,8 +241,8 @@
    end if
    !============== second substep dt/2 advance of B-field
    if (prl) then
-    str = 0
-    stl = 1
+    str = 1
+    stl = 2
     call fill_ebfield_yzxbdsdata(ef, 1, curr_ndim, str, stl)
    end if
    ! E field gets stl points from right (nyp+stl), (nzp+stl)

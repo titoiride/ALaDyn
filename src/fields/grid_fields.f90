@@ -1488,10 +1488,7 @@
     j = 1
     do i = ix1, ix2
      ef(i, j, k, nfield) = ef(i, j, k, nfield) - &
-       aph1*(ef(i+1,j,k,2)-ef(i,j,k,2))
-    end do
-    do i = ix1 + 1, ix2 - 1
-     ef(i, j, k, nfield) = ef(i, j, k, nfield) - &
+       aph1*(ef(i+1,j,k,2)-ef(i,j,k,2)) - &
        aph2*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
     end do
     return
@@ -1503,11 +1500,8 @@
      sdhy = loc_yg(jj, 4, imody)*aphy
      do i = ix1, ix2
       ef(i, j, k, nfield) = ef(i, j, k, nfield) - &
-        aph1*(ef(i+1,j,k,2)-ef(i,j,k,2)) + sdhy*(ef(i,j+1,k,1)-ef(i,j,k, &
-        1))
-     end do
-     do i = ix1 + 1, ix2 - 1
-      ef(i, j, k, nfield) = ef(i, j, k, nfield) - &
+        aph1*(ef(i+1,j,k,2)-ef(i,j,k,2)) + &
+        sdhy*(ef(i,j+1,k,1)-ef(i,j,k,1)) - &
         aph2*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
      end do
     end do
@@ -1523,12 +1517,10 @@
       do i = ix1, ix2
        ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3) &
          ) + sdhz*(ef(i,j,k+1,2)-ef(i,j,k,2))
-       ef(i, j, k, 5) = ef(i, j, k, 5) + aph1*(ef(i+1,j,k,3)-ef(i,j,k,3) &
-         ) - sdhz*(ef(i,j,k+1,1)-ef(i,j,k,1))
-      end do
-      do i = ix1 + 1, ix2 - 1
-       ef(i, j, k, 5) = ef(i, j, k, 5) + aph2*(ef(i+2,j,k,3)-ef(i-1,j,k, &
-         3))
+       ef(i, j, k, 5) = ef(i, j, k, 5) + &
+        aph1*(ef(i+1,j,k,3)-ef(i,j,k,3)) - &
+        sdhz*(ef(i,j,k+1,1)-ef(i,j,k,1)) + &
+        aph2*(ef(i+2,j,k,3)-ef(i-1,j,k, 3))
       end do
      end do
     end do
@@ -1539,11 +1531,8 @@
      sdhy = loc_yg(jj, 4, imody)*aphy
      do i = ix1, ix2
       ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3))
-      ef(i, j, k, 5) = ef(i, j, k, 5) + aph1*(ef(i+1,j,k,3)-ef(i,j,k,3))
-     end do
-     do i = ix1 + 1, ix2 - 1
-      ef(i, j, k, 5) = ef(i, j, k, 5) + aph2*(ef(i+2,j,k,3)-ef(i-1,j,k,3 &
-        ))
+      ef(i, j, k, 5) = ef(i, j, k, 5) + aph1*(ef(i+1,j,k,3)-ef(i,j,k,3)) &
+       + aph2*(ef(i+2,j,k,3)-ef(i-1,j,k,3))
      end do
     end do
    end if
@@ -1583,13 +1572,9 @@
       ii = i - 2
       ef(i, j, k, 1) = ef(i, j, k, 1) + sdy*(ef(i,j,k,nfield)-ef(i,j-1,k &
         ,nfield))
-      ef(i, j, k, 2) = ef(i, j, k, 2) - aph1*(ef(i,j,k,nfield)-ef(i-1,j, &
-        k,nfield))
-     end do
-     do i = ix1 + 2, ix2 - 1
-      ii = i - 2
-      ef(i, j, k, 2) = ef(i, j, k, 2) - aph2*(ef(i+1,j,k,nfield)-ef(i-2, &
-        j,k,nfield))
+      ef(i, j, k, 2) = ef(i, j, k, 2) - &
+       aph1*(ef(i,j,k,nfield)-ef(i-1,j,k,nfield)) - &
+       aph2*(ef(i+1,j,k,nfield)-ef(i-2,j,k,nfield))
      end do
     end do
    end do
@@ -1605,13 +1590,10 @@
        ii = i - 2
        ef(i, j, k, 1) = ef(i, j, k, 1) - sdz*(ef(i,j,k,5)-ef(i,j,k-1,5))
        ef(i, j, k, 2) = ef(i, j, k, 2) + sdz*(ef(i,j,k,4)-ef(i,j,k-1,4))
-       ef(i, j, k, 3) = ef(i, j, k, 3) + aph1*(ef(i,j,k,5)-ef(i-1,j,k,5) &
-         ) - sdy*(ef(i,j,k,4)-ef(i,j-1,k,4))
-      end do
-      do i = ix1 + 2, ix2 - 1
-       ii = i - 2
-       ef(i, j, k, 3) = ef(i, j, k, 3) + aph2*(ef(i+1,j,k,5)-ef(i-2,j,k, &
-         5))
+       ef(i, j, k, 3) = ef(i, j, k, 3) + &
+        aph1*(ef(i,j,k,5)-ef(i-1,j,k,5)) - &
+        sdy*(ef(i,j,k,4)-ef(i,j-1,k,4)) + &
+        aph2*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
       end do
      end do
     end do
@@ -1622,13 +1604,10 @@
      sdy = aphy*loc_yg(jj, 3, imody)
      do i = ix1, ix2
       ii = i - 2
-      ef(i, j, k, 3) = ef(i, j, k, 3) + aph1*(ef(i,j,k,5)-ef(i-1,j,k,5)) &
-        - sdy*(ef(i,j,k,4)-ef(i,j-1,k,4))
-     end do
-     do i = ix1 + 2, ix2 - 1
-      ii = i - 2
-      ef(i, j, k, 3) = ef(i, j, k, 3) + aph2*(ef(i+1,j,k,5)-ef(i-2,j,k,5 &
-        ))
+      ef(i, j, k, 3) = ef(i, j, k, 3) + &
+       aph1*(ef(i,j,k,5)-ef(i-1,j,k,5)) - &
+       sdy*(ef(i,j,k,4)-ef(i,j-1,k,4)) + &
+       aph2*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
      end do
     end do
    end if

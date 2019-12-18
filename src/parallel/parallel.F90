@@ -235,10 +235,10 @@
    !==========================================
 
    call init_random_seed(mype)
- 
+   !call processor_grid_diag
+   
   end subroutine
 
-  !call processor_grid_diag
 
   subroutine mpi_write_dp(buf, bufsize, disp, nchar, fout)
 
