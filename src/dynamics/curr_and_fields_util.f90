@@ -274,8 +274,8 @@
    !optimized advection scheme
    if (comoving) ib = 0
    if (prl) then
-    str = 1
-    stl = 1
+    str = 2
+    stl = 2
     call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
    end if
    do k = kz1, kz2
@@ -295,6 +295,9 @@
     call env_maxw_solve(jc, evf, omg, dt_loc)
    end if
    ! =================================
+   str = 2
+   stl = 2
+   call env_bds(evf, dt_loc, str, stl)
   end subroutine
   !========================================================
 

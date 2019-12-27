@@ -128,8 +128,8 @@
    q = max(nl_send, 1)
    allocate (right_pind(p))
    allocate (left_pind(q))
-   right_pind = 0
-   left_pind = 0
+   right_pind(:) = 0
+   left_pind(:) = 0
    p = 0
    q = 0
    npt = 0
@@ -191,6 +191,7 @@
      end do
 !=============== NON PERIODIC CASE
     else
+     !To be checked case ibd == 1 
      do k = 1, nr_send
       n = right_pind(k)
       loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
@@ -432,28 +433,78 @@
    if(allocated(sp1_aux)) deallocate(sp1_aux)
    if (moving_wind)return
 !==========================
-    ymm = loc_ygrid(imody)%gmin
-    ymx = loc_ygrid(imody)%gmax
-    lbd_min = loc_ygrid(0)%gmin
-    rbd_max = loc_ygrid(npe_yloc-1)%gmax
-    if (prly) then
+   ymm = loc_ygrid(imody)%gmin
+   ymx = loc_ygrid(imody)%gmax
+   lbd_min = loc_ygrid(0)%gmin
+   rbd_max = loc_ygrid(npe_yloc-1)%gmax
+   if (prly) then
+    do ic = 1, nsp_run
+     n_sr = 0
+     np = loc_npart(imody, imodz, imodx, ic)
+     np_new = np
+     call traffic_size_eval(spec(ic), ymm, ymx, pe0y, pe1y, iby, 2, np, &
+       n_sr, np_new)
+     np_new_allocate = max(1, np_new)
+     np_rs = maxval(n_sr(1:4))
+     if (np_rs>0) then
+      allocate(sp_aux(np_new,ndv))
+      allocate(sp1_aux(np_new,ndv))
+      call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
+        rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
+      if (np_out/=np_new) then
+       write (6, *) 'error in y-part count', mype, np_out, np_new
+       ier = 99
+      end if
+      call p_realloc(spec(ic), np_new, ndv)
+      call v_realloc(ebfp, np_new, ndv)
+      do n = 1, np_new
+       spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+       ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+      end do
+      loc_npart(imody, imodz, imodx, ic) = np_new
+     end if
+    end do
+   else
+    do ic = 1, nsp_run
+     np = loc_npart(imody, imodz, imodx, ic)
+     if (np>0) then
+      call reset_all_part_dist(spec(ic), ebfp, ymm, ymx, iby, np, ndv, &
+        2, ndim, np_new)
+      if (np_new<np) then
+       loc_npart(imody, imodz, imodx, ic) = np_new
+       do n = 1, np_new
+        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+       end do
+      end if
+     end if
+    end do
+   end if
+   if(allocated(sp_aux)) deallocate(sp_aux)
+   if(allocated(sp1_aux)) deallocate(sp1_aux)
+   if (ndim>2) then
+    zmm = loc_zgrid(imodz)%gmin
+    zmx = loc_zgrid(imodz)%gmax
+    lbd_min = loc_zgrid(0)%gmin
+    rbd_max = loc_zgrid(npe_zloc-1)%gmax
+    if (prlz) then
      do ic = 1, nsp_run
-      n_sr = 0
       np = loc_npart(imody, imodz, imodx, ic)
       np_new = np
-      call traffic_size_eval(spec(ic), ymm, ymx, pe0y, pe1y, iby, 2, np, &
-        n_sr, np_new)
+      n_sr = 0
+      call traffic_size_eval(spec(ic), zmm, zmx, pe0z, pe1z, ibz, 3, &
+        np, n_sr, np_new)
       np_new_allocate = max(1, np_new)
       np_rs = maxval(n_sr(1:4))
       if (np_rs>0) then
-
-       allocate(sp_aux(np_new,ndv))
-       allocate(sp1_aux(np_new,ndv))
-
-       call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
-         rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
+       !=====================
+       call v_realloc(sp_aux, np_new, ndv)
+       call v_realloc(sp1_aux, np_new, ndv)
+       !================
+       call part_prl_exchange(spec(ic), ebfp, zmm, zmx, lbd_min, &
+         rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, np_out)
        if (np_out/=np_new) then
-        write (6, *) 'error in y-part count', mype, np_out, np_new
+        write (6, *) 'error in z-part count', mype, np_out, np_new
         ier = 99
        end if
        call p_realloc(spec(ic), np_new, ndv)
@@ -469,8 +520,8 @@
      do ic = 1, nsp_run
       np = loc_npart(imody, imodz, imodx, ic)
       if (np>0) then
-       call reset_all_part_dist(spec(ic), ebfp, ymm, ymx, iby, np, ndv, &
-         2, ndim, np_new)
+       call reset_all_part_dist(spec(ic), ebfp, zmm, zmx, ibz, np, ndv, &
+         3, ndim, np_new)
        if (np_new<np) then
         loc_npart(imody, imodz, imodx, ic) = np_new
         do n = 1, np_new
@@ -481,61 +532,9 @@
       end if
      end do
     end if
-    if(allocated(sp_aux)) deallocate(sp_aux)
-    if(allocated(sp1_aux)) deallocate(sp1_aux)
-    if (ndim>2) then
-     zmm = loc_zgrid(imodz)%gmin
-     zmx = loc_zgrid(imodz)%gmax
-     lbd_min = loc_zgrid(0)%gmin
-     rbd_max = loc_zgrid(npe_zloc-1)%gmax
-     if (prlz) then
-      do ic = 1, nsp_run
-       np = loc_npart(imody, imodz, imodx, ic)
-       np_new = np
-       n_sr = 0
-       call traffic_size_eval(spec(ic), zmm, zmx, pe0z, pe1z, ibz, 3, &
-         np, n_sr, np_new)
-       np_new_allocate = max(1, np_new)
-       np_rs = maxval(n_sr(1:4))
-       if (np_rs>0) then
-        !=====================
-        call v_realloc(sp_aux, np_new, ndv)
-        call v_realloc(sp1_aux, np_new, ndv)
-        !================
-        call part_prl_exchange(spec(ic), ebfp, zmm, zmx, lbd_min, &
-          rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, np_out)
-        if (np_out/=np_new) then
-         write (6, *) 'error in z-part count', mype, np_out, np_new
-         ier = 99
-        end if
-        call p_realloc(spec(ic), np_new, ndv)
-        call v_realloc(ebfp, np_new, ndv)
-        do n = 1, np_new
-         spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-         ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-        end do
-        loc_npart(imody, imodz, imodx, ic) = np_new
-       end if
-      end do
-     else
-      do ic = 1, nsp_run
-       np = loc_npart(imody, imodz, imodx, ic)
-       if (np>0) then
-        call reset_all_part_dist(spec(ic), ebfp, zmm, zmx, ibz, np, ndv, &
-          3, ndim, np_new)
-        if (np_new<np) then
-         loc_npart(imody, imodz, imodx, ic) = np_new
-         do n = 1, np_new
-          spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-          ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-         end do
-        end if
-       end if
-      end do
-     end if
-     if(allocated(sp_aux))deallocate(sp_aux)
-     if(allocated(sp1_aux))deallocate(sp1_aux)
-    end if
+    if(allocated(sp_aux))deallocate(sp_aux)
+    if(allocated(sp1_aux))deallocate(sp1_aux)
+   end if
    !=====================
   end subroutine
   !=========================

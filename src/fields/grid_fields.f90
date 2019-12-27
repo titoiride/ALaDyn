@@ -926,7 +926,7 @@
    !curr=M^{-1}F
    if (ib>0) then !fixed coordinate system (x,t)
     !=======================
-    !(1+Dt*D_x]A^{n+1}=(1-Dt*D_x)A^{n-1}+ M^{-1}F
+    !(1+Dt*D_x)A^{n+1}=(1-Dt*D_x)A^{n-1}+ M^{-1}F
     !==================================
     select case (ib) !ib=der-1
     case (1)
@@ -936,18 +936,10 @@
       ic1 = ic + 2
       do k = kz1, kz2
        do j = jy1, jy2
-        i = ix1
-        evf(i-1, j, k, ic) = evf(i, j, k, ic)
-        curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
-          adv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
-        do i = ix1 + 1, ix2 - 1
+        do i = ix1, ix2
          curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
            adv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
         end do
-        i = ix2
-        evf(i+1, j, k, ic) = evf(i, j, k, ic)
-        curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
-          adv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
         do i = ix1, ix2
          evf(i, j, k, ic1) = evf(i, j, k, ic)
          evf(i, j, k, ic) = curr(i, j, k, ic)
@@ -968,22 +960,10 @@
       ic1 = ic + 2
       do k = kz1, kz2
        do j = jy1, jy2
-        i = ix1
-        evf(i-1, j, k, ic) = evf(i, j, k, ic)
-        do i = ix1, ix1 + 1
-         curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
-           adv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
-        end do
-        do i = ix1 + 2, ix2 - 2
+        do i = ix1, ix2
          curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
            an*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic)) - &
            bn*(evf(i+2,j,k,ic)-evf(i-2,j,k,ic))
-        end do
-        i = ix2
-        evf(i+1, j, k, ic) = evf(i, j, k, ic)
-        do i = ix2 - 1, ix2
-         curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
-           adv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
         end do
         do i = ix1, ix2
          evf(i, j, k, ic1) = evf(i, j, k, ic)
@@ -1014,25 +994,13 @@
 
     do k = kz1, kz2
      do j = jy1, jy2
-      i = ix1
-      ii = i - 2
-      ww0(ii, 1) = om0*curr(i, j, k, 2) + dhx*(curr(i+1,j,k,1)-curr(i,j, &
-        k,1))
-      ww0(ii, 2) = -om0*curr(i, j, k, 1) + dhx*(curr(i+1,j,k,2)-curr(i,j &
-        ,k,2))
-      do i = ix1 + 1, ix2 - 1
+      do i = ix1, ix2
        ii = i - 2
        ww0(ii, 1) = om0*curr(i, j, k, 2) + dx1_inv*(curr(i+1,j,k,1)-curr &
          (i-1,j,k,1))
        ww0(ii, 2) = -om0*curr(i, j, k, 1) + dx1_inv*(curr(i+1,j,k,2)- &
          curr(i-1,j,k,2))
       end do
-      i = ix2
-      ii = i - 2
-      ww0(ii, 1) = om0*curr(i, j, k, 2) + dhx*(curr(i,j,k,1)-curr(i-1,j, &
-        k,1))
-      ww0(ii, 2) = -om0*curr(i, j, k, 1) + dhx*(curr(i,j,k,2)-curr(i-1,j &
-        ,k,2))
       do i = ix1, ix2
        ii = i - 2
        curr(i, j, k, 1) = ww0(ii, 1)
@@ -1049,19 +1017,11 @@
     do iic = 1, 2
      do k = kz1, kz2
       do j = jy1, jy2
-       i = ix1
-       ii = i - 2
-       ww0(ii, 1) = dx2_norm*(curr(i,j,k,iic)-2.*curr(i+1,j,k,iic)+curr(i+ &
-         2,j,k,iic))
-       do i = ix1 + 1, ix2 - 1
+       do i = ix1, ix2
         ii = i - 2
         ww0(ii, 1) = dx2_norm*(curr(i+1,j,k,iic)-2.*curr(i,j,k,iic)+curr(i &
           -1,j,k,iic))
        end do
-       i = ix2
-       ii = i - 2
-       ww0(ii, 1) = dx2_norm*(curr(i,j,k,iic)-2.*curr(i-1,j,k,iic)+curr(i- &
-         2,j,k,iic))
        do i = ix1, ix2
         ii = i - 2
         curr(i, j, k, iic) = (curr(i,j,k,iic)-ww0(ii,1))/om2
@@ -1077,6 +1037,53 @@
   !========== LASER FIELDS SECTION
   !            (E,B) BC in open boundaries (lowest order Yee method
   !==========================================
+  subroutine env_bds(ef, dtl, ptrght, ptlft, imbd, init_ic, end_ic)
+   
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   real (dp), intent(in) :: dtl
+   integer, intent(in) :: ptlft, ptrght
+   integer, optional, intent(in) :: imbd, init_ic, end_ic
+
+   integer :: i, j, k, iic, i1, i2
+   integer :: comp1, comp2
+
+   comp1 = 1
+   comp2 = 2
+   if (present(init_ic)) then
+    comp1 = init_ic
+   endif
+   if (present(end_ic)) then
+    comp2 = end_ic
+   endif
+   i1 = ix1
+   i2 = ix2
+   if(xl_bd) then
+    do iic = comp1, comp2
+     do k = kz1, kz2
+      do j = jy1, jy2
+       do i = i1 - ptlft, i1 - 1
+        ef(i, j, k, iic) = ef(i1, j, k, iic)
+       end do
+      end do
+     end do
+    end do
+   end if
+
+   if(xr_bd) then
+    i = ix2
+    do iic = comp1, comp2
+     do k = kz1, kz2
+      do j = jy1, jy2
+       do i = i2 + ptrght, i2 + 1
+        ef(i, j, k, iic) = ef(i2, j, k, iic)
+       end do
+      end do
+     end do
+    end do
+   end if
+
+  end subroutine
+
   subroutine bf_bds(ef, dtl, imbd)
 
    real (dp), intent (inout) :: ef(:, :, :, :)
@@ -1089,7 +1096,7 @@
    !=================
    ! Enter bf(4:6)=[Bx,By,Bz]
    !============================
-   !=========Hegquist-Majda ABC (=>> Mur)=====================
+   !========= Engquist-Majda ABC (=>> Mur) =====================
    !===============
    ! Ey+Bz are right-moving
    !at x=0 minim. reflection (d/dt-d/dx)^{p-1}(Ey+Bz)=0
@@ -1227,7 +1234,7 @@
    ! DATA: ef[1:n1p][1:n2p+1][1:n3p+1] bds are on the right
    !===============
    ! to be used to advance B_t=-rot(E)
-   !=========Hegquist-Majda ABC (=>> Mur)=====================
+   !========= Engquist-Majda ABC (=>> Mur) =====================
    !===============
    ! Ey+Bz are right-moving, Ey-Bz left-moving
    !at x=0 minim. reflection (d/dt-d/dx)^{p-1}(Ey+Bz)=0
