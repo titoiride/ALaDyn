@@ -577,7 +577,7 @@
    k01 = kz1
    k02 = kz2
    !================
-   if(pe0x)then
+   if(xl_bd)then
     i = ix1
     do k = kz1, kz2
      do j = jy1, jy2
@@ -586,13 +586,13 @@
     end do
     i01=ix1+1
    endif
-   if(pe1x)then
+   if(xr_bd)then
     do k = kz1, kz2
      do j = jy1, jy2
       i = ix2 - 1
       envg(i, j, k, 2) = dx_inv*(envg(i+1,j,k,1)-envg(i,j,k,1))
       envg(i+1, j, k, 2) = dx_inv*(2.*envg(i,j,k,1)-3.*envg(i-1,j,k,1)+ &
-                                   envg(i-2,j,k,1))
+       envg(i-2,j,k,1))
      end do
     end do
     i02=ix2-2
@@ -614,7 +614,7 @@
      end do
     end do
    end if
-   if (pe1y) then
+   if (yr_bd) then
     do k = kz1, kz2
      j = jy2
      shy = loc_yg(j-2, 4, imody)*dy_inv
@@ -631,7 +631,7 @@
     j02 = jy2 - 2
    end if
    !===================
-   if (pe0y) then
+   if (yl_bd) then
     j = jy1
     shy = loc_yg(j-2, 4, imody)*dy_inv
     do k = kz1, kz2
@@ -662,7 +662,7 @@
     end do
    end if
    if (ndim==2) return
-   if (pe1z) then
+   if (zr_bd) then
     k = kz2
     shz = loc_zg(k-2, 4, imodz)*dz_inv
     do j = jy1, jy2
@@ -673,7 +673,7 @@
     end do
     k02 = kz2 - 1
    end if
-   if (pe0z) then
+   if (zl_bd) then
     k = kz1
     shz = loc_zg(k-2, 4, imodz)*dz_inv
     do j = jy1, jy2
@@ -785,75 +785,17 @@
     i01 = ix1
     i02 = ix2
     if (der_ord<3) then
-     if(pe0x)then
-      i = ix1
-      do k = kz1, kz2
-       do j = jy1, jy2
-       curr(i, j, k, 1) = curr(i, j, k, 1) - dhx1_inv*(evf(i+1,j,k,2)- &
-         evf(i,j,k,2))
-       curr(i, j, k, 2) = curr(i, j, k, 2) + dhx1_inv*(evf(i+1,j,k,1)- &
-         evf(i,j,k,1))
-       end do
-      end do
-      i01=ix1+1
-     endif
-     if(pe1x)then
-      i = ix2
-      do k = kz1, kz2
-       do j = jy1, jy2
-        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i,j,k,2)-evf(i &
-         -1,j,k,2))
-        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i,j,k,1)-evf(i &
-         -1,j,k,1))
-       end do
-      end do
-      i02=ix2-1
-     endif
      do k = kz1, kz2
       do j = jy1, jy2
-       do i = i01,i02
+       do i = i01, i02
         curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)- &
-          evf(i-1,j,k,2))
+         evf(i-1,j,k,2))
         curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)- &
-          evf(i-1,j,k,1))
+         evf(i-1,j,k,1))
        end do
       end do
      end do
     else
-     if(pe0x)then
-      do k = kz1, kz2
-       do j = jy1, jy2
-        i = ix1
-        curr(i, j, k, 1) = curr(i, j, k, 1) - dhx1_inv*(evf(i+1,j,k,2)- &
-         evf(i,j,k,2))
-        curr(i, j, k, 2) = curr(i, j, k, 2) + dhx1_inv*(evf(i+1,j,k,1)- &
-         evf(i,j,k,1))
-        i = ix1+ 1
-        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)-evf &
-         (i-1,j,k,2))
-        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)-evf &
-         (i-1,j,k,1))
-        end do
-       end do
-       i01=ix1+2
-      endif
-      if(pe1x)then
-       do k = kz1, kz2
-        do j = jy1, jy2
-         i = ix2 - 1
-         curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)-evf &
-          (i-1,j,k,2))
-         curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)-evf &
-          (i-1,j,k,1))
-         i = ix2
-         curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i,j,k,2)-evf(i &
-          -1,j,k,2))
-         curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i,j,k,1)-evf(i &
-         -1,j,k,1))
-        end do
-       end do
-      i02=ix2-2
-     endif
      do k = kz1, kz2
       do j = jy1, jy2
        do i = i01, i02
@@ -1038,15 +980,20 @@
   !            (E,B) BC in open boundaries (lowest order Yee method
   !==========================================
   subroutine env_bds(ef, dtl, ptrght, ptlft, imbd, init_ic, end_ic)
-   
+   !! Boundary conditions for the envelope field.
+   !! Empirically set to be continuous with continuous first derivative.
+   !! WARNING: to be completed with y and z directions.
+
    real(dp), intent(inout) :: ef(:, :, :, :)
    real (dp), intent(in) :: dtl
    integer, intent(in) :: ptlft, ptrght
    integer, optional, intent(in) :: imbd, init_ic, end_ic
 
+   real(dp) :: def, shx, shy, shz
    integer :: i, j, k, iic, i1, i2
    integer :: comp1, comp2
-
+   !j = jy2
+   !shy = loc_yg(j-2, 3, imody)*dy_inv
    comp1 = 1
    comp2 = 2
    if (present(init_ic)) then
@@ -1057,12 +1004,18 @@
    endif
    i1 = ix1
    i2 = ix2
+
+   shx = dx_inv
+   shy = dy_inv
+   shz = dz_inv
+
    if(xl_bd) then
     do iic = comp1, comp2
      do k = kz1, kz2
       do j = jy1, jy2
+       def = shx*(ef(i1 + 1, j, k, iic) - ef(i1, j, k, iic))
        do i = i1 - ptlft, i1 - 1
-        ef(i, j, k, iic) = ef(i1, j, k, iic)
+        ef(i, j, k, iic) = ef(i1, j, k, iic) - ((i1 + 0.5) - i)*def
        end do
       end do
      end do
@@ -1074,8 +1027,9 @@
     do iic = comp1, comp2
      do k = kz1, kz2
       do j = jy1, jy2
-       do i = i2 + ptrght, i2 + 1
-        ef(i, j, k, iic) = ef(i2, j, k, iic)
+       def = shx*(ef(i2, j, k, iic) - ef(i2 - 1, j, k, iic))
+       do i = i2 + 1, i2 + ptrght
+        ef(i, j, k, iic) = ef(i2, j, k, iic) + (i - (i2 - 0.5))*def
        end do
       end do
      end do
@@ -1110,7 +1064,7 @@
    !========================
    ! aphx centered as Ey at ii=1
    ii = 1
-   if (pe0x) then
+   if (xl_bd) then
     if (ibx<2) then
      aphx = loc_xg(1, 3, imodx)*dx_inv*dtl
      do k = kz1, kz2
@@ -1143,7 +1097,7 @@
    ! aphy centered as Ex j=1 (the Bz derivative)
    ii = 1
    if (iby<2) then
-    if (pe0y) then
+    if (yl_bd) then
      select case (imbd)
      case (0)
       aphy = loc_yg(ii, 3, imody)*dy_inv*dtl
@@ -1193,7 +1147,7 @@
    !==============================
    ii = 1
    if (ibz<2) then
-    if (pe0z) then
+    if (zl_bd) then
      select case (imbd)
      case (0)
       aphz = loc_zg(ii, 3, imodz)*dz_inv*dtl
@@ -1244,7 +1198,7 @@
    !=====================
    ! aphx centered as Bz nx+1/2
    if (ibx<2) then
-    if (pe1x) then
+    if (xr_bd) then
      ii = ix2 - 2
      select case (ibx)
      case (0)
@@ -1293,7 +1247,7 @@
    !========================
    ! aphy centered as Bz field ny+1/2
    if (iby<2) then
-    if (pe1y) then
+    if (yr_bd) then
      select case (imbd)
      case (0)
       ii = jy2 - 2
@@ -1346,7 +1300,7 @@
    !========================================
    ! aphz centered as Bx,By at nz+1/2
    if (ibz<2) then
-    if (pe1z) then
+    if (zr_bd) then
      select case (imbd)
      case (0)
       ii = loc_zgrid(imodz)%ng != kz2-2
@@ -1395,56 +1349,6 @@
    end if
    dx4(1) = cf(1)*dx2
    dx4(2) = cf(2)*dx2
-   if (pe0x) then
-    i = ix1
-    do ic = ic1, ic2
-     do k = kz1, kz2
-      do j = jy1, jy2
-       apf(i-1, j, k, ic) = apf(i, j, k, ic)
-       curr(i, j, k, ic) = curr(i, j, k, ic) + dx2*(apf(i+1,j,k,ic)+apf( &
-         i-1,j,k,ic)-2.*apf(i,j,k,ic))
-      end do
-     end do
-    end do
-    i01 = ix1 + 1
-    if (der_ord>2) then
-     i = ix1 + 1
-     do ic = ic1, ic2
-      do k = kz1, kz2
-       do j = jy1, jy2
-        curr(i, j, k, ic) = curr(i, j, k, ic) + dx2*(apf(i+1,j,k,ic)+apf &
-          (i-1,j,k,ic)-2.*apf(i,j,k,ic))
-       end do
-      end do
-     end do
-     i01 = ix1 + 2
-    end if
-   end if
-   if (pe1x) then
-    i = ix2
-    do ic = ic1, ic2
-     do k = kz1, kz2
-      do j = jy1, jy2
-       apf(i+1, j, k, ic) = apf(i, j, k, ic)
-       curr(i, j, k, ic) = curr(i, j, k, ic) + dx2*(apf(i+1,j,k,ic)+apf( &
-         i-1,j,k,ic)-2.*apf(i,j,k,ic))
-      end do
-     end do
-    end do
-    i02 = ix2 - 1
-    if (der_ord>2) then
-     i = ix2 - 1
-     do ic = ic1, ic2
-      do k = kz1, kz2
-       do j = jy1, jy2
-        curr(i, j, k, ic) = curr(i, j, k, ic) + dx2*(apf(i+1,j,k,ic)+apf &
-          (i-1,j,k,ic)-2.*apf(i,j,k,ic))
-       end do
-      end do
-     end do
-     i02 = ix2 - 2
-    end if
-   end if
    do ic = ic1, ic2
     do k = kz1, kz2
      do j = jy1, jy2
@@ -1462,7 +1366,6 @@
        do i = i01, i02
         curr(i, j, k, ic) = curr(i, j, k, ic) + dx4(2)*(apf(i+2,j,k,ic)+ &
           apf(i-2,j,k,ic)-2.*apf(i,j,k,ic))
-
        end do
       end do
      end do
