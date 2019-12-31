@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -115,7 +115,7 @@
     end if
    end if
    if (ndim<2) return
-   if (pe0y) then
+   if (yl_bd) then
     if (iby==0) then
      do ik = 1, nc
       do iz = k1, k2
@@ -136,7 +136,7 @@
      end do
     end if
    end if
-   if (pe1y) then
+   if (yr_bd) then
     if (iby==0) then
      do ik = 1, nc
       do iz = k1, k2
@@ -158,7 +158,7 @@
     end if
    end if
    if (ndim<3) return
-   if (pe0z) then
+   if (zl_bd) then
     if (ibz==0) then
      do ik = 1, nc
       do iy = j1, j2
@@ -179,7 +179,7 @@
      end do
     end if
    end if
-   if (pe1z) then
+   if (zr_bd) then
     if (ibz==0) then
      do ik = 1, nc
       do iy = j1, j2
@@ -249,7 +249,7 @@
      end do
     end do
    end do
-   if(pe0x)then
+   if(xl_bd)then
     do ic = ic1, ic2
      do iz = k1, k2
       do iy = j1, j2
@@ -406,7 +406,7 @@
      lenws = kk
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, lft)
-     if (pe0y) then
+     if (yl_bd) then
       if (iby<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -449,7 +449,7 @@
 
      !======================= next indx=1 cart dim=1 sign=+1
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, rgt)
-     if (pe1y) then
+     if (yr_bd) then
       if (iby<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -493,7 +493,7 @@
      lenws = kk
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, lft)
-     if (pe0z) then
+     if (zl_bd) then
       if (ibz<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -531,7 +531,7 @@
      lenws = kk
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, rgt)
-     if (pe1z) then
+     if (zr_bd) then
       if (ibz<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -600,7 +600,7 @@
     lenws = kk
     lenwr = lenws
     call exchange_bdx_data(aux1, aux2, lenws, lenwr, 3, lft)
-    if (pe0x) then
+    if (xl_bd) then
      if (ibx<2) then
       aux2(1:lenwr) = 0.0
      end if
