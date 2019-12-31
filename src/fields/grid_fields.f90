@@ -1540,10 +1540,12 @@
    real(dp), dimension(2), parameter :: W03 = [ 1./3., 2./3. ]
    real(dp), dimension(3), parameter :: LDER = [ 0.5, -2., 1.5 ]
    real(dp), dimension(3), parameter :: RDER = [ -1.5, 2., -0.5 ]
-   real(dp), dimension(4), parameter :: LDER4 = [ 1./6., -1., 0.5, &
-     1./3. ] ![i-2,i+1] stencil
-   real(dp), dimension(4), parameter :: rder4 = [ -1./3., -0.5, 1., &
-     -1./6. ] ![i-1,i+2] stencil
+
+   ! Fourth order derivatives
+   !real(dp), dimension(4), parameter :: LDER4 = [ 1./6., -1., 0.5, &
+   !  1./3. ] ![i-2,i+1] stencil
+   !real(dp), dimension(4), parameter :: RDER4 = [ -1./3., -0.5, 1., &
+   !  -1./6. ] ![i-1,i+2] stencil
    !=========================
    ! Enter primitive variables in flux array flx(Px,Py,Pz,den,vx,vy,vz)
    ! fcomp=curr_ndim+1 components
@@ -1630,7 +1632,7 @@
     integer, intent (in) :: nc, i1, np
     logical, intent (in) :: lbd, rbd
     !  enter data [i1,np]  
-    integer :: l, ii, iic
+    integer :: ii, iic
 
     !=======ENTER DATA [i1,np]
     !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 

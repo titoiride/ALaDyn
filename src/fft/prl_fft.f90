@@ -646,7 +646,6 @@
   subroutine pftw3d_sc(w, n1, n2, n2_loc, n3, n3_loc, is, sym)
    real (dp), intent (inout) :: w(:, :, :)
    integer, intent (in) :: n1, n2, n2_loc, n3, n3_loc, is, sym
-   integer :: n1_loc
 
    select case (is)
    case (-1)
@@ -725,7 +724,6 @@
   subroutine pftw3d(w, n1, n2, n2_loc, n3, n3_loc, is)
    real (dp), intent (inout) :: w(:, :, :)
    integer, intent (in) :: n1, n2, n2_loc, n3, n3_loc, is
-   integer :: n1_loc
 
    select case (is)
    case (-1)

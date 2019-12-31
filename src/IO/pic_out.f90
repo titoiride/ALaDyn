@@ -1643,7 +1643,6 @@
    integer :: id_ch, ik, p, q, ip, ip_max, nptot
    integer :: ne, lenp, ip_loc(npe), ndv, i_end
    integer (offset_kind) :: disp
-   real (sp) :: ch_ion
    character (4) :: foldername
    integer, parameter :: file_version = 4
 

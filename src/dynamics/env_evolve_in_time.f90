@@ -136,7 +136,7 @@
    real (dp), intent (in) :: envf(:, :, :, :)
    real (dp), intent (out) :: av(:, :, :, :)
    integer, intent (in) :: ord, spl_in, spr_in
-   integer :: ix, iy, iz, spl, spr
+   integer :: spl, spr
    !real(dp) :: ar,ai
    !===================
    !|A|^2/2 at current t^n time level

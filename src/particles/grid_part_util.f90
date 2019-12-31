@@ -606,7 +606,7 @@
    real (dp), intent (inout) :: eden(:, :, :, :)
    integer, intent (in) :: np
    real (dp) :: dvol, gam
-   real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), vx, xp(3), pp(3)
+   real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), vx, xp(3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
    real (sp) :: wght
    !======================

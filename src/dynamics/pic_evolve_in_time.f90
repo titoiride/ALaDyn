@@ -36,7 +36,7 @@
 
   subroutine lpf2_evolve(iter_loc)
    integer, intent (in) :: iter_loc
-   integer :: lp, ic, np, id_ch
+   integer :: ic, np, id_ch
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
    logical, parameter :: mw = .false.
    !============================

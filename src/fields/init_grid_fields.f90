@@ -408,7 +408,7 @@
   subroutine get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
    real (dp), intent (in) :: coords(4), par_lp(7)
    real (dp), intent (out) :: fields(6)
-   real (dp) :: phi0, phi1, phig00, phig10, csphig01
+   real (dp) :: phi0, phi1, phig00, phig10
    real (dp) :: x1, y1, t1, r2, w2
    real (dp) :: ampl, ampl_1, tshape, phx, wshape
    !========== enter
@@ -446,7 +446,7 @@
   subroutine get_2dlaser_fields_lp(coords, par_lp, fields)
    real (dp), intent (in) :: coords(4), par_lp(7)
    real (dp), intent (out) :: fields(6)
-   real (dp) :: phi0, phi1, phig00, phig10, csphig01
+   real (dp) :: phi0, phi1, phig00, phig10
    real (dp) :: x1, y1, t1, pih
    real (dp) :: w2, ampl, ampl_1
    real (dp) :: tshape, phx, r2, wshape
@@ -532,7 +532,7 @@
   subroutine get_laser_gprof_fields_lp(coords, par_lp, fields)
    real (dp), intent (in) :: coords(4), par_lp(7)
    real (dp), intent (out) :: fields(6)
-   real (dp) :: phi0, phi1, phig00, phig10, csphig01
+   real (dp) :: phi0, phi1, phig00, phig10
    real (dp) :: x1, y1, z1, t1, pih
    real (dp) :: ampl, ampl_1, w2
    real (dp) :: phx, r2, wshape, tshape
@@ -998,7 +998,7 @@
    real (dp), intent (in) :: ee0, t_loc, tf, wx, wy, xf0, om0
    integer, intent (in) :: lp, i1, i2
    real (dp) :: xxh, xx, yy, yyh, zz, zzh, sigma, eps
-   real (dp) :: xp, xc, yp, yc, zc, zra, ycent, zcent
+   real (dp) :: xp, xc, yc, zc, zra, ycent, zcent
    real (dp) :: ex, ey, ez, bx, by, bz
    integer :: i, j, k, ii, jj, kk
    integer :: j1, j2, k1, k2

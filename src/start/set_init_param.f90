@@ -38,7 +38,7 @@
 
    ! sets general parameters and grid depending on initial conditions
    integer :: i
-   real (dp) :: bunch_charge_density, gvol, gvol_inv, nm_fact, ncell
+   real (dp) :: gvol, gvol_inv, nm_fact, ncell
    real (dp) :: aph_fwhm, c1_fact, c2_fact
    !================== grid dimension definition ==============
    ndim = 1
