@@ -7,13 +7,13 @@ matrix:
       compiler: gcc
       name: macOS - native gcc (llvm backend)
       env:
-        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
+        - MATRIX_EVAL="brew update && brew install open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     - os: osx
       compiler: clang
       name: macOS - native clang
       env:
-        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
+        - MATRIX_EVAL="brew update && brew install open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     # broken, PGI compiler cannot compile OpenMPI headers
     - os: osx
