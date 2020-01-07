@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -115,7 +115,7 @@
     end if
    end if
    if (ndim<2) return
-   if (pe0y) then
+   if (yl_bd) then
     if (iby==0) then
      do ik = 1, nc
       do iz = k1, k2
@@ -136,7 +136,7 @@
      end do
     end if
    end if
-   if (pe1y) then
+   if (yr_bd) then
     if (iby==0) then
      do ik = 1, nc
       do iz = k1, k2
@@ -158,7 +158,7 @@
     end if
    end if
    if (ndim<3) return
-   if (pe0z) then
+   if (zl_bd) then
     if (ibz==0) then
      do ik = 1, nc
       do iy = j1, j2
@@ -179,7 +179,7 @@
      end do
     end if
    end if
-   if (pe1z) then
+   if (zr_bd) then
     if (ibz==0) then
      do ik = 1, nc
       do iy = j1, j2
@@ -208,7 +208,7 @@
    integer, intent (in) :: i1, i2, ic1, ic2, xsh
    real (dp), intent (inout) :: fld(:, :, :, :)
    real (dp), intent (in) :: den_x(:), den_yz(:, :)
-   integer :: ic, ix, j, iy, iz, kk, lenws
+   integer :: n1, ic, ii, ix, j, iy, iz, kk, lenws
    integer :: j1, j2, k1, k2
 
    if (xsh==0) return
@@ -217,6 +217,7 @@
    j2 = jy2
    k1 = kz1
    k2 = kz2
+   n1=loc_xgrid(imodx)%ng
 
    lenws = (ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
    if (prlx) then
@@ -239,33 +240,37 @@
    end if
    !
    ! shifts (i1+xsx:i2+xsh=n1p)=>(i1:i2)
-   do ic = ic1, ic2 - 1
+   do ic = ic1, ic2
     do iz = k1, k2
      do iy = j1, j2
-      fld(i1-1, iy, iz, ic) = fld(i1+xsh-1, iy, iz, ic)
       do ix = i1, i2
        fld(ix, iy, iz, ic) = fld(ix+xsh, iy, iz, ic)
       end do
-      fld(i1, iy, iz, ic) = 0.5*fld(i1, iy, iz, ic) + &
+     end do
+    end do
+   end do
+   if(xl_bd)then
+    do ic = ic1, ic2
+     do iz = k1, k2
+      do iy = j1, j2
+       fld(i1-1, iy, iz, ic) = fld(i1+xsh-1, iy, iz, ic)
+        fld(i1, iy, iz, ic) = 0.5*fld(i1, iy, iz, ic) + &
         0.25*(fld(i1+1,iy,iz,ic)+fld(i1-1,iy,iz,ic))
-      fld(i2+1:i2+xsh, iy, iz, ic) = 0.0
+      end do
      end do
     end do
-   end do
-   ic = ic2
-   do iz = k1, k2
-    do iy = j1, j2
-     fld(i1-1, iy, iz, ic) = fld(i1+xsh-1, iy, iz, ic)
-     do ix = i1, i2
-      fld(ix, iy, iz, ic) = fld(ix+xsh, iy, iz, ic)
-     end do
-     fld(i1, iy, iz, ic) = 0.5*fld(i1, iy, iz, ic) + &
-       0.25*(fld(i1+1,iy,iz,ic)+fld(i1-1,iy,iz,ic))
-     do ix = i2 + 1, i2 + xsh
-      fld(ix, iy, iz, ic) = den_x(ix)*den_yz(iy, iz)
+   endif
+   if(pex1)then
+    do ic = ic1, ic2-1
+     do iz = k1, k2
+      do iy = j1, j2
+       do ix = i2 + 1, i2 + xsh
+        fld(ix, iy, iz, ic) = zero_dp
+       end do
+      end do
      end do
     end do
-   end do
+   endif
    ! now replaces (i2+1:i2+xsh=n1p)
    if (prlx) then
     if (pex1) aux2(1:lenws) = 0.0
@@ -282,6 +287,17 @@
      end do
     end do
    end if
+   if(pex1)then
+    ic = ic2
+    do iz = k1, k2
+     do iy = j1, j2
+      do ix = i2 + 1, i2 + xsh
+       ii=ix +imodx*n1
+       fld(ix, iy, iz, ic) = den_x(ii)*den_yz(iy, iz)
+      end do
+     end do
+    end do
+   endif
 
   end subroutine
   !==================================
@@ -366,6 +382,7 @@
    iy2 = j2
    iz1 = k1
    iz2 = k2
+
    ! WARNING str <3 , stl>2 allowed
    !=======================
    ! Extends data to the y-left
@@ -389,7 +406,7 @@
      lenws = kk
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, lft)
-     if (pe0y) then
+     if (yl_bd) then
       if (iby<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -432,7 +449,7 @@
 
      !======================= next indx=1 cart dim=1 sign=+1
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, rgt)
-     if (pe1y) then
+     if (yr_bd) then
       if (iby<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -476,7 +493,7 @@
      lenws = kk
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, lft)
-     if (pe0z) then
+     if (zl_bd) then
       if (ibz<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -514,7 +531,7 @@
      lenws = kk
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, rgt)
-     if (pe1z) then
+     if (zr_bd) then
       if (ibz<2) then
        aux2(1:lenwr) = 0.0
       end if
@@ -583,7 +600,7 @@
     lenws = kk
     lenwr = lenws
     call exchange_bdx_data(aux1, aux2, lenws, lenwr, 3, lft)
-    if (pex0) then
+    if (xl_bd) then
      if (ibx<2) then
       aux2(1:lenwr) = 0.0
      end if

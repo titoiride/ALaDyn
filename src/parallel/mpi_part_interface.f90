@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -41,9 +41,8 @@
    integer, intent (in) :: ibd, ind, npold
    integer, intent (inout) :: nsr(4)
    integer, intent (inout) :: npnew
-   integer :: n, p, q
+   integer :: p, q
    integer :: nl_send, nl_recv, nr_send, nr_recv, cdir
-   real (dp) :: xp
 
    cdir = ind - 1
    if (ind==1) cdir = 3
@@ -52,11 +51,8 @@
    nr_recv = 0
    nl_recv = 0
    if (npold>0) then
-    do n = 1, npold
-     xp = sp_loc%part(n, ind)
-     if (xp>xr) p = p + 1
-     if (xp<xl) q = q + 1
-    end do
+    p = COUNT( sp_loc%part( :, ind ) > xr)
+    q = COUNT( sp_loc%part( :, ind ) < xl)
    end if
    nr_send = p
    nl_send = q
@@ -92,10 +88,10 @@
    logical, intent (in) :: pel, per
    integer, intent (in) :: ibd, dir, ndv, old_np, n_sr(4)
    integer, intent (out) :: npt
-   integer, allocatable :: left_pind(:), right_pind(:)
+   type(index_array) :: left_pind, right_pind
    integer :: k, kk, n, p, q, ns, nr, cdir
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
-   real (dp) :: xp
+   logical :: mask(old_np)
    !================ dir are cartesian coordinate index (x,y,z)
    !================ cdir are mpi-cartesian index (y,z,x)
 
@@ -126,38 +122,34 @@
    !==================== copy remaining part => ebfp
    p = max(nr_send, 1)
    q = max(nl_send, 1)
-   allocate (right_pind(p))
-   allocate (left_pind(q))
-   right_pind = 0
-   left_pind = 0
+
+   right_pind = index_array(old_np)
+   left_pind = index_array(old_np)
+
    p = 0
    q = 0
    npt = 0
    if (ibd==1 .and. dir==1) then !reflecting on the right
     if (per) then
-     do n = 1, old_np
-      xp = sp_loc%part(n, dir)
-      if (xp > xr) then
-       sp_loc%part(n, dir) = xr - (xp - xr)
-       sp_loc%part(n, vxdir) = -sp_loc%part(n, vxdir)
-      end if
-     end do
+     associate ( xp => sp_loc%part( :, dir ))
+      where (xp > xr)
+       xp = xr - (xp - xr)
+       sp_loc%part( :, vxdir ) = -sp_loc%part( :, vxdir )
+      end where
+     end associate
     end if
    end if
-!================== copy in sp_aux particles non to be exchanged
-   do n = 1, old_np
-    xp = sp_loc%part(n, dir)
-    if (xp>xr) then
-     p = p + 1
-     right_pind(p) = n
-    else if (xp<xl) then
-     q = q + 1
-     left_pind(q) = n
-    else
-     npt = npt + 1
-     sp_aux(npt, 1:ndv) = sp_loc%part(n, 1:ndv)
-     sp1_aux(npt, 1:ndv) = vstore(n, 1:ndv)
-    end if
+!================== copy in sp_aux particles not to be exchanged
+   associate (xp => sp_loc%part(:, dir))
+    call right_pind%find_index( xp > xr )
+    call left_pind%find_index( xp < xl )
+    mask(:) = (xp >= xl .and. xp <= xr)
+    npt = COUNT( mask )
+   end associate
+
+   do n = 1, ndv
+    sp_aux( :, n) = PACK( sp_loc%part(:, n), mask(:) )
+    sp1_aux( :, n) = PACK( vstore(:, n), mask(:) )
    end do
    !=======================
    ns = 2*ndv*nr_send
@@ -171,7 +163,7 @@
     if (per) then
      !sends to the right only for Periodic boundary
      do k = 1, nr_send
-      n = right_pind(k)
+      n = right_pind%indices(k)
       loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
       loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
       do q = 1, ndv
@@ -181,7 +173,7 @@
      end do
      !adds vstore data
      do k = 1, nr_send
-      n = right_pind(k)
+      n = right_pind%indices(k)
       loc_pstore(1:ndv) = vstore(n, 1:ndv)
       loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
       do q = 1, ndv
@@ -191,8 +183,9 @@
      end do
 !=============== NON PERIODIC CASE
     else
+     !To be checked case ibd == 1 
      do k = 1, nr_send
-      n = right_pind(k)
+      n = right_pind%indices(k)
       loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
       do q = 1, ndv
        kk = kk + 1
@@ -201,7 +194,7 @@
      end do
      !adds vstore data
      do k = 1, nr_send
-      n = right_pind(k)
+      n = right_pind%indices(k)
       loc_pstore(1:ndv) = vstore(n, 1:ndv)
       do q = 1, ndv
        kk = kk + 1
@@ -223,7 +216,7 @@
       sp_aux(p, q) = aux2(kk)
      end do
     end do
-                        !   adds...
+    !   adds...
     p = npt
     do n = 1, nl_recv
      p = p + 1
@@ -245,7 +238,7 @@
     kk = 0
     if (pel) then !only for periodic case
      do k = 1, nl_send
-      n = left_pind(k)
+      n = left_pind%indices(k)
       loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
       loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
       do q = 1, ndv
@@ -255,7 +248,7 @@
      end do
 ! adds....
      do k = 1, nl_send
-      n = left_pind(k)
+      n = left_pind%indices(k)
       loc_pstore(1:ndv) = vstore(n, 1:ndv)
       loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
       do q = 1, ndv
@@ -266,7 +259,7 @@
     else
     !============ NON PERIODIC EXCHANGE
      do k = 1, nl_send
-      n = left_pind(k)
+      n = left_pind%indices(k)
       loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
       do q = 1, ndv
        kk = kk + 1
@@ -274,7 +267,7 @@
       end do
      end do
      do k = 1, nl_send
-      n = left_pind(k)
+      n = left_pind%indices(k)
       loc_pstore(1:ndv) = vstore(n, 1:ndv)
       do q = 1, ndv
        kk = kk + 1
@@ -305,8 +298,7 @@
     end do
     npt = p
    end if
-   if (allocated(left_pind)) deallocate (left_pind)
-   if (allocated(right_pind)) deallocate (right_pind)
+
 !  EXIT old+new data in sp_aux(:,:) and sp1_aux(:,:)
   end subroutine
   !================
@@ -341,9 +333,8 @@
    end do
    pout = p
    if (pout>0) then
-    np_new = np - pout
-    call v_realloc(sp_aux, np_new, ndv)
-    call v_realloc(sp1_aux, np_new, ndv)
+    call v_realloc(sp_aux, np-pout, ndv)
+    call v_realloc(sp1_aux, np-pout, ndv)
     p = 0
     do n = 1, np
      xp = loc_sp%part(n, cin)
@@ -376,116 +367,12 @@
    ! ==> new particle number np_new= nl_recv-nl_send+ nr_recv-nr_send
    !      In part_prl_exchange()    exchanges particle data by mpi_send_recv
    !=====================================
-   if (.not. moving_wind) then
-    ymm = loc_ygrid(imody)%gmin
-    ymx = loc_ygrid(imody)%gmax
-    lbd_min = loc_ygrid(0)%gmin
-    rbd_max = loc_ygrid(npe_yloc-1)%gmax
-    if (prly) then
-     do ic = 1, nsp_run
-      n_sr = 0
-      np = loc_npart(imody, imodz, imodx, ic)
-      np_new = np
-      call traffic_size_eval(spec(ic), ymm, ymx, pe0y, pe1y, iby, 2, np, &
-        n_sr, np_new)
-      np_new_allocate = max(1, np_new)
-      np_rs = maxval(n_sr(1:4))
-      if (np_rs>0) then
-
-       allocate(sp_aux(np_new,ndv))
-       allocate(sp1_aux(np_new,ndv))
-
-       call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
-         rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
-       if (np_out/=np_new) then
-        write (6, *) 'error in y-part count', mype, np_out, np_new
-        ier = 99
-       end if
-       call p_realloc(spec(ic), np_new, ndv)
-       call v_realloc(ebfp, np_new, ndv)
-       do n = 1, np_new
-        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-       end do
-       loc_npart(imody, imodz, imodx, ic) = np_new
-      end if
-     end do
-    else
-     do ic = 1, nsp_run
-      np = loc_npart(imody, imodz, imodx, ic)
-      if (np>0) then
-       call reset_all_part_dist(spec(ic), ebfp, ymm, ymx, iby, np, ndv, &
-         2, ndim, np_new)
-       if (np_new<np) then
-        loc_npart(imody, imodz, imodx, ic) = np_new
-        do n = 1, np_new
-         spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-         ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-        end do
-       end if
-      end if
-     end do
-    end if
-    if (ndim>2) then
-     zmm = loc_zgrid(imodz)%gmin
-     zmx = loc_zgrid(imodz)%gmax
-     lbd_min = loc_zgrid(0)%gmin
-     rbd_max = loc_zgrid(npe_zloc-1)%gmax
-     if (prlz) then
-      do ic = 1, nsp_run
-       np = loc_npart(imody, imodz, imodx, ic)
-       np_new = np
-       n_sr = 0
-       call traffic_size_eval(spec(ic), zmm, zmx, pe0z, pe1z, ibz, 3, &
-         np, n_sr, np_new)
-       np_new_allocate = max(1, np_new)
-       np_rs = maxval(n_sr(1:4))
-       if (np_rs>0) then
-        !=====================
-        call v_realloc(sp_aux, np_new, ndv)
-        call v_realloc(sp1_aux, np_new, ndv)
-        !================
-        call part_prl_exchange(spec(ic), ebfp, zmm, zmx, lbd_min, &
-          rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, np_out)
-        if (np_out/=np_new) then
-         write (6, *) 'error in z-part count', mype, np_out, np_new
-         ier = 99
-        end if
-        call p_realloc(spec(ic), np_new, ndv)
-        call v_realloc(ebfp, np_new, ndv)
-        do n = 1, np_new
-         spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-         ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-        end do
-        loc_npart(imody, imodz, imodx, ic) = np_new
-       end if
-      end do
-     else
-      do ic = 1, nsp_run
-       np = loc_npart(imody, imodz, imodx, ic)
-       if (np>0) then
-        call reset_all_part_dist(spec(ic), ebfp, zmm, zmx, ibz, np, ndv, &
-          3, ndim, np_new)
-        if (np_new<np) then
-         loc_npart(imody, imodz, imodx, ic) = np_new
-         do n = 1, np_new
-          spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-          ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-         end do
-        end if
-       end if
-      end do
-     end if
-    end if
-    if(allocated(sp_aux))deallocate(sp_aux)
-    if(allocated(sp1_aux))deallocate(sp1_aux)
-   end if !end of moving_window=false
-   !=====================
    !In moving window box (xmm,xmx) are right shifted
    !all species leaving the computational box at the left
    !x-boundary are removed
    !==========================================
-   nspx = nsp
+   nspx=nsp_run
+   if(moving_wind)nspx = nsp
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
    lbd_min = loc_xgrid(0)%gmin
@@ -508,10 +395,12 @@
        write (6, *) 'error in x-part count', mype, np_out, np_new
        ier = 99
       end if
-      call p_realloc(spec(ic), np_new, ndv)
-      do n = 1, np_new
-       spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-      end do
+       call p_realloc(spec(ic), np_new, ndv)
+       call v_realloc(ebfp, np_new, ndv)
+       do n = 1, np_new
+        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+       end do
       loc_npart(imody, imodz, imodx, ic) = np_new
      end if
     end do
@@ -530,9 +419,114 @@
       end if
      end if
     end do
-    if(allocated(sp_aux)) deallocate(sp_aux)
-    if(allocated(sp1_aux)) deallocate(sp1_aux)
    end if
+   if(allocated(sp_aux)) deallocate(sp_aux)
+   if(allocated(sp1_aux)) deallocate(sp1_aux)
+   if (moving_wind)return
+!==========================
+   ymm = loc_ygrid(imody)%gmin
+   ymx = loc_ygrid(imody)%gmax
+   lbd_min = loc_ygrid(0)%gmin
+   rbd_max = loc_ygrid(npe_yloc-1)%gmax
+   if (prly) then
+    do ic = 1, nsp_run
+     n_sr = 0
+     np = loc_npart(imody, imodz, imodx, ic)
+     np_new = np
+     call traffic_size_eval(spec(ic), ymm, ymx, pe0y, pe1y, iby, 2, np, &
+       n_sr, np_new)
+     np_new_allocate = max(1, np_new)
+     np_rs = maxval(n_sr(1:4))
+     if (np_rs>0) then
+      allocate(sp_aux(np_new,ndv))
+      allocate(sp1_aux(np_new,ndv))
+      call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
+        rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
+      if (np_out/=np_new) then
+       write (6, *) 'error in y-part count', mype, np_out, np_new
+       ier = 99
+      end if
+      call p_realloc(spec(ic), np_new, ndv)
+      call v_realloc(ebfp, np_new, ndv)
+      do n = 1, np_new
+       spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+       ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+      end do
+      loc_npart(imody, imodz, imodx, ic) = np_new
+     end if
+    end do
+   else
+    do ic = 1, nsp_run
+     np = loc_npart(imody, imodz, imodx, ic)
+     if (np>0) then
+      call reset_all_part_dist(spec(ic), ebfp, ymm, ymx, iby, np, ndv, &
+        2, ndim, np_new)
+      if (np_new<np) then
+       loc_npart(imody, imodz, imodx, ic) = np_new
+       do n = 1, np_new
+        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+       end do
+      end if
+     end if
+    end do
+   end if
+   if(allocated(sp_aux)) deallocate(sp_aux)
+   if(allocated(sp1_aux)) deallocate(sp1_aux)
+   if (ndim>2) then
+    zmm = loc_zgrid(imodz)%gmin
+    zmx = loc_zgrid(imodz)%gmax
+    lbd_min = loc_zgrid(0)%gmin
+    rbd_max = loc_zgrid(npe_zloc-1)%gmax
+    if (prlz) then
+     do ic = 1, nsp_run
+      np = loc_npart(imody, imodz, imodx, ic)
+      np_new = np
+      n_sr = 0
+      call traffic_size_eval(spec(ic), zmm, zmx, pe0z, pe1z, ibz, 3, &
+        np, n_sr, np_new)
+      np_new_allocate = max(1, np_new)
+      np_rs = maxval(n_sr(1:4))
+      if (np_rs>0) then
+       !=====================
+       call v_realloc(sp_aux, np_new, ndv)
+       call v_realloc(sp1_aux, np_new, ndv)
+       !================
+       call part_prl_exchange(spec(ic), ebfp, zmm, zmx, lbd_min, &
+         rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, np_out)
+       if (np_out/=np_new) then
+        write (6, *) 'error in z-part count', mype, np_out, np_new
+        ier = 99
+       end if
+       call p_realloc(spec(ic), np_new, ndv)
+       call v_realloc(ebfp, np_new, ndv)
+       do n = 1, np_new
+        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+       end do
+       loc_npart(imody, imodz, imodx, ic) = np_new
+      end if
+     end do
+    else
+     do ic = 1, nsp_run
+      np = loc_npart(imody, imodz, imodx, ic)
+      if (np>0) then
+       call reset_all_part_dist(spec(ic), ebfp, zmm, zmx, ibz, np, ndv, &
+         3, ndim, np_new)
+       if (np_new<np) then
+        loc_npart(imody, imodz, imodx, ic) = np_new
+        do n = 1, np_new
+         spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+         ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
+        end do
+       end if
+      end if
+     end do
+    end if
+    if(allocated(sp_aux))deallocate(sp_aux)
+    if(allocated(sp1_aux))deallocate(sp1_aux)
+   end if
+   !=====================
   end subroutine
   !=========================
  end module

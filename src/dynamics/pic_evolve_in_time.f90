@@ -1,6 +1,6 @@
 
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -36,7 +36,7 @@
 
   subroutine lpf2_evolve(iter_loc)
    integer, intent (in) :: iter_loc
-   integer :: lp, ic, np, id_ch
+   integer :: ic, np, id_ch
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
    logical, parameter :: mw = .false.
    !============================
@@ -70,7 +70,7 @@
    !    ions enter with new ionization levels and new electrons
    !                   are injected
    !=============================================
-   jc(:, :, :, :) = 0.0
+   jc(:, :, :, :) = zero_dp
    !curr_clean
    do ic = 1, nsp_run
     np = loc_npart(imody, imodz, imodx, ic)

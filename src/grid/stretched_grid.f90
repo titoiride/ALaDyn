@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -46,7 +46,7 @@
    real(dp), intent(in) :: yp_in
    type(str_params), intent(in) :: params
    real(dp) :: stretched
-   real(dp) :: const, nl_stretch, xs, dli_inv, ratio, init_cell
+   real(dp) :: const, nl_stretch, xs, dli_inv, ratio
 
    const = params%const
    nl_stretch = params%nl_stretch

@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -195,7 +195,7 @@
     plan3 = fftw_plan_dft_r2c_1d( 2*n3, w3_re, w3_cplx, fftw_estimate)
     iplan3 = fftw_plan_dft_c2r_1d( 2*n3, w3_cplx, w3_re, fftw_estimate)
 
-    !===== Trying out new version based on r2r transforms =====
+    !===== New version based on r2r transforms =====
     data1_sc = fftw_alloc_complex(int( n1, C_SIZE_T))
     call c_f_pointer(data1_sc, in1_1d, [n1])
 
@@ -480,7 +480,7 @@
 
    integer, intent (in) :: n1, n2, n3, is, dir
    integer :: ix, iy, iz, n1_tr, n2_tr
-   integer :: i1, i2, j1, j2, k1, k2
+   integer :: i1, i2, j1, j2
    real (dp) :: sc, wrr, wir, wri, wii
 
    !!$PRAGMA C( DFFTW_EXECUTE )
@@ -670,49 +670,13 @@
     if (allocated(cw)) deallocate (cw)
    end select
   end subroutine
-  !================
-  subroutine ft_kern(w, n1, is)
-   !! WARNING: Still to be checked
-   real (dp), intent (inout) :: w(:)
-   integer, intent (in) :: n1, is
-   integer :: ix, i2
-   real (dp) :: sc
-   integer :: ndb
 
-   !!$PRAGMA C( DFFTW_EXECUTE )
-
-   ndb = 2*n1
-   sc = 1.
-   if (is<0) then
-    w1_re(1:n1) = w(1:n1)
-    w1_re(n1+1) = 0.0
-    do ix = n1 + 2, ndb
-     w1_re(ix) = -w1_re(ndb+2-ix)
-    end do
-    call fftw_execute_dft_r2c(plan1, w1_re, w1_cplx)
-    do ix = 1, n1
-     i2 = 2*ix
-     w(ix) = sc*w1_cplx(i2)
-    end do
-   else
-    w1_re(1:n1) = w(1:n1)
-    do ix = n1 + 2, ndb
-     w1_re(ix) = w1_re(ndb+2-ix)
-    end do
-    w1_re(n1+1) = 0.5*(w1_re(n1)+w1_re(n1+2))
-    call fftw_execute_dft_r2c(plan1, w1_re, w1_cplx)
-    do ix = 1, n1
-     i2 = 2*ix - 1
-     w(ix) = sc*w1_cplx(i2)
-    end do
-   end if
-  end subroutine
   !==========================
   subroutine ftw1d_sc(w, n1, n2, n3, is, dir, sym)
    real (dp), intent (inout) :: w(:, :, :)
 
    integer, intent (in) :: n1, n2, n3, is, dir, sym
-   integer :: ix, iy, iz, i1, i2, n1_tr, n2_tr
+   integer :: ix, iy, iz
    real (dp) :: sc
    integer :: ndb
    integer(C_INTPTR_T) :: kind
@@ -807,168 +771,6 @@
       end do
      end do
     end if
-   end select
-  end subroutine
-
-  subroutine old_ftw1d_sc(w, n1, n2, n3, is, dir, sym)
-   real (dp), intent (inout) :: w(:, :, :)
-
-   integer, intent (in) :: n1, n2, n3, is, dir, sym
-   integer :: ix, iy, iz, i1, i2, n1_tr, n2_tr
-   real (dp) :: sc
-   integer :: ndb
-   integer(C_INTPTR_T) :: kind
-
-   !!$PRAGMA C( DFFTW_EXECUTE )
-   kind = determine_kind(sym)
-   select case (dir)
-   case (1)
-    ndb = 2*n1
-    if (is<0) then !grid to Fourier space
-     sc = 1./real(ndb, dp)
-     if (kind == FFTW_RODFT00) then !sin
-      do iz = 1, n3
-       do iy = 1, n2
-        w1_re(1:n1) = w(1:n1, iy, iz)
-        w1_re(n1+1) = 0.0
-        do ix = n1 + 2, ndb
-         w1_re(ix) = -w1_re(ndb+2-ix)
-        end do
-        call fftw_execute_dft_r2c(plan1, w1_re, w1_cplx)
-        do ix = 1, n1
-         w(ix, iy, iz) = sc*imag(w1_cplx(ix))
-        end do
-       end do
-      end do
-     else if (kind == FFTW_REDFT00) then
-      do iz = 1, n3 !cos
-       do iy = 1, n2
-        w1_re(1:n1) = w(1:n1, iy, iz)
-        do ix = n1 + 2, ndb
-         w1_re(ix) = w1_re(ndb+2-ix)
-        end do
-        w1_re(n1+1) = 0.5*(w1_re(n1)+w1_re(n1+2))
-        call fftw_execute_dft_r2c(plan1, w1_re, w1_cplx)
-        do ix = 1, n1
-         w(ix, iy, iz) = sc*real(w1_cplx(ix))
-        end do
-       end do
-      end do
-     end if
-    else
-     n1_tr = n1
-     if (kind == FFTW_RODFT00) then
-      do iz = 1, n3
-       do iy = 1, n2
-        w1_cplx(:) = 0.0
-        do ix = 1, n1
-         w1_cplx(ix) = cmplx(zero_dp, w(ix, iy, iz))
-        end do
-        call fftw_execute_dft_c2r(iplan1, w1_cplx, w1_re)
-        w(1:n1, iy, iz) = w1_re(1:n1)
-       end do
-      end do
-     else if (kind == FFTW_REDFT00) then
-      do iz = 1, n3
-       do iy = 1, n2
-        w1_cplx(:) = 0.0
-        do ix = 1, n1
-         w1_cplx(ix) = cmplx(w(ix, iy, iz), zero_dp)
-        end do
-        call fftw_execute_dft_c2r(iplan1, w1_cplx, w1_re)
-        w(1:n1, iy, iz) = w1_re(1:n1)
-       end do
-      end do
-     end if
-    end if
-   case (2)
-    ndb = 2*n2
-    allocate (cw(n1,n2))
-    if (is<0) then
-     sc = 1./real(ndb, dp)
-     do iz = 1, n3
-      do ix = 1, n1
-       do iy = 1, n2
-        w2_re(iy) = w(ix, iy, iz)
-       end do
-       w2_re(n2+1) = 0.0
-       do iy = n2 + 2, ndb
-        w2_re(iy) = -w2_re(ndb+2-iy)
-       end do
-       call fftw_execute_dft_r2c(plan2, w2_re, w2_cplx)
-       do iy = 1, n2
-        cw(ix, iy) = sc*imag(w2_cplx(iy))
-       end do
-      end do
-      do iy = 1, n2
-       do ix = 1, n1
-        w(ix, iy, iz) = cw(ix, iy)
-       end do
-      end do
-     end do
-    else
-     n2_tr = n2
-     do iz = 1, n3
-      do ix = 1, n1
-       w2_cplx(:) = 0.0
-       do iy = 1, n2
-        w2_cplx(iy) = cmplx(zero_dp, w(ix, iy, iz))
-       end do
-       call fftw_execute_dft_c2r(iplan2, w2_cplx, w2_re)
-       do iy = 1, n2
-        cw(ix, iy) = w2_re(iy)
-       end do
-      end do
-      w(1:n1, 1:n2, iz) = cw(1:n1, 1:n2)
-     end do
-    end if
-    if (allocated(cw)) deallocate (cw)
-   case (3)
-    ndb = 2*n3
-    allocate (cw(n1,n3))
-    if (is<0) then
-     sc = 1./real(ndb, dp)
-     do iy = 1, n2
-      do ix = 1, n1
-       do iz = 1, n3
-        w3_re(iz) = w(ix, iy, iz)
-       end do
-       w3_re(n3+1) = 0.0
-       do iz = n3 + 2, ndb
-        w3_re(iz) = -w3_re(ndb+2-iz)
-       end do
-       call fftw_execute_dft_r2c(plan3, w3_re, w3_cplx)
-       do iz = 1, n3
-        cw(ix, iz) = sc*imag(w3_cplx(iz))
-       end do
-      end do
-      do iz = 1, n3
-       do ix = 1, n1
-        w(ix, iy, iz) = cw(ix, iz)
-       end do
-      end do
-     end do
-    else
-     n2_tr = n3
-     do iy = 1, n2
-      do ix = 1, n1
-       w3_cplx(:) = 0.0
-       do iz = 1, n3
-        w3_cplx(iz) = cmplx(zero_dp, w(ix, iy, iz))
-       end do
-       call fftw_execute_dft_c2r(iplan3, w3_cplx, w3_re)
-       do iz = 1, n3
-        cw(ix, iz) = w3_re(iz)
-       end do
-      end do
-      do iz = 1, n3
-       do ix = 1, n1
-        w(ix, iy, iz) = cw(ix, iz)
-       end do
-      end do
-     end do
-    end if
-    if (allocated(cw)) deallocate (cw)
    end select
   end subroutine
 

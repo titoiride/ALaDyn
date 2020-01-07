@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -24,6 +24,7 @@
   use pstruct_data
   use fstruct_data
   use init_grid_field
+  use grid_fields, only : env_bds
 
   implicit none
 
@@ -145,6 +146,7 @@
    real (dp), intent (out) :: part_in
    integer :: ic, pw_ind, i1, i2, j1, k1
    real (dp) :: eps, sigm, xm, tt, tau, tau1, loc_delay(3)
+   integer :: str, stl
 
    lp_amp = a0
    lp1_amp = a1
@@ -226,8 +228,14 @@
      end if
     end if
    end if
+
+   str = 2
+   stl = 2
+   call env_bds(env, dt_loc, str, stl, init_ic = 1, end_ic = 4)
+   if ( TWO_COLOR ) then
+    call env_bds(env1, dt_loc, str, stl, init_ic = 1, end_ic = 4)
+   end if
    !=======================
-   !==========================
    ebf = 0.0
    !=====================
    if (pe0) then

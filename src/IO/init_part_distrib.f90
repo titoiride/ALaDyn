@@ -1461,8 +1461,8 @@
    integer :: p, ip
    integer :: l, i, i1, i2, ic
    integer :: n_peak, nptx_loc(7)
-   integer :: npmax, nps_loc(4), np1_loc
-   real (dp) :: uu, xp_min, xp_max
+   integer :: npmax, nps_loc(4)
+   real (dp) :: uu, xp_min, xp_max, np1_loc
    real (dp) :: xfsh, l_inv, wgh_sp(7)
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
@@ -1568,7 +1568,7 @@
    ! x distribution
    !====================
    np1_loc = 0.005
-   if (np1>0.0) np1_loc = np1
+   if (np1 > 0.0) np1_loc = np1
    l_inv = log(1./np1_loc)
    do ic = 1, 3
     n_peak = nptx_loc(ic) !central target

@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -408,7 +408,7 @@
   subroutine get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
    real (dp), intent (in) :: coords(4), par_lp(7)
    real (dp), intent (out) :: fields(6)
-   real (dp) :: phi0, phi1, phig00, phig10, csphig01
+   real (dp) :: phi0, phi1, phig00, phig10
    real (dp) :: x1, y1, t1, r2, w2
    real (dp) :: ampl, ampl_1, tshape, phx, wshape
    !========== enter
@@ -446,7 +446,7 @@
   subroutine get_2dlaser_fields_lp(coords, par_lp, fields)
    real (dp), intent (in) :: coords(4), par_lp(7)
    real (dp), intent (out) :: fields(6)
-   real (dp) :: phi0, phi1, phig00, phig10, csphig01
+   real (dp) :: phi0, phi1, phig00, phig10
    real (dp) :: x1, y1, t1, pih
    real (dp) :: w2, ampl, ampl_1
    real (dp) :: tshape, phx, r2, wshape
@@ -532,7 +532,7 @@
   subroutine get_laser_gprof_fields_lp(coords, par_lp, fields)
    real (dp), intent (in) :: coords(4), par_lp(7)
    real (dp), intent (out) :: fields(6)
-   real (dp) :: phi0, phi1, phig00, phig10, csphig01
+   real (dp) :: phi0, phi1, phig00, phig10
    real (dp) :: x1, y1, z1, t1, pih
    real (dp) :: ampl, ampl_1, w2
    real (dp) :: phx, r2, wshape, tshape
@@ -998,7 +998,7 @@
    real (dp), intent (in) :: ee0, t_loc, tf, wx, wy, xf0, om0
    integer, intent (in) :: lp, i1, i2
    real (dp) :: xxh, xx, yy, yyh, zz, zzh, sigma, eps
-   real (dp) :: xp, xc, yp, yc, zc, zra, ycent, zcent
+   real (dp) :: xp, xc, yc, zc, zra, ycent, zcent
    real (dp) :: ex, ey, ez, bx, by, bz
    integer :: i, j, k, ii, jj, kk
    integer :: j1, j2, k1, k2
@@ -2135,12 +2135,13 @@
    integer, intent (in) :: dmodel
    real (dp), intent (in) :: part_in
    integer :: i, i0, j, k, ic, nxl(6), ntot, i0_targ, i1_targ
-   integer :: i1, i2, j1, j2, k1, k2
+   integer :: n1, ix, i1, i2, j1, j2, k1, k2
    integer :: j01, j02, k01, k02, jj, kk
    real (dp) :: uu, tot_x, l_inv, np1_loc, peak_fluid_density, u2, u3, &
      ramp_prefactor
    real (dp) :: yy, zz, r2
    !==================================
+   n1 = loc_xgrid(imodx)%ng
    i1 = loc_xgrid(imodx)%p_ind(1)
    i2 = loc_xgrid(imodx)%p_ind(2)
    j1 = loc_ygrid(imody)%p_ind(1)
@@ -2368,9 +2369,10 @@
    ic = size(up, 4) !the particle number density
    do k = k1, k2
     do j = j1, j2
-     do i = 1, i2
-      up(i, j, k, ic) = fluid_x_profile(i)*fluid_yz_profile(j, k)
-      up0(i, j, k, ic) = up(i, j, k, ic)
+     do ix = i1, i2
+      i = ix - 2 + imodx*n1
+      up(ix, j, k, ic) = fluid_x_profile(i)*fluid_yz_profile(j, k)
+      up0(ix, j, k, ic) = up(ix, j, k, ic)
      end do
     end do
    end do

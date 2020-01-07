@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -54,7 +54,7 @@
    real (dp), parameter :: small_value = 0.1
    logical :: check
 
-   check = (abs(value)<epsilon(small_value))
+   check = (abs(value) < epsilon(small_value))
 
   end function
 

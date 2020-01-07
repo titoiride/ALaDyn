@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -395,11 +395,10 @@
    integer, intent (in) :: np, ic
    integer, intent (inout) :: new_np_el
    integer, intent (inout) :: ion_ch_inc(:)
-   real (dp), allocatable :: wpr(:)
-   real (dp) :: ion_wch, p
+   real (dp) :: p
    integer :: n, nk, kk, z0
-   integer :: kf, loc_inc, id_ch, sp_ion
-   real (dp) :: energy_norm, ef_ion
+   integer :: kf, id_ch, sp_ion
+   real (dp) :: ef_ion
    !=====================
    ! Units Ef_ion is in unit mc^2/e=2 MV/m
    ! Hence E0*Ef_ion, E0=0.51 is the electric field in MV/m

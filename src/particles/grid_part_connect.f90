@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -958,9 +958,9 @@
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
    integer, intent (in) :: np
-   real (dp) :: ax, sx, sx2, dvol
+   real (dp) :: dvol
    real (dp) :: ax0(0:3), ay0(0:3), xp1(3), xp0(3)
-   real (dp) :: ax1(0:3), ay1(0:3), vp(3), vyp
+   real (dp) :: ax1(0:3), ay1(0:3), vp(3)
    real (dp) :: axh(0:4), axh0(0:4), axh1(0:4), ayh(0:4)
    real (dp) :: currx(0:4), curry(0:4)
    real (sp) :: wght
@@ -1340,7 +1340,6 @@
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
    integer, intent (in) :: np
-   real (dp) :: gam_inv
    real (dp) :: axh0(0:2), ayh0(0:2)
    real (dp) :: axh1(0:2), ayh1(0:2)
    real (dp) :: ax0(0:2), ay0(0:2), xp0(1:2)
@@ -1407,7 +1406,7 @@
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
    integer, intent (in) :: np
-   real (dp) :: ax, sx, sx2, dvol(3), gam_inv
+   real (dp) :: dvol(3), gam_inv
    real (dp) :: xp0(3), xp1(3)
    real (dp) :: ax0(0:2), ay0(0:2), az0(0:2)
    real (dp) :: ax1(0:2), ay1(0:2), az1(0:2)

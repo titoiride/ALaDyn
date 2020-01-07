@@ -1,6 +1,6 @@
 
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -186,8 +186,8 @@
    ! A LPF order Lpf with time-centered source term
    !=============================
    if (prl) then
-    str = 0
-    stl = 1
+    str = 1
+    stl = 2
     call fill_ebfield_yzxbdsdata(ef, 1, curr_ndim, str, stl)
     ! To fill electric field data
     ! sends stl to the left,
@@ -209,8 +209,8 @@
    !=============================
    !============== central step for advance of E-field
    if (prl) then
-    str = 1
-    stl = 0
+    str = 2
+    stl = 1
     call fill_ebfield_yzxbdsdata(ef, curr_ndim+1, nfield, str, stl)
     ! sends nyp+1-str to the right
     ! recvs str points from left at (1-str)
@@ -241,8 +241,8 @@
    end if
    !============== second substep dt/2 advance of B-field
    if (prl) then
-    str = 0
-    stl = 1
+    str = 1
+    stl = 2
     call fill_ebfield_yzxbdsdata(ef, 1, curr_ndim, str, stl)
    end if
    ! E field gets stl points from right (nyp+stl), (nzp+stl)
@@ -274,8 +274,8 @@
    !optimized advection scheme
    if (comoving) ib = 0
    if (prl) then
-    str = 1
-    stl = 1
+    str = 2
+    stl = 2
     call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
    end if
    do k = kz1, kz2
@@ -295,6 +295,9 @@
     call env_maxw_solve(jc, evf, omg, dt_loc)
    end if
    ! =================================
+   str = 2
+   stl = 2
+   call env_bds(evf, dt_loc, str, stl)
   end subroutine
   !========================================================
 

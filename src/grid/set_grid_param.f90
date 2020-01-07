@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -781,32 +781,32 @@
    end do
   end subroutine
 !
-  subroutine select_str_to_ft_grid(npey,npez)
+  subroutine select_str_to_ft_grid(npey, npez)
 
-   integer,intent(in) :: npey,npez
-   integer :: ip,iy,ii,iz,nloc,loc_nft
-   real(dp) :: yy
+   integer,intent(in) :: npey, npez
+   integer :: ip, iy, iz, ii, nloc, loc_nft
+   real(dp) :: yy, zz
 
-   loc_nft=4*loc_yftgrid(0)%ng   !the local size of uniform grid
-   do ip=0,npey-1     !from negative to positive y coordinate 
-    nloc=loc_ygrid(ip)%ng     !the local size of stretched grid
-    do iy=1,nloc
-     yy=loc_yg(iy, 1, ip)
-     do ii=1,loc_nft
-      if(yy < loc_yft(ii,ip))exit
+   loc_nft = 4*loc_yftgrid(0)%ng   !the local size of uniform grid
+   do ip = 0, npey - 1     !from negative to positive y coordinate 
+    nloc = loc_ygrid(ip)%ng     !the local size of stretched grid
+    do iy = 1, nloc
+     yy = loc_yg(iy, 1, ip)
+     do ii = 1, loc_nft
+      if(yy < loc_yft(ii,ip)) exit
      end do
-     yft_ind(iy,ip)=ii-1
+     yft_ind(iy, ip) = ii - 1
     end do
    end do
-   loc_nft=4*loc_zftgrid(0)%ng
-   do ip=0,npez-1     !from negative to positive z coordinate 
-    nloc=loc_zgrid(ip)%ng
-    do iy=1,nloc
-     yy=loc_zg(iy, 1, ip)
-     do ii=1,loc_nft
-      if(yy < loc_zft(ii,ip))exit
+   loc_nft = 4*loc_zftgrid(0)%ng
+   do ip = 0, npez - 1     !from negative to positive z coordinate 
+    nloc = loc_zgrid(ip)%ng
+    do iz = 1, nloc
+     zz = loc_zg(iy, 1, ip)
+     do ii = 1, loc_nft
+      if(zz < loc_zft(ii,ip)) exit
      end do
-     zft_ind(iy,ip)=ii-1
+     zft_ind(iy, ip) = ii-1
     end do
    end do
   end subroutine

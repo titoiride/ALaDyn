@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -29,11 +29,13 @@
   subroutine fluid_curr_accumulate(flx, curr)
 
    real (dp), intent (inout) :: flx(:, :, :, :), curr(:, :, :, :)
-   integer :: i, j, k, ic, ic1, str, stl, fdim
+   integer :: i, j, k, ic, str, stl, fdim
    real (dp) :: pp(1:3), den, gam2, ch, gam_inv
    real (dp) :: qx, qy, qz, av2
-   real (dp), parameter :: WK1 = 0.5, EPS = 1.e-04
+   real (dp), parameter :: WK1 = 0.5
 
+   stl = 1
+   str = 1
    ! Enter fluid variables at t^{n+1/2} and flx(fdim+1)= |a|^2/2 at t^{n+1/2}
    ch = dt_loc*WK1*unit_charge(1)
    fdim = curr_ndim + 1
@@ -68,11 +70,17 @@
      end do
     end do
    end if
-   call fill_ebfield_yzxbdsdata(flx, 1, curr_ndim, 1, 1)
+   call fill_ebfield_yzxbdsdata(flx, 1, curr_ndim, str, stl)
+   if(pe1x)then
+    do k = kz1, kz2
+     do j = jy1, jy2
+      i = ix2
+      flx(i+1, j, k, 1) = flx(i, j, k, 1)
+     end do
+    end do
+   endif
    do k = kz1, kz2
     do j = jy1, jy2
-     i = ix2
-     flx(i+1, j, k, 1) = flx(i, j, k, 1)
      do i = ix1, ix2
       qx = ch*(flx(i,j,k,1)+flx(i+1,j,k,1)) !Dt*Jx(i+1/2,j,k)
       qy = ch*(flx(i,j,k,2)+flx(i,j+1,k,2)) !Dt*Jy(i,j+1/2,k)
@@ -161,9 +169,9 @@
   subroutine update_adam_bash_fluid_variables( u, u0, flx, ef )
    real (dp), intent (inout) :: u(:, :, :, :), u0(:, :, :, :)
    real (dp), intent (inout) :: ef(:, :, :, :), flx(:, :, :, :)
-   integer :: i, j, k, ic, ic1, str, stl, fdim, fldim
-   real (dp) :: pp(1:3), den, gam2, ch, gam_inv, lzf, apx, apy, apz
-   real (dp) :: ex, ey, ez, bx, by, bz, vx, vy, vz, qx, qy, qz, b1p, b1m
+   integer :: i, j, k, ic, str, stl, fdim, fldim
+   real (dp) :: den, lzf
+   real (dp) :: ex, ey, ez, bx, by, bz, vx, vy, vz, b1p, b1m
    real (dp), parameter :: WK1 = 0.5, EPS = 1.e-06
    real (dp) :: abf_0, abf_1
    !===================================

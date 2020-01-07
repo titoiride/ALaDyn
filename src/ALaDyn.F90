@@ -1,5 +1,5 @@
 !*****************************************************************************************************!
-!                            Copyright 2008-2019  The ALaDyn Collaboration                            !
+!                            Copyright 2008-2020  The ALaDyn Collaboration                            !
 !*****************************************************************************************************!
 
 !*****************************************************************************************************!
@@ -116,6 +116,7 @@
      call Part_numbers
      if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
     end if
+    !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
    endif
    call Data_out
    !================
@@ -139,7 +140,6 @@
   !======================
   subroutine data_out
    integer :: i, iic, idata
-
 
    idata = iout
    if (diag) then
@@ -189,7 +189,6 @@
      end do
     end if
     if (nden>0) then
-     !if(inject_beam)call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
      do i = 1, nsp
       call prl_den_energy_interp(i,nden)
       do iic = 1, min(2, nden)
@@ -214,8 +213,6 @@
       end do
      end if
     end if
-    if (nbout>0) call part_bdata_out(tnow,1,pjump)
-                                                 !if(tnow>0.)write(6,*)'exit pdata',mype
 
     call CPU_TIME( unix_time_now )
 
