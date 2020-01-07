@@ -35,6 +35,10 @@
 
   integer, allocatable :: loc_imax(:, :), loc_jmax(:, :), loc_kmax(:, :)
 
+  interface pspecies_distribute
+   module procedure :: old_pspecies_distribute
+   module procedure :: new_pspecies_distribute
+  end interface
  contains
 
   subroutine set_pgrid_xind(npx, ic)
@@ -149,7 +153,21 @@
   end subroutine
 
   !--------------------------
-  subroutine pspecies_distribute(loc_sp, t_x, ch, q, ic, i2, p)
+  subroutine new_pspecies_distribute(loc_sp, t_x, ch, q, ic, i2, p)
+   type (species_new), intent (inout) :: loc_sp
+   real (dp), intent (in) :: t_x, ch
+   integer, intent (in) :: q, ic, i2
+   integer, intent (out) :: p
+   integer :: i, j, k, j2, k2
+   real (dp) :: u, whz
+
+   call init_random_seed(mype)
+   p = q
+   k2 = loc_nptz(ic)
+   j2 = loc_npty(ic)
+  end subroutine
+
+  subroutine old_pspecies_distribute(loc_sp, t_x, ch, q, ic, i2, p)
    type (species), intent (inout) :: loc_sp
    real (dp), intent (in) :: t_x, ch
    integer, intent (in) :: q, ic, i2

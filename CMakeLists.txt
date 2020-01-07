@@ -75,6 +75,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/start/system_utilities.f90
   src/structs/grid_def.f90
   src/structs/particles_def.f90
+  src/structs/struct_def.f90
   src/work/array_alloc.f90
   src/work/code_util.f90
   src/work/common_param.f90
@@ -83,7 +84,6 @@ list(APPEND ALaDyn_Fortran_sources
   src/work/phys_param.f90
   src/work/precision_def.F90
   src/work/pstruct_data.f90
-  src/work/struct_def.f90
   src/work/util.f90
 )
 
