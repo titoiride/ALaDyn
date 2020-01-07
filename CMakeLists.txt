@@ -73,6 +73,8 @@ list(APPEND ALaDyn_Fortran_sources
   src/start/set_init_param.f90
   src/start/start_all.F90
   src/start/system_utilities.f90
+  src/structs/grid_def.f90
+  src/structs/particles_def.f90
   src/work/array_alloc.f90
   src/work/code_util.f90
   src/work/common_param.f90

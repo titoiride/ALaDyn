@@ -38,6 +38,10 @@
   use fstruct_data
   implicit none
 
+  interface p_alloc
+   module procedure :: old_p_alloc
+   module procedure :: new_p_alloc
+  end interface
  contains
 
   subroutine mpi_buffer_alloc(n1_loc, n2_loc, n3_loc, nvd)
@@ -222,7 +226,7 @@
 
   end subroutine
 
-  subroutine p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
+  subroutine old_p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
 
    integer, intent (in) :: npt_max, ncmp, np_s(:), ns, lp, mid, r_type
    integer, intent (inout) :: msize
