@@ -194,9 +194,34 @@
    fsize = fsize + bcomp*ng
   end subroutine
   !===========================
-  ! subroutine new_p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
+  subroutine new_p_alloc(npt_max, ndims, np_s, ns, lp, mid, msize)
 
-  ! end subroutine
+   integer, intent (in) :: npt_max, ndims, np_s(:), ns, lp, mid
+   integer, intent (inout) :: msize
+   integer :: nsize, ic, allocstatus
+
+   allocate( spec_new(ns), stat=allocstatus )
+   nsize = 0
+   do ic = 1, ns
+    spec_new(ic) = species_new( np_s(ic), ndims)
+    nsize = nsize + spec_new(ic)%total_size()
+   end do
+   if (mid>0) then
+    spec_aux = species_new( npt_max, ndims)
+    nsize = nsize + spec_aux%total_size()
+   end if
+   if (lp>2) then
+    spec_aux_0 = species_new( npt_max, ndims)
+    nsize = nsize + spec_aux_0%total_size()
+    if (lp==4) then
+     spec_aux_1 = species_new( npt_max, ndims)
+     nsize = nsize + spec_aux_1%total_size()
+    end if
+   end if
+   msize = msize + nsize
+
+  end subroutine
+
   subroutine p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
 
    integer, intent (in) :: npt_max, ncmp, np_s(:), ns, lp, mid, r_type

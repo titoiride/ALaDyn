@@ -54,6 +54,7 @@
    !! Array containig the particle index
    contains
     procedure, public :: how_many
+    procedure, public :: total_size
   end type
 
   interface species_new
@@ -125,49 +126,74 @@
     n_parts = this%n_part
    
    end function
-  
-   function new_species_new( npt_max, curr_ndims ) result(this)
-    integer, intent(in) :: npt_max, curr_ndims
+
+   pure function total_size( this ) result(size)
+    class(species_new), intent(in) :: this
+    integer :: size, i
+    i = 0
+    if(allocated(this%x)) then
+     i = i + 1
+    end if
+    if(allocated(this%y)) then
+     i = i + 1
+    end if
+    if(allocated(this%z)) then
+     i = i + 1
+    end if
+    if(allocated(this%px)) then
+     i = i + 1
+    end if
+    if(allocated(this%py)) then
+     i = i + 1
+    end if
+    if(allocated(this%pz)) then
+     i = i + 1
+    end if
+    size = i*this%how_many()
+
+   end function
+   function new_species_new( n_particles, curr_ndims ) result(this)
+    integer, intent(in) :: n_particles, curr_ndims
     type(species_new) :: this
     integer :: allocstatus
    
-    if (npt_max <= 0) then
+    if (n_particles <= 0) then
      this%initialized = .false.
      this%n_part = 0
      return
     end if
    
     this%initialized = .true.
-    this%n_part = npt_max
+    this%n_part = n_particles
    
     select case(curr_ndims)
     
     case(1)
     
-     allocate( this%x(npt_max), stat=allocstatus)
-     allocate( this%px(npt_max), stat=allocstatus)
-     allocate( this%weight(npt_max), stat=allocstatus)
-     allocate( this%part_index(npt_max), stat=allocstatus)
+     allocate( this%x(n_particles), stat=allocstatus)
+     allocate( this%px(n_particles), stat=allocstatus)
+     allocate( this%weight(n_particles), stat=allocstatus)
+     allocate( this%part_index(n_particles), stat=allocstatus)
     
     case(2)
     
-     allocate( this%x(npt_max), stat=allocstatus)
-     allocate( this%px(npt_max), stat=allocstatus)
-     allocate( this%y(npt_max), stat=allocstatus)
-     allocate( this%py(npt_max), stat=allocstatus)
-     allocate( this%weight(npt_max), stat=allocstatus)
-     allocate( this%part_index(npt_max), stat=allocstatus)
+     allocate( this%x(n_particles), stat=allocstatus)
+     allocate( this%px(n_particles), stat=allocstatus)
+     allocate( this%y(n_particles), stat=allocstatus)
+     allocate( this%py(n_particles), stat=allocstatus)
+     allocate( this%weight(n_particles), stat=allocstatus)
+     allocate( this%part_index(n_particles), stat=allocstatus)
     
     case(3)
     
-     allocate( this%x(npt_max), stat=allocstatus)
-     allocate( this%px(npt_max), stat=allocstatus)
-     allocate( this%y(npt_max), stat=allocstatus)
-     allocate( this%py(npt_max), stat=allocstatus)
-     allocate( this%z(npt_max), stat=allocstatus)
-     allocate( this%pz(npt_max), stat=allocstatus)
-     allocate( this%weight(npt_max), stat=allocstatus)
-     allocate( this%part_index(npt_max), stat=allocstatus)
+     allocate( this%x(n_particles), stat=allocstatus)
+     allocate( this%px(n_particles), stat=allocstatus)
+     allocate( this%y(n_particles), stat=allocstatus)
+     allocate( this%py(n_particles), stat=allocstatus)
+     allocate( this%z(n_particles), stat=allocstatus)
+     allocate( this%pz(n_particles), stat=allocstatus)
+     allocate( this%weight(n_particles), stat=allocstatus)
+     allocate( this%part_index(n_particles), stat=allocstatus)
     end select
    end function
  end module
