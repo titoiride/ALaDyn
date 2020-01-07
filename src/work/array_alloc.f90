@@ -194,6 +194,9 @@
    fsize = fsize + bcomp*ng
   end subroutine
   !===========================
+  ! subroutine new_p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
+
+  ! end subroutine
   subroutine p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
 
    integer, intent (in) :: npt_max, ncmp, np_s(:), ns, lp, mid, r_type

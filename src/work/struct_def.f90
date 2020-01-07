@@ -18,15 +18,47 @@
 !  You should have received a copy of the GNU General Public License                                  !
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
+!#define NEW_SP
+
  module struct_def
   use precision_def
   implicit none
   public
 
   type species
-   real (dp), allocatable :: part(:, :)
+  real (dp), allocatable :: part(:, :)
+  end type
+  
+  type species_new
+   logical :: initialized
+   !! Flag that states if the species has been initialized
+   integer :: charge
+   !! Particle charge
+   integer, private :: n_part
+   !! Number of particles
+   real(dp), allocatable :: x(:)
+   !! Array containig the x particle positions
+   real(dp), allocatable :: y(:)
+   !! Array containig the y particle positions
+   real(dp), allocatable :: z(:)
+   !! Array containig the z particle positions
+   real(dp), allocatable :: px(:)
+   !! Array containig the x particle momenta
+   real(dp), allocatable :: py(:)
+   !! Array containig the y particle momenta
+   real(dp), allocatable :: pz(:)
+   !! Array containig the z particle momenta
+   real (sp), allocatable :: weight(:)
+   !! Array containig the particle weights
+   integer, allocatable :: part_index(:)
+   !! Array containig the particle index
+   contains
+    procedure, public :: how_many
   end type
 
+  interface species_new
+   module procedure :: new_species_new
+  end interface
 
   type grid
    integer :: ng
@@ -86,4 +118,56 @@
     index_in%indices = PACK( index_in%indices, mask )
    end subroutine
 
+   pure function how_many( this ) result(n_parts)
+    class(species_new), intent(in) :: this
+    integer :: n_parts
+   
+    n_parts = this%n_part
+   
+   end function
+  
+   function new_species_new( npt_max, curr_ndims ) result(this)
+    integer, intent(in) :: npt_max, curr_ndims
+    type(species_new) :: this
+    integer :: allocstatus
+   
+    if (npt_max <= 0) then
+     this%initialized = .false.
+     this%n_part = 0
+     return
+    end if
+   
+    this%initialized = .true.
+    this%n_part = npt_max
+   
+    select case(curr_ndims)
+    
+    case(1)
+    
+     allocate( this%x(npt_max), stat=allocstatus)
+     allocate( this%px(npt_max), stat=allocstatus)
+     allocate( this%weight(npt_max), stat=allocstatus)
+     allocate( this%part_index(npt_max), stat=allocstatus)
+    
+    case(2)
+    
+     allocate( this%x(npt_max), stat=allocstatus)
+     allocate( this%px(npt_max), stat=allocstatus)
+     allocate( this%y(npt_max), stat=allocstatus)
+     allocate( this%py(npt_max), stat=allocstatus)
+     allocate( this%weight(npt_max), stat=allocstatus)
+     allocate( this%part_index(npt_max), stat=allocstatus)
+    
+    case(3)
+    
+     allocate( this%x(npt_max), stat=allocstatus)
+     allocate( this%px(npt_max), stat=allocstatus)
+     allocate( this%y(npt_max), stat=allocstatus)
+     allocate( this%py(npt_max), stat=allocstatus)
+     allocate( this%z(npt_max), stat=allocstatus)
+     allocate( this%pz(npt_max), stat=allocstatus)
+     allocate( this%weight(npt_max), stat=allocstatus)
+     allocate( this%part_index(npt_max), stat=allocstatus)
+    end select
+   end function
  end module

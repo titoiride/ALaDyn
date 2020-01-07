@@ -37,6 +37,7 @@
     loc_wghyz(:, :, :)
   real (dp), allocatable :: loc_xpt(:, :), loc_wghx(:, :)
   type (species) :: spec(4), bunch(5)
+  type (species_new), allocatable :: spec_new(:)
   integer (hp_int), parameter :: ihx = 3
 
  end module
