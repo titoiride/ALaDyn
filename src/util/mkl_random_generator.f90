@@ -23,25 +23,24 @@
 
   use precision_def
   use code_util
+  use mkl_vsl
 
   implicit none
-  include 'mkl_vsl.f90'
 
   type (VSL_STREAM_STATE), save :: stream
   integer, parameter :: method = VSL_RNG_METHOD_GAUSSIAN_BOXMULLER
   integer, parameter :: brng = VSL_BRNG_MCG31
+  integer, private :: stat, errstat
+
   contains
 
   subroutine init_random_seed(myrank)
    integer, intent (in) :: myrank
-   integer, allocatable :: seed(:)
-   integer :: i, n, un, istat, dt(8), pid, t(2), s
-   integer (8) :: count, tms
+   integer :: seed
+   integer :: i, un, istat, dt(8), pid, t(2), s
+   integer(8) :: count, tms
 
    i = 0
-   n = 1 
-   call random_seed(size=n)
-   allocate (seed(n))
 
    if (.not. l_disable_rng_seed) then
     un = 123
@@ -68,28 +67,21 @@
      s = ieor(t(1), t(2))
      pid = myrank + 1099279 ! Add a prime
      s = ieor(s, pid)
-     if (n>=3) then
-      seed(1) = t(1) + 36269
-      seed(2) = t(2) + 72551
-      seed(3) = pid
-      if (n>3) then
-       seed(4:) = s + 37* [ (i,i=0,n-4) ]
-      end if
-     else
-      seed = s + 37* [ (i,i=0,n-1) ]
-     end if
+     seed = s
     end if
    else
     seed = myrank
    end if
-   vslNewStream( stream, brng, seed )
+   errstat = vslNewStream( stream, brng, seed )
   end subroutine
 
   subroutine gasdev(dev)
    real (dp), intent (inout) :: dev
-   integer, parameter :: mean = 0
-   integer, parameter :: sigma = 1
+   real (dp), parameter :: mean = zero_dp
+   real (dp), parameter :: sigma = one_dp
+   real (dp) :: r(1)
+   stat = vdRngGaussian( method, stream, 1, r, mean, sigma )
+   dev = r(1)
 
-   vsRngGaussian( method, stream, 1, dev, mean, sigma )
   end subroutine
  end module

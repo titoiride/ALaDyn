@@ -191,8 +191,6 @@ endif()
 if(USING_INTEL_COMPILER AND NOT FORCE_FFTW)
   find_package(MKL REQUIRED)
   set(MKL_FFTW_INCLUDE_DIR "${MKL_INCLUDE_DIR}/fftw/")
-  add_definitions(-DUSE_MKL)
-  list(APPEND ALaDyn_Fortran_sources src/util/mkl_random_generator.f90)
 else()
   find_package(FFTW REQUIRED OPTIONAL_COMPONENTS MPI)
 endif()
@@ -222,6 +220,13 @@ if(FFTW_MPI_FOUND)
    ${FFTW_MPI_INCLUDE_DIR}
   )
 endif()
+
+if(MKL_FOUND)
+  add_definitions(-DUSE_MKL)
+  list(APPEND ALaDyn_Fortran_sources src/util/mkl_random_generator.f90)
+  list(APPEND ALaDyn_Fortran_sources ${MKL_INCLUDE_DIR}/mkl_vsl.f90)
+endif()
+
 add_executable(ALaDyn
   ${ALaDyn_Fortran_sources}
 )
