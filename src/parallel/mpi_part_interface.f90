@@ -148,8 +148,8 @@
    end associate
 
    do n = 1, ndv
-    sp_aux( :, n) = PACK( sp_loc%part(:, n), mask(:) )
-    sp1_aux( :, n) = PACK( vstore(:, n), mask(:) )
+    sp_aux( 1:npt, n) = PACK( sp_loc%part(:, n), mask(:) )
+    sp1_aux( 1:npt, n) = PACK( vstore(:, n), mask(:) )
    end do
    !=======================
    ns = 2*ndv*nr_send
