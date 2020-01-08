@@ -25,14 +25,14 @@ module particles_def
  implicit none
  public
 
- character(1), parameter :: x_comp = 'x'
- character(1), parameter :: y_comp = 'y'
- character(1), parameter :: z_comp = 'z'
- character(2), parameter :: px_comp = 'px'
- character(2), parameter :: py_comp = 'py'
- character(2), parameter :: pz_comp = 'pz'
- character(6), parameter :: w_comp = 'weight'
- character(5), parameter :: index_comp = 'index'
+ character(1), parameter :: X_COMP = 'x'
+ character(1), parameter :: Y_COMP = 'y'
+ character(1), parameter :: Z_COMP = 'z'
+ character(2), parameter :: PX_COMP = 'px'
+ character(2), parameter :: PY_COMP = 'py'
+ character(2), parameter :: PZ_COMP = 'pz'
+ character(6), parameter :: W_COMP = 'weight'
+ character(5), parameter :: INDEX_COMP = 'index'
 
  type species
  real (dp), allocatable :: part(:, :)
