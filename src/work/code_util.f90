@@ -25,8 +25,8 @@
 
   implicit none
 
-  integer, parameter :: major_version = 7
-  integer, parameter :: minor_version = 6
+  integer, parameter :: major_version = 8
+  integer, parameter :: minor_version = 0
   character (6) :: sw_name = 'ALaDyn'
   character (9) :: input_namelist_filename = 'input.nml'
   character (10) :: input_data_filename = 'input.data'
