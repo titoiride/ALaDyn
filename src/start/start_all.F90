@@ -88,18 +88,20 @@
    !sets parameters related to initial condition
    !=== Ascii art generated on http://patorjk.com/software/taag using the Star Wars font ===
    if (pe0) then
-    write (6, *) '    _    _          ____              ____    ___ '
-    write (6, *) '   / \  | |    __ _|  _ \ _   _ _ __ |___ \  / _ \ '
-    write (6, *) '  / _ \ | |   / _` | | | | | | | ''_ \  __) || | | |'
-    write (6, *) ' / ___ \| |__| (_| | |_| | |_| | | | |/ __/ | |_| |'
-    write (6, *) '/_/   \_|_____\__,_|____/ \__, |_| |_|_____(_\___/ '
-    write (6, *) '                          |___/                    '
+    write (6, *) '    ___   _          ______              _____  _____ '
+    write (6, *) '   / _ \ | |         |  _  \            |____ ||  _  |'
+    write (6, *) '  / /_\ \| |     __ _| | | |_   _ _ __      / /| |/| |'
+    write (6, *) '  |  _  || |    / _  | | | | | | |  _ \     \ \|  /| |'
+    write (6, *) '  | | | || |___| (_| | |/ /| |_| | | | |.___/ /\ |_/ /'
+    write (6, *) '  \_| |_/\_____/\__,_|___/  \__, |_| |_|\____(_)\___/ '
+    write (6, *) '                             __/ |                    '
+    write (6, *) '                            |___/                     '
    end if
    if (pe0) then
-    write (6, *) '==================================================='
-    write (6, '(a32,i1,a1,i2,a16)') ' =              Code version    ', &
-      major_version, '.', minor_version, '               ='
-    write (6, *) '==================================================='
+    write (6, *) '======================================================'
+    write (6, '(a33,i1,a1,i2,a17)') ' =               Code version    ', &
+      major_version, '.', minor_version, '                ='
+    write (6, *) '======================================================'
     call create_initial_folders
     call write_read_nml
    end if
