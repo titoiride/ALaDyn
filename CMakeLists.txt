@@ -17,9 +17,6 @@ set(FORCE_FFTW OFF CACHE BOOL "Forcing FFTW libraries")
 # set this variable to true to force static linking (if supported by the compiler)
 set(FORCE_STATIC_LINK FALSE CACHE BOOL "Forcing static linking to libraries")
 
-# forcing old mpif.h if the correct version of the mpi module is not available
-set(FORCE_OLD_MPI OFF CACHE BOOL "Forcing old mpif.h linking")
-
 # make sure that the default is a RELEASE
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -76,15 +73,16 @@ list(APPEND ALaDyn_Fortran_sources
   src/structs/grid_def.f90
   src/structs/particles_def.f90
   src/structs/struct_def.f90
+  src/util/code_util.f90
+  src/util/random_generator.f90
+  src/util/util.F90
   src/work/array_alloc.f90
-  src/work/code_util.f90
   src/work/common_param.f90
   src/work/control_bunch_input.f90
   src/work/fstruct_data.f90
   src/work/phys_param.f90
   src/work/precision_def.F90
   src/work/pstruct_data.f90
-  src/work/util.f90
 )
 
 set(USING_PGI_COMPILER FALSE)
@@ -193,6 +191,8 @@ endif()
 if(USING_INTEL_COMPILER AND NOT FORCE_FFTW)
   find_package(MKL REQUIRED)
   set(MKL_FFTW_INCLUDE_DIR "${MKL_INCLUDE_DIR}/fftw/")
+  add_definitions(-DUSE_MKL)
+  list(APPEND ALaDyn_Fortran_sources src/util/mkl_random_generator.f90)
 else()
   find_package(FFTW REQUIRED OPTIONAL_COMPONENTS MPI)
 endif()
