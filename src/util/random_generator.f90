@@ -23,8 +23,14 @@
 
   use precision_def
   use code_util
+  use array_util
 
   implicit none
+
+  interface gasdev
+   module procedure :: gasdev_array 
+   module procedure :: gasdev_real 
+  end interface
 
   contains
 
@@ -81,7 +87,7 @@
   end subroutine
   !========================
 
-  subroutine gasdev(dev)
+  subroutine gasdev_real(dev)
 
    real (dp), intent (out) :: dev
    real (dp) :: v1, v2, rsq
@@ -111,28 +117,77 @@
 
   subroutine gasdev_array(dev)
 
-   real (dp), intent(out) :: dev
-   real (dp) :: v1, v2, rsq
-   real (dp), save :: g
-   logical, save :: gaus_store = .false.
-
-   if (gaus_store) then
+   !
+   !=======================================================================
+   !                                                                      !
+   !  Return in harvest a normally distributed deviate with zero mean     !
+   !  and unit variance, using RAN1 as the source of uniform deviates.    !
+   !                                                                      !
+   !  Vector version adapted from Numerical Recipes.                      !
+   !                                                                      !
+   !  Press, W.H., S.A. Teukolsky, W.T. Vetterling, and B.P. Flannery,    !
+   !     1996:  Numerical Recipes in Fortran 90,  The Art of Parallel     !
+   !     Scientific Computing, 2nd Edition, Cambridge Univ. Press.        !
+   !                                                                      !
+   !=======================================================================
+   real(dp), dimension(:), intent(out) :: dev
+   logical, save :: gaus_stored = .TRUE.
+   logical, dimension(SIZE(dev)) :: mask
+   integer, save :: last_allocated = 0
+   integer :: m, n, ng, nn
+   real(dp), dimension(SIZE(dev)) :: rsq, v1, v2
+   real(dp), allocatable, dimension(:), save :: g
+   !
+   !-----------------------------------------------------------------------
+   !  Compute a normally distributed vector deviate.
+   !-----------------------------------------------------------------------
+   !
+   !  We have an extra deviate handy, so return it, and unset the flag.
+   !
+   n = SIZE(dev)
+   if (n /= last_allocated) then
+    if (last_allocated /= 0) deallocate (g)
+    allocate ( g(n) )
+    last_allocated = n
+    gaus_stored = .FALSE.
+   end if
+   !
+   !  We do not have an extra deviate handy, so pick two uniform numbers
+   !  in the square extending from -1 to +1 in each direction.
+   !
+   if (gaus_stored) then
     dev = g
-    gaus_store = .false.
+    gaus_stored = .FALSE.
    else
+    ng = 1
     do
-     call random_number(v1)
-     call random_number(v2)
-     v1 = 2.0*v1 - 1.0
-     v2 = 2.0*v2 - 1.0
-     rsq = v1*v1 + v2*v2
-     if (rsq<1.0) exit
+     if (ng > n) exit
+     call random_number(v1(ng:n))
+     call random_number(v2(ng:n))
+     v1(ng:n) = 2*one_dp*v1(ng:n) - one_dp
+     v2(ng:n) = 2*one_dp*v2(ng:n) - one_dp
+     !
+     !  See if they are in the unit circle, and if they are not, try again.
+     !
+     rsq(ng:n) = v1(ng:n)**2 + v2(ng:n)**2
+     mask(ng:n) = ((rsq(ng:n) > zero_dp).and.(rsq(ng:n) < one_dp))
+     call array_copy(PACK(v1(ng:n), mask(ng:n)), v1(ng:), nn, m)
+     v2(ng:ng+nn-1) = PACK(v2(ng:n), mask(ng:n))
+     rsq(ng:ng+nn-1) = PACK(rsq(ng:n), mask(ng:n))
+     ng=ng+nn
     end do
-    rsq = sqrt(-2.0*log(rsq)/rsq)
+    !
+    !  Make the Box-Muller transformation to get two normal deviates.
+    !  Return one and save the other for next time.
+    !
+    rsq = sqrt(-2*one_dp*log(rsq)/rsq)
     dev = v1*rsq
     g = v2*rsq
-    gaus_store = .true.
+    gaus_stored = .TRUE.
    end if
+
+   return
+
   end subroutine
 
 

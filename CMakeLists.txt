@@ -73,6 +73,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/structs/grid_def.f90
   src/structs/particles_def.f90
   src/structs/struct_def.f90
+  src/util/array_util.f90
   src/util/code_util.f90
   src/util/random_generator.f90
   src/util/util.F90

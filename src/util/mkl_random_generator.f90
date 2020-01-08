@@ -32,6 +32,10 @@
   integer, parameter :: brng = VSL_BRNG_MCG31
   integer, private :: stat, errstat
 
+  interface gasdev
+   module procedure :: gasdev_array 
+   module procedure :: gasdev_real 
+  end interface
   contains
 
   subroutine init_random_seed(myrank)
@@ -75,13 +79,24 @@
    errstat = vslNewStream( stream, brng, seed )
   end subroutine
 
-  subroutine gasdev(dev)
-   real (dp), intent (inout) :: dev
+  subroutine gasdev_real(dev)
+   real (dp), intent (out) :: dev
    real (dp), parameter :: mean = zero_dp
    real (dp), parameter :: sigma = one_dp
    real (dp) :: r(1)
    stat = vdRngGaussian( method, stream, 1, r, mean, sigma )
    dev = r(1)
+  end subroutine
+  
+  subroutine gasdev_array(dev)
+   real (dp), intent (inout), dimension(:) :: dev
+   real (dp), parameter :: mean = zero_dp
+   real (dp), parameter :: sigma = one_dp
+   integer :: n
+
+   n = size(dev)
+   stat = vdRngGaussian( method, stream, n, dev, mean, sigma )
 
   end subroutine
+
  end module
