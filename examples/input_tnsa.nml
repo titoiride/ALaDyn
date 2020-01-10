@@ -64,7 +64,7 @@
   lpx(7)           = 0.01,
   lpy(1)           = 0.0,
   lpy(2)           = 0.0,
-  n_over_nc        = 100.0,
+  n0_ref           = 1000.0,
   np1              = 2.5,
   np2              = 10.0
 /
@@ -78,6 +78,7 @@
   w0_y             = 3.25,
   a0               = 23.5,
   lam0             = 0.8,
+  incid_angle      = 0,
 /
 
 &MOVING_WINDOW
