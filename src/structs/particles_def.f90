@@ -41,7 +41,7 @@ module particles_def
  type species_new
   logical :: initialized
   !! Flag that states if the species has been initialized
-  integer :: charge
+  real(dp) :: charge
   !! Particle charge
   integer, private :: n_part
   !! Number of particles
@@ -64,9 +64,13 @@ module particles_def
   contains
    procedure, public :: how_many
    procedure, public :: total_size
+   procedure, public :: set_charge_int
+   procedure, public :: set_charge_real
+   procedure, public :: set_part_number
    procedure, public :: initialize_component_real
    procedure, public :: initialize_component_integer
    generic :: initialize_component => initialize_component_real, initialize_component_integer
+   generic :: set_charge => set_charge_real, set_charge_int
  end type
 
  interface species_new
@@ -155,7 +159,7 @@ module particles_def
  end function
 
  subroutine initialize_component_real( this, values, component )
-  class(species_new), intent(inout) :: this
+  class(species_new), intent(out) :: this
   real (dp), intent(in) :: values(:)
   character(*), intent(in) :: component
 
@@ -181,7 +185,7 @@ module particles_def
  end subroutine
 
  subroutine initialize_component_integer( this, values, component )
-  class(species_new), intent(inout) :: this
+  class(species_new), intent(out) :: this
   integer, intent(in) :: values(:)
   character(*), intent(in) :: component
 
@@ -204,6 +208,27 @@ module particles_def
    this%part_index(:) = values(:)
   end select
 
+ end subroutine
+
+ subroutine set_charge_int( this, ch)
+  class(species_new), intent(out) :: this
+  integer, intent(in) :: ch
+
+  this%charge = real(ch, dp)
+ end subroutine
+
+ subroutine set_charge_real( this, ch)
+  class(species_new), intent(out) :: this
+  real(dp), intent(in) :: ch
+
+  this%charge = ch
+ end subroutine
+
+ subroutine set_part_number( this, n_parts)
+  class(species_new), intent(out) :: this
+  integer, intent(in) :: n_parts
+
+  this%n_part = n_parts
  end subroutine
 
 end module

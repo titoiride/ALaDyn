@@ -153,18 +153,74 @@
   end subroutine
 
   !--------------------------
-  subroutine new_pspecies_distribute(loc_sp, t_x, ch, q, ic, i2, p)
+  subroutine new_pspecies_distribute(loc_sp, t_x, ch, ic, i2)
    type (species_new), intent (inout) :: loc_sp
    real (dp), intent (in) :: t_x, ch
-   integer, intent (in) :: q, ic, i2
-   integer, intent (out) :: p
-   integer :: i, j, k, j2, k2
-   real (dp) :: u, whz
+   integer, intent (in) :: ic, i2
+   type(index_array) :: index
+   integer :: i, j, k, j2, k2, n_parts, p
+   real (dp), allocatable, dimension(:) :: u
+   real (dp), allocatable, dimension(:) :: whz
 
    call init_random_seed(mype)
-   p = q
+   p = 1
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
+   n_parts = i2*j2*k2
+   index = index_array(n_parts)
+   allocate(u(n_parts))
+   allocate(whz(n_parts))
+
+   call loc_sp%set_charge(ch)
+   select case (curr_ndim)
+   case(2)
+    call loc_sp%initialize_component(loc_xpt(1:n_parts, ic), X_COMP)
+    call loc_sp%initialize_component(loc_ypt(1:n_parts, ic), Y_COMP)
+
+    call gasdev(u)
+    call loc_sp%initialize_component(u(1:n_parts)*t_x, PX_COMP)
+    call gasdev(u)
+    call loc_sp%initialize_component(u(1:n_parts)*t_x, PY_COMP)
+
+    do k = 1, 1
+     do j = 1, j2
+      do i = 1, i2
+       whz(p) = loc_wghx(i, ic)*loc_wghyz(j, k, ic)
+       p = p + 1
+      end do
+     end do
+    end do
+
+    call loc_sp%initialize_component(whz(1:n_parts), W_COMP)
+    call loc_sp%initialize_component(index%indices(1:n_parts), INDEX_COMP)
+    call loc_sp%set_part_number(n_parts)
+
+   case(3)
+    call loc_sp%initialize_component(loc_xpt(1:n_parts, ic), X_COMP)
+    call loc_sp%initialize_component(loc_ypt(1:n_parts, ic), Y_COMP)
+    call loc_sp%initialize_component(loc_zpt(1:n_parts, ic), Z_COMP)
+
+    call gasdev(u)
+    call loc_sp%initialize_component(u(1:n_parts)*t_x, PX_COMP)
+    call gasdev(u)
+    call loc_sp%initialize_component(u(1:n_parts)*t_x, PY_COMP)
+    call gasdev(u)
+    call loc_sp%initialize_component(u(1:n_parts)*t_x, PZ_COMP)
+
+    do k = 1, k2
+     do j = 1, j2
+      do i = 1, i2
+       whz(p) = loc_wghx(i, ic)*loc_wghyz(j, k, ic)
+       p = p + 1
+      end do
+     end do
+    end do
+
+    call loc_sp%initialize_component(whz(1:n_parts), W_COMP)
+    call loc_sp%initialize_component(index%indices(1:n_parts), INDEX_COMP)
+    call loc_sp%set_part_number(n_parts)
+
+   end select
   end subroutine
 
   subroutine old_pspecies_distribute(loc_sp, t_x, ch, q, ic, i2, p)
@@ -600,7 +656,7 @@
      xfsh = xfsh + lpx(5)
     end if
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic), nx*np_per_xc(ic))
     end do
     !=========================================
    case (2)
@@ -678,7 +734,7 @@
      xfsh = xfsh + lpx(5)
     end if
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic), nx*np_per_xc(ic))
     end do
     !=====================================
    case (3)
@@ -760,7 +816,7 @@
      xfsh = xfsh + lpx(5)
     end if
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic), nx*np_per_xc(ic))
     end do
     !===================================
    case (4)
@@ -865,7 +921,7 @@
     end if
 
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic), nx*np_per_xc(ic))
     end do
     !=========================================
    end select
@@ -886,7 +942,7 @@
    end if
    !============================= 
    do ic = 1, nsp
-    nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+    nptx_alloc(ic) = min(nptx(ic), nx*np_per_xc(ic))
    end do
    do ic = 1, nsp
     sptx_max(ic) = nptx(ic)
@@ -931,7 +987,7 @@
    loc_nptx(1:nsp) = loc_imax(imodx, 1:nsp)
    ! Alocation using a large buffer npt_max=mp_per_cell(1)*nx_loc*ny_loc*nz_loc
    do ic = 1, nsp
-    nptx_alloc(ic) = min(loc_nptx(ic)+10, nx_loc*np_per_xc(ic))
+    nptx_alloc(ic) = min(loc_nptx(ic), nx_loc*np_per_xc(ic))
    end do
    do ic = 1, nsp
     nps_loc(ic) = nptx_alloc(ic)*loc_jmax(imody, ic)*loc_kmax(imodz, ic)
