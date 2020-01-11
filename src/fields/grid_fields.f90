@@ -1715,7 +1715,7 @@
     do iic = 1, nc - 2
      do ii = i1 + 1, np - 2
       vv = wr(ii, nc) + wl(ii, nc)
-      s0 = sign(1., vv) !s0=1*sign(vv)
+      s0 = sign(one_dp, vv) !s0=1*sign(vv)
       var(ii, iic) = max(0., s0)*wl(ii, iic) - min(0., s0)*wr(ii, iic)
      end do
      do ii = i1 + 2, np - 2

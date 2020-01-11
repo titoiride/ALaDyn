@@ -51,8 +51,8 @@
    nr_recv = 0
    nl_recv = 0
    if (npold>0) then
-    p = COUNT( sp_loc%part( :, ind ) > xr)
-    q = COUNT( sp_loc%part( :, ind ) < xl)
+    p = COUNT( sp_loc%part( 1:npold, ind ) > xr)
+    q = COUNT( sp_loc%part( 1:npold, ind ) < xl)
    end if
    nr_send = p
    nl_send = q
@@ -131,25 +131,25 @@
    npt = 0
    if (ibd==1 .and. dir==1) then !reflecting on the right
     if (per) then
-     associate ( xp => sp_loc%part( :, dir ))
+     associate ( xp => sp_loc%part( 1:old_np, dir ))
       where (xp > xr)
        xp = xr - (xp - xr)
-       sp_loc%part( :, vxdir ) = -sp_loc%part( :, vxdir )
+       sp_loc%part( 1:old_np, vxdir ) = -sp_loc%part( 1:old_np, vxdir )
       end where
      end associate
     end if
    end if
 !================== copy in sp_aux particles not to be exchanged
-   associate (xp => sp_loc%part(:, dir))
+   associate (xp => sp_loc%part( 1:old_np, dir))
     call right_pind%find_index( xp > xr )
     call left_pind%find_index( xp < xl )
     mask(:) = (xp >= xl .and. xp <= xr)
-    npt = COUNT( mask )
+    npt = COUNT( mask(:) )
    end associate
 
    do n = 1, ndv
-    sp_aux( 1:npt, n) = PACK( sp_loc%part(:, n), mask(:) )
-    sp1_aux( 1:npt, n) = PACK( vstore(:, n), mask(:) )
+    sp_aux( 1:npt, n) = PACK( sp_loc%part(1:old_np, n), mask(:) )
+    sp1_aux( 1:npt, n) = PACK( vstore(1:old_np, n), mask(:) )
    end do
    !=======================
    ns = 2*ndv*nr_send
@@ -351,7 +351,7 @@
   subroutine cell_part_dist(moving_wind)
    logical, intent (in) :: moving_wind
    integer :: ic, nspx, n, np, np_new, np_new_allocate, ndv, &
-     np_rs,np_out
+     np_rs, np_out
    integer :: n_sr(4)
    real (dp) :: ymm, ymx, lbd_min, rbd_max
    real (dp) :: zmm, zmx
@@ -371,8 +371,8 @@
    !all species leaving the computational box at the left
    !x-boundary are removed
    !==========================================
-   nspx=nsp_run
-   if(moving_wind)nspx = nsp
+   nspx = nsp_run
+   if(moving_wind) nspx = nsp
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
    lbd_min = loc_xgrid(0)%gmin
@@ -384,33 +384,33 @@
      n_sr = 0
      call traffic_size_eval(spec(ic), xmm, xmx, pex0, pex1, ibx, 1, np, &
        n_sr, np_new)
-     np_new_allocate = max(1, np_new)
+     ! Allocate the aux array with lenght np + n_recieve
+     ! because it needs to recieve before to send
+     np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
-     if (np_rs>0) then
-      allocate(sp_aux(np_new,ndv))
-      allocate(sp1_aux(np_new,ndv))
+     if (np_rs > 0) then
+      allocate(sp_aux(np_new_allocate, ndv))
+      allocate(sp1_aux(np_new_allocate, ndv))
       call part_prl_exchange(spec(ic), ebfp, xmm, xmx, lbd_min, rbd_max, &
         pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
-      if (np_out/=np_new) then
+      if (np_out /= np_new) then
        write (6, *) 'error in x-part count', mype, np_out, np_new
        ier = 99
       end if
-       call p_realloc(spec(ic), np_new, ndv)
-       call v_realloc(ebfp, np_new, ndv)
-       do n = 1, np_new
-        spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
-        ebfp(n, 1:ndv) = sp1_aux(n, 1:ndv)
-       end do
+      call p_realloc(spec(ic), np_new, ndv)
+      call v_realloc(ebfp, np_new, ndv)
+      spec(ic)%part(1:np_new, 1:ndv) = sp_aux(1:np_new, 1:ndv)
+      ebfp(1:np_new, 1:ndv) = sp1_aux(1:np_new, 1:ndv)
       loc_npart(imody, imodz, imodx, ic) = np_new
      end if
     end do
    else
     do ic = 1, nspx
      np = loc_npart(imody, imodz, imodx, ic)
-     if (np>0) then
+     if (np > 0) then
       call reset_all_part_dist(spec(ic), ebfp, xmm, xmx, ibx, np, ndv, &
         1, ndim, np_new)
-      if (np_new<np) then
+      if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
        do n = 1, np_new
         spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
@@ -434,15 +434,15 @@
      np = loc_npart(imody, imodz, imodx, ic)
      np_new = np
      call traffic_size_eval(spec(ic), ymm, ymx, pe0y, pe1y, iby, 2, np, &
-       n_sr, np_new)
-     np_new_allocate = max(1, np_new)
+      n_sr, np_new)
+     np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
-     if (np_rs>0) then
-      allocate(sp_aux(np_new,ndv))
-      allocate(sp1_aux(np_new,ndv))
+     if (np_rs > 0) then
+      allocate(sp_aux(np_new_allocate, ndv))
+      allocate(sp1_aux(np_new_allocate, ndv))
       call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
         rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
-      if (np_out/=np_new) then
+      if (np_out /= np_new) then
        write (6, *) 'error in y-part count', mype, np_out, np_new
        ier = 99
       end if
@@ -458,10 +458,10 @@
    else
     do ic = 1, nsp_run
      np = loc_npart(imody, imodz, imodx, ic)
-     if (np>0) then
+     if (np > 0) then
       call reset_all_part_dist(spec(ic), ebfp, ymm, ymx, iby, np, ndv, &
         2, ndim, np_new)
-      if (np_new<np) then
+      if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
        do n = 1, np_new
         spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
@@ -484,17 +484,17 @@
       np_new = np
       n_sr = 0
       call traffic_size_eval(spec(ic), zmm, zmx, pe0z, pe1z, ibz, 3, &
-        np, n_sr, np_new)
-      np_new_allocate = max(1, np_new)
+       np, n_sr, np_new)
+      np_new_allocate = np_new + SUM( n_sr(1:2) )
       np_rs = maxval(n_sr(1:4))
       if (np_rs>0) then
        !=====================
-       call v_realloc(sp_aux, np_new, ndv)
-       call v_realloc(sp1_aux, np_new, ndv)
+       call v_realloc(sp_aux, np_new_allocate, ndv)
+       call v_realloc(sp1_aux, np_new_allocate, ndv)
        !================
        call part_prl_exchange(spec(ic), ebfp, zmm, zmx, lbd_min, &
          rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, np_out)
-       if (np_out/=np_new) then
+       if (np_out /= np_new) then
         write (6, *) 'error in z-part count', mype, np_out, np_new
         ier = 99
        end if
@@ -513,7 +513,7 @@
       if (np>0) then
        call reset_all_part_dist(spec(ic), ebfp, zmm, zmx, ibz, np, ndv, &
          3, ndim, np_new)
-       if (np_new<np) then
+       if (np_new < np) then
         loc_npart(imody, imodz, imodx, ic) = np_new
         do n = 1, np_new
          spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
