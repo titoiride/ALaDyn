@@ -68,9 +68,9 @@ module particles_def
    procedure, public :: set_charge_int
    procedure, public :: set_charge_real
    procedure, public :: set_part_number
-   procedure, public :: initialize_component_real
-   procedure, public :: initialize_component_integer
-   generic :: initialize_component => initialize_component_real, initialize_component_integer
+   procedure, public :: set_component_real
+   procedure, public :: set_component_integer
+   generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_real, set_charge_int
  end type
 
@@ -80,27 +80,53 @@ module particles_def
 
  contains
 
- pure function call_component( this, component ) result(comp)
+ pure function call_component( this, component, lb, ub ) result(comp)
+ !! Function that hides the underlying array and calls the
+ !! corresponding component from the particle structure.
+ !! @warning
+ !! This function gives back always an array of reals!
+ !! When using for weights and particle indexes remember to
+ !! cast it again to the right type.
+ !! @endwarning
+
   class(species_new), intent(in) :: this
   integer, intent(in) :: component
+  integer, intent(in), optional :: lb, ub
   real(dp), allocatable, dimension(:) :: comp
-  integer :: n_parts
+  integer :: lowb, upb, n_parts
 
   n_parts = this%n_part
 
+  if ( present(lb) ) then
+   lowb = lb
+  else
+   lowb = 1
+  end if
+
+  if ( present(ub) ) then
+   upb = ub
+  else
+   upb = n_parts
+  end if
+
+
   select case(component)
   case(X_COMP)
-   comp = this%x(1:n_parts)
+   comp = this%x(lowb:upb)
   case(Y_COMP)
-   comp = this%y(1:n_parts)
+   comp = this%y(lowb:upb)
   case(Z_COMP)
-   comp = this%z(1:n_parts)
+   comp = this%z(lowb:upb)
   case(PX_COMP)
-   comp = this%px(1:n_parts)
+   comp = this%px(lowb:upb)
   case(PY_COMP)
-   comp = this%py(1:n_parts)
+   comp = this%py(lowb:upb)
   case(PZ_COMP)
-   comp = this%pz(1:n_parts)
+   comp = this%pz(lowb:upb)
+  case(W_COMP)
+   comp = real( this%weight(lowb:upb), dp )
+  case(INDEX_COMP)
+   comp = real( this%part_index(lowb:upb), dp )
   end select
 
  end function
@@ -184,54 +210,80 @@ module particles_def
   end select
  end function
 
- subroutine initialize_component_real( this, values, component )
+ subroutine set_component_real( this, values, component, lb, ub )
   class(species_new), intent(out) :: this
   real (dp), intent(in) :: values(:)
   integer, intent(in) :: component
+  integer, intent(in), optional :: lb, ub
+  integer :: lowb, upb
+
+  if ( present(lb) ) then
+   lowb = lb
+  else
+   lowb = lbound(this%call_component( component ))
+  end if
+
+  if ( present(ub) ) then
+   upb = ub
+  else
+   upb = ubound(this%x)
+  end if
 
   select case(component)
   case(X_COMP)
-   this%x(:) = values(:)
+   this%x(lowb:upb) = values(:)
   case(Y_COMP)
-   this%y(:) = values(:)
+   this%y(lowb:upb) = values(:)
   case(Z_COMP)
-   this%z(:) = values(:)
+   this%z(lowb:upb) = values(:)
   case(PX_COMP)
-   this%px(:) = values(:)
+   this%px(lowb:upb) = values(:)
   case(PY_COMP)
-   this%py(:) = values(:)
+   this%py(lowb:upb) = values(:)
   case(PZ_COMP)
-   this%pz(:) = values(:)
+   this%pz(lowb:upb) = values(:)
   case(W_COMP)
-   this%weight(:) = values(:)
-  case default
-   stop
+   this%weight(lowb:upb) = values(:)
   end select
 
  end subroutine
 
- subroutine initialize_component_integer( this, values, component )
+ subroutine set_component_integer( this, values, component, lb, ub )
   class(species_new), intent(out) :: this
   integer, intent(in) :: values(:)
   integer, intent(in) :: component
+  integer, intent(in), optional :: lb, ub
+  integer :: lowb, upb
+
+  if ( present(lb) ) then
+   lowb = lb
+  else
+   lowb = lbound(this%call_component( component ))
+  end if
+
+  if ( present(ub) ) then
+   upb = ub
+  else
+   upb = ubound(this%x)
+  end if
 
   select case(component)
   case(X_COMP)
-   this%x(:) = real(values(:), dp)
+   this%x(lowb:upb) = real(values(:), dp)
   case(Y_COMP)
-   this%y(:) = real(values(:), dp)
+   this%y(lowb:upb) = real(values(:), dp)
   case(Z_COMP)
-   this%z(:) = real(values(:), dp)
+   this%z(lowb:upb) = real(values(:), dp)
   case(PX_COMP)
-   this%px(:) = real(values(:), dp)
+   this%px(lowb:upb) = real(values(:), dp)
   case(PY_COMP)
-   this%py(:) = real(values(:), dp)
+   this%py(lowb:upb) = real(values(:), dp)
   case(PZ_COMP)
-   this%pz(:) = real(values(:), dp)
+   this%pz(lowb:upb) = real(values(:), dp)
   case(W_COMP)
-   this%weight(:) = real(values(:), sp)
+   this%weight(lowb:upb) = real(values(:), sp)
   case(INDEX_COMP)
-   this%part_index(:) = values(:)
+   this%part_index(lowb:upb) = values(:)
   end select
 
  end subroutine
@@ -258,7 +310,8 @@ module particles_def
  end subroutine
 
  pure function component_dictionary( component ) result(cdir)
- !! Dictionary for send_recieve routines in parallel.F90
+ !! Dictionary wrapper for send_recieve routines in parallel.F90
+ !! that need the cdir parameter
   integer, intent(in) :: component
   integer :: cdir
   select case(component)
@@ -268,6 +321,33 @@ module particles_def
    cdir = 1
   case(Z_COMP)
    cdir = 2
+  end select
+ end function
+
+ pure function link_position_momentum( component ) result (pm_comp)
+ !! Dictionary that gives back the corresponding position (momentum)
+ !! when a momentum (position) is given, e.g.7
+ !!
+ !! ```
+ !!     comp = X_COMP
+ !!
+ !!     link_position_momentum( comp ) => gives PX_COMP
+ !! ```
+  integer, intent(in) :: component
+  integer :: pm_comp
+  select case(component)
+  case(X_COMP)
+   pm_comp = PX_COMP
+  case(Y_COMP)
+   pm_comp = PY_COMP
+  case(Z_COMP)
+   pm_comp = PZ_COMP
+  case(PX_COMP)
+   pm_comp = X_COMP
+  case(PY_COMP)
+   pm_comp = Y_COMP
+  case(PZ_COMP)
+   pm_comp = Z_COMP
   end select
  end function
 

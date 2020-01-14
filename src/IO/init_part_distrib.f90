@@ -174,13 +174,13 @@
    call loc_sp%set_charge(ch)
    select case (curr_ndim)
    case(2)
-    call loc_sp%initialize_component(loc_xpt(1:n_parts, ic), X_COMP)
-    call loc_sp%initialize_component(loc_ypt(1:n_parts, ic), Y_COMP)
+    call loc_sp%set_component(loc_xpt(1:n_parts, ic), X_COMP)
+    call loc_sp%set_component(loc_ypt(1:n_parts, ic), Y_COMP)
 
     call gasdev(u)
-    call loc_sp%initialize_component(u(1:n_parts)*t_x, PX_COMP)
+    call loc_sp%set_component(u(1:n_parts)*t_x, PX_COMP)
     call gasdev(u)
-    call loc_sp%initialize_component(u(1:n_parts)*t_x, PY_COMP)
+    call loc_sp%set_component(u(1:n_parts)*t_x, PY_COMP)
 
     do k = 1, 1
      do j = 1, j2
@@ -191,21 +191,21 @@
      end do
     end do
 
-    call loc_sp%initialize_component(whz(1:n_parts), W_COMP)
-    call loc_sp%initialize_component(index%indices(1:n_parts), INDEX_COMP)
+    call loc_sp%set_component(whz(1:n_parts), W_COMP)
+    call loc_sp%set_component(index%indices(1:n_parts), INDEX_COMP)
     call loc_sp%set_part_number(n_parts)
 
    case(3)
-    call loc_sp%initialize_component(loc_xpt(1:n_parts, ic), X_COMP)
-    call loc_sp%initialize_component(loc_ypt(1:n_parts, ic), Y_COMP)
-    call loc_sp%initialize_component(loc_zpt(1:n_parts, ic), Z_COMP)
+    call loc_sp%set_component(loc_xpt(1:n_parts, ic), X_COMP)
+    call loc_sp%set_component(loc_ypt(1:n_parts, ic), Y_COMP)
+    call loc_sp%set_component(loc_zpt(1:n_parts, ic), Z_COMP)
 
     call gasdev(u)
-    call loc_sp%initialize_component(u(1:n_parts)*t_x, PX_COMP)
+    call loc_sp%set_component(u(1:n_parts)*t_x, PX_COMP)
     call gasdev(u)
-    call loc_sp%initialize_component(u(1:n_parts)*t_x, PY_COMP)
+    call loc_sp%set_component(u(1:n_parts)*t_x, PY_COMP)
     call gasdev(u)
-    call loc_sp%initialize_component(u(1:n_parts)*t_x, PZ_COMP)
+    call loc_sp%set_component(u(1:n_parts)*t_x, PZ_COMP)
 
     do k = 1, k2
      do j = 1, j2
@@ -216,8 +216,8 @@
      end do
     end do
 
-    call loc_sp%initialize_component(whz(1:n_parts), W_COMP)
-    call loc_sp%initialize_component(index%indices(1:n_parts), INDEX_COMP)
+    call loc_sp%set_component(whz(1:n_parts), W_COMP)
+    call loc_sp%set_component(index%indices(1:n_parts), INDEX_COMP)
     call loc_sp%set_part_number(n_parts)
 
    end select

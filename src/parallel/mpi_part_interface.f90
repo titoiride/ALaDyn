@@ -132,15 +132,16 @@
 
     !======================================
   subroutine part_prl_exchange_new(sp_loc, vstore, xl, xr, xlmin, xrmax, &
-   pel, per, ibd, dir, ndv, old_np, n_sr, npt)
+   pel, per, ibd, component, ndv, old_np, n_sr, npt)
   
    type (species_new), intent (inout) :: sp_loc
    real (dp), intent (in) :: vstore(:, :)
    real (dp), intent (in) :: xl, xr, xlmin, xrmax
    logical, intent (in) :: pel, per
-   integer, intent (in) :: ibd, dir, ndv, old_np, n_sr(4)
+   integer, intent (in) :: ibd, component, ndv, old_np, n_sr(4)
    integer, intent (out) :: npt
    type(index_array) :: left_pind, right_pind
+   real(dp), allocatable :: temp(:), xp(:)
    integer :: k, kk, n, p, q, ns, nr, cdir
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
    logical :: mask(old_np)
@@ -151,9 +152,8 @@
    nr_send = n_sr(2)
    nl_recv = n_sr(3)
    nr_recv = n_sr(4)
-   cdir = dir - 1
-   if (dir==1) cdir = 3 !for x-direction
-   vxdir = dir + ndim
+   cdir = component_dictionary( component )
+   vxdir = link_position_momentum( component )
    !================== checks memory
    p = 2*ndv*max(nl_send, nr_send)
    if (p > 0) then
@@ -165,39 +165,33 @@
    end if
    q = 2*ndv*max(nl_recv, nr_recv)
    if (q > 0) then
-    if (size(aux2)<q) then
+    if (size(aux2) < q) then
      deallocate(aux2)
      allocate(aux2(q))
      aux2(:) = zero_dp
     end if
    end if
    !==================== copy remaining part => ebfp
-   p = max(nr_send, 1)
-   q = max(nl_send, 1)
   
    right_pind = index_array(old_np)
    left_pind = index_array(old_np)
   
-   p = 0
-   q = 0
-   npt = 0
-   if (ibd==1 .and. dir==1) then !reflecting on the right
+   if (ibd == 1 .and. component == X_COMP) then !reflecting on the right
     if (per) then
-     associate ( xp => sp_loc%part( 1:old_np, dir ))
-      where (xp > xr)
-       xp = xr - (xp - xr)
-       sp_loc%part( 1:old_np, vxdir ) = -sp_loc%part( 1:old_np, vxdir )
-      end where
-     end associate
+     xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
+     where (xp > xr)
+      xp = xr - (xp - xr)
+      temp(:) = -sp_loc%call_component( vxdir, lb=1, ub=old_np)
+      sp_loc%set_component(temp, vxdir, lb=1, ub=old_np)
+     end where
     end if
    end if
  !================== copy in sp_aux particles not to be exchanged
-   associate (xp => sp_loc%part( 1:old_np, dir))
-    call right_pind%find_index( xp > xr )
-    call left_pind%find_index( xp < xl )
-    mask(:) = (xp >= xl .and. xp <= xr)
-    npt = COUNT( mask(:) )
-   end associate
+   xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
+   call right_pind%find_index( xp > xr )
+   call left_pind%find_index( xp < xl )
+   mask(:) = (xp >= xl .and. xp <= xr)
+   npt = COUNT( mask(:) )
    
    do n = 1, ndv
     sp_aux( 1:npt, n) = PACK( sp_loc%part(1:old_np, n), mask(:) )
