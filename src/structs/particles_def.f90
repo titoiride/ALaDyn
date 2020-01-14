@@ -25,14 +25,14 @@ module particles_def
  implicit none
  public
 
- character(1), parameter :: X_COMP = 'x'
- character(1), parameter :: Y_COMP = 'y'
- character(1), parameter :: Z_COMP = 'z'
- character(2), parameter :: PX_COMP = 'px'
- character(2), parameter :: PY_COMP = 'py'
- character(2), parameter :: PZ_COMP = 'pz'
- character(6), parameter :: W_COMP = 'weight'
- character(5), parameter :: INDEX_COMP = 'index'
+ integer, parameter :: X_COMP = 1
+ integer, parameter :: Y_COMP = 2
+ integer, parameter :: Z_COMP = 3
+ integer, parameter :: PX_COMP = 4
+ integer, parameter :: PY_COMP = 5
+ integer, parameter :: PZ_COMP = 6
+ integer, parameter :: W_COMP = 7
+ integer, parameter :: INDEX_COMP = -1
 
  type species
  real (dp), allocatable :: part(:, :)
@@ -62,6 +62,7 @@ module particles_def
   integer, allocatable :: part_index(:)
   !! Array containig the particle index
   contains
+   procedure, public :: call_component
    procedure, public :: how_many
    procedure, public :: total_size
    procedure, public :: set_charge_int
@@ -79,12 +80,37 @@ module particles_def
 
  contains
 
+ pure function call_component( this, component ) result(comp)
+  class(species_new), intent(in) :: this
+  integer, intent(in) :: component
+  real(dp), allocatable, dimension(:) :: comp
+  integer :: n_parts
+
+  n_parts = this%n_part
+
+  select case(component)
+  case(X_COMP)
+   comp = this%x(1:n_parts)
+  case(Y_COMP)
+   comp = this%y(1:n_parts)
+  case(Z_COMP)
+   comp = this%z(1:n_parts)
+  case(PX_COMP)
+   comp = this%px(1:n_parts)
+  case(PY_COMP)
+   comp = this%py(1:n_parts)
+  case(PZ_COMP)
+   comp = this%pz(1:n_parts)
+  end select
+
+ end function
+
  pure function how_many( this ) result(n_parts)
   class(species_new), intent(in) :: this
   integer :: n_parts
- 
+
   n_parts = this%n_part
- 
+
  end function
 
  pure function total_size( this ) result(size)
@@ -161,22 +187,22 @@ module particles_def
  subroutine initialize_component_real( this, values, component )
   class(species_new), intent(out) :: this
   real (dp), intent(in) :: values(:)
-  character(*), intent(in) :: component
+  integer, intent(in) :: component
 
   select case(component)
-  case('x')
+  case(X_COMP)
    this%x(:) = values(:)
-  case('y')
+  case(Y_COMP)
    this%y(:) = values(:)
-  case('z')
+  case(Z_COMP)
    this%z(:) = values(:)
-  case('px')
+  case(PX_COMP)
    this%px(:) = values(:)
-  case('py')
+  case(PY_COMP)
    this%py(:) = values(:)
-  case('pz')
+  case(PZ_COMP)
    this%pz(:) = values(:)
-  case('weight')
+  case(W_COMP)
    this%weight(:) = values(:)
   case default
    stop
@@ -187,24 +213,24 @@ module particles_def
  subroutine initialize_component_integer( this, values, component )
   class(species_new), intent(out) :: this
   integer, intent(in) :: values(:)
-  character(*), intent(in) :: component
+  integer, intent(in) :: component
 
   select case(component)
-  case('x')
+  case(X_COMP)
    this%x(:) = real(values(:), dp)
-  case('y')
+  case(Y_COMP)
    this%y(:) = real(values(:), dp)
-  case('z')
+  case(Z_COMP)
    this%z(:) = real(values(:), dp)
-  case('px')
+  case(PX_COMP)
    this%px(:) = real(values(:), dp)
-  case('py')
+  case(PY_COMP)
    this%py(:) = real(values(:), dp)
-  case('pz')
+  case(PZ_COMP)
    this%pz(:) = real(values(:), dp)
-  case('weight')
+  case(W_COMP)
    this%weight(:) = real(values(:), sp)
-  case('index')
+  case(INDEX_COMP)
    this%part_index(:) = values(:)
   end select
 
@@ -230,5 +256,19 @@ module particles_def
 
   this%n_part = n_parts
  end subroutine
+
+ pure function component_dictionary( component ) result(cdir)
+ !! Dictionary for send_recieve routines in parallel.F90
+  integer, intent(in) :: component
+  integer :: cdir
+  select case(component)
+  case(X_COMP)
+   cdir = 3
+  case(Y_COMP)
+   cdir = 1
+  case(Z_COMP)
+   cdir = 2
+  end select
+ end function
 
 end module

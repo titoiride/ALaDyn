@@ -30,9 +30,60 @@
   real (dp) :: loc_pstore(7)
   real (dp), allocatable :: sp_aux(:, :), sp1_aux(:, :)
 
+  interface traffic_size_eval
+   module procedure :: traffic_size_eval_old
+   module procedure :: traffic_size_eval_new
+  end interface
  contains
   !=================
-  subroutine traffic_size_eval(sp_loc, xl, xr, pel, per, ibd, ind, &
+  subroutine traffic_size_eval_new(sp_loc, xl, xr, pel, per, ibd, component, &
+    npold, nsr, npnew)
+
+   type (species_new), intent (in) :: sp_loc
+   real (dp), intent (in) :: xl, xr
+   logical, intent (in) :: pel, per
+   integer, intent (in) :: ibd, npold
+   integer, intent(in) :: component
+   integer, intent (inout) :: nsr(4)
+   integer, intent (inout) :: npnew
+   integer :: p, q
+   integer :: nl_send, nl_recv, nr_send, nr_recv, cdir
+
+   cdir = component_dictionary( component )
+   p = 0
+   q = 0
+   nr_recv = 0
+   nl_recv = 0
+   if (npold>0) then
+    p = COUNT( sp_loc%call_component( component ) > xr)
+    q = COUNT( sp_loc%call_component( component ) < xl)
+   end if
+   nr_send = p
+   nl_send = q
+   call sr_idata(nr_send, nl_recv, cdir, left)
+   !sends to right nr_send receives from left nl_recv
+   call sr_idata(nl_send, nr_recv, cdir, right)
+   !sends to left nl_send  receives from right nr_recv
+
+   if (ibd<2) then !NOT PERIODIC BD
+    if (pel) nl_recv = 0
+    if (per) then
+     nr_recv = 0
+     if (ibd==1) nr_send = 0
+    end if
+   end if
+   npnew = npold + nl_recv + nr_recv - nl_send - nr_send
+   !================================
+   !if(pel)nl_send=0
+   !if(per)nr_send=0
+   nsr(1) = nl_send
+   nsr(2) = nr_send
+   nsr(3) = nl_recv
+   nsr(4) = nr_recv
+   !================================
+  end subroutine
+  !=================
+  subroutine traffic_size_eval_old(sp_loc, xl, xr, pel, per, ibd, ind, &
     npold, nsr, npnew)
 
    type (species), intent (in) :: sp_loc
@@ -78,8 +129,234 @@
    nsr(4) = nr_recv
    !================================
   end subroutine
+
+    !======================================
+  subroutine part_prl_exchange_new(sp_loc, vstore, xl, xr, xlmin, xrmax, &
+   pel, per, ibd, dir, ndv, old_np, n_sr, npt)
+  
+   type (species_new), intent (inout) :: sp_loc
+   real (dp), intent (in) :: vstore(:, :)
+   real (dp), intent (in) :: xl, xr, xlmin, xrmax
+   logical, intent (in) :: pel, per
+   integer, intent (in) :: ibd, dir, ndv, old_np, n_sr(4)
+   integer, intent (out) :: npt
+   type(index_array) :: left_pind, right_pind
+   integer :: k, kk, n, p, q, ns, nr, cdir
+   integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
+   logical :: mask(old_np)
+   !================ dir are cartesian coordinate index (x,y,z)
+   !================ cdir are mpi-cartesian index (y,z,x)
+   
+   nl_send = n_sr(1)
+   nr_send = n_sr(2)
+   nl_recv = n_sr(3)
+   nr_recv = n_sr(4)
+   cdir = dir - 1
+   if (dir==1) cdir = 3 !for x-direction
+   vxdir = dir + ndim
+   !================== checks memory
+   p = 2*ndv*max(nl_send, nr_send)
+   if (p > 0) then
+    if (size(aux1) < p) then
+     deallocate(aux1)
+     allocate(aux1(p))
+     aux1(:) = zero_dp
+    end if
+   end if
+   q = 2*ndv*max(nl_recv, nr_recv)
+   if (q > 0) then
+    if (size(aux2)<q) then
+     deallocate(aux2)
+     allocate(aux2(q))
+     aux2(:) = zero_dp
+    end if
+   end if
+   !==================== copy remaining part => ebfp
+   p = max(nr_send, 1)
+   q = max(nl_send, 1)
+  
+   right_pind = index_array(old_np)
+   left_pind = index_array(old_np)
+  
+   p = 0
+   q = 0
+   npt = 0
+   if (ibd==1 .and. dir==1) then !reflecting on the right
+    if (per) then
+     associate ( xp => sp_loc%part( 1:old_np, dir ))
+      where (xp > xr)
+       xp = xr - (xp - xr)
+       sp_loc%part( 1:old_np, vxdir ) = -sp_loc%part( 1:old_np, vxdir )
+      end where
+     end associate
+    end if
+   end if
+ !================== copy in sp_aux particles not to be exchanged
+   associate (xp => sp_loc%part( 1:old_np, dir))
+    call right_pind%find_index( xp > xr )
+    call left_pind%find_index( xp < xl )
+    mask(:) = (xp >= xl .and. xp <= xr)
+    npt = COUNT( mask(:) )
+   end associate
+   
+   do n = 1, ndv
+    sp_aux( 1:npt, n) = PACK( sp_loc%part(1:old_np, n), mask(:) )
+    sp1_aux( 1:npt, n) = PACK( vstore(1:old_np, n), mask(:) )
+   end do
+   !=======================
+   ns = 2*ndv*nr_send
+   nr = 2*ndv*nl_recv
+   if (ibd<2) then !NON PERIODIC CASE
+    if (per) ns = 0
+    if (pel) nr = 0
+   end if
+   if (ns>0) then
+    kk = 0
+    if (per) then
+     !sends to the right only for Periodic boundary
+     do k = 1, nr_send
+      n = right_pind%indices(k)
+      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+      loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+     !adds vstore data
+     do k = 1, nr_send
+      n = right_pind%indices(k)
+      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+      loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+ !=============== NON PERIODIC CASE
+    else
+     !To be checked case ibd == 1 
+     do k = 1, nr_send
+      n = right_pind%indices(k)
+      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+     !adds vstore data
+     do k = 1, nr_send
+      n = right_pind%indices(k)
+      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+    end if
+   end if
+  
+   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
+   ! sends ns data to the right
+   if (nr>0) then !receives nr data from left
+    kk = 0
+    p = npt
+    do n = 1, nl_recv
+     p = p + 1
+     do q = 1, ndv
+      kk = kk + 1
+      sp_aux(p, q) = aux2(kk)
+     end do
+    end do
+    !   adds...
+    p = npt
+    do n = 1, nl_recv
+     p = p + 1
+     do q = 1, ndv
+      kk = kk + 1
+      sp1_aux(p, q) = aux2(kk)
+     end do
+    end do
+    npt = p
+   end if
+ !===================
+   ns = 2*ndv*nl_send
+   nr = 2*ndv*nr_recv
+   if (ibd==0) then
+    if (pel) ns = 0
+    if (per) nr = 0
+   end if
+   if (ns>0) then
+    kk = 0
+    if (pel) then !only for periodic case
+     do k = 1, nl_send
+      n = left_pind%indices(k)
+      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+      loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+ ! adds....
+     do k = 1, nl_send
+      n = left_pind%indices(k)
+      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+      loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+    else
+    !============ NON PERIODIC EXCHANGE
+     do k = 1, nl_send
+      n = left_pind%indices(k)
+      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+     do k = 1, nl_send
+      n = left_pind%indices(k)
+      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+      do q = 1, ndv
+       kk = kk + 1
+       aux1(kk) = loc_pstore(q)
+      end do
+     end do
+    end if
+   end if   !END ns >0
+   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, right)
+   ! sends ns data to the left recieves nr data from right
+   if (nr>0) then
+    p = npt
+    kk = 0
+    do n = 1, nr_recv
+     p = p + 1
+     do q = 1, ndv
+      kk = kk + 1
+      sp_aux(p, q) = aux2(kk)
+     end do
+    end do
+    p = npt
+    do n = 1, nr_recv
+     p = p + 1
+     do q = 1, ndv
+      kk = kk + 1
+      sp1_aux(p, q) = aux2(kk)
+     end do
+    end do
+    npt = p
+   end if
+  
+ !  EXIT old+new data in sp_aux(:,:) and sp1_aux(:,:)
+ end subroutine
+ !================
+
   !======================================
-  subroutine part_prl_exchange(sp_loc, vstore, xl, xr, xlmin, xrmax, &
+  subroutine part_prl_exchange_old(sp_loc, vstore, xl, xr, xlmin, xrmax, &
     pel, per, ibd, dir, ndv, old_np, n_sr, npt)
 
    type (species), intent (inout) :: sp_loc
