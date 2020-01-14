@@ -1,6 +1,6 @@
 project: ALaDyn
 src_dir: ./src
-output_dir: ./doc_ford
+output_dir: ./docs/doc_ford
 include: /usr/include
          /usr/local/include
          /usr/include/mpi
@@ -35,7 +35,7 @@ To date, main usage of the code has been carried on in simulating:
 
 - **P**lasma **W**ake**F**ield acceleration (Beam driven),
 
-- **T**arget **N**orma **S**heath **A**cceleration (Interaction with solid targets).
+- **T**arget **N**ormal **S**heath **A**cceleration (Interaction with solid targets).
 
 
 @Bug
