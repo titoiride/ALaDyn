@@ -7,50 +7,50 @@ matrix:
       compiler: gcc
       name: macOS - native gcc (llvm backend)
       env:
-        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
+        - MATRIX_EVAL="brew update && brew install open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     - os: osx
       compiler: clang
       name: macOS - native clang
       env:
-        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
+        - MATRIX_EVAL="brew update && brew install open-mpi fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     # broken, PGI compiler cannot compile OpenMPI headers
     - os: osx
       compiler: clang
-      name: macOS - PGI 18.10
+      name: macOS - PGI 19.4
       env:
-        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw && brew upgrade cmake && curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-macos-x64' -o PGI-1810.dmg && hdiutil attach PGI-1810.dmg && sudo installer -store -pkg '/Volumes/PGI 18.10/PGI 18.10.pkg' -target / && FC=/opt/pgi/osx86-64/18.10/bin/pgfortran"
+        - MATRIX_EVAL="brew update && brew install gcc open-mpi fftw --with-mpi && brew upgrade cmake && curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-macos-x64' -o PGI-194.dmg && hdiutil attach PGI-194.dmg && sudo installer -store -pkg '/Volumes/PGI 19.4/PGI 19.4.pkg' -target / && FC=/opt/pgi/osx86-64/19.4/bin/pgfortran"
 
     - os: osx
       compiler: gcc
       name: macOS - native gcc (llvm backend) - mpich
       env:
-        - MATRIX_EVAL="brew update && brew install gcc mpich fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
+        - MATRIX_EVAL="brew update && brew install gcc mpich fftw --with-mpi && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     - os: osx
       compiler: clang
       name: macOS - native clang - mpich
       env:
-        - MATRIX_EVAL="brew update && brew install gcc mpich fftw && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
+        - MATRIX_EVAL="brew update && brew install gcc mpich fftw --with-mpi && brew upgrade cmake && FC=/usr/local/bin/gfortran-9"
 
     # broken, PGI cannot link properly with homebrew's mpich - a single final error is remaining
     - os: osx
       compiler: clang
-      name: macOS - PGI 18.10 - mpich
+      name: macOS - PGI 19.4 - mpich
       env:
-        - MATRIX_EVAL="brew update && brew install gcc mpich fftw && brew upgrade cmake && curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-macos-x64' -o PGI-1810.dmg && hdiutil attach PGI-1810.dmg && sudo installer -store -pkg '/Volumes/PGI 18.10/PGI 18.10.pkg' -target / && FC=/opt/pgi/osx86-64/18.10/bin/pgfortran"
+        - MATRIX_EVAL="brew update && brew install gcc mpich fftw --with-mpi && brew upgrade cmake && curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-macos-x64' -o PGI-194.dmg && hdiutil attach PGI-194.dmg && sudo installer -store -pkg '/Volumes/PGI 19.4/PGI 19.4.pkg' -target / && FC=/opt/pgi/osx86-64/19.4/bin/pgfortran"
 
     # broken, cmake cannot find PGI integrated mpich
     - os: osx
       compiler: clang
-      name: macOS - PGI 18.10 - PGI mpich
+      name: macOS - PGI 19.4 - PGI mpich
       env:
-        - MATRIX_EVAL="brew update && brew install gcc fftw && brew upgrade cmake && curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-macos-x64' -o PGI-1810.dmg && hdiutil attach PGI-1810.dmg && sudo installer -store -pkg '/Volumes/PGI 18.10/PGI 18.10.pkg' -target / && FC=/opt/pgi/osx86-64/18.10/bin/pgfortran && export ADDITIONAL_CMAKE_SETTINGS=\"-DMPI_C_HEADER_DIR=/opt/pgi/osx86-64/2018/mpi/mpich/include\""
+        - MATRIX_EVAL="brew update && brew install gcc fftw --with-mpi && brew upgrade cmake && curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-macos-x64' -o PGI-194.dmg && hdiutil attach PGI-194.dmg && sudo installer -store -pkg '/Volumes/PGI 19.4/PGI 19.4.pkg' -target / && FC=/opt/pgi/osx86-64/19.4/bin/pgfortran && export ADDITIONAL_CMAKE_SETTINGS=\"-DMPI_C_HEADER_DIR=/opt/pgi/osx86-64/2019/mpi/mpich/include\""
 
     - os: linux
       compiler: gcc
-      name: ubuntu - PGI 18.10 - openmpi
+      name: ubuntu - PGI 19.4 - openmpi
       addons:
         apt:
           update: true
@@ -60,8 +60,9 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
             - libnuma-dev
+            - libfftw3-mpi-dev
       env:
-        - MATRIX_EVAL="curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-linux-x64' -o pgilinux-2018-1810-x86-64.tar.gz && tar zxvf pgilinux-2018-1810-x86-64.tar.gz && export TEMPORARY_FILES=/tmp && export PGI_SILENT=true && export PGI_ACCEPT_EULA=accept && export PGI_INSTALL_DIR=/opt/pgi && export PGI_INSTALL_NVIDIA=false && export PGI_INSTALL_AMD=false && export PGI_INSTALL_JAVA=false && export PGI_INSTALL_MPI=false && export PGI_MPI_GPU_SUPPORT=false && export PGI_INSTALL_MANAGED=false && export VERBOSE=false && cd install_components && ./install && export PGI_VERSION=18.10 && export PGI=/opt/pgi && export PATH=/opt/pgi/linux86-64/18.10/bin:$PATH && export MANPATH=$MANPATH:/opt/pgi/linux86-64/18.10/man && export LM_LICENSE_FILE=$LM_LICENSE_FILE:/opt/pgi/license.dat && FC=/opt/pgi/linux86-64/18.10/bin/pgfortran && cd .."
+        - MATRIX_EVAL="curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-linux-x64' -o pgilinux-2019-194-x86-64.tar.gz && tar zxvf pgilinux-2019-194-x86-64.tar.gz && export TEMPORARY_FILES=/tmp && export PGI_SILENT=true && export PGI_ACCEPT_EULA=accept && export PGI_INSTALL_DIR=/opt/pgi && export PGI_INSTALL_NVIDIA=false && export PGI_INSTALL_AMD=false && export PGI_INSTALL_JAVA=false && export PGI_INSTALL_MPI=false && export PGI_MPI_GPU_SUPPORT=false && export PGI_INSTALL_MANAGED=false && export VERBOSE=false && cd install_components && ./install && export PGI_VERSION=19.4 && export PGI=/opt/pgi && export PATH=/opt/pgi/linux86-64/19.4/bin:$PATH && export MANPATH=$MANPATH:/opt/pgi/linux86-64/19.4/man && export LM_LICENSE_FILE=$LM_LICENSE_FILE:/opt/pgi/license.dat && FC=/opt/pgi/linux86-64/19.4/bin/pgfortran && cd .."
 
     - os: linux
       compiler: clang
@@ -74,6 +75,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="FC=/usr/bin/gfortran"
 
@@ -89,6 +91,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && FC=/usr/bin/gfortran"
 
@@ -106,6 +109,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && FC=/usr/bin/gfortran"
 
@@ -123,6 +127,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9 && FC=/usr/bin/gfortran"
 
@@ -140,6 +145,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0 && FC=/usr/bin/gfortran"
 
@@ -149,14 +155,13 @@ matrix:
       addons:
         apt:
           update: true
-          sources:
-            - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
             - gfortran
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && FC=/usr/bin/gfortran"
 
@@ -167,7 +172,6 @@ matrix:
         apt:
           update: true
           sources:
-            - llvm-toolchain-trusty-6.0
             - ubuntu-toolchain-r-test
           packages:
             - clang-6.0
@@ -175,6 +179,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && FC=/usr/bin/gfortran"
 
@@ -189,6 +194,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="FC=gfortran"
 
@@ -207,6 +213,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && FC=/usr/bin/gfortran-4.9"
 
@@ -225,6 +232,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && FC=/usr/bin/gfortran-5"
 
@@ -243,6 +251,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6 && FC=/usr/bin/gfortran-6"
 
@@ -261,6 +270,7 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && FC=/usr/bin/gfortran-7"
 
@@ -279,12 +289,32 @@ matrix:
             - libopenmpi-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && FC=/usr/bin/gfortran-8"
 
     - os: linux
       compiler: gcc
-      name: ubuntu - PGI 18.10 - mpich
+      name: ubuntu - gcc@9.0 - openmpi
+      addons:
+        apt:
+          update: true
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - gfortran-9
+            - gfortran
+            - libopenmpi-dev
+            - libboost-all-dev
+            - libfftw3-dev
+            - libfftw3-mpi-dev
+      env:
+        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9 && FC=/usr/bin/gfortran-9"
+
+    - os: linux
+      compiler: gcc
+      name: ubuntu - PGI 19.4 - mpich
       addons:
         apt:
           update: true
@@ -294,8 +324,9 @@ matrix:
             - libboost-all-dev
             - libfftw3-dev
             - libnuma-dev
+            - libfftw3-mpi-dev
       env:
-        - MATRIX_EVAL="curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-linux-x64' -o pgilinux-2018-1810-x86-64.tar.gz && tar zxvf pgilinux-2018-1810-x86-64.tar.gz && export TEMPORARY_FILES=/tmp && export PGI_SILENT=true && export PGI_ACCEPT_EULA=accept && export PGI_INSTALL_DIR=/opt/pgi && export PGI_INSTALL_NVIDIA=false && export PGI_INSTALL_AMD=false && export PGI_INSTALL_JAVA=false && export PGI_INSTALL_MPI=false && export PGI_MPI_GPU_SUPPORT=false && export PGI_INSTALL_MANAGED=false && export VERBOSE=false && cd install_components && ./install && export PGI_VERSION=18.10 && export PGI=/opt/pgi && export PATH=/opt/pgi/linux86-64/18.10/bin:$PATH && export MANPATH=$MANPATH:/opt/pgi/linux86-64/18.10/man && export LM_LICENSE_FILE=$LM_LICENSE_FILE:/opt/pgi/license.dat && FC=/opt/pgi/linux86-64/18.10/bin/pgfortran && cd .."
+        - MATRIX_EVAL="curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-linux-x64' -o pgilinux-2019-194-x86-64.tar.gz && tar zxvf pgilinux-2019-194-x86-64.tar.gz && export TEMPORARY_FILES=/tmp && export PGI_SILENT=true && export PGI_ACCEPT_EULA=accept && export PGI_INSTALL_DIR=/opt/pgi && export PGI_INSTALL_NVIDIA=false && export PGI_INSTALL_AMD=false && export PGI_INSTALL_JAVA=false && export PGI_INSTALL_MPI=false && export PGI_MPI_GPU_SUPPORT=false && export PGI_INSTALL_MANAGED=false && export VERBOSE=false && cd install_components && ./install && export PGI_VERSION=19.4 && export PGI=/opt/pgi && export PATH=/opt/pgi/linux86-64/19.4/bin:$PATH && export MANPATH=$MANPATH:/opt/pgi/linux86-64/19.4/man && export LM_LICENSE_FILE=$LM_LICENSE_FILE:/opt/pgi/license.dat && FC=/opt/pgi/linux86-64/19.4/bin/pgfortran && cd .."
 
     - os: linux
       compiler: clang
@@ -308,6 +339,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="FC=/usr/bin/gfortran"
 
@@ -323,6 +355,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && FC=/usr/bin/gfortran"
 
@@ -340,6 +373,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && FC=/usr/bin/gfortran"
 
@@ -357,6 +391,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9 && FC=/usr/bin/gfortran"
 
@@ -374,6 +409,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0 && FC=/usr/bin/gfortran"
 
@@ -383,14 +419,13 @@ matrix:
       addons:
         apt:
           update: true
-          sources:
-            - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
             - gfortran
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && FC=/usr/bin/gfortran"
 
@@ -401,7 +436,6 @@ matrix:
         apt:
           update: true
           sources:
-            - llvm-toolchain-trusty-6.0
             - ubuntu-toolchain-r-test
           packages:
             - clang-6.0
@@ -409,6 +443,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && FC=/usr/bin/gfortran"
 
@@ -423,6 +458,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="FC=gfortran"
 
@@ -441,6 +477,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9 && FC=/usr/bin/gfortran-4.9"
 
@@ -459,6 +496,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5 && FC=/usr/bin/gfortran-5"
 
@@ -477,6 +515,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6 && FC=/usr/bin/gfortran-6"
 
@@ -495,6 +534,7 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && FC=/usr/bin/gfortran-7"
 
@@ -513,18 +553,39 @@ matrix:
             - libmpich-dev
             - libboost-all-dev
             - libfftw3-dev
+            - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8 && FC=/usr/bin/gfortran-8"
 
+    - os: linux
+      compiler: gcc
+      name: ubuntu - gcc@9.0 - mpich
+      addons:
+        apt:
+          update: true
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - gfortran-9
+            - gfortran
+            - libmpich-dev
+            - libboost-all-dev
+            - libfftw3-dev
+            - libfftw3-mpi-dev
+      env:
+        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9 && FC=/usr/bin/gfortran-9"
+
   #do not consider known failing builds for the whole build status
   allow_failures:
-    - name: macOS - PGI 18.10
-    - name: macOS - PGI 18.10 - mpich
-    - name: macOS - PGI 18.10 - PGI mpich
+    - name: macOS - PGI 19.4
+    - name: macOS - PGI 19.4 - mpich
+    - name: macOS - PGI 19.4 - PGI mpich
     - name: macOS - native gcc (llvm backend) - mpich
     - name: macOS - native clang - mpich
-    - name: ubuntu - PGI 18.10 - openmpi
-    - name: ubuntu - PGI 18.10 - mpich
+    - name: ubuntu - PGI 19.4 - openmpi
+    - name: ubuntu - PGI 19.4 - mpich
+
 
 before_install:
   - eval "${MATRIX_EVAL}"
@@ -532,7 +593,7 @@ before_install:
 before_script:
   - mkdir build
   - cd build
-  - cmake .. -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_Fortran_COMPILER=$FC ${ADDITIONAL_CMAKE_SETTINGS}
+  - cmake .. -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_Fortran_COMPILER=$FC ${ADDITIONAL_CMAKE_SETTINGS} -DFORCE_OLD_MPI:BOOL=ON
 
 script:
   - cmake --build . --target install

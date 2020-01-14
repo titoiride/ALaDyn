@@ -4,7 +4,7 @@
   ny      = 288,
   nz      = 288,
   ny_targ = 256,
-  k0      = 1.0,
+  k0      = 8.0,
   yx_rat  = 0.4,
 /
 
@@ -13,12 +13,12 @@
   der_ord     = 2,
   str_flag    = 0,
   iform       = 0,
-  model_id    = 5,
+  model_id    = 4,
   dmodel_id   = 1,
   ibx         = 0,
   iby         = 0,
   ibz         = 0,
-  ibeam       = 0,
+  ibeam       = 1,
 /
 
 &TARGET_DESCRIPTION
@@ -55,25 +55,23 @@
   np_per_yc(5)     = 6,
   np_per_yc(6)     = 6,
   lpx(1)           = 0.0,
-  lpx(2)           = 0.0,
+  lpx(2)           = 100.0,
   lpx(3)           = 20000.,
-  lpx(4)           = 0.0,
+  lpx(4)           = 100.0,
   lpx(5)           = 0.0,
   lpx(6)           = 0.0,
   lpx(7)           = -340.,
-  lpy(1)           = 0.2,
-  lpy(2)           = 0.1,
-  n_over_nc        = 0.01,
-  n1_over_n        = 0.,
-  n2_over_n        = 0.,
+  lpy(1)           = 0.,
+  lpy(2)           = 0.,
+  n0_ref           = 1.0,
 /
 
 &LASER
   t0_lp       = 0.,
   xc_lp       = 16.,
-  w0_x        = 20.6,
+  tau_fwhm    = 20.6,
   w0_y        = 10.,
-  a0          = 1.0,
+  a0          = 0.0,
   lam0        = 0.8,
 /
 
@@ -97,7 +95,7 @@
   xp1_out                   = 60.0,
   yp_out                    = 5.,
   tmax                      = 2000.0,
-  cfl                       = 0.85,
+  cfl                       = 0.8,
   new_sim                   = 0,
   id_new                    = 0,
   dump                      = 0,
@@ -113,43 +111,15 @@
   nprocz    = 12,
 /
 
-&NUMBER_BUNCHES
-  n_bunches                = 1,
-  L_particles              = .false.,
-  L_intdiagnostics_pwfa    = .true.,
-  L_intdiagnostics_classic = .false.,
-/
-
-&BUNCH1
-  bunch_type_1 = 1,
-  rho_b_1      = 9.95,
-  gamma_1      = 200.,
-  xb_1         = 296.,
-  sx_1         = 50.,
-  sy_1         = 4.0,
-  epsy_1       = 3.0,
-  epsz_1       = 3.0,
-  dg_1         = 0.1,
-  np_1         = 1500000,
-/
-
-&BUNCH2
-  bunch_type_2 = 1,
-  rho_b_2      = 50.0,
-  gamma_2      = 200.,
-  xb_2         = 129.,
-  sx_2         = 10.,
-  sy_2         = 2.30,
-  epsy_2       = 1.0,
-  epsz_2       = 1.0,
-  dg_2         = 0.1,
-  np_2         = 800000,
-/
-
-&TWISS
-  L_TWISS        = .true.,
-  alpha_twiss(1) = 0.09375,
-  alpha_twiss(2) = 0.20794,
-  beta_twiss(1)  = 5.3802083,
-  beta_twiss(2)  = 5.5187334593,
+&BEAM_INJECT
+  nb_1        = 5,
+  xc_1        = 30,
+  gam_1       = 300,
+  sxb_1       = 3,
+  syb_1       = 3,
+  epsy_1      = 0.2,
+  epsz_1      = 0.2,
+  dg_1        = 1,
+  charge_1    = 1,
+  t_inject    = 0,
 /
