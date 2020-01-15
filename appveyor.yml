@@ -4,23 +4,10 @@ clone_folder: c:\projects\aladyn
 environment:
   WORKSPACE: C:\projects
   matrix:
-  - platform: PGI194
+  - platform: PGI1910
     COMPILER: pgi
-    INSTALLED_MPI_VERSION: MSMPI_PGI
     GENERATOR: "NMake Makefiles"
     VCPKG_DEFAULT_TRIPLET: x64-windows
-  - platform: PGI194
-    COMPILER: pgi
-    INSTALLED_MPI_VERSION: MSMPI_HPC2012
-    GENERATOR: "NMake Makefiles"
-    VCPKG_DEFAULT_TRIPLET: x64-windows
-  # broken: PGI is incompatible with latest MS-MPI
-  - platform: PGI194
-    COMPILER: pgi
-    INSTALLED_MPI_VERSION: MSMPI_VCPKG
-    GENERATOR: "NMake Makefiles"
-    VCPKG_DEFAULT_TRIPLET: x64-windows
-  # broken: gfortran 7.4 has an internal compiler error during building
   - platform: Cygwin64
     COMPILER: cygwin
     CYGWIN_NOWINPATH: yes
@@ -28,7 +15,7 @@ environment:
 
 matrix:
   allow_failures:
-    - INSTALLED_MPI_VERSION: MSMPI_VCPKG
+    - platform: PGI1910
     - platform: Cygwin64
 
 init:
@@ -42,88 +29,61 @@ install:
   - if [%COMPILER%]==[pgi] SET "PATH=C:\Program Files\CMake\bin;%PATH%"
   - if [%COMPILER%]==[pgi] call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
   - cd %WORKSPACE%
-  #prepare the silent install for PGI
-  - if [%COMPILER%]==[pgi] echo [Application] > setup.iss
-  - if [%COMPILER%]==[pgi] echo Name=PGI Workstation 19.4 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Version=19.4 >> setup.iss
+  #prepare the silent install for PGI 19.10
+  - if [%COMPILER%]==[pgi] echo [Application] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Name=PGI Workstation 19.10 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Version=19.10 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Company=The Portland Group >> setup.iss
   - if [%COMPILER%]==[pgi] echo Lang=0409 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-DlgOrder] >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Dlg0={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdWelcome-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Count=11 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg1={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg2={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg3={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdRegisterUser-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg4={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg5={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg6={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdSelectFolder-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg7={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg8={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdStartCopy-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg9={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SprintfBox-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg10={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdFinish-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Count=12 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg1={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg2={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg3={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg4={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdRegisterUser-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg5={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg6={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg7={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdSelectFolder-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg8={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg9={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdStartCopy-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg10={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SprintfBox-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Dlg11={FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdFinish-0 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdWelcome-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-DlgOrder] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg0={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdWelcome-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Count=10 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg1={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdLicense2Rtf-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg2={89F281D6-89B4-4CBA-8342-7A7800CB4771}-AskOptions-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg3={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdRegisterUser-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg4={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdAskDestPath-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg5={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdAskDestPath-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg6={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdSelectFolder-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg7={89F281D6-89B4-4CBA-8342-7A7800CB4771}-AskOptions-1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg8={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdStartCopy-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Dlg9={89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdFinish-0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdWelcome-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdLicense2Rtf-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-0] >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-0=0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-1=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-0=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Sel-1=0 >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdLicense2Rtf-1] >> setup.iss
-  - if [%COMPILER%]==[pgi] if     [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdRegisterUser-0] >> setup.iss
-  - if [%COMPILER%]==[pgi] echo szName=none >> setup.iss
-  - if [%COMPILER%]==[pgi] echo szCompany=none >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-0] >> setup.iss
-  - if [%COMPILER%]==[pgi] echo szDir=C:\Program Files\PGI\ >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdAskDestPath-1] >> setup.iss
-  - if [%COMPILER%]==[pgi] echo szDir=C:\temp >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdSelectFolder-0] >> setup.iss
-  - if [%COMPILER%]==[pgi] echo szFolder=PGI Workstation >> setup.iss
-  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-AskOptions-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-AskOptions-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Sel-0=0 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Sel-1=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdStartCopy-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdRegisterUser-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szName=user >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szCompany=company >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SprintfBox-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdAskDestPath-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szDir=C:\Program Files\PGI\ >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
-  - if [%COMPILER%]==[pgi] echo [{FC0FF62B-3F0A-44F8-9D68-0A6AAB65101C}-SdFinish-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdAskDestPath-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szDir=C:\temp >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdSelectFolder-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo szFolder=PGI Workstation >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-AskOptions-1] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Sel-0=0 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Sel-1=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdStartCopy-0] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [{89F281D6-89B4-4CBA-8342-7A7800CB4771}-SdFinish-0] >> setup.iss
   - if [%COMPILER%]==[pgi] echo Result=1 >> setup.iss
   - if [%COMPILER%]==[pgi] echo bOpt1=0 >> setup.iss
   - if [%COMPILER%]==[pgi] echo bOpt2=0 >> setup.iss
+
   #download & install PGI
-  - if [%COMPILER%]==[pgi] curl --location --referer "http://www.pgroup.com/products/community.htm" "https://www.pgroup.com/support/downloader.php?file=pgi-community-windows-x64" -o pgiws64-194.exe
-  - if [%COMPILER%]==[pgi] %WORKSPACE%\pgiws64-194.exe /s /f1"%WORKSPACE%\setup.iss"
-  #wait for installation to complete!
-  #not necessary in latest version, the installer blocks the command prompt until finished
-  #- if [%COMPILER%]==[pgi] echo Waiting 10 minutes
-  #- if [%COMPILER%]==[pgi] ping -n 600 127.0.0.1 > nul
-  #install Community license (installation should be over by now)
-  #not necessary in latest version, the file is already with the proper name
-  #- if [%COMPILER%]==[pgi] copy %PROGRAMFILES%\PGI\license.dat-COMMUNITY-18.10 %PROGRAMFILES%\PGI\license.dat
-  #download & install msmpi
-  - ps: if($env:COMPILER -eq "pgi") { if($env:INSTALLED_MPI_VERSION -eq "MSMPI_HPC2012") { Invoke-WebRequest https://download.microsoft.com/download/B/C/8/BC826318-B57E-490D-82C1-06C99F52C608/MSMPISetup.exe -OutFile $env:WORKSPACE\msmpi.exe } }
-  - ps: if($env:COMPILER -eq "pgi") { if($env:INSTALLED_MPI_VERSION -eq "MSMPI_VCPKG")   { Invoke-WebRequest https://download.microsoft.com/download/A/E/0/AE002626-9D9D-448D-8197-1EA510E297CE/msmpisetup.exe -OutFile $env:WORKSPACE\msmpi.exe } }
-  - if [%COMPILER%]==[pgi] if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI] %WORKSPACE%\msmpi.exe -unattend
+  - if [%COMPILER%]==[pgi] curl --location --referer "http://www.pgroup.com/products/community.htm" "https://www.pgroup.com/support/downloader.php?file=pgi-community-windows-x64" -o pgiws64-1910.exe
+  - if [%COMPILER%]==[pgi] %WORKSPACE%\pgiws64-1910.exe /s /f1"%WORKSPACE%\setup.iss"
+  - ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/A/E/0/AE002626-9D9D-448D-8197-1EA510E297CE/msmpisetup.exe -OutFile $env:WORKSPACE\msmpi.exe }
+  - if [%COMPILER%]==[pgi] %WORKSPACE%\msmpi.exe -unattend
   #download & install libs for pgi - first of all update vcpkg and then install necessary libs
   - if [%COMPILER%]==[pgi] cd C:\Tools\vcpkg
   - if [%COMPILER%]==[pgi] git pull
@@ -131,7 +91,7 @@ install:
   - cd %WORKSPACE%\
   - if [%COMPILER%]==[pgi] vcpkg integrate install
   - if [%COMPILER%]==[pgi] vcpkg install fftw3
-  - if [%COMPILER%]==[pgi] if [%INSTALLED_MPI_VERSION%]==[MSMPI_VCPKG] vcpkg install msmpi
+  - if [%COMPILER%]==[pgi] vcpkg install msmpi
   #download & install libs for cygwin
   - cd %WORKSPACE%
   - mkdir cygwin-downloads
@@ -143,22 +103,14 @@ install:
   - cd build
   - if [%COMPILER%]==[pgi] set PGI=%PROGRAMFILES%\PGI
   - if [%COMPILER%]==[pgi] set PATH=%PROGRAMFILES%\PGI\flexlm;%PATH%
-  - if [%COMPILER%]==[pgi] set PATH=%PROGRAMFILES%\PGI\win64\19.4\bin;%PATH%
+  - if [%COMPILER%]==[pgi] set PATH=%PROGRAMFILES%\PGI\win64\19.10\bin;%PATH%
   - if [%COMPILER%]==[pgi] set PATH=%PATH%;.
   - if [%COMPILER%]==[pgi] set FLEXLM_BATCH=1
-  - if [%COMPILER%]==[pgi] echo PGI 19.4 Enabled
+  - if [%COMPILER%]==[pgi] echo PGI 19.10 Enabled
 
 build_script:
-  - if [%COMPILER%]==[pgi]    if [%INSTALLED_MPI_VERSION%]==[MSMPI_PGI]       cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" "-DCMAKE_BUILD_TYPE=Release" "-DFORCE_MSMPI_PATH_R1:BOOL=TRUE" ..
-  - if [%COMPILER%]==[pgi]    if [%INSTALLED_MPI_VERSION%]==[MSMPI_HPC2012]   cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" "-DCMAKE_BUILD_TYPE=Release" "-DFORCE_MSMPI_PATH_R2:BOOL=TRUE" ..
-  - if [%COMPILER%]==[pgi]    if NOT [%INSTALLED_MPI_VERSION%]==[MSMPI_VCPKG] cmake --build . --target install
-
-  - if [%COMPILER%]==[pgi]    if [%INSTALLED_MPI_VERSION%]==[MSMPI_VCPKG]     cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" "-DCMAKE_BUILD_TYPE=Release" ..
-  # wrap nmake inside a powershell call to avoid build stops due to error and be able to reach the extended debug info
-  - ps: if($env:COMPILER -eq "pgi") { if($env:INSTALLED_MPI_VERSION -eq "MSMPI_VCPKG")   { cmake --build . --target install ; if ($LastExitCode -ne 0) { Write-Host "Detected error! Exit code $exitCode" ; $host.SetShouldExit(0) } } }
-  - if [%COMPILER%]==[pgi]    if [%INSTALLED_MPI_VERSION%]==[MSMPI_VCPKG]     echo Adding more debug info
-  - if [%COMPILER%]==[pgi]    if [%INSTALLED_MPI_VERSION%]==[MSMPI_VCPKG]     echo Re-run last line in verbose mode
-  - if [%COMPILER%]==[pgi]    if [%INSTALLED_MPI_VERSION%]==[MSMPI_VCPKG]     pgf95.exe -DUSE_MPI_MODULE -IC:\Tools\vcpkg\installed\%VCPKG_DEFAULT_TRIPLET%\include -# -Bdynamic -fast -O3 -r8 -c %WORKSPACE%\aladyn\src\parallel.F90 -o CMakeFiles\ALaDyn.dir\src\parallel.F90.obj
+  - if [%COMPILER%]==[pgi]    cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" "-DCMAKE_BUILD_TYPE=Release" ..
+  - if [%COMPILER%]==[pgi]    cmake --build . --target install
 
   - if [%COMPILER%]==[cygwin] %CYGSH% 'cmake -G "Unix Makefiles" "-DCMAKE_BUILD_TYPE=Debug" ..'
   - if [%COMPILER%]==[cygwin] %CYGSH% 'cmake --build . --target install'
