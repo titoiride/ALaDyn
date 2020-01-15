@@ -1,6 +1,6 @@
 name: FORD Documentation
 uses: ResearchSoftwareActions/ford-build@v1.0
-on: push
+on: [push, pull_request]
 author: The ALaDyn Collaboration
 description: Build FORD documentation of the ALaDyn code
 inputs:
