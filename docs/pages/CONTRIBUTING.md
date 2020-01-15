@@ -1,3 +1,5 @@
+title: Contributing guidelines
+
 # Contributing guidelines
 
 `ALaDyn` is an open source code, so you are very welcome to contribute!
@@ -45,13 +47,16 @@ Any pull request should
 * Be as compact as possible, to facilitate the discussion and merging process. You can always open more than one pull request
 * Contain correction and/or new fragments of code that can at least compile: you should try the compilation during your work. However, the Continuous Integration will check the pull request status as soon as you open it: any broken code cannot be merged.
 * If possible, be already **squashed**. In particular, you should clean every confused or repeated commit, to reduce the number of them to the significant ones. For example (and this happens on daily basis, so don't worry!) an history such as
-  ```
-  <hash1> Fist try to fix bug
-  <hash2> Second try to fix bug
-  <hash3> Maybe this time works
-  <hash4> Final fix
-  ```
-  should become
-  ```
-  <hash> Bug fixed
-  ```
+    
+    ```
+    <hash1> Fist try to fix bug
+    <hash2> Second try to fix bug
+    <hash3> Maybe this time works
+    <hash4> Final fix
+    ```
+
+    should become
+
+    ```
+    <hash> Bug fixed
+    ```

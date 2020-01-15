@@ -1,3 +1,5 @@
+title: Code description
+
 # The ALaDyn PIC Code
 
 ## Overview

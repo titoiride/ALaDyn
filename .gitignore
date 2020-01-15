@@ -52,7 +52,6 @@ build.*
 
 .project
 *.nml
-index.md
 fftw*/
 
 #Visual studio code
@@ -66,4 +65,4 @@ fftw*/
 snippet_*
 
 #FORD documentations
-doc_ford/*
+html/*
