@@ -36,7 +36,7 @@ endif()
 
 if( EXISTS "$ENV{FFTW_ROOT_DIR}" )
   file( TO_CMAKE_PATH "$ENV{FFTW_ROOT_DIR}" FFTW_ROOT_DIR )
-  set( FFTW_ROOT_DIR "${FFTW_ROOT_DIR}" CACHE PATH "Prefix for FFTW installation." )
+  set( FFTW_ROOT_DIR "$ENV{FFTW_ROOT_DIR}" CACHE PATH "Prefix for FFTW installation." )
 endif()
 
 if( NOT EXISTS "${FFTW_ROOT_DIR}" AND NOT EXISTS "${FFTW_ROOT_DIR_FIXED_PATH}")
@@ -68,28 +68,94 @@ endif()
 
 find_path( FFTW_INCLUDE_DIR
   NAMES fftw3.h
-  HINTS ${FFTW_ROOT_DIR}/include ${FFTW_ROOT_DIR} ${FFTW_ROOT_DIR_FIXED_PATH} ${FFTW_ROOT_DIR_FIXED_PATH}/include ${FFTW_INCLUDEDIR}
+  HINTS ${FFTW_ROOT_DIR}/include
+  ${FFTW_ROOT_DIR}
+  ${FFTW_ROOT_DIR_FIXED_PATH}
+  ${FFTW_ROOT_DIR_FIXED_PATH}/include
+  ${FFTW_INCLUDEDIR}
 )
 
 find_library( FFTW_LIBRARY
   NAMES fftw3 fftw3-3 libfftw3-3
-  HINTS ${FFTW_ROOT_DIR}/lib ${FFTW_ROOT_DIR} ${FFTW_ROOT_DIR_FIXED_PATH} ${FFTW_ROOT_DIR_FIXED_PATH}/lib ${FFTW_LIBDIR}
+  HINTS ${FFTW_ROOT_DIR}/lib
+  ${FFTW_ROOT_DIR}
+  ${FFTW_ROOT_DIR_FIXED_PATH}
+  ${FFTW_ROOT_DIR_FIXED_PATH}/lib
+  ${FFTW_LIBDIR}
   PATH_SUFFIXES Release Debug
 )
 
 find_library( FFTWF_LIBRARY
   NAMES fftw3f fftw3f-3 libfftw3f-3
-  HINTS ${FFTW_ROOT_DIR}/lib ${FFTW_ROOT_DIR} ${FFTW_ROOT_DIR_FIXED_PATH} ${FFTW_ROOT_DIR_FIXED_PATH}/lib ${FFTW_LIBDIR}
+  HINTS ${FFTW_ROOT_DIR}/lib
+  ${FFTW_ROOT_DIR}
+  ${FFTW_ROOT_DIR_FIXED_PATH}
+  ${FFTW_ROOT_DIR_FIXED_PATH}/lib
+  ${FFTW_LIBDIR}
   PATH_SUFFIXES Release Debug
 )
-
+  
 if (ENABLE_FFTW_LONG_DOUBLE)
   find_library( FFTWL_LIBRARY
     NAMES fftw3l fftw3l-3 libfftw3l-3
-    HINTS ${FFTW_ROOT_DIR}/lib ${FFTW_ROOT_DIR} ${FFTW_ROOT_DIR_FIXED_PATH} ${FFTW_ROOT_DIR_FIXED_PATH}/lib ${FFTW_LIBDIR}
+    HINTS ${FFTW_ROOT_DIR}/lib
+    ${FFTW_ROOT_DIR}
+    ${FFTW_ROOT_DIR_FIXED_PATH}
+    ${FFTW_ROOT_DIR_FIXED_PATH}/lib
+    ${FFTW_LIBDIR}
     PATH_SUFFIXES Release Debug
   )
 endif()
+
+foreach(component IN ITEMS ${FFTW_FIND_COMPONENTS})
+  if(component MATCHES MPI)
+    
+    find_path( FFTW_MPI_INCLUDE_DIR
+      NAMES fftw3-mpi.h
+      HINTS ${FFTW_ROOT_DIR}/include
+      ${FFTW_ROOT_DIR}
+      ${FFTW_ROOT_DIR_FIXED_PATH}
+      ${FFTW_ROOT_DIR_FIXED_PATH}/include
+      ${FFTW_INCLUDEDIR}
+    )
+
+    find_library( FFTW_MPI_LIBRARY
+      NAMES fftw3_mpi fftw3-3_mpi libfftw3-3_mpi
+      HINTS ${FFTW_ROOT_DIR}/lib
+      ${FFTW_ROOT_DIR}
+      ${FFTW_ROOT_DIR_FIXED_PATH}
+      ${FFTW_ROOT_DIR_FIXED_PATH}/lib
+      ${FFTW_LIBDIR}
+      PATH_SUFFIXES Release Debug
+    )
+
+    find_library( FFTWF_MPI_LIBRARY
+      NAMES fftw3f_mpi fftw3f-3_mpi libfftw3f-3_mpi
+      HINTS ${FFTW_ROOT_DIR}/lib
+      ${FFTW_ROOT_DIR}
+      ${FFTW_ROOT_DIR_FIXED_PATH}
+      ${FFTW_ROOT_DIR_FIXED_PATH}/lib
+      ${FFTW_LIBDIR}
+      PATH_SUFFIXES Release Debug
+    )
+    if (ENABLE_FFTW_LONG_DOUBLE)
+      find_library( FFTWL_MPI_LIBRARY
+      NAMES fftw3l_mpi fftw3l-3_mpi libfftw3l-3_mpi
+      HINTS ${FFTW_ROOT_DIR}/lib
+      ${FFTW_ROOT_DIR}
+      ${FFTW_ROOT_DIR_FIXED_PATH}
+      ${FFTW_ROOT_DIR_FIXED_PATH}/lib
+      ${FFTW_LIBDIR}
+      PATH_SUFFIXES Release Debug
+      )
+    endif()
+    if (FFTW_MPI_INCLUDE_DIR AND FFTW_MPI_LIBRARY AND FFTWF_MPI_LIBRARY)
+      set(FFTW_MPI_FOUND TRUE)
+    endif()
+  endif()
+  set( FFTW_${component}_INCLUDE_DIRS ${FFTW_${component}_INCLUDE_DIR} )
+  set( FFTW_${component}_LIBRARIES ${FFTW_${component}_LIBRARY} ${FFTWF_${component}_LIBRARY} ${FFTWL_${component}_LIBRARY} )
+endforeach()
 
 # Do we also have debug versions?
 find_library( FFTW_LIBRARY_DEBUG
@@ -119,18 +185,24 @@ set( FFTW_LIBRARIES ${FFTW_LIBRARY} ${FFTWF_LIBRARY} ${FFTWL_LIBRARY} )
 # handle the QUIETLY and REQUIRED arguments and set FFTW_FOUND to TRUE if all
 # listed variables are TRUE
 find_package_handle_standard_args( FFTW
-  FOUND_VAR
-    FFTW_FOUND
-  REQUIRED_VARS
-    FFTW_INCLUDE_DIR
-    FFTW_LIBRARY
-    FFTWF_LIBRARY
-  )
+REQUIRED_VARS
+  FFTW_INCLUDE_DIR
+  FFTW_LIBRARY
+  FFTWF_LIBRARY
+HANDLE_COMPONENTS
+)
 
 mark_as_advanced( FFTW_ROOT_DIR FFTW_LIBRARY FFTW_INCLUDE_DIR
   FFTWF_LIBRARY FFTWL_LIBRARY FFTW_LIBRARY_DEBUG FFTWF_LIBRARY_DEBUG FFTWL_LIBRARY_DEBUG
-  FFTW_USE_PKGCONFIG FFTW_CONFIG )
+  FFTW_USE_PKGCONFIG FFTW_CONFIG
+)
 
+foreach(component IN ITEMS ${FFTW_FIND_COMPONENTS})
+  if(FFTW_${component}_FOUND)
+    mark_as_advanced(FFTW_${component}_LIBRARY FFTW_${component}_INCLUDE_DIR
+    FFTWF_${component}_LIBRARY)
+  endif()
+endforeach()
 
 #=============================================================================
 # Register imported libraries:

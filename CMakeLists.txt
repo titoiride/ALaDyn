@@ -17,6 +17,9 @@ set(FORCE_FFTW OFF CACHE BOOL "Forcing FFTW libraries")
 # set this variable to true to force static linking (if supported by the compiler)
 set(FORCE_STATIC_LINK FALSE CACHE BOOL "Forcing static linking to libraries")
 
+# forcing old mpif.h if the correct version of the mpi module is not available
+set(FORCE_OLD_MPI OFF CACHE BOOL "Forcing old mpif.h linking")
+
 # make sure that the default is a RELEASE
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -29,37 +32,57 @@ endif()
 
 list(APPEND ALaDyn_Fortran_sources
   src/ALaDyn.F90
-  src/precision_def.F90
-  src/mpi_var.f90
-  src/phys_param.f90
-  src/grid_and_particles.f90
-  src/code_util.f90
-  src/system_utilities.f90
-  src/util.f90
-  src/fft_lib.F90
-  src/struct_def.f90
-  src/grid_param.f90
-  src/control_bunch_input.f90
-  src/ionz_data.f90
-  src/ionize.f90
-  src/pstruct_data.F90
-  src/fstruct_data.f90
-  src/psolv.f90
-  src/all_param.f90
-  src/particles.F90
-  src/parallel.F90
-  src/pic_rutil.f90
-  src/der_lib.f90
-  src/grid_fields.f90
-  src/pdf_moments.f90
-  src/pic_in.f90
-  src/pic_out.f90
-  src/pic_out_util.f90
-  src/pic_dump.f90
-  src/pic_evolve_in_time.f90
-  src/pwfa_bunch_field_calculation.F90
-  src/read_input.f90
-  src/pwfa_output_addons.f90
+  src/cpp_lib/cpp_folder_tree.cpp
+  src/cpp_lib/find_last_addr.cpp 
+  src/diagnostics/diag_part_and_fields.f90
+  src/diagnostics/run_data_info.f90
+  src/dynamics/boris_push.f90
+  src/dynamics/curr_and_fields_util.f90
+  src/dynamics/env_evolve_in_time.f90
+  src/dynamics/fluid_density_momenta.f90
+  src/dynamics/pic_evolve_in_time.f90
+  src/dynamics/window.f90
+  src/fft/legacy_fft_lib.F90
+  src/fft/modern_fft_lib.F90
+  src/fft/prl_fft.f90
+  src/fields/grid_field_param.f90
+  src/fields/grid_fields.f90
+  src/fields/init_grid_fields.f90
+  src/grid/grid_param.f90
+  src/grid/set_grid_param.f90
+  src/grid/stretched_grid.f90
+  src/ionization/ionize.f90
+  src/ionization/ionz_data.f90
+  src/IO/pic_in.f90
+  src/IO/init_laser_field.f90
+  src/IO/init_part_distrib.f90
+  src/IO/init_beam_part_distrib.f90
+  src/IO/pic_out.f90
+  src/IO/pic_out_util.f90
+  src/IO/psolve.f90
+  src/particles/grid_part_lib.f90
+  src/particles/grid_part_connect.f90
+  src/particles/grid_part_util.f90
+  src/parallel/mpi_var.f90
+  src/parallel/mpi_part_interface.f90
+  src/parallel/mpi_field_interface.f90
+  src/parallel/mpi_curr_interface.f90
+  src/parallel/parallel.F90
+  src/start/pic_dump.f90
+  src/start/read_input.f90
+  src/start/set_init_param.f90
+  src/start/start_all.F90
+  src/start/system_utilities.f90
+  src/work/array_alloc.f90
+  src/work/code_util.f90
+  src/work/common_param.f90
+  src/work/control_bunch_input.f90
+  src/work/fstruct_data.f90
+  src/work/phys_param.f90
+  src/work/precision_def.F90
+  src/work/pstruct_data.f90
+  src/work/struct_def.f90
+  src/work/util.f90
 )
 
 set(USING_PGI_COMPILER FALSE)
@@ -78,13 +101,14 @@ elseif(Fortran_COMPILER_NAME MATCHES "gfor*")
   string(APPEND CMAKE_CXX_COMPILE_FLAGS " -Wall")
   string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -fdefault-real-8")
   string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fdefault-real-8 -Wall -Wextra")
+  string(APPEND CMAKE_Fortran_FLAGS_PROFILING " -fdefault-real-8 -g -O3 -pg -Wall -fcheck='all' ")
   if(MARCONI_KNL)
     string(APPEND CMAKE_CXX_COMPILE_FLAGS " -mavx512f -mavx512cd -mavx512er -mavx512pf")
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -funroll-all-loops  -mavx512f -mavx512cd -mavx512er -mavx512pf -O3")
     string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fbacktrace -fbounds-check -mavx512f -mavx512cd -mavx512er -mavx512pf -Og -g")
   else()
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -funroll-all-loops -O3")
-    string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fbacktrace -fbounds-check -Og -g")
+    string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fbacktrace -fbounds-check -O0 -g")
   endif()
 elseif(Fortran_COMPILER_NAME MATCHES "ifor*" OR Fortran_COMPILER_NAME MATCHES "ftn*")
   message(STATUS "ALaDyn: Using Intel Compiler")
@@ -119,6 +143,10 @@ else()
   endif()
 endif()
 
+if(FORCE_OLD_MPI)
+  message(STATUS "ALaDyn: MPI libraries are linked against mpif.h")
+  add_definitions(-DFORCE_OLD_MPI)
+endif()
 if(FORCE_STATIC_LINK)
   string(APPEND CMAKE_Fortran_LINK_FLAGS " -static")
 endif()
@@ -165,7 +193,7 @@ if(USING_INTEL_COMPILER AND NOT FORCE_FFTW)
   find_package(MKL REQUIRED)
   set(MKL_FFTW_INCLUDE_DIR "${MKL_INCLUDE_DIR}/fftw/")
 else()
-  find_package(FFTW REQUIRED)
+  find_package(FFTW REQUIRED OPTIONAL_COMPONENTS MPI)
 endif()
 
 string(APPEND CMAKE_CXX_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS}")
@@ -178,21 +206,52 @@ if(APPLE AND USING_PGI_COMPILER)
   #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-include_directories(${OTHER_INCLUDE_DIR} ${MPI_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH} ${FFTW_INCLUDE_DIR} ${MKL_INCLUDE_DIR} ${MKL_FFTW_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+include_directories(
+  ${OTHER_INCLUDE_DIR}
+  ${MPI_INCLUDE_PATH}
+  ${MPI_Fortran_INCLUDE_PATH}
+  ${FFTW_INCLUDE_DIR}
+  ${MKL_INCLUDE_DIR}
+  ${MKL_FFTW_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIR}
+)
 
+if(FFTW_MPI_FOUND)
+  include_directories(
+   ${FFTW_MPI_INCLUDE_DIR}
+  )
+endif()
 add_executable(ALaDyn
   ${ALaDyn_Fortran_sources}
 )
 
-add_library(cpp_folder_tree STATIC src/cpp_folder_tree.cpp)
-add_library(find_last_addr STATIC src/find_last_addr.cpp)
-add_library(enable_gdb_attach STATIC src/enable_gdb_attach.cpp)
+add_library(cpp_folder_tree STATIC src/cpp_lib/cpp_folder_tree.cpp)
+add_library(find_last_addr STATIC src/cpp_lib/find_last_addr.cpp)
+add_library(enable_gdb_attach STATIC src/cpp_lib/enable_gdb_attach.cpp)
 
 target_link_libraries(ALaDyn
   cpp_folder_tree
   find_last_addr
   enable_gdb_attach
 )
+
+if(FFTW_MPI_LIBRARY)
+  target_link_libraries(ALaDyn
+    ${FFTW_MPI_LIBRARY}
+  )
+endif()
+
+if(FFTW_LIBRARY)
+  target_link_libraries(ALaDyn
+    ${FFTW_LIBRARY}
+  )
+endif()
+
+if(MKL_LIBRARIES)
+  target_link_libraries(ALaDyn
+    ${MKL_LIBRARIES}
+  )
+endif()
 
 if(MPI_Fortran_LIBRARIES)
   target_link_libraries(ALaDyn
@@ -209,18 +268,6 @@ endif()
 if(Boost_LIBRARIES)
   target_link_libraries(ALaDyn
     ${Boost_LIBRARIES}
-  )
-endif()
-
-if(MKL_LIBRARIES)
-  target_link_libraries(ALaDyn
-    ${MKL_LIBRARIES}
-  )
-endif()
-
-if(FFTW_LIBRARY)
-  target_link_libraries(ALaDyn
-    ${FFTW_LIBRARY}
   )
 endif()
 

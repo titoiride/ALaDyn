@@ -3,7 +3,7 @@
   nx               = 5000,
   ny               = 4200,
   nz               = 1,
-  ny_targ          = 2500,
+  ny_targ          = 3200,
   k0               = 50.0,
   yx_rat           = 2.0,
   zx_rat           = 1.0,
@@ -13,18 +13,18 @@
   LPf_ord          = 2,
   der_ord          = 2,
   str_flag         = 0,
-  iform            = 2,
+  iform            = 0,
   model_id         = 1,
   dmodel_id        = 1,
   ibx              = 0,
   iby              = 0,
   ibz              = 0,
-  ibeam            = 0,
+  ibeam            = 1,
 /
 
 &TARGET_DESCRIPTION
   nsp              = 1,
-  nsb              = 1,
+  nsb              = 0,
   ionz_lev         = 0,
   ionz_model       = 4,
   ion_min(1)       = 1,
@@ -55,18 +55,20 @@
   np_per_yc(4)     = 1,
   np_per_yc(5)     = 1,
   np_per_yc(6)     = 1,
+  concentration(1) = 1,
   lpx(1)           = 0.,
   lpx(2)           = 50.,
   lpx(3)           = 400.,
-  lpx(4)           = 0.,
+  lpx(4)           = 100.,
   lpx(5)           = 0.0,
   lpx(6)           = 0.0,
   lpx(7)           = 15.0,
   lpy(1)           = 0.0,
   lpy(2)           = 0.0,
-  n_over_nc        = 5.75e-4,
+  n0_ref           = 1.0,
   np1              = 0.0,
-  np2              = 0.0
+  np2              = 0.0,
+  r_c              = 0.0,
 /
 
 &LASER
@@ -78,13 +80,22 @@
   w0_y             = 20.0,
   a0               = 2.0,
   lam0             = 0.8,
-  lp_delay         = 20.59
+  y0_cent(1)       = 0.0,
+  z0_cent(1)       = 0.0,
+  incid_angle      = 0.0,
+  Enable_ionization(1)=.true.,
+  lp_delay(1)         = 20.59
   lp_offset        = 0,
   t1_lp            = 200.0,
   tau1_fwhm        = 24.74,
   w1_y             = 3.5,
   a1               = 0.45,
   lam1             = 0.4,
+  y1_cent          = 0.0,
+  z1_cent          = 0.0,
+  Enable_ionization(2)=.true.,
+  Symmetrization_pulse = .false.,
+  a_symm_rat       = 1.35,
 /
 
 &MOVING_WINDOW
@@ -113,20 +124,6 @@
   id_new           = 0,
   dump             = 0,
   L_env_modulus    =.true.,
-  P_tracking       =.true.,
-/
-
-&TRACKING
-  nkjump           = 128,
-  tkjump           = 100,
-  txmin            = 53.,
-  txmax            = 75.,
-  tymin            =-80.,
-  tymax            = 80.,
-  tzmin            =-20.,
-  tzmax            = 20.,
-  t_in             = 0.,
-  t_out            = 48.,
 /
 
 &MPIPARAMS
