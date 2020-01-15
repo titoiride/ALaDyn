@@ -1,3 +1,5 @@
+title: How to build
+
 # How to build the code
 
 1) Follow your system prerequisites (below)

@@ -1,3 +1,5 @@
+title: Write a Namelist
+
 # ALaDyn `namelist` guide
 
 Following here is a brief description of the new `input.nml` file required for the simulation parameters definition, through an example.

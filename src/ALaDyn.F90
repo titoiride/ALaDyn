@@ -19,7 +19,7 @@
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
  !! author: The ALaDyn Collaboration
- !! version: v7.6
+ !! version: v{!./docs/VERSION.md!}
  !!
  !! Program: ALaDyn. Main file that executes the dynamics.
  program aladyn
