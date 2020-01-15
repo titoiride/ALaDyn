@@ -11,8 +11,6 @@ inputs:
 outputs:
   output_dir:
     description: Path to the directory where documentation is written
-    required: true
-    default: docs/doc_ford
 runs:
   using: docker
   image: Dockerfile

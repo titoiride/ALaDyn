@@ -4,11 +4,13 @@ RUN apt-get update &&\
     apt-get install --no-install-recommends -y \
     build-essential \
     graphviz \
+    gcc \
+    gfortran \
     libboost-all-dev \
     libopenmpi-dev \
     libfftw3-dev
 RUN pip install --no-cache-dir ford
 
-COPY entrypoint.sh /
-RUN ["chmod", "+x", "entrypoint.sh"]
-ENTRYPOINT ["/entrypoint.sh"]
+COPY ford.sh /
+RUN ["chmod", "+x", "ford.sh"]
+ENTRYPOINT ["/ford.sh"]

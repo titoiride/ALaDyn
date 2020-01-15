@@ -1,3 +1,5 @@
+title: Old input guide
+
 # ALaDyn `input.data` guide
 
 Following here is a brief description of the `input.data` file required for the simulation parameters definition, through an example. This method is currently deprecated, in favour of the new input namelist.
