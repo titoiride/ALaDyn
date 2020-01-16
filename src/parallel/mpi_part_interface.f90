@@ -29,10 +29,16 @@
   implicit none
   real (dp) :: loc_pstore(7)
   real (dp), allocatable :: sp_aux(:, :), sp1_aux(:, :)
+  type(species_new) :: sp_aux_new, sp1_aux_new
 
   interface traffic_size_eval
    module procedure :: traffic_size_eval_old
    module procedure :: traffic_size_eval_new
+  end interface
+
+  interface part_prl_exchange
+    module procedure :: part_prl_exchange_old
+    module procedure :: part_prl_exchange_new
   end interface
  contains
   !=================
@@ -131,11 +137,11 @@
   end subroutine
 
     !======================================
-  subroutine part_prl_exchange_new(sp_loc, vstore, xl, xr, xlmin, xrmax, &
+  subroutine part_prl_exchange_new(sp_loc, aux_sp, xl, xr, xlmin, xrmax, &
    pel, per, ibd, component, ndv, old_np, n_sr, npt)
   
    type (species_new), intent (inout) :: sp_loc
-   real (dp), intent (in) :: vstore(:, :)
+   type (species_new), intent (in) :: aux_sp
    real (dp), intent (in) :: xl, xr, xlmin, xrmax
    logical, intent (in) :: pel, per
    integer, intent (in) :: ibd, component, ndv, old_np, n_sr(4)
@@ -173,6 +179,7 @@
    end if
    !==================== copy remaining part => ebfp
   
+   !CHECK if index is the fastest way to select particles in species_new
    right_pind = index_array(old_np)
    left_pind = index_array(old_np)
   
@@ -182,8 +189,9 @@
      where (xp > xr)
       xp = xr - (xp - xr)
       temp(:) = -sp_loc%call_component( vxdir, lb=1, ub=old_np)
-      sp_loc%set_component(temp, vxdir, lb=1, ub=old_np)
      end where
+     call sp_loc%set_component(xp, component, lb=1, ub=old_np)
+     call sp_loc%set_component(temp, vxdir, lb=1, ub=old_np)
     end if
    end if
  !================== copy in sp_aux particles not to be exchanged
@@ -193,157 +201,163 @@
    mask(:) = (xp >= xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
-   do n = 1, ndv
-    sp_aux( 1:npt, n) = PACK( sp_loc%part(1:old_np, n), mask(:) )
-    sp1_aux( 1:npt, n) = PACK( vstore(1:old_np, n), mask(:) )
-   end do
+   sp_aux_new = sel_particles(sp_loc, 1, old_np)
+   sp_aux_new = sp_aux_new%pack_species( mask(:) )
+
+   ! TO BE FIXED UPDATING VSTORE TO NEW STRUCT
+   ! vstore(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
+   ! vstore(4:7) store old x^n positions and dt/gam at t^{n+1/2}
+   ! do n = 1, ndv
+   !  sp_aux( 1:npt, n) = PACK( sp_loc%part(1:old_np, n), mask(:) )
+   !  sp1_aux( 1:npt, n) = PACK( vstore(1:old_np, n), mask(:) )
+   ! end do
    !=======================
-   ns = 2*ndv*nr_send
-   nr = 2*ndv*nl_recv
-   if (ibd<2) then !NON PERIODIC CASE
-    if (per) ns = 0
-    if (pel) nr = 0
-   end if
-   if (ns>0) then
-    kk = 0
-    if (per) then
-     !sends to the right only for Periodic boundary
-     do k = 1, nr_send
-      n = right_pind%indices(k)
-      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
-      loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
-     !adds vstore data
-     do k = 1, nr_send
-      n = right_pind%indices(k)
-      loc_pstore(1:ndv) = vstore(n, 1:ndv)
-      loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
- !=============== NON PERIODIC CASE
-    else
-     !To be checked case ibd == 1 
-     do k = 1, nr_send
-      n = right_pind%indices(k)
-      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
-     !adds vstore data
-     do k = 1, nr_send
-      n = right_pind%indices(k)
-      loc_pstore(1:ndv) = vstore(n, 1:ndv)
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
-    end if
-   end if
+ !   ns = 2*ndv*nr_send
+ !   nr = 2*ndv*nl_recv
+ !   if (ibd<2) then !NON PERIODIC CASE
+ !    if (per) ns = 0
+ !    if (pel) nr = 0
+ !   end if
+ !   if (ns>0) then
+ !    kk = 0
+ !    if (per) then
+ !     !sends to the right only for Periodic boundary
+ !     do k = 1, nr_send
+ !      n = right_pind%indices(k)
+ !      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+ !      loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ !     !adds vstore data
+ !     do k = 1, nr_send
+ !      n = right_pind%indices(k)
+ !      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+ !      loc_pstore(dir) = loc_pstore(dir) + xlmin - xr
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ ! !=============== NON PERIODIC CASE
+ !    else
+ !     !To be checked case ibd == 1 
+ !     do k = 1, nr_send
+ !      n = right_pind%indices(k)
+ !      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ !     !adds vstore data
+ !     do k = 1, nr_send
+ !      n = right_pind%indices(k)
+ !      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ !    end if
+ !   end if
   
-   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
-   ! sends ns data to the right
-   if (nr>0) then !receives nr data from left
-    kk = 0
-    p = npt
-    do n = 1, nl_recv
-     p = p + 1
-     do q = 1, ndv
-      kk = kk + 1
-      sp_aux(p, q) = aux2(kk)
-     end do
-    end do
-    !   adds...
-    p = npt
-    do n = 1, nl_recv
-     p = p + 1
-     do q = 1, ndv
-      kk = kk + 1
-      sp1_aux(p, q) = aux2(kk)
-     end do
-    end do
-    npt = p
-   end if
- !===================
-   ns = 2*ndv*nl_send
-   nr = 2*ndv*nr_recv
-   if (ibd==0) then
-    if (pel) ns = 0
-    if (per) nr = 0
-   end if
-   if (ns>0) then
-    kk = 0
-    if (pel) then !only for periodic case
-     do k = 1, nl_send
-      n = left_pind%indices(k)
-      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
-      loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
- ! adds....
-     do k = 1, nl_send
-      n = left_pind%indices(k)
-      loc_pstore(1:ndv) = vstore(n, 1:ndv)
-      loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
-    else
-    !============ NON PERIODIC EXCHANGE
-     do k = 1, nl_send
-      n = left_pind%indices(k)
-      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
-     do k = 1, nl_send
-      n = left_pind%indices(k)
-      loc_pstore(1:ndv) = vstore(n, 1:ndv)
-      do q = 1, ndv
-       kk = kk + 1
-       aux1(kk) = loc_pstore(q)
-      end do
-     end do
-    end if
-   end if   !END ns >0
-   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, right)
-   ! sends ns data to the left recieves nr data from right
-   if (nr>0) then
-    p = npt
-    kk = 0
-    do n = 1, nr_recv
-     p = p + 1
-     do q = 1, ndv
-      kk = kk + 1
-      sp_aux(p, q) = aux2(kk)
-     end do
-    end do
-    p = npt
-    do n = 1, nr_recv
-     p = p + 1
-     do q = 1, ndv
-      kk = kk + 1
-      sp1_aux(p, q) = aux2(kk)
-     end do
-    end do
-    npt = p
-   end if
+ !   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
+ !   ! sends ns data to the right
+ !   if (nr>0) then !receives nr data from left
+ !    kk = 0
+ !    p = npt
+ !    do n = 1, nl_recv
+ !     p = p + 1
+ !     do q = 1, ndv
+ !      kk = kk + 1
+ !      sp_aux(p, q) = aux2(kk)
+ !     end do
+ !    end do
+ !    !   adds...
+ !    p = npt
+ !    do n = 1, nl_recv
+ !     p = p + 1
+ !     do q = 1, ndv
+ !      kk = kk + 1
+ !      sp1_aux(p, q) = aux2(kk)
+ !     end do
+ !    end do
+ !    npt = p
+ !   end if
+ ! !===================
+ !   ns = 2*ndv*nl_send
+ !   nr = 2*ndv*nr_recv
+ !   if (ibd==0) then
+ !    if (pel) ns = 0
+ !    if (per) nr = 0
+ !   end if
+ !   if (ns>0) then
+ !    kk = 0
+ !    if (pel) then !only for periodic case
+ !     do k = 1, nl_send
+ !      n = left_pind%indices(k)
+ !      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+ !      loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ ! ! adds....
+ !     do k = 1, nl_send
+ !      n = left_pind%indices(k)
+ !      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+ !      loc_pstore(dir) = loc_pstore(dir) + xrmax - xl
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ !    else
+ !    !============ NON PERIODIC EXCHANGE
+ !     do k = 1, nl_send
+ !      n = left_pind%indices(k)
+ !      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ !     do k = 1, nl_send
+ !      n = left_pind%indices(k)
+ !      loc_pstore(1:ndv) = vstore(n, 1:ndv)
+ !      do q = 1, ndv
+ !       kk = kk + 1
+ !       aux1(kk) = loc_pstore(q)
+ !      end do
+ !     end do
+ !    end if
+ !   end if   !END ns >0
+ !   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, right)
+ !   ! sends ns data to the left recieves nr data from right
+ !   if (nr>0) then
+ !    p = npt
+ !    kk = 0
+ !    do n = 1, nr_recv
+ !     p = p + 1
+ !     do q = 1, ndv
+ !      kk = kk + 1
+ !      sp_aux(p, q) = aux2(kk)
+ !     end do
+ !    end do
+ !    p = npt
+ !    do n = 1, nr_recv
+ !     p = p + 1
+ !     do q = 1, ndv
+ !      kk = kk + 1
+ !      sp1_aux(p, q) = aux2(kk)
+ !     end do
+ !    end do
+ !    npt = p
+ !   end if
   
  !  EXIT old+new data in sp_aux(:,:) and sp1_aux(:,:)
  end subroutine
