@@ -389,8 +389,8 @@
      np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
-      allocate(sp_aux(np_new_allocate, ndv))
-      allocate(sp1_aux(np_new_allocate, ndv))
+      call v_realloc(sp_aux, np_new_allocate, ndv)
+      call v_realloc(sp1_aux, np_new_allocate, ndv)
       call part_prl_exchange(spec(ic), ebfp, xmm, xmx, lbd_min, rbd_max, &
         pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
       if (np_out /= np_new) then
@@ -438,8 +438,8 @@
      np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
-      allocate(sp_aux(np_new_allocate, ndv))
-      allocate(sp1_aux(np_new_allocate, ndv))
+      call v_realloc(sp_aux, np_new_allocate, ndv)
+      call v_realloc(sp1_aux, np_new_allocate, ndv)
       call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
         rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
       if (np_out /= np_new) then
