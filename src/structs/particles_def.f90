@@ -96,17 +96,19 @@ module particles_def
   !! True if index array is allocated
   contains
    procedure, public :: call_component
-   procedure, public :: copy_scalars_from
+   procedure, public :: count_particles
+   procedure, private :: copy_scalars_from
+   procedure, public :: flatten
    procedure, public :: how_many
    procedure, public :: sel_particles
    procedure, public :: total_size
-   procedure, public :: pack_species_logical
-   procedure, public :: pack_species_array
-   procedure, public :: set_charge_int
-   procedure, public :: set_charge_real
+   procedure, private :: pack_species_logical
+   procedure, private :: pack_species_array
+   procedure, private :: set_charge_int
+   procedure, private :: set_charge_real
    procedure, public :: set_part_number
-   procedure, public :: set_component_real
-   procedure, public :: set_component_integer
+   procedure, private :: set_component_real
+   procedure, private :: set_component_integer
    generic :: pack_species => pack_species_array, pack_species_logical
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_real, set_charge_int
@@ -118,10 +120,36 @@ module particles_def
 
  contains
 
+ pure function count_particles( this ) result( number )
+  class(species_new), intent(in) :: this
+  integer :: number
+
+  if ( this%allocated_x ) then
+   number = SIZE( this%x(:) )
+  else if ( this%allocated_y ) then
+   number = SIZE( this%y(:) )
+  else if ( this%allocated_z ) then
+   number = SIZE( this%z(:) )
+  else if ( this%allocated_px ) then
+   number = SIZE( this%px(:) )
+  else if ( this%allocated_py ) then
+   number = SIZE( this%py(:) )
+  else if ( this%allocated_pz ) then
+   number = SIZE( this%pz(:) )
+  else if ( this%allocated_gamma ) then
+   number = SIZE( this%gamma(:) )
+  else if ( this%allocated_index ) then
+   number = SIZE( this%part_index(:) )
+  else if ( this%allocated_weight ) then
+   number = SIZE( this%weight(:) )
+  end if
+
+ end function
+
  subroutine copy_scalars_from( this, other )
   !! Copies all the non-array values from a `species_new` to another
   class(species_new), intent(out) :: this
-  class(species_new), intent(in) :: other
+  type(species_new), intent(in) :: other
 
   this%charge = other%charge
   this%dimensions = other%dimensions
@@ -192,6 +220,49 @@ module particles_def
 
  end function
 
+ pure function flatten( this ) result(flat_array)
+  class(species_new), intent(in) :: this
+  integer :: array_size, num_comps, i
+  real(dp), allocatable :: temp(:, :), flat_array(:)
+
+  array_size = this%count_particles()
+  num_comps = this%total_size()
+  allocate(temp( array_size, num_comps ))
+
+  i = 1
+  if( this%allocated_x ) then
+   temp( :, i ) = this%x(:)
+   i = i + 1
+  end if
+  if( this%allocated_y ) then
+   temp( :, i ) = this%y(:)
+   i = i + 1
+  end if
+  if( this%allocated_z ) then
+   temp( :, i ) = this%z(:)
+   i = i + 1
+  end if
+  if( this%allocated_px ) then
+   temp( :, i ) = this%px(:)
+   i = i + 1
+  end if
+  if( this%allocated_py ) then
+   temp( :, i ) = this%py(:)
+   i = i + 1
+  end if
+  if( this%allocated_pz ) then
+   temp( :, i ) = this%pz(:)
+   i = i + 1
+  end if
+  if( this%allocated_gamma ) then
+   temp( :, i ) = this%gamma(:)
+   i = i + 1
+  end if
+
+  flat_array = PACK( temp(:, :), .true. )
+
+ end function
+
  pure function how_many( this ) result(n_parts)
   !! Number of particles in the species
   class(species_new), intent(in) :: this
@@ -229,12 +300,17 @@ module particles_def
   if( this%allocated_pz ) then
    sel%pz = this%pz(lower_bound:upper_bound)
   end if
+  if( this%allocated_gamma ) then
+   sel%gamma = this%gamma(lower_bound:upper_bound)
+  end if
   if( this%allocated_weight ) then
    sel%weight = this%weight(lower_bound:upper_bound)
   end if
   if( this%allocated_index ) then
    sel%part_index = this%part_index(lower_bound:upper_bound)
   end if
+
+  sel%n_part = sel%count_particles()
 
  end function
 
@@ -263,7 +339,7 @@ module particles_def
   if( this%allocated_gamma ) then
    i = i + 1
   end if
-  size = i*this%how_many()
+  size = i
 
  end function
 
@@ -381,6 +457,7 @@ module particles_def
    packed%part_index = PACK( this%part_index(:), mask)
   end if
 
+  packed%n_part = packed%count_particles()
  end function
 
  function pack_species_array( this, mask ) result(packed)
@@ -417,6 +494,8 @@ module particles_def
   if( this%allocated_index ) then
    packed%part_index = PACK( this%part_index(:), mask(:) )
   end if
+
+  packed%n_part = packed%count_particles()
 
  end function
 
@@ -456,7 +535,7 @@ module particles_def
   case(GAMMA_COMP)
    this%gamma(lowb:upb) = values(:)
   case(W_COMP)
-   this%weight(lowb:upb) = values(:)
+   this%weight(lowb:upb) = real(values(:), sp)
   end select
 
  end subroutine

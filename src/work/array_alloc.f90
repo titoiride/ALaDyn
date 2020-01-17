@@ -208,18 +208,18 @@
    nsize = 0
    do ic = 1, ns
     spec_new(ic) = species_new( np_s(ic), ndims)
-    nsize = nsize + spec_new(ic)%total_size()
+    nsize = nsize + spec_new(ic)%total_size()*spec_new(ic)%how_many()
    end do
    if (mid>0) then
     spec_aux = species_new( npt_max, ndims)
-    nsize = nsize + spec_aux%total_size()
+    nsize = nsize + spec_aux%total_size()*spec_aux%how_many()
    end if
    if (lp>2) then
     spec_aux_0 = species_new( npt_max, ndims)
-    nsize = nsize + spec_aux_0%total_size()
+    nsize = nsize + spec_aux_0%total_size()*spec_aux_0%how_many()
     if (lp==4) then
      spec_aux_1 = species_new( npt_max, ndims)
-     nsize = nsize + spec_aux_1%total_size()
+     nsize = nsize + spec_aux_1%total_size()*spec_aux_1%how_many()
     end if
    end if
    msize = msize + nsize

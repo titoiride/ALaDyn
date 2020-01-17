@@ -147,8 +147,9 @@
    integer, intent (in) :: ibd, component, ndv, old_np, n_sr(4)
    integer, intent (out) :: npt
    type(index_array) :: left_pind, right_pind
+   type( species_new ) :: temp_spec
    real(dp), allocatable :: temp(:), xp(:)
-   integer :: k, kk, n, p, q, ns, nr, cdir
+   integer :: k, kk, n, p, q, ns, nr, cdir, tot
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
    logical :: mask(old_np)
    !================ dir are cartesian coordinate index (x,y,z)
@@ -198,6 +199,13 @@
    xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
    call right_pind%find_index( xp > xr )
    call left_pind%find_index( xp < xl )
+   if ( nl_send /= SIZE( left_pind%indices(:) ) ) then
+    write (6, *) 'Error in counting particles sent to the left'
+   end if
+   if ( nr_send /= SIZE( right_pind%indices(:) ) ) then
+    write (6, *) 'Error in counting particles sent to the right'
+   end if
+
    mask(:) = (xp >= xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
@@ -212,15 +220,16 @@
    !  sp1_aux( 1:npt, n) = PACK( vstore(1:old_np, n), mask(:) )
    ! end do
    !=======================
- !   ns = 2*ndv*nr_send
- !   nr = 2*ndv*nl_recv
- !   if (ibd<2) then !NON PERIODIC CASE
- !    if (per) ns = 0
- !    if (pel) nr = 0
- !   end if
- !   if (ns>0) then
- !    kk = 0
- !    if (per) then
+   ns = 2*ndv*nr_send
+   nr = 2*ndv*nl_recv
+   if (ibd<2) then !NON PERIODIC CASE
+    if (per) ns = 0
+    if (pel) nr = 0
+   end if
+   if (ns>0) then
+    kk = 0
+    if (per) then
+       !=== TO BE CHECKED -> Periodic case 
  !     !sends to the right only for Periodic boundary
  !     do k = 1, nr_send
  !      n = right_pind%indices(k)
@@ -242,27 +251,30 @@
  !      end do
  !     end do
  ! !=============== NON PERIODIC CASE
- !    else
- !     !To be checked case ibd == 1 
- !     do k = 1, nr_send
- !      n = right_pind%indices(k)
- !      loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
- !      do q = 1, ndv
- !       kk = kk + 1
- !       aux1(kk) = loc_pstore(q)
- !      end do
- !     end do
- !     !adds vstore data
- !     do k = 1, nr_send
- !      n = right_pind%indices(k)
- !      loc_pstore(1:ndv) = vstore(n, 1:ndv)
- !      do q = 1, ndv
- !       kk = kk + 1
- !       aux1(kk) = loc_pstore(q)
- !      end do
- !     end do
- !    end if
- !   end if
+    else
+     ! !To be checked case ibd == 1 
+     ! temp_spec = sp_loc%pack_species( xp > xr )
+     ! tot = temp_spec%how_many()*temp_spec%total_size()
+     ! aux1( 1:tot ) = temp_spec%flatten()
+     ! do k = 1, nr_send
+     !  n = right_pind%indices(k)
+     !  loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
+     !  do q = 1, ndv
+     !   kk = kk + 1
+     !   aux1(kk) = loc_pstore(q)
+     !  end do
+     ! end do
+     ! !adds vstore data
+     ! do k = 1, nr_send
+     !  n = right_pind%indices(k)
+     !  loc_pstore(1:ndv) = vstore(n, 1:ndv)
+     !  do q = 1, ndv
+     !   kk = kk + 1
+     !   aux1(kk) = loc_pstore(q)
+     !  end do
+     ! end do
+    end if
+   end if
   
  !   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
  !   ! sends ns data to the right
