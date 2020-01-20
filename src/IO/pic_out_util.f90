@@ -357,8 +357,9 @@
     select case (cmp_out)
     case (1)
      call set_grid_charge(spec(ic), ebfp, jc, np, 1)
-
+     !nden=1 exit density for each ic species
     case (2)
+     !nden=2 exit density and energy density for each species
      if (envelope) then
       if(ic==1)then
        do k = kz1, kz2
@@ -372,14 +373,13 @@
        end do
        if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
        call set_grid_env_den_energy(spec(ic), ebfp, jc, np, 3)
+      else
+       call set_grid_den_energy(spec(ic), ebfp, jc, np) !ic >1 in envelope scheme
       endif
-      ! in jc(1) is the plasma density in jc(2) (gam-1)density with env-gamma component
-      !ONLY for electrons
      else
-      call set_grid_den_energy(spec(ic), ebfp, jc, np)
-
-     ! in jc(1) is plasma norm density in jc(2) <(gam-1)density>  with
-     ! kineticagamma for each species
+      call set_grid_den_energy(spec(ic), ebfp, jc, np) 
+     ! in jc(1) is plasma norm density in jc(2) <(gam-1)density> using kinetic
+     ! gamma  for each species
      end if
     end select
     if (prl) call fill_curr_yzxbdsdata(jc,cmp_out)
