@@ -167,11 +167,9 @@
      np_new = 0
      np_old = loc_npart(imody, imodz, imodx, ic)
      np_new = max(np_old+npt_inj(ic), np_new)
-     if (ic==1) then
-      if (size(ebfp,1)<np_new) then
-       deallocate (ebfp)
-       allocate (ebfp(np_new,ndv))
-      end if
+     if (size(ebfp,1)<np_new) then
+      deallocate (ebfp)
+      allocate (ebfp(np_new,ndv))
      end if
      !=========================
      if (size(spec(ic)%part,ic)<np_new) then
