@@ -65,20 +65,6 @@
    k2 = kz2
    i1 = ix1
    i2 = ix2
-   if (prly) then
-    j1 = jy1 - stl
-    j2 = jy2 + str
-   end if
-   if (prlz) then
-    k1 = kz1 - stl
-    k2 = kz2 + str
-   end if
-   i1 = ix1
-   i2 = ix2
-   if (prlx) then
-    i1 = ix1 - stl
-    i2 = ix2 + str
-   end if
    if (pex0) then
     if (ibx<2) then
      do ik = 1, nc

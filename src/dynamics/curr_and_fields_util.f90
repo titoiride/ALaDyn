@@ -278,6 +278,7 @@
     stl = 2
     call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
    end if
+   call field_xyzbd(evf,2,stl,str)      !define bds
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix1, ix2
@@ -295,9 +296,6 @@
     call env_maxw_solve(jc, evf, omg, dt_loc)
    end if
    ! =================================
-   str = 2
-   stl = 2
-   call env_bds(evf, dt_loc, str, stl)
   end subroutine
   !========================================================
 
