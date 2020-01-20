@@ -139,6 +139,29 @@
    if (nsp>1) ions = .true.
    lp_active = .true.
    if (ibeam==2) hybrid = .true.
+!============================================
+   if (iby==2) plane_wave = .true.
+   mod_ord = 1
+   if (model_id<3) lin_lp = .true.
+   if (model_id==3) circ_lp = .true.
+   if (model_id==4) then
+    mod_ord = 2
+    envelope = .true.
+   end if
+   relativistic = .true.
+   nfield = 3
+   curr_ndim = 2
+   nbfield = 4
+   if (ndim>2) then
+    nfield = 6
+    curr_ndim = ndim
+    nbfield = 6
+   end if
+   if (circ_lp) then
+    nfield = 6
+    curr_ndim = 3
+   end if
+   if (lp_offset>0.0) Two_color = .true.
    !===============================
    ! Multispecies target with max 3 ionic species (nsp=4)
    !=================
@@ -223,55 +246,17 @@
    end if
    !====================================
     ! Code units for background plasma number density
-    ! Enter n0_ref= in 10^18/cc= 10^6/mu^3 units
-    ! L_u =1mu
+    ! Enter n0_ref= in 10^18/cc= 10^6/mu^3 units (reference_density)
+    ! l_u =1mu
     ! omp^2_norm=(l_u/c)^2*[4*pi *n0_ref*e^2/m_e]=4*pi*rc0*n0_ref
-    ! rc0= class elect. radius in 10^{-9}\mu units
+    ! rc0= class elect. radius in 10^{-9}[mu] units
+    ! l_u^2*rc0  in 10^{-9} [mu^3] 
     !====================================================== 
-    ompe = 4.*pi*rc0*(reference_density*1.e-6)         !squared adimensional plasma frequency 
+    ompe = 4.*pi*rc0*(reference_density*1.e-6)         !squared adimensional unit frequency at reference_density=1.e+06/mu^3 
     ompe=1.e-03*ompe
     !==========================================
-    ncrit = pi/(rc0*lam0*lam0) !critical density in units n0=10^21/cm^3=10^9/mu^3
-    nm_fact = ncrit*(1.e+9) ! critical density in (1/mu^3) units
-    n_over_nc=1.e-03*n0_ref*(reference_density*1.e-6)/ncrit
-   !==========================
-   ! Target parameters  enter n_over_nc
-   if (iby==2) plane_wave = .true.
-   mod_ord = 1
-   if (model_id<3) lin_lp = .true.
-   if (model_id==3) circ_lp = .true.
-   if (model_id==4) then
-    mod_ord = 2
-    envelope = .true.
-   end if
-   if (n_over_nc>1.) then
-    solid_target = .true.
-   else
-    wake = .true.
-   end if
-   relativistic = .true.
-   nfield = 3
-   curr_ndim = 2
-   nbfield = 4
-   if (ndim>2) then
-    nfield = 6
-    curr_ndim = ndim
-    nbfield = 6
-   end if
-   if (circ_lp) then
-    nfield = 6
-    curr_ndim = 3
-   end if
-   if (lp_offset>0.0) Two_color = .true.
-   !====================
-   !to be multiplied by the particle charge in the equation of motion
-   !E=in unit mc^2/(e*l0)=[TV/m]/E0; E0*E in [TV/m]=[MV/mu] unit
-   !E0(A,phi) in MV unit
-   !==========================================
    np_per_cell = 1
    !=======================
-   ! Code Units for laser fields
-   if (wake) then
     n_plasma = 0
     if (nsp>1) then
      do i = 1, nsp - 1
@@ -285,8 +270,25 @@
     else if (nsp==1) then
      n_plasma = one_dp
     end if
+    ncrit = pi/(rc0*lam0*lam0) 
+                                 !critical density in unit nc=10^21/cm^3=10^9/mu^3
+                                 ! 1.e-03*ncrit    in unit reference_density 
+    nm_fact = ncrit*(1.e+3) 
+                            ! nm_fact critical density in (10^6/mu^3) units
+                            ! n0_ref*n_plasma electron density in 10^6/mu^3
+                            ! (reference_density) units
+    n_over_nc=1.e-03*n_plasma*n0_ref/ncrit
+    if (n_over_nc>1.) then
+     solid_target = .true.
+    else
+     wake = .true.
    end if
+   !==========================
+   ! Target parameters  using n_over_nc
     !===================================     
+   ! Laser/envelope parameters
+   !E=in unit mc^2/(e*l0)=[TV/m]/E0; E0*E in [TV/m]=[MV/mu] unit
+   !E0(A,phi) in MV unit
    oml = pi2/lam0 !laser frequency in unit c/l0
    om1 = pi2/lam1 !laser frequency in unit c/l0
    lp_amp = a0*oml
