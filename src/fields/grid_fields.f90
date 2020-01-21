@@ -351,72 +351,72 @@
    j02 = jy2
    k01 = kz1
    k02 = kz2
-   ! if (iby<2) then
-   !  if (pe0y) then
-   !   j = jy1
-   !   jj = j - 2
-   !   shy = dy2_inv*loc_yg(jj+1, 3, imody)
-   !   sphy = loc_yg(jj+1, 4, imody)
-   !   smhy = loc_yg(jj, 4, imody)
-   !   do ic = ic1, ic2
-   !    do k = kz1, kz2
-   !     do i = ix1, ix2
-   !      source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j+2, &
-   !        k,ic)-av(i,j+1,k,ic))-smhy*(av(i,j+1,k,ic)-av(i,j,k,ic)))
-   !     end do
-   !     j01 = jy1 + 1
-   !    end do
-   !   end do
-   !   if (der_ord==4) then
-   !    j = jy1 + 1
-   !    jj = j - 2
-   !    shy = dy2_inv*loc_yg(jj, 3, imody)
-   !    sphy = loc_yg(jj, 4, imody)
-   !    smhy = loc_yg(jj-1, 4, imody)
-   !    do ic = ic1, ic2
-   !     do k = kz1, kz2
-   !      do i = ix1, ix2
-   !       source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
-   !         j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
-   !      end do
-   !     end do
-   !    end do
-   !    j01 = jy1 + 2
-   !   end if
-   !  end if !Pe0y end
-   !  if (pe1y) then
-   !   j = jy2
-   !   jj = j - 2
-   !   shy = dy2_inv*loc_yg(jj-1, 3, imody)
-   !   sphy = loc_yg(jj-1, 4, imody)
-   !   smhy = loc_yg(jj-2, 4, imody)
-   !   do ic = ic1, ic2
-   !    do k = kz1, kz2
-   !     do i = ix1, ix2
-   !      source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j,k, &
-   !        ic)-av(i,j-1,k,ic))-smhy*(av(i,j-1,k,ic)-av(i,j-2,k,ic)))
-   !     end do
-   !    end do
-   !   end do
-   !   j02 = jy2 - 1
-   !   if (der_ord==4) then
-   !    j = jy2 - 1
-   !    jj = j - 2
-   !    shy = dy2_inv*loc_yg(jj, 3, imody)
-   !    sphy = loc_yg(jj, 4, imody)
-   !    smhy = loc_yg(jj-1, 4, imody)
-   !    do ic = ic1, ic2
-   !     do k = kz1, kz2
-   !      do i = ix1, ix2
-   !       source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
-   !         j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
-   !      end do
-   !     end do
-   !    end do
-   !    j02 = jy2 - 2
-   !   end if
-   !  end if
-   ! end if !END non periodic BCs
+   if (iby<2) then
+    if (pe0y) then
+     j = jy1
+     jj = j - 2
+     shy = dy2_inv*loc_yg(jj+1, 3, imody)
+     sphy = loc_yg(jj+1, 4, imody)
+     smhy = loc_yg(jj, 4, imody)
+     do ic = ic1, ic2
+      do k = kz1, kz2
+       do i = ix1, ix2
+        source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j+2, &
+          k,ic)-av(i,j+1,k,ic))-smhy*(av(i,j+1,k,ic)-av(i,j,k,ic)))
+       end do
+       j01 = jy1 + 1
+      end do
+     end do
+     if (der_ord==4) then
+      j = jy1 + 1
+      jj = j - 2
+      shy = dy2_inv*loc_yg(jj, 3, imody)
+      sphy = loc_yg(jj, 4, imody)
+      smhy = loc_yg(jj-1, 4, imody)
+      do ic = ic1, ic2
+       do k = kz1, kz2
+        do i = ix1, ix2
+         source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
+           j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
+        end do
+       end do
+      end do
+      j01 = jy1 + 2
+     end if
+    end if !Pe0y end
+    if (pe1y) then
+     j = jy2
+     jj = j - 2
+     shy = dy2_inv*loc_yg(jj-1, 3, imody)
+     sphy = loc_yg(jj-1, 4, imody)
+     smhy = loc_yg(jj-2, 4, imody)
+     do ic = ic1, ic2
+      do k = kz1, kz2
+       do i = ix1, ix2
+        source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j,k, &
+          ic)-av(i,j-1,k,ic))-smhy*(av(i,j-1,k,ic)-av(i,j-2,k,ic)))
+       end do
+      end do
+     end do
+     j02 = jy2 - 1
+     if (der_ord==4) then
+      j = jy2 - 1
+      jj = j - 2
+      shy = dy2_inv*loc_yg(jj, 3, imody)
+      sphy = loc_yg(jj, 4, imody)
+      smhy = loc_yg(jj-1, 4, imody)
+      do ic = ic1, ic2
+       do k = kz1, kz2
+        do i = ix1, ix2
+         source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
+           j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
+        end do
+       end do
+      end do
+      j02 = jy2 - 2
+     end if
+    end if
+   end if !END non periodic BCs
    do ic = ic1, ic2
     do k = kz1, kz2
      do j = j01, j02
@@ -449,72 +449,72 @@
    end if
    if (ndim<3) return
    !====================
-   ! if (ibz<2) then
-   !  if (pe0z) then
-   !   k = kz1
-   !   jj = k - 2
-   !   shz = dz2_inv*loc_zg(jj+1, 3, imodz)
-   !   sphz = loc_zg(jj+1, 4, imodz)
-   !   smhz = loc_zg(jj, 4, imodz)
-   !   do ic = ic1, ic2
-   !    do j = jy1, jy2
-   !     do i = ix1, ix2
-   !      source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-   !        k+2,ic)-av(i,j,k+1,ic))-smhz*(av(i,j,k+1,ic)-av(i,j,k,ic)))
-   !     end do
-   !    end do
-   !   end do
-   !   k01 = kz1 + 1
-   !   if (der_ord==4) then
-   !    k = kz1 + 1
-   !    jj = k - 2
-   !    shz = dz2_inv*loc_zg(jj, 3, imodz)
-   !    sphz = loc_zg(jj, 4, imodz)
-   !    smhz = loc_zg(jj-1, 4, imodz)
-   !    do ic = ic1, ic2
-   !     do j = jy1, jy2
-   !      do i = ix1, ix2
-   !       source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-   !         k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
-   !      end do
-   !     end do
-   !    end do
-   !    k01 = kz1 + 2
-   !   end if
-   !  end if
-   !  if (pe1z) then
-   !   k = kz2
-   !   jj = k - 2
-   !   shz = dz2_inv*loc_zg(jj-1, 3, imodz)
-   !   sphz = loc_zg(jj-1, 4, imodz)
-   !   smhz = loc_zg(jj-2, 4, imodz)
-   !   do ic = ic1, ic2
-   !    do j = jy1, jy2
-   !     do i = ix1, ix2
-   !      source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j,k, &
-   !        ic)-av(i,j,k-1,ic))-smhz*(av(i,j,k-1,ic)-av(i,j,k-2,ic)))
-   !     end do
-   !    end do
-   !   end do
-   !   k02 = kz2 - 1
-   !   if (der_ord==4) then
-   !    k = kz2 - 1
-   !    jj = k - 2
-   !    shz = dz2_inv*loc_zg(jj, 3, imodz)
-   !    sphz = loc_zg(jj, 4, imodz)
-   !    smhz = loc_zg(jj-1, 4, imodz)
-   !    do ic = ic1, ic2
-   !     do j = jy1, jy2
-   !      do i = ix1, ix2
-   !       source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-   !         k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
-   !      end do
-   !     end do
-   !    end do
-   !    k01 = kz2 - 2
-   !   end if
-   !  end if
-   ! end if
+   if (ibz<2) then
+    if (pe0z) then
+     k = kz1
+     jj = k - 2
+     shz = dz2_inv*loc_zg(jj+1, 3, imodz)
+     sphz = loc_zg(jj+1, 4, imodz)
+     smhz = loc_zg(jj, 4, imodz)
+     do ic = ic1, ic2
+      do j = jy1, jy2
+       do i = ix1, ix2
+        source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
+          k+2,ic)-av(i,j,k+1,ic))-smhz*(av(i,j,k+1,ic)-av(i,j,k,ic)))
+       end do
+      end do
+     end do
+     k01 = kz1 + 1
+     if (der_ord==4) then
+      k = kz1 + 1
+      jj = k - 2
+      shz = dz2_inv*loc_zg(jj, 3, imodz)
+      sphz = loc_zg(jj, 4, imodz)
+      smhz = loc_zg(jj-1, 4, imodz)
+      do ic = ic1, ic2
+       do j = jy1, jy2
+        do i = ix1, ix2
+         source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
+           k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
+        end do
+       end do
+      end do
+      k01 = kz1 + 2
+     end if
+    end if
+    if (pe1z) then
+     k = kz2
+     jj = k - 2
+     shz = dz2_inv*loc_zg(jj-1, 3, imodz)
+     sphz = loc_zg(jj-1, 4, imodz)
+     smhz = loc_zg(jj-2, 4, imodz)
+     do ic = ic1, ic2
+      do j = jy1, jy2
+       do i = ix1, ix2
+        source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j,k, &
+          ic)-av(i,j,k-1,ic))-smhz*(av(i,j,k-1,ic)-av(i,j,k-2,ic)))
+       end do
+      end do
+     end do
+     k02 = kz2 - 1
+     if (der_ord==4) then
+      k = kz2 - 1
+      jj = k - 2
+      shz = dz2_inv*loc_zg(jj, 3, imodz)
+      sphz = loc_zg(jj, 4, imodz)
+      smhz = loc_zg(jj-1, 4, imodz)
+      do ic = ic1, ic2
+       do j = jy1, jy2
+        do i = ix1, ix2
+         source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
+           k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
+        end do
+       end do
+      end do
+      k01 = kz2 - 2
+     end if
+    end if
+   end if
    do ic = ic1, ic2
     do k = k01, k02
      jj = k - 2
