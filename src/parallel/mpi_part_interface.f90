@@ -168,7 +168,7 @@
      end do
 !=============== NON PERIODIC CASE
     else
-     !To be checked case ibd == 1 
+     !To be checked case ibd == 1
      do k = 1, nr_send
       n = right_pind%indices(k)
       loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
@@ -240,7 +240,7 @@
     npt = p
    end if
 
-!  EXIT old+new data in sp_aux(:,:) 
+!  EXIT old+new data in sp_aux(:,:)
   end subroutine
 !==============================================
   subroutine part_prl_exchange(sp_loc, vstore, xl, xr, xlmin, xrmax, &
@@ -546,7 +546,7 @@
    !x-boundary are removed
    !==========================================
    !=========== mowing window section
-   if(moving_wind)then 
+   if(moving_wind)then
     nspx = nsp
     xmm = loc_xgrid(imodx)%gmin
     xmx = loc_xgrid(imodx)%gmax

@@ -278,7 +278,7 @@
     stl = 2
     call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
    end if
-   call field_xyzbd(evf,2,stl,str)      !define bds
+   call env_bds( evf, stl, str )
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix1, ix2

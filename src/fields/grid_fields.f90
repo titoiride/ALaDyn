@@ -25,6 +25,9 @@
   use parallel
 
   implicit none
+  integer, parameter, private :: x_parity(6) = [ -1, 1, 1, -1, 1, 1 ]
+  integer, parameter, private :: y_parity(6) = [ 1, -1, 1, 1, -1, 1 ]
+  integer, parameter, private :: z_parity(6) = [ 1, 1, -1, 1, 1, -1 ]
  contains
 
 
@@ -348,72 +351,72 @@
    j02 = jy2
    k01 = kz1
    k02 = kz2
-   if (iby<2) then
-    if (pe0y) then
-     j = jy1
-     jj = j - 2
-     shy = dy2_inv*loc_yg(jj+1, 3, imody)
-     sphy = loc_yg(jj+1, 4, imody)
-     smhy = loc_yg(jj, 4, imody)
-     do ic = ic1, ic2
-      do k = kz1, kz2
-       do i = ix1, ix2
-        source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j+2, &
-          k,ic)-av(i,j+1,k,ic))-smhy*(av(i,j+1,k,ic)-av(i,j,k,ic)))
-       end do
-       j01 = jy1 + 1
-      end do
-     end do
-     if (der_ord==4) then
-      j = jy1 + 1
-      jj = j - 2
-      shy = dy2_inv*loc_yg(jj, 3, imody)
-      sphy = loc_yg(jj, 4, imody)
-      smhy = loc_yg(jj-1, 4, imody)
-      do ic = ic1, ic2
-       do k = kz1, kz2
-        do i = ix1, ix2
-         source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
-           j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
-        end do
-       end do
-      end do
-      j01 = jy1 + 2
-     end if
-    end if !Pe0y end
-    if (pe1y) then
-     j = jy2
-     jj = j - 2
-     shy = dy2_inv*loc_yg(jj-1, 3, imody)
-     sphy = loc_yg(jj-1, 4, imody)
-     smhy = loc_yg(jj-2, 4, imody)
-     do ic = ic1, ic2
-      do k = kz1, kz2
-       do i = ix1, ix2
-        source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j,k, &
-          ic)-av(i,j-1,k,ic))-smhy*(av(i,j-1,k,ic)-av(i,j-2,k,ic)))
-       end do
-      end do
-     end do
-     j02 = jy2 - 1
-     if (der_ord==4) then
-      j = jy2 - 1
-      jj = j - 2
-      shy = dy2_inv*loc_yg(jj, 3, imody)
-      sphy = loc_yg(jj, 4, imody)
-      smhy = loc_yg(jj-1, 4, imody)
-      do ic = ic1, ic2
-       do k = kz1, kz2
-        do i = ix1, ix2
-         source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
-           j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
-        end do
-       end do
-      end do
-      j02 = jy2 - 2
-     end if
-    end if
-   end if !END non periodic BCs
+   ! if (iby<2) then
+   !  if (pe0y) then
+   !   j = jy1
+   !   jj = j - 2
+   !   shy = dy2_inv*loc_yg(jj+1, 3, imody)
+   !   sphy = loc_yg(jj+1, 4, imody)
+   !   smhy = loc_yg(jj, 4, imody)
+   !   do ic = ic1, ic2
+   !    do k = kz1, kz2
+   !     do i = ix1, ix2
+   !      source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j+2, &
+   !        k,ic)-av(i,j+1,k,ic))-smhy*(av(i,j+1,k,ic)-av(i,j,k,ic)))
+   !     end do
+   !     j01 = jy1 + 1
+   !    end do
+   !   end do
+   !   if (der_ord==4) then
+   !    j = jy1 + 1
+   !    jj = j - 2
+   !    shy = dy2_inv*loc_yg(jj, 3, imody)
+   !    sphy = loc_yg(jj, 4, imody)
+   !    smhy = loc_yg(jj-1, 4, imody)
+   !    do ic = ic1, ic2
+   !     do k = kz1, kz2
+   !      do i = ix1, ix2
+   !       source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
+   !         j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
+   !      end do
+   !     end do
+   !    end do
+   !    j01 = jy1 + 2
+   !   end if
+   !  end if !Pe0y end
+   !  if (pe1y) then
+   !   j = jy2
+   !   jj = j - 2
+   !   shy = dy2_inv*loc_yg(jj-1, 3, imody)
+   !   sphy = loc_yg(jj-1, 4, imody)
+   !   smhy = loc_yg(jj-2, 4, imody)
+   !   do ic = ic1, ic2
+   !    do k = kz1, kz2
+   !     do i = ix1, ix2
+   !      source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j,k, &
+   !        ic)-av(i,j-1,k,ic))-smhy*(av(i,j-1,k,ic)-av(i,j-2,k,ic)))
+   !     end do
+   !    end do
+   !   end do
+   !   j02 = jy2 - 1
+   !   if (der_ord==4) then
+   !    j = jy2 - 1
+   !    jj = j - 2
+   !    shy = dy2_inv*loc_yg(jj, 3, imody)
+   !    sphy = loc_yg(jj, 4, imody)
+   !    smhy = loc_yg(jj-1, 4, imody)
+   !    do ic = ic1, ic2
+   !     do k = kz1, kz2
+   !      do i = ix1, ix2
+   !       source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, &
+   !         j+1,k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
+   !      end do
+   !     end do
+   !    end do
+   !    j02 = jy2 - 2
+   !   end if
+   !  end if
+   ! end if !END non periodic BCs
    do ic = ic1, ic2
     do k = kz1, kz2
      do j = j01, j02
@@ -446,72 +449,72 @@
    end if
    if (ndim<3) return
    !====================
-   if (ibz<2) then
-    if (pe0z) then
-     k = kz1
-     jj = k - 2
-     shz = dz2_inv*loc_zg(jj+1, 3, imodz)
-     sphz = loc_zg(jj+1, 4, imodz)
-     smhz = loc_zg(jj, 4, imodz)
-     do ic = ic1, ic2
-      do j = jy1, jy2
-       do i = ix1, ix2
-        source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-          k+2,ic)-av(i,j,k+1,ic))-smhz*(av(i,j,k+1,ic)-av(i,j,k,ic)))
-       end do
-      end do
-     end do
-     k01 = kz1 + 1
-     if (der_ord==4) then
-      k = kz1 + 1
-      jj = k - 2
-      shz = dz2_inv*loc_zg(jj, 3, imodz)
-      sphz = loc_zg(jj, 4, imodz)
-      smhz = loc_zg(jj-1, 4, imodz)
-      do ic = ic1, ic2
-       do j = jy1, jy2
-        do i = ix1, ix2
-         source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-           k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
-        end do
-       end do
-      end do
-      k01 = kz1 + 2
-     end if
-    end if
-    if (pe1z) then
-     k = kz2
-     jj = k - 2
-     shz = dz2_inv*loc_zg(jj-1, 3, imodz)
-     sphz = loc_zg(jj-1, 4, imodz)
-     smhz = loc_zg(jj-2, 4, imodz)
-     do ic = ic1, ic2
-      do j = jy1, jy2
-       do i = ix1, ix2
-        source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j,k, &
-          ic)-av(i,j,k-1,ic))-smhz*(av(i,j,k-1,ic)-av(i,j,k-2,ic)))
-       end do
-      end do
-     end do
-     k02 = kz2 - 1
-     if (der_ord==4) then
-      k = kz2 - 1
-      jj = k - 2
-      shz = dz2_inv*loc_zg(jj, 3, imodz)
-      sphz = loc_zg(jj, 4, imodz)
-      smhz = loc_zg(jj-1, 4, imodz)
-      do ic = ic1, ic2
-       do j = jy1, jy2
-        do i = ix1, ix2
-         source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-           k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
-        end do
-       end do
-      end do
-      k01 = kz2 - 2
-     end if
-    end if
-   end if
+   ! if (ibz<2) then
+   !  if (pe0z) then
+   !   k = kz1
+   !   jj = k - 2
+   !   shz = dz2_inv*loc_zg(jj+1, 3, imodz)
+   !   sphz = loc_zg(jj+1, 4, imodz)
+   !   smhz = loc_zg(jj, 4, imodz)
+   !   do ic = ic1, ic2
+   !    do j = jy1, jy2
+   !     do i = ix1, ix2
+   !      source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
+   !        k+2,ic)-av(i,j,k+1,ic))-smhz*(av(i,j,k+1,ic)-av(i,j,k,ic)))
+   !     end do
+   !    end do
+   !   end do
+   !   k01 = kz1 + 1
+   !   if (der_ord==4) then
+   !    k = kz1 + 1
+   !    jj = k - 2
+   !    shz = dz2_inv*loc_zg(jj, 3, imodz)
+   !    sphz = loc_zg(jj, 4, imodz)
+   !    smhz = loc_zg(jj-1, 4, imodz)
+   !    do ic = ic1, ic2
+   !     do j = jy1, jy2
+   !      do i = ix1, ix2
+   !       source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
+   !         k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
+   !      end do
+   !     end do
+   !    end do
+   !    k01 = kz1 + 2
+   !   end if
+   !  end if
+   !  if (pe1z) then
+   !   k = kz2
+   !   jj = k - 2
+   !   shz = dz2_inv*loc_zg(jj-1, 3, imodz)
+   !   sphz = loc_zg(jj-1, 4, imodz)
+   !   smhz = loc_zg(jj-2, 4, imodz)
+   !   do ic = ic1, ic2
+   !    do j = jy1, jy2
+   !     do i = ix1, ix2
+   !      source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j,k, &
+   !        ic)-av(i,j,k-1,ic))-smhz*(av(i,j,k-1,ic)-av(i,j,k-2,ic)))
+   !     end do
+   !    end do
+   !   end do
+   !   k02 = kz2 - 1
+   !   if (der_ord==4) then
+   !    k = kz2 - 1
+   !    jj = k - 2
+   !    shz = dz2_inv*loc_zg(jj, 3, imodz)
+   !    sphz = loc_zg(jj, 4, imodz)
+   !    smhz = loc_zg(jj-1, 4, imodz)
+   !    do ic = ic1, ic2
+   !     do j = jy1, jy2
+   !      do i = ix1, ix2
+   !       source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
+   !         k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
+   !      end do
+   !     end do
+   !    end do
+   !    k01 = kz2 - 2
+   !   end if
+   !  end if
+   ! end if
    do ic = ic1, ic2
     do k = k01, k02
      jj = k - 2
@@ -780,7 +783,7 @@
   contains
    subroutine first_ader
    !============
-   integer :: i01,i02
+   integer :: i01, i02
    ! explicit second order [-2isin(k0dx)*Dx]A and add to S(A)
     i01 = ix1
     i02 = ix2
@@ -788,10 +791,10 @@
      do k = kz1, kz2
       do j = jy1, jy2
        do i = i01, i02
-        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2)- &
-         evf(i-1,j,k,2))
-        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1)- &
-         evf(i-1,j,k,1))
+        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2) - &
+         evf(i - 1, j, k, 2))
+        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1) - &
+         evf(i - 1, j, k, 1))
        end do
       end do
      end do
@@ -799,10 +802,10 @@
      do k = kz1, kz2
       do j = jy1, jy2
        do i = i01, i02
-        curr(i, j, k, 1) = curr(i, j, k, 1) - aph_opt(1)*(evf(i+1,j,k,2) &
-          -evf(i-1,j,k,2)) - aph_opt(2)*(evf(i+2,j,k,2)-evf(i-2,j,k,2))
-        curr(i, j, k, 2) = curr(i, j, k, 2) + aph_opt(1)*(evf(i+1,j,k,1) &
-          -evf(i-1,j,k,1)) + aph_opt(2)*(evf(i+2,j,k,1)-evf(i-2,j,k,1))
+        curr(i, j, k, 1) = curr(i, j, k, 1) - aph_opt(1)*(evf(i + 1, j, k, 2) - &
+         evf(i - 1, j, k, 2)) - aph_opt(2)*(evf(i + 2, j, k, 2) - evf(i - 2, j, k, 2))
+        curr(i, j, k, 2) = curr(i, j, k, 2) + aph_opt(1)*(evf(i + 1, j, k, 1) - &
+         evf(i - 1, j, k, 1)) + aph_opt(2)*(evf(i + 2, j, k, 1) - evf(i - 2, j, k, 1))
        end do
       end do
      end do
@@ -979,18 +982,17 @@
   !========== LASER FIELDS SECTION
   !            (E,B) BC in open boundaries (lowest order Yee method
   !==========================================
-  subroutine env_bds(ef, dtl, ptrght, ptlft, imbd, init_ic, end_ic)
+  subroutine env_bds(ef, ptrght, ptlft, init_ic, end_ic)
    !! Boundary conditions for the envelope field.
    !! Empirically set to be continuous with continuous first derivative.
    !! WARNING: to be completed with y and z directions.
 
    real(dp), intent(inout) :: ef(:, :, :, :)
-   real (dp), intent(in) :: dtl
    integer, intent(in) :: ptlft, ptrght
-   integer, optional, intent(in) :: imbd, init_ic, end_ic
+   integer, optional, intent(in) :: init_ic, end_ic
 
    real(dp) :: def, shx, shy, shz
-   integer :: i, j, k, iic, i1, i2
+   integer :: i, j, k, iic, i1, i2, j1, j2, k1, k2
    integer :: comp1, comp2
    !j = jy2
    !shy = loc_yg(j-2, 3, imody)*dy_inv
@@ -1002,6 +1004,10 @@
    if (present(end_ic)) then
     comp2 = end_ic
    endif
+   j1 = jy1
+   j2 = jy2
+   k1 = kz1
+   k2 = kz2
    i1 = ix1
    i2 = ix2
 
@@ -1010,30 +1016,163 @@
    shz = dz_inv
 
    if(xl_bd) then
-    do iic = comp1, comp2
-     do k = kz1, kz2
-      do j = jy1, jy2
-       def = shx*(ef(i1 + 1, j, k, iic) - ef(i1, j, k, iic))
-       do i = i1 - ptlft, i1 - 1
-        ef(i, j, k, iic) = ef(i1, j, k, iic) - ((i1 + 0.5) - i)*def
+    if (ibx == 0) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do j = j1, j2
+        def = shx*(ef(i1 + 1, j, k, iic) - ef(i1, j, k, iic))
+        do i = i1 - ptlft, i1 - 1
+         ef(i, j, k, iic) = ef(i1, j, k, iic) - ((i1 + 0.5) - i)*def
+        end do
        end do
       end do
      end do
-    end do
+    end if
+    if (ibx == 1) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do j = j1, j2
+        do i = i1 - ptlft, i1 - 1
+         ef(i, j, k, iic) = x_parity(iic)*ef(2*i1 - i, j, k, iic)
+        end do
+       end do
+      end do
+     end do
+    end if
    end if
 
    if(xr_bd) then
-    i = ix2
-    do iic = comp1, comp2
-     do k = kz1, kz2
-      do j = jy1, jy2
-       def = shx*(ef(i2, j, k, iic) - ef(i2 - 1, j, k, iic))
-       do i = i2 + 1, i2 + ptrght
-        ef(i, j, k, iic) = ef(i2, j, k, iic) + (i - (i2 - 0.5))*def
+    if (ibx == 0) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do j = j1, j2
+        def = shx*(ef(i2, j, k, iic) - ef(i2 - 1, j, k, iic))
+        do i = i2 + 1, i2 + ptrght
+         ef(i, j, k, iic) = ef(i2, j, k, iic) + (i - (i2 - 0.5))*def
+        end do
        end do
       end do
      end do
-    end do
+    end if
+    if (ibx == 1) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do j = j1, j2
+        do i = i2 + 1, i2 + ptrght
+         ef(i, j, k, iic) = x_parity(iic)*ef(2*i2 - i, j, k, iic)
+        end do
+       end do
+      end do
+     end do
+    end if
+   end if
+
+   if (ndim < 2) return
+
+   if (yl_bd) then
+    if (iby == 0) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do i = i1, i2
+        def = shy*(ef(i, j1 + 1, k, iic) - ef(i, j1, k, iic))
+        do j = j1 - ptlft, j1 - 1
+         ef(i, j, k, iic) = ef(i, j1, k, iic) - ((j1 + 0.5) - j)*def
+        end do
+       end do
+      end do
+     end do
+    end if
+    if (iby == 1) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do j = j1 - ptlft, j1 - 1
+        do i = i1, i2
+         ef(i, j, k, iic) = y_parity(iic)*ef(i, 2*j1 - j, k, iic)
+        end do
+       end do
+      end do
+     end do
+    end if
+   end if
+
+   if (yr_bd) then
+    if (iby == 0) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do i = i1, i2
+        def = shy*(ef(i, j2, k, iic) - ef(i, j2 - 1, k, iic))
+        do j = j2 + 1, j2 + ptrght
+         ef(i, j, k, iic) = ef(i, j2, k, iic) - (j - (j2 - 0.5))*def
+        end do
+       end do
+      end do
+     end do
+    end if
+    if (iby == 1) then
+     do iic = comp1, comp2
+      do k = k1, k2
+       do j = j2 + 1, j2 + ptrght
+        do i = i1, i2
+         ef(i, j, k, iic) = y_parity(iic)*ef(i, 2*j2 - j, k, iic)
+        end do
+       end do
+      end do
+     end do
+    end if
+   end if
+
+   if (ndim < 3) return
+
+   if (zl_bd) then
+    if (ibz == 0) then
+     do iic = comp1, comp2
+      do j = j1, j2
+       do i = i1, i2
+        def = shz*(ef(i, j, k1 + 1, iic) - ef(i, j, k1, iic))
+        do k = k1 - ptlft, k1 - 1
+         ef(i, j, k, iic) = ef(i, j, k1, iic) - ((k1 + 0.5) - k)*def
+        end do
+       end do
+      end do
+     end do
+    end if
+    if (ibz == 1) then
+     do iic = comp1, comp2
+      do k = k1 - ptlft, k1 - 1
+       do j = j1, j2
+        do i = i1, i2
+         ef(i, j, k, iic) = z_parity(iic)*ef(i, j, 2*k1 - k, iic)
+        end do
+       end do
+      end do
+     end do
+    end if
+   end if
+
+   if (zr_bd) then
+    if (ibz == 0) then
+     do iic = comp1, comp2
+      do j = j1, j2
+       do i = i1, i2
+        def = shz*(ef(i, j, k2, iic) - ef(i, j, k2 - 1, iic))
+        do k = k2 + 1, k2 + ptrght
+         ef(i, j, k, iic) = ef(i, j, k2, iic) - (k - (k2 - 0.5))*def
+        end do
+       end do
+      end do
+     end do
+    end if
+    if (ibz == 1) then
+     do iic = comp1, comp2
+      do k = k2 + 1, k2 + ptrght
+       do j = j1, j2
+        do i = i1, i2
+         ef(i, j, k, iic) = z_parity(iic)*ef(i, j, 2*k2 - k, iic)
+        end do
+       end do
+      end do
+     end do
+    end if
    end if
 
   end subroutine

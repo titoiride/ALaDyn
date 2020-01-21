@@ -377,7 +377,7 @@
        call set_grid_den_energy(spec(ic), ebfp, jc, np) !ic >1 in envelope scheme
       endif
      else
-      call set_grid_den_energy(spec(ic), ebfp, jc, np) 
+      call set_grid_den_energy(spec(ic), ebfp, jc, np)
      ! in jc(1) is plasma norm density in jc(2) <(gam-1)density> using kinetic
      ! gamma  for each species
      end if
