@@ -992,10 +992,21 @@
    integer, optional, intent(in) :: init_ic, end_ic
 
    real(dp) :: def, shx, shy, shz
-   integer :: i, j, k, iic, i1, i2, j1, j2, k1, k2
+   integer :: i, j, k, iic, i1, i2, j1, j2, k1, k2, point
    integer :: comp1, comp2
+   integer, dimension(2, 3) :: COEFF_2
+   integer, dimension(2, 2) :: COEFF_1
+   integer, dimension(2, 1) :: COEFF_0
+   integer, dimension(:, :), allocatable :: COEFF
+   integer :: stenc
    !j = jy2
    !shy = loc_yg(j-2, 3, imody)*dy_inv
+   COEFF_2(1, :) = [3, -3, 1]
+   COEFF_2(2, :) = [6, -8, 3]
+   COEFF_1(1, :) = [2, -1]
+   COEFF_1(2, :) = [3, -2]
+   COEFF_1(1, :) = 1
+   COEFF_1(2, :) = 1
    comp1 = 1
    comp2 = 2
    if (present(init_ic)) then
@@ -1014,15 +1025,16 @@
    shx = dx_inv
    shy = dy_inv
    shz = dz_inv
-
+   stenc = 1
+   COEFF = TRANSPOSE( COEFF_0 )
    if(xl_bd) then
     if (ibx == 0) then
      do iic = comp1, comp2
       do k = k1, k2
        do j = j1, j2
-        def = shx*(ef(i1 + 1, j, k, iic) - ef(i1, j, k, iic))
-        do i = i1 - ptlft, i1 - 1
-         ef(i, j, k, iic) = ef(i1, j, k, iic) - ((i1 + 0.5) - i)*def
+        do point = ptlft, 1, -1
+         i = i1 - point
+         ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i1:(i1+stenc-1), j, k, iic))
         end do
        end do
       end do
@@ -1046,9 +1058,9 @@
      do iic = comp1, comp2
       do k = k1, k2
        do j = j1, j2
-        def = shx*(ef(i2, j, k, iic) - ef(i2 - 1, j, k, iic))
-        do i = i2 + 1, i2 + ptrght
-         ef(i, j, k, iic) = ef(i2, j, k, iic) + (i - (i2 - 0.5))*def
+        do point = 1, ptrght
+         i = i2 + point
+         ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i2:(i2-stenc+1), j, k, iic))
         end do
        end do
       end do
