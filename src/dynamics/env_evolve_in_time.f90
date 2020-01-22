@@ -365,6 +365,10 @@
 
    real (dp), intent (in) :: t_loc
    integer, intent (in) :: iter_loc
+
+   !=========================
+   call env_lpf2_evolve(iter_loc)
+   !================================
    !+++++++++++++++++++++++++++++++++
    !for vbeam >0 uses the xw=(x+vbeam*t)
    !x=xi=(xw-vbeam*t) fixed
@@ -387,9 +391,6 @@
      end if
     end if
    end if
-   !=========================
-   call env_lpf2_evolve(iter_loc)
-   !================================
   end subroutine
   !============================
   ! END ENVELOPE MODULE
