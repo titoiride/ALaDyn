@@ -68,15 +68,11 @@
    if (plane_wave) lp_ind = 0
    if (angle>0.0) then
     shx_lp = lpx(7)
-    if (lp_end(1)>xm) then
-     call init_lp_fields(ebf, lp_amp, tt, t0_lp, w0_x, w0_y, xf, oml, &
-       angle, shx_lp, lp_ind, i1, i2, y0_cent(1), z0_cent(1))
-    end if
+    call init_lp_fields(ebf, lp_amp, tt, t0_lp, w0_x, w0_y, xf, oml, &
+      angle, shx_lp, lp_ind, i1, i2, y0_cent(1), z0_cent(1))
    else !normal incidence
-    if (lp_end(1)>xm) then
-     call init_lp_inc0_fields(ebf, lp_amp, tt, t0_lp, w0_x, w0_y, xf, &
-       oml, lp_ind, i1, i2, y0_cent(1), z0_cent(1))
-    end if
+    call init_lp_inc0_fields(ebf, lp_amp, tt, t0_lp, w0_x, w0_y, xf, &
+      oml, lp_ind, i1, i2, y0_cent(1), z0_cent(1))
    end if
    if (nb_laser>1) then
     do ic = 2, nb_laser
@@ -84,7 +80,7 @@
      lp_end(ic) = lp_end(ic-1) - lp_delay(ic-1)
      xc_loc(ic) = xc_loc(ic-1) - lp_delay(ic-1)
      xf_loc(ic) = xc_loc(ic) + t0_lp
-     if (lp_end(ic)>xm) call init_lp_inc0_fields(ebf, lp_amp, tt, t0_lp, &
+     call init_lp_inc0_fields(ebf, lp_amp, tt, t0_lp, &
        w0_x, w0_y, xf_loc(ic), oml, lp_ind, i1, i2, y0_cent(ic), &
        z0_cent(ic))
     end do
@@ -178,15 +174,13 @@
    xc_loc(1) = xc_lp
    xf_loc(1) = xf
    env(:, :, :, :) = 0.0
-   if (lp_end(1)>xm) then
-    if (g_prof) then
-     call init_gprof_envelope_field(env, a0, tt, t0_lp, w0_x, w0_y, &
-       xf, oml, pw_ind, i1, i2, y0_cent(1), z0_cent(1))
-    else
-     call init_envelope_field(env, a0, tt, t0_lp, w0_x, w0_y, xf, &
-       oml, pw_ind, i1, i2, y0_cent(1), z0_cent(1))
-     !call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
-    end if
+   if (g_prof) then
+    call init_gprof_envelope_field(env, a0, tt, t0_lp, w0_x, w0_y, &
+      xf, oml, pw_ind, i1, i2, y0_cent(1), z0_cent(1))
+   else
+    call init_envelope_field(env, a0, tt, t0_lp, w0_x, w0_y, xf, &
+      oml, pw_ind, i1, i2, y0_cent(1), z0_cent(1))
+    !call init_env_filtering(env,i1,i2,j1,nyp,k1,nzp)
    end if
    if (nb_laser>1) then
     do ic = 2, nb_laser
