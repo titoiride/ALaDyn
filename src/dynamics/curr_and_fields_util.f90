@@ -30,13 +30,36 @@
   use grid_fields
   use init_grid_field
 
+  interface set_lpf_acc
+   module procedure :: set_lpf_acc_new
+   module procedure :: set_lpf_acc_old
+  end interface
   implicit none
   !===============================
   ! MOVING WINDOW SECTION
   !=============================
  contains
   !============================
-  subroutine set_lpf_acc(ef, sp_loc, apt, np, nf)
+  subroutine set_lpf_acc_new(ef, sp_loc, apt, np, nf)
+
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (in) :: sp_loc
+   real(dp), intent (out) :: apt
+   integer, intent (in) :: np, nf
+
+   ! Uses alternating order quadratic or linear shapes
+
+   select case (ndim)
+   case (1)
+    call set_part1d_acc(ef, sp_loc, apt, np, nf)
+   case (2)
+    call set_part2d_hcell_acc(ef, sp_loc, apt, np, nf)
+   case (3)
+    call set_part3d_hcell_acc(ef, sp_loc, apt, np)
+   end select
+  end subroutine
+
+  subroutine set_lpf_acc_old(ef, sp_loc, apt, np, nf)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species), intent (in) :: sp_loc

@@ -149,7 +149,7 @@
    type(index_array) :: left_pind, right_pind
    type( species_new ) :: temp_spec
    real(dp), allocatable :: temp(:), xp(:)
-   integer :: k, kk, n, p, q, ns, nr, cdir, tot
+   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
    logical :: mask(old_np)
    !================ dir are cartesian coordinate index (x,y,z)
@@ -252,53 +252,45 @@
  !     end do
  ! !=============== NON PERIODIC CASE
     else
-     ! !To be checked case ibd == 1 
-     ! temp_spec = sp_loc%pack_species( xp > xr )
-     ! tot = temp_spec%how_many()*temp_spec%total_size()
-     ! aux1( 1:tot ) = temp_spec%flatten()
-     ! do k = 1, nr_send
-     !  n = right_pind%indices(k)
-     !  loc_pstore(1:ndv) = sp_loc%part(n, 1:ndv)
-     !  do q = 1, ndv
-     !   kk = kk + 1
-     !   aux1(kk) = loc_pstore(q)
-     !  end do
-     ! end do
-     ! !adds vstore data
-     ! do k = 1, nr_send
-     !  n = right_pind%indices(k)
-     !  loc_pstore(1:ndv) = vstore(n, 1:ndv)
-     !  do q = 1, ndv
-     !   kk = kk + 1
-     !   aux1(kk) = loc_pstore(q)
-     !  end do
-     ! end do
+
+     ! !To be checked case ibd == 1
+
+     temp_spec = sp_loc%sel_particles( right_pind%indices(:) )
+     tot = temp_spec%how_many()*temp_spec%total_size()
+     aux1( 1:tot ) = temp_spec%flatten()
+
+     temp_spec = aux_sp%sel_particles( right_pind%indices(:) )
+     tot_aux = temp_spec%how_many()*temp_spec%total_size()
+     tot_aux = tot_aux + tot
+     aux1( (tot+1):tot_aux ) = temp_spec%flatten()
+
     end if
    end if
   
- !   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
- !   ! sends ns data to the right
- !   if (nr>0) then !receives nr data from left
- !    kk = 0
- !    p = npt
- !    do n = 1, nl_recv
- !     p = p + 1
- !     do q = 1, ndv
- !      kk = kk + 1
- !      sp_aux(p, q) = aux2(kk)
- !     end do
- !    end do
- !    !   adds...
- !    p = npt
- !    do n = 1, nl_recv
- !     p = p + 1
- !     do q = 1, ndv
- !      kk = kk + 1
- !      sp1_aux(p, q) = aux2(kk)
- !     end do
- !    end do
- !    npt = p
- !   end if
+   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
+   ! sends ns data to the right
+   if (nr>0) then !receives nr data from left
+    
+    kk = 0
+    p = npt
+    do n = 1, nl_recv
+     p = p + 1
+     do q = 1, ndv
+      kk = kk + 1
+      sp_aux(p, q) = aux2(kk)
+     end do
+    end do
+    !   adds...
+    p = npt
+    do n = 1, nl_recv
+     p = p + 1
+     do q = 1, ndv
+      kk = kk + 1
+      sp1_aux(p, q) = aux2(kk)
+     end do
+    end do
+    npt = p
+   end if
  ! !===================
  !   ns = 2*ndv*nl_send
  !   nr = 2*ndv*nr_recv

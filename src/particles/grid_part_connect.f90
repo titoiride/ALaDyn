@@ -24,13 +24,84 @@
   use pstruct_data
   use fstruct_data
   use grid_part_lib
+  use particles_def
 
+  interface set_part1d_acc
+   module procedure :: set_part1d_acc_new
+   module procedure :: set_part1d_acc_old
+  end interface
+
+  interface set_part2d_hcell_acc
+   module procedure :: set_part2d_hcell_acc_new
+   module procedure :: set_part2d_hcell_acc_old
+  end interface
   implicit none
   !========= SECTION FOR FIELDS ASSIGNEMENT
  contains
 
   !==========================================
-  subroutine set_part1d_acc(ef, sp_loc, pt, np, ndf)
+  subroutine set_part1d_acc_new(ef, sp_loc, pt, np, ndf)
+   !To be checked, actually never used
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (in) :: sp_loc
+   real (dp), intent (inout) :: pt(:, :)
+   integer, intent (in) :: np, ndf
+
+   real(dp), allocatable, dimension(:) :: xx
+   real (dp) :: xp1(3), ap(6)
+   real (dp) :: axh(0:2), ax1(0:2)
+   integer :: i, ih, i1, i2, j2, n
+   !=====================
+   !================================
+   select case (ndf)
+   case (3)
+    j2 = 1
+    xx = sp_loc%call_component(X_COMP)
+    do n = 1, np
+
+     ap(1:3) = zero_dp
+     xp1(1) = xx(n) !the current particle positions
+
+     call qqh_1d_spline(xp1, ax1, axh, i, ih)
+
+     do i1 = 0, 2
+      i2 = i1 + ih
+      ap(1) = ap(1) + axh(i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
+      ap(3) = ap(3) + axh(i1)*ef(i2, j2, 1, 3) !Bz(i+1/2)
+      i2 = i + i1
+      ap(2) = ap(2) + ax1(i1)*ef(i2, j2, 1, 2) !Ey(i)
+     end do
+     pt(n, 1:3) = ap(1:3)
+    end do
+   !========================
+   case (6)
+    j2 = 1
+    xx = sp_loc%call_component(X_COMP) !the current particle positions
+
+    do n = 1, np
+     ap(1:6) = zero_dp
+     xp(1) = xx(n)
+     call qqh_1d_spline(xp1, ax1, axh, i, ih)
+
+     do i1 = 0, 2
+      i2 = i1 + ih
+      ap(1) = ap(1) + axh(i1)*ef(i2, j2, 1, 1) !Ex
+      ap(5) = ap(5) + axh(i1)*ef(i2, j2, 1, 5) !By
+      ap(6) = ap(6) + axh(i1)*ef(i2, j2, 1, 6) !Bz
+     end do
+     do i1 = 0, 2
+      i2 = i + i1
+      ap(2) = ap(2) + ax1(i1)*ef(i2, j2, 1, 2) !Ey
+      ap(3) = ap(3) + ax1(i1)*ef(i2, j2, 1, 3) !Ez
+      ap(4) = ap(4) + ax1(i1)*ef(i2, j2, 1, 4) !Bx
+     end do
+     pt(n, 1:6) = ap(1:6)
+    end do
+   end select
+  end subroutine
+
+  !===========================
+  subroutine set_part1d_acc_old(ef, sp_loc, pt, np, ndf)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species), intent (in) :: sp_loc
@@ -86,7 +157,103 @@
    end select
   end subroutine
   !===========================
-  subroutine set_part2d_hcell_acc(ef, sp_loc, pt, np, ndf)
+  subroutine set_part2d_hcell_acc_new(ef, sp_loc, pt, np, ndf)
+
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (in) :: sp_loc
+   real (dp), intent (inout) :: pt(:, :)
+   integer, intent (in) :: np, ndf
+
+   real (dp) :: dvol, dvol1
+   real (dp) :: xp1(3), ap(6)
+   real (dp) :: axh(0:1), ax1(0:2)
+   real (dp) :: ayh(0:1), ay1(0:2)
+   real (dp), allocatable, dimension(:) :: xx, yy
+
+   integer :: i, ih, j, jh, i1, j1, i2, j2, n
+   !================================
+   ! Uses quadratic or linear shapes depending on staggering
+   ! ndf is the number of field component
+   xp1 = zero_dp
+   pt = set_local_positions( sp_loc, X_COMP )
+
+   select case (ndf) !Field components
+   case (3)
+    do n = 1, np
+     ap(1:3) = zero_dp
+     xp1(1:2) = pt(n, 1:2)
+     call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
+
+     do j1 = 0, 2
+      j2 = j + j1
+      dvol = ay1(j1)
+      do i1 = 0, 1
+       i2 = i1 + ih
+       dvol1 = axh(i1)*dvol
+       ap(1) = ap(1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+      end do
+     end do
+     do j1 = 0, 1
+      j2 = jh + j1
+      dvol = ayh(j1)
+      do i1 = 0, 2
+       i2 = i + i1
+       dvol1 = ax1(i1)*dvol
+       ap(2) = ap(2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+      end do
+      do i1 = 0, 1
+       i2 = i1 + ih
+       dvol1 = axh(i1)*dvol
+       ap(3) = ap(3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
+      end do
+     end do
+     pt(n, 1:3) = ap(1:3)
+    end do
+    !==============
+   case (6)
+    !=====================
+    do n = 1, np
+     ap(1:6) = zero_dp
+     xp1(1:2) = pt(n, 1:2)
+     call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
+
+     do j1 = 0, 2
+      j2 = j + j1
+      dvol = ay1(j1)
+      do i1 = 0, 1
+       i2 = i1 + ih
+       dvol1 = axh(i1)*dvol
+       ap(1) = ap(1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+       ap(5) = ap(5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
+      end do
+      do i1 = 0, 2
+       i2 = i1 + i
+       dvol1 = ax1(i1)*dvol
+       ap(3) = ap(3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
+      end do
+     end do
+     do j1 = 0, 1
+      j2 = jh + j1
+      dvol = ayh(j1)
+      do i1 = 0, 2
+       i2 = i + i1
+       dvol1 = ax1(i1)*dvol
+       ap(2) = ap(2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+       ap(4) = ap(4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
+      end do
+      do i1 = 0, 1
+       i2 = i1 + ih
+       dvol1 = axh(i1)*dvol
+       ap(6) = ap(6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
+      end do
+     end do
+     pt(n, 1:6) = ap(1:6)
+    end do
+   end select
+   !=====================
+  end subroutine
+  !====================================
+  subroutine set_part2d_hcell_acc_old(ef, sp_loc, pt, np, ndf)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species), intent (in) :: sp_loc

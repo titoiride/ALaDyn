@@ -80,7 +80,7 @@ module particles_def
   logical :: allocated_pz
   !! True if pz array is allocated
   
-  real(dp), allocatable :: gamma(:)
+  real(dp), allocatable :: lor_gamma(:)
   !! Array containig the Lorentz gamma factor
   logical :: allocated_gamma
   !! True if gamma array is allocated
@@ -100,16 +100,17 @@ module particles_def
    procedure, private :: copy_scalars_from
    procedure, public :: flatten
    procedure, public :: how_many
-   procedure, public :: sel_particles
    procedure, public :: total_size
    procedure, private :: pack_species_logical
    procedure, private :: pack_species_array
+   procedure, public :: sel_particles_bounds
    procedure, private :: set_charge_int
    procedure, private :: set_charge_real
    procedure, public :: set_part_number
    procedure, private :: set_component_real
    procedure, private :: set_component_integer
    generic :: pack_species => pack_species_array, pack_species_logical
+   generic :: sel_particles => sel_particles_bounds, sel particles_index
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_real, set_charge_int
  end type
@@ -137,7 +138,7 @@ module particles_def
   else if ( this%allocated_pz ) then
    number = SIZE( this%pz(:) )
   else if ( this%allocated_gamma ) then
-   number = SIZE( this%gamma(:) )
+   number = SIZE( this%lor_gamma(:) )
   else if ( this%allocated_index ) then
    number = SIZE( this%part_index(:) )
   else if ( this%allocated_weight ) then
@@ -211,7 +212,7 @@ module particles_def
   case(PZ_COMP)
    comp = this%pz(lowb:upb)
   case(GAMMA_COMP)
-   comp = this%gamma(lowb:upb)
+   comp = this%lor_gamma(lowb:upb)
   case(W_COMP)
    comp = real( this%weight(lowb:upb), dp )
   case(INDEX_COMP)
@@ -219,6 +220,52 @@ module particles_def
   end select
 
  end function
+
+ subroutine redistribute( this, flat_array, num_particles )
+  class(species_new), intent(inout) :: this
+  real(dp), intent(in) :: flat_array
+  integer, intent(in) :: num_particles
+  integer :: i
+
+  i = 0
+  if( this%allocated_x ) then
+   this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_y ) then
+   this%y(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_z ) then
+   this%z(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_px ) then
+   this%px(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_py ) then
+   this%py(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_pz ) then
+   this%pz(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_gamma ) then
+   this%lor_gamma(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_weight ) then
+   this%weight(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_index ) then
+   this%part_index(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+
+ end subroutine
 
  pure function flatten( this ) result(flat_array)
   class(species_new), intent(in) :: this
@@ -255,7 +302,15 @@ module particles_def
    i = i + 1
   end if
   if( this%allocated_gamma ) then
-   temp( :, i ) = this%gamma(:)
+   temp( :, i ) = this%lor_gamma(:)
+   i = i + 1
+  end if
+  if( this%allocated_weight ) then
+   temp( :, i ) = this%weight(:)
+   i = i + 1
+  end if
+  if( this%allocated_index ) then
+   temp( :, i ) = this%part_index(:)
    i = i + 1
   end if
 
@@ -272,7 +327,7 @@ module particles_def
 
  end function
 
- function sel_particles( this, lower_bound, upper_bound ) result(sel)
+ function sel_particles_bounds( this, lower_bound, upper_bound ) result(sel)
  !! Function that selects particles with respect to the given array boundaries
  !! (Memory position, NOT a particle index)
   class(species_new), intent(in) :: this
@@ -301,7 +356,7 @@ module particles_def
    sel%pz = this%pz(lower_bound:upper_bound)
   end if
   if( this%allocated_gamma ) then
-   sel%gamma = this%gamma(lower_bound:upper_bound)
+   sel%lor_gamma = this%lor_gamma(lower_bound:upper_bound)
   end if
   if( this%allocated_weight ) then
    sel%weight = this%weight(lower_bound:upper_bound)
@@ -311,6 +366,78 @@ module particles_def
   end if
 
   sel%n_part = sel%count_particles()
+
+ end function
+
+ function sel_particles_index( this, index_array ) result(sel)
+  class(species_new), intent(in) :: this
+  integer, dimension(:) :: index_array
+  type(species_new) :: sel
+  integer :: i, tot_len, n
+
+  
+  tot_len = SIZE(index_array)
+  
+  sel = species_new( tot_len, this%dimensions )
+  
+  call sel%copy_scalars_from(this)
+
+  if( this%allocated_x ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%x(i) = this%x(n)
+   end do
+  end if
+  if( this%allocated_y ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%y(i) = this%y(n)
+   end do
+  end if
+  if( this%allocated_z ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%z(i) = this%z(n)
+   end do
+  end if
+
+  if( this%allocated_px ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%px(i) = this%px(n)
+   end do
+  end if
+  if( this%allocated_py ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%py(i) = this%py(n)
+   end do
+  end if
+  if( this%allocated_pz ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%pz(i) = this%pz(n)
+   end do
+  end if
+  if( this%allocated_gamma ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%lor_gamma(i) = this%lor_gamma(n)
+   end do
+  end if
+
+  if( this%allocated_weight ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%weight(i) = this%weight(n)
+   end do
+  end if
+  if( this%allocated_index ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    sel%part_index(i) = this%part_index(n)
+   end do
+  end if
 
  end function
 
@@ -337,6 +464,12 @@ module particles_def
    i = i + 1
   end if
   if( this%allocated_gamma ) then
+   i = i + 1
+  end if
+  if( this%allocated_weight ) then
+   i = i + 1
+  end if
+  if( this%allocated_index ) then
    i = i + 1
   end if
   size = i
@@ -376,7 +509,7 @@ module particles_def
    this%allocated_x = .true.
    allocate( this%px(n_particles), stat=allocstatus)
    this%allocated_px = .true.
-   allocate( this%gamma(n_particles), stat=allocstatus)
+   allocate( this%lor_gamma(n_particles), stat=allocstatus)
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
@@ -392,7 +525,7 @@ module particles_def
    this%allocated_y = .true.
    allocate( this%py(n_particles), stat=allocstatus)
    this%allocated_py = .true.
-   allocate( this%gamma(n_particles), stat=allocstatus)
+   allocate( this%lor_gamma(n_particles), stat=allocstatus)
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
@@ -413,7 +546,7 @@ module particles_def
    this%allocated_z = .true.
    allocate( this%pz(n_particles), stat=allocstatus)
    this%allocated_pz = .true.
-   allocate( this%gamma(n_particles), stat=allocstatus)
+   allocate( this%lor_gamma(n_particles), stat=allocstatus)
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
@@ -448,7 +581,7 @@ module particles_def
    packed%pz = PACK( this%pz(:), mask)
   end if
   if( this%allocated_gamma ) then
-   packed%gamma = PACK( this%gamma(:), mask)
+   packed%lor_gamma = PACK( this%lor_gamma(:), mask)
   end if
   if( this%allocated_weight ) then
    packed%weight = PACK( this%weight(:), mask)
@@ -486,7 +619,7 @@ module particles_def
    packed%pz = PACK( this%pz(:), mask(:) )
   end if
   if( this%allocated_gamma ) then
-   packed%gamma = PACK( this%gamma(:), mask(:) )
+   packed%lor_gamma = PACK( this%lor_gamma(:), mask(:) )
   end if
   if( this%allocated_weight ) then
    packed%weight = PACK( this%weight(:), mask(:) )
@@ -533,7 +666,7 @@ module particles_def
   case(PZ_COMP)
    this%pz(lowb:upb) = values(:)
   case(GAMMA_COMP)
-   this%gamma(lowb:upb) = values(:)
+   this%lor_gamma(lowb:upb) = values(:)
   case(W_COMP)
    this%weight(lowb:upb) = real(values(:), sp)
   end select
@@ -574,7 +707,7 @@ module particles_def
   case(PZ_COMP)
    this%pz(lowb:upb) = real(values(:), dp)
   case(GAMMA_COMP)
-   this%gamma(lowb:upb) = real(values(:), dp)
+   this%lor_gamma(lowb:upb) = real(values(:), dp)
   case(W_COMP)
    this%weight(lowb:upb) = real(values(:), sp)
   case(INDEX_COMP)

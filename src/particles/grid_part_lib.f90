@@ -24,6 +24,7 @@
   use common_param
   use grid_param
   use stretched_grid
+  use particles_def
 
   implicit none
 
@@ -455,6 +456,28 @@
   !====================================
 
   !DIR$ ATTRIBUTES INLINE :: ql_interpolate
+  pure function set_local_positions( pt_array, component ) result(position)
+   type (species_new), intent(in) :: pt_array
+   integer, intent(in) :: component
+   integer :: np
+   real(dp), allocatable, dimension(:) :: comp
+
+   np = pt_array%how_many()
+   comp = pt_array%call_component( component )
+
+   select case(component)
+   case(X_COMP)
+    call map2dx_part_sind( np, comp )
+   case(Y_COMP)
+    call map2dy_part_sind( np, comp )
+   case(Z_COMP)
+    call map2dz_part_sind( np, comp )
+   end select
+
+   position(:) = comp(:)
+
+  end function
+
   subroutine set_local_2d_positions(pt_loc, n1, np)
 
    real (dp), intent (inout) :: pt_loc(:, :)

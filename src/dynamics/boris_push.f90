@@ -26,12 +26,60 @@
   use fstruct_data
   use common_param
 
+  interface init_lpf_momenta
+   module procedure :: init_lpf_momenta_new
+   module procedure :: init_lpf_momenta_old
+  end interface
+
+  interface set_lp
   implicit none
 
  contains
   ! SECTION for Leap-frog integrators in LP regime
   !==========================
-  subroutine init_lpf_momenta(sp_loc, pt, np, ic)
+  subroutine init_lpf_momenta_new(sp_loc, pt, np, ic)
+   type(species_new), intent(inout) :: sp_loc
+   type(species_new), intent(inout) :: pt
+   integer, intent(in) :: np, ic
+   integer :: p
+   real(dp) :: alp, dth_lp, pp(3), vp(3), efp(6), gam2, gam_inv
+
+   dth_lp = 0.5*dt_loc
+   alp = dth_lp*lorentz_fact(ic) ! Lfact =1./m
+   ! Fields are already multiplied by particle(ic) charge
+   !=========================
+   ! from p^n to p^{n-1/2}
+   !==========================
+   select case (curr_ndim)
+    !Maybe curr_ndim could be changed with sp_loc%dimensions
+   case (2)
+    do p = 1, np
+     efp(1:3) = -alp*pt(p, 1:3) !-DT/2*charge*(Ex,Ey,Bz)^n
+     pp(1:2) = sp_loc%part(p, 3:4) !p_{n}
+     gam2 = 1. + dot_product(pp(1:2), pp(1:2))
+     gam_inv = 1./sqrt(gam2)
+     vp(1:2) = pp(1:2)*gam_inv
+     sp_loc%part(p, 3) = sp_loc%part(p, 3) + efp(1) + vp(2)*efp(3)
+     sp_loc%part(p, 4) = sp_loc%part(p, 4) + efp(2) - vp(1)*efp(3)
+    end do
+   case (3)
+    do p = 1, np
+     pp(1:3) = sp_loc%part(p, 4:6)
+     efp(1:6) = -alp*pt(p, 1:6)
+     gam2 = 1. + dot_product(pp(1:3), pp(1:3))
+     gam_inv = 1./sqrt(gam2) !1/gamma
+     vp(1:3) = gam_inv*pp(1:3)
+     sp_loc%part(p, 4) = sp_loc%part(p, 4) + efp(1) + vp(2)*efp(6) - &
+       vp(3)*efp(5)
+     sp_loc%part(p, 5) = sp_loc%part(p, 5) + efp(2) + vp(3)*efp(4) - &
+       vp(1)*efp(6)
+     sp_loc%part(p, 6) = sp_loc%part(p, 6) + efp(3) + vp(1)*efp(5) - &
+       vp(2)*efp(4)
+    end do
+   end select
+  end subroutine
+  !==========================
+  subroutine init_lpf_momenta_old(sp_loc, pt, np, ic)
    type(species), intent(inout) :: sp_loc
    real(dp), intent(inout) :: pt(:, :)
    integer, intent(in) :: np, ic
