@@ -82,6 +82,7 @@ install:
   #download & install PGI
   - if [%COMPILER%]==[pgi] curl --location --referer "http://www.pgroup.com/products/community.htm" "https://www.pgroup.com/support/downloader.php?file=pgi-community-windows-x64" -o pgiws64-1910.exe
   - if [%COMPILER%]==[pgi] %WORKSPACE%\pgiws64-1910.exe /s /f1"%WORKSPACE%\setup.iss"
+
   - ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/A/E/0/AE002626-9D9D-448D-8197-1EA510E297CE/msmpisetup.exe -OutFile $env:WORKSPACE\msmpi.exe }
   - if [%COMPILER%]==[pgi] %WORKSPACE%\msmpi.exe -unattend
   #download & install libs for pgi - first of all update vcpkg and then install necessary libs
@@ -91,12 +92,15 @@ install:
   - cd %WORKSPACE%\
   - if [%COMPILER%]==[pgi] vcpkg integrate install
   - if [%COMPILER%]==[pgi] vcpkg install fftw3
-  - if [%COMPILER%]==[pgi] vcpkg install msmpi
+  #- if [%COMPILER%]==[pgi] vcpkg install msmpi
+  # install an old MSMPI version because the one in vcpkg is too new and the PGI compiler crashes
+  - ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/5/A/E/5AEA3C34-32A1-4A70-9622-F9734E92981F/sdk_x64.msi -OutFile $env:WORKSPACE\msmpisdk.exe }
+  - if [%COMPILER%]==[pgi] %WORKSPACE%\msmpisdk.exe -unattend
   #download & install libs for cygwin
   - cd %WORKSPACE%
   - mkdir cygwin-downloads
   - ps: if($env:COMPILER -eq "cygwin") { Invoke-WebRequest https://cygwin.com/setup-x86_64.exe -OutFile $env:WORKSPACE\cygwin-setup.exe }
-  - if [%COMPILER%]==[cygwin] %WORKSPACE%\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir %WORKSPACE%\cygwin-downloads --packages libopenmpi-devel,cmake,fftw3,libfftw3-devel,libboost-devel,zlib-devel,gcc-fortran-9.2.0
+  - if [%COMPILER%]==[cygwin] %WORKSPACE%\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir %WORKSPACE%\cygwin-downloads --packages libopenmpi-devel,cmake,fftw3,libfftw3-devel,libboost-devel,zlib-devel,gcc-fortran-9
   #get ready for build
   - cd %WORKSPACE%\aladyn\
   - mkdir build
