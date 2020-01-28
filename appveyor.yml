@@ -110,7 +110,7 @@ install:
   - mkdir cygwin-downloads
   - ps: if($env:COMPILER -eq "cygwin") { Invoke-WebRequest https://cygwin.com/setup-x86_64.exe -OutFile $env:WORKSPACE\cygwin-setup.exe }
   - if [%COMPILER%]==[cygwin] %WORKSPACE%\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir %WORKSPACE%\cygwin-downloads --packages libopenmpi-devel,cmake,fftw3,libfftw3-devel,libboost-devel,zlib-devel,gcc-fortran
-  - if [%COMPILER%]==[msys2] %BASH% "pacman -U --noconfirm mingw-w64-msmpi cmake mingw-w64-boost mingw-w64-x86_64-gcc-fortran mingw-w64-x86_64-gcc-libgfortran mingw-w64-x86_64-fftw"
+  - if [%COMPILER%]==[msys2] %BASH% "pacman --Sy --noconfirm mingw-w64-msmpi cmake mingw-w64-boost mingw-w64-x86_64-gcc-fortran mingw-w64-x86_64-gcc-libgfortran mingw-w64-x86_64-fftw"
 
   #get ready for build
   - cd %WORKSPACE%\aladyn\
