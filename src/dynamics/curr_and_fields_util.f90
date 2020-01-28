@@ -168,7 +168,7 @@
     ! iby,ibz,ibx =2
     !==================
    end if
-   call field_xyzbd(ef, nc, spl, spr)
+   call field_xyzbd(ef, nc)
    ! extends for one point at the box boundaries
    !==================================================
   end subroutine

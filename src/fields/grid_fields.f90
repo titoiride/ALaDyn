@@ -923,6 +923,7 @@
       end do
      end do
     end if
+    i1 = i1 - ptlft
    end if
 
    if(xr_bd) then
@@ -949,6 +950,7 @@
       end do
      end do
     end if
+    i2 = i2 + ptrght
    end if
 
    if (ndim < 2) return
@@ -975,6 +977,7 @@
       end do
      end do
     end if
+    j1 = j1 - ptlft
    end if
 
    if (yr_bd) then
@@ -999,6 +1002,7 @@
       end do
      end do
     end if
+    j2 = j2 + ptrght
    end if
 
    if (ndim < 3) return
@@ -1025,6 +1029,7 @@
       end do
      end do
     end if
+    k1 = k1 - ptlft
    end if
 
    if (zr_bd) then
@@ -1049,6 +1054,7 @@
       end do
      end do
     end if
+    k2 = k2 + ptrght
    end if
 
   end subroutine
