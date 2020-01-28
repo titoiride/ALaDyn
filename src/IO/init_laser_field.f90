@@ -223,12 +223,6 @@
     end if
    end if
 
-   str = 2
-   stl = 2
-   call env_bds(env, str, stl, init_ic = 1, end_ic = 4)
-   if ( TWO_COLOR ) then
-    call env_bds(env1, str, stl, init_ic = 1, end_ic = 4)
-   end if
    !=======================
    ebf = 0.0
    !=====================

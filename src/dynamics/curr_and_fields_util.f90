@@ -277,6 +277,7 @@
    if (prl) then
     call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
    end if
+   call env_bds( evf, str, stl )
 
    do k = kz1, kz2
     do j = jy1, jy2
@@ -295,7 +296,6 @@
     call env_maxw_solve(jc, evf, omg, dt_loc)
    end if
    ! =================================
-   call env_bds( evf, str, stl )
   end subroutine
   !========================================================
 
