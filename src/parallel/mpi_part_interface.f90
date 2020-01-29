@@ -572,6 +572,7 @@
         ier = 99
        end if
        call p_realloc(spec(ic), np_new, ndv)
+       call v_realloc(ebfp, np_new, ndv)
        spec(ic)%part(1:np_new, 1:ndv) = sp_aux(1:np_new, 1:ndv)
        loc_npart(imody, imodz, imodx, ic) = np_new
       end if
