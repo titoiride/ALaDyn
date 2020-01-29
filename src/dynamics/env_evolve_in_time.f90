@@ -111,18 +111,17 @@
    integer, intent (in) :: spl_in, spr_in
    integer :: ix, iy, iz, ord
    real (dp) :: ar, ai
+   real (dp), parameter :: frac = one_dp/8.
    !===================
    ord = 2
-   do iz = kz1, kz2
-    do iy = jy1, jy2
-     do ix = ix1, ix2
-      ar = 0.5*(evf(ix,iy,iz,1)+evf(ix,iy,iz,3)) !A^{n+1/2}=(A^n+1+A^n)/2
-      ai = 0.5*(evf(ix,iy,iz,2)+evf(ix,iy,iz,4))
-      av(ix, iy, iz, 1) = 0.5*(ar*ar+ai*ai)
-      ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
-     end do
-    end do
-   end do
+   ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
+   av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = &
+    frac*( &
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 3)) * &
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 3)) + &
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 4)) * &
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 4)) )
+
    if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr_in, spl_in)
    call env_grad(av)
    !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
@@ -211,7 +210,7 @@
     end if
     id_ch = nd2 + 1
     if (enable_ionization(1)) then
-     if (prl) call fill_ebfield_yzxbdsdata(env, 1, 2, 2, 2)
+     if (prl) call pfields_prepare(env, 2, 2, 2)
      do ic = 2, nsp_ionz
       np = loc_npart(imody, imodz, imodx, ic)
       if (np>0) then
@@ -232,7 +231,7 @@
     end if
     if (Two_color) then
      if (enable_ionization(2)) then
-      if (prl) call fill_ebfield_yzxbdsdata(env1, 1, 2, 2, 2)
+      if (prl) call pfields_prepare(env1, 2, 2, 2)
       do ic = 2, nsp_ionz
        np = loc_npart(imody, imodz, imodx, ic)
        if (np>0) then
@@ -365,6 +364,10 @@
 
    real (dp), intent (in) :: t_loc
    integer, intent (in) :: iter_loc
+
+   !=========================
+   call env_lpf2_evolve(iter_loc)
+   !================================
    !+++++++++++++++++++++++++++++++++
    !for vbeam >0 uses the xw=(x+vbeam*t)
    !x=xi=(xw-vbeam*t) fixed
@@ -387,9 +390,6 @@
      end if
     end if
    end if
-   !=========================
-   call env_lpf2_evolve(iter_loc)
-   !================================
   end subroutine
   !============================
   ! END ENVELOPE MODULE
