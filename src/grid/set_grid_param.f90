@@ -59,10 +59,10 @@
    integer :: i, ns1
    real (dp) :: yy, yyh, smin, smax
 
-   allocate (x(n1+1), xw(n1+1), dx1(n1+1), y(n2+1), z(n3+1), dy1(n2+1), &
-     dz1(n3+1))
-   allocate (dx1h(n1+1), dy1h(n2+1), dz1h(n3+1))
-   allocate (xh(n1+1), yh(n2+1), zh(n3+1))
+   allocate (x(0:n1+1), xw(n1+1), dx1(0:n1+1), y(0:n2+1), z(0:n3+1), dy1(0:n2+1), &
+     dz1(0:n3+1))
+   allocate (dx1h(0:n1+1), dy1h(0:n2+1), dz1h(0:n3+1))
+   allocate (xh(0:n1+1), yh(0:n2+1), zh(0:n3+1))
    !-----------------------------------
    aph = acos(-1.0)*0.4
    dxi = 1.
@@ -76,7 +76,7 @@
    dx = 1.
    if (xres>0.0) dx = 1./xres
    dx_inv = 1.0/dx
-   do i = 1, n1 + 1
+   do i = 0, n1 + 1
     x(i) = dx*real(i-1, dp) !xminx(1)=0,.....,xmax-dx=x(nx)
     xh(i) = x(i) + 0.5*dx
     dx1(i) = 1.
@@ -128,7 +128,7 @@
     dy_inv = 1./dy
     dyi = dy
     dyi_inv = dy_inv
-    do i = 1, n2 + 1
+    do i = 0, n2 + 1
      y(i) = dy*real(i-1-n2/2, dp)
      yh(i) = y(i) + 0.5*dy
      dy1(i) = 1.
@@ -151,7 +151,7 @@
      str_ygrid%sind(2) = ns1
      str_ygrid%smin = smin
      str_ygrid%smax = smax
-     do i = 1, y_stretch
+     do i = 0, y_stretch
       yy = dyi*real(i-1-y_stretch, dp)
       yyh = yy + 0.5*dyi
       y(i) = smin + l_s*tan(yy) !y(xi)=y_s +(Dy/Dxi)*tan(xi) Dy=L_s*dxi uniform
@@ -186,7 +186,7 @@
    if (n3>1) then
     dz = zxres*dx
     dz_inv = 1./dz
-    do i = 1, n3 + 1
+    do i = 0, n3 + 1
      z(i) = dz*real(i-1-n3/2, dp)
      zh(i) = z(i) + 0.5*dz
      dz1(i) = 1.
@@ -204,7 +204,7 @@
      str_zgrid%sind(2) = ns1
      str_zgrid%smin = smin
      str_zgrid%smax = smax
-     do i = 1, y_stretch
+     do i = 0, y_stretch
       yy = dzi*real(i-1-y_stretch, dp)
       yyh = yy + 0.5*dzi
       z(i) = smin + l_s*tan(yy)
@@ -489,7 +489,7 @@
    loc_ygrid(0)%max_cell = loc_ygrid(0)%min_cell + n_loc - 1
 
    p = 0
-   do i = 1, n_loc + 1
+   do i = 0, n_loc + 1
     loc_yg(i, 1, p) = y(i)
     loc_yg(i, 2, p) = yh(i)
     loc_yg(i, 3, p) = dy1(i)
@@ -554,7 +554,7 @@
    loc_zgrid(0)%max_cell = loc_zgrid(0)%min_cell + n_loc - 1
 
    p = 0
-   do i = 1, n_loc + 1
+   do i = 0, n_loc + 1
     loc_zg(i, 1, p) = z(i)
     loc_zg(i, 2, p) = zh(i)
     loc_zg(i, 3, p) = dz1(i)
@@ -613,7 +613,7 @@
    loc_xgrid(0)%min_cell = 0
    loc_xgrid(0)%max_cell = loc_xgrid(0)%min_cell + n_loc - 1
    p = 0
-   do i = 1, n_loc + 1
+   do i = 0, n_loc + 1
     loc_xg(i, 1, p) = x(i)
     loc_xg(i, 2, p) = xh(i)
     loc_xg(i, 3, p) = dx1(i)
@@ -676,7 +676,7 @@
    loc_xgrid(0)%p_ind(2) = n_loc + loc_xgrid(0)%p_ind(1) - 1
 
    p = 0
-   do i = 1, n_loc + 1
+   do i = 0, n_loc + 1
     loc_xg(i, 1, p) = x(i)
     loc_xg(i, 2, p) = xh(i)
     loc_xg(i, 3, p) = dx1(i)

@@ -51,34 +51,24 @@
 
  contains
   !===========================
-  subroutine field_xyzbd(ef, nc, stl, str)
+  subroutine field_xyzbd(ef, nc)
    real (dp), intent (inout) :: ef(:, :, :, :)
-   integer, intent (in) :: nc, stl, str
-   integer :: ik, iy, ix, iz
+   integer, intent (in) :: nc
+   integer :: ik, iy, ix, iz, str, stl
    integer :: i1, i2, j1, j2, k1, k2
    !==========================
    ! enter fields(1:n1,j01-1:j02+1,k01-1:k02+1,nc)
    ! Only for NON-PERIODIC boundaries
+   str = 1
+   stl = 1
+
    j1 = jy1
    j2 = jy2
    k1 = kz1
    k2 = kz2
    i1 = ix1
    i2 = ix2
-   if (prly) then
-    j1 = jy1 - stl
-    j2 = jy2 + str
-   end if
-   if (prlz) then
-    k1 = kz1 - stl
-    k2 = kz2 + str
-   end if
-   i1 = ix1
-   i2 = ix2
-   if (prlx) then
-    i1 = ix1 - stl
-    i2 = ix2 + str
-   end if
+
    if (pex0) then
     if (ibx<2) then
      do ik = 1, nc
@@ -89,8 +79,8 @@
        end do
       end do
      end do
-     i1 = ix1 - 1
     end if
+    i1 = i1 - 1
    end if
    if (pex1) then
     if (ibx==0) then
@@ -111,10 +101,11 @@
        end do
       end do
      end do
-     i2 = i2 + 1
     end if
+    i2 = i2 + 1
    end if
    if (ndim<2) return
+
    if (yl_bd) then
     if (iby==0) then
      do ik = 1, nc
@@ -135,6 +126,7 @@
       end do
      end do
     end if
+    j1 = j1 - 1
    end if
    if (yr_bd) then
     if (iby==0) then
@@ -156,8 +148,10 @@
       end do
      end do
     end if
+    j2 = j2 + 1
    end if
    if (ndim<3) return
+
    if (zl_bd) then
     if (ibz==0) then
      do ik = 1, nc
@@ -178,6 +172,7 @@
       end do
      end do
     end if
+    k1 = k1 - 1
    end if
    if (zr_bd) then
     if (ibz==0) then
@@ -199,6 +194,7 @@
       end do
      end do
     end if
+    k2 = k2 + 1
    end if
   end subroutine
   !========================================

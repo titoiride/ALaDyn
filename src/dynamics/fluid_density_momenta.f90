@@ -71,6 +71,7 @@
     end do
    end if
    call fill_ebfield_yzxbdsdata(flx, 1, curr_ndim, str, stl)
+   call field_xyzbd(flx,curr_ndim)
    if(pe1x)then
     do k = kz1, kz2
      do j = jy1, jy2
@@ -202,6 +203,7 @@
     !extends flux data to j1-2,j2+2 and k1-2,k2+2 
     call fill_ebfield_yzxbdsdata(flx, 1, fldim, 2, 2)
     call fill_ebfield_yzxbdsdata(ef, 1, nfield, str, stl)
+    call field_xyzbd(ef,nfield)
    end if
    if (initial_time) then !a one_step update
     u0(:, :, :, :) = zero_dp
