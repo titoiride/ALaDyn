@@ -36,7 +36,7 @@ module particles_def
  integer, parameter :: INDEX_COMP = -1
 
  type species
- real (dp), allocatable :: part(:, :)
+  real (dp), allocatable :: part(:, :)
  end type
  
  type species_new
@@ -94,10 +94,11 @@ module particles_def
   !! Array containig the particle index
   logical :: allocated_index
   !! True if index array is allocated
+
   contains
-   procedure, public :: call_component
+   procedure, public :: call_component => call_component_spec
    procedure, public :: count_particles
-   procedure, private :: copy_scalars_from
+   procedure, private :: copy_scalars_from => copy_scalars_from_spec
    procedure, public :: flatten
    procedure, public :: how_many
    procedure, public :: total_size
@@ -147,7 +148,7 @@ module particles_def
 
  end function
 
- subroutine copy_scalars_from( this, other )
+ subroutine copy_scalars_from_spec( this, other )
   !! Copies all the non-array values from a `species_new` to another
   class(species_new), intent(out) :: this
   type(species_new), intent(in) :: other
@@ -168,7 +169,7 @@ module particles_def
 
  end subroutine
 
- pure function call_component( this, component, lb, ub ) result(comp)
+ pure function call_component_spec( this, component, lb, ub ) result(comp)
  !! Function that hides the underlying array and calls the
  !! corresponding component from the particle structure.
  !! @warning

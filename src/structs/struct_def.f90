@@ -23,7 +23,7 @@
  module struct_def
   use precision_def
   use grid_def
-  use particles_def
+  use particles_aux_def
   implicit none
   public
 
