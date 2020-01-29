@@ -191,7 +191,7 @@
     ! iby,ibz,ibx =2
     !==================
    end if
-   call field_xyzbd(ef, nc, spl, spr)
+   call field_xyzbd(ef, nc)
    ! extends for one point at the box boundaries
    !==================================================
   end subroutine
@@ -290,17 +290,18 @@
    integer :: str, stl, cind, ib
    !====== enter env(3:4)=A^{n-1} and env(1:2)= A^{n}
    ! enters jc(3)=<wgh*n/gamp> >0
-
+   str = 2
+   stl = 2
    !ord=2
    cind = 1 !cind=0 FFT cind=1 grid deriv
    ib = 2 !ib=1 implicit ib=2 optimazid explicit
    !optimized advection scheme
    if (comoving) ib = 0
    if (prl) then
-    str = 2
-    stl = 2
     call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
    end if
+   call env_bds( evf, str, stl )
+
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix1, ix2
@@ -318,9 +319,6 @@
     call env_maxw_solve(jc, evf, omg, dt_loc)
    end if
    ! =================================
-   str = 2
-   stl = 2
-   call env_bds(evf, dt_loc, str, stl)
   end subroutine
   !========================================================
 

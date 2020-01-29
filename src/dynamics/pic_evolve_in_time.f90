@@ -116,6 +116,11 @@
    integer, intent (in) :: iter_loc
    real (dp) :: ts
    !================================
+
+   !=========================
+   call lpf2_evolve(iter_loc)
+   !===================================
+   
    ts = t_loc
    if (w_speed>0.0) then ! moves the computational box with w_speed>0.
     if (ts>=wi_time .and. ts<wf_time) then
@@ -136,9 +141,6 @@
    !vbeam >0 uses the xw=(x+vbeam*t)
    !x=xi=(xw-vbeam*t) fixed
    !==============================
-   !=========================
-   call lpf2_evolve(iter_loc)
-   !===================================
   end subroutine
 
  end module

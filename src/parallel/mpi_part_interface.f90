@@ -573,9 +573,6 @@
     end if
    end if
    !==================== copy remaining part => ebfp
-   p = max(nr_send, 1)
-   q = max(nl_send, 1)
-
    right_pind = index_array(old_np)
    left_pind = index_array(old_np)
 
@@ -757,11 +754,12 @@
   !================
   !=============================
   subroutine reset_all_part_dist(loc_sp, pstore, xl, xr, ib, np, ndv, &
-    cin, ndm, np_new)
+    cin, np_new, mwin)
    type (species), intent (inout) :: loc_sp
    real (dp), intent (inout) :: pstore(:, :)
    real (dp), intent (in) :: xl, xr
-   integer, intent (in) :: ib, np, ndv, cin, ndm
+   logical, intent(in) :: mwin
+   integer, intent (in) :: ib, np, ndv, cin
    integer, intent (out) :: np_new
    real (dp) :: xp, dxp
    integer :: n, p, pout
@@ -786,17 +784,29 @@
    end do
    pout = p
    if (pout>0) then
-    call v_realloc(sp_aux, np-pout, ndv)
-    call v_realloc(sp1_aux, np-pout, ndv)
-    p = 0
-    do n = 1, np
-     xp = loc_sp%part(n, cin)
-     if (xp>xl .and. xp<=xr) then
-      p = p + 1
-      sp_aux(p, 1:ndv) = loc_sp%part(n, 1:ndv)
-      sp1_aux(p, 1:ndv) = pstore(n, 1:ndv)
-     end if
-    end do
+    if(mwin)then
+     call v_realloc(sp_aux, np-pout, ndv)
+     p = 0
+     do n = 1, np
+      xp = loc_sp%part(n, cin)
+      if (xp>xl .and. xp<=xr) then
+       p = p + 1
+       sp_aux(p, 1:ndv) = loc_sp%part(n, 1:ndv)
+      end if
+     end do
+    else
+     call v_realloc(sp_aux, np-pout, ndv)
+     call v_realloc(sp1_aux, np-pout, ndv)
+     p = 0
+     do n = 1, np
+      xp = loc_sp%part(n, cin)
+      if (xp>xl .and. xp<=xr) then
+       p = p + 1
+       sp_aux(p, 1:ndv) = loc_sp%part(n, 1:ndv)
+       sp1_aux(p, 1:ndv) = pstore(n, 1:ndv)
+      end if
+     end do
+    endif
     np_new = p
    end if
   end subroutine
@@ -824,8 +834,58 @@
    !all species leaving the computational box at the left
    !x-boundary are removed
    !==========================================
+   !=========== mowing window section
+   if(moving_wind)then
+    nspx = nsp
+    xmm = loc_xgrid(imodx)%gmin
+    xmx = loc_xgrid(imodx)%gmax
+    lbd_min = loc_xgrid(0)%gmin
+    rbd_max = loc_xgrid(npe_xloc-1)%gmax
+    if (prlx) then
+     do ic = 1, nspx
+      np = loc_npart(imody, imodz, imodx, ic)
+      np_new = np
+      n_sr = 0
+      call traffic_size_eval(spec(ic), xmm, xmx, pex0, pex1, ibx, 1, np, &
+       n_sr, np_new)
+     ! Allocate the aux array with lenght np + n_recieve
+     ! because it needs to receive before to send
+      np_new_allocate = np_new + SUM( n_sr(1:2) )
+      np_rs = maxval(n_sr(1:4))
+      if (np_rs > 0) then
+       call v_realloc(sp_aux, np_new_allocate, ndv)
+       call part_prl_wexchange(spec(ic), xmm, xmx, lbd_min, rbd_max, &
+        pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
+       if (np_out /= np_new) then
+        write (6, *) 'error in x-part w-count', mype, np_out, np_new
+        ier = 99
+       end if
+       call p_realloc(spec(ic), np_new, ndv)
+       call v_realloc(ebfp, np_new, ndv)
+       spec(ic)%part(1:np_new, 1:ndv) = sp_aux(1:np_new, 1:ndv)
+       loc_npart(imody, imodz, imodx, ic) = np_new
+      end if
+     end do
+    else
+     do ic = 1, nspx
+      np = loc_npart(imody, imodz, imodx, ic)
+      if (np > 0) then
+       call reset_all_part_dist(spec(ic), ebfp, xmm, xmx, ibx, np, ndv, &
+        1, np_new, moving_wind)
+       if (np_new < np) then
+        loc_npart(imody, imodz, imodx, ic) = np_new
+        do n = 1, np_new
+         spec(ic)%part(n, 1:ndv) = sp_aux(n, 1:ndv)
+        end do
+       end if
+      end if
+     end do
+    end if
+    if(allocated(sp_aux)) deallocate(sp_aux)
+    return
+   endif
+!=========== not mowing window section
    nspx = nsp_run
-   if(moving_wind) nspx = nsp
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
    lbd_min = loc_xgrid(0)%gmin
@@ -842,8 +902,8 @@
      np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
-      allocate(sp_aux(np_new_allocate, ndv))
-      allocate(sp1_aux(np_new_allocate, ndv))
+      call v_realloc(sp_aux, np_new_allocate, ndv)
+      call v_realloc(sp1_aux, np_new_allocate, ndv)
       call part_prl_exchange(spec(ic), ebfp, xmm, xmx, lbd_min, rbd_max, &
         pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
       if (np_out /= np_new) then
@@ -862,7 +922,7 @@
      np = loc_npart(imody, imodz, imodx, ic)
      if (np > 0) then
       call reset_all_part_dist(spec(ic), ebfp, xmm, xmx, ibx, np, ndv, &
-        1, ndim, np_new)
+        1, np_new, moving_wind)
       if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
        do n = 1, np_new
@@ -875,7 +935,6 @@
    end if
    if(allocated(sp_aux)) deallocate(sp_aux)
    if(allocated(sp1_aux)) deallocate(sp1_aux)
-   if (moving_wind)return
 !==========================
    ymm = loc_ygrid(imody)%gmin
    ymx = loc_ygrid(imody)%gmax
@@ -891,8 +950,8 @@
      np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
-      allocate(sp_aux(np_new_allocate, ndv))
-      allocate(sp1_aux(np_new_allocate, ndv))
+      call v_realloc(sp_aux, np_new_allocate, ndv)
+      call v_realloc(sp1_aux, np_new_allocate, ndv)
       call part_prl_exchange(spec(ic), ebfp, ymm, ymx, lbd_min, &
         rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
       if (np_out /= np_new) then
@@ -913,7 +972,7 @@
      np = loc_npart(imody, imodz, imodx, ic)
      if (np > 0) then
       call reset_all_part_dist(spec(ic), ebfp, ymm, ymx, iby, np, ndv, &
-        2, ndim, np_new)
+        2, np_new, moving_wind)
       if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
        do n = 1, np_new
@@ -965,7 +1024,7 @@
       np = loc_npart(imody, imodz, imodx, ic)
       if (np>0) then
        call reset_all_part_dist(spec(ic), ebfp, zmm, zmx, ibz, np, ndv, &
-         3, ndim, np_new)
+         3, np_new, moving_wind)
        if (np_new < np) then
         loc_npart(imody, imodz, imodx, ic) = np_new
         do n = 1, np_new

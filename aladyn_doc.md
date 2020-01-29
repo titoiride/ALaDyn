@@ -42,10 +42,10 @@ creation_date: %Y-%m-%d
 
 [Input guide](|url|/page/NAMELIST_GUIDE.html)
 
-@Bug
+@warning
 ALaDyn code is fully maintained and tested.
 Anyway, if while using it you find any bug affecting the code or if you simply
 have questions, please feel free to open an issue in the [GitHub page](https://github.com/ALaDyn/ALaDyn/issues).
-@endbug
+@endwarning
 
 Copyright on the code is by the ALaDyn Collaboration.

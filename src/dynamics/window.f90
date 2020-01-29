@@ -167,22 +167,13 @@
      np_new = 0
      np_old = loc_npart(imody, imodz, imodx, ic)
      np_new = max(np_old+npt_inj(ic), np_new)
-     if (ic==1) then
-      if (size(ebfp,1)<np_new) then
-       deallocate (ebfp)
-       allocate (ebfp(np_new,ndv))
-      end if
-     end if
+     call v_realloc( ebfp, np_new, ndv )
      !=========================
      if (size(spec(ic)%part,ic)<np_new) then
-      do n = 1, np_old
-       ebfp(n, 1:ndv) = spec(ic)%part(n, 1:ndv)
-      end do
+      ebfp(1:np_old, 1:ndv) = spec(ic)%part(1:np_old, 1:ndv)
       deallocate (spec(ic)%part)
-      allocate (spec(ic)%part(np_new,ndv))
-      do n = 1, np_old
-       spec(ic)%part(n, 1:ndv) = ebfp(n, 1:ndv)
-      end do
+      allocate (spec(ic)%part(np_new, ndv))
+      spec(ic)%part(1:np_old, 1:ndv) = ebfp(1:np_old, 1:ndv)
      end if
      q = np_old
      call add_particles(q, i1, i2, ic)
