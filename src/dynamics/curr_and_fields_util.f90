@@ -29,12 +29,13 @@
   use grid_part_connect
   use grid_fields
   use init_grid_field
-
+  
+  implicit none
   interface set_lpf_acc
    module procedure :: set_lpf_acc_new
    module procedure :: set_lpf_acc_old
   end interface
-  implicit none
+
   !===============================
   ! MOVING WINDOW SECTION
   !=============================
@@ -44,7 +45,7 @@
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   real(dp), intent (out) :: apt
+   type (species_aux), intent (out) :: apt
    integer, intent (in) :: np, nf
 
    ! Uses alternating order quadratic or linear shapes
@@ -55,7 +56,7 @@
    case (2)
     call set_part2d_hcell_acc(ef, sp_loc, apt, np, nf)
    case (3)
-    call set_part3d_hcell_acc(ef, sp_loc, apt, np)
+    !call set_part3d_hcell_acc(ef, sp_loc, apt, np)
    end select
   end subroutine
 

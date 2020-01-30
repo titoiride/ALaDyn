@@ -45,7 +45,7 @@ module particles_def
   !! Flag that states if the species has been initialized
   real(dp) :: charge
   !! Particle charge
-  integer, private :: n_part
+  integer, public :: n_part
   !! Number of particles
   integer :: dimensions
   !! Number of dimensions in which particles live
@@ -80,8 +80,8 @@ module particles_def
   logical :: allocated_pz
   !! True if pz array is allocated
   
-  real(dp), allocatable :: lor_gamma(:)
-  !! Array containig the Lorentz gamma factor
+  real(dp), allocatable :: gamma_inv(:)
+  !! Array containig the inverse of Lorentz gamma factor
   logical :: allocated_gamma
   !! True if gamma array is allocated
   
@@ -98,20 +98,21 @@ module particles_def
   contains
    procedure, public :: call_component => call_component_spec
    procedure, public :: count_particles
-   procedure, private :: copy_scalars_from => copy_scalars_from_spec
+   procedure, public :: copy_scalars_from => copy_scalars_from_spec
    procedure, public :: flatten
    procedure, public :: how_many
    procedure, public :: total_size
    procedure, private :: pack_species_logical
    procedure, private :: pack_species_array
-   procedure, public :: sel_particles_bounds
+   procedure, private :: sel_particles_bounds
+   procedure, private :: sel_particles_index
    procedure, private :: set_charge_int
    procedure, private :: set_charge_real
    procedure, public :: set_part_number
    procedure, private :: set_component_real
    procedure, private :: set_component_integer
    generic :: pack_species => pack_species_array, pack_species_logical
-   generic :: sel_particles => sel_particles_bounds, sel particles_index
+   generic :: sel_particles => sel_particles_bounds, sel_particles_index
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_real, set_charge_int
  end type
@@ -139,7 +140,7 @@ module particles_def
   else if ( this%allocated_pz ) then
    number = SIZE( this%pz(:) )
   else if ( this%allocated_gamma ) then
-   number = SIZE( this%lor_gamma(:) )
+   number = SIZE( this%gamma_inv(:) )
   else if ( this%allocated_index ) then
    number = SIZE( this%part_index(:) )
   else if ( this%allocated_weight ) then
@@ -213,7 +214,7 @@ module particles_def
   case(PZ_COMP)
    comp = this%pz(lowb:upb)
   case(GAMMA_COMP)
-   comp = this%lor_gamma(lowb:upb)
+   comp = this%gamma_inv(lowb:upb)
   case(W_COMP)
    comp = real( this%weight(lowb:upb), dp )
   case(INDEX_COMP)
@@ -224,7 +225,7 @@ module particles_def
 
  subroutine redistribute( this, flat_array, num_particles )
   class(species_new), intent(inout) :: this
-  real(dp), intent(in) :: flat_array
+  real(dp), intent(in), dimension(:) :: flat_array
   integer, intent(in) :: num_particles
   integer :: i
 
@@ -254,7 +255,7 @@ module particles_def
    i = i + num_particles
   end if
   if( this%allocated_gamma ) then
-   this%lor_gamma(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   this%gamma_inv(1:num_particles) = flat_array((i + 1): (i + num_particles))
    i = i + num_particles
   end if
   if( this%allocated_weight ) then
@@ -303,7 +304,7 @@ module particles_def
    i = i + 1
   end if
   if( this%allocated_gamma ) then
-   temp( :, i ) = this%lor_gamma(:)
+   temp( :, i ) = this%gamma_inv(:)
    i = i + 1
   end if
   if( this%allocated_weight ) then
@@ -357,7 +358,7 @@ module particles_def
    sel%pz = this%pz(lower_bound:upper_bound)
   end if
   if( this%allocated_gamma ) then
-   sel%lor_gamma = this%lor_gamma(lower_bound:upper_bound)
+   sel%gamma_inv = this%gamma_inv(lower_bound:upper_bound)
   end if
   if( this%allocated_weight ) then
    sel%weight = this%weight(lower_bound:upper_bound)
@@ -423,7 +424,7 @@ module particles_def
   if( this%allocated_gamma ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%lor_gamma(i) = this%lor_gamma(n)
+    sel%gamma_inv(i) = this%gamma_inv(n)
    end do
   end if
 
@@ -510,7 +511,7 @@ module particles_def
    this%allocated_x = .true.
    allocate( this%px(n_particles), stat=allocstatus)
    this%allocated_px = .true.
-   allocate( this%lor_gamma(n_particles), stat=allocstatus)
+   allocate( this%gamma_inv(n_particles), stat=allocstatus)
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
@@ -526,7 +527,7 @@ module particles_def
    this%allocated_y = .true.
    allocate( this%py(n_particles), stat=allocstatus)
    this%allocated_py = .true.
-   allocate( this%lor_gamma(n_particles), stat=allocstatus)
+   allocate( this%gamma_inv(n_particles), stat=allocstatus)
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
@@ -547,7 +548,7 @@ module particles_def
    this%allocated_z = .true.
    allocate( this%pz(n_particles), stat=allocstatus)
    this%allocated_pz = .true.
-   allocate( this%lor_gamma(n_particles), stat=allocstatus)
+   allocate( this%gamma_inv(n_particles), stat=allocstatus)
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
@@ -582,7 +583,7 @@ module particles_def
    packed%pz = PACK( this%pz(:), mask)
   end if
   if( this%allocated_gamma ) then
-   packed%lor_gamma = PACK( this%lor_gamma(:), mask)
+   packed%gamma_inv = PACK( this%gamma_inv(:), mask)
   end if
   if( this%allocated_weight ) then
    packed%weight = PACK( this%weight(:), mask)
@@ -620,7 +621,7 @@ module particles_def
    packed%pz = PACK( this%pz(:), mask(:) )
   end if
   if( this%allocated_gamma ) then
-   packed%lor_gamma = PACK( this%lor_gamma(:), mask(:) )
+   packed%gamma_inv = PACK( this%gamma_inv(:), mask(:) )
   end if
   if( this%allocated_weight ) then
    packed%weight = PACK( this%weight(:), mask(:) )
@@ -667,7 +668,7 @@ module particles_def
   case(PZ_COMP)
    this%pz(lowb:upb) = values(:)
   case(GAMMA_COMP)
-   this%lor_gamma(lowb:upb) = values(:)
+   this%gamma_inv(lowb:upb) = values(:)
   case(W_COMP)
    this%weight(lowb:upb) = real(values(:), sp)
   end select
@@ -708,7 +709,7 @@ module particles_def
   case(PZ_COMP)
    this%pz(lowb:upb) = real(values(:), dp)
   case(GAMMA_COMP)
-   this%lor_gamma(lowb:upb) = real(values(:), dp)
+   this%gamma_inv(lowb:upb) = real(values(:), dp)
   case(W_COMP)
    this%weight(lowb:upb) = real(values(:), sp)
   case(INDEX_COMP)

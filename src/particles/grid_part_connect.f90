@@ -25,7 +25,7 @@
   use fstruct_data
   use grid_part_lib
   use particles_def
-
+  implicit none
   interface set_part1d_acc
    module procedure :: set_part1d_acc_new
    module procedure :: set_part1d_acc_old
@@ -35,7 +35,7 @@
    module procedure :: set_part2d_hcell_acc_new
    module procedure :: set_part2d_hcell_acc_old
   end interface
-  implicit none
+
   !========= SECTION FOR FIELDS ASSIGNEMENT
  contains
 
@@ -44,7 +44,7 @@
    !To be checked, actually never used
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
+   type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
 
    real(dp), allocatable, dimension(:) :: xx
@@ -71,7 +71,7 @@
       i2 = i + i1
       ap(2) = ap(2) + ax1(i1)*ef(i2, j2, 1, 2) !Ey(i)
      end do
-     pt(n, 1:3) = ap(1:3)
+     !pt(n, 1:3) = ap(1:3)
     end do
    !========================
    case (6)
@@ -80,7 +80,7 @@
 
     do n = 1, np
      ap(1:6) = zero_dp
-     xp(1) = xx(n)
+     xp1(1) = xx(n)
      call qqh_1d_spline(xp1, ax1, axh, i, ih)
 
      do i1 = 0, 2
@@ -95,7 +95,7 @@
       ap(3) = ap(3) + ax1(i1)*ef(i2, j2, 1, 3) !Ez
       ap(4) = ap(4) + ax1(i1)*ef(i2, j2, 1, 4) !Bx
      end do
-     pt(n, 1:6) = ap(1:6)
+     !pt(n, 1:6) = ap(1:6)
     end do
    end select
   end subroutine
@@ -161,7 +161,7 @@
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
+   type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
 
    real (dp) :: dvol, dvol1
@@ -175,13 +175,13 @@
    ! Uses quadratic or linear shapes depending on staggering
    ! ndf is the number of field component
    xp1 = zero_dp
-   pt = set_local_positions( sp_loc, X_COMP )
+   !pt = set_local_positions( sp_loc, X_COMP )
 
    select case (ndf) !Field components
    case (3)
     do n = 1, np
      ap(1:3) = zero_dp
-     xp1(1:2) = pt(n, 1:2)
+     !xp1(1:2) = pt(n, 1:2)
      call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
 
      do j1 = 0, 2
@@ -207,14 +207,14 @@
        ap(3) = ap(3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
       end do
      end do
-     pt(n, 1:3) = ap(1:3)
+     !pt(n, 1:3) = ap(1:3)
     end do
     !==============
    case (6)
     !=====================
     do n = 1, np
      ap(1:6) = zero_dp
-     xp1(1:2) = pt(n, 1:2)
+     !xp1(1:2) = pt(n, 1:2)
      call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
 
      do j1 = 0, 2
@@ -247,7 +247,7 @@
        ap(6) = ap(6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
       end do
      end do
-     pt(n, 1:6) = ap(1:6)
+     !pt(n, 1:6) = ap(1:6)
     end do
    end select
    !=====================

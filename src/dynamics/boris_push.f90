@@ -26,56 +26,78 @@
   use fstruct_data
   use common_param
 
+  implicit none
   interface init_lpf_momenta
    module procedure :: init_lpf_momenta_new
    module procedure :: init_lpf_momenta_old
   end interface
 
-  interface set_lp
-  implicit none
 
  contains
   ! SECTION for Leap-frog integrators in LP regime
   !==========================
   subroutine init_lpf_momenta_new(sp_loc, pt, np, ic)
    type(species_new), intent(inout) :: sp_loc
-   type(species_new), intent(inout) :: pt
+   type(species_aux), intent(inout) :: pt
    integer, intent(in) :: np, ic
    integer :: p
-   real(dp) :: alp, dth_lp, pp(3), vp(3), efp(6), gam2, gam_inv
-
+   real (dp) :: alp, dth_lp, vp(3), efp(6), gam2, gam_inv
+   real (dp), allocatable :: pp(:, :)
+ 
    dth_lp = 0.5*dt_loc
    alp = dth_lp*lorentz_fact(ic) ! Lfact =1./m
    ! Fields are already multiplied by particle(ic) charge
    !=========================
    ! from p^n to p^{n-1/2}
    !==========================
-   select case (curr_ndim)
-    !Maybe curr_ndim could be changed with sp_loc%dimensions
+   select case (sp_loc%dimensions)
+
    case (2)
-    do p = 1, np
-     efp(1:3) = -alp*pt(p, 1:3) !-DT/2*charge*(Ex,Ey,Bz)^n
-     pp(1:2) = sp_loc%part(p, 3:4) !p_{n}
-     gam2 = 1. + dot_product(pp(1:2), pp(1:2))
-     gam_inv = 1./sqrt(gam2)
-     vp(1:2) = pp(1:2)*gam_inv
-     sp_loc%part(p, 3) = sp_loc%part(p, 3) + efp(1) + vp(2)*efp(3)
-     sp_loc%part(p, 4) = sp_loc%part(p, 4) + efp(2) - vp(1)*efp(3)
-    end do
+
+    allocate( pp( np, 2) )
+
+    pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+
+    pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(EY_COMP, lb=1, ub=np) + &
+    alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component(pp(1:np, 1), PX_COMP, lb=1, ub=np)
+    call sp_loc%set_component(pp(1:np, 2), PY_COMP, lb=1, ub=np)
+
    case (3)
-    do p = 1, np
-     pp(1:3) = sp_loc%part(p, 4:6)
-     efp(1:6) = -alp*pt(p, 1:6)
-     gam2 = 1. + dot_product(pp(1:3), pp(1:3))
-     gam_inv = 1./sqrt(gam2) !1/gamma
-     vp(1:3) = gam_inv*pp(1:3)
-     sp_loc%part(p, 4) = sp_loc%part(p, 4) + efp(1) + vp(2)*efp(6) - &
-       vp(3)*efp(5)
-     sp_loc%part(p, 5) = sp_loc%part(p, 5) + efp(2) + vp(3)*efp(4) - &
-       vp(1)*efp(6)
-     sp_loc%part(p, 6) = sp_loc%part(p, 6) + efp(3) + vp(1)*efp(5) - &
-       vp(2)*efp(4)
-    end do
+
+    allocate( pp( np, 3) )
+
+    pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np) + &
+    alp*pt%call_component(BY_COMP, lb=1, ub=np) * sp_loc%call_component(PZ_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+
+    pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(EY_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(BX_COMP, lb=1, ub=np) * sp_loc%call_component(PZ_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np) + &
+    alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+
+    pp(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(EZ_COMP, lb=1, ub=np) - &
+    alp*pt%call_component(BY_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np) + &
+    alp*pt%call_component(BX_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
+    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component(pp(1:np, 1), PX_COMP, lb=1, ub=np)
+    call sp_loc%set_component(pp(1:np, 2), PY_COMP, lb=1, ub=np)
+    call sp_loc%set_component(pp(1:np, 3), PZ_COMP, lb=1, ub=np)
+
    end select
   end subroutine
   !==========================

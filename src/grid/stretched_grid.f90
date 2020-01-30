@@ -23,14 +23,15 @@
 
   use common_param
   use grid_param
-  use mpi_var, only: imody, imodz
+  use mpi_var, only: imody, imodz, imodx
 
   implicit none
   private
 
   type str_params
-   real(dp) :: const, smin, smax, nl_stretch, xs, dli_inv, ratio, &
+   real(dp) :: const, smin, smax, xs, dli_inv, ratio, &
     dl_inv, init_cell
+   integer :: nl_stretch
   end type
 
   type(str_params) :: y_params, z_params, x_params
@@ -174,9 +175,9 @@
    real (dp) :: yp, yp_loc
    integer :: n
    !========================
-   !  enter the y=part(ic1,n) particle position in stretched grid
+   !  enter the y=part(n) particle position in stretched grid
    !            y=y(xi)
-   !  exit      xi=part(ic1,n) the  particle position in uniform grid
+   !  exit      xi=part(n) the  particle position in uniform grid
    !               normalized to the Dxi cell size
    !==========================================
    y_params%const = one_dp*ny*dy/2
@@ -258,9 +259,9 @@
    real (dp) :: zp, zp_loc
    integer :: n
    !========================
-   !  enter the z=part(ic1,n) particle position in stretched grid
+   !  enter the z=part(n) particle position in stretched grid
    !            z=y(xi)
-   !  exit      xi=part(ic1,n) the  particle position in uniform grid
+   !  exit      xi=part(n) the  particle position in uniform grid
    !               normalized to the Dxi cell size
    !==========================================
    z_params%const = one_dp*nz*dz/2
@@ -284,7 +285,7 @@
    case default
 
     do n = 1, np
-     zp = pt(n, ic1)
+     zp = pt(n)
      if (zp <= z_params%smin) then
       zp_loc = invert_stretched_grid(zp, z_params) - z_params%init_cell
      else if (zp >= z_params%smax) then
@@ -294,7 +295,7 @@
      else
       zp_loc = invert_uniform_grid(zp, z_params) - z_params%init_cell
      end if
-     pt(n, ic1) = zp_loc
+     pt(n) = zp_loc
     end do
 
    end select

@@ -25,6 +25,7 @@
   use grid_param
   use code_util
   use parallel
+  use pstruct_data
 
   implicit none
   real (dp) :: loc_pstore(7)
@@ -373,7 +374,7 @@
    mask(:) = (xp >= xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
-   sp_aux_new = sel_particles(sp_loc, 1, old_np)
+   sp_aux_new = sp_loc%sel_particles( 1, old_np )
    sp_aux_new = sp_aux_new%pack_species( mask(:) )
 
    ! TO BE FIXED UPDATING VSTORE TO NEW STRUCT

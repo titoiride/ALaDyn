@@ -32,43 +32,61 @@ module particles_aux_def
  integer, parameter :: BY_COMP = 5
  integer, parameter :: BZ_COMP = 6
 
+ integer, parameter :: AUX1_COMP = 7
+ integer, parameter :: AUX2_COMP = 8
+ integer, parameter :: AUX3_COMP = 9
+ integer, parameter :: AUX4_COMP = 10
+ integer, parameter :: AUX5_COMP = 11
+ integer, parameter :: AUX6_COMP = 12
+ integer, parameter :: AUX7_COMP = 13
+
+ integer, parameter :: OLD_X_COMP = 14
+ integer, parameter :: OLD_Y_COMP = 15
+ integer, parameter :: OLD_Z_COMP = 16
+ integer, parameter :: OLD_PX_COMP = 17
+ integer, parameter :: OLD_PY_COMP = 18
+ integer, parameter :: OLD_PZ_COMP = 19
+ integer, parameter :: OLD_GAMMA_COMP = 20
+
  type, extends(species_new) :: species_aux
   !! Auxiliary species for operations on species type
 
-  real(dp), allocatable :: ex(:)
-  !! Ex field interpolated on particles position
-  logical :: allocated_ex
-  !! True if ex array is allocated
+  real(dp), allocatable :: aux1(:)
+  logical :: allocated_aux1
+  !! True if aux1 array is allocated
 
-  real(dp), allocatable :: ey(:)
-  !! Ey field interpolated on particles position
-  logical :: allocated_ey
-  !! True if ey array is allocated
+  real(dp), allocatable :: aux2(:)
+  logical :: allocated_aux2
+  !! True if aux2 array is allocated
 
-  real(dp), allocatable :: ez(:)
-  !! Ez field interpolated on particles position
-  logical :: allocated_ez
-  !! True if ez array is allocated
+  real(dp), allocatable :: aux3(:)
+  logical :: allocated_aux3
+  !! True if aux3 array is allocated
 
-  real(dp), allocatable :: bx(:)
+  real(dp), allocatable :: aux4(:)
   !! Bx field interpolated on particles position
-  logical :: allocated_bx
-  !! True if bx array is allocated
+  logical :: allocated_aux4
+  !! True if aux4 array is allocated
 
-  real(dp), allocatable :: by(:)
+  real(dp), allocatable :: aux5(:)
   !! By field interpolated on particles position
-  logical :: allocated_by
-  !! True if by array is allocated
+  logical :: allocated_aux5
+  !! True if aux5 array is allocated
 
-  real(dp), allocatable :: bz(:)
+  real(dp), allocatable :: aux6(:)
   !! Bz field interpolated on particles position
-  logical :: allocated_bz
-  !! True if bz array is allocated
+  logical :: allocated_aux6
+  !! True if aux6 array is allocated
+
+  real(dp), allocatable :: aux7(:)
+  !! Bz field interpolated on particles position
+  logical :: allocated_aux7
+  !! True if aux6 array is allocated
 
   contains
-
+   procedure, private :: set_component_aux
    procedure, public :: call_component => call_component_aux
-   procedure, private :: copy_scalars_from => copy_scalars_from_aux
+   procedure, public :: copy_scalars_from => copy_scalars_from_aux
 
  end type species_aux
 
@@ -98,11 +116,6 @@ module particles_aux_def
  pure function call_component_aux( this, component, lb, ub ) result(comp)
  !! Function that hides the underlying array and calls the
  !! corresponding component from the particle structure.
- !! @warning
- !! This function gives back always an array of reals!
- !! When using for weights and particle indexes remember to
- !! cast it again to the right type.
- !! @endwarning
 
   class(species_aux), intent(in) :: this
   integer, intent(in) :: component
@@ -127,18 +140,117 @@ module particles_aux_def
   ! WARNING: allocation status should be checked
   select case(component)
   case(EX_COMP)
-   comp = this%ex(lowb:upb)
+   comp = this%aux1(lowb:upb)
   case(EY_COMP)
-   comp = this%ey(lowb:upb)
+   comp = this%aux2(lowb:upb)
   case(EZ_COMP)
-   comp = this%ez(lowb:upb)
+   comp = this%aux3(lowb:upb)
   case(BX_COMP)
-   comp = this%bx(lowb:upb)
+   comp = this%aux4(lowb:upb)
   case(BY_COMP)
-   comp = this%by(lowb:upb)
+   comp = this%aux5(lowb:upb)
   case(BZ_COMP)
-   comp = this%bz(lowb:upb)
+   comp = this%aux6(lowb:upb)
+
+  case(AUX1_COMP)
+   comp = this%aux1(lowb:upb)
+  case(AUX2_COMP)
+   comp = this%aux2(lowb:upb)
+  case(AUX3_COMP)
+   comp = this%aux3(lowb:upb)
+  case(AUX4_COMP)
+   comp = this%aux4(lowb:upb)
+  case(AUX5_COMP)
+   comp = this%aux5(lowb:upb)
+  case(AUX6_COMP)
+   comp = this%aux6(lowb:upb)
+  case(AUX7_COMP)
+   comp = this%aux7(lowb:upb)
+
+  case(OLD_X_COMP)
+   comp = this%aux1(lowb:upb)
+  case(OLD_Y_COMP)
+   comp = this%aux2(lowb:upb)
+  case(OLD_Z_COMP)
+   comp = this%aux3(lowb:upb)
+  case(OLD_PX_COMP)
+   comp = this%aux4(lowb:upb)
+  case(OLD_PY_COMP)
+   comp = this%aux5(lowb:upb)
+  case(OLD_PZ_COMP)
+   comp = this%aux6(lowb:upb)
+  case(OLD_GAMMA_COMP)
+   comp = this%aux7(lowb:upb)
+
   end select
 
  end function
+
+ subroutine set_component_aux( this, values, component, lb, ub )
+  !! Assigns an array of real values to a given `species_new` component
+  class(species_aux), intent(out) :: this
+  real (dp), intent(in) :: values(:)
+  integer, intent(in) :: component
+  integer, intent(in), optional :: lb, ub
+  integer :: lowb, upb
+
+  if ( present(lb) ) then
+   lowb = lb
+  else
+   lowb = lbound(this%call_component( component ), 1)
+  end if
+
+  if ( present(ub) ) then
+   upb = ub
+  else
+   upb = ubound(this%call_component( component ), 1)
+  end if
+
+  select case(component)
+  case(EX_COMP)
+   this%aux1(lowb:upb) = values(:)
+  case(EY_COMP)
+   this%aux2(lowb:upb) = values(:)
+  case(EZ_COMP)
+   this%aux3(lowb:upb) = values(:)
+  case(BX_COMP)
+   this%aux4(lowb:upb) = values(:)
+  case(BY_COMP)
+   this%aux5(lowb:upb) = values(:)
+  case(BZ_COMP)
+   this%aux6(lowb:upb) = values(:)
+
+  case(AUX1_COMP)
+   this%aux1(lowb:upb) = values(:)
+  case(AUX2_COMP)
+   this%aux2(lowb:upb) = values(:)
+  case(AUX3_COMP)
+   this%aux3(lowb:upb) = values(:)
+  case(AUX4_COMP)
+   this%aux4(lowb:upb) = values(:)
+  case(AUX5_COMP)
+   this%aux5(lowb:upb) = values(:)
+  case(AUX6_COMP)
+   this%aux6(lowb:upb) = values(:)
+  case(AUX7_COMP)
+   this%aux7(lowb:upb) = values(:)
+
+  case(OLD_X_COMP)
+   this%aux1(lowb:upb) = values(:)
+  case(OLD_Y_COMP)
+   this%aux2(lowb:upb) = values(:)
+  case(OLD_Z_COMP)
+   this%aux3(lowb:upb) = values(:)
+  case(OLD_PX_COMP)
+   this%aux4(lowb:upb) = values(:)
+  case(OLD_PY_COMP)
+   this%aux5(lowb:upb) = values(:)
+  case(OLD_PZ_COMP)
+   this%aux6(lowb:upb) = values(:)
+  case(OLD_GAMMA_COMP)
+   this%aux7(lowb:upb) = values(:)
+
+  end select
+
+ end subroutine
 end module

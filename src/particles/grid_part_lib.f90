@@ -456,25 +456,23 @@
   !====================================
 
   !DIR$ ATTRIBUTES INLINE :: ql_interpolate
-  pure function set_local_positions( pt_array, component ) result(position)
+  function set_local_positions( pt_array, component ) result(position)
    type (species_new), intent(in) :: pt_array
    integer, intent(in) :: component
    integer :: np
-   real(dp), allocatable, dimension(:) :: comp
+   real(dp), allocatable, dimension(:) :: position
 
    np = pt_array%how_many()
-   comp = pt_array%call_component( component )
+   position = pt_array%call_component( component )
 
    select case(component)
    case(X_COMP)
-    call map2dx_part_sind( np, comp )
+    call map2dx_part_sind( np, position )
    case(Y_COMP)
-    call map2dy_part_sind( np, comp )
+    call map2dy_part_sind( np, position )
    case(Z_COMP)
-    call map2dz_part_sind( np, comp )
+    call map2dz_part_sind( np, position )
    end select
-
-   position(:) = comp(:)
 
   end function
 
