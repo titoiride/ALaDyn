@@ -31,7 +31,7 @@ module particles_def
  integer, parameter :: PX_COMP = 4
  integer, parameter :: PY_COMP = 5
  integer, parameter :: PZ_COMP = 6
- integer, parameter :: GAMMA_COMP = 7
+ integer, parameter :: INV_GAMMA_COMP = 7
  integer, parameter :: W_COMP = 8
  integer, parameter :: INDEX_COMP = -1
 
@@ -97,6 +97,7 @@ module particles_def
 
   contains
    procedure, public :: call_component => call_component_spec
+   procedure, public :: compute_gamma
    procedure, public :: count_particles
    procedure, public :: copy_scalars_from => copy_scalars_from_spec
    procedure, public :: flatten
@@ -122,6 +123,31 @@ module particles_def
  end interface
 
  contains
+
+ subroutine compute_gamma( this )
+  class(species_new), intent(inout) :: this
+  real(dp), allocatable :: temp(:)
+  integer :: np
+
+  np = this%how_many()
+  allocate( temp(np), source=zero_dp)
+
+  if ( this%allocated_px ) then
+   temp(1:np) = temp(1:np) + this%call_component( PX_COMP )*this%call_component( PX_COMP )
+  end if
+
+  if ( this%allocated_py ) then
+   temp(1:np) = temp(1:np) + this%call_component( PY_COMP )*this%call_component( PY_COMP )
+  end if
+
+  if ( this%allocated_pz ) then
+   temp(1:np) = temp(1:np) + this%call_component( PZ_COMP )*this%call_component( PZ_COMP )
+  end if
+
+  temp(1:np) = one_dp/sqrt(one_dp + temp(1:np))
+  call this%set_component(temp(1:np), INV_GAMMA_COMP, lb=1, ub=np)
+
+ end subroutine
 
  pure function count_particles( this ) result( number )
   class(species_new), intent(in) :: this
@@ -213,7 +239,7 @@ module particles_def
    comp = this%py(lowb:upb)
   case(PZ_COMP)
    comp = this%pz(lowb:upb)
-  case(GAMMA_COMP)
+  case(INV_GAMMA_COMP)
    comp = this%gamma_inv(lowb:upb)
   case(W_COMP)
    comp = real( this%weight(lowb:upb), dp )
@@ -667,7 +693,7 @@ module particles_def
    this%py(lowb:upb) = values(:)
   case(PZ_COMP)
    this%pz(lowb:upb) = values(:)
-  case(GAMMA_COMP)
+  case(INV_GAMMA_COMP)
    this%gamma_inv(lowb:upb) = values(:)
   case(W_COMP)
    this%weight(lowb:upb) = real(values(:), sp)
@@ -708,7 +734,7 @@ module particles_def
    this%py(lowb:upb) = real(values(:), dp)
   case(PZ_COMP)
    this%pz(lowb:upb) = real(values(:), dp)
-  case(GAMMA_COMP)
+  case(INV_GAMMA_COMP)
    this%gamma_inv(lowb:upb) = real(values(:), dp)
   case(W_COMP)
    this%weight(lowb:upb) = real(values(:), sp)

@@ -22,6 +22,7 @@
 module particles_aux_def
 
  use particles_def
+ use precision_def
  implicit none
  public
 
@@ -47,6 +48,10 @@ module particles_aux_def
  integer, parameter :: OLD_PY_COMP = 18
  integer, parameter :: OLD_PZ_COMP = 19
  integer, parameter :: OLD_GAMMA_COMP = 20
+
+ integer, parameter :: VX_COMP = 21
+ integer, parameter :: VY_COMP = 22
+ integer, parameter :: VZ_COMP = 23
 
  type, extends(species_new) :: species_aux
   !! Auxiliary species for operations on species type
@@ -84,7 +89,7 @@ module particles_aux_def
   !! True if aux6 array is allocated
 
   contains
-   procedure, private :: set_component_aux
+   procedure, public :: set_component_aux
    procedure, public :: call_component => call_component_aux
    procedure, public :: copy_scalars_from => copy_scalars_from_aux
 
@@ -182,6 +187,12 @@ module particles_aux_def
   case(OLD_GAMMA_COMP)
    comp = this%aux7(lowb:upb)
 
+  case(VX_COMP)
+   comp = this%aux4(lowb:upb)
+  case(VY_COMP)
+   comp = this%aux5(lowb:upb)
+  case(VZ_COMP)
+   comp = this%aux6(lowb:upb)
   end select
 
  end function
@@ -250,6 +261,12 @@ module particles_aux_def
   case(OLD_GAMMA_COMP)
    this%aux7(lowb:upb) = values(:)
 
+  case(VX_COMP)
+   this%aux4(lowb:upb) = values(:)
+  case(VY_COMP)
+   this%aux5(lowb:upb) = values(:)
+  case(VZ_COMP)
+   this%aux6(lowb:upb) = values(:)
   end select
 
  end subroutine

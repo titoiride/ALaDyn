@@ -32,7 +32,10 @@
    module procedure :: init_lpf_momenta_old
   end interface
 
-
+  interface lpf_momenta_and_positions
+   module procedure :: lpf_momenta_and_positions_new
+   module procedure :: lpf_momenta_and_positions_old
+  end interface
  contains
   ! SECTION for Leap-frog integrators in LP regime
   !==========================
@@ -50,7 +53,7 @@
    !=========================
    ! from p^n to p^{n-1/2}
    !==========================
-   select case (sp_loc%dimensions)
+   select case (curr_ndim)
 
    case (2)
 
@@ -59,12 +62,12 @@
     pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
     pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EY_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
     call sp_loc%set_component(pp(1:np, 1), PX_COMP, lb=1, ub=np)
     call sp_loc%set_component(pp(1:np, 2), PY_COMP, lb=1, ub=np)
@@ -76,23 +79,23 @@
     pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np) + &
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BY_COMP, lb=1, ub=np) * sp_loc%call_component(PZ_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
     pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EY_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BX_COMP, lb=1, ub=np) * sp_loc%call_component(PZ_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np) + &
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
     pp(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EZ_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BY_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np) + &
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BX_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
-    sp_loc%call_component(GAMMA_COMP, lb=1, ub=np)
+    sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
     call sp_loc%set_component(pp(1:np, 1), PX_COMP, lb=1, ub=np)
     call sp_loc%set_component(pp(1:np, 2), PY_COMP, lb=1, ub=np)
@@ -142,7 +145,200 @@
    end select
   end subroutine
   !======================================
-  subroutine lpf_momenta_and_positions(sp_loc, pt, np, ic)
+  subroutine lpf_momenta_and_positions_new(sp_loc, pt, np, ic)
+
+   type (species_new), intent (inout) :: sp_loc
+   type (species_aux), intent (inout) :: pt
+   integer, intent (in) :: np, ic
+
+   integer :: p
+   real (dp) :: alp, dt_lp, dth_lp
+   real (dp), allocatable :: pp(:, :), gam(:), gam02(:), &
+    b2(:), bv(:), bb(:, :), aux(:)
+   !========================================
+   ! uses exact explicit solution for
+   ! p^{n}=(p^{n+1/2}+p^{n-1/2})/2 and gamma^n=sqrt( 1+p^n*p^n)
+   ! v^n=p^n/gamma^n
+   !========================================
+   !Enter Fields multiplied by particle charge
+   dt_lp = dt_loc
+   dth_lp = 0.5*dt_lp
+   alp = dth_lp*lorentz_fact(ic)
+
+   select case (curr_ndim)
+   case (2)
+    allocate( pp(np, 2) )
+    allocate( gam02(np) )
+    allocate( gam(np) )
+    allocate( b2(np) )
+
+    !Old momenta
+    pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+    pt%call_component( EX_COMP, lb=1, ub=np )*alp
+    pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+    pt%call_component( EY_COMP, lb=1, ub=np )*alp
+
+    do p = 1, np
+     gam02(p) = 1. + dot_product(pp(p, 1:2), pp(p, 1:2))
+    end do
+
+    b2(1:np) = alp * alp * pt%call_component( BZ_COMP, lb=1, ub=np ) * &
+     pt%call_component( BZ_COMP, lb=1, ub=np )
+
+    !gam0 in Boris push
+    gam02(1:np) = gam02(1:np) - b2(1:np)
+
+    !exact gam^2 solution
+    gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+     4.*b2(1:np)))
+
+    gam(1:np) = sqrt(gam02(1:np))
+
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*(gam02(1:np)*pp(1:np, 1) + &
+     gam(1:np)*pp(1:np, 2) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
+     (gam02(1:np) * b2(1:np)) - sp_loc%call_component( PX_COMP, lb=1, ub=np), &
+     PX_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component( 2.*(gam02(1:np)*pp(1:np, 2) - &
+     gam(1:np)*pp(1:np, 1) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
+     (gam02(1:np) * b2(1:np)) - sp_loc%call_component( PY_COMP, lb=1, ub=np), &
+     PY_COMP, lb=1, ub=np)
+
+    !Updated momenta
+    call sp_loc%compute_gamma()
+
+    !Stores old positions
+    call pt%set_component_aux( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
+    call pt%set_component_aux( sp_loc%call_component( Y_COMP, lb=1, ub=np), OLD_Y_COMP, lb=1, ub=np)
+    call pt%set_component_aux(dt_lp*sp_loc%call_component( INV_GAMMA_COMP, lb=1, ub=np), &
+     OLD_GAMMA_COMP, lb=1, ub=np)
+
+    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+     sp_loc%call_component( PX_COMP, lb=1, ub=np), VX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+     sp_loc%call_component( PY_COMP, lb=1, ub=np), VY_COMP, lb=1, ub=np)
+
+    pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
+    pp(1:np, 2) = sp_loc%call_component(Y_COMP, lb=1, ub=np) + pt%call_component(VY_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component(pp(1:np, 1), X_COMP, lb=1, ub=np)
+    call sp_loc%set_component(pp(1:np, 2), Y_COMP, lb=1, ub=np)
+
+   case (3)
+
+    allocate( pp(np, 3) )
+    allocate( gam02(np) )
+    allocate( gam(np) )
+    allocate( b2(np) )
+    allocate( bb(np, 3) )
+    allocate( bv(np) )
+    allocate( aux(np) )
+
+    !Old momenta
+    pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+    pt%call_component( EX_COMP, lb=1, ub=np )*alp
+    pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+    pt%call_component( EY_COMP, lb=1, ub=np )*alp
+    pp(1:np, 3) = sp_loc%call_component( PZ_COMP, lb=1, ub=np) + &
+    pt%call_component( EZ_COMP, lb=1, ub=np )*alp
+
+    do p = 1, np
+     gam02(p) = 1. + dot_product(pp(p, 1:3), pp(p, 1:3))
+    end do
+
+    bb(1:np, 1) = alp * alp * pt%call_component( BX_COMP, lb=1, ub=np ) * &
+     pt%call_component( BX_COMP, lb=1, ub=np )
+    bb(1:np, 2) = alp * alp * pt%call_component( BY_COMP, lb=1, ub=np ) * &
+     pt%call_component( BY_COMP, lb=1, ub=np )
+    bb(1:np, 3) = alp * alp * pt%call_component( BZ_COMP, lb=1, ub=np ) * &
+     pt%call_component( BZ_COMP, lb=1, ub=np )
+
+    do p = 1, np
+     b2(p) = dot_product(bb(p, 1:3), bb(p, 1:3))
+     bv(p) = dot_product(bb(p, 1:3), pp(p, 1:3))
+    end do
+
+    !gam0 in Boris push
+    gam02(1:np) = gam02(1:np) - b2(1:np)
+
+    !exact gam^2 solution
+    gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+     4.*(b2(1:np) + bv(1:np) * bv(1:np))))
+
+    gam(1:np) = sqrt(gam02(1:np))
+
+    ! New PX_COMP calculation
+    aux(1:np) = gam02(1:np)*pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(pp(1:np, 2)*bb(1:np, 3) - &
+     pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
+    
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%call_component( PX_COMP, lb=1, ub=np), &
+     PX_COMP, lb=1, ub=np)
+
+    ! New PY_COMP calculation
+    aux(1:np) = gam02(1:np)*pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(pp(1:np, 3)*bb(1:np, 1) - &
+     pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
+    
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%call_component( PY_COMP, lb=1, ub=np), &
+     PY_COMP, lb=1, ub=np)
+
+    ! New PZ_COMP calculation
+    aux(1:np) = gam02(1:np)*pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(pp(1:np, 1)*bb(1:np, 2) - &
+     pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
+    
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%call_component( PZ_COMP, lb=1, ub=np), &
+     PZ_COMP, lb=1, ub=np)
+
+    !Updated momenta
+    call sp_loc%compute_gamma()
+
+    !Stores old positions
+    call pt%set_component_aux( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
+    call pt%set_component_aux( sp_loc%call_component( Y_COMP, lb=1, ub=np), OLD_Y_COMP, lb=1, ub=np)
+    call pt%set_component_aux( sp_loc%call_component( Z_COMP, lb=1, ub=np), OLD_Z_COMP, lb=1, ub=np)
+    call pt%set_component_aux(dt_lp*sp_loc%call_component( INV_GAMMA_COMP, lb=1, ub=np), &
+     OLD_GAMMA_COMP, lb=1, ub=np)
+
+    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+     sp_loc%call_component( PX_COMP, lb=1, ub=np), VX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+     sp_loc%call_component( PY_COMP, lb=1, ub=np), VY_COMP, lb=1, ub=np)
+    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+     sp_loc%call_component( PZ_COMP, lb=1, ub=np), VZ_COMP, lb=1, ub=np)
+
+    pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
+    pp(1:np, 2) = sp_loc%call_component(Y_COMP, lb=1, ub=np) + pt%call_component(VY_COMP, lb=1, ub=np)
+    pp(1:np, 2) = sp_loc%call_component(Z_COMP, lb=1, ub=np) + pt%call_component(VZ_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component(pp(1:np, 1), X_COMP, lb=1, ub=np)
+    call sp_loc%set_component(pp(1:np, 2), Y_COMP, lb=1, ub=np)
+    call sp_loc%set_component(pp(1:np, 2), Z_COMP, lb=1, ub=np)
+
+   end select
+   !====================
+   ! ??? CANNOT UNDERSTAND THIS ???
+   ! if (iform<2) then
+   !  !old charge stored for charge preserving schemes
+   !  do p = 1, np
+   !   pt(p, ch) = sp_loc%part(p, ch)
+   !  end do
+   ! end if
+   !In comoving frame vbeam >0
+   if (vbeam>0.) then
+    call sp_loc%set_component(sp_loc%call_component(X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
+     X_COMP, lb=1, ub=np)
+    call pt%set_component_aux(pt%call_component(OLD_X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
+     OLD_X_COMP, lb=1, ub=np)
+   end if
+  end subroutine
+  !=============================
+  subroutine lpf_momenta_and_positions_old(sp_loc, pt, np, ic)
 
    type (species), intent (inout) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)
