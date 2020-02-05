@@ -869,7 +869,7 @@
    real(dp) :: shx, shy, shz, smy, smz, alpha
    integer :: i, j, k, iic, i1, i2, j1, j2, k1, k2, point
    integer :: comp1, comp2
-   integer, dimension(1, 2):: COEFF
+   integer, dimension(:, :), allocatable :: COEFF
    integer :: stenc
 
    COEFF_2(1, :) = [3, -3, 1]
@@ -896,8 +896,8 @@
    i2 = ix2
 
    shx = dx_inv
-   stenc = 1
-   COEFF = TRANSPOSE( COEFF_0 )
+   stenc = 3
+   COEFF = - TRANSPOSE( COEFF_2 )
 
    if(xl_bd) then
     if (ibx == 0) then
@@ -933,7 +933,7 @@
        do j = j1, j2
         do point = 1, ptrght
          i = i2 + point
-         ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i2:(i2-stenc+1), j, k, iic))
+         ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i2:(i2-stenc+1):-1, j, k, iic))
         end do
        end do
       end do
