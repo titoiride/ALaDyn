@@ -31,6 +31,10 @@
   integer, dimension(2, 3), protected, private :: COEFF_2
   integer, dimension(2, 2), protected, private :: COEFF_1
   integer, dimension(2, 1), protected, private :: COEFF_0
+  real(dp), parameter :: EPS = 1.e-06
+  real(dp), dimension(2), parameter :: W03 = [ 1./3., 2./3. ]
+  real(dp), dimension(3), parameter :: LDER = [ 0.5, -2., 1.5 ]
+  real(dp), dimension(3), parameter :: RDER = [ -1.5, 2., -0.5 ]
 
  contains
 
@@ -1556,11 +1560,6 @@
    integer :: i, j, k, ic, i01, i02, j01, j02, k01, k02, fcomp_tot
    real(dp) :: shy, shz
    real(dp) :: dw(3), sl(2), sr(2), omgl(2), vv, s0
-   real(dp), parameter :: EPS = 1.e-06
-
-   real(dp), dimension(2), parameter :: W03 = [ 1./3., 2./3. ]
-   real(dp), dimension(3), parameter :: LDER = [ 0.5, -2., 1.5 ]
-   real(dp), dimension(3), parameter :: RDER = [ -1.5, 2., -0.5 ]
 
    ! Fourth order derivatives
    !real(dp), dimension(4), parameter :: LDER4 = [ 1./6., -1., 0.5, &
@@ -1598,7 +1597,7 @@
        var(i, ic) = flx(i, j, k, ic)
       end do
      end do
-     call weno3_nc(fcomp_tot, i01-2, i02+2, xl_bd, xr_bd)
+     call weno3_nc(var, ww0, fcomp_tot, i01-2, i02+2, xl_bd, xr_bd)
      do ic = 1, fcomp !var=momenta
       do i = i01, i02
        ef(i, j, k, ic) = ef(i, j, k, ic) - aphx*ww0(i, ic)
@@ -1617,7 +1616,7 @@
      do j = j01 - 2, j02 + 2
       var(j, fcomp+1) = flx(i, j, k, fcomp+2)
      end do
-     call weno3_nc(fcomp+1, j01-2, j02+2, yl_bd, yr_bd) !rec[flux][j01-1,j02+1] 
+     call weno3_nc(var, ww0, fcomp+1, j01-2, j02+2, yl_bd, yr_bd) !rec[flux][j01-1,j02+1] 
      do ic = 1, fcomp
       do j = j01, j02
        shy = aphy*loc_yg(j-2, 3, imody)
@@ -1638,7 +1637,7 @@
      do k = k01 - 2, k02 + 2
       var(k, ic) = flx(i, j, k, fcomp+3)
      end do
-     call weno3_nc(fcomp+1, k01-2, k02+2, zl_bd, zr_bd)
+     call weno3_nc(var, ww0, fcomp+1, k01-2, k02+2, zl_bd, zr_bd)
      do ic = 1, fcomp
       do k = k01, k02
        shz = aphz*loc_zg(k-2, 3, imodz)
@@ -1647,118 +1646,121 @@
      end do
     end do
    end do
-   !=================================
-  contains
-   subroutine weno3_nc( nc, i1, np, lbd, rbd )
-    integer, intent (in) :: nc, i1, np
-    logical, intent (in) :: lbd, rbd
-    !  enter data [i1,np]  
-    integer :: ii, iic
+  end subroutine
 
-    !=======ENTER DATA [i1,np]
-    !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 
-    !wr_{i+1/2}  uses stencil [i,i+1,i+2] in range [i=i1,np-2] 
-    !            common interior points [i1+1,np-2
-    !            Dw first derivative in range[i1+2,np-2]
-    !            L-Boundary    Dw^r[i1+1] uses the [i1:i1+3] stencil for v<0
-    !            R-Boundary    Dw^L[np-1] uses the [np-3:np1] stencil
-    !===========================================
+  !=================================
 
-    iic = nc - 1
-    do ii = i1, np
-     var(ii, nc+1) = var(ii, iic)*var(ii, nc) !in den array var(nc+1) => den*v
+  subroutine weno3_nc( var_in, ww0_in, nc, i1, np, lbd, rbd )
+   real(dp), intent(inout), dimension(:, :) :: var_in, ww0_in
+   integer, intent (in) :: nc, i1, np
+   logical, intent (in) :: lbd, rbd
+   !  enter data [i1,np]  
+   integer :: ii, iic
+   real(dp) :: dw(3), sl(2), sr(2), omgl(2), vv, s0
+
+   !=======ENTER DATA [i1,np]
+   !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 
+   !wr_{i+1/2}  uses stencil [i,i+1,i+2] in range [i=i1,np-2] 
+   !            common interior points [i1+1,np-2
+   !            Dw first derivative in range[i1+2,np-2]
+   !            L-Boundary    Dw^r[i1+1] uses the [i1:i1+3] stencil for v<0
+   !            R-Boundary    Dw^L[np-1] uses the [np-3:np1] stencil
+   !===========================================
+
+   iic = nc - 1
+   do ii = i1, np
+    var_in(ii, nc+1) = var_in(ii, iic)*var_in(ii, nc) !in den array var_in(nc+1) => den*v
+   end do
+   !================= reconstruct nc primitives (Px,Py,Pz,Den,V)
+   do iic = 1, nc
+    do ii = i1 + 1, np - 1
+     dw(1) = var_in(ii, iic) - var_in(ii-1, iic) !DW_{i-1/2}
+     dw(2) = var_in(ii+1, iic) - var_in(ii, iic) !DW_{i+1/2}
+     omgl(1) = 1./(dw(1)*dw(1)+EPS)
+     omgl(2) = 1./(dw(2)*dw(2)+EPS)
+     omgl(:) = omgl(:) * omgl(:)
+     sl(1) = W03(1)*omgl(1)
+     sl(2) = W03(2)*omgl(2)
+     sr(1) = W03(2)*omgl(1)
+     sr(2) = W03(1)*omgl(2)
+     s0 = sl(1) + sl(2)
+     wl(ii, iic) = var_in(ii, iic) + 0.5*(dw(1)*sl(1)+dw(2)*sl(2))/s0
+     s0 = sr(1) + sr(2)
+     wr(ii-1, iic) = var_in(ii, iic) - 0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
     end do
-    !================= reconstruct nc primitives (Px,Py,Pz,Den,V)
-    do iic = 1, nc
-     do ii = i1 + 1, np - 1
-      dw(1) = var(ii, iic) - var(ii-1, iic) !DW_{i-1/2}
-      dw(2) = var(ii+1, iic) - var(ii, iic) !DW_{i+1/2}
-      omgl(1) = 1./(dw(1)*dw(1)+EPS)
-      omgl(2) = 1./(dw(2)*dw(2)+EPS)
-      omgl(:) = omgl(:) * omgl(:)
-      sl(1) = W03(1)*omgl(1)
-      sl(2) = W03(2)*omgl(2)
-      sr(1) = W03(2)*omgl(1)
-      sr(2) = W03(1)*omgl(2)
-      s0 = sl(1) + sl(2)
-      wl(ii, iic) = var(ii, iic) + 0.5*(dw(1)*sl(1)+dw(2)*sl(2))/s0
-      s0 = sr(1) + sr(2)
-      wr(ii-1, iic) = var(ii, iic) - 0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
-     end do
-    end do
-    !===================================
-    !upwind boundary derivatives
-    if (lbd) then
-     do iic = 1, nc - 2
-      ii = i1
-      ww0(ii, iic) = 0.0
-      vv = var(ii, nc)
-      if (vv<0.0) ww0(ii, iic) = vv*(var(ii+1,iic)-var(ii,iic))
-      ii = i1 + 1
-      vv = var(ii, nc)
-      ww0(ii, iic) = vv*(var(ii,iic)-var(ii-1,iic))
-      if (vv<0.0) ww0(ii, iic) = vv*dot_product(RDER(1:3), var(ii:ii+2,iic))
-     end do
-     iic = nc - 1
-     ii = i1
-     ww0(ii, iic) = 0.0
-     vv = var(ii, nc)
-     if (vv<0.0) ww0(ii, iic) = var(ii+1, nc+1) - var(ii, nc+1)
-     ii = i1 + 1
-     vv = var(ii, nc)
-     ww0(ii, iic) = var(ii, nc+1) - var(ii-1, nc+1)
-     if (vv<0.0) ww0(ii, iic) = dot_product(RDER(1:3), var(ii:ii+2,nc+1))
-    end if
-    if (rbd) then
-     do iic = 1, nc - 2
-      ii = np - 1
-      vv = var(ii, nc)
-      ww0(ii, iic) = vv*(var(ii+1,iic)-var(ii,iic))
-      if (vv>0.0) ww0(ii, iic) = vv*dot_product(LDER(1:3), var(ii-2:ii,iic))
-      ii = np
-      vv = var(ii, nc)
-      ww0(ii, iic) = 0.0
-      if (vv>0.0) ww0(ii, iic) = vv*(var(ii,iic)-var(ii-1,iic))
-     end do
-     iic = nc - 1
-     ii = np - 1
-     vv = var(ii, nc)
-     ww0(ii, iic) = var(ii+1, nc+1) - var(ii, nc+1)
-     if (vv>0.0) ww0(ii, iic) = dot_product(LDER(1:3), var(ii-2:ii,nc+1))
-     ii = np
-     vv = var(ii, nc)
-     ww0(ii, iic) = 0.0
-     if (vv>0.0) ww0(ii, iic) = var(ii, nc+1) - var(ii-1, nc+1)
-    end if
-    !===================================
-    !   UPWINDING at interior points
-    !          Momenta
+   end do
+   !===================================
+   !upwind boundary derivatives
+   if (lbd) then
     do iic = 1, nc - 2
-     do ii = i1 + 1, np - 2
-      vv = wr(ii, nc) + wl(ii, nc)
-      s0 = sign(one_dp, vv) !s0=1*sign(vv)
-      var(ii, iic) = max(0., s0)*wl(ii, iic) - min(0., s0)*wr(ii, iic)
-     end do
-     do ii = i1 + 2, np - 2
-      ww0(ii, iic) = var(ii, nc)*(var(ii,iic)-var(ii-1,iic))
-     end do
+     ii = i1
+     ww0_in(ii, iic) = 0.0
+     vv = var_in(ii, nc)
+     if (vv<0.0) ww0_in(ii, iic) = vv*(var_in(ii+1,iic)-var_in(ii,iic))
+     ii = i1 + 1
+     vv = var_in(ii, nc)
+     ww0_in(ii, iic) = vv*(var_in(ii,iic)-var_in(ii-1,iic))
+     if (vv<0.0) ww0_in(ii, iic) = vv*dot_product(RDER(1:3), var_in(ii:ii+2,iic))
     end do
-    ! LxF flux for density variable
-    !   F=nv=> 1/2(F_L+F_R)-|V_{max}|(den_R-den_L)]
     iic = nc - 1
+    ii = i1
+    ww0_in(ii, iic) = 0.0
+    vv = var_in(ii, nc)
+    if (vv<0.0) ww0_in(ii, iic) = var_in(ii+1, nc+1) - var_in(ii, nc+1)
+    ii = i1 + 1
+    vv = var_in(ii, nc)
+    ww0_in(ii, iic) = var_in(ii, nc+1) - var_in(ii-1, nc+1)
+    if (vv<0.0) ww0_in(ii, iic) = dot_product(RDER(1:3), var_in(ii:ii+2,nc+1))
+   end if
+   if (rbd) then
+    do iic = 1, nc - 2
+     ii = np - 1
+     vv = var_in(ii, nc)
+     ww0_in(ii, iic) = vv*(var_in(ii+1,iic)-var_in(ii,iic))
+     if (vv>0.0) ww0_in(ii, iic) = vv*dot_product(LDER(1:3), var_in(ii-2:ii,iic))
+     ii = np
+     vv = var_in(ii, nc)
+     ww0_in(ii, iic) = 0.0
+     if (vv>0.0) ww0_in(ii, iic) = vv*(var_in(ii,iic)-var_in(ii-1,iic))
+    end do
+    iic = nc - 1
+    ii = np - 1
+    vv = var_in(ii, nc)
+    ww0_in(ii, iic) = var_in(ii+1, nc+1) - var_in(ii, nc+1)
+    if (vv>0.0) ww0_in(ii, iic) = dot_product(LDER(1:3), var_in(ii-2:ii,nc+1))
+    ii = np
+    vv = var_in(ii, nc)
+    ww0_in(ii, iic) = 0.0
+    if (vv>0.0) ww0_in(ii, iic) = var_in(ii, nc+1) - var_in(ii-1, nc+1)
+   end if
+   !===================================
+   !   UPWINDING at interior points
+   !          Momenta
+   do iic = 1, nc - 2
     do ii = i1 + 1, np - 2
-     dw(1) = var(ii-1, nc)
-     dw(2) = var(ii, nc)
-     dw(3) = var(ii+1, nc)
-     vv = maxval(abs(dw(1:3)))
-     var(ii, iic) = wr(ii, nc)*wr(ii, iic) + wl(ii, nc)*wl(ii, iic) - &
-       vv*(wr(ii,iic)-wl(ii,iic))
-     var(ii, iic) = 0.5*var(ii, iic)
+     vv = wr(ii, nc) + wl(ii, nc)
+     s0 = sign(one_dp, vv) !s0=1*sign(vv)
+     var_in(ii, iic) = max(0., s0)*wl(ii, iic) - min(0., s0)*wr(ii, iic)
     end do
     do ii = i1 + 2, np - 2
-     ww0(ii, iic) = var(ii, iic) - var(ii-1, iic)
+     ww0_in(ii, iic) = var_in(ii, nc)*(var_in(ii,iic)-var_in(ii-1,iic))
     end do
-   end subroutine
+   end do
+   ! LxF flux for density variable
+   !   F=nv=> 1/2(F_L+F_R)-|V_{max}|(den_R-den_L)]
+   iic = nc - 1
+   do ii = i1 + 1, np - 2
+    dw(1) = var_in(ii-1, nc)
+    dw(2) = var_in(ii, nc)
+    dw(3) = var_in(ii+1, nc)
+    vv = maxval(abs(dw(1:3)))
+    var_in(ii, iic) = wr(ii, nc)*wr(ii, iic) + wl(ii, nc)*wl(ii, iic) - &
+      vv*(wr(ii,iic)-wl(ii,iic))
+    var_in(ii, iic) = 0.5*var_in(ii, iic)
+   end do
+   do ii = i1 + 2, np - 2
+    ww0_in(ii, iic) = var_in(ii, iic) - var_in(ii-1, iic)
+   end do
   end subroutine
 !====================================
  end module
