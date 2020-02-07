@@ -69,6 +69,7 @@
     relativistic, Two_color
   logical :: enable_ionization(2), symmetrization_pulse
   logical :: charge_cons, high_gamma, test
+  logical :: density_limiter
 
   integer :: nx_loc, ny_loc, nz_loc, npty, nptz, nptx_max, ncmp_max, &
     nx_alloc

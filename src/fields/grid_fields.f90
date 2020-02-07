@@ -32,6 +32,9 @@
   integer, dimension(2, 2), protected, private :: COEFF_1
   integer, dimension(2, 1), protected, private :: COEFF_0
   real(dp), parameter :: EPS = 1.e-06
+  !! Small parameter for WENO interpolation
+  real(dp), save :: EPS_P
+  !! Small parameter for density flux limiter
   real(dp), dimension(3), parameter :: LDER = [ 0.5, -2., 1.5 ]
   real(dp), dimension(3), parameter :: RDER = [ -1.5, 2., -0.5 ]
 
@@ -1558,7 +1561,6 @@
    real(dp) :: aphx, aphy, aphz
    integer :: i, j, k, ic, i01, i02, j01, j02, k01, k02, fcomp_tot
    real(dp) :: shy, shz
-   real(dp) :: dw(3), sl(2), sr(2), omgl(2), vv, s0
 
    ! Fourth order derivatives
    !real(dp), dimension(4), parameter :: LDER4 = [ 1./6., -1., 0.5, &
@@ -1586,6 +1588,7 @@
    aphx = dt_step*dx_inv
    aphy = dt_step*dy_inv
    aphz = dt_step*dz_inv
+   EPS_P = min( 1.e-8, MINVAL(var(:, fcomp)))
    !===========================
    ! momenta-density
    fcomp_tot = fcomp +1
@@ -1596,7 +1599,7 @@
        var(i, ic) = flx(i, j, k, ic)
       end do
      end do
-     call density_flux(var, ww0, fcomp, xl_bd, xr_bd, i01 - 2, i02 + 2)
+     call density_flux(var, ww0, fcomp, aphx, xl_bd, xr_bd, i01 - 2, i02 + 2)
      call momentum_flux(var, ww0, fcomp, xl_bd, xr_bd, i01 - 2, i02 + 2)
      do ic = 1, fcomp !var=momenta
       do i = i01, i02
@@ -1616,7 +1619,7 @@
      do j = j01 - 2, j02 + 2
       var(j, fcomp+1) = flx(i, j, k, fcomp+2)
      end do
-     call density_flux(var, ww0, fcomp, yl_bd, yr_bd, j01 - 2, j02 + 2)
+     call density_flux(var, ww0, fcomp, aphy, yl_bd, yr_bd, j01 - 2, j02 + 2)
      call momentum_flux(var, ww0, fcomp, yl_bd, yr_bd, j01 - 2, j02 + 2)
      do ic = 1, fcomp
       do j = j01, j02
@@ -1638,7 +1641,7 @@
      do k = k01 - 2, k02 + 2
       var(k, ic) = flx(i, j, k, fcomp+3)
      end do
-     call density_flux(var, ww0, fcomp, zl_bd, zr_bd, k01 - 2, k02 + 2)
+     call density_flux(var, ww0, fcomp, aphz, zl_bd, zr_bd, k01 - 2, k02 + 2)
      call momentum_flux(var, ww0, fcomp, zl_bd, zr_bd, k01 - 2, k02 + 2)
      do ic = 1, fcomp
       do k = k01, k02
@@ -1651,13 +1654,19 @@
   end subroutine
 
   !=================================
-  subroutine density_flux( var_in, ww0_in, fcomp_in, lbd, rbd, i1, np )
+  subroutine density_flux( var_in, ww0_in, fcomp_in, aph, lbd, rbd, i1, np )
    real(dp), intent(inout), dimension(:, :) :: var_in, ww0_in
+   real(dp), intent(in) :: aph
    logical, intent(in) :: lbd, rbd
    integer, intent(in) :: fcomp_in, i1, np
    real(dp) :: vv, dw(3)
-   integer :: iic, ii, nc
+   real(dp), allocatable, dimension(:) :: thetap, thetam, fluxlf, flux, &
+    uplus, uminus, ulfp, ulfm, flux_tmp
+   integer :: iic, ii, nc, lb, ub, lb1, ub1
+   logical, allocatable, dimension(:) :: dens_maskp, dens_maskm
 
+   ! Provisional, must be selected in input file
+   density_limiter = .true.
    nc = fcomp_in + 1
    iic = nc - 1
    do ii = i1, np
@@ -1703,20 +1712,99 @@
    !===================================
    ! LxF flux for density variable
    !   F=nv=> 1/2(F_L+F_R)-|V_{max}|(den_R-den_L)]
-   iic = nc - 1
-   do ii = i1 + 1, np - 2
+   
+   if (density_limiter) then
+    iic = nc - 1
+    lb = lbound(ww0_in(:, iic), DIM=1)
+    ub = ubound(ww0_in(:, iic), DIM=1)
+    lb1 = i1 + 1
+    ub1 = np - 2
+    allocate( thetam(lb:ub), thetap(lb:ub), source = one_dp )
+    allocate( flux(lb:ub), fluxlf(lb:ub), source = ww0_in(:, iic) )
+    allocate( uplus(lb:ub), uminus(lb:ub), ulfp(lb:ub), ulfm(lb:ub) )
+    allocate( dens_maskp(lb:ub), dens_maskm(lb:ub), source=.false.)
+    !===================================
+    ! Max on the velocity in the surrounding of the point.
+    ! For a more robust (diffusive) LxF, use max on all the domain
     dw(1) = var_in(ii-1, nc)
     dw(2) = var_in(ii, nc)
     dw(3) = var_in(ii+1, nc)
     vv = maxval(abs(dw(1:3)))
-    var_in(ii, iic) = wr(ii, nc)*wr(ii, iic) + wl(ii, nc)*wl(ii, iic) - &
-      vv*(wr(ii,iic)-wl(ii,iic))
-    var_in(ii, iic) = 0.5*var_in(ii, iic)
-   end do
-   do ii = i1 + 2, np - 2
-    ww0_in(ii, iic) = var_in(ii, iic) - var_in(ii-1, iic)
-   end do
+    !===================================
+    ! In flux returns F_i based on reconstructed solution
+    call lxf_flux( flux, wr, wl, vv, iic, i1, np )
+    ! Flux_tmp temporarily stores the shifted real flux
+    flux_tmp(:) = EOSHIFT(flux(:), -1)
+    ! Computing U_i^+= U_i - 2*(dt/dx)*F_{i+1/2}
+    uplus(lb1:ub1) = var_in(lb1:ub1, iic) - 2*aph*flux(lb1:ub1)
+    ! Computing U_i^-= U_i + 2*(dt/dx)*F_{i-1/2}
+    uminus(lb1:ub1) = var_in(lb1:ub1, iic) + 2*aph*flux_tmp(lb1:ub1)
 
+    dens_maskp = uplus(:) < EPS_P
+    dens_maskm = uminus(:) < EPS_P
+
+    if (ANY(dens_maskp .or. dens_maskm)) then
+     !===================================
+     ! In fluxlf returns F_i based on the piecewise solution
+     call lxf_flux( fluxlf, EOSHIFT(var_in, 1), var_in, vv, iic, &
+      i1, np, (dens_maskp .or. dens_maskm))
+     where( dens_maskp )
+      ! Computing U_i^+LF= U_i - 2*(dt/dx)*F_{i+1/2}^LF
+      ulfp(lb1:ub1) = var_in(lb1:ub1, iic) - 2*aph*fluxlf(lb1:ub1)
+      thetap(lb1:ub1) = (EPS_P - ulfp(lb1:ub1))/(uplus(lb1:ub1) - ulfp(lb1:ub1))
+     end where
+     if ( ANY( thetap(lb1:ub1) > 1) .or. ANY( thetap(lb1:ub1) < 0) ) then
+      write(6, *) 'Invalid thetap'
+      call ABORT
+     end if
+     where( dens_maskm )
+     ! Computing U_i^-LF= U_i + 2*(dt/dx)*F_{i-1/2}^LF
+      flux_tmp = EOSHIFT(fluxlf, -1)
+      ulfm(lb1:ub1) = var_in(lb1:ub1, iic) + 2*aph*flux_tmp(lb1:ub1)
+      thetam(lb1:ub1) = (EPS_P - ulfm(lb1:ub1))/(uminus(lb1:ub1) - ulfm(lb1:ub1))
+     end where
+     if ( ANY( thetam(lb1:ub1) > 1) .or. ANY( thetam(lb1:ub1) < 0) ) then
+      write(6, *) 'Invalid thetam'
+      call ABORT
+     end if
+     ! In thetap the min between each thetap and thetam is stored
+     thetap(:) = MERGE( thetap, thetam, thetap < thetam)
+     if ( ANY( thetap(lb1:ub1) > 1 ) .or. ANY( thetap(lb1:ub1) < 0 ) ) then
+      write(6, *) 'Invalid thetap'
+      call ABORT
+     end if
+    end if
+    where( thetap(lb1:ub1) < 1 )
+     flux(lb1:ub1) = (1 - thetap(lb1:ub1))*fluxlf(lb1:ub1) + &
+      thetap(lb1:ub1)*flux(lb1:ub1)
+    end where
+    do ii = lb1 + 1, ub1
+     ww0_in(ii, iic) = flux(ii) - flux(ii-1)
+    end do
+
+   else
+    iic = nc - 1
+    lb1 = i1 + 1
+    ub1 = np - 2
+    lb = lbound(ww0_in(:, iic), DIM=1)
+    ub = ubound(ww0_in(:, iic), DIM=1)
+    allocate( flux(lb:ub), source = ww0_in(:, iic) )
+    !===================================
+    ! Max on the velocity in the surrounding of the point.
+    ! For a more robust (diffusive) LxF, use max on all the domain
+    dw(1) = var_in(ii-1, nc)
+    dw(2) = var_in(ii, nc)
+    dw(3) = var_in(ii+1, nc)
+    vv = maxval(abs(dw(1:3)))
+    !===================================
+    ! In flux returns F_i based on reconstructed solution
+    call lxf_flux( flux, wr, wl, vv, iic, i1, np )
+    do ii = lb1 + 1, ub1
+     ww0_in(ii, iic) = flux(ii) - flux(ii-1)
+    end do
+   end if
+
+   var_in(:, iic) = flux(:)
   end subroutine
   !=================================
 
@@ -1784,7 +1872,7 @@
   
 
   subroutine weno3_nc( var_in, cmp_min, cmp_max, i1, np )
-   real(dp), intent(inout), dimension(:, :) :: var_in
+   real(dp), intent(in), dimension(:, :) :: var_in
    integer, intent (in) :: cmp_min, cmp_max, i1, np
    !  enter data [i1,np]  
    integer :: ii, iic
@@ -1821,4 +1909,33 @@
 
   end subroutine
 !====================================
+
+  subroutine lxf_flux(flx_in, wr_in, wl_in, vv, comp_in, i1, np, mask_in )
+   real(dp), intent(out), dimension(:) :: flx_in
+   real(dp), intent(in), dimension(:, :) :: wr_in, wl_in
+   real(dp), intent(in) :: vv
+   integer, intent (in) :: comp_in, i1, np
+   logical, intent(in), dimension(:), optional :: mask_in
+   integer :: dens_cmp, vel_cmp , lb, ub
+   logical, allocatable, dimension(:) :: mask
+   dens_cmp = comp_in
+   vel_cmp = comp_in + 1
+   lb = i1 + 1
+   ub = np - 2
+   if ( present(mask_in) ) then
+    allocate(mask, source=mask_in)
+   else
+    allocate(mask(lb:ub), source=.true.)
+   end if
+
+   where ( mask )
+
+    flx_in(lb:ub) = wr_in(lb:ub, vel_cmp)*wr_in(lb:ub, dens_cmp) + &
+      wl_in(lb:ub, vel_cmp)*wl_in(lb:ub, dens_cmp) - &
+      vv*(wr_in(lb:ub, dens_cmp)-wl_in(lb:ub, dens_cmp))
+    flx_in(lb:ub) = 0.5*flx_in(lb:ub)
+
+   end where
+
+  end subroutine
  end module
