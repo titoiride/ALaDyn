@@ -1666,7 +1666,7 @@
    logical, allocatable, dimension(:) :: dens_maskp, dens_maskm
 
    ! Provisional, must be selected in input file
-   density_limiter = .true.
+   density_limiter = .false.
    nc = fcomp_in + 1
    iic = nc - 1
    do ii = i1, np
@@ -1721,15 +1721,12 @@
     ub1 = np - 2
     allocate( thetam(lb:ub), thetap(lb:ub), source = one_dp )
     allocate( flux(lb:ub), fluxlf(lb:ub), source = ww0_in(:, iic) )
-    allocate( uplus(lb:ub), uminus(lb:ub), ulfp(lb:ub), ulfm(lb:ub) )
-    allocate( dens_maskp(lb:ub), dens_maskm(lb:ub), source=.false.)
+    allocate( uplus(lb1:ub1), uminus(lb1:ub1), ulfp(lb1:ub1), ulfm(lb1:ub1) )
+    allocate( dens_maskp(lb1:ub1), dens_maskm(lb1:ub1), source=.false.)
     !===================================
     ! Max on the velocity in the surrounding of the point.
     ! For a more robust (diffusive) LxF, use max on all the domain
-    dw(1) = var_in(ii-1, nc)
-    dw(2) = var_in(ii, nc)
-    dw(3) = var_in(ii+1, nc)
-    vv = maxval(abs(dw(1:3)))
+    vv = maxval(abs(var_in(lb1:ub1, nc)))
     !===================================
     ! In flux returns F_i based on reconstructed solution
     call lxf_flux( flux, wr, wl, vv, iic, i1, np )
@@ -1740,8 +1737,8 @@
     ! Computing U_i^-= U_i + 2*(dt/dx)*F_{i-1/2}
     uminus(lb1:ub1) = var_in(lb1:ub1, iic) + 2*aph*flux_tmp(lb1:ub1)
 
-    dens_maskp = uplus(:) < EPS_P
-    dens_maskm = uminus(:) < EPS_P
+    dens_maskp(:) = uplus(:) < EPS_P
+    dens_maskm(:) = uminus(:) < EPS_P
 
     if (ANY(dens_maskp .or. dens_maskm)) then
      !===================================
@@ -1754,8 +1751,8 @@
       thetap(lb1:ub1) = (EPS_P - ulfp(lb1:ub1))/(uplus(lb1:ub1) - ulfp(lb1:ub1))
      end where
      if ( ANY( thetap(lb1:ub1) > 1) .or. ANY( thetap(lb1:ub1) < 0) ) then
-      write(6, *) 'Invalid thetap'
-      call ABORT
+      write(6, *) 'Invalid thetap (1)'
+      call gdbattach
      end if
      where( dens_maskm )
      ! Computing U_i^-LF= U_i + 2*(dt/dx)*F_{i-1/2}^LF
@@ -1765,13 +1762,13 @@
      end where
      if ( ANY( thetam(lb1:ub1) > 1) .or. ANY( thetam(lb1:ub1) < 0) ) then
       write(6, *) 'Invalid thetam'
-      call ABORT
+      call gdbattach
      end if
      ! In thetap the min between each thetap and thetam is stored
      thetap(:) = MERGE( thetap, thetam, thetap < thetam)
      if ( ANY( thetap(lb1:ub1) > 1 ) .or. ANY( thetap(lb1:ub1) < 0 ) ) then
-      write(6, *) 'Invalid thetap'
-      call ABORT
+      write(6, *) 'Invalid thetap (2)'
+      call gdbattach
      end if
     end if
     where( thetap(lb1:ub1) < 1 )
@@ -1792,10 +1789,7 @@
     !===================================
     ! Max on the velocity in the surrounding of the point.
     ! For a more robust (diffusive) LxF, use max on all the domain
-    dw(1) = var_in(ii-1, nc)
-    dw(2) = var_in(ii, nc)
-    dw(3) = var_in(ii+1, nc)
-    vv = maxval(abs(dw(1:3)))
+    vv = maxval(abs(var_in(lb1:ub1, nc)))
     !===================================
     ! In flux returns F_i based on reconstructed solution
     call lxf_flux( flux, wr, wl, vv, iic, i1, np )
@@ -1803,8 +1797,18 @@
      ww0_in(ii, iic) = flux(ii) - flux(ii-1)
     end do
    end if
-
    var_in(:, iic) = flux(:)
+
+   if ( allocated(thetap) ) deallocate(thetap)
+   if ( allocated(thetam) ) deallocate(thetam)
+   if ( allocated(flux) ) deallocate(flux)
+   if ( allocated(fluxlf) ) deallocate(fluxlf)
+   if ( allocated(uplus) ) deallocate(uplus)
+   if ( allocated(uminus) ) deallocate(uminus)
+   if ( allocated(ulfp) ) deallocate(ulfp)
+   if ( allocated(ulfm) ) deallocate(ulfm)
+   if ( allocated(dens_maskm) ) deallocate(dens_maskm)
+   if ( allocated(dens_maskp) ) deallocate(dens_maskp)
   end subroutine
   !=================================
 
