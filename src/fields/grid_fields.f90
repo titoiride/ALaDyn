@@ -1588,7 +1588,7 @@
    aphx = dt_step*dx_inv
    aphy = dt_step*dy_inv
    aphz = dt_step*dz_inv
-   EPS_P = min( 1.e-8, MINVAL(var(:, fcomp)))
+   EPS_P = 1.e-3
    !===========================
    ! momenta-density
    fcomp_tot = fcomp +1
@@ -1662,11 +1662,11 @@
    real(dp) :: vv, dw(3)
    real(dp), allocatable, dimension(:) :: thetap, thetam, fluxlf, flux, &
     uplus, uminus, ulfp, ulfm, flux_tmp
-   integer :: iic, ii, nc, lb, ub, lb1, ub1
+   real(dp), allocatable, dimension(:, :) :: var_in_tmp
+   integer :: iic, ii, nc, lb, ub, lb1, ub1, jj
    logical, allocatable, dimension(:) :: dens_maskp, dens_maskm
 
    ! Provisional, must be selected in input file
-   density_limiter = .false.
    nc = fcomp_in + 1
    iic = nc - 1
    do ii = i1, np
@@ -1715,13 +1715,14 @@
    
    if (density_limiter) then
     iic = nc - 1
-    lb = lbound(ww0_in(:, iic), DIM=1)
-    ub = ubound(ww0_in(:, iic), DIM=1)
+    lb = i1
+    ub = np
     lb1 = i1 + 1
     ub1 = np - 2
     allocate( thetam(lb:ub), thetap(lb:ub), source = one_dp )
-    allocate( flux(lb:ub), fluxlf(lb:ub), source = ww0_in(:, iic) )
-    allocate( uplus(lb1:ub1), uminus(lb1:ub1), ulfp(lb1:ub1), ulfm(lb1:ub1) )
+    allocate( flux(lb:ub), fluxlf(lb:ub), source = ww0_in(lb:ub, iic) )
+    allocate( uplus(lb1:ub1), uminus(lb1:ub1), ulfp(lb1:ub1), ulfm(lb1:ub1), &
+     flux_tmp(lb:ub), var_in_tmp(lb:ub, iic:nc) )
     allocate( dens_maskp(lb1:ub1), dens_maskm(lb1:ub1), source=.false.)
     !===================================
     ! Max on the velocity in the surrounding of the point.
@@ -1729,47 +1730,51 @@
     vv = maxval(abs(var_in(lb1:ub1, nc)))
     !===================================
     ! In flux returns F_i based on reconstructed solution
-    call lxf_flux( flux, wr, wl, vv, iic, i1, np )
+    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv, iic, i1, np )
     ! Flux_tmp temporarily stores the shifted real flux
-    flux_tmp(:) = EOSHIFT(flux(:), -1)
+    flux_tmp(lb:ub) = EOSHIFT(flux(lb:ub), -1)
     ! Computing U_i^+= U_i - 2*(dt/dx)*F_{i+1/2}
     uplus(lb1:ub1) = var_in(lb1:ub1, iic) - 2*aph*flux(lb1:ub1)
     ! Computing U_i^-= U_i + 2*(dt/dx)*F_{i-1/2}
     uminus(lb1:ub1) = var_in(lb1:ub1, iic) + 2*aph*flux_tmp(lb1:ub1)
 
-    dens_maskp(:) = uplus(:) < EPS_P
-    dens_maskm(:) = uminus(:) < EPS_P
+    dens_maskp(lb1:ub1) = uplus(lb1:ub1) < EPS_P
+    dens_maskm(lb1:ub1) = uminus(lb1:ub1) < EPS_P
 
     if (ANY(dens_maskp .or. dens_maskm)) then
+     !call gdbattach
      !===================================
      ! In fluxlf returns F_i based on the piecewise solution
-     call lxf_flux( fluxlf, EOSHIFT(var_in, 1), var_in, vv, iic, &
+     do jj = iic, nc
+      do ii = lb, ub
+       var_in_tmp(ii, jj) = var_in(ii + 1, jj)
+      end do
+     end do
+     call lxf_flux( fluxlf(lb:ub), var_in_tmp(lb:ub, iic:nc), var_in(lb:ub, iic:nc), vv, iic, &
       i1, np, (dens_maskp .or. dens_maskm))
+     flux_tmp(lb:ub) = EOSHIFT(fluxlf(lb:ub), -1)
      where( dens_maskp )
       ! Computing U_i^+LF= U_i - 2*(dt/dx)*F_{i+1/2}^LF
       ulfp(lb1:ub1) = var_in(lb1:ub1, iic) - 2*aph*fluxlf(lb1:ub1)
       thetap(lb1:ub1) = (EPS_P - ulfp(lb1:ub1))/(uplus(lb1:ub1) - ulfp(lb1:ub1))
      end where
-     if ( ANY( thetap(lb1:ub1) > 1) .or. ANY( thetap(lb1:ub1) < 0) ) then
-      write(6, *) 'Invalid thetap (1)'
+     if (ANY(thetap > 1) .or. ANY(thetap < 0)) then
+      write( 6, *) 'Warning, thetap not admissible'
       call gdbattach
      end if
+
      where( dens_maskm )
      ! Computing U_i^-LF= U_i + 2*(dt/dx)*F_{i-1/2}^LF
-      flux_tmp = EOSHIFT(fluxlf, -1)
+      
       ulfm(lb1:ub1) = var_in(lb1:ub1, iic) + 2*aph*flux_tmp(lb1:ub1)
       thetam(lb1:ub1) = (EPS_P - ulfm(lb1:ub1))/(uminus(lb1:ub1) - ulfm(lb1:ub1))
      end where
-     if ( ANY( thetam(lb1:ub1) > 1) .or. ANY( thetam(lb1:ub1) < 0) ) then
-      write(6, *) 'Invalid thetam'
+     if (ANY(thetam > 1) .or. ANY(thetam < 0)) then
+      write( 6, *) 'Warning, thetam not admissible'
       call gdbattach
      end if
      ! In thetap the min between each thetap and thetam is stored
-     thetap(:) = MERGE( thetap, thetam, thetap < thetam)
-     if ( ANY( thetap(lb1:ub1) > 1 ) .or. ANY( thetap(lb1:ub1) < 0 ) ) then
-      write(6, *) 'Invalid thetap (2)'
-      call gdbattach
-     end if
+     thetap(lb:ub) = MERGE( thetap, thetam, thetap < thetam)
     end if
     where( thetap(lb1:ub1) < 1 )
      flux(lb1:ub1) = (1 - thetap(lb1:ub1))*fluxlf(lb1:ub1) + &
@@ -1783,32 +1788,32 @@
     iic = nc - 1
     lb1 = i1 + 1
     ub1 = np - 2
-    lb = lbound(ww0_in(:, iic), DIM=1)
-    ub = ubound(ww0_in(:, iic), DIM=1)
-    allocate( flux(lb:ub), source = ww0_in(:, iic) )
+    lb = i1
+    ub = np
+    allocate( flux(lb:ub), source = ww0_in(lb:ub, iic) )
     !===================================
     ! Max on the velocity in the surrounding of the point.
     ! For a more robust (diffusive) LxF, use max on all the domain
     vv = maxval(abs(var_in(lb1:ub1, nc)))
     !===================================
     ! In flux returns F_i based on reconstructed solution
-    call lxf_flux( flux, wr, wl, vv, iic, i1, np )
+    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv, iic, i1, np )
     do ii = lb1 + 1, ub1
      ww0_in(ii, iic) = flux(ii) - flux(ii-1)
     end do
    end if
-   var_in(:, iic) = flux(:)
+   var_in(lb:ub, iic) = flux(lb:ub)
 
-   if ( allocated(thetap) ) deallocate(thetap)
-   if ( allocated(thetam) ) deallocate(thetam)
-   if ( allocated(flux) ) deallocate(flux)
-   if ( allocated(fluxlf) ) deallocate(fluxlf)
-   if ( allocated(uplus) ) deallocate(uplus)
-   if ( allocated(uminus) ) deallocate(uminus)
-   if ( allocated(ulfp) ) deallocate(ulfp)
-   if ( allocated(ulfm) ) deallocate(ulfm)
-   if ( allocated(dens_maskm) ) deallocate(dens_maskm)
-   if ( allocated(dens_maskp) ) deallocate(dens_maskp)
+   ! if ( allocated(thetap) ) deallocate(thetap)
+   ! if ( allocated(thetam) ) deallocate(thetam)
+   ! if ( allocated(flux) ) deallocate(flux)
+   ! if ( allocated(fluxlf) ) deallocate(fluxlf)
+   ! if ( allocated(uplus) ) deallocate(uplus)
+   ! if ( allocated(uminus) ) deallocate(uminus)
+   ! if ( allocated(ulfp) ) deallocate(ulfp)
+   ! if ( allocated(ulfm) ) deallocate(ulfm)
+   ! if ( allocated(dens_maskm) ) deallocate(dens_maskm)
+   ! if ( allocated(dens_maskp) ) deallocate(dens_maskp)
   end subroutine
   !=================================
 
@@ -1922,24 +1927,24 @@
    logical, intent(in), dimension(:), optional :: mask_in
    integer :: dens_cmp, vel_cmp , lb, ub
    logical, allocatable, dimension(:) :: mask
-   dens_cmp = comp_in
-   vel_cmp = comp_in + 1
-   lb = i1 + 1
-   ub = np - 2
+   dens_cmp = 1
+   vel_cmp = dens_cmp + 1
+   lb = 1
+   ub = SIZE(flx_in)
    if ( present(mask_in) ) then
     allocate(mask, source=mask_in)
    else
     allocate(mask(lb:ub), source=.true.)
    end if
 
-   where ( mask )
+   !where ( mask )
 
     flx_in(lb:ub) = wr_in(lb:ub, vel_cmp)*wr_in(lb:ub, dens_cmp) + &
       wl_in(lb:ub, vel_cmp)*wl_in(lb:ub, dens_cmp) - &
       vv*(wr_in(lb:ub, dens_cmp)-wl_in(lb:ub, dens_cmp))
     flx_in(lb:ub) = 0.5*flx_in(lb:ub)
 
-   end where
+   !end where
 
   end subroutine
  end module

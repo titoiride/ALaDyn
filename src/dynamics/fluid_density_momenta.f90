@@ -174,7 +174,8 @@
    real (dp) :: den, lzf
    real (dp) :: ex, ey, ez, bx, by, bz, vx, vy, vz, b1p, b1m
    real (dp), parameter :: WK1 = 0.5, EPS = 1.e-06
-   real (dp) :: abf_0, abf_1
+   real (dp), parameter :: abf_0 = zero_dp !(-0.5)
+   real (dp), parameter :: abf_1 = one_dp !(1.5)
    !===================================
    ! INTEGRATES by a one-step adam-bashfort (dissipative leap-frog)
    !===============================
@@ -191,8 +192,6 @@
    !fdim=curr_ndim+1
    fldim = size( flx, 4 )
    !fldim = 2*curr_ndim + 1 !(five or seven components)
-   abf_0 = -0.5
-   abf_1 = 1.5
    !================== Enter
    ! flx[Px,Py,Pz,den,vx,vy,vz]^n fldim components
    ! ef[1:nfield] = total (E,B) fields and ponderomotive force
