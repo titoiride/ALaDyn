@@ -199,6 +199,135 @@
       foldername // '/' // fname // '.bin'
    end if
   end subroutine
+!=====================
+  subroutine pic_density_flux_out(curr, cmp)
+   real (dp), intent (in) :: curr(:, :, :, :)
+   integer, intent (in) :: cmp
+   character (10) :: fname = '         '
+   character (8), dimension (3), parameter :: flvar = [ 'denvxout', &
+     'denvyout', 'denvzout' ]
+
+   integer :: ix, iy, iz, iq, ipe
+   integer :: lenw, kk, nx1, ny1, nz1
+   integer :: gr_dim(3), i_end, cmp_name
+   integer :: lun, i1, j1, k1
+   logical :: sd
+   character (4) :: foldername
+   integer, parameter :: file_version = 2
+   !========================
+   ! ns_index select ion species
+   ! cmp select components (density, energy,..)
+   ! cmp_loc is the index of output data:  jc(cmp_loc)
+
+   write (foldername, '(i4.4)') iout
+
+   int_par = 0
+   real_par = 0.0
+   lun = 0
+   j1 = jy1
+   k1 = kz1
+   i1 = ix1
+
+   kk = 0
+   do iz = k1, nzp, jump
+    do iy = j1, nyp, jump
+     do ix = i1, nxp, jump
+      kk = kk + 1
+      wdata(kk) = real(-curr(ix,iy,iz,cmp)/dt_loc, sp)
+     end do
+    end do
+   end do
+   cmp_name = 1
+
+   if (pe0) then
+    call endian(i_end)
+    nx1 = sum(nxh(1:npe_xloc))
+    ny1 = sum(nyh(1:npe_yloc))
+    nz1 = sum(nzh(1:npe_zloc))
+
+    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
+      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
+      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
+      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
+      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
+      real(b_charge,sp), real(vbeam,sp) ]
+
+    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+      file_version, i_end ]
+
+    write (fname, '(a8,i2.2)') flvar(cmp), iout
+    open (10, file=foldername//'/'//fname//'.dat', form='formatted')
+    write (10, *) ' Integer parameters'
+    write (10, '(4i14)') int_par
+    write (10, *) ' Real parameters'
+    write (10, '(4e14.5)') real_par
+    close (10)
+    write (6, *) 'Field data written on file: ' // foldername // '/' // &
+      fname // '.dat'
+
+    gr_dim(1) = nxh(1)
+    gr_dim(2) = nyh(1)
+    gr_dim(3) = nzh(1)
+    lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
+    lun = 10
+    open (10, file=foldername//'/'//fname//'.bin', form='unformatted')
+    write (10) par_dim
+    write (10) int_par
+    write (10) real_par
+    write (10) gr_dim
+    write (10) wdata(1:lenw)
+   end if
+
+   if (mype>0) then
+    gr_dim(1) = nxh(imodx+1)
+    gr_dim(2) = nyh(imody+1)
+    gr_dim(3) = nzh(imodz+1)
+    lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
+    sd = .true.
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+   else
+    sd = .false.
+    do ix = 0, npe_xloc - 1
+     gr_dim(1) = nxh(ix+1)
+     do iz = 0, npe_zloc - 1
+      gr_dim(3) = nzh(iz+1)
+      do iy = 0, npe_yloc - 1
+       gr_dim(2) = nyh(iy+1)
+       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
+       if (ipe>0) then
+        lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+        write (lun) gr_dim
+        write (lun) wdata(1:lenw)
+       end if
+      end do
+     end do
+    end do
+    kk = 0
+    do iq = 1, nx, jump
+     kk = kk + 1
+     gwdata(kk) = real(x(iq), sp)
+    end do
+    write (10) gwdata(1:kk)
+    kk = 0
+    do iq = 1, ny, jump
+     kk = kk + 1
+     gwdata(kk) = real(y(iq), sp)
+    end do
+    write (10) gwdata(1:kk)
+    kk = 0
+    do iq = 1, nz, jump
+     kk = kk + 1
+     gwdata(kk) = real(z(iq), sp)
+    end do
+    write (10) gwdata(1:kk)
+    close (10)
+    write (6, *) 'Fluid density-momenta written on file: ' // &
+      foldername // '/' // fname // '.bin'
+   end if
+  end subroutine
   !==================================
   subroutine den_energy_out( ns_ind, cmp, cmp_loc )
    integer, intent (in) :: ns_ind, cmp, cmp_loc

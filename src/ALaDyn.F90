@@ -115,8 +115,8 @@
      call beam_inject
      call Part_numbers
      if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
+     !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
     end if
-    !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
    endif
    call Data_out
    !================
@@ -188,6 +188,11 @@
       end if
      end do
     end if
+    if(ncurr >0)then
+     do i=1,curr_ndim
+      call pic_density_flux_out(jc,i)
+     end do
+    endif
     if (nden>0) then
      do i = 1, nsp
       call prl_den_energy_interp(i,nden)
@@ -213,6 +218,7 @@
       end do
      end if
     end if
+    !if(tnow>0.)write(6,*)'exit pdata',mype
 
     call CPU_TIME( unix_time_now )
 
