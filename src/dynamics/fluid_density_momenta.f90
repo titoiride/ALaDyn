@@ -174,8 +174,8 @@
    real (dp) :: den, lzf
    real (dp) :: ex, ey, ez, bx, by, bz, vx, vy, vz, b1p, b1m
    real (dp), parameter :: WK1 = 0.5, EPS = 1.e-06
-   real (dp), parameter :: abf_0 = zero_dp !(-0.5)
-   real (dp), parameter :: abf_1 = one_dp !(1.5)
+   real (dp), parameter :: abf_0 = -0.5
+   real (dp), parameter :: abf_1 = 1.5
    !===================================
    ! INTEGRATES by a one-step adam-bashfort (dissipative leap-frog)
    !===============================
