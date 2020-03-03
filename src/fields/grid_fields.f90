@@ -1588,7 +1588,6 @@
    aphx = dt_step*dx_inv
    aphy = dt_step*dy_inv
    aphz = dt_step*dz_inv
-   EPS_P = 1.e-3
    !===========================
    ! momenta-density
    fcomp_tot = fcomp +1
@@ -1665,6 +1664,7 @@
    real(dp), allocatable, dimension(:, :) :: var_in_tmp
    integer :: iic, ii, nc, lb, ub, lb1, ub1, jj
    logical, allocatable, dimension(:) :: dens_maskp, dens_maskm
+   real(dp),parameter :: EPS_P=1.e-03
 
    ! Provisional, must be selected in input file
    nc = fcomp_in + 1
@@ -1878,15 +1878,14 @@
 
   end subroutine
   !=================================
-  
-
   subroutine weno3_nc( var_in, cmp_min, cmp_max, i1, np )
    real(dp), intent(in), dimension(:, :) :: var_in
    integer, intent (in) :: cmp_min, cmp_max, i1, np
    !  enter data [i1,np]  
    integer :: ii, iic
    real(dp) :: dw(2), sl(2), sr(2), omgl(2), s0
-   real(dp), dimension(2), parameter :: W03 = [ 1./3., 2./3. ]
+   real(dp), dimension(2), parameter :: W03 = [ 1./4., 3./4. ]
+   real(dp), dimension(2), parameter :: W03_OPT = [ 1./3., 2./3. ]
 
    !=======ENTER DATA [i1,np]
    !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 
@@ -1896,7 +1895,6 @@
    !            L-Boundary    Dw^r[i1+1] uses the [i1:i1+3] stencil for v<0
    !            R-Boundary    Dw^L[np-1] uses the [np-3:np1] stencil
    !===========================================
-
    !================= reconstruct nc primitives (Px,Py,Pz,Den,V)
    do iic = cmp_min, cmp_max
     do ii = i1 + 1, np - 1
@@ -1915,7 +1913,6 @@
      wr(ii-1, iic) = var_in(ii, iic) - 0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
     end do
    end do
-
   end subroutine
 !====================================
 
