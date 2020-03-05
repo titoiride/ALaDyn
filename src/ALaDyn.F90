@@ -189,8 +189,8 @@
      end do
     end if
     if(ncurr >0)then
-     do i=1,curr_ndim
-      call pic_density_flux_out(jc,i)
+     do i = 1, curr_ndim
+      call density_flux_out(jc,i)
      end do
     endif
     if (nden>0) then

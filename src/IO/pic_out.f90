@@ -200,12 +200,12 @@
    end if
   end subroutine
 !=====================
-  subroutine pic_density_flux_out(curr, cmp)
+  subroutine density_flux_out(curr, cmp)
    real (dp), intent (in) :: curr(:, :, :, :)
    integer, intent (in) :: cmp
    character (10) :: fname = '         '
-   character (8), dimension (3), parameter :: flvar = [ 'denvxout', &
-     'denvyout', 'denvzout' ]
+   character (8), dimension (3), parameter :: flvar = [ 'Denvxout', &
+     'Denvyout', 'Denvzout' ]
 
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
