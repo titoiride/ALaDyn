@@ -45,6 +45,7 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
  iby              = 0,
  ibz              = 0,
  ibeam            = 1
+ density_limiter  = .false.,
 /
 ```
 
@@ -80,6 +81,8 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
   + `0`
   + `1`
   + `2` For Envelope-fluid LWFA model (model_id = 4). Code solves Euler equations for plasma density with the laser described as an envelope.
++ `density_limiter` (default is false) bool variable that activates the density flux limiter in the fluid equations.
+This enforces density positivity. **WARNING** Still in beta, use is not recommended
 
 ## TARGET_DESCRIPTION namelist block
 
@@ -314,6 +317,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
  iene           = 200,
  nvout          = 3,
  nden           = 1,
+ ncurr          = 1,
  npout          = 0,
  nbout          = 0,
  jump           = 1,
@@ -336,7 +340,9 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 + `nden` can have three different values; every output is divided by species on different files:
   + `1`: writes *only* the particle density *n* on the grid
   + `2`: writes *also* the energy density *n ･ gamma* on the grid
-  + `3`: writes *also* the currents *J* on the grid
++ `ncurr` current density *J* in the PIC and ENV scheme.
+  + `0`: no output
+  + `1`: writes the current
 + `npout`
   + `1`: writes *only* the electron phase space
   + `2`: writes *only* the proton phase space

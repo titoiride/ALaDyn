@@ -1666,7 +1666,6 @@
    logical, allocatable, dimension(:) :: dens_maskp, dens_maskm
    real(dp), parameter :: EPS_P = 1.e-03
 
-   ! Provisional, must be selected in input file
    nc = fcomp_in + 1
    iic = nc - 1
    do ii = i1, np
@@ -1714,6 +1713,15 @@
    !   F=nv=> 1/2(F_L+F_R)-|V_{max}|(den_R-den_L)]
    
    if (density_limiter) then
+    !==========================================
+    ! Density flux limiter as described in
+    ! Hu et al., "Positivity-preserving method 
+    ! for high-order conservative
+    ! schemes solving compressible Euler equations.", 
+    ! JCP 242 (2013).
+    ! Still in beta, should be validated.
+    !==========================================
+
     iic = nc - 1
     lb = i1
     ub = np
