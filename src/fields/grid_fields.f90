@@ -1658,13 +1658,13 @@
    real(dp), intent(in) :: aph
    logical, intent(in) :: lbd, rbd
    integer, intent(in) :: fcomp_in, i1, np
-   real(dp) :: vv, dw(3)
+   real(dp) :: vv
    real(dp), allocatable, dimension(:) :: thetap, thetam, fluxlf, flux, &
     uplus, uminus, ulfp, ulfm, flux_tmp
    real(dp), allocatable, dimension(:, :) :: var_in_tmp
    integer :: iic, ii, nc, lb, ub, lb1, ub1, jj
    logical, allocatable, dimension(:) :: dens_maskp, dens_maskm
-   real(dp),parameter :: EPS_P=1.e-03
+   real(dp), parameter :: EPS_P = 1.e-03
 
    ! Provisional, must be selected in input file
    nc = fcomp_in + 1
@@ -1730,7 +1730,7 @@
     vv = maxval(abs(var_in(lb1:ub1, nc)))
     !===================================
     ! In flux returns F_i based on reconstructed solution
-    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv, iic, i1, np )
+    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv )
     ! Flux_tmp temporarily stores the shifted real flux
     flux_tmp(lb:ub) = EOSHIFT(flux(lb:ub), -1)
     ! Computing U_i^+= U_i - 2*(dt/dx)*F_{i+1/2}
@@ -1750,8 +1750,8 @@
        var_in_tmp(ii, jj) = var_in(ii + 1, jj)
       end do
      end do
-     call lxf_flux( fluxlf(lb:ub), var_in_tmp(lb:ub, iic:nc), var_in(lb:ub, iic:nc), vv, iic, &
-      i1, np, (dens_maskp .or. dens_maskm))
+     call lxf_flux( fluxlf(lb:ub), var_in_tmp(lb:ub, iic:nc), var_in(lb:ub, iic:nc), vv, &
+      (dens_maskp .or. dens_maskm))
      flux_tmp(lb:ub) = EOSHIFT(fluxlf(lb:ub), -1)
      where( dens_maskp )
       ! Computing U_i^+LF= U_i - 2*(dt/dx)*F_{i+1/2}^LF
@@ -1797,7 +1797,7 @@
     vv = maxval(abs(var_in(lb1:ub1, nc)))
     !===================================
     ! In flux returns F_i based on reconstructed solution
-    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv, iic, i1, np )
+    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv )
     do ii = lb1 + 1, ub1
      ww0_in(ii, iic) = flux(ii) - flux(ii-1)
     end do
@@ -1916,11 +1916,10 @@
   end subroutine
 !====================================
 
-  subroutine lxf_flux(flx_in, wr_in, wl_in, vv, comp_in, i1, np, mask_in )
+  subroutine lxf_flux(flx_in, wr_in, wl_in, vv, mask_in )
    real(dp), intent(out), dimension(:) :: flx_in
    real(dp), intent(in), dimension(:, :) :: wr_in, wl_in
    real(dp), intent(in) :: vv
-   integer, intent (in) :: comp_in, i1, np
    logical, intent(in), dimension(:), optional :: mask_in
    integer :: dens_cmp, vel_cmp , lb, ub
    logical, allocatable, dimension(:) :: mask
@@ -1934,14 +1933,14 @@
     allocate(mask(lb:ub), source=.true.)
    end if
 
-   !where ( mask )
+   where ( mask )
 
     flx_in(lb:ub) = wr_in(lb:ub, vel_cmp)*wr_in(lb:ub, dens_cmp) + &
       wl_in(lb:ub, vel_cmp)*wl_in(lb:ub, dens_cmp) - &
       vv*(wr_in(lb:ub, dens_cmp)-wl_in(lb:ub, dens_cmp))
     flx_in(lb:ub) = 0.5*flx_in(lb:ub)
 
-   !end where
+   end where
 
   end subroutine
  end module
