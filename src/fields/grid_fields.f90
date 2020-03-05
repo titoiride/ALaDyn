@@ -1936,7 +1936,7 @@
    lb = 1
    ub = SIZE(flx_in)
    if ( present(mask_in) ) then
-    allocate(mask, source=mask_in)
+    allocate(mask(lb:ub), source=mask_in)
    else
     allocate(mask(lb:ub), source=.true.)
    end if
