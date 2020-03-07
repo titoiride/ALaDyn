@@ -27,6 +27,8 @@
 
   implicit none
 
+  type(interp_coeff), private :: interp
+  !! Useful variable to store interpolation results
  contains
 
   !DIR$ ATTRIBUTES INLINE :: set_local_positions
@@ -109,10 +111,15 @@
      wght = real(pt(n,4), sp)
      xp(1:2) = pt(n, 1:2)
 
-     call cden_2d_wgh(xp, ax0, ay0, i, j)
+     interp = cden_2d_wgh( xp )
+
+     ax0(0:3) = interp%coeff_x(1:4)
+     ay0(0:3) = interp%coeff_y(1:4)
+
+     i = interp%ix
+     j = interp%iy
+
      ax0(0:3) = wght*ax0(0:3)
-     i = i - 1
-     j = j - 1
      do j1 = 0, 3
       j2 = j + j1
       do i1 = 0, 3
@@ -135,11 +142,18 @@
     do n = 1, np
      xp(1:3) = pt(n, 1:3)
      wght = real(pt(n,4), sp)
-     call cden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
+
+     interp = cden_3d_wgh( xp )
+
+     ax0(0:3) = interp%coeff_x(1:4)
+     ay0(0:3) = interp%coeff_y(1:4)
+     az0(0:3) = interp%coeff_z(1:4)
+
+     i = interp%ix
+     j = interp%iy
+     k = interp%iz
+
      ax0(0:3) = wght*ax0(0:3)
-     i = i - 1
-     j = j - 1
-     k = k - 1
      do k1 = 0, spl
       k2 = k + k1
       do j1 = 0, spl
@@ -190,10 +204,15 @@
      wght = real(pt(n,4), sp)
      xp(1:2) = pt(n, 1:2)
 
-     call qden_2d_wgh(xp, ax0, ay0, i, j)
+     interp = qden_2d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+
+     i = interp%ix
+     j = interp%iy
+
      ax0(0:2) = wght*ax0(0:2)
-     i = i - 1
-     j = j - 1
      do j1 = 0, 2
       j2 = j + j1
       do i1 = 0, 2
@@ -216,11 +235,18 @@
     do n = 1, np
      xp(1:3) = pt(n, 1:3)
      wght = real(pt(n,4), sp)
-     call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
+
+     interp = qden_3d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+     az0(0:2) = interp%coeff_z(1:3)
+
+     i = interp%ix
+     j = interp%iy
+     k = interp%iz
+
      ax0(0:2) = wght*ax0(0:2)
-     i = i - 1
-     j = j - 1
-     k = k - 1
      do k1 = 0, spl
       k2 = k + k1
       do j1 = 0, spl
@@ -265,9 +291,11 @@
      wgh_cmp = sp_loc%part(n, 5)
      wght = charge*wgh
 
-     call qden_1d_wgh(xp, ax0, i)
-     ax0(0:2) = wght*ax0(0:2)
-     i = i - 1
+     interp = qden_1d_wgh( xp )
+
+     ax0(0:2) = wght*interp%coeff_x(1:3)
+     i = interp%ix
+
      do i1 = 0, 2
       i2 = i + i1
       den(i2, j2, 1, ic) = den(i2, j2, 1, ic) + ax0(i1)
@@ -286,10 +314,15 @@
      wght = real(pt(n,4), sp)
      xp(1:2) = pt(n, 1:2)
 
-     call qden_2d_wgh(xp, ax0, ay0, i, j)
+     interp = qden_2d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+
+     i = interp%ix
+     j = interp%iy
+
      ax0(0:2) = wght*ax0(0:2)
-     i = i - 1
-     j = j - 1
      do j1 = 0, 2
       j2 = j + j1
       do i1 = 0, 2
@@ -312,11 +345,18 @@
     do n = 1, np
      xp(1:3) = pt(n, 1:3)
      wght = real(pt(n,4), sp)
-     call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
+
+     interp = qden_3d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+     az0(0:2) = interp%coeff_z(1:3)
+
+     i = interp%ix
+     j = interp%iy
+     k = interp%iz
+
      ax0(0:2) = wght*ax0(0:2)
-     i = i - 1
-     j = j - 1
-     k = k - 1
      do k1 = 0, spl
       k2 = k + k1
       do j1 = 0, spl
@@ -364,8 +404,12 @@
      pp(1:2) = sp_loc%part(n, 3:4)
      gam2 = pp(1)*pp(1) + pp(2)*pp(2)
      wgh_cmp = sp_loc%part(n, ch)
-     call qden_1d_wgh(xp, ax0, i)
-     i = i - 1
+
+     interp = qden_1d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     i = interp%ix
+
      do i1 = 0, 2
       i2 = i + i1
       dvol = ax0(i1)
@@ -393,9 +437,14 @@
       xp(1:2) = pt(n, 1:2)
       wgh_cmp = pt(n, ch)
 
-      call qden_2d_wgh(xp, ax0, ay0, i, j)
-      i = i - 1
-      j = j - 1
+      interp = qden_2d_wgh( xp )
+
+      ax0(0:2) = interp%coeff_x(1:3)
+      ay0(0:2) = interp%coeff_y(1:3)
+ 
+      i = interp%ix
+      j = interp%iy
+
       do j1 = 0, 2
        j2 = j + j1
        do i1 = 0, 2
@@ -424,9 +473,14 @@
       xp(1:2) = pt(n, 1:2)
       wgh_cmp = pt(n, ch)
 
-      call qden_2d_wgh(xp, ax0, ay0, i, j)
-      i = i - 1
-      j = j - 1
+      interp = qden_2d_wgh( xp )
+
+      ax0(0:2) = interp%coeff_x(1:3)
+      ay0(0:2) = interp%coeff_y(1:3)
+ 
+      i = interp%ix
+      j = interp%iy
+
       !============ adds iparticle assigned [A^2/2]_p contribution
       do j1 = 0, 2
        j2 = j + j1
@@ -461,11 +515,15 @@
      xp(1:3) = pt(n, 1:3)
      wgh_cmp = pt(n, ch)
 
-     call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
+     interp = qden_3d_wgh( xp )
 
-     i = i - 1
-     j = j - 1
-     k = k - 1
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+     az0(0:2) = interp%coeff_z(1:3)
+
+     i = interp%ix
+     j = interp%iy
+     k = interp%iz
 
      do k1 = 0, spl
       k2 = k + k1
@@ -525,9 +583,10 @@
      gam = sqrt(pp(1)*pp(1)+pp(2)*pp(2)+1.)
      wgh_cmp = sp_loc%part(n, ch)
 
-     call qden_1d_wgh(xp, ax0, i)
-     ax0(0:2) = wgh*ax0(0:2)
-     i = i - 1
+     interp = qden_1d_wgh( xp )
+
+     ax0(0:2) = wgh*interp%coeff_x(1:3)
+     i = interp%ix
 
      do i1 = 0, 2
       i2 = i + i1
@@ -549,10 +608,15 @@
      gam = pt(n, 4)
      wgh_cmp = pt(n, ch)
 
-     call qden_2d_wgh(xp, ax0, ay0, i, j)
+     interp = qden_2d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+
+     i = interp%ix
+     j = interp%iy
+
      ax0(0:2) = wgh*ax0(0:2)
-     i = i - 1
-     j = j - 1
      do j1 = 0, 2
       j2 = j + j1
       do i1 = 0, 2
@@ -576,11 +640,17 @@
      wgh_cmp = pt(n, ch)
      gam = pt(n, 4)
 
-     call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
+     interp = qden_3d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+     az0(0:2) = interp%coeff_z(1:3)
+
+     i = interp%ix
+     j = interp%iy
+     k = interp%iz
+
      ax0(0:2) = wgh*ax0(0:2)
-     i = i - 1
-     j = j - 1
-     k = k - 1
      do k1 = 0, spl
       k2 = k + k1
       do j1 = 0, spl
@@ -631,10 +701,15 @@
      vx = pt(n, 3)/gam
      wght = charge*wgh
 
-     call qden_2d_wgh(xp, ax0, ay0, i, j)
+     interp = qden_2d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+
+     i = interp%ix
+     j = interp%iy
+
      ax0(0:2) = wght*ax0(0:2)
-     i = i - 1
-     j = j - 1
      do j1 = 0, 2
       j2 = j + j1
       do i1 = 0, 2
@@ -659,11 +734,17 @@
      vx = pt(n, 4)/gam
      wght = charge*wgh
 
-     call qden_3d_wgh(xp, ax0, ay0, az0, i, j, k)
+     interp = qden_3d_wgh( xp )
+
+     ax0(0:2) = interp%coeff_x(1:3)
+     ay0(0:2) = interp%coeff_y(1:3)
+     az0(0:2) = interp%coeff_z(1:3)
+
+     i = interp%ix
+     j = interp%iy
+     k = interp%iz
+
      ax0(0:2) = wght*ax0(0:2)
-     i = i - 1
-     j = j - 1
-     k = k - 1
      do k1 = 0, spl
       k2 = k + k1
       do j1 = 0, spl

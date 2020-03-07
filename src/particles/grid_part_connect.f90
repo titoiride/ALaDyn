@@ -36,6 +36,9 @@
    module procedure :: set_part2d_hcell_acc_old
   end interface
 
+  type(interp_coeff), private :: interp
+  !! Useful variable to store interpolation results
+
   !========= SECTION FOR FIELDS ASSIGNEMENT
  contains
 
@@ -62,7 +65,13 @@
      ap(1:3) = zero_dp
      xp1(1) = xx(n) !the current particle positions
 
-     call qqh_1d_spline(xp1, ax1, axh, i, ih)
+     interp = qqh_1d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     axh(0:2) = interp%h_coeff_x(1:3)
+
+     i = interp%ix
+     ih = interp%ihx
 
      do i1 = 0, 2
       i2 = i1 + ih
@@ -81,7 +90,13 @@
     do n = 1, np
      ap(1:6) = zero_dp
      xp1(1) = xx(n)
-     call qqh_1d_spline(xp1, ax1, axh, i, ih)
+     interp = qqh_1d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     axh(0:2) = interp%h_coeff_x(1:3)
+
+     i = interp%ix
+     ih = interp%ihx
 
      do i1 = 0, 2
       i2 = i1 + ih
@@ -120,7 +135,13 @@
      ap(1:3) = zero_dp
      xp1(1) = sp_loc%part(n, 1) !the current particle positions
 
-     call qqh_1d_spline(xp1, ax1, axh, i, ih)
+     interp = qqh_1d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     axh(0:2) = interp%h_coeff_x(1:3)
+
+     i = interp%ix
+     ih = interp%ihx
 
      do i1 = 0, 2
       i2 = i1 + ih
@@ -138,7 +159,13 @@
      ap(1:6) = zero_dp
      xp1(1) = sp_loc%part(n, 1) !the current particle positions
 
-     call qqh_1d_spline(xp1, ax1, axh, i, ih)
+     interp = qqh_1d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     axh(0:2) = interp%h_coeff_x(1:3)
+
+     i = interp%ix
+     ih = interp%ihx
 
      do i1 = 0, 2
       i2 = i1 + ih
@@ -182,7 +209,17 @@
     do n = 1, np
      ap(1:3) = zero_dp
      !xp1(1:2) = pt(n, 1:2)
-     call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
+     interp = qlh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh(0:1) = interp%h_coeff_x(1:2)
+     ayh(0:1) = interp%h_coeff_y(1:2)
+
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
 
      do j1 = 0, 2
       j2 = j + j1
@@ -215,7 +252,18 @@
     do n = 1, np
      ap(1:6) = zero_dp
      !xp1(1:2) = pt(n, 1:2)
-     call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
+
+     interp = qlh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh(0:1) = interp%h_coeff_x(1:2)
+     ayh(0:1) = interp%h_coeff_y(1:2)
+
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
 
      do j1 = 0, 2
       j2 = j + j1
@@ -280,7 +328,18 @@
     do n = 1, np
      ap(1:3) = zero_dp
      xp1(1:2) = pt(n, 1:2)
-     call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
+
+     interp = qlh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh(0:1) = interp%h_coeff_x(1:2)
+     ayh(0:1) = interp%h_coeff_y(1:2)
+
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
 
      do j1 = 0, 2
       j2 = j + j1
@@ -313,7 +372,18 @@
     do n = 1, np
      ap(1:6) = zero_dp
      xp1(1:2) = pt(n, 1:2)
-     call qlh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
+
+     interp = qlh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh(0:1) = interp%h_coeff_x(1:2)
+     ayh(0:1) = interp%h_coeff_y(1:2)
+
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
 
      do j1 = 0, 2
       j2 = j + j1
@@ -379,9 +449,21 @@
     ap(1:6) = zero_dp
     xp1(1:3) = pt(n, 1:3)
 
-    call qlh_3d_spline(xp1, ax1, axh, ay1, ayh, az1, azh, i, ih, j, jh, &
-      k, kh)
+    interp = qlh_3d_spline( xp1 )
 
+    ax1(0:2) = interp%coeff_x(1:3)
+    ay1(0:2) = interp%coeff_y(1:3)
+    az1(0:2) = interp%coeff_z(1:3)
+    axh(0:1) = interp%h_coeff_x(1:2)
+    ayh(0:1) = interp%h_coeff_y(1:2)
+    azh(0:1) = interp%h_coeff_z(1:2)
+
+    i = interp%ix
+    ih = interp%ihx
+    j = interp%iy
+    jh = interp%ihy
+    k = interp%iz
+    kh = interp%ihz
     ! Ex(i+1/2,j,k)
     !==============
     !==============
@@ -485,7 +567,17 @@
      ef_sqr = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     call qqh_2d_spline(xp1, ax1, axh, ay1, ayh, i, ih, j, jh)
+     interp = qqh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh(0:2) = interp%h_coeff_x(1:3)
+     ayh(0:2) = interp%h_coeff_y(1:3)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
 
      ! Ex(i+1/2,j,k)
      !==============
@@ -526,8 +618,21 @@
      ef_sqr = zero_dp
      xp1(1:3) = pt(n, 1:3)
 
-     call qqh_3d_spline(xp1, ax1, axh, ay1, ayh, az1, azh, i, ih, j, jh, &
-       k, kh)
+     interp = qqh_3d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     az1(0:2) = interp%coeff_z(1:3)
+     axh(0:1) = interp%h_coeff_x(1:2)
+     ayh(0:1) = interp%h_coeff_y(1:2)
+     azh(0:1) = interp%h_coeff_z(1:2)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
+     k = interp%iz
+     kh = interp%ihz
 
      ! Ex(i+1/2,j,k)
      !==============
@@ -633,7 +738,18 @@
      upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
      wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
 
-     call qqh_2d_spline(xp1, ax1, axh1, ay1, ayh1, i, ih, j, jh)
+     interp = qqh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh1(0:2) = interp%h_coeff_x(1:3)
+     ayh1(0:2) = interp%h_coeff_y(1:3)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
+
      !==========================
      do j1 = 0, stl
       j2 = j + j1
@@ -699,8 +815,21 @@
      upart(1:3) = sp_loc%part(n, 4:6) !the current particle  momenta
      wgh_cmp = sp_loc%part(n, 7) !the current particle (weight,charge)
 
-     call qqh_3d_spline(xp1, ax1, axh1, ay1, ayh1, az1, azh1, i, ih, j, &
-       jh, k, kh)
+     interp = qqh_3d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     az1(0:2) = interp%coeff_z(1:3)
+     axh1(0:1) = interp%h_coeff_x(1:2)
+     ayh1(0:1) = interp%h_coeff_y(1:2)
+     azh1(0:1) = interp%h_coeff_z(1:2)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
+     k = interp%iz
+     kh = interp%ihz
 
      !==========================
      do k1 = 0, stl
@@ -826,7 +955,17 @@
      ap(1:6) = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     call qqh_2d_spline(xp1, ax1, axh1, ay1, ayh1, i, ih, j, jh)
+     interp = qqh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh1(0:2) = interp%h_coeff_x(1:3)
+     ayh1(0:2) = interp%h_coeff_y(1:3)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
 
      do j1 = 0, 2
       j2 = j + j1
@@ -880,8 +1019,21 @@
      ap(1:6) = zero_dp
      xp1(1:3) = pt(n, 1:3)
 
-     call qqh_3d_spline(xp1, ax1, axh1, ay1, ayh1, az1, azh1, i, ih, j, &
-       jh, k, kh)
+     interp = qqh_3d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     az1(0:2) = interp%coeff_z(1:3)
+     axh1(0:1) = interp%h_coeff_x(1:2)
+     ayh1(0:1) = interp%h_coeff_y(1:2)
+     azh1(0:1) = interp%h_coeff_z(1:2)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
+     k = interp%iz
+     kh = interp%ihz
      !=============== Quadratic/linear assignements
      do k1 = 0, 2
       k2 = k + k1
@@ -965,7 +1117,17 @@
      ap = 0.0
      xp1(1:2) = pt(n, 1:2)
 
-     call qqh_2d_spline(xp1, ax1, axh1, ay1, ayh1, i, ih, j, jh)
+     interp = qqh_2d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     axh1(0:2) = interp%h_coeff_x(1:3)
+     ayh1(0:2) = interp%h_coeff_y(1:3)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
      !==========================
      do j1 = 0, 2
       j2 = j + j1
@@ -1004,8 +1166,21 @@
      ap = 0.0
      xp1(1:3) = pt(n, 1:3)
 
-     call qqh_3d_spline(xp1, ax1, axh1, ay1, ayh1, az1, azh1, i, ih, j, &
-       jh, k, kh)
+     interp = qqh_3d_spline( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     az1(0:2) = interp%coeff_z(1:3)
+     axh1(0:1) = interp%h_coeff_x(1:2)
+     ayh1(0:1) = interp%h_coeff_y(1:2)
+     azh1(0:1) = interp%h_coeff_z(1:2)
+ 
+     i = interp%ix
+     ih = interp%ihx
+     j = interp%iy
+     jh = interp%ihy
+     k = interp%iz
+     kh = interp%ihz
 
      !==========================
      ap = 0.0
@@ -1074,9 +1249,14 @@
     do n = 1, np
      xp1(1:2) = efp(n, 1:2)
      wghp = efp(n, 5) !the particle  wgh/gamp at current time
-     call qden_2d_wgh(xp1, ax1, ay1, i, j)
-     i = i - 1
-     j = j - 1
+
+     interp = qden_2d_wgh( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+
+     i = interp%ix
+     j = interp%iy
      !==========================
      do j1 = 0, 2
       j2 = j + j1
@@ -1094,10 +1274,16 @@
     do n = 1, np
      xp1(1:3) = efp(n, 1:3) ! local x-y-z
      wghp = efp(n, 7) !the particle  wgh/gamp at current time
-     call qden_3d_wgh(xp1, ax1, ay1, az1, i, j, k)
-     i = i - 1
-     j = j - 1
-     k = k - 1
+
+     interp = qden_3d_wgh( xp1 )
+
+     ax1(0:2) = interp%coeff_x(1:3)
+     ay1(0:2) = interp%coeff_y(1:3)
+     az1(0:2) = interp%coeff_z(1:3)
+
+     i = interp%ix
+     j = interp%iy
+     k = interp%iz
 
      do k1 = 0, 2
       k2 = k + k1
@@ -1162,8 +1348,22 @@
       xp0(1:2) = pt(n, 3:4) !x-y  -old
       wght = real(pt(n,5), sp) !w*q
       !=====================
-      call qden_2d_wgh(xp0, ax0, ay0, ii0, jj0)
-      call qden_2d_wgh(xp1, ax1, ay1, i, j)
+      interp = qden_2d_wgh( xp0 )
+
+      ax0(0:2) = interp%coeff_x(1:3)
+      ay0(0:2) = interp%coeff_y(1:3)
+ 
+      ii0 = interp%ix
+      jj0 = interp%iy
+
+
+      interp = qden_2d_wgh( xp1 )
+
+      ax1(0:2) = interp%coeff_x(1:3)
+      ay1(0:2) = interp%coeff_y(1:3)
+ 
+      i = interp%ix
+      j = interp%iy
 
       axh(0:4) = zero_dp
       ih = i - ii0 + 1
@@ -1200,12 +1400,9 @@
       y0 = min(jh, 1)
       y1 = max(jh+2, 3)
       !================dt*J_x
-      jj0 = jj0 - 1
-      j = j - 1
+
       jh = jj0 - 1
 
-      i = i - 1
-      ii0 = ii0 - 1
       ih = ii0 - 1
 
       do j1 = y0, y1
@@ -1241,8 +1438,23 @@
       vp(3) = xp1(3) - xp0(3) !dt*v_z(n+1/2)
       vp(3) = wght*vp(3)/3. !dt*q*w*vz/3
       !=====================
-      call qden_2d_wgh(xp0, ax0, ay0, ii0, jj0)
-      call qden_2d_wgh(xp1, ax1, ay1, i, j)
+
+      interp = qden_2d_wgh( xp0 )
+
+      ax0(0:2) = interp%coeff_x(1:3)
+      ay0(0:2) = interp%coeff_y(1:3)
+ 
+      ii0 = interp%ix
+      jj0 = interp%iy
+
+
+      interp = qden_2d_wgh( xp1 )
+
+      ax1(0:2) = interp%coeff_x(1:3)
+      ay1(0:2) = interp%coeff_y(1:3)
+ 
+      i = interp%ix
+      j = interp%iy
 
       axh(0:4) = zero_dp
       ih = i - ii0 + 1
@@ -1268,9 +1480,6 @@
        axh1(i1) = axh1(i1) + 0.5*ax0(i1-1)
        axh(i1) = axh(i1) + ax0(i1-1) !Wx^0+Wx^1)
       end do
-      !-------
-      i = i - 1
-      ii0 = ii0 - 1
 
       jh = j - jj0 + 1
       y0 = min(jh, 1)
@@ -1289,9 +1498,6 @@
       do i1 = 1, 3
        ayh(i1) = ayh(i1) + ay0(i1-1)
       end do
-      !-----------
-      jj0 = jj0 - 1
-      j = j - 1
       !================dt*J_x= currx*(Wy^0+Wy^1) to be multiplied by dx/2
       ih = ii0 - 1
       jh = jj0 - 1
@@ -1377,8 +1583,26 @@
     wght = real(pt(n,7), sp)
     xp1(1:3) = pt(n, 1:3) !increments of the new positions
     xp0(1:3) = pt(n, 4:6) !increments of old positions
-    call qden_3d_wgh(xp0, ax0, ay0, az0, ii0, jj0, kk0)
-    call qden_3d_wgh(xp1, ax1, ay1, az1, i, j, k)
+
+    interp = qden_3d_wgh( xp0 )
+
+    ax0(0:2) = interp%coeff_x(1:3)
+    ay0(0:2) = interp%coeff_y(1:3)
+    az0(0:2) = interp%coeff_z(1:3)
+
+    ii0 = interp%ix
+    jj0 = interp%iy
+    kk0 = interp%iz
+
+    interp = qden_3d_wgh( xp1 )
+
+    ax1(0:2) = interp%coeff_x(1:3)
+    ay1(0:2) = interp%coeff_y(1:3)
+    az1(0:2) = interp%coeff_z(1:3)
+
+    i = interp%ix
+    j = interp%iy
+    k = interp%iz
 
     axh(0:4) = zero_dp
     ih = i - ii0 + 1
@@ -1402,9 +1626,6 @@
 
     x0 = min(ih, 1)
     x1 = max(ih+2, 3)
-    !-------
-    i = i - 1
-    ii0 = ii0 - 1
 
     !========== direct Jy-inversion
     jh = j - jj0 + 1 !=[0,1,2]
@@ -1430,9 +1651,6 @@
     end do
     y0 = min(jh, 1) ![0,1]
     y1 = max(jh+2, 3) ![3,4]
-    !-----------
-    jj0 = jj0 - 1
-    j = j - 1
 
     ! Direct Jz inversion
     kh = k - kk0 + 1
@@ -1446,9 +1664,6 @@
     end do
     currz(4) = currz(3) - azh(4)
     currz(0:4) = wght*currz(0:4)
-    !----------
-    kk0 = kk0 - 1
-    k = k - 1
     z0 = min(kh, 1)
     z1 = max(kh+2, 3)
     !================Jx=DT*drho_x to be inverted==================
@@ -1531,10 +1746,33 @@
 
     xp1(1:2) = pt(n, 1:2)
     xp0(1:2) = pt(n, 3:4)
-    call qlh_2d_spline(xp0, ax0, axh0, ay0, ayh0, ii0, ih0, jj0, jh0)
-    !====================
-    call qlh_2d_spline(xp1, ax1, axh1, ay1, ayh1, i, ih, j, jh)
 
+    interp = qlh_2d_spline( xp0 )
+
+    ax0(0:2) = interp%coeff_x(1:3)
+    ay0(0:2) = interp%coeff_y(1:3)
+    axh0(0:1) = interp%h_coeff_x(1:2)
+    ayh0(0:1) = interp%h_coeff_y(1:2)
+
+    ii0 = interp%ix
+    ih0 = interp%ihx
+    jj0 = interp%iy
+    jh0 = interp%ihy
+
+    !====================
+
+    interp = qlh_2d_spline( xp1 )
+
+    ax1(0:2) = interp%coeff_x(1:3)
+    ay1(0:2) = interp%coeff_y(1:3)
+    axh1(0:1) = interp%h_coeff_x(1:2)
+    ayh1(0:1) = interp%h_coeff_y(1:2)
+
+    i = interp%ix
+    ih = interp%ihx
+    j = interp%iy
+    jh = interp%ihy
+    
     !===============Jx ========
     do j1 = 0, 2
      j2 = j + j1
@@ -1607,11 +1845,38 @@
     xp1(1:3) = pt(n, 1:3) !new relative coordinates
     xp0(1:3) = pt(n, 4:6) !old relative coordinates
 
-    call qlh_3d_spline(xp0, ax0, axh0, ay0, ayh0, az0, azh0, ii0, ih0, &
-      jj0, jh0, kk0, kh0)
+    interp = qlh_3d_spline( xp0 )
+
+    ax0(0:2) = interp%coeff_x(1:3)
+    ay0(0:2) = interp%coeff_y(1:3)
+    az0(0:2) = interp%coeff_z(1:3)
+    axh0(0:1) = interp%h_coeff_x(1:2)
+    ayh0(0:1) = interp%h_coeff_y(1:2)
+    azh0(0:1) = interp%h_coeff_z(1:2)
+
+    ii0 = interp%ix
+    ih0 = interp%ihx
+    jj0 = interp%iy
+    jh0 = interp%ihy
+    kk0 = interp%iz
+    kh0 = interp%ihz
+
     !====================
-    call qlh_3d_spline(xp1, ax1, axh1, ay1, ayh1, az1, azh1, i, ih, j, &
-      jh, k, kh)
+    interp = qlh_3d_spline( xp1 )
+
+    ax1(0:2) = interp%coeff_x(1:3)
+    ay1(0:2) = interp%coeff_y(1:3)
+    az1(0:2) = interp%coeff_z(1:3)
+    axh1(0:1) = interp%h_coeff_x(1:2)
+    ayh1(0:1) = interp%h_coeff_y(1:2)
+    azh1(0:1) = interp%h_coeff_z(1:2)
+
+    i = interp%ix
+    ih = interp%ihx
+    j = interp%iy
+    jh = interp%ihy
+    k = interp%iz
+    kh = interp%ihz
     !======================   Jx
     do k1 = 0, 2
      k2 = k + k1
