@@ -53,6 +53,11 @@ module particles_aux_def
  integer, parameter :: VY_COMP = 22
  integer, parameter :: VZ_COMP = 23
 
+ integer, parameter :: POND_COMP = 24
+ integer, parameter :: GRADF_X_COMP = 25
+ integer, parameter :: GRADF_Y_COMP = 26
+ integer, parameter :: GRADF_Z_COMP = 27
+
  type, extends(species_new) :: species_aux
   !! Auxiliary species for operations on species type
 
@@ -193,6 +198,15 @@ module particles_aux_def
    comp = this%aux5(lowb:upb)
   case(VZ_COMP)
    comp = this%aux6(lowb:upb)
+
+  case(POND_COMP)
+   comp = this%aux4(lowb:upb)
+  case(GRADF_X_COMP)
+   comp = this%aux1(lowb:upb)
+  case(GRADF_Y_COMP)
+   comp = this%aux2(lowb:upb)
+  case(GRADF_Z_COMP)
+   comp = this%aux3(lowb:upb)
   end select
 
  end function
@@ -267,6 +281,15 @@ module particles_aux_def
    this%aux5(lowb:upb) = values(:)
   case(VZ_COMP)
    this%aux6(lowb:upb) = values(:)
+
+  case(POND_COMP)
+   this%aux4(lowb:upb) = values(:)
+  case(GRADF_X_COMP)
+   this%aux1(lowb:upb) = values(:)
+  case(GRADF_Y_COMP)
+   this%aux2(lowb:upb) = values(:)
+  case(GRADF_Z_COMP)
+   this%aux3(lowb:upb) = values(:)
   end select
 
  end subroutine

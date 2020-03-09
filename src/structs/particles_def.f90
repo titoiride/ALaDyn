@@ -124,13 +124,14 @@ module particles_def
 
  contains
 
- subroutine compute_gamma( this )
+ subroutine compute_gamma( this, pond_pot )
   class(species_new), intent(inout) :: this
+  real(dp), intent(in), optional :: pond_pot(:)
   real(dp), allocatable :: temp(:)
   integer :: np
 
   np = this%how_many()
-  allocate( temp(np), source=zero_dp)
+  allocate( temp(np), source=zero_dp )
 
   if ( this%allocated_px ) then
    temp(1:np) = temp(1:np) + this%call_component( PX_COMP )*this%call_component( PX_COMP )
@@ -142,6 +143,10 @@ module particles_def
 
   if ( this%allocated_pz ) then
    temp(1:np) = temp(1:np) + this%call_component( PZ_COMP )*this%call_component( PZ_COMP )
+  end if
+
+  if( present( pond_pot ) ) then
+   temp(1:np) = temp(1:np) + pond_pot(1:np)
   end if
 
   temp(1:np) = one_dp/sqrt(one_dp + temp(1:np))
