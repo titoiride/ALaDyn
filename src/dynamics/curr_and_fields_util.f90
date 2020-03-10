@@ -56,7 +56,7 @@
    case (2)
     call set_part2d_hcell_acc(ef, sp_loc, apt, np, nf)
    case (3)
-    !call set_part3d_hcell_acc(ef, sp_loc, apt, np)
+    call set_part3d_hcell_acc(ef, sp_loc, apt, np)
    end select
   end subroutine
 

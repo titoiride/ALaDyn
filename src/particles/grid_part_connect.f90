@@ -36,6 +36,11 @@
    module procedure :: set_part2d_hcell_acc_old
   end interface
 
+  interface set_part3d_hcell_acc
+   module procedure :: set_part3d_hcell_acc_new
+   module procedure :: set_part3d_hcell_acc_old
+  end interface
+
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
 
@@ -47,71 +52,77 @@
    !To be checked, actually never used
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (inout) :: pt
+   type (species_aux), intent (out) :: pt
    integer, intent (in) :: np, ndf
 
-   real(dp), allocatable, dimension(:) :: xx
-   real (dp) :: xp1(3), ap(6)
-   real (dp) :: axh(0:2), ax1(0:2)
-   integer :: i, ih, i1, i2, j2, n
+   real(dp), allocatable, dimension(:, :) :: xx, axh, ax1, ap
+   integer, allocatable, dimension(:) :: i, ih
+   integer :: i1, i2, j2, n
    !=====================
    !================================
+   allocate( xx(np, 1) )
+   allocate( axh(np, 0:2) )
+   allocate( ax1(np, 0:2) )
+   allocate( i(np) )
+   allocate( ih(np) )
+
    select case (ndf)
    case (3)
+
+    allocate( ap(np, 3), source=zero_dp )
     j2 = 1
-    xx = sp_loc%call_component(X_COMP)
-    do n = 1, np
+    xx(1:np, 1) = sp_loc%call_component(X_COMP)
+    
+    interp = qqh_1d_spline( xx )
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
 
-     ap(1:3) = zero_dp
-     xp1(1) = xx(n) !the current particle positions
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
 
-     interp = qqh_1d_spline( xp1 )
-
-     ax1(0:2) = interp%coeff_x(1:3)
-     axh(0:2) = interp%h_coeff_x(1:3)
-
-     i = interp%ix
-     ih = interp%ihx
-
-     do i1 = 0, 2
-      i2 = i1 + ih
-      ap(1) = ap(1) + axh(i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
-      ap(3) = ap(3) + axh(i1)*ef(i2, j2, 1, 3) !Bz(i+1/2)
-      i2 = i + i1
-      ap(2) = ap(2) + ax1(i1)*ef(i2, j2, 1, 2) !Ey(i)
+    do i1 = 0, 2
+     do n = 1, np
+      i2 = i1 + ih(n)
+      ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
+      ap(n, 3) = ap(n, 3) + axh(n, i1)*ef(i2, j2, 1, 3) !Bz(i+1/2)
+      i2 = i1 + i(n)
+      ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
      end do
-     !pt(n, 1:3) = ap(1:3)
     end do
+    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
    !========================
    case (6)
     j2 = 1
-    xx = sp_loc%call_component(X_COMP) !the current particle positions
+    allocate( ap(np, 3), source=zero_dp )
+    xx(1:np, 1) = sp_loc%call_component(X_COMP) !the current particle positions
+    
+    interp = qqh_1d_spline( xx )
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
 
-    do n = 1, np
-     ap(1:6) = zero_dp
-     xp1(1) = xx(n)
-     interp = qqh_1d_spline( xp1 )
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     axh(0:2) = interp%h_coeff_x(1:3)
-
-     i = interp%ix
-     ih = interp%ihx
-
-     do i1 = 0, 2
-      i2 = i1 + ih
-      ap(1) = ap(1) + axh(i1)*ef(i2, j2, 1, 1) !Ex
-      ap(5) = ap(5) + axh(i1)*ef(i2, j2, 1, 5) !By
-      ap(6) = ap(6) + axh(i1)*ef(i2, j2, 1, 6) !Bz
+    do i1 = 0, 2
+     do n = 1, np
+      i2 = i1 + ih(n)
+      ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
+      ap(n, 5) = ap(n, 5) + axh(n, i1)*ef(i2, j2, 1, 5) !By(i+1/2)
+      ap(n, 6) = ap(n, 6) + axh(n, i1)*ef(i2, j2, 1, 6) !Bz(i+1/2)
+      i2 = i1 + i(n)
+      ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
+      ap(n, 3) = ap(n, 3) + ax1(n, i1)*ef(i2, j2, 1, 3) !Ez(i)
+      ap(n, 4) = ap(n, 4) + ax1(n, i1)*ef(i2, j2, 1, 4) !Bx(i)
      end do
-     do i1 = 0, 2
-      i2 = i + i1
-      ap(2) = ap(2) + ax1(i1)*ef(i2, j2, 1, 2) !Ey
-      ap(3) = ap(3) + ax1(i1)*ef(i2, j2, 1, 3) !Ez
-      ap(4) = ap(4) + ax1(i1)*ef(i2, j2, 1, 4) !Bx
-     end do
-     !pt(n, 1:6) = ap(1:6)
     end do
+    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
   end subroutine
 
@@ -188,115 +199,128 @@
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (inout) :: pt
+   type (species_aux), intent (out) :: pt
    integer, intent (in) :: np, ndf
 
+   real(dp), allocatable, dimension(:, :) :: xx, ap
+   real(dp), allocatable, dimension(:, :) :: axh, ax1, ay1, ayh
+   integer, allocatable, dimension(:) :: i, ih, j, jh
    real (dp) :: dvol, dvol1
-   real (dp) :: xp1(3), ap(6)
-   real (dp) :: axh(0:1), ax1(0:2)
-   real (dp) :: ayh(0:1), ay1(0:2)
-   real (dp), allocatable, dimension(:) :: xx, yy
-
-   integer :: i, ih, j, jh, i1, j1, i2, j2, n
+   integer :: i1, j1, i2, j2, n
    !================================
    ! Uses quadratic or linear shapes depending on staggering
    ! ndf is the number of field component
-   xp1 = zero_dp
-   !pt = set_local_positions( sp_loc, X_COMP )
 
+   allocate( xx(np, 2) )
+   allocate( ax1(np, 0:2) )
+   allocate( axh(np, 0:1) )
+   allocate( ay1(np, 0:2) )
+   allocate( ayh(np, 0:1) )
+   allocate( i(np) )
+   allocate( ih(np) )
+   allocate( j(np) )
+   allocate( jh(np) )
    select case (ndf) !Field components
    case (3)
+    allocate( ap(np, 3), source=zero_dp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    interp = qlh_2d_spline( xx )
+    
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    axh(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
+    ayh(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
+    
+    i(1:np) = interp%ix_rank2(1:np)
+    ih (1:np)= interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh (1:np)= interp%ihy_rank2(1:np)
+    
     do n = 1, np
-     ap(1:3) = zero_dp
-     !xp1(1:2) = pt(n, 1:2)
-     interp = qlh_2d_spline( xp1 )
-
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh(0:1) = interp%h_coeff_x(1:2)
-     ayh(0:1) = interp%h_coeff_y(1:2)
-
-     i = interp%ix
-     ih = interp%ihx
-     j = interp%iy
-     jh = interp%ihy
-
      do j1 = 0, 2
-      j2 = j + j1
-      dvol = ay1(j1)
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)
       do i1 = 0, 1
-       i2 = i1 + ih
-       dvol1 = axh(i1)*dvol
-       ap(1) = ap(1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+       i2 = i1 + ih(n)
+       dvol1 = axh(n, i1)*dvol
+       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
       end do
      end do
      do j1 = 0, 1
-      j2 = jh + j1
-      dvol = ayh(j1)
+      j2 = jh(n) + j1
+      dvol = ayh(n, j1)
       do i1 = 0, 2
-       i2 = i + i1
-       dvol1 = ax1(i1)*dvol
-       ap(2) = ap(2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+       i2 = i(n) + i1
+       dvol1 = ax1(n, i1)*dvol
+       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
       end do
       do i1 = 0, 1
-       i2 = i1 + ih
-       dvol1 = axh(i1)*dvol
-       ap(3) = ap(3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
+       i2 = i1 + ih(n)
+       dvol1 = axh(n, i1)*dvol
+       ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
       end do
      end do
-     !pt(n, 1:3) = ap(1:3)
     end do
+    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
     !==============
    case (6)
     !=====================
+    allocate( ap(np, 6), source=zero_dp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    interp = qlh_2d_spline( xx )
+    
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    axh(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
+    ayh(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
+    
+    i(1:np) = interp%ix_rank2(1:np)
+    ih (1:np)= interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh (1:np)= interp%ihy_rank2(1:np)
+
     do n = 1, np
-     ap(1:6) = zero_dp
-     !xp1(1:2) = pt(n, 1:2)
-
-     interp = qlh_2d_spline( xp1 )
-
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh(0:1) = interp%h_coeff_x(1:2)
-     ayh(0:1) = interp%h_coeff_y(1:2)
-
-     i = interp%ix
-     ih = interp%ihx
-     j = interp%iy
-     jh = interp%ihy
-
      do j1 = 0, 2
-      j2 = j + j1
-      dvol = ay1(j1)
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)
       do i1 = 0, 1
-       i2 = i1 + ih
-       dvol1 = axh(i1)*dvol
-       ap(1) = ap(1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
-       ap(5) = ap(5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
+       i2 = i1 + ih(n)
+       dvol1 = axh(n, i1)*dvol
+       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+       ap(n, 5) = ap(n, 5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
       end do
       do i1 = 0, 2
-       i2 = i1 + i
-       dvol1 = ax1(i1)*dvol
-       ap(3) = ap(3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
+       i2 = i1 + i(n)
+       dvol1 = ax1(n, i1)*dvol
+       ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
       end do
      end do
      do j1 = 0, 1
-      j2 = jh + j1
-      dvol = ayh(j1)
+      j2 = jh(n) + j1
+      dvol = ayh(n, j1)
       do i1 = 0, 2
-       i2 = i + i1
-       dvol1 = ax1(i1)*dvol
-       ap(2) = ap(2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
-       ap(4) = ap(4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
+       i2 = i(n) + i1
+       dvol1 = ax1(n, i1)*dvol
+       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+       ap(n, 4) = ap(n, 4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
       end do
       do i1 = 0, 1
-       i2 = i1 + ih
-       dvol1 = axh(i1)*dvol
-       ap(6) = ap(6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
+       i2 = i1 + ih(n)
+       dvol1 = axh(n, i1)*dvol
+       ap(n, 6) = ap(n, 6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
       end do
      end do
-     !pt(n, 1:6) = ap(1:6)
     end do
+    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component_aux( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
    !=====================
   end subroutine
@@ -421,7 +445,135 @@
    !=====================
   end subroutine
   !====================================
-  subroutine set_part3d_hcell_acc(ef, sp_loc, pt, np)
+  subroutine set_part3d_hcell_acc_new(ef, sp_loc, pt, np)
+
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (out) :: pt
+   integer, intent (in) :: np
+
+   real(dp), allocatable, dimension(:, :) :: xx, ap
+   real(dp), allocatable, dimension(:, :) :: axh, ax1, ay1, ayh, azh, az1
+   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real (dp) :: dvol
+   integer :: i1, j1, i2, j2, k1, k2, n
+
+   !===============================================
+   !Staggered shapes
+   ! Linear shape at half-index
+   ! Quadratic shape at integer index
+   !====================================
+   !=============================================================
+   allocate( xx(np, 3) )
+   allocate( ax1(np, 0:2) )
+   allocate( axh(np, 0:1) )
+   allocate( ay1(np, 0:2) )
+   allocate( ayh(np, 0:1) )
+   allocate( i(np) )
+   allocate( ih(np) )
+   allocate( j(np) )
+   allocate( jh(np) )
+   allocate( k(np) )
+   allocate( kh(np) )
+   allocate( ap(np, 6), source=zero_dp )
+
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+   interp = qlh_3d_spline( xx )
+   !==========================
+
+   ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+   ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+   az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+   axh(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
+   ayh(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
+   azh(1:np, 0:1) = interp%h_coeff_z_rank2(1:np, 1:2)
+
+   i(1:np) = interp%ix_rank2(1:np)
+   ih (1:np)= interp%ihx_rank2(1:np)
+   j(1:np) = interp%iy_rank2(1:np)
+   jh (1:np)= interp%ihy_rank2(1:np)
+   k(1:np) = interp%iz_rank2(1:np)
+   kh (1:np)= interp%ihz_rank2(1:np)
+    
+   do n = 1, np
+    ! Ex(i+1/2,j,k)
+    !==============
+    !==============
+    ! Ey(i,j+1/2,k)
+    !==============
+    !==============
+    ! Bz(i+1/2,j+1/2,k)
+    !==============
+    do k1 = 0, 2
+     k2 = k(n) + k1
+     do j1 = 0, 2
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)*az1(n, k1)
+      do i1 = 0, 1
+       i2 = i1 + ih(n)
+       ap(n, 1) = ap(n, 1) + axh(n, i1)*dvol*ef(i2, j2, k2, 1)
+      end do
+     end do
+     do j1 = 0, 1
+      j2 = jh(n) + j1
+      dvol = ayh(n, j1)*az1(n, k1)
+      do i1 = 0, 2
+       i2 = i(n) + i1
+       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2)
+      end do
+      do i1 = 0, 1
+       i2 = i1 + ih(n)
+       ap(n, 6) = ap(n, 6) + axh(n, i1)*dvol*ef(i2, j2, k2, 6)
+      end do
+     end do
+    end do
+    !==============
+    ! Bx(i,j+1/2,k+1/2)
+    !==============
+    !==============
+    ! By(i+1/2,j,k+1/2)
+    !==============
+    !==============
+    ! Ez(i,j,k+1/2)
+    !==============
+
+    do k1 = 0, 1
+     k2 = kh(n) + k1
+     do j1 = 0, 1
+      j2 = jh(n) + j1
+      dvol = ayh(n, j1)*azh(n, k1)
+      do i1 = 0, 2
+       i2 = i1 + i(n)
+       ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4)
+      end do
+     end do
+     do j1 = 0, 2
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)*azh(n, k1)
+      do i1 = 0, 1
+       i2 = ih(n) + i1
+       ap(n, 5) = ap(n, 5) + axh(n, i1)*dvol*ef(i2, j2, k2, 5)
+      end do
+      do i1 = 0, 2
+       i2 = i1 + i(n)
+       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*ef(i2, j2, k2, 3)
+      end do
+     end do
+    end do
+   end do
+   call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+   call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+   call pt%set_component_aux( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+   call pt%set_component_aux( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+   call pt%set_component_aux( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+   call pt%set_component_aux( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+
+  end subroutine
+  !======================================
+  !====================================
+  subroutine set_part3d_hcell_acc_old(ef, sp_loc, pt, np)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species), intent (in) :: sp_loc
