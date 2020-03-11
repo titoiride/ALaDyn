@@ -58,6 +58,13 @@ module particles_aux_def
  integer, parameter :: GRADF_Y_COMP = 26
  integer, parameter :: GRADF_Z_COMP = 27
 
+ integer, parameter :: E_SQUARED = 28
+ integer, parameter :: B_SQUARED = 29
+
+ integer, parameter :: FX_COMP = 30
+ integer, parameter :: FY_COMP = 31
+ integer, parameter :: FZ_COMP = 32
+
  type, extends(species_new) :: species_aux
   !! Auxiliary species for operations on species type
 
@@ -74,24 +81,24 @@ module particles_aux_def
   !! True if aux3 array is allocated
 
   real(dp), allocatable :: aux4(:)
-  !! Bx field interpolated on particles position
   logical :: allocated_aux4
   !! True if aux4 array is allocated
 
   real(dp), allocatable :: aux5(:)
-  !! By field interpolated on particles position
   logical :: allocated_aux5
   !! True if aux5 array is allocated
 
   real(dp), allocatable :: aux6(:)
-  !! Bz field interpolated on particles position
   logical :: allocated_aux6
   !! True if aux6 array is allocated
 
   real(dp), allocatable :: aux7(:)
-  !! Bz field interpolated on particles position
   logical :: allocated_aux7
-  !! True if aux6 array is allocated
+  !! True if aux7 array is allocated
+
+  real(dp), allocatable :: aux8(:)
+  logical :: allocated_aux8
+  !! True if aux8 array is allocated
 
   contains
    procedure, public :: set_component_aux
@@ -207,6 +214,17 @@ module particles_aux_def
    comp = this%aux2(lowb:upb)
   case(GRADF_Z_COMP)
    comp = this%aux3(lowb:upb)
+
+  case(E_SQUARED)
+   comp = this%aux8(lowb:upb)
+
+  case(FX_COMP)
+   comp = this%aux1(lowb:upb)
+  case(FY_COMP)
+   comp = this%aux2(lowb:upb)
+  case(FZ_COMP)
+   comp = this%aux3(lowb:upb)
+  
   end select
 
  end function
@@ -289,6 +307,16 @@ module particles_aux_def
   case(GRADF_Y_COMP)
    this%aux2(lowb:upb) = values(:)
   case(GRADF_Z_COMP)
+   this%aux3(lowb:upb) = values(:)
+
+  case(E_SQUARED)
+   this%aux8(lowb:upb) = values(:)
+
+  case(FX_COMP)
+   this%aux1(lowb:upb) = values(:)
+  case(FY_COMP)
+   this%aux2(lowb:upb) = values(:)
+  case(FZ_COMP)
    this%aux3(lowb:upb) = values(:)
   end select
 

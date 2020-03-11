@@ -41,6 +41,16 @@
    module procedure :: set_part3d_hcell_acc_old
   end interface
 
+  interface set_ion_efield
+   module procedure :: set_ion_efield_new
+   module procedure :: set_ion_efield_old
+  end interface
+
+  interface set_env_acc
+   module procedure :: set_env_acc_new
+   module procedure :: set_env_acc_old
+  end interface
+
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
 
@@ -686,7 +696,171 @@
   end subroutine
   !======================================
 
-  subroutine set_ion_efield(ef, sp_loc, pt, np)
+  subroutine set_ion_efield_new(ef, sp_loc, pt, np)
+
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (out) :: pt
+   integer, intent (in) :: np
+
+   real (dp), allocatable, dimension(:, :) :: xx
+   real (dp), allocatable, dimension(:, :) :: ax1, axh, ay1, ayh, az1, azh
+   real (dp), allocatable, dimension(:) :: ef_sqr
+   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real (dp) :: dvol, ex, ey, ez
+   integer :: n, ip1, jp1, kp1, ip2, jp2, kp2
+
+   !===============================================
+   ! qlh_spline()      Linear shape at half-index quadratic shape at integer index
+   ! qqh_spline()      quadratic shape at half-index and at integer index
+   !                 For field assignements
+   !====================================
+   ! fields are at t^n
+
+   allocate( i(np) )
+   allocate( ih(np) )
+   allocate( j(np) )
+   allocate( jh(np) )
+   allocate( ef_sqr(np), source=zero_dp )
+
+   select case (ndim)
+   case (2)
+    allocate( xx(np, 2) )
+    allocate( ax1(np, 0:2) )
+    allocate( axh(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh(np, 0:2) )
+
+    kp2 = 1
+    !==========================
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+    !==========================
+    do n = 1, np
+     ! Ex(i+1/2,j,k)
+     !==============
+     !==============
+     ! Ey(i,j+1/2,k)
+     !==============
+     do jp1 = 0, 2
+      jp2 = j(n) + jp1
+      dvol = ay1(n, jp1)
+      do ip1 = 0, 2
+       ip2 = ih(n) + ip1
+       ex = ef(ip2, jp2, kp2, 1)
+       ef_sqr(n) = ef_sqr(n) + axh(n, ip1)*dvol*ex*ex
+      end do
+     end do
+     do jp1 = 0, 2
+      jp2 = jh(n) + jp1
+      dvol = ayh(n, jp1)
+      do ip1 = 0, 2
+       ip2 = i(n) + ip1
+       ey = ef(ip2, jp2, kp2, 2)
+       ef_sqr(n) = ef_sqr(n) + ax1(n, ip1)*dvol*ey*ey
+      end do
+     end do
+     !==============
+    end do
+    call pt%set_component_aux( ef_sqr(1:np), &
+     E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2
+    !=======================================
+
+   case (3)
+
+    allocate( xx(np, 3) )
+    allocate( ax1(np, 0:2) )
+    allocate( axh(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh(np, 0:2) )
+    allocate( az1(np, 0:2) )
+    allocate( azh(np, 0:2) )
+
+    !==========================
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+    azh(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+    k(1:np) = interp%iz_rank2(1:np)
+    kh(1:np) = interp%ihz_rank2(1:np)
+    !==========================
+    ! Here Quadratic shapes are used
+    do n = 1, np
+     ! Ex(i+1/2,j,k)
+     !==============
+     !==============
+     ! Ey(i,j+1/2,k)
+     !==============
+     do kp1 = 0, 2
+      kp2 = k(n) + kp1
+      do jp1 = 0, 2
+       jp2 = j(n) + jp1
+       dvol = ay1(n, jp1)*az1(n, kp1)
+       do ip1 = 0, 2
+        ip2 = ip1 + ih(n)
+        ex = ef(ip2, jp2, kp2, 1)
+        ef_sqr(n) = ef_sqr(n) + axh(n, ip1)*dvol*ex*ex
+       end do
+      end do
+      do jp1 = 0, 2
+       jp2 = jh(n) + jp1
+       dvol = ayh(n, jp1)*az1(n, kp1)
+       do ip1 = 0, 2
+        ip2 = i(n) + ip1
+        ey = ef(ip2, jp2, kp2, 2)
+        ef_sqr(n) = ef_sqr(n) + ax1(n, ip1)*dvol*ey*ey
+       end do
+      end do
+     end do
+     !==============
+     ! Ez(i,j,k+1/2)
+     !==============
+     do kp1 = 0, 2
+      kp2 = kh(n) + kp1
+      do jp1 = 0, 2
+       jp2 = j(n) + jp1
+       dvol = ay1(n, jp1)*azh(n, kp1)
+       do ip1 = 0, 2
+        ip2 = ip1 + i(n)
+        ez = ef(ip2, jp2, kp2, 3)
+        ef_sqr(n) = ef_sqr(n) + ax1(n, ip1)*dvol*ez*ez
+       end do
+      end do
+     end do
+    end do
+    call pt%set_component_aux( ef_sqr(1:np), &
+    E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2 + Ez(p)^2
+
+   end select
+   !================================
+  end subroutine
+
+
+  subroutine set_ion_efield_old(ef, sp_loc, pt, np)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species), intent (in) :: sp_loc
@@ -832,10 +1006,271 @@
    end select
    !================================
   end subroutine
+
   !===================================
   ! ENV field assignement section
   !===========================
-  subroutine set_env_acc(ef, av, sp_loc, pt, np, dt_step)
+  
+  subroutine set_env_acc_new(ef, av, sp_loc, pt, np, dt_step)
+
+   real (dp), intent (in) :: ef(:, :, :, :), av(:, :, :, :)
+   type (species_new), intent (inout) :: sp_loc
+   type (species_aux), intent (inout) :: pt
+   integer, intent (in) :: np
+   real (dp), intent (in) :: dt_step
+
+   real (dp), allocatable, dimension(:, :) :: xx, ap
+   real (dp), allocatable, dimension(:, :) :: ax1, axh1, ay1, ayh1, az1, azh1
+   real (dp), allocatable, dimension(:) :: inv_gam, gam, aa1, b1, dgam
+   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real (dp) :: dvol, dvol1
+   real (dp) :: dth, ch
+   integer (kind=2) :: i1, j1, k1, i2, j2, k2, n
+   integer (kind=2), parameter :: stl = 2
+   !===============================================
+   !===============================================
+   ! Uses quadratic shape functions at integer and half-integer grid points
+   !====================================
+   !===================================================
+   ! enter ef(1:6) wake fields
+   ! enters av(1)=F=|a|^2/2 envelope at integer grid nodes
+   ! and av(2:4)=grad[F] at staggered points
+   !  COMPUTES
+   !(E,B), F, grad[F] assignements to particle positions 
+   ! => ap(1:6)  in 2D 
+   ! => ap(1:10) in 3D
+   ! approximated gamma function:
+   ! gam_new= gam +0.25*charge*Dt(gam*E+0.5*grad[F]).p^{n-1/2}/gam^2
+   ! EXIT
+   ! (E+ 0.5grad[F]/gam_new) B/gam_new, F   and wgh/gam_new  
+   ! pt(1:5)  in 2D
+   ! pt(1:7)  in 3D
+   !========================================
+   dth = 0.5*dt_step
+   ch = sp_loc%charge
+
+   allocate( i(np) )
+   allocate( ih(np) )
+   allocate( j(np) )
+   allocate( jh(np) )
+   allocate( gam(np) )
+   allocate( dgam(np) )
+   allocate( inv_gam(np) )
+   allocate( aa1(np), source=zero_dp )
+   allocate( b1(np), source=zero_dp )
+   select case (ndim)
+   !==========================
+   case (2)
+    allocate( xx(np, 2) )
+    allocate( ap(np, 6), source=zero_dp )
+    allocate( ax1(np, 0:2) )
+    allocate( axh1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh1(np, 0:2) )
+    k2 = 1
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+
+    !     upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
+    !     wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
+    
+    !==========================
+    do n = 1, np
+     do j1 = 0, stl
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)
+      do i1 = 0, stl
+       i2 = i(n) + i1
+       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned F=a^2/2 field
+      end do
+      do i1 = 0, stl
+       i2 = ih(n) + i1
+       dvol1 = dvol*axh1(n, i1)
+       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
+       ap(n, 4) = ap(n, 4) + dvol1*av(i2, j2, k2, 2)
+       !ap(4)=ap(4)+dvol1*dx_inv*(av(i2+1,j2,k2,1)-av(i2,j2,k2,1))
+      end do
+     end do
+     do j1 = 0, stl
+      j2 = jh(n) + j1
+      dvol = ayh1(n, j1)
+      do i1 = 0, stl
+       i2 = i(n) + i1
+       dvol1 = dvol*ax1(n, i1)
+       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
+       ap(n, 5) = ap(n, 5) + dvol1*av(i2, j2, k2, 3)
+       !ap(5)=ap(5)+dvol1*dy_inv*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))
+      end do
+      do i1 = 0, stl
+       i2 = ih(n) + i1
+       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*ef(i2, j2, k2, 3) !Bz(i+1/2,j+1/2,k)
+      end do
+     end do
+    end do
+    !=========================
+    call sp_loc%compute_gamma(pond_pot=ap(1:np, 6)) ! Check if needed, probably can be computed in lpf_env_positions
+    inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
+    ap(1:np, 1:3) = ch*ap(1:np, 1:3)
+    ap(1:np, 4:5) = 0.5*ch*ch*ap(1:np, 4:5)
+    xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
+    xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
+    !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
+    do n = 1, 2
+     aa1(1:np) = aa1(1:np) + ap(1:np, n)*xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + ap(1:np, n + 3)*xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+    end do
+    gam(1:np) = one_dp/inv_gam(1:np)
+    dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
+    inv_gam(1:np) = (gam(1:np)-dgam(1:np))*inv_gam(1:np)*inv_gam(1:np)
+    !ap(3)=q*B/gamp, ap(4:5)= q*Grad[F]/2*gamp
+    do n = 3, 5
+     ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
+    end do
+    call pt%set_component_aux(ap(1:np, 1) - ap(1:np, 4), FX_COMP, lb=1, ub=np)
+    call pt%set_component_aux(ap(1:np, 2) - ap(1:np, 5), FY_COMP, lb=1, ub=np)
+    ! Lorentz force already multiplied by q    
+    call pt%set_component_aux(ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component_aux(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
+     BZ_COMP, lb=1, ub=np) !weight/gamp
+    !=============================
+
+   case (3)
+
+    allocate( xx(np, 3) )
+    allocate( ap(np, 10), source=zero_dp )
+    allocate( ax1(np, 0:2) )
+    allocate( axh1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh1(np, 0:2) )
+    allocate( az1(np, 0:2) )
+    allocate( azh1(np, 0:2) )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+    azh1(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+    k(1:np) = interp%iz_rank2(1:np)
+    kh(1:np) = interp%ihz_rank2(1:np)
+
+    do n = 1, np
+     do k1 = 0, stl
+      k2 = k(n) + k1
+      do j1 = 0, stl
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*az1(n, k1)
+       do i1 = 0, stl
+        i2 = i1 + i(n)
+        ap(n, 10) = ap(n, 10) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned Phi=a^2/2 field
+       end do
+       do i1 = 0, stl
+        i2 = i1 + ih(n)
+        dvol1 = dvol*axh1(n, i1)
+        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
+        ap(n, 7) = ap(n, 7) + dvol1*av(i2, j2, k2, 2)
+       end do
+      end do
+      do j1 = 0, stl
+       j2 = jh(n) + j1
+       dvol = ayh1(n, j1)*az1(n, k1)
+       do i1 = 0, 2
+        i2 = i(n) + i1
+        dvol1 = dvol*ax1(n, i1)
+        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
+        ap(n, 8) = ap(n, 8) + dvol1*av(i2, j2, k2, 3)
+       end do
+       do i1 = 0, stl
+        i2 = i1 + ih(n)
+        ap(n, 6) = ap(n, 6) + axh1(n, i1)*dvol*ef(i2, j2, k2, 6) !Bz(i+1/2,j+1/2,k)
+       end do
+      end do
+     end do
+     !=========================
+     do k1 = 0, stl
+      k2 = kh(n) + k1
+      do j1 = 0, stl
+       j2 = jh(n) + j1
+       dvol = ayh1(n, j1)*azh1(n, k1)
+       do i1 = 0, stl
+        i2 = i1 + i(n)
+        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4) !Bx(i,j+1/2,k+1/2)
+       end do
+      end do
+      do j1 = 0, stl
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*azh1(n, k1)
+       do i1 = 0, stl
+        i2 = ih(n) + i1
+        ap(n, 5) = ap(n, 5) + axh1(n, i1)*dvol*ef(i2, j2, k2, 5) !By(i+1/2,j,k+1/2)
+       end do
+       do i1 = 0, stl
+        i2 = i1 + i(n)
+        dvol1 = dvol*ax1(n, i1)
+        ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, k2, 3) !Ez and Dz[F] (i,j,k+1/2)
+        ap(n, 9) = ap(n, 9) + dvol1*av(i2, j2, k2, 4)
+       end do
+      end do
+     end do
+    end do
+     
+    !=========================
+    call sp_loc%compute_gamma(pond_pot=ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
+    inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
+    ap(1:np, 1:6) = ch*ap(1:np, 1:6)
+    ap(1:np, 7:9) = 0.5*ch*ch*ap(1:np, 7:9)
+    xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
+    xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
+    xx(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np)
+    !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
+    do n = 1, 3
+     aa1(1:np) = aa1(1:np) + ap(1:np, n)*xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + ap(1:np, n + 6)*xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+    end do
+    gam(1:np) = one_dp/inv_gam(1:np)
+    dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
+    inv_gam(1:np) = (gam(1:np)-dgam(1:np))*inv_gam(1:np)*inv_gam(1:np)
+    !  ap(1:3)=q(Ex,Ey,Ez)   ap(4:6)=q(Bx,By,Bz),ap(7:9)=q[Dx,Dy,Dz]F/2
+    do n = 4, 9
+     ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
+    end do
+    ! Lorentz force already multiplied by q    
+    call pt%set_component_aux(ap(1:np, 1) - ap(1:np, 7), FX_COMP, lb=1, ub=np)
+    call pt%set_component_aux(ap(1:np, 2) - ap(1:np, 8), FY_COMP, lb=1, ub=np)
+    call pt%set_component_aux(ap(1:np, 3) - ap(1:np, 9), FZ_COMP, lb=1, ub=np)
+    call pt%set_component_aux(ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component_aux(ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component_aux(ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component_aux(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
+     BZ_COMP, lb=1, ub=np) !weight/gamp
+    !=============================
+   end select
+  end subroutine
+  !=======================================
+  
+  subroutine set_env_acc_old(ef, av, sp_loc, pt, np, dt_step)
 
    real (dp), intent (in) :: ef(:, :, :, :), av(:, :, :, :)
    type (species), intent (in) :: sp_loc
@@ -972,9 +1407,9 @@
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
      az1(0:2) = interp%coeff_z(1:3)
-     axh1(0:1) = interp%h_coeff_x(1:2)
-     ayh1(0:1) = interp%h_coeff_y(1:2)
-     azh1(0:1) = interp%h_coeff_z(1:2)
+     axh1(0:2) = interp%h_coeff_x(1:3)
+     ayh1(0:2) = interp%h_coeff_y(1:3)
+     azh1(0:2) = interp%h_coeff_z(1:3)
  
      i = interp%ix
      ih = interp%ihx
