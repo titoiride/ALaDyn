@@ -51,6 +51,11 @@
    module procedure :: set_env_acc_old
   end interface
 
+  interface set_ion_env_field
+   module procedure :: set_ion_env_field_new
+   module procedure :: set_ion_env_field_old
+  end interface
+
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
 
@@ -1497,7 +1502,184 @@
    end select
   end subroutine
   !=======================================
-  subroutine set_ion_env_field(ef, sp_loc, pt, np, om0)
+
+  subroutine set_ion_env_field_new(ef, sp_loc, pt, np, om0)
+
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (inout) :: pt
+   integer, intent (in) :: np
+   real (dp), intent (in) :: om0
+
+   real (dp), allocatable, dimension(:, :) :: xx, ap
+   real (dp), allocatable, dimension(:, :) :: ax1, axh1, ay1, ayh1, az1, azh1
+   real (dp), allocatable, dimension(:) :: aux
+   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real (dp) :: dvol, ddx, ddy
+   integer :: i1, j1, i2, j2, k1, k2, n
+   !==============================
+   ! Enter ef(1:2)<=  A=(A_R,A_I)
+   ! Exit pt=|E|^2= |E_y|^2 + |E_x|^2 assigned to each ion particle
+   !===========================
+   !  Up to O(epsilon)^2:
+   ! |E_y|^2= k_0^2*|A|^2+2*k_0*[A_R*Dx(A_I)-A_I*Dx(A_R)] +(Dx[A_R])^2 +Dx[A_I}^2)
+   ! |E_x|^2= (Dy[A_R])^2 +Dy[A_I]^2)
+   !===============================================
+   !===============================================
+   ! Quadratic shape functions
+   !====================================
+   ddx = dx_inv
+   ddy = dy_inv
+   !===== enter species positions at t^{n+1} level========
+   ! fields are at t^n
+   select case (ndim)
+   case (2)
+    k2 = 1
+
+    allocate( xx(np, 2) )
+    allocate( ap(np, 6), source=zero_dp )
+    allocate( ax1(np, 0:2) )
+    allocate( axh1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh1(np, 0:2) )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+
+    !==========================
+    do n = 1, np
+     do j1 = 0, 2
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)
+      do i1 = 0, 2
+       i2 = i1 + i(n)
+       ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
+       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+      end do
+      do i1 = 0, 2
+       i2 = i1 + ih(n)
+       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+       ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+      end do
+     end do
+     do j1 = 0, 2
+      j2 = jh(n) + j1
+      dvol = ayh1(n, j1)
+      do i1 = 0, 2
+       i2 = i(n) + i1
+       ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+      end do
+     end do
+    end do
+    !==================
+    call pt%set_component_aux( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
+     POND_COMP, lb=1, ub=np) !The interpolated |A| potential
+    ap(1:np, 1) = om0*ap(1:np, 1) 
+    ap(1:np, 2) = om0*ap(1:np, 2)
+    ap(1:np, 3) = ddx*ap(1:np, 3)
+    ap(1:np, 4) = ddx*ap(1:np, 4)
+    ap(1:np, 5) = ddy*ap(1:np, 5)
+    ap(1:np, 6) = ddy*ap(1:np, 6)
+
+    associate( aux => ap(1:np, 1)*ap(1:np, 1) + ap(1:np, 2)*ap(1:np, 2) + &
+               ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
+               ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
+               2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
+     call pt%set_component_aux( aux, E_SQUARED, lb=1, ub=np )
+    end associate
+
+    !==========================
+   case (3)
+
+    allocate( xx(np, 3) )
+    allocate( ap(np, 6), source=zero_dp )
+    allocate( ax1(np, 0:2) )
+    allocate( axh1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh1(np, 0:2) )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+    azh1(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+    k(1:np) = interp%iz_rank2(1:np)
+    kh(1:np) = interp%ihz_rank2(1:np)
+
+    !==========================
+
+    do n = 1, np
+     do k1 = 0, 2
+      k2 = k(n) + k1
+      do j1 = 0, 2
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*az1(n, k1)
+       do i1 = 0, 2
+        i2 = i1 + i(n)
+        ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
+        ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+       end do
+       do i1 = 0, 2
+        i2 = i1 + ih(n)
+        ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+        ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+       end do
+      end do
+      do j1 = 0, 2
+       j2 = jh(n) + j1
+       dvol = ayh1(n, j1)*az1(n, k1)
+       do i1 = 0, 2
+        i2 = i(n) + i1
+        ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+        ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+       end do
+      end do
+     end do
+    end do
+    call pt%set_component_aux( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
+    POND_COMP, lb=1, ub=np) !The interpolated |A| potential
+    ap(1:np, 1) = om0*ap(1:np, 1) 
+    ap(1:np, 2) = om0*ap(1:np, 2)
+    ap(1:np, 3) = ddx*ap(1:np, 3)
+    ap(1:np, 4) = ddx*ap(1:np, 4)
+    ap(1:np, 5) = ddy*ap(1:np, 5)
+    ap(1:np, 6) = ddy*ap(1:np, 6)
+    
+    associate( aux => ap(1:np, 1)*ap(1:np, 1) + ap(1:np, 2)*ap(1:np, 2) + &
+     ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
+     ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
+     2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
+     call pt%set_component_aux( aux, E_SQUARED, lb=1, ub=np )
+    end associate
+
+   end select
+   !================================
+  end subroutine
+
+  subroutine set_ion_env_field_old(ef, sp_loc, pt, np, om0)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species), intent (in) :: sp_loc
