@@ -56,6 +56,16 @@
    module procedure :: set_ion_env_field_old
   end interface
 
+  interface set_env_grad_interp
+   module procedure :: set_env_grad_interp_new
+   module procedure :: set_env_grad_interp_old
+  end interface
+
+  interface set_env_density
+   module procedure :: set_env_density_new
+   module procedure :: set_env_density_old
+  end interface
+
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
 
@@ -722,14 +732,14 @@
    !====================================
    ! fields are at t^n
 
-   allocate( i(np) )
-   allocate( ih(np) )
-   allocate( j(np) )
-   allocate( jh(np) )
    allocate( ef_sqr(np), source=zero_dp )
 
    select case (ndim)
    case (2)
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
     allocate( xx(np, 2) )
     allocate( ax1(np, 0:2) )
     allocate( axh(np, 0:2) )
@@ -784,6 +794,12 @@
 
    case (3)
 
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
+    allocate( k(np) )
+    allocate( kh(np) )
     allocate( xx(np, 3) )
     allocate( ax1(np, 0:2) )
     allocate( axh(np, 0:2) )
@@ -863,7 +879,6 @@
    end select
    !================================
   end subroutine
-
 
   subroutine set_ion_efield_old(ef, sp_loc, pt, np)
 
@@ -1054,10 +1069,6 @@
    dth = 0.5*dt_step
    ch = sp_loc%charge
 
-   allocate( i(np) )
-   allocate( ih(np) )
-   allocate( j(np) )
-   allocate( jh(np) )
    allocate( gam(np) )
    allocate( dgam(np) )
    allocate( inv_gam(np) )
@@ -1066,6 +1077,10 @@
    select case (ndim)
    !==========================
    case (2)
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
     allocate( xx(np, 2) )
     allocate( ap(np, 6), source=zero_dp )
     allocate( ax1(np, 0:2) )
@@ -1152,7 +1167,12 @@
     !=============================
 
    case (3)
-
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
+    allocate( k(np) )
+    allocate( kh(np) )
     allocate( xx(np, 3) )
     allocate( ap(np, 10), source=zero_dp )
     allocate( ax1(np, 0:2) )
@@ -1513,7 +1533,6 @@
 
    real (dp), allocatable, dimension(:, :) :: xx, ap
    real (dp), allocatable, dimension(:, :) :: ax1, axh1, ay1, ayh1, az1, azh1
-   real (dp), allocatable, dimension(:) :: aux
    integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
    real (dp) :: dvol, ddx, ddy
    integer :: i1, j1, i2, j2, k1, k2, n
@@ -1530,12 +1549,16 @@
    !====================================
    ddx = dx_inv
    ddy = dy_inv
+
    !===== enter species positions at t^{n+1} level========
    ! fields are at t^n
    select case (ndim)
    case (2)
     k2 = 1
-
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
     allocate( xx(np, 2) )
     allocate( ap(np, 6), source=zero_dp )
     allocate( ax1(np, 0:2) )
@@ -1603,6 +1626,12 @@
     !==========================
    case (3)
 
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
+    allocate( k(np) )
+    allocate( kh(np) )
     allocate( xx(np, 3) )
     allocate( ap(np, 6), source=zero_dp )
     allocate( ax1(np, 0:2) )
@@ -1845,7 +1874,171 @@
    !================================
   end subroutine
   !================================
-  subroutine set_env_grad_interp(av, sp_loc, pt, np, ndm)
+  subroutine set_env_grad_interp_new(av, sp_loc, pt, np, ndm)
+
+   real (dp), intent (in) :: av(:, :, :, :)
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (inout) :: pt
+   integer, intent (in) :: np, ndm
+
+   real (dp), allocatable, dimension(:, :) :: xx, ap
+   real (dp), allocatable, dimension(:, :) :: ax1, axh1, ay1, ayh1, az1, azh1
+   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real (dp) :: dvol, dvol1
+   integer ::i1, j1, i2, j2, k1, k2, n
+
+   !===============================================
+   ! enters av(1)=|a|^2/2 envelope at integer grid nodes
+   ! and av(2:4)=[Grad |a|2/2] at staggered grid points
+   ! exit in pt(1:4) grad[|a|^2]/2 and |a|^2/2 at the particle positions
+   ! On output => Reverse ordering of field variables is used
+   !=========================
+   ! Particle positions assigned using quadratic splines
+   !  F=|a|^2/2
+   !  ap(1)= [D_x(F)](i+1/2,j,k)
+   !  ap(2)= [D_y(F)](i,j+1/2,k)
+   !  ap(3)= [D_z(F)](i,j,k+1/2)
+   !  ap(4)= [Phi](i,j,k)
+   !===========================================
+
+   select case (ndim)
+   case (2)
+    k2 = 1
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
+    allocate( xx(np, 2) )
+    allocate( ap(np, 6), source=zero_dp )
+    allocate( ax1(np, 0:2) )
+    allocate( axh1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh1(np, 0:2) )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+
+    !==========================
+
+    do n = 1, np
+     do j1 = 0, 2
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)
+      do i1 = 0, 2
+       i2 = i1 + ih(n)
+       dvol1 = dvol*axh1(n, i1)
+       ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[Phi]
+       i2 = i1 + i(n)
+       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) ![Phi]
+      end do
+     end do
+     do j1 = 0, 2
+      j2 = jh(n) + j1
+      dvol = ayh1(n, j1)
+      do i1 = 0, 2
+       i2 = i(n) + i1
+       dvol1 = dvol*ax1(n, i1)
+       ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[Phi]
+      end do
+     end do
+
+     !assigned grad[Phi] and Phi
+     call pt%set_component_aux( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+     call pt%set_component_aux( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+     call pt%set_component_aux( ap(1:np, 3), POND_COMP, lb=1, ub=np)
+    end do
+    !=================================
+   case (3)
+    allocate( i(np) )
+    allocate( ih(np) )
+    allocate( j(np) )
+    allocate( jh(np) )
+    allocate( k(np) )
+    allocate( kh(np) )
+    allocate( xx(np, 3) )
+    allocate( ap(np, 6), source=zero_dp )
+    allocate( ax1(np, 0:2) )
+    allocate( axh1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( ayh1(np, 0:2) )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    interp = qqh_2d_spline( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
+    azh1(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    ih(1:np) = interp%ihx_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    jh(1:np) = interp%ihy_rank2(1:np)
+    k(1:np) = interp%iz_rank2(1:np)
+    kh(1:np) = interp%ihz_rank2(1:np)
+
+    !==========================
+
+    do n = 1, np
+     do k1 = 0, 2
+      k2 = k(n) + k1
+      do j1 = 0, 2
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*az1(n, k1)
+       do i1 = 0, 2
+        i2 = i1 + ih(n)
+        dvol1 = dvol*axh1(n, i1)
+        ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[F]
+        i2 = i1 + i(n)
+        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !Phi
+       end do
+      end do
+      do j1 = 0, 2
+       j2 = jh(n) + j1
+       dvol = ayh1(n, j1)*az1(n, k1)
+       do i1 = 0, 2
+        i2 = i(n) + i1
+        dvol1 = dvol*ax1(n, i1)
+        ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[F]
+       end do
+      end do
+      k2 = kh(n) + k1
+      do j1 = 0, 2
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*azh1(n, k1)
+       do i1 = 0, 2
+        i2 = i(n) + i1
+        dvol1 = dvol*ax1(n, i1)
+        ap(n, 3) = ap(n, 3) + dvol1*av(i2, j2, k2, 4) !Dz[F]
+       end do
+      end do
+     end do
+     !assigned grad[Phi] and Phi
+     call pt%set_component_aux( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+     call pt%set_component_aux( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+     call pt%set_component_aux( ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
+     call pt%set_component_aux( ap(1:np, 4), POND_COMP, lb=1, ub=np)
+     !=================================
+    end do
+   end select
+  end subroutine
+  !===========================
+  subroutine set_env_grad_interp_old(av, sp_loc, pt, np, ndm)
 
    type (species), intent (in) :: sp_loc
    real (dp), intent (in) :: av(:, :, :, :)
@@ -1992,7 +2185,103 @@
    end select
   end subroutine
   !===========================
-  subroutine set_env_density(efp, av, np, ic)
+  subroutine set_env_density_new(sp_loc, av, np, ic)
+
+   type (species_aux), intent (inout) :: sp_loc
+   real (dp), intent (inout) :: av(:, :, :, :)
+   integer, intent (in) :: np, ic
+
+   real (dp), allocatable, dimension(:, :) :: xx
+   real (dp), allocatable, dimension(:, :) :: ax1, ay1, az1
+   real (dp), allocatable, dimension(:) :: weight
+   integer, allocatable, dimension(:) :: i, j, k
+   real (dp) :: dvol, dvol1
+   integer :: i1, j1, i2, j2, k1, k2, n
+   !===============================================
+   ! Enter in sp_loc positions and efp(5) wgh/gamp at time level n
+   ! exit av(:,:,:,ic) the den source in envelope equation :  <n*wgh/gamp> > 0
+   ! exit efp(1:3) relative positions at time level n
+   !=========================
+
+   select case (ndim)
+   case (2)
+    k2 = 1
+    allocate( i(np) )
+    allocate( j(np) )
+    allocate( weight(np) )
+    allocate( xx(np, 2) )
+    allocate( ax1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    interp = qden_2d_wgh( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+
+    weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
+     !==========================
+    do n = 1, np
+     do j1 = 0, 2
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)*weight(n)
+      do i1 = 0, 2
+       i2 = i1 + i(n)
+       dvol1 = dvol*ax1(n, i1)
+       av(i2, j2, k2, ic) = av(i2, j2, k2, ic) + dvol1
+      end do
+     end do
+    end do
+    !========================
+   case (3)
+    allocate( i(np) )
+    allocate( j(np) )
+    allocate( k(np) )
+    allocate( weight(np) )
+    allocate( xx(np, 3) )
+    allocate( ax1(np, 0:2) )
+    allocate( ay1(np, 0:2) )
+    allocate( az1(np, 0:2) )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    interp = qden_3d_wgh( xx )
+
+    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    k(1:np) = interp%iz_rank2(1:np)
+
+    weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
+    do n = 1, np
+     do k1 = 0, 2
+      k2 = k(n) + k1
+      do j1 = 0, 2
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*az1(n, k1)*weight(n)
+       do i1 = 0, 2
+        i2 = i1 + i(n)
+        dvol1 = dvol*ax1(n, i1)
+        av(i2, j2, k2, ic) = av(i2, j2, k2, ic) + dvol1
+       end do
+      end do
+     end do
+    end do
+   end select
+   !In ebfp(1:3) exit relative (x,y,z) positions at current t^n level
+   !In av(ic)  exit particle density
+   !================================
+  end subroutine
+  !==========================
+  subroutine set_env_density_old(efp, av, np, ic)
 
    real (dp), intent (inout) :: efp(:, :)
    real (dp), intent (inout) :: av(:, :, :, :)
