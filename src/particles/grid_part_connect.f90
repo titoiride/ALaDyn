@@ -66,6 +66,11 @@
    module procedure :: set_env_density_old
   end interface
 
+  interface esirkepov_2d_curr
+   module procedure :: esirkepov_2d_curr_new
+   module procedure :: esirkepov_2d_curr_old
+  end interface
+
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
 
@@ -969,9 +974,9 @@
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
      az1(0:2) = interp%coeff_z(1:3)
-     axh(0:1) = interp%h_coeff_x(1:2)
-     ayh(0:1) = interp%h_coeff_y(1:2)
-     azh(0:1) = interp%h_coeff_z(1:2)
+     axh(0:2) = interp%h_coeff_x(1:3)
+     ayh(0:2) = interp%h_coeff_y(1:3)
+     azh(0:2) = interp%h_coeff_z(1:3)
  
      i = interp%ix
      ih = interp%ihx
@@ -1822,9 +1827,9 @@
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
      az1(0:2) = interp%coeff_z(1:3)
-     axh1(0:1) = interp%h_coeff_x(1:2)
-     ayh1(0:1) = interp%h_coeff_y(1:2)
-     azh1(0:1) = interp%h_coeff_z(1:2)
+     axh1(0:2) = interp%h_coeff_x(1:3)
+     ayh1(0:2) = interp%h_coeff_y(1:3)
+     azh1(0:2) = interp%h_coeff_z(1:3)
  
      i = interp%ix
      ih = interp%ihx
@@ -2133,9 +2138,9 @@
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
      az1(0:2) = interp%coeff_z(1:3)
-     axh1(0:1) = interp%h_coeff_x(1:2)
-     ayh1(0:1) = interp%h_coeff_y(1:2)
-     azh1(0:1) = interp%h_coeff_z(1:2)
+     axh1(0:2) = interp%h_coeff_x(1:3)
+     ayh1(0:2) = interp%h_coeff_y(1:3)
+     azh1(0:2) = interp%h_coeff_z(1:3)
  
      i = interp%ix
      ih = interp%ihx
@@ -2215,6 +2220,7 @@
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+
     interp = qden_2d_wgh( xx )
 
     ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
@@ -2364,7 +2370,293 @@
   !====================================================
   !========= PARTICLE ASSIGNEMENT TO GRID FOR CURRENT DENSITY
   !=============================
-  subroutine esirkepov_2d_curr(sp_loc, pt, jcurr, np)
+  subroutine esirkepov_2d_curr_new(sp_loc, pt, jcurr, np)
+
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (in) :: pt
+   real (dp), intent (inout) :: jcurr(:, :, :, :)
+   integer, intent (in) :: np
+
+   real (dp), allocatable, dimension(:, :) :: xx, ap
+   real (dp), allocatable, dimension(:, :) :: ax0, ay0, axh0
+   real (dp), allocatable, dimension(:, :) :: ax1, ay1, axh, ayh, axh1
+   real (dp), allocatable, dimension(:, :) :: currx, curry
+   real (dp), allocatable, dimension(:) :: weight
+   integer, allocatable, dimension(:) :: i, ii0, j, jj0, ih, jh
+   integer, allocatable, dimension(:) :: x0, x1, y0, y1
+   real (dp) :: dvol
+   integer :: i1, j1, i2, j2, n
+   !==========================
+   !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
+   ! ==============================Only new and old positions needed
+   allocate( ax1(np, 0:2) )
+   allocate( ay1(np, 0:2) )
+   allocate( ax0(np, 0:2) )
+   allocate( ay0(np, 0:2) )
+   allocate( axh(np, 0:4), source=zero_dp )
+   allocate( ayh(np, 0:4), source=zero_dp )
+   allocate( currx(np, 0:4) )
+   allocate( curry(np, 0:4) )
+   allocate( weight(np) )
+   !======================
+   select case (ndim)
+   case (2)
+    if (curr_ndim==2) then !Two current components
+     allocate( xx(np, 2) )
+     allocate( x0(np) )
+     allocate( x1(np) )
+     allocate( y0(np) )
+     allocate( y1(np) )
+     allocate( i(np) )
+     allocate( ii0(np) )
+     allocate( j(np) )
+     allocate( jj0(np) )
+     allocate( ih(np) )
+     allocate( jh(np) )
+
+     weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+
+     ! Interpolation on new positions
+     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+     
+     interp = qden_2d_wgh( xx )
+     
+     ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+     ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+     
+     i(1:np) = interp%ix_rank2(1:np)
+     j(1:np) = interp%iy_rank2(1:np)
+     
+     ! Interpolation on old positions
+     xx(1:np, 1) = set_local_positions( pt, X_COMP )
+     xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+     
+     interp = qden_2d_wgh( xx )
+     
+     ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+     ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+
+     ii0(1:np) = interp%ix_rank2(1:np)
+     jj0(1:np) = interp%iy_rank2(1:np)
+
+     ih(1:np) = i(1:np) - ii0(1:np) + 1
+
+     !========================================
+     do n = 1, np
+      do i1 = 0, 2
+       axh(n, ih(n) + i1) = ax1(n, i1)
+      end do
+     end do
+
+     currx(1:np, 0) = -axh(1:np, 0)
+      do i1 = 1, 3
+       currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
+      end do
+     currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
+
+     do i1 = 1, 3
+      axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
+     end do
+     
+     do i1 = 0, 4
+      currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
+     end do
+
+     x0(1:np) = min(ih(1:np), 1)
+     x1(1:np) = max(ih(1:np) + 2, 3)
+
+     !========================================
+     jh(1:np) = j(1:np) - jj0(1:np) + 1
+     do n = 1, np
+      do i1 = 0, 2
+       ayh(n, jh(n) + i1) = ay1(n, i1)
+      end do
+     end do
+     curry(1:np, 0) = -ayh(1:np, 0)
+     do i1 = 1, 3
+      curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
+     end do
+     curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
+     do i1 = 0, 4
+      curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+     end do
+     do i1 = 1, 3
+      ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
+     end do
+     y0(1:np) = min(jh(1:np), 1)
+     y1(1:np) = max(jh(1:np) + 2, 3)
+
+     !================dt*J_x
+
+     jh(1:np) = jj0(1:np) - 1
+     ih(1:np) = ii0(1:np) - 1
+
+     do n = 1, np
+      do j1 = y0(n), y1(n)
+       j2 = jh(n) + j1
+       do i1 = x0(n), x1(n)
+        i2 = ih(n) + i1
+        jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
+       end do
+      end do
+      !================dt*J_y
+      do j1 = y0(n), y1(n)
+       j2 = jh(n) + j1
+       do i1 = x0(n), x1(n)
+        i2 = ih(n) + i1
+        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
+       end do
+      end do
+     end do
+    end if
+     !========================================
+    if (curr_ndim==3) then !Three currents conditions in 2D grid
+
+     !============== ********************** =================
+     allocate( xx(np, 2) )
+     allocate( x0(np) )
+     allocate( x1(np) )
+     allocate( y0(np) )
+     allocate( y1(np) )
+     allocate( i(np) )
+     allocate( ii0(np) )
+     allocate( j(np) )
+     allocate( jj0(np) )
+     allocate( ih(np) )
+     allocate( jh(np) )
+     allocate( axh0(np, 0:4))
+     allocate( axh1(np, 0:4))
+
+     weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+
+     ! Interpolation on new positions
+     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+     
+     interp = qden_2d_wgh( xx )
+     
+     ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+     ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+     
+     i(1:np) = interp%ix_rank2(1:np)
+     j(1:np) = interp%iy_rank2(1:np)
+     
+     ! Interpolation on old positions
+     xx(1:np, 1) = set_local_positions( pt, X_COMP )
+     xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+     
+     interp = qden_2d_wgh( xx )
+     
+     ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+     ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+
+     ii0(1:np) = interp%ix_rank2(1:np)
+     jj0(1:np) = interp%iy_rank2(1:np)
+
+     ih(1:np) = i(1:np) - ii0(1:np) + 1
+
+     !========================================
+     ! Computing velocity along z
+     xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
+     xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
+
+     ! Storing z_new - z_old in xx(1:np, 1)
+     xx(1:np, 1) = weight(1:np)*(xx(1:np, 1) - xx(1:np, 2))/3.
+
+     do n = 1, np
+      do i1 = 0, 2
+       axh(n, ih(n) + i1) = ax1(n, i1)
+      end do
+     end do
+
+     currx(1:np, 0) = -axh(1:np, 0)
+      do i1 = 1, 3
+       currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
+      end do
+     currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
+
+     do i1 = 1, 3
+      axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
+     end do
+     
+     do i1 = 0, 4
+      currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
+     end do
+
+     axh0(1:np, 0:4) = 0.5*axh(1:np, 0:4)
+     axh1(1:np, 0:4) = axh(1:np, 0:4)
+     do i1 = 1, 3
+      axh0(1:np, i1) = axh0(1:np, i1) + ax0(1:np, i1-1)
+      axh1(1:np, i1) = axh1(1:np, i1) + 0.5*ax0(1:np, i1-1)
+     end do
+
+     x0(1:np) = min(ih(1:np), 1)
+     x1(1:np) = max(ih(1:np) + 2, 3)
+
+     !========================================
+     jh(1:np) = j(1:np) - jj0(1:np) + 1
+     do n = 1, np
+      do i1 = 0, 2
+       ayh(n, jh(n) + i1) = ay1(n, i1)
+      end do
+     end do
+     curry(1:np, 0) = -ayh(1:np, 0)
+     do i1 = 1, 3
+      curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
+     end do
+     curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
+     do i1 = 0, 4
+      curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+     end do
+     do i1 = 1, 3
+      ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
+     end do
+     y0(1:np) = min(jh(1:np), 1)
+     y1(1:np) = max(jh(1:np) + 2, 3)
+
+     !================dt*J_x= currx*(Wy^0+Wy^1) to be multiplied by dx/2
+
+     jh(1:np) = jj0(1:np) - 1
+     ih(1:np) = ii0(1:np) - 1
+
+     do n = 1, np
+      do j1 = y0(n), y1(n)
+       j2 = jh(n) + j1
+       do i1 = x0(n), x1(n)
+        i2 = ih(n) + i1
+        jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
+       end do
+      end do
+      !================dt*J_y= curry*(Wx^0+Wx^1)
+      do j1 = y0(n), y1(n)
+       j2 = jh(n) + j1
+       do i1 = x0(n), x1(n)
+        i2 = ih(n) + i1
+        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
+       end do
+      end do
+      !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
+      do j1 = 0, 2
+       j2 = jj0(n) + j1
+       dvol = ay0(n, j1)*xx(n, 1)
+       do i1 = x0(n), x1(n)
+        i2 = i1 + ih(n)
+        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh0(n, i1)*dvol
+       end do
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*xx(n, 1)
+       do i1 = x0(n), x1(n)
+        i2 = i1 + ih(n)
+        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh1(n, i1)*dvol
+       end do
+      end do
+     end do 
+    end if
+   end select
+   !-----------------------
+  end subroutine
+  subroutine esirkepov_2d_curr_old(sp_loc, pt, jcurr, np)
 
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
