@@ -71,6 +71,11 @@
    module procedure :: esirkepov_2d_curr_old
   end interface
 
+  interface esirkepov_3d_curr
+   module procedure :: esirkepov_3d_curr_new
+   module procedure :: esirkepov_3d_curr_old
+  end interface
+
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
 
@@ -2654,7 +2659,7 @@
      end do 
     end if
    end select
-   !-----------------------
+   !===================================
   end subroutine
   subroutine esirkepov_2d_curr_old(sp_loc, pt, jcurr, np)
 
@@ -2888,7 +2893,220 @@
   end subroutine
   !==========================================
   !=============3D=================
-  subroutine esirkepov_3d_curr(sp_loc, pt, jcurr, np)
+  subroutine esirkepov_3d_curr_new(sp_loc, pt, jcurr, np)
+
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (in) :: pt
+   real (dp), intent (inout) :: jcurr(:, :, :, :)
+   integer, intent (in) :: np
+
+   real (dp), allocatable, dimension(:, :) :: xx, ap
+   real (dp), allocatable, dimension(:, :) :: ax0, ay0, az0
+   real (dp), allocatable, dimension(:, :) :: axh0, axh1, ayh0, ayh1
+   real (dp), allocatable, dimension(:, :) :: ax1, ay1, az1, axh, ayh, azh
+   real (dp), allocatable, dimension(:, :) :: currx, curry, currz
+   real (dp), allocatable, dimension(:) :: weight
+   integer, allocatable, dimension(:) :: i, ii0, j, jj0, k, kk0, ih, jh, kh
+   integer, allocatable, dimension(:) :: x0, x1, y0, y1, z0, z1
+   real (dp) :: dvol, dvolh
+   integer :: i1, j1, i2, j2, k1, k2, n
+   !==========================
+   !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
+   ! ==============================Only new and old positions needed
+   allocate( ax1(np, 0:2) )
+   allocate( ay1(np, 0:2) )
+   allocate( az1(np, 0:2) )
+   allocate( ax0(np, 0:2) )
+   allocate( ay0(np, 0:2) )
+   allocate( az0(np, 0:2) )
+   allocate( axh(np, 0:4), source=zero_dp )
+   allocate( ayh(np, 0:4), source=zero_dp )
+   allocate( azh(np, 0:4), source=zero_dp )
+   allocate( currx(np, 0:4) )
+   allocate( curry(np, 0:4) )
+   allocate( currz(np, 0:4) )
+   allocate( weight(np) )
+   allocate( xx(np, 3) )
+   allocate( x0(np) )
+   allocate( x1(np) )
+   allocate( y0(np) )
+   allocate( y1(np) )
+   allocate( z0(np) )
+   allocate( z1(np) )
+   allocate( i(np) )
+   allocate( ii0(np) )
+   allocate( j(np) )
+   allocate( jj0(np) )
+   allocate( k(np) )
+   allocate( kk0(np) )
+   allocate( ih(np) )
+   allocate( jh(np) )
+   allocate( kh(np) )
+   allocate( axh0(np, 0:4))
+   allocate( axh1(np, 0:4))
+   allocate( ayh0(np, 0:4))
+   allocate( ayh1(np, 0:4))
+
+   weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+
+   ! Interpolation on new positions
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+   
+   interp = qden_2d_wgh( xx )
+   
+   ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+   ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+   az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+   
+   i(1:np) = interp%ix_rank2(1:np)
+   j(1:np) = interp%iy_rank2(1:np)
+   k(1:np) = interp%iz_rank2(1:np)
+   
+   ! Interpolation on old positions
+   xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   xx(1:np, 3) = set_local_positions( pt, Z_COMP )
+   
+   interp = qden_2d_wgh( xx )
+   
+   ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+   ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+   az0(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+
+   ii0(1:np) = interp%ix_rank2(1:np)
+   jj0(1:np) = interp%iy_rank2(1:np)
+   kk0(1:np) = interp%iz_rank2(1:np)
+
+   ih(1:np) = i(1:np) - ii0(1:np) + 1
+
+   !========== direct Jx-inversion
+   do n = 1, np
+    do i1 = 0, 2
+     axh(n, ih(n) + i1) = ax1(n, i1)
+    end do
+   end do
+   currx(1:np, 0) = -axh(1:np, 0)
+   do i1 = 1, 3
+    currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
+   end do
+   currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
+   do i1 = 0, 4
+    currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
+   end do
+   !=======================
+   axh0(1:np, 0:4) = 0.5*axh(1:np, 0:4)
+   axh1(1:np, 0:4) = axh(1:np, 0:4)
+   do i1 = 1, 3
+    axh0(1:np, i1) = axh0(1:np, i1) + ax0(1:np, i1-1)
+    axh1(1:np, i1) = axh1(1:np, i1) + 0.5*ax0(1:np, i1-1)
+   end do
+
+   x0(1:np) = min(ih(1:np), 1)
+   x1(1:np) = max(ih(1:np) + 2, 3)
+
+   !========== direct Jy-inversion
+   jh(1:np) = j(1:np) - jj0(1:np) + 1 !=[0,1,2]
+   do n = 1, np
+    do i1 = 0, 2
+     ayh(n, jh(n) + i1) = ay1(n, i1)
+    end do
+   end do
+   curry(1:np, 0) = -ayh(1:np, 0)
+   do i1 = 1, 3
+    curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
+   end do
+   curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
+   do i1 = 0, 4
+    curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+   end do
+   !=====================================
+   !                                 Jx =>    Wz^0(0.5*wy^1+Wy^0)=Wz^0*ayh0
+   !                                          Wz^1(wy^1+0.5*Wy^0)=Wz^1*ayh1
+   !==============================
+   ayh0(1:np, 0:4) = 0.5*ayh(1:np, 0:4)
+   ayh1(1:np, 0:4) = ayh(1:np, 0:4)
+   do i1 = 1, 3
+    ayh0(1:np, i1) = ayh0(1:np, i1) + ay0(1:np, i1-1)
+    ayh1(1:np, i1) = ayh1(1:np, i1) + 0.5*ay0(1:np, i1-1)
+   end do
+   y0(1:np) = min(jh(1:np), 1) ![0,1]
+   y1(1:np) = max(jh(1:np) + 2, 3) ![3,4]
+
+   !============= Direct Jz inversion
+   kh(1:np) = k(1:np) - kk0(1:np) + 1
+   do n = 1, np
+    do i1 = 0, 2
+     azh(n, kh(n) + i1) = az1(n, i1)
+    end do
+   end do
+   currz(1:np, 0) = -azh(1:np, 0)
+   do i1 = 1, 3
+    currz(1:np, i1) = currz(1:np, i1-1) + az0(1:np, i1-1) - azh(1:np, i1)
+   end do
+   currz(1:np, 4) = currz(1:np, 3) - azh(1:np, 4)
+   do i1 = 0, 4
+    currz(1:np, i1) = weight(1:np)*currz(1:np, i1)
+   end do
+   z0(1:np) = min(kh(1:np), 1)
+   z1(1:np) = max(kh(1:np) + 2, 3)
+   !================Jx=DT*drho_x to be inverted==================
+   jh(1:np) = jj0(1:np) - 1
+   !====================
+   ih(1:np) = ii0(1:np) - 1
+   !========================================
+   do n = 1, np
+    do k1 = 0, 2
+     do j1 = y0(n), y1(n)
+      j2 = jh(n) + j1
+      dvol = ayh0(n, j1)*az0(n, k1)
+      dvolh = ayh1(n, j1)*az1(n, k1)
+      do i1 = x0(n), x1(n)
+       i2 = ih(n) + i1
+       jcurr(i2, j2, kk0(n) + k1, 1) = jcurr(i2, j2, kk0(n) + k1, 1) + &
+         dvol*currx(n, i1)
+       jcurr(i2, j2, k(n) + k1, 1) = jcurr(i2, j2, k(n) + k1, 1) + &
+        dvolh*currx(n, i1)
+      end do
+     end do
+    end do
+    !================Jy
+    do k1 = 0, 2
+     do j1 = y0(n), y1(n)
+      j2 = jh(n) + j1
+      dvol = curry(n, j1)*az0(n, k1)
+      dvolh = curry(n, j1)*az1(n, k1)
+      do i1 = x0(n), x1(n)
+       i2 = ih(n) + i1
+       jcurr(i2, j2, kk0(n) + k1, 2) = jcurr(i2, j2, kk0(n) + k1, 2) + &
+        axh0(n, i1)*dvol
+       jcurr(i2, j2, k(n) + k1, 2) = jcurr(i2, j2, k(n) + k1, 2) + &
+        axh1(n, i1)*dvolh
+      end do
+     end do
+    end do
+    !================Jz
+    kh(n) = kk0(n) - 1
+    do k1 = z0(n), z1(n)
+     k2 = kh(n) + k1
+     do j1 = 0, 2
+      dvol = ay0(n, j1)*currz(n, k1)
+      dvolh = ay1(n, j1)*currz(n, k1)
+      do i1 = x0(n), x1(n)
+       i2 = ih(n) + i1
+       jcurr(i2, jj0(n) + j1, k2, 3) = jcurr(i2, jj0(n) + j1, k2, 3) + &
+        axh0(n, i1)*dvol
+       jcurr(i2, j(n) + j1, k2, 3) = jcurr(i2, j(n) + j1, k2, 3) + &
+        axh1(n, i1)*dvolh
+      end do
+     end do
+    end do
+   end do
+   !============= Curr data on [1:n+4] extended range
+  end subroutine
+
+  subroutine esirkepov_3d_curr_old(sp_loc, pt, jcurr, np)
 
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
