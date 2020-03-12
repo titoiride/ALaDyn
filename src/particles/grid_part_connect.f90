@@ -76,6 +76,11 @@
    module procedure :: esirkepov_3d_curr_old
   end interface
 
+  interface ncdef_2d_curr
+   module procedure :: ncdef_2d_curr_new
+   module procedure :: ncdef_2d_curr_old
+  end interface
+
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
 
@@ -3285,7 +3290,126 @@
   !===============================
   ! NO CHARGE PRESERVING CURRENT DENSITY
   !=========================
-  subroutine ncdef_2d_curr(sp_loc, pt, jcurr, np)
+  subroutine ncdef_2d_curr_new(sp_loc, pt, jcurr, np)
+
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (in) :: pt
+   real (dp), intent (inout) :: jcurr(:, :, :, :)
+   integer, intent (in) :: np
+
+   real (dp), allocatable, dimension(:, :) :: xx, vp
+   real (dp), allocatable, dimension(:, :) :: ax1, ay1
+   real (dp), allocatable, dimension(:, :) :: ax0, ay0
+   real (dp), allocatable, dimension(:, :) :: axh0, ayh0
+   real (dp), allocatable, dimension(:, :) :: axh1, ayh1
+   real (dp), allocatable, dimension(:) :: weight
+   integer, allocatable, dimension(:) :: i, j, ii0, jj0
+   integer, allocatable, dimension(:) :: ih, ih0, jh, jh0
+   real (dp) ::dvol(3)
+   integer :: i1, j1, i2, j2, n
+   !=======================
+   !Enter pt(3:4) old x-y positions
+   !====================================
+
+   allocate( xx(np, 2) )
+   allocate( vp(np, 2) )
+   allocate( ax1(np, 0:2) )
+   allocate( ay1(np, 0:2) )
+   allocate( ax0(np, 0:2) )
+   allocate( ax0(np, 0:2) )
+   allocate( axh1(np, 0:1) )
+   allocate( ayh1(np, 0:1) )
+   allocate( axh0(np, 0:1) )
+   allocate( ayh0(np, 0:1) )
+   allocate( i(np) )
+   allocate( j(np) )
+   allocate( ih(np) )
+   allocate( jh(np) )
+   allocate( ii0(np) )
+   allocate( jj0(np) )
+   allocate( ih0(np) )
+   allocate( jh0(np) )
+   allocate( weight(np) )
+
+   weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+
+   !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
+   ! is dt/gam and not just 1/gam ===
+
+   vp(1:np, 1) = 0.5*weight(1:np) * &
+    pt%call_component(INV_GAMMA_COMP, lb=1, ub=np) * &
+    sp_loc%call_component(PX_COMP, lb=1, ub=np)
+   vp(1:np, 2) = 0.5*weight(1:np) * &
+    pt%call_component(INV_GAMMA_COMP, lb=1, ub=np) * &
+    sp_loc%call_component(PY_COMP, lb=1, ub=np)
+
+   ! Interpolation on new positions
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+
+   interp = qlh_2d_spline( xx )
+
+   ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+   ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+   axh1(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
+   ayh1(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
+
+   i(1:np) = interp%ix_rank2(1:np)
+   ih(1:np) = interp%ihx_rank2(1:np)
+   j(1:np) = interp%iy_rank2(1:np)
+   jh(1:np) = interp%ihy_rank2(1:np)
+
+   ! Interpolation on old positions
+   xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+
+   interp = qlh_2d_spline( xx )
+
+   ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+   ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+   axh0(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
+   ayh0(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
+
+   ii0(1:np) = interp%ix_rank2(1:np)
+   ih0(1:np) = interp%ihx_rank2(1:np)
+   jj0(1:np) = interp%iy_rank2(1:np)
+   jh0(1:np) = interp%ihy_rank2(1:np)
+   
+   do n = 1, np
+    !===============Jx ========
+    do j1 = 0, 2
+     j2 = j(n) + j1
+     dvol(1) = vp(n, 1)*ay1(n, j1)
+     do i1 = 0, 1
+      i2 = ih(n) + i1
+      jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + dvol(1)*axh1(n, i1)
+     end do
+     j2 = jj0(n) + j1
+     dvol(1) = vp(n, 1)*ay0(n, j1)
+     do i1 = 0, 1
+      i2 = ih0(n) + i1
+      jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + dvol(1)*axh0(n, i1)
+     end do
+    end do
+    !=========== Jy             
+    do j1 = 0, 1
+     j2 = jh0(n) + j1
+     dvol(2) = vp(n, 2)*ayh0(n, j1)
+     do i1 = 0, 2
+      i2 = ii0(n) + i1
+      jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + dvol(2)*ax0(n, i1)
+     end do
+     j2 = jh(n) + j1
+     dvol(2) = vp(n, 2)*ayh1(n, j1)
+     do i1 = 0, 2
+      i2 = i(n) + i1
+      jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + dvol(2)*ax1(n, i1)
+     end do
+    end do
+   end do
+  end subroutine
+  !========================
+  subroutine ncdef_2d_curr_old(sp_loc, pt, jcurr, np)
 
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
