@@ -218,14 +218,14 @@
     call sp_loc%compute_gamma()
 
     !Stores old positions
-    call pt%set_component_aux( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
-    call pt%set_component_aux( sp_loc%call_component( Y_COMP, lb=1, ub=np), OLD_Y_COMP, lb=1, ub=np)
-    call pt%set_component_aux(dt_lp*sp_loc%call_component( INV_GAMMA_COMP, lb=1, ub=np), &
+    call pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
+    call pt%set_component( sp_loc%call_component( Y_COMP, lb=1, ub=np), OLD_Y_COMP, lb=1, ub=np)
+    call pt%set_component(dt_lp*sp_loc%call_component( INV_GAMMA_COMP, lb=1, ub=np), &
      OLD_GAMMA_COMP, lb=1, ub=np)
 
-    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+    call pt%set_component( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
      sp_loc%call_component( PX_COMP, lb=1, ub=np), VX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+    call pt%set_component( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
      sp_loc%call_component( PY_COMP, lb=1, ub=np), VY_COMP, lb=1, ub=np)
 
     pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
@@ -308,17 +308,17 @@
     call sp_loc%compute_gamma()
 
     !Stores old positions
-    call pt%set_component_aux( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
-    call pt%set_component_aux( sp_loc%call_component( Y_COMP, lb=1, ub=np), OLD_Y_COMP, lb=1, ub=np)
-    call pt%set_component_aux( sp_loc%call_component( Z_COMP, lb=1, ub=np), OLD_Z_COMP, lb=1, ub=np)
-    call pt%set_component_aux(dt_lp*sp_loc%call_component( INV_GAMMA_COMP, lb=1, ub=np), &
+    call pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
+    call pt%set_component( sp_loc%call_component( Y_COMP, lb=1, ub=np), OLD_Y_COMP, lb=1, ub=np)
+    call pt%set_component( sp_loc%call_component( Z_COMP, lb=1, ub=np), OLD_Z_COMP, lb=1, ub=np)
+    call pt%set_component(dt_lp*sp_loc%call_component( INV_GAMMA_COMP, lb=1, ub=np), &
      OLD_GAMMA_COMP, lb=1, ub=np)
 
-    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+    call pt%set_component( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
      sp_loc%call_component( PX_COMP, lb=1, ub=np), VX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+    call pt%set_component( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
      sp_loc%call_component( PY_COMP, lb=1, ub=np), VY_COMP, lb=1, ub=np)
-    call pt%set_component_aux( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
+    call pt%set_component( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
      sp_loc%call_component( PZ_COMP, lb=1, ub=np), VZ_COMP, lb=1, ub=np)
 
     pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
@@ -342,7 +342,7 @@
    if (vbeam>0.) then
     call sp_loc%set_component(sp_loc%call_component(X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
      X_COMP, lb=1, ub=np)
-    call pt%set_component_aux(pt%call_component(OLD_X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
+    call pt%set_component(pt%call_component(OLD_X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
      OLD_X_COMP, lb=1, ub=np)
    end if
   end subroutine
@@ -482,9 +482,9 @@
      sp_loc%call_component( PY_COMP, lb=1, ub=np)
     call sp_loc%set_component(vp(1:np), PY_COMP, lb=1, ub=np)
 
-    call f_pt%set_component_aux( sp_loc%call_component( X_COMP, lb=1, ub=np), &
+    call f_pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), &
      OLD_X_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux( sp_loc%call_component( Y_COMP, lb=1, ub=np), &
+    call f_pt%set_component( sp_loc%call_component( Y_COMP, lb=1, ub=np), &
      OLD_Y_COMP, lb=1, ub=np)
     !F_pt(5)=wgh/gamp unchanged
    case (3)
@@ -524,11 +524,11 @@
     call sp_loc%set_component(vp(1:np), PZ_COMP, lb=1, ub=np)
 
     !stores old positions
-    call f_pt%set_component_aux( sp_loc%call_component( X_COMP, lb=1, ub=np), &
+    call f_pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), &
      OLD_X_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux( sp_loc%call_component( Y_COMP, lb=1, ub=np), &
+    call f_pt%set_component( sp_loc%call_component( Y_COMP, lb=1, ub=np), &
      OLD_Y_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux( sp_loc%call_component( Z_COMP, lb=1, ub=np), &
+    call f_pt%set_component( sp_loc%call_component( Z_COMP, lb=1, ub=np), &
      OLD_Z_COMP, lb=1, ub=np)
     !F_pt(7)=wgh/gamp unchanged
    end select
@@ -632,17 +632,17 @@
     
     call sp_loc%set_component(gam_inv(1:np), INV_GAMMA_COMP, lb=1, ub=np)
     !============================
-    call f_pt%set_component_aux(gam_inv(1:np)*dt_lp, OLD_GAMMA_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(sp_loc%call_component( X_COMP, lb=1, ub=np), &
+    call f_pt%set_component(gam_inv(1:np)*dt_lp, OLD_GAMMA_COMP, lb=1, ub=np)
+    call f_pt%set_component(sp_loc%call_component( X_COMP, lb=1, ub=np), &
      OLD_X_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(sp_loc%call_component( Y_COMP, lb=1, ub=np), &
+    call f_pt%set_component(sp_loc%call_component( Y_COMP, lb=1, ub=np), &
      OLD_Y_COMP, lb=1, ub=np)
     vp(1:np, 1) = dt_lp*gam_inv(1:np)*pp(1:np, 1)
     vp(1:np, 2) = dt_lp*gam_inv(1:np)*pp(1:np, 2)
     
     !dt*V^{n+1/2}  velocities
-    call f_pt%set_component_aux(vp(1:np, 1), VX_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(vp(1:np, 2), VY_COMP, lb=1, ub=np)
+    call f_pt%set_component(vp(1:np, 1), VX_COMP, lb=1, ub=np)
+    call f_pt%set_component(vp(1:np, 2), VY_COMP, lb=1, ub=np)
     call sp_loc%set_component(sp_loc%call_component(X_COMP, lb=1, ub=np) &
      + vp(1:np, 1), X_COMP, lb=1, ub=np)
     call sp_loc%set_component(sp_loc%call_component(Y_COMP, lb=1, ub=np) &
@@ -681,18 +681,18 @@
     vp(1:np, 2) = dt_lp*gam_inv(1:np)*pp(1:np, 2)
     vp(1:np, 3) = dt_lp*gam_inv(1:np)*pp(1:np, 3)
 
-    call f_pt%set_component_aux(sp_loc%call_component( X_COMP, lb=1, ub=np), &
+    call f_pt%set_component(sp_loc%call_component( X_COMP, lb=1, ub=np), &
      OLD_X_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(sp_loc%call_component( Y_COMP, lb=1, ub=np), &
+    call f_pt%set_component(sp_loc%call_component( Y_COMP, lb=1, ub=np), &
      OLD_Y_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(sp_loc%call_component( Z_COMP, lb=1, ub=np), &
+    call f_pt%set_component(sp_loc%call_component( Z_COMP, lb=1, ub=np), &
      OLD_Z_COMP, lb=1, ub=np)
 
-    call f_pt%set_component_aux(gam_inv(1:np)*dt_lp, OLD_GAMMA_COMP, lb=1, ub=np)
+    call f_pt%set_component(gam_inv(1:np)*dt_lp, OLD_GAMMA_COMP, lb=1, ub=np)
     !dt*V^{n+1/2}  velocities
-    call f_pt%set_component_aux(vp(1:np, 1), VX_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(vp(1:np, 2), VY_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(vp(1:np, 3), VZ_COMP, lb=1, ub=np)
+    call f_pt%set_component(vp(1:np, 1), VX_COMP, lb=1, ub=np)
+    call f_pt%set_component(vp(1:np, 2), VY_COMP, lb=1, ub=np)
+    call f_pt%set_component(vp(1:np, 3), VZ_COMP, lb=1, ub=np)
     call sp_loc%set_component(sp_loc%call_component(X_COMP, lb=1, ub=np) &
      + vp(1:np, 1), X_COMP, lb=1, ub=np)
     call sp_loc%set_component(sp_loc%call_component(Y_COMP, lb=1, ub=np) &
@@ -712,7 +712,7 @@
    if (vbeam > zero_dp) then
     call sp_loc%set_component(sp_loc%call_component(X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
      X_COMP, lb=1, ub=np)
-    call f_pt%set_component_aux(f_pt%call_component(OLD_X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
+    call f_pt%set_component(f_pt%call_component(OLD_X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
      OLD_X_COMP, lb=1, ub=np)
    end if
   end subroutine

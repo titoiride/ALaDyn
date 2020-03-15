@@ -21,101 +21,27 @@
 
 module particles_def
 
- use precision_def
+ use base_species
  implicit none
- public
-
- integer, parameter :: X_COMP = 1
- integer, parameter :: Y_COMP = 2
- integer, parameter :: Z_COMP = 3
- integer, parameter :: PX_COMP = 4
- integer, parameter :: PY_COMP = 5
- integer, parameter :: PZ_COMP = 6
- integer, parameter :: INV_GAMMA_COMP = 7
- integer, parameter :: W_COMP = 8
- integer, parameter :: INDEX_COMP = -1
 
  type species
   real (dp), allocatable :: part(:, :)
  end type
  
- type species_new
-
-  logical :: initialized
-  !! Flag that states if the species has been initialized
-  real(dp) :: charge
-  !! Particle charge
-  integer, public :: n_part
-  !! Number of particles
-  integer :: dimensions
-  !! Number of dimensions in which particles live
-
-  real(dp), allocatable :: x(:)
-  !! Array containig the x particle positions
-  logical :: allocated_x
-  !! True if x array is allocated
-
-  real(dp), allocatable :: y(:)
-  !! Array containig the y particle positions
-  logical :: allocated_y
-  !! True if y array is allocated
-
-  real(dp), allocatable :: z(:)
-  !! Array containig the z particle positions
-  logical :: allocated_z
-  !! True if z array is allocated
-
-  real(dp), allocatable :: px(:)
-  !! Array containig the x particle momenta
-  logical :: allocated_px
-  !! True if px array is allocated
-
-  real(dp), allocatable :: py(:)
-  !! Array containig the y particle momenta
-  logical :: allocated_py
-  !! True if py array is allocated
-
-  real(dp), allocatable :: pz(:)
-  !! Array containig the z particle momenta
-  logical :: allocated_pz
-  !! True if pz array is allocated
-  
-  real(dp), allocatable :: gamma_inv(:)
-  !! Array containig the inverse of Lorentz gamma factor
-  logical :: allocated_gamma
-  !! True if gamma array is allocated
-  
-  real (sp), allocatable :: weight(:)
-  !! Array containig the particle weights
-  logical :: allocated_weight
-  !! True if weight array is allocated
-  
-  integer, allocatable :: part_index(:)
-  !! Array containig the particle index
-  logical :: allocated_index
-  !! True if index array is allocated
-
+ type, extends(base_species_T) :: species_new
   contains
    procedure, public :: call_component => call_component_spec
-   procedure, public :: compute_gamma
-   procedure, public :: count_particles
    procedure, public :: copy_scalars_from => copy_scalars_from_spec
    procedure, public :: flatten
-   procedure, public :: how_many
    procedure, public :: total_size
    procedure, private :: pack_species_logical
    procedure, private :: pack_species_array
    procedure, private :: sel_particles_bounds
    procedure, private :: sel_particles_index
-   procedure, private :: set_charge_int
-   procedure, private :: set_charge_real
-   procedure, public :: set_part_number
-   procedure, private :: set_component_real
-   procedure, private :: set_component_integer
+   procedure, public :: set_component_real
+   procedure, public :: set_component_integer
    generic :: pack_species => pack_species_array, pack_species_logical
    generic :: sel_particles => sel_particles_bounds, sel_particles_index
-   generic :: set_component => set_component_real, set_component_integer
-   generic :: set_charge => set_charge_real, set_charge_int
  end type
 
  interface species_new
@@ -124,66 +50,10 @@ module particles_def
 
  contains
 
- subroutine compute_gamma( this, pond_pot )
-  class(species_new), intent(inout) :: this
-  real(dp), intent(in), optional :: pond_pot(:)
-  real(dp), allocatable :: temp(:)
-  integer :: np
-
-  np = this%how_many()
-  allocate( temp(np), source=zero_dp )
-
-  if ( this%allocated_px ) then
-   temp(1:np) = temp(1:np) + this%call_component( PX_COMP )*this%call_component( PX_COMP )
-  end if
-
-  if ( this%allocated_py ) then
-   temp(1:np) = temp(1:np) + this%call_component( PY_COMP )*this%call_component( PY_COMP )
-  end if
-
-  if ( this%allocated_pz ) then
-   temp(1:np) = temp(1:np) + this%call_component( PZ_COMP )*this%call_component( PZ_COMP )
-  end if
-
-  if( present( pond_pot ) ) then
-   temp(1:np) = temp(1:np) + pond_pot(1:np)
-  end if
-
-  temp(1:np) = one_dp/sqrt(one_dp + temp(1:np))
-  call this%set_component(temp(1:np), INV_GAMMA_COMP, lb=1, ub=np)
-
- end subroutine
-
- pure function count_particles( this ) result( number )
-  class(species_new), intent(in) :: this
-  integer :: number
-
-  if ( this%allocated_x ) then
-   number = SIZE( this%x(:) )
-  else if ( this%allocated_y ) then
-   number = SIZE( this%y(:) )
-  else if ( this%allocated_z ) then
-   number = SIZE( this%z(:) )
-  else if ( this%allocated_px ) then
-   number = SIZE( this%px(:) )
-  else if ( this%allocated_py ) then
-   number = SIZE( this%py(:) )
-  else if ( this%allocated_pz ) then
-   number = SIZE( this%pz(:) )
-  else if ( this%allocated_gamma ) then
-   number = SIZE( this%gamma_inv(:) )
-  else if ( this%allocated_index ) then
-   number = SIZE( this%part_index(:) )
-  else if ( this%allocated_weight ) then
-   number = SIZE( this%weight(:) )
-  end if
-
- end function
-
  subroutine copy_scalars_from_spec( this, other )
   !! Copies all the non-array values from a `species_new` to another
-  class(species_new), intent(out) :: this
-  type(species_new), intent(in) :: other
+  class(species_new), intent(inout) :: this
+  class(base_species_T), intent(in) :: other
 
   this%charge = other%charge
   this%dimensions = other%dimensions
@@ -351,128 +221,117 @@ module particles_def
 
  end function
 
- pure function how_many( this ) result(n_parts)
-  !! Number of particles in the species
-  class(species_new), intent(in) :: this
-  integer :: n_parts
-
-  n_parts = this%n_part
-
- end function
-
- function sel_particles_bounds( this, lower_bound, upper_bound ) result(sel)
+ subroutine sel_particles_bounds( this, out_sp, lower_bound, upper_bound )
  !! Function that selects particles with respect to the given array boundaries
  !! (Memory position, NOT a particle index)
   class(species_new), intent(in) :: this
+  type(species_new), intent(out) :: out_sp
   integer, intent(in) :: lower_bound, upper_bound
-  type(species_new) :: sel
 
-
-  call sel%copy_scalars_from(this)
+  call out_sp%copy_scalars_from(this)
 
   if( this%allocated_x ) then
-   sel%x = this%x(lower_bound:upper_bound)
+   out_sp%x = this%x(lower_bound:upper_bound)
   end if
   if( this%allocated_y ) then
-   sel%y = this%y(lower_bound:upper_bound)
+   out_sp%y = this%y(lower_bound:upper_bound)
   end if
   if( this%allocated_z ) then
-   sel%z = this%z(lower_bound:upper_bound)
+   out_sp%z = this%z(lower_bound:upper_bound)
   end if
   if( this%allocated_px ) then
-   sel%px = this%px(lower_bound:upper_bound)
+   out_sp%px = this%px(lower_bound:upper_bound)
   end if
   if( this%allocated_py ) then
-   sel%py = this%py(lower_bound:upper_bound)
+   out_sp%py = this%py(lower_bound:upper_bound)
   end if
   if( this%allocated_pz ) then
-   sel%pz = this%pz(lower_bound:upper_bound)
+   out_sp%pz = this%pz(lower_bound:upper_bound)
   end if
   if( this%allocated_gamma ) then
-   sel%gamma_inv = this%gamma_inv(lower_bound:upper_bound)
+   out_sp%gamma_inv = this%gamma_inv(lower_bound:upper_bound)
   end if
   if( this%allocated_weight ) then
-   sel%weight = this%weight(lower_bound:upper_bound)
+   out_sp%weight = this%weight(lower_bound:upper_bound)
   end if
   if( this%allocated_index ) then
-   sel%part_index = this%part_index(lower_bound:upper_bound)
+   out_sp%part_index = this%part_index(lower_bound:upper_bound)
   end if
 
-  sel%n_part = sel%count_particles()
+  out_sp%n_part = out_sp%count_particles()
 
- end function
+ end subroutine
 
- function sel_particles_index( this, index_array ) result(sel)
+ subroutine sel_particles_index( this, out_sp, index_array )
   class(species_new), intent(in) :: this
+  type(species_new), intent(out) :: out_sp
   integer, dimension(:) :: index_array
-  type(species_new) :: sel
   integer :: i, tot_len, n
 
-  
   tot_len = SIZE(index_array)
   
-  sel = species_new( tot_len, this%dimensions )
+  out_sp = species_new( tot_len, this%dimensions )
   
-  call sel%copy_scalars_from(this)
+  call out_sp%copy_scalars_from(this)
 
   if( this%allocated_x ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%x(i) = this%x(n)
+    out_sp%x(i) = this%x(n)
    end do
   end if
   if( this%allocated_y ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%y(i) = this%y(n)
+    out_sp%y(i) = this%y(n)
    end do
   end if
   if( this%allocated_z ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%z(i) = this%z(n)
+    out_sp%z(i) = this%z(n)
    end do
   end if
 
   if( this%allocated_px ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%px(i) = this%px(n)
+    out_sp%px(i) = this%px(n)
    end do
   end if
   if( this%allocated_py ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%py(i) = this%py(n)
+    out_sp%py(i) = this%py(n)
    end do
   end if
   if( this%allocated_pz ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%pz(i) = this%pz(n)
+    out_sp%pz(i) = this%pz(n)
    end do
   end if
   if( this%allocated_gamma ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%gamma_inv(i) = this%gamma_inv(n)
+    out_sp%gamma_inv(i) = this%gamma_inv(n)
    end do
   end if
 
   if( this%allocated_weight ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%weight(i) = this%weight(n)
+    out_sp%weight(i) = this%weight(n)
    end do
   end if
   if( this%allocated_index ) then
    do i = 1, tot_len
     n = index_array(i)
-    sel%part_index(i) = this%part_index(n)
+    out_sp%part_index(i) = this%part_index(n)
    end do
   end if
 
- end function
+ end subroutine
 
  pure function total_size( this ) result(size)
   class(species_new), intent(in) :: this
@@ -667,7 +526,7 @@ module particles_def
 
  subroutine set_component_real( this, values, component, lb, ub )
   !! Assigns an array of real values to a given `species_new` component
-  class(species_new), intent(out) :: this
+  class(species_new), intent(inout) :: this
   real (dp), intent(in) :: values(:)
   integer, intent(in) :: component
   integer, intent(in), optional :: lb, ub
@@ -708,7 +567,7 @@ module particles_def
 
  subroutine set_component_integer( this, values, component, lb, ub )
   !! Assigns an array of integer values to a given `species_new` component
-  class(species_new), intent(out) :: this
+  class(species_new), intent(inout) :: this
   integer, intent(in) :: values(:)
   integer, intent(in) :: component
   integer, intent(in), optional :: lb, ub
@@ -748,68 +607,5 @@ module particles_def
   end select
 
  end subroutine
-
- subroutine set_charge_int( this, ch)
-  class(species_new), intent(out) :: this
-  integer, intent(in) :: ch
-
-  this%charge = real(ch, dp)
- end subroutine
-
- subroutine set_charge_real( this, ch)
-  class(species_new), intent(out) :: this
-  real(dp), intent(in) :: ch
-
-  this%charge = ch
- end subroutine
-
- subroutine set_part_number( this, n_parts)
-  class(species_new), intent(out) :: this
-  integer, intent(in) :: n_parts
-
-  this%n_part = n_parts
- end subroutine
-
- pure function component_dictionary( component ) result(cdir)
- !! Dictionary wrapper for send_recieve routines in parallel.F90
- !! that need the cdir parameter
-  integer, intent(in) :: component
-  integer :: cdir
-  select case(component)
-  case(X_COMP)
-   cdir = 3
-  case(Y_COMP)
-   cdir = 1
-  case(Z_COMP)
-   cdir = 2
-  end select
- end function
-
- pure function link_position_momentum( component ) result (pm_comp)
- !! Dictionary that gives back the corresponding position (momentum)
- !! when a momentum (position) is given, e.g.
- !!
- !! ```
- !!     comp = X_COMP
- !!
- !!     link_position_momentum( comp ) => gives PX_COMP
- !! ```
-  integer, intent(in) :: component
-  integer :: pm_comp
-  select case(component)
-  case(X_COMP)
-   pm_comp = PX_COMP
-  case(Y_COMP)
-   pm_comp = PY_COMP
-  case(Z_COMP)
-   pm_comp = PZ_COMP
-  case(PX_COMP)
-   pm_comp = X_COMP
-  case(PY_COMP)
-   pm_comp = Y_COMP
-  case(PZ_COMP)
-   pm_comp = Z_COMP
-  end select
- end function
 
 end module

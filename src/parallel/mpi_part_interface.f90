@@ -306,7 +306,7 @@
    pel, per, ibd, component, ndv, old_np, n_sr, npt)
   
    type (species_new), intent (inout) :: sp_loc
-   type (species_new), intent (in) :: aux_sp
+   type (species_aux), intent (in) :: aux_sp
    real (dp), intent (in) :: xl, xr, xlmin, xrmax
    logical, intent (in) :: pel, per
    integer, intent (in) :: ibd, component, ndv, old_np, n_sr(4)
@@ -344,7 +344,6 @@
     end if
    end if
    !==================== copy remaining part => ebfp
-  
    !CHECK if index is the fastest way to select particles in species_new
    right_pind = index_array(old_np)
    left_pind = index_array(old_np)
@@ -374,8 +373,8 @@
    mask(:) = (xp >= xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
-   sp_aux_new = sp_loc%sel_particles( 1, old_np )
-   sp_aux_new = sp_aux_new%pack_species( mask(:) )
+   ! sp_aux_new = sp_loc%sel_particles( 1, old_np )
+   ! sp_aux_new = sp_aux_new%pack_species( mask(:) )
 
    ! TO BE FIXED UPDATING VSTORE TO NEW STRUCT
    ! vstore(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
@@ -420,14 +419,14 @@
 
      ! !To be checked case ibd == 1
 
-     temp_spec = sp_loc%sel_particles( right_pind%indices(:) )
-     tot = temp_spec%how_many()*temp_spec%total_size()
-     aux1( 1:tot ) = temp_spec%flatten()
+     ! temp_spec = sp_loc%sel_particles( right_pind%indices(:) )
+     ! tot = temp_spec%how_many()*temp_spec%total_size()
+     ! aux1( 1:tot ) = temp_spec%flatten()
 
-     temp_spec = aux_sp%sel_particles( right_pind%indices(:) )
-     tot_aux = temp_spec%how_many()*temp_spec%total_size()
-     tot_aux = tot_aux + tot
-     aux1( (tot+1):tot_aux ) = temp_spec%flatten()
+     ! temp_spec = aux_sp%sel_particles( right_pind%indices(:) )
+     ! tot_aux = temp_spec%how_many()*temp_spec%total_size()
+     ! tot_aux = tot_aux + tot
+     ! aux1( (tot+1):tot_aux ) = temp_spec%flatten()
 
     end if
    end if

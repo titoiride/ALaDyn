@@ -134,9 +134,9 @@
       ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
      end do
     end do
-    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
    !========================
    case (6)
     j2 = 1
@@ -162,12 +162,12 @@
       ap(n, 4) = ap(n, 4) + ax1(n, i1)*ef(i2, j2, 1, 4) !Bx(i)
      end do
     end do
-    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
   end subroutine
 
@@ -307,9 +307,9 @@
       end do
      end do
     end do
-    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
     !==============
    case (6)
     !=====================
@@ -360,12 +360,12 @@
       end do
      end do
     end do
-    call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component_aux( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
    !=====================
   end subroutine
@@ -608,12 +608,12 @@
      end do
     end do
    end do
-   call pt%set_component_aux( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-   call pt%set_component_aux( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-   call pt%set_component_aux( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-   call pt%set_component_aux( ap(1:np, 4), BX_COMP, lb=1, ub=np)
-   call pt%set_component_aux( ap(1:np, 5), BY_COMP, lb=1, ub=np)
-   call pt%set_component_aux( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
 
   end subroutine
   !======================================
@@ -808,7 +808,7 @@
      end do
      !==============
     end do
-    call pt%set_component_aux( ef_sqr(1:np), &
+    call pt%set_component( ef_sqr(1:np), &
      E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2
     !=======================================
 
@@ -893,7 +893,7 @@
       end do
      end do
     end do
-    call pt%set_component_aux( ef_sqr(1:np), &
+    call pt%set_component( ef_sqr(1:np), &
     E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2 + Ez(p)^2
 
    end select
@@ -1178,11 +1178,11 @@
     do n = 3, 5
      ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
     end do
-    call pt%set_component_aux(ap(1:np, 1) - ap(1:np, 4), FX_COMP, lb=1, ub=np)
-    call pt%set_component_aux(ap(1:np, 2) - ap(1:np, 5), FY_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 1) - ap(1:np, 4), FX_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 2) - ap(1:np, 5), FY_COMP, lb=1, ub=np)
     ! Lorentz force already multiplied by q    
-    call pt%set_component_aux(ap(1:np, 3), BZ_COMP, lb=1, ub=np)
-    call pt%set_component_aux(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
+    call pt%set_component(ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
      BZ_COMP, lb=1, ub=np) !weight/gamp
     !=============================
 
@@ -1302,13 +1302,13 @@
      ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
     end do
     ! Lorentz force already multiplied by q    
-    call pt%set_component_aux(ap(1:np, 1) - ap(1:np, 7), FX_COMP, lb=1, ub=np)
-    call pt%set_component_aux(ap(1:np, 2) - ap(1:np, 8), FY_COMP, lb=1, ub=np)
-    call pt%set_component_aux(ap(1:np, 3) - ap(1:np, 9), FZ_COMP, lb=1, ub=np)
-    call pt%set_component_aux(ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component_aux(ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component_aux(ap(1:np, 6), BZ_COMP, lb=1, ub=np)
-    call pt%set_component_aux(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
+    call pt%set_component(ap(1:np, 1) - ap(1:np, 7), FX_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 2) - ap(1:np, 8), FY_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 3) - ap(1:np, 9), FZ_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
      BZ_COMP, lb=1, ub=np) !weight/gamp
     !=============================
    end select
@@ -1627,7 +1627,7 @@
      end do
     end do
     !==================
-    call pt%set_component_aux( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
+    call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
      POND_COMP, lb=1, ub=np) !The interpolated |A| potential
     ap(1:np, 1) = om0*ap(1:np, 1) 
     ap(1:np, 2) = om0*ap(1:np, 2)
@@ -1640,7 +1640,7 @@
                ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
                ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
                2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
-     call pt%set_component_aux( aux, E_SQUARED, lb=1, ub=np )
+     call pt%set_component( aux, E_SQUARED, lb=1, ub=np )
     end associate
 
     !==========================
@@ -1708,7 +1708,7 @@
       end do
      end do
     end do
-    call pt%set_component_aux( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
+    call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
     POND_COMP, lb=1, ub=np) !The interpolated |A| potential
     ap(1:np, 1) = om0*ap(1:np, 1) 
     ap(1:np, 2) = om0*ap(1:np, 2)
@@ -1721,7 +1721,7 @@
      ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
      ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
      2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
-     call pt%set_component_aux( aux, E_SQUARED, lb=1, ub=np )
+     call pt%set_component( aux, E_SQUARED, lb=1, ub=np )
     end associate
 
    end select
@@ -1974,9 +1974,9 @@
      end do
 
      !assigned grad[Phi] and Phi
-     call pt%set_component_aux( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-     call pt%set_component_aux( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-     call pt%set_component_aux( ap(1:np, 3), POND_COMP, lb=1, ub=np)
+     call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+     call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+     call pt%set_component( ap(1:np, 3), POND_COMP, lb=1, ub=np)
     end do
     !=================================
    case (3)
@@ -2049,10 +2049,10 @@
       end do
      end do
      !assigned grad[Phi] and Phi
-     call pt%set_component_aux( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-     call pt%set_component_aux( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-     call pt%set_component_aux( ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
-     call pt%set_component_aux( ap(1:np, 4), POND_COMP, lb=1, ub=np)
+     call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+     call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+     call pt%set_component( ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
+     call pt%set_component( ap(1:np, 4), POND_COMP, lb=1, ub=np)
      !=================================
     end do
    end select
