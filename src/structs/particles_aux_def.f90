@@ -102,6 +102,7 @@ module particles_aux_def
   contains
    !procedure, public :: sel_particles_bounds_aux
    !procedure, public :: sel_particles_index_aux
+   procedure, pass :: new_species => new_species_aux
    procedure, public :: set_component_real => set_component_aux_real
    procedure, public :: set_component_integer => set_component_aux_integer
    procedure, public :: call_component => call_component_aux
@@ -110,16 +111,13 @@ module particles_aux_def
 
  end type species_aux
 
- interface species_aux
-  module procedure :: new_species_aux
- end interface
-
  contains
 
- function new_species_aux( n_particles, curr_ndims ) result(this)
+  !==== Constructor ===
+ subroutine new_species_aux( this, n_particles, curr_ndims )
   !! Constructor for the `species_new` type
+  class(species_aux), intent(inout) :: this
   integer, intent(in) :: n_particles, curr_ndims
-  type(species_aux) :: this
   integer :: allocstatus
  
   if (n_particles <= 0) then
@@ -193,7 +191,9 @@ module particles_aux_def
    allocate( this%part_index(n_particles), stat=allocstatus)
    this%allocated_index = .true.
   end select
- end function
+ end subroutine
+
+!=== Type bound procedures
 
  subroutine copy_scalars_from_aux( this, other )
   !! Copies all the non-array values from a `species_new` to another

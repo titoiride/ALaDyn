@@ -33,6 +33,7 @@ module particles_def
    procedure, public :: call_component => call_component_spec
    procedure, public :: copy_scalars_from => copy_scalars_from_spec
    procedure, public :: flatten
+   procedure, public :: new_species => new_species_spec
    procedure, public :: total_size
    procedure, private :: pack_species_logical
    procedure, private :: pack_species_array
@@ -44,11 +45,90 @@ module particles_def
    generic :: sel_particles => sel_particles_bounds, sel_particles_index
  end type
 
- interface species_new
-  module procedure :: new_species_new
- end interface
-
  contains
+
+  !==== Constructor ===
+ 
+ subroutine new_species_spec( this, n_particles, curr_ndims )
+  !! Constructor for the `species_new` type
+  class(species_new), intent(inout) :: this
+  integer, intent(in) :: n_particles, curr_ndims
+  integer :: allocstatus
+ 
+  if (n_particles <= 0) then
+   this%initialized = .false.
+   this%n_part = 0
+   return
+  end if
+ 
+  this%initialized = .true.
+  this%n_part = n_particles
+  this%dimensions = curr_ndims
+  this%allocated_x = .false.
+  this%allocated_y = .false.
+  this%allocated_z = .false.
+  this%allocated_px = .false.
+  this%allocated_py = .false.
+  this%allocated_pz = .false.
+  this%allocated_gamma = .false.
+  this%allocated_weight = .false.
+  this%allocated_index = .false.
+ 
+  select case(curr_ndims)
+  
+  case(1)
+  
+   allocate( this%x(n_particles), stat=allocstatus)
+   this%allocated_x = .true.
+   allocate( this%px(n_particles), stat=allocstatus)
+   this%allocated_px = .true.
+   allocate( this%gamma_inv(n_particles), stat=allocstatus)
+   this%allocated_gamma = .true.
+   allocate( this%weight(n_particles), stat=allocstatus)
+   this%allocated_weight = .true.
+   allocate( this%part_index(n_particles), stat=allocstatus)
+   this%allocated_index = .true.
+  case(2)
+  
+   allocate( this%x(n_particles), stat=allocstatus)
+   this%allocated_x = .true.
+   allocate( this%px(n_particles), stat=allocstatus)
+   this%allocated_px = .true.
+   allocate( this%y(n_particles), stat=allocstatus)
+   this%allocated_y = .true.
+   allocate( this%py(n_particles), stat=allocstatus)
+   this%allocated_py = .true.
+   allocate( this%gamma_inv(n_particles), stat=allocstatus)
+   this%allocated_gamma = .true.
+   allocate( this%weight(n_particles), stat=allocstatus)
+   this%allocated_weight = .true.
+   allocate( this%part_index(n_particles), stat=allocstatus)
+   this%allocated_index = .true.
+  
+  case(3)
+  
+   allocate( this%x(n_particles), stat=allocstatus)
+   this%allocated_x = .true.
+   allocate( this%px(n_particles), stat=allocstatus)
+   this%allocated_px = .true.
+   allocate( this%y(n_particles), stat=allocstatus)
+   this%allocated_y = .true.
+   allocate( this%py(n_particles), stat=allocstatus)
+   this%allocated_py = .true.
+   allocate( this%z(n_particles), stat=allocstatus)
+   this%allocated_z = .true.
+   allocate( this%pz(n_particles), stat=allocstatus)
+   this%allocated_pz = .true.
+   allocate( this%gamma_inv(n_particles), stat=allocstatus)
+   this%allocated_gamma = .true.
+   allocate( this%weight(n_particles), stat=allocstatus)
+   this%allocated_weight = .true.
+   allocate( this%part_index(n_particles), stat=allocstatus)
+   this%allocated_index = .true.
+  end select
+ end subroutine
+
+!=== Type bound procedures
 
  subroutine copy_scalars_from_spec( this, other )
   !! Copies all the non-array values from a `species_new` to another
@@ -270,7 +350,7 @@ module particles_def
 
   tot_len = SIZE(index_array)
   
-  out_sp = species_new( tot_len, this%dimensions )
+  call out_sp%new_species( tot_len, this%dimensions )
   
   call out_sp%copy_scalars_from(this)
 
@@ -366,85 +446,6 @@ module particles_def
   end if
   size = i
 
- end function
-
- function new_species_new( n_particles, curr_ndims ) result(this)
-  !! Constructor for the `species_new` type
-  integer, intent(in) :: n_particles, curr_ndims
-  type(species_new) :: this
-  integer :: allocstatus
- 
-  if (n_particles <= 0) then
-   this%initialized = .false.
-   this%n_part = 0
-   return
-  end if
- 
-  this%initialized = .true.
-  this%n_part = n_particles
-  this%dimensions = curr_ndims
-  this%allocated_x = .false.
-  this%allocated_y = .false.
-  this%allocated_z = .false.
-  this%allocated_px = .false.
-  this%allocated_py = .false.
-  this%allocated_pz = .false.
-  this%allocated_gamma = .false.
-  this%allocated_weight = .false.
-  this%allocated_index = .false.
- 
-  select case(curr_ndims)
-  
-  case(1)
-  
-   allocate( this%x(n_particles), stat=allocstatus)
-   this%allocated_x = .true.
-   allocate( this%px(n_particles), stat=allocstatus)
-   this%allocated_px = .true.
-   allocate( this%gamma_inv(n_particles), stat=allocstatus)
-   this%allocated_gamma = .true.
-   allocate( this%weight(n_particles), stat=allocstatus)
-   this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
-  case(2)
-  
-   allocate( this%x(n_particles), stat=allocstatus)
-   this%allocated_x = .true.
-   allocate( this%px(n_particles), stat=allocstatus)
-   this%allocated_px = .true.
-   allocate( this%y(n_particles), stat=allocstatus)
-   this%allocated_y = .true.
-   allocate( this%py(n_particles), stat=allocstatus)
-   this%allocated_py = .true.
-   allocate( this%gamma_inv(n_particles), stat=allocstatus)
-   this%allocated_gamma = .true.
-   allocate( this%weight(n_particles), stat=allocstatus)
-   this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
-  
-  case(3)
-  
-   allocate( this%x(n_particles), stat=allocstatus)
-   this%allocated_x = .true.
-   allocate( this%px(n_particles), stat=allocstatus)
-   this%allocated_px = .true.
-   allocate( this%y(n_particles), stat=allocstatus)
-   this%allocated_y = .true.
-   allocate( this%py(n_particles), stat=allocstatus)
-   this%allocated_py = .true.
-   allocate( this%z(n_particles), stat=allocstatus)
-   this%allocated_z = .true.
-   allocate( this%pz(n_particles), stat=allocstatus)
-   this%allocated_pz = .true.
-   allocate( this%gamma_inv(n_particles), stat=allocstatus)
-   this%allocated_gamma = .true.
-   allocate( this%weight(n_particles), stat=allocstatus)
-   this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
-  end select
  end function
 
  function pack_species_logical( this, mask ) result(packed)
