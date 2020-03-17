@@ -95,18 +95,34 @@ module base_species
    procedure, pass :: compute_gamma
    procedure, pass :: count_particles
    procedure, pass :: how_many
+   procedure, public, pass :: flatten
    procedure, pass :: new_species => new_species_abstract
    procedure, pass :: set_charge_int
    procedure, pass :: set_charge_real
    procedure, pass :: set_part_number
+   procedure, public, pass :: total_size
+   procedure(append_abstract), deferred, pass :: append
    procedure(call_component_abstract), deferred, pass :: call_component
    procedure(copy_scalars_abstract), deferred, pass :: copy_scalars_from
+   procedure(sel_particles_bounds_abstract), deferred, pass :: sel_particles_bounds
+   procedure(sel_particles_index_abstract), deferred, pass :: sel_particles_index
    procedure(set_component_abstract_real), deferred, pass :: set_component_real
    procedure(set_component_abstract_integer), deferred, pass :: set_component_integer
+   generic :: sel_particles => sel_particles_bounds, sel_particles_index
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_int, set_charge_real
   end type
 
+  
+  abstract interface
+   pure function append_abstract( this, other ) result(spec)
+    import :: base_species_T, dp
+    implicit none
+    class(base_species_T), intent(in) :: this
+    class(base_species_T), intent(in) :: other
+    class(base_species_T) :: spec
+   end function
+  end interface
   
   abstract interface
    pure function call_component_abstract( this, component, lb, ub ) result(comp)
@@ -148,6 +164,32 @@ module base_species
    end subroutine
   end interface
 
+  abstract interface
+   subroutine sel_particles_index_abstract( this, out_sp, index_array )
+    import base_species_T, dp
+    class(base_species_T), intent(in) :: this
+    class(base_species_T), intent(inout) :: out_sp
+    integer, dimension(:), intent(in) :: index_array
+   end subroutine
+   
+   subroutine sel_particles_bounds_abstract( this, out_sp, lower_bound, upper_bound )
+    import base_species_T, dp
+    class(base_species_T), intent(in) :: this
+    class(base_species_T), intent(inout) :: out_sp
+    integer, intent(in) :: lower_bound, upper_bound
+   end subroutine
+
+  end interface
+
+  interface assign
+   module procedure :: assign_real_realdp
+   module procedure :: assign_real_realsp
+   module procedure :: assign_realsp_realsp
+   module procedure :: assign_real_integer
+   module procedure :: assign_integer_realdp
+   module procedure :: assign_integer_realsp
+   module procedure :: assign_integer_integer
+  end interface
   contains
   
   !==== Constructor ===
@@ -299,6 +341,57 @@ module base_species
   
   end function
 
+   pure function flatten( this ) result(flat_array)
+   class(base_species_T), intent(in) :: this
+   integer :: array_size, num_comps, i
+   real(dp), allocatable :: temp(:, :), flat_array(:)
+
+   array_size = this%count_particles()
+   num_comps = this%total_size()
+   allocate(temp( array_size, num_comps ))
+
+   i = 1
+   if( this%allocated_x ) then
+    temp( :, i ) = this%x(:)
+    i = i + 1
+   end if
+   if( this%allocated_y ) then
+    temp( :, i ) = this%y(:)
+    i = i + 1
+   end if
+   if( this%allocated_z ) then
+    temp( :, i ) = this%z(:)
+    i = i + 1
+   end if
+   if( this%allocated_px ) then
+    temp( :, i ) = this%px(:)
+    i = i + 1
+   end if
+   if( this%allocated_py ) then
+    temp( :, i ) = this%py(:)
+    i = i + 1
+   end if
+   if( this%allocated_pz ) then
+    temp( :, i ) = this%pz(:)
+    i = i + 1
+   end if
+   if( this%allocated_gamma ) then
+    temp( :, i ) = this%gamma_inv(:)
+    i = i + 1
+   end if
+   if( this%allocated_weight ) then
+    temp( :, i ) = this%weight(:)
+    i = i + 1
+   end if
+   if( this%allocated_index ) then
+    temp( :, i ) = this%part_index(:)
+    i = i + 1
+   end if
+
+   flat_array = PACK( temp(:, :), .true. )
+
+  end function
+
   subroutine set_charge_int( this, ch)
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: ch
@@ -321,7 +414,175 @@ module base_species
   this%n_part = n_parts
  end subroutine
 
+ pure function total_size( this ) result(size)
+  class(base_species_T), intent(in) :: this
+  integer :: size, i
+  i = 0
+  if( this%allocated_x ) then
+   i = i + 1
+  end if
+  if( this%allocated_y ) then
+   i = i + 1
+  end if
+  if( this%allocated_z ) then
+   i = i + 1
+  end if
+  if( this%allocated_px ) then
+   i = i + 1
+  end if
+  if( this%allocated_py ) then
+   i = i + 1
+  end if
+  if( this%allocated_pz ) then
+   i = i + 1
+  end if
+  if( this%allocated_gamma ) then
+   i = i + 1
+  end if
+  if( this%allocated_weight ) then
+   i = i + 1
+  end if
+  if( this%allocated_index ) then
+   i = i + 1
+  end if
+  size = i
+
+ end function
+
 !==== Procedures not bound to type ======
+
+ subroutine assign_real_realdp( array, values, lb, ub, n_parts)
+  real(dp), allocatable, dimension(:), intent(inout) :: array
+  real(dp), dimension(:), intent(in)  :: values
+  integer, intent(in)  :: lb, ub, n_parts
+  integer :: size_value
+
+  size_value = SIZE(values, DIM=1)
+  if ( (ub - lb + 1) /= size_value ) then
+   write( 6, *) 'Assigning wrong value size'
+  end if
+
+  if ( .not. allocated(array) ) then
+   allocate( array(n_parts) )
+  end if
+
+  array(lb:ub) = values(:)
+
+ end subroutine
+
+ subroutine assign_integer_realdp( array, values, lb, ub, n_parts)
+  real(dp), allocatable, dimension(:), intent(inout) :: array
+  integer, dimension(:), intent(in)  :: values
+  integer, intent(in)  :: lb, ub, n_parts
+  integer :: size_value
+
+  size_value = SIZE(values, DIM=1)
+  if ( (ub - lb + 1) /= size_value ) then
+   write( 6, *) 'Assigning wrong value size'
+  end if
+
+  if ( .not. allocated(array) ) then
+   allocate( array(n_parts) )
+  end if
+
+  array(lb:ub) = real(values(:), dp)
+
+ end subroutine
+
+ subroutine assign_real_realsp( array, values, lb, ub, n_parts)
+  real(sp), allocatable, dimension(:), intent(inout) :: array
+  real(dp), dimension(:), intent(in)  :: values
+  integer, intent(in)  :: lb, ub, n_parts
+  integer :: size_value
+
+  size_value = SIZE(values, DIM=1)
+  if ( (ub - lb + 1) /= size_value ) then
+   write( 6, *) 'Assigning wrong value size'
+  end if
+
+  if ( .not. allocated(array) ) then
+   allocate( array(n_parts) )
+  end if
+
+  array(lb:ub) = real(values(:), sp)
+
+ end subroutine
+
+ subroutine assign_realsp_realsp( array, values, lb, ub, n_parts)
+  real(sp), allocatable, dimension(:), intent(inout) :: array
+  real(sp), dimension(:), intent(in)  :: values
+  integer, intent(in)  :: lb, ub, n_parts
+  integer :: size_value
+
+  size_value = SIZE(values, DIM=1)
+  if ( (ub - lb + 1) /= size_value ) then
+   write( 6, *) 'Assigning wrong value size'
+  end if
+
+  if ( .not. allocated(array) ) then
+   allocate( array(n_parts) )
+  end if
+
+  array(lb:ub) = values(:)
+
+ end subroutine
+
+ subroutine assign_integer_realsp( array, values, lb, ub, n_parts)
+  real(sp), allocatable, dimension(:), intent(inout) :: array
+  integer, dimension(:), intent(in)  :: values
+  integer, intent(in)  :: lb, ub, n_parts
+  integer :: size_value
+
+  size_value = SIZE(values, DIM=1)
+  if ( (ub - lb + 1) /= size_value ) then
+   write( 6, *) 'Assigning wrong value size'
+  end if
+
+  if ( .not. allocated(array) ) then
+   allocate( array(n_parts) )
+  end if
+
+  array(lb:ub) = real(values(:), sp)
+
+ end subroutine
+
+ subroutine assign_real_integer( array, values, lb, ub, n_parts)
+  integer, allocatable, dimension(:), intent(inout) :: array
+  real(dp), dimension(:), intent(in)  :: values
+  integer, intent(in)  :: lb, ub, n_parts
+  integer :: size_value
+
+  size_value = SIZE(values, DIM=1)
+  if ( (ub - lb + 1) /= size_value ) then
+   write( 6, *) 'Assigning wrong value size'
+  end if
+
+  if ( .not. allocated(array) ) then
+   allocate( array(n_parts) )
+  end if
+
+  array(lb:ub) = int(values(:))
+
+ end subroutine
+
+ subroutine assign_integer_integer( array, values, lb, ub, n_parts)
+  integer, allocatable, dimension(:), intent(inout) :: array
+  integer, dimension(:), intent(in)  :: values
+  integer, intent(in)  :: lb, ub, n_parts
+  integer :: size_value
+
+  size_value = SIZE(values, DIM=1)
+  if ( (ub - lb + 1) /= size_value ) then
+   write( 6, *) 'Assigning wrong value size'
+  end if
+
+  if ( .not. allocated(array) ) then
+   allocate( array(n_parts) )
+  end if
+
+  array(lb:ub) = values(:)
+
+ end subroutine
 
  pure function component_dictionary( component ) result(cdir)
  !! Dictionary wrapper for send_recieve routines in parallel.F90

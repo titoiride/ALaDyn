@@ -30,19 +30,17 @@ module particles_def
  
  type, extends(base_species_T) :: species_new
   contains
+   procedure, public :: append => append_spec
    procedure, public :: call_component => call_component_spec
    procedure, public :: copy_scalars_from => copy_scalars_from_spec
-   procedure, public :: flatten
    procedure, public :: new_species => new_species_spec
-   procedure, public :: total_size
    procedure, private :: pack_species_logical
    procedure, private :: pack_species_array
-   procedure, private :: sel_particles_bounds
-   procedure, private :: sel_particles_index
    procedure, public :: set_component_real
    procedure, public :: set_component_integer
+   procedure, pass :: sel_particles_bounds => sel_particles_bounds_spec
+   procedure, pass :: sel_particles_index => sel_particles_index_spec
    generic :: pack_species => pack_species_array, pack_species_logical
-   generic :: sel_particles => sel_particles_bounds, sel_particles_index
  end type
 
  contains
@@ -129,6 +127,53 @@ module particles_def
  end subroutine
 
 !=== Type bound procedures
+
+ function append_spec( this, other ) result(spec)
+  class(species_new), intent(in) :: this
+  class(base_species_T), intent(in) :: other
+  class(species_new) :: spec
+  integer :: tot_size
+
+  tot_size = this%how_many()+other%how_many()
+  call spec%new_species(tot_size, this%dimensions)
+  
+  if(this%allocated_x) then
+   call assign(spec%x, [this%call_component(X_COMP), other%call_component(X_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_y) then
+   call assign(spec%y, [this%call_component(Y_COMP), other%call_component(Y_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_z) then
+   call assign(spec%z, [this%call_component(Z_COMP), other%call_component(Z_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_px) then
+   call assign(spec%px, [this%call_component(PX_COMP), other%call_component(PX_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_py) then
+   call assign(spec%py, [this%call_component(PY_COMP), other%call_component(PY_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_pz) then
+   call assign(spec%pz, [this%call_component(PZ_COMP), other%call_component(PZ_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_gamma) then
+   call assign(spec%gamma_inv, [this%call_component(INV_GAMMA_COMP), other%call_component(INV_GAMMA_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_weight) then
+   call assign(spec%weight, [this%call_component(W_COMP), other%call_component(W_COMP)], &
+    1, tot_size, tot_size)
+  end if
+  if(this%allocated_index) then
+   call assign(spec%part_index, [this%call_component(INDEX_COMP), other%call_component(INDEX_COMP)], &
+    1, tot_size, tot_size)
+  end if
+ end function
 
  subroutine copy_scalars_from_spec( this, other )
   !! Copies all the non-array values from a `species_new` to another
@@ -250,65 +295,18 @@ module particles_def
 
  end subroutine
 
- pure function flatten( this ) result(flat_array)
-  class(species_new), intent(in) :: this
-  integer :: array_size, num_comps, i
-  real(dp), allocatable :: temp(:, :), flat_array(:)
-
-  array_size = this%count_particles()
-  num_comps = this%total_size()
-  allocate(temp( array_size, num_comps ))
-
-  i = 1
-  if( this%allocated_x ) then
-   temp( :, i ) = this%x(:)
-   i = i + 1
-  end if
-  if( this%allocated_y ) then
-   temp( :, i ) = this%y(:)
-   i = i + 1
-  end if
-  if( this%allocated_z ) then
-   temp( :, i ) = this%z(:)
-   i = i + 1
-  end if
-  if( this%allocated_px ) then
-   temp( :, i ) = this%px(:)
-   i = i + 1
-  end if
-  if( this%allocated_py ) then
-   temp( :, i ) = this%py(:)
-   i = i + 1
-  end if
-  if( this%allocated_pz ) then
-   temp( :, i ) = this%pz(:)
-   i = i + 1
-  end if
-  if( this%allocated_gamma ) then
-   temp( :, i ) = this%gamma_inv(:)
-   i = i + 1
-  end if
-  if( this%allocated_weight ) then
-   temp( :, i ) = this%weight(:)
-   i = i + 1
-  end if
-  if( this%allocated_index ) then
-   temp( :, i ) = this%part_index(:)
-   i = i + 1
-  end if
-
-  flat_array = PACK( temp(:, :), .true. )
-
- end function
-
- subroutine sel_particles_bounds( this, out_sp, lower_bound, upper_bound )
+ subroutine sel_particles_bounds_spec( this, out_sp, lower_bound, upper_bound )
  !! Function that selects particles with respect to the given array boundaries
  !! (Memory position, NOT a particle index)
   class(species_new), intent(in) :: this
-  type(species_new), intent(out) :: out_sp
+  class(base_species_T), intent(inout) :: out_sp
   integer, intent(in) :: lower_bound, upper_bound
+  integer :: tot_len
 
-  call out_sp%copy_scalars_from(this)
+  tot_len = upper_bound - lower_bound
+
+  call out_sp%new_species( tot_len, this%dimensions )
+  call out_sp%set_charge(this%charge)
 
   if( this%allocated_x ) then
    out_sp%x = this%x(lower_bound:upper_bound)
@@ -342,17 +340,16 @@ module particles_def
 
  end subroutine
 
- subroutine sel_particles_index( this, out_sp, index_array )
+ subroutine sel_particles_index_spec( this, out_sp, index_array )
   class(species_new), intent(in) :: this
-  type(species_new), intent(out) :: out_sp
-  integer, dimension(:) :: index_array
+  class(base_species_T), intent(inout) :: out_sp
+  integer, dimension(:), intent(in) :: index_array
   integer :: i, tot_len, n
 
-  tot_len = SIZE(index_array)
+  tot_len = SIZE(index_array, DIM=1)
   
   call out_sp%new_species( tot_len, this%dimensions )
-  
-  call out_sp%copy_scalars_from(this)
+  call out_sp%set_charge(this%charge)
 
   if( this%allocated_x ) then
    do i = 1, tot_len
@@ -413,47 +410,13 @@ module particles_def
 
  end subroutine
 
- pure function total_size( this ) result(size)
-  class(species_new), intent(in) :: this
-  integer :: size, i
-  i = 0
-  if( this%allocated_x ) then
-   i = i + 1
-  end if
-  if( this%allocated_y ) then
-   i = i + 1
-  end if
-  if( this%allocated_z ) then
-   i = i + 1
-  end if
-  if( this%allocated_px ) then
-   i = i + 1
-  end if
-  if( this%allocated_py ) then
-   i = i + 1
-  end if
-  if( this%allocated_pz ) then
-   i = i + 1
-  end if
-  if( this%allocated_gamma ) then
-   i = i + 1
-  end if
-  if( this%allocated_weight ) then
-   i = i + 1
-  end if
-  if( this%allocated_index ) then
-   i = i + 1
-  end if
-  size = i
-
- end function
-
  function pack_species_logical( this, mask ) result(packed)
   class(species_new), intent(in) :: this
   logical, intent(in) :: mask
   type(species_new) :: packed
 
-  call packed%copy_scalars_from(this)
+  call packed%new_species(this%n_part, this%dimensions)
+  call packed%set_charge(this%charge)
 
   if( this%allocated_x ) then
    packed%x = PACK( this%x(:), mask)
@@ -484,14 +447,18 @@ module particles_def
   end if
 
   packed%n_part = packed%count_particles()
+
  end function
 
  function pack_species_array( this, mask ) result(packed)
   class(species_new), intent(in) :: this
   logical, intent(in) :: mask(:)
   type(species_new) :: packed
+  integer :: tot_parts
 
-  call packed%copy_scalars_from(this)
+  tot_parts = COUNT( mask )
+  call packed%new_species(tot_parts, this%dimensions)
+  call packed%set_charge(this%charge)
 
   if( this%allocated_x ) then
    packed%x = PACK( this%x(:), mask(:) )
@@ -521,8 +488,6 @@ module particles_def
    packed%part_index = PACK( this%part_index(:), mask(:) )
   end if
 
-  packed%n_part = packed%count_particles()
-
  end function
 
  subroutine set_component_real( this, values, component, lb, ub )
@@ -547,21 +512,29 @@ module particles_def
 
   select case(component)
   case(X_COMP)
-   this%x(lowb:upb) = values(:)
+   call assign(this%x, values, lowb, upb, this%n_part)
+   this%allocated_x = .true.
   case(Y_COMP)
-   this%y(lowb:upb) = values(:)
+   call assign(this%y, values, lowb, upb, this%n_part)
+   this%allocated_y = .true.
   case(Z_COMP)
-   this%z(lowb:upb) = values(:)
+   call assign(this%z, values, lowb, upb, this%n_part)
+   this%allocated_z = .true.
   case(PX_COMP)
-   this%px(lowb:upb) = values(:)
+   call assign(this%px, values, lowb, upb, this%n_part)
+   this%allocated_px = .true.
   case(PY_COMP)
-   this%py(lowb:upb) = values(:)
+   call assign(this%py, values, lowb, upb, this%n_part)
+   this%allocated_py = .true.
   case(PZ_COMP)
-   this%pz(lowb:upb) = values(:)
+   call assign(this%pz, values, lowb, upb, this%n_part)
+   this%allocated_pz = .true.
   case(INV_GAMMA_COMP)
-   this%gamma_inv(lowb:upb) = values(:)
+   call assign(this%gamma_inv, values, lowb, upb, this%n_part)
+   this%allocated_gamma = .true.
   case(W_COMP)
-   this%weight(lowb:upb) = real(values(:), sp)
+   call assign(this%weight, values, lowb, upb, this%n_part)
+   this%allocated_weight = .true.
   end select
 
  end subroutine
@@ -588,23 +561,32 @@ module particles_def
 
   select case(component)
   case(X_COMP)
-   this%x(lowb:upb) = real(values(:), dp)
+   call assign(this%x, values, lowb, upb, this%n_part)
+   this%allocated_x = .true.
   case(Y_COMP)
-   this%y(lowb:upb) = real(values(:), dp)
+   call assign(this%y, values, lowb, upb, this%n_part)
+   this%allocated_y = .true.
   case(Z_COMP)
-   this%z(lowb:upb) = real(values(:), dp)
+   call assign(this%z, values, lowb, upb, this%n_part)
+   this%allocated_z = .true.
   case(PX_COMP)
-   this%px(lowb:upb) = real(values(:), dp)
+   call assign(this%px, values, lowb, upb, this%n_part)
+   this%allocated_px = .true.
   case(PY_COMP)
-   this%py(lowb:upb) = real(values(:), dp)
+   call assign(this%py, values, lowb, upb, this%n_part)
+   this%allocated_py = .true.
   case(PZ_COMP)
-   this%pz(lowb:upb) = real(values(:), dp)
+   call assign(this%pz, values, lowb, upb, this%n_part)
+   this%allocated_pz = .true.
   case(INV_GAMMA_COMP)
-   this%gamma_inv(lowb:upb) = real(values(:), dp)
+   call assign(this%gamma_inv, values, lowb, upb, this%n_part)
+   this%allocated_gamma = .true.
   case(W_COMP)
-   this%weight(lowb:upb) = real(values(:), sp)
+   call assign(this%weight, values, lowb, upb, this%n_part)
+   this%allocated_weight = .true.
   case(INDEX_COMP)
-   this%part_index(lowb:upb) = values(:)
+   call assign(this%part_index, values, lowb, upb, this%n_part)
+   this%allocated_index = .true.
   end select
 
  end subroutine

@@ -312,9 +312,9 @@
    integer, intent (in) :: ibd, component, ndv, old_np, n_sr(4)
    integer, intent (out) :: npt
    type(index_array) :: left_pind, right_pind
-   type( species_new ) :: temp_spec
-   real(dp), allocatable :: temp(:), xp(:)
-   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux
+   type( species_aux ) :: temp_spec
+   real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
+   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
    logical :: mask(old_np)
    !================ dir are cartesian coordinate index (x,y,z)
@@ -327,21 +327,16 @@
    cdir = component_dictionary( component )
    vxdir = link_position_momentum( component )
    !================== checks memory
-   p = 2*ndv*max(nl_send, nr_send)
+   tot_size = sp_loc%total_size()
+   p = 2*tot_size*max(nl_send, nr_send)
    if (p > 0) then
-    if (size(aux1) < p) then
-     deallocate(aux1)
-     allocate(aux1(p))
-     aux1(:) = zero_dp
-    end if
+    allocate(aux_array1(p))
+    aux_array1(:) = zero_dp
    end if
-   q = 2*ndv*max(nl_recv, nr_recv)
+   q = 2*tot_size*max(nl_recv, nr_recv)
    if (q > 0) then
-    if (size(aux2) < q) then
-     deallocate(aux2)
-     allocate(aux2(q))
-     aux2(:) = zero_dp
-    end if
+    allocate(aux_array2(q))
+    aux_array2(:) = zero_dp
    end if
    !==================== copy remaining part => ebfp
    !CHECK if index is the fastest way to select particles in species_new
@@ -350,6 +345,7 @@
   
    if (ibd == 1 .and. component == X_COMP) then !reflecting on the right
     if (per) then
+     allocate(temp(1:old_np), source=sp_loc%call_component( vxdir, lb=1, ub=old_np))
      xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
      where (xp > xr)
       xp = xr - (xp - xr)
@@ -357,12 +353,13 @@
      end where
      call sp_loc%set_component(xp, component, lb=1, ub=old_np)
      call sp_loc%set_component(temp, vxdir, lb=1, ub=old_np)
+     deallocate( temp )
     end if
    end if
  !================== copy in sp_aux particles not to be exchanged
    xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
    call right_pind%find_index( xp > xr )
-   call left_pind%find_index( xp < xl )
+   call left_pind%find_index( xp <= xl )
    if ( nl_send /= SIZE( left_pind%indices(:) ) ) then
     write (6, *) 'Error in counting particles sent to the left'
    end if
@@ -370,22 +367,18 @@
     write (6, *) 'Error in counting particles sent to the right'
    end if
 
-   mask(:) = (xp >= xl .and. xp <= xr)
+   mask(:) = (xp > xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
-   ! sp_aux_new = sp_loc%sel_particles( 1, old_np )
-   ! sp_aux_new = sp_aux_new%pack_species( mask(:) )
+   call sp_loc%sel_particles( sp_aux_new, 1, old_np )
+   sp_aux_new = sp_aux_new%pack_species( mask(:) )
 
    ! TO BE FIXED UPDATING VSTORE TO NEW STRUCT
    ! vstore(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
    ! vstore(4:7) store old x^n positions and dt/gam at t^{n+1/2}
-   ! do n = 1, ndv
-   !  sp_aux( 1:npt, n) = PACK( sp_loc%part(1:old_np, n), mask(:) )
-   !  sp1_aux( 1:npt, n) = PACK( vstore(1:old_np, n), mask(:) )
-   ! end do
    !=======================
-   ns = 2*ndv*nr_send
-   nr = 2*ndv*nl_recv
+   ns = 2*tot_size*nr_send
+   nr = 2*tot_size*nl_recv
    if (ibd<2) then !NON PERIODIC CASE
     if (per) ns = 0
     if (pel) nr = 0
@@ -416,17 +409,18 @@
  !     end do
  ! !=============== NON PERIODIC CASE
     else
+    !To be checked case ibd == 1
+     
+     call sp_loc%sel_particles( temp_spec, right_pind%indices(:) )
+     tot = temp_spec%how_many()*tot_size
+     
+     aux1( 1:tot ) = temp_spec%flatten()
 
-     ! !To be checked case ibd == 1
+     call aux_sp%sel_particles( temp_spec, right_pind%indices(:) )
+     tot_aux = temp_spec%how_many()*tot_size
+     tot_aux = tot_aux + tot
 
-     ! temp_spec = sp_loc%sel_particles( right_pind%indices(:) )
-     ! tot = temp_spec%how_many()*temp_spec%total_size()
-     ! aux1( 1:tot ) = temp_spec%flatten()
-
-     ! temp_spec = aux_sp%sel_particles( right_pind%indices(:) )
-     ! tot_aux = temp_spec%how_many()*temp_spec%total_size()
-     ! tot_aux = tot_aux + tot
-     ! aux1( (tot+1):tot_aux ) = temp_spec%flatten()
+     aux1( (tot+1):tot_aux ) = temp_spec%flatten()
 
     end if
    end if
@@ -435,6 +429,7 @@
    ! sends ns data to the right
    if (nr>0) then !receives nr data from left
     
+    call sp_
     kk = 0
     p = npt
     do n = 1, nl_recv
