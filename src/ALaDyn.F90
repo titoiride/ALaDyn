@@ -51,8 +51,8 @@
    diag = .false.
    iene = 1
   end if
+  call Part_numbers
   if (prl) then
-   call Part_numbers
    call Max_pmemory_check()
   end if
   if (pe0)then
