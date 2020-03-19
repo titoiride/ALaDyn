@@ -34,7 +34,7 @@ install:
   - if [%COMPILER%]==[pgi] call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
   - cd %WORKSPACE%
   #prepare the silent install for PGI 19.10
-  - if [%COMPILER%]==[pgi] echo [Application] >> setup.iss
+  - if [%COMPILER%]==[pgi] echo [Application] > setup.iss
   - if [%COMPILER%]==[pgi] echo Name=PGI Workstation 19.10 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Version=19.10 >> setup.iss
   - if [%COMPILER%]==[pgi] echo Company=The Portland Group >> setup.iss
@@ -87,30 +87,29 @@ install:
   - if [%COMPILER%]==[pgi] curl --location --referer "http://www.pgroup.com/products/community.htm" "https://www.pgroup.com/support/downloader.php?file=pgi-community-windows-x64" -o pgiws64-1910.exe
   - if [%COMPILER%]==[pgi] %WORKSPACE%\pgiws64-1910.exe /s /f1"%WORKSPACE%\setup.iss"
 
-  # MPI runtime for MS-MPI 9
-  - ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/2/E/C/2EC96D7F-687B-4613-80F6-E10F670A2D97/msmpisetup.exe -OutFile $env:WORKSPACE\msmpisetup.exe }
-
   # MPI runtime for MS-MPI 10 (vcpkg)
-  #- ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/A/E/0/AE002626-9D9D-448D-8197-1EA510E297CE/msmpisetup.exe -OutFile $env:WORKSPACE\msmpisetup.exe }
-
+  - ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/a/5/2/a5207ca5-1203-491a-8fb8-906fd68ae623/msmpisetup.exe -OutFile $env:WORKSPACE\msmpisetup.exe }
   - if [%COMPILER%]==[pgi] %WORKSPACE%\msmpisetup.exe -unattend
-  #download & install libs for pgi - first of all update vcpkg and then install necessary libs
+
   - if [%COMPILER%]==[pgi] cd C:\Tools\vcpkg
   - if [%COMPILER%]==[pgi] git pull
   - if [%COMPILER%]==[pgi] bootstrap-vcpkg.bat
   - cd %WORKSPACE%\
   - if [%COMPILER%]==[pgi] vcpkg integrate install
   - if [%COMPILER%]==[pgi] vcpkg install fftw3
-  #- if [%COMPILER%]==[pgi] vcpkg install msmpi    # MS-MPI 10 SDK
-  # install MS-MPI 9 SDK because the one in vcpkg is too new and the PGI compiler crashes
-  - ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/2/E/C/2EC96D7F-687B-4613-80F6-E10F670A2D97/msmpisdk.msi -OutFile $env:WORKSPACE\msmpisdk.exe }
-  - if [%COMPILER%]==[pgi] %WORKSPACE%\msmpisdk.exe -unattend
+
+  #- if [%COMPILER%]==[pgi] vcpkg install msmpi    # MS-MPI 10 SDK, requires update on vcpkg
+  #- ps: if($env:COMPILER -eq "pgi") { Invoke-WebRequest https://download.microsoft.com/download/a/5/2/a5207ca5-1203-491a-8fb8-906fd68ae623/msmpisdk.msi -OutFile $env:WORKSPACE\msmpisdk.exe }
+  #- if [%COMPILER%]==[pgi] %WORKSPACE%\msmpisdk.exe -unattend
+
   #download & install libs for cygwin
   - cd %WORKSPACE%
   - mkdir cygwin-downloads
   - ps: if($env:COMPILER -eq "cygwin") { Invoke-WebRequest https://cygwin.com/setup-x86_64.exe -OutFile $env:WORKSPACE\cygwin-setup.exe }
   - if [%COMPILER%]==[cygwin] %WORKSPACE%\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir %WORKSPACE%\cygwin-downloads --packages libopenmpi-devel,cmake,fftw3,libfftw3-devel,libboost-devel,zlib-devel,gcc-fortran
-  - if [%COMPILER%]==[msys2] %BASH% "pacman --Sy --noconfirm mingw-w64-msmpi cmake mingw-w64-boost mingw-w64-x86_64-gcc-fortran mingw-w64-x86_64-gcc-libgfortran mingw-w64-x86_64-fftw"
+  - if [%COMPILER%]==[msys2] %BASH% "pacman -Syu --noconfirm"
+  - if [%COMPILER%]==[msys2] %BASH% "pacman -R --noconfirm mingw-w64-x86_64-gcc-ada mingw-w64-x86_64-gcc-objc"
+  - if [%COMPILER%]==[msys2] %BASH% "pacman -Sy -R --noconfirm mingw-w64-x86_64-msmpi mingw-w64-x86_64-cmake mingw-w64-x86_64-boost mingw-w64-x86_64-gcc-fortran mingw-w64-x86_64-gcc-libgfortran mingw-w64-x86_64-fftw"
 
   #get ready for build
   - cd %WORKSPACE%\aladyn\
@@ -127,8 +126,8 @@ build_script:
   - if [%COMPILER%]==[pgi]    cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" "-DCMAKE_BUILD_TYPE=Release" ..
   - if [%COMPILER%]==[pgi]    cmake --build . --target install
 
-  - if [%COMPILER%]==[msys2]  %BASH% 'cmake -G "MSYS Makefiles" "-DCMAKE_BUILD_TYPE=Debug" ..'
-  - if [%COMPILER%]==[cygwin] %BASH% 'cmake -G "Unix Makefiles" "-DCMAKE_BUILD_TYPE=Debug" ..'
+  - if [%COMPILER%]==[msys2]  %BASH% 'cmake -G "MinGW Makefiles" "-DCMAKE_BUILD_TYPE=Release" ..'
+  - if [%COMPILER%]==[cygwin] %BASH% 'cmake -G "Unix Makefiles" "-DCMAKE_BUILD_TYPE=Release" ..'
   - if [%COMPILER%]==[cygwin] %BASH% 'cmake --build . --target install'
 
 on_finish:

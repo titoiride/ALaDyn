@@ -33,7 +33,7 @@ endif()
 list(APPEND ALaDyn_Fortran_sources
   src/ALaDyn.F90
   src/cpp_lib/cpp_folder_tree.cpp
-  src/cpp_lib/find_last_addr.cpp 
+  src/cpp_lib/find_last_addr.cpp
   src/diagnostics/diag_part_and_fields.f90
   src/diagnostics/run_data_info.f90
   src/dynamics/boris_push.f90
@@ -163,7 +163,7 @@ if(WIN32 AND USING_PGI_COMPILER)
     set(MPI_LIBRARIES "C:/Program Files/Microsoft HPC Pack 2012/Lib/amd64/msmpi.lib")
     message(STATUS "Forced MPI_LIBRARIES: ${MPI_LIBRARIES}")
   else()
-    find_package(MPI COMPONENTS C REQUIRED)
+    find_package(MPI COMPONENTS C)
   endif()
   list(GET MPI_INCLUDE_PATH -1 MPI_CUSTOM_PATH)
   add_definitions(-DUSE_MPI_MODULE)
