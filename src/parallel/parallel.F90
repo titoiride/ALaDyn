@@ -613,6 +613,7 @@
     call mpi_send(ns, 1, mpi_integer, pe_min, mype, comm, error)
    else
     nc(1) = ns
+    if (.not. prl) return
     do ipe = 1, nproc - 1
      call mpi_recv(nr, 1, mpi_integer, ipe, ipe, comm, status, error)
      nc(ipe+1) = nr
