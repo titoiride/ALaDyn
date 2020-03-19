@@ -101,7 +101,6 @@ module base_species
    procedure, pass :: set_charge_real
    procedure, pass :: set_part_number
    procedure, public, pass :: total_size
-   procedure(append_abstract), deferred, pass :: append
    procedure(call_component_abstract), deferred, pass :: call_component
    procedure(copy_scalars_abstract), deferred, pass :: copy_scalars_from
    procedure(sel_particles_bounds_abstract), deferred, pass :: sel_particles_bounds
@@ -113,17 +112,6 @@ module base_species
    generic :: set_charge => set_charge_int, set_charge_real
   end type
 
-  
-  abstract interface
-   pure function append_abstract( this, other ) result(spec)
-    import :: base_species_T, dp
-    implicit none
-    class(base_species_T), intent(in) :: this
-    class(base_species_T), intent(in) :: other
-    class(base_species_T) :: spec
-   end function
-  end interface
-  
   abstract interface
    pure function call_component_abstract( this, component, lb, ub ) result(comp)
     import :: base_species_T, dp

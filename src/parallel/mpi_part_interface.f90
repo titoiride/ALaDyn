@@ -429,7 +429,7 @@
    ! sends ns data to the right
    if (nr>0) then !receives nr data from left
     
-    call sp_
+    sp_aux_new = sp_aux_new%append(aux1)
     kk = 0
     p = npt
     do n = 1, nl_recv

@@ -131,7 +131,7 @@ module particles_def
  function append_spec( this, other ) result(spec)
   class(species_new), intent(in) :: this
   class(base_species_T), intent(in) :: other
-  class(species_new) :: spec
+  type(species_new) :: spec
   integer :: tot_size
 
   tot_size = this%how_many()+other%how_many()

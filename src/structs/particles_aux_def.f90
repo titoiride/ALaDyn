@@ -201,7 +201,7 @@ module particles_aux_def
  function append_aux( this, other ) result(spec)
   class(species_aux), intent(in) :: this
   class(base_species_T), intent(in) :: other
-  class(species_aux) :: spec
+  type(species_aux) :: spec
   integer :: tot_size
 
   tot_size = this%how_many()+other%how_many()

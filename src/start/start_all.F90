@@ -225,7 +225,6 @@
      dt_loc = tmax/float(iter_max)
     end if
     if(iter_max <1000)write_every=nint(0.1*iter_max)
-    if(pe0)write(*,*)'write_every param =',write_every
 
    case (1) 
     if (.not. l_first_output_on_restart) then
