@@ -906,7 +906,8 @@
        do j = j1, j2
         do point = ptlft, 1, -1
          i = i1 - point
-         ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i1:(i1+stenc-1), j, k, iic))
+         ef(i, j, k, iic) = zero_dp
+         !ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i1:(i1+stenc-1), j, k, iic))
         end do
        end do
       end do
@@ -933,7 +934,8 @@
        do j = j1, j2
         do point = 1, ptrght
          i = i2 + point
-         ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i2:(i2-stenc+1):-1, j, k, iic))
+         ef(i, j, k, iic) = zero_dp
+         !ef(i, j, k, iic) = DOT_PRODUCT(COEFF(1:stenc, point), ef(i2:(i2-stenc+1):-1, j, k, iic))
         end do
        end do
       end do
