@@ -138,8 +138,8 @@
 !================== copy in sp_aux particles not to be exchanged
    associate (xp => sp_loc%part( 1:old_np, dir))
     call right_pind%find_index( xp > xr )
-    call left_pind%find_index( xp < xl )
-    mask(:) = (xp >= xl .and. xp <= xr)
+    call left_pind%find_index( xp <= xl )
+    mask(:) = (xp > xl .and. xp <= xr)
     npt = COUNT( mask(:) )
    end associate
 
@@ -303,8 +303,8 @@
 !================== copy in sp_aux particles not to be exchanged
    associate (xp => sp_loc%part( 1:old_np, dir))
     call right_pind%find_index( xp > xr )
-    call left_pind%find_index( xp < xl )
-    mask(:) = (xp >= xl .and. xp <= xr)
+    call left_pind%find_index( xp <= xl )
+    mask(:) = (xp > xl .and. xp <= xr)
     npt = COUNT( mask(:) )
    end associate
 

@@ -40,8 +40,8 @@
 
    if (mod(iter,write_every)==0) then
     mem_psize_max = 0.0
+    call Part_numbers
     if (prl) then
-     call Part_numbers
      call Max_pmemory_check()
     end if
     if (pe0) then
