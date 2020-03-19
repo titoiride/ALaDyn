@@ -1,7 +1,5 @@
 #!/bin/bash
 
-module purge
-
 export CRAY_CPU_TARGET=haswell
 module load PrgEnv-intel
 module load intel
