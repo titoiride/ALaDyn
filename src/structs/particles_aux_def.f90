@@ -39,6 +39,7 @@ module particles_aux_def
  integer, parameter :: AUX5_COMP = 43
  integer, parameter :: AUX6_COMP = 44
  integer, parameter :: AUX7_COMP = 45
+ integer, parameter :: AUX8_COMP = 46
 
  integer, parameter :: OLD_X_COMP = 14
  integer, parameter :: OLD_Y_COMP = 15
@@ -111,9 +112,14 @@ module particles_aux_def
 
  end type species_aux
 
+ interface operator(*)
+  module procedure :: multiply_number_aux
+ end interface
  contains
 
-  !==== Constructor ===
+ !========================================
+ ! CONSTRUCTOR
+ !========================================
  subroutine new_species_aux( this, n_particles, curr_ndims )
   !! Constructor for the `species_new` type
   class(species_aux), intent(inout) :: this
@@ -196,7 +202,9 @@ module particles_aux_def
   end select
  end subroutine
 
-!=== Type bound procedures
+ !========================================
+ ! TYPE BOUND PROCEDURES
+ !========================================
 
  function append_aux( this, other ) result(spec)
   class(species_aux), intent(in) :: this
@@ -338,6 +346,8 @@ module particles_aux_def
    comp = this%aux6(lowb:upb)
   case(AUX7_COMP)
    comp = this%aux7(lowb:upb)
+  case(AUX8_COMP)
+   comp = this%aux8(lowb:upb)
 
   case(OLD_X_COMP)
    comp = this%x(lowb:upb)
@@ -584,6 +594,9 @@ module particles_aux_def
   case(AUX7_COMP)
    call assign(this%aux7, values, lowb, upb, this%n_part)
    this%allocated_aux7 = .true.
+  case(AUX8_COMP)
+   call assign(this%aux8, values, lowb, upb, this%n_part)
+   this%allocated_aux8 = .true.
 
   case(OLD_X_COMP)
    call assign(this%x, values, lowb, upb, this%n_part)
@@ -733,6 +746,9 @@ module particles_aux_def
   case(AUX7_COMP)
    call assign(this%aux7, values, lowb, upb, this%n_part)
    this%allocated_aux7 = .true.
+  case(AUX8_COMP)
+   call assign(this%aux8, values, lowb, upb, this%n_part)
+   this%allocated_aux8 = .true.
 
   case(OLD_X_COMP)
    call assign(this%x, values, lowb, upb, this%n_part)
@@ -795,4 +811,74 @@ module particles_aux_def
   end select
 
  end subroutine
+
+ !========================================
+ ! NOT TYPE BOUND PROCEDURES
+ !========================================
+
+ function multiply_number_aux( this, number ) result(dot)
+  type(species_aux), intent(in) :: this
+  real(dp), intent(in) :: number
+  type(species_aux) :: dot
+  integer :: np
+
+  np = this%how_many()
+  call dot%new_species(this%how_many(), this%dimensions)
+  call dot%set_charge(this%charge)
+
+  if( this%allocated_x ) then
+   call assign(dot%x, number*this%call_component(X_COMP), 1, np)
+  end if
+  if( this%allocated_y ) then
+   call assign(dot%y, number*this%call_component(Y_COMP), 1, np)
+  end if
+  if( this%allocated_z ) then
+   call assign(dot%z, number*this%call_component(Z_COMP), 1, np)
+  end if
+  if( this%allocated_px ) then
+   call assign(dot%px, number*this%call_component(PX_COMP), 1, np)
+  end if
+  if( this%allocated_py ) then
+   call assign(dot%py, number*this%call_component(PY_COMP), 1, np)
+  end if
+  if( this%allocated_pz ) then
+   call assign(dot%pz, number*this%call_component(PZ_COMP), 1, np)
+  end if
+  if( this%allocated_gamma ) then
+   call assign(dot%gamma_inv, number*this%call_component(INV_GAMMA_COMP), 1, np)
+  end if
+  if( this%allocated_weight ) then
+   call assign(dot%weight, number*this%call_component(W_COMP), 1, np)
+  end if
+  if( this%allocated_index ) then
+   call assign(dot%part_index, number*this%call_component(INDEX_COMP), 1, np)
+  end if
+
+  if( this%allocated_aux1 ) then
+   call assign(dot%aux1, number*this%call_component(AUX1_COMP), 1, np)
+  end if
+  if( this%allocated_aux2 ) then
+   call assign(dot%aux2, number*this%call_component(AUX2_COMP), 1, np)
+  end if
+  if( this%allocated_aux3 ) then
+   call assign(dot%aux3, number*this%call_component(AUX3_COMP), 1, np)
+  end if
+  if( this%allocated_aux4 ) then
+   call assign(dot%aux4, number*this%call_component(AUX4_COMP), 1, np)
+  end if
+  if( this%allocated_aux5 ) then
+   call assign(dot%aux5, number*this%call_component(AUX5_COMP), 1, np)
+  end if
+  if( this%allocated_aux6 ) then
+   call assign(dot%aux6, number*this%call_component(AUX6_COMP), 1, np)
+  end if
+  if( this%allocated_aux7 ) then
+   call assign(dot%aux7, number*this%call_component(AUX7_COMP), 1, np)
+  end if
+  if( this%allocated_aux8 ) then
+   call assign(dot%aux8, number*this%call_component(AUX8_COMP), 1, np)
+  end if
+
+  
+ end function
 end module

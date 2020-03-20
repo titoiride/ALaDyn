@@ -490,7 +490,8 @@ module base_species
  subroutine assign_real_realdp( array, values, lb, ub, n_parts)
   real(dp), allocatable, dimension(:), intent(inout) :: array
   real(dp), dimension(:), intent(in)  :: values
-  integer, intent(in)  :: lb, ub, n_parts
+  integer, intent(in)  :: lb, ub
+  integer, intent(in), optional  :: n_parts
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
@@ -509,7 +510,8 @@ module base_species
  subroutine assign_integer_realdp( array, values, lb, ub, n_parts)
   real(dp), allocatable, dimension(:), intent(inout) :: array
   integer, dimension(:), intent(in)  :: values
-  integer, intent(in)  :: lb, ub, n_parts
+  integer, intent(in)  :: lb, ub
+  integer, intent(in), optional  :: n_parts
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
@@ -528,7 +530,8 @@ module base_species
  subroutine assign_real_realsp( array, values, lb, ub, n_parts)
   real(sp), allocatable, dimension(:), intent(inout) :: array
   real(dp), dimension(:), intent(in)  :: values
-  integer, intent(in)  :: lb, ub, n_parts
+  integer, intent(in)  :: lb, ub
+  integer, intent(in), optional  :: n_parts
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
@@ -547,7 +550,8 @@ module base_species
  subroutine assign_realsp_realsp( array, values, lb, ub, n_parts)
   real(sp), allocatable, dimension(:), intent(inout) :: array
   real(sp), dimension(:), intent(in)  :: values
-  integer, intent(in)  :: lb, ub, n_parts
+  integer, intent(in)  :: lb, ub
+  integer, intent(in), optional  :: n_parts
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
@@ -566,7 +570,8 @@ module base_species
  subroutine assign_integer_realsp( array, values, lb, ub, n_parts)
   real(sp), allocatable, dimension(:), intent(inout) :: array
   integer, dimension(:), intent(in)  :: values
-  integer, intent(in)  :: lb, ub, n_parts
+  integer, intent(in)  :: lb, ub
+  integer, intent(in), optional  :: n_parts
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
@@ -585,7 +590,8 @@ module base_species
  subroutine assign_real_integer( array, values, lb, ub, n_parts)
   integer, allocatable, dimension(:), intent(inout) :: array
   real(dp), dimension(:), intent(in)  :: values
-  integer, intent(in)  :: lb, ub, n_parts
+  integer, intent(in)  :: lb, ub
+  integer, intent(in), optional  :: n_parts
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
@@ -604,7 +610,8 @@ module base_species
  subroutine assign_integer_integer( array, values, lb, ub, n_parts)
   integer, allocatable, dimension(:), intent(inout) :: array
   integer, dimension(:), intent(in)  :: values
-  integer, intent(in)  :: lb, ub, n_parts
+  integer, intent(in)  :: lb, ub
+  integer, intent(in), optional  :: n_parts
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)

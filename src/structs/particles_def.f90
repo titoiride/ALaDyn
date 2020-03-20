@@ -43,9 +43,15 @@ module particles_def
    generic :: pack_species => pack_species_array, pack_species_logical
  end type
 
+ interface operator(*)
+  module procedure :: multiply_number_spec
+ end interface
+
  contains
 
-  !==== Constructor ===
+ !========================================
+ ! CONSTRUCTOR
+ !========================================
  
  subroutine new_species_spec( this, n_particles, curr_ndims )
   !! Constructor for the `species_new` type
@@ -126,7 +132,9 @@ module particles_def
   end select
  end subroutine
 
-!=== Type bound procedures
+ !========================================
+ ! TYPE BOUND PROCEDURES
+ !========================================
 
  function append_spec( this, other ) result(spec)
   class(species_new), intent(in) :: this
@@ -544,5 +552,47 @@ module particles_def
   end select
 
  end subroutine
+ !========================================
+ ! NOT TYPE BOUND PROCEDURES
+ !========================================
 
+ function multiply_number_spec( this, number ) result(dot)
+  type(species_new), intent(in) :: this
+  real(dp), intent(in) :: number
+  type(species_new) :: dot
+  integer :: np
+
+  np = this%how_many()
+  call dot%new_species(this%how_many(), this%dimensions)
+  call dot%set_charge(this%charge)
+
+  if( this%allocated_x ) then
+   call assign(dot%x, number*this%call_component(X_COMP), 1, np)
+  end if
+  if( this%allocated_y ) then
+   call assign(dot%y, number*this%call_component(Y_COMP), 1, np)
+  end if
+  if( this%allocated_z ) then
+   call assign(dot%z, number*this%call_component(Z_COMP), 1, np)
+  end if
+  if( this%allocated_px ) then
+   call assign(dot%px, number*this%call_component(PX_COMP), 1, np)
+  end if
+  if( this%allocated_py ) then
+   call assign(dot%py, number*this%call_component(PY_COMP), 1, np)
+  end if
+  if( this%allocated_pz ) then
+   call assign(dot%pz, number*this%call_component(PZ_COMP), 1, np)
+  end if
+  if( this%allocated_gamma ) then
+   call assign(dot%gamma_inv, number*this%call_component(INV_GAMMA_COMP), 1, np)
+  end if
+  if( this%allocated_weight ) then
+   call assign(dot%weight, number*this%call_component(W_COMP), 1, np)
+  end if
+  if( this%allocated_index ) then
+   call assign(dot%part_index, number*this%call_component(INDEX_COMP), 1, np)
+  end if
+
+ end function
 end module

@@ -36,6 +36,15 @@
    module procedure :: set_lpf_acc_old
   end interface
 
+  interface field_charge_multiply
+   module procedure :: field_charge_multiply_new
+   module procedure :: field_charge_multiply_old
+  end interface
+
+  interface curr_accumulate
+   module procedure :: curr_accumulate_new
+   module procedure :: curr_accumulate_old
+  end interface
   !===============================
   ! MOVING WINDOW SECTION
   !=============================
@@ -79,7 +88,7 @@
    end select
   end subroutine
 
-  subroutine field_charge_multiply(sp_loc, apt, np, ncmp)
+  subroutine field_charge_multiply_old(sp_loc, apt, np, ncmp)
 
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: apt(:, :)
@@ -95,9 +104,54 @@
    ! EXIT p-assigned (E,B) fields multiplied by charge
   end subroutine
 
-  subroutine curr_accumulate(sp_loc, pdata, curr, npt)
+  subroutine field_charge_multiply_new(sp_loc, apt, np, ncmp)
+
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (inout) :: apt
+   integer, intent (in) :: np, ncmp
+   real(dp) :: ch
+
+   ch = sp_loc%charge
+   !==========================
+   apt = apt * ch
+   ! EXIT p-assigned (E,B) fields multiplied by charge
+  end subroutine
+
+  subroutine curr_accumulate_old(sp_loc, pdata, curr, npt)
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pdata(:, :), curr(:, :, :, :)
+   integer, intent (in) :: npt
+   ! real(dp),intent(in) :: dtloc
+   !=========================
+   ! charge preserving for iform=0, 1
+   !iform=0 => (D_xJx,D_yJy,D_zJz) inverted on each particle=> (Jx,Jy,Jz)
+   !iform=1    as iform=0
+   !iform=2    no charge preserving
+   !=========================
+   if (npt==0) return
+   if (ndim<3) then
+    if (iform<2) then
+     call esirkepov_2d_curr(sp_loc, pdata, curr, npt)
+    else
+     call ncdef_2d_curr(sp_loc, pdata, curr, npt)
+    end if
+    return
+   end if
+   if (iform<2) then
+    call esirkepov_3d_curr(sp_loc, pdata, curr, npt)
+   else
+    call ncdef_3d_curr(sp_loc, pdata, curr, npt)
+   end if
+   !========================
+   ! accumulates for each species currents on curr(i1:n1p,j1:n2p,k1:n3p,1:compnent)
+   !============================
+  end subroutine
+
+  !==============================
+  subroutine curr_accumulate_new(sp_loc, pdata, curr, npt)
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent(inout) :: pdata
+   real (dp), intent (inout) :: curr(:, :, :, :)
    integer, intent (in) :: npt
    ! real(dp),intent(in) :: dtloc
    !=========================

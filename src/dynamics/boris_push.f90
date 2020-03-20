@@ -538,8 +538,8 @@
 
    type (species), intent (inout) :: sp_loc
    real (dp), intent (inout) :: f_pt(:, :)
-
    integer, intent (in) :: np, ic
+
    integer :: p
    real (dp) :: bb(3), pp(3), vp(3), vph(3)
    real (dp) :: b2, bv, alp, dt_lp, efp(6)

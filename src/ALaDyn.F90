@@ -53,7 +53,7 @@
   end if
   call Part_numbers
   if (prl) then
-   call Max_pmemory_check()
+   call Max_pmemory_check(spec, ebfp, ebfp0, ebfp1)
   end if
   if (pe0)then
    call initial_run_info(new_sim)
@@ -87,7 +87,19 @@
   !--------------------------
   
   subroutine Lp_cycle
-   !! LP_CYCLE: collects the Laser-plasma dynamics evolved as a standard PIC.
+   !! Collects the Laser-plasma dynamics evolved as a standard PIC.
+
+   ! ==============================================
+   ! BEAM is for now deactivated with new particles
+   ! ==============================================
+   ! if(inject_beam)then
+   !  if(tnow <= t_inject.and.tnow+dt_loc >t_inject)then
+   !   call beam_inject
+   !   call Part_numbers
+   !   if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
+   !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
+   !  end if
+   ! endif
    call Data_out
    do while (tnow<tmax)
    !=======================
@@ -103,21 +115,26 @@
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
    end do
-   if (dump > 0) call dump_data(iter, tnow)
+   !if (dump > 0) call dump_data(iter, tnow)
   end subroutine
 
   !--------------------------
 
   subroutine Env_cycle
+   !! Collects the Laser-plasma dynamics evolved as a PIC in ponderomotive
+   !! approximation.
 
-   if(inject_beam)then
-    if(tnow <= t_inject.and.tnow+dt_loc >t_inject)then
-     call beam_inject
-     call Part_numbers
-     if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
-     !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
-    end if
-   endif
+   ! ==============================================
+   ! BEAM is for now deactivated with new particles
+   ! ==============================================
+   ! if(inject_beam)then
+   !  if(tnow <= t_inject.and.tnow+dt_loc >t_inject)then
+   !   call beam_inject
+   !   call Part_numbers
+   !   if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
+   !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
+   !  end if
+   ! endif
    call Data_out
    !================
    tk_ind = 0
@@ -206,15 +223,15 @@
       call fluid_den_mom_out(up, i, nfcomp)
      end do
     end if
-    if (ionization) call part_ionz_out(tnow)
-    if (gam_min > 1.) call part_high_gamma_out(gam_min, tnow)
+    !if (ionization) call part_ionz_out(tnow)
+    !if (gam_min > 1.) call part_high_gamma_out(gam_min, tnow)
     if (npout > 0) then
      iic = npout
      if (iic <= nsp) then
-      call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, iic, pjump)
+      !call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, iic, pjump)
      else
       do i = 1, nsp
-       call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, i, pjump)
+       !call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, i, pjump)
       end do
      end if
     end if
@@ -230,7 +247,7 @@
        unix_time_now - unix_time_begin
     end if
     if (dump>0 .and. time_interval_dumps < 0.0) then
-     if (iter>0) call dump_data(iter,tnow)
+     !if (iter>0) call dump_data(iter,tnow)
     endif
     iout = iout + 1
    end if
