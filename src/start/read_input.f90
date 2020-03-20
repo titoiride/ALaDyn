@@ -61,7 +61,7 @@
 
    namelist /grid/nx, ny, nz, ny_targ, k0, yx_rat, zx_rat
    namelist /simulation/lpf_ord, der_ord, str_flag, iform, model_id, &
-     dmodel_id, ibx, iby, ibz, ibeam
+     dmodel_id, ibx, iby, ibz, ibeam, density_limiter
    namelist /target_description/nsp, nsb, ionz_lev, ionz_model, ion_min, &
      ion_max, atomic_number, mass_number, t0_pl, ppc, np_per_xc, &
      np_per_yc, np_per_zc, concentration, lpx, lpy, n0_ref, np1, np2, &
@@ -73,7 +73,7 @@
    namelist /beam_inject/nb_1, xc_1, gam_1, sxb_1, syb_1, epsy_1, &
      epsz_1, dg_1, charge_1, ap1_twiss,bt1_twiss,t_inject
    namelist /moving_window/w_sh, wi_time, wf_time, w_speed
-   namelist /output/nouts, iene, nvout, nden, npout, nbout, jump, pjump, &
+   namelist /output/nouts, iene, nvout, nden, ncurr, npout, nbout, jump, pjump, &
      gam_min, xp0_out, xp1_out, yp_out, tmax, cfl, new_sim, id_new, &
      dump, l_force_singlefile_output, time_interval_dumps, &
      l_print_j_on_grid, l_first_output_on_restart, l_env_modulus
@@ -93,6 +93,7 @@
    call consistency_check_grid
 
    !--- reading sim parameters ---!
+   density_limiter = .false.
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, simulation, iostat=nml_ierr)
    nml_error_message = 'SIMULATION'
@@ -200,7 +201,7 @@
    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
    namelist /grid/nx, ny, nz, ny_targ, k0, yx_rat, zx_rat
    namelist /simulation/lpf_ord, der_ord, str_flag, iform, model_id, &
-     dmodel_id, ibx, iby, ibz, ibeam
+     dmodel_id, ibx, iby, ibz, ibeam, density_limiter
    namelist /target_description/nsp, nsb, ionz_lev, ionz_model, ion_min, &
      ion_max, atomic_number, mass_number, t0_pl, ppc, np_per_xc, &
      np_per_yc, np_per_zc, concentration, lpx, lpy, n0_ref, np1, np2, &
@@ -210,7 +211,7 @@
      symmetrization_pulse, a_symm_rat, enable_ionization, y0_cent, &
      z0_cent, y1_cent, z1_cent, incid_angle
    namelist /moving_window/w_sh, wi_time, wf_time, w_speed
-   namelist /output/nouts, iene, nvout, nden, npout, nbout, jump, pjump, &
+   namelist /output/nouts, iene, nvout, nden, ncurr, npout, nbout, jump, pjump, &
      gam_min, xp0_out, xp1_out, yp_out, tmax, cfl, new_sim, id_new, &
      dump, l_force_singlefile_output, time_interval_dumps, &
      l_print_j_on_grid, l_first_output_on_restart, l_env_modulus
