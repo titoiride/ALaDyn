@@ -340,26 +340,26 @@ module particles_aux_def
    comp = this%aux7(lowb:upb)
 
   case(OLD_X_COMP)
-   comp = this%aux1(lowb:upb)
+   comp = this%x(lowb:upb)
   case(OLD_Y_COMP)
-   comp = this%aux2(lowb:upb)
+   comp = this%y(lowb:upb)
   case(OLD_Z_COMP)
-   comp = this%aux3(lowb:upb)
+   comp = this%z(lowb:upb)
   case(OLD_PX_COMP)
-   comp = this%aux4(lowb:upb)
+   comp = this%px(lowb:upb)
   case(OLD_PY_COMP)
-   comp = this%aux5(lowb:upb)
+   comp = this%py(lowb:upb)
   case(OLD_PZ_COMP)
-   comp = this%aux6(lowb:upb)
+   comp = this%pz(lowb:upb)
   case(OLD_GAMMA_COMP)
-   comp = this%aux7(lowb:upb)
+   comp = this%gamma_inv(lowb:upb)
 
   case(VX_COMP)
-   comp = this%aux4(lowb:upb)
+   comp = this%px(lowb:upb)
   case(VY_COMP)
-   comp = this%aux5(lowb:upb)
+   comp = this%py(lowb:upb)
   case(VZ_COMP)
-   comp = this%aux6(lowb:upb)
+   comp = this%pz(lowb:upb)
 
   case(POND_COMP)
    comp = this%aux4(lowb:upb)
@@ -586,36 +586,36 @@ module particles_aux_def
    this%allocated_aux7 = .true.
 
   case(OLD_X_COMP)
-   call assign(this%aux1, values, lowb, upb, this%n_part)
-   this%allocated_aux1 = .true.
+   call assign(this%x, values, lowb, upb, this%n_part)
+   this%allocated_x = .true.
   case(OLD_Y_COMP)
-   call assign(this%aux2, values, lowb, upb, this%n_part)
-   this%allocated_aux2 = .true.
+   call assign(this%y, values, lowb, upb, this%n_part)
+   this%allocated_y = .true.
   case(OLD_Z_COMP)
-   call assign(this%aux3, values, lowb, upb, this%n_part)
-   this%allocated_aux3 = .true.
+   call assign(this%z, values, lowb, upb, this%n_part)
+   this%allocated_z = .true.
   case(OLD_PX_COMP)
-   call assign(this%aux4, values, lowb, upb, this%n_part)
-   this%allocated_aux4 = .true.
+   call assign(this%px, values, lowb, upb, this%n_part)
+   this%allocated_px = .true.
   case(OLD_PY_COMP)
-   call assign(this%aux5, values, lowb, upb, this%n_part)
-   this%allocated_aux5 = .true.
+   call assign(this%py, values, lowb, upb, this%n_part)
+   this%allocated_py = .true.
   case(OLD_PZ_COMP)
-   call assign(this%aux6, values, lowb, upb, this%n_part)
-   this%allocated_aux6 = .true.
+   call assign(this%pz, values, lowb, upb, this%n_part)
+   this%allocated_pz = .true.
   case(OLD_GAMMA_COMP)
-   call assign(this%aux7, values, lowb, upb, this%n_part)
-   this%allocated_aux7 = .true.
+   call assign(this%gamma_inv, values, lowb, upb, this%n_part)
+   this%allocated_gamma = .true.
 
   case(VX_COMP)
-   call assign(this%aux4, values, lowb, upb, this%n_part)
-   this%allocated_aux4 = .true.
+   call assign(this%px, values, lowb, upb, this%n_part)
+   this%allocated_px = .true.
   case(VY_COMP)
-   call assign(this%aux5, values, lowb, upb, this%n_part)
-   this%allocated_aux5 = .true.
+   call assign(this%py, values, lowb, upb, this%n_part)
+   this%allocated_py = .true.
   case(VZ_COMP)
-   call assign(this%aux6, values, lowb, upb, this%n_part)
-   this%allocated_aux6 = .true.
+   call assign(this%pz, values, lowb, upb, this%n_part)
+   this%allocated_pz = .true.
 
   case(POND_COMP)
    call assign(this%aux4, values, lowb, upb, this%n_part)
@@ -669,90 +669,129 @@ module particles_aux_def
 
   select case(component)
   case(X_COMP)
-   this%x(lowb:upb) = values(:)
+   call assign(this%x, values, lowb, upb, this%n_part)
+   this%allocated_x = .true.
   case(Y_COMP)
-   this%y(lowb:upb) = values(:)
+   call assign(this%y, values, lowb, upb, this%n_part)
+   this%allocated_y = .true.
   case(Z_COMP)
-   this%z(lowb:upb) = values(:)
+   call assign(this%z, values, lowb, upb, this%n_part)
+   this%allocated_z = .true.
   case(PX_COMP)
-   this%px(lowb:upb) = values(:)
+   call assign(this%px, values, lowb, upb, this%n_part)
+   this%allocated_px = .true.
   case(PY_COMP)
-   this%py(lowb:upb) = values(:)
+   call assign(this%py, values, lowb, upb, this%n_part)
+   this%allocated_py = .true.
   case(PZ_COMP)
-   this%pz(lowb:upb) = values(:)
+   call assign(this%pz, values, lowb, upb, this%n_part)
+   this%allocated_pz = .true.
   case(INV_GAMMA_COMP)
-   this%gamma_inv(lowb:upb) = values(:)
+   call assign(this%gamma_inv, values, lowb, upb, this%n_part)
+   this%allocated_gamma = .true.
   case(W_COMP)
-   this%weight(lowb:upb) = real(values(:), sp)
+   call assign(this%weight, values, lowb, upb, this%n_part)
+   this%allocated_weight = .true.
 
   case(EX_COMP)
-   this%aux1(lowb:upb) = values(:)
+   call assign(this%aux1, values, lowb, upb, this%n_part)
+   this%allocated_aux1 = .true.
   case(EY_COMP)
-   this%aux2(lowb:upb) = values(:)
+   call assign(this%aux2, values, lowb, upb, this%n_part)
+   this%allocated_aux2 = .true.
   case(EZ_COMP)
-   this%aux3(lowb:upb) = values(:)
+   call assign(this%aux3, values, lowb, upb, this%n_part)
+   this%allocated_aux3 = .true.
   case(BX_COMP)
-   this%aux4(lowb:upb) = values(:)
+   call assign(this%aux4, values, lowb, upb, this%n_part)
+   this%allocated_aux4 = .true.
   case(BY_COMP)
-   this%aux5(lowb:upb) = values(:)
+   call assign(this%aux5, values, lowb, upb, this%n_part)
+   this%allocated_aux5 = .true.
   case(BZ_COMP)
-   this%aux6(lowb:upb) = values(:)
+   call assign(this%aux6, values, lowb, upb, this%n_part)
+   this%allocated_aux6 = .true.
 
   case(AUX1_COMP)
-   this%aux1(lowb:upb) = values(:)
+   call assign(this%aux1, values, lowb, upb, this%n_part)
+   this%allocated_aux1 = .true.
   case(AUX2_COMP)
-   this%aux2(lowb:upb) = values(:)
+   call assign(this%aux2, values, lowb, upb, this%n_part)
+   this%allocated_aux2 = .true.
   case(AUX3_COMP)
-   this%aux3(lowb:upb) = values(:)
+   call assign(this%aux3, values, lowb, upb, this%n_part)
+   this%allocated_aux3 = .true.
   case(AUX4_COMP)
-   this%aux4(lowb:upb) = values(:)
+   call assign(this%aux4, values, lowb, upb, this%n_part)
+   this%allocated_aux4 = .true.
   case(AUX5_COMP)
-   this%aux5(lowb:upb) = values(:)
+   call assign(this%aux5, values, lowb, upb, this%n_part)
+   this%allocated_aux5 = .true.
   case(AUX6_COMP)
-   this%aux6(lowb:upb) = values(:)
+   call assign(this%aux6, values, lowb, upb, this%n_part)
+   this%allocated_aux6 = .true.
   case(AUX7_COMP)
-   this%aux7(lowb:upb) = values(:)
+   call assign(this%aux7, values, lowb, upb, this%n_part)
+   this%allocated_aux7 = .true.
 
   case(OLD_X_COMP)
-   this%aux1(lowb:upb) = values(:)
+   call assign(this%x, values, lowb, upb, this%n_part)
+   this%allocated_x = .true.
   case(OLD_Y_COMP)
-   this%aux2(lowb:upb) = values(:)
+   call assign(this%y, values, lowb, upb, this%n_part)
+   this%allocated_y = .true.
   case(OLD_Z_COMP)
-   this%aux3(lowb:upb) = values(:)
+   call assign(this%z, values, lowb, upb, this%n_part)
+   this%allocated_z = .true.
   case(OLD_PX_COMP)
-   this%aux4(lowb:upb) = values(:)
+   call assign(this%px, values, lowb, upb, this%n_part)
+   this%allocated_px = .true.
   case(OLD_PY_COMP)
-   this%aux5(lowb:upb) = values(:)
+   call assign(this%py, values, lowb, upb, this%n_part)
+   this%allocated_py = .true.
   case(OLD_PZ_COMP)
-   this%aux6(lowb:upb) = values(:)
+   call assign(this%pz, values, lowb, upb, this%n_part)
+   this%allocated_pz = .true.
   case(OLD_GAMMA_COMP)
-   this%aux7(lowb:upb) = values(:)
+   call assign(this%gamma_inv, values, lowb, upb, this%n_part)
+   this%allocated_gamma = .true.
 
   case(VX_COMP)
-   this%aux4(lowb:upb) = values(:)
+   call assign(this%px, values, lowb, upb, this%n_part)
+   this%allocated_px = .true.
   case(VY_COMP)
-   this%aux5(lowb:upb) = values(:)
+   call assign(this%py, values, lowb, upb, this%n_part)
+   this%allocated_py = .true.
   case(VZ_COMP)
-   this%aux6(lowb:upb) = values(:)
+   call assign(this%pz, values, lowb, upb, this%n_part)
+   this%allocated_pz = .true.
 
   case(POND_COMP)
-   this%aux4(lowb:upb) = values(:)
+   call assign(this%aux4, values, lowb, upb, this%n_part)
+   this%allocated_aux4 = .true.
   case(GRADF_X_COMP)
-   this%aux1(lowb:upb) = values(:)
+   call assign(this%aux1, values, lowb, upb, this%n_part)
+   this%allocated_aux1 = .true.
   case(GRADF_Y_COMP)
-   this%aux2(lowb:upb) = values(:)
+   call assign(this%aux2, values, lowb, upb, this%n_part)
+   this%allocated_aux2 = .true.
   case(GRADF_Z_COMP)
-   this%aux3(lowb:upb) = values(:)
+   call assign(this%aux3, values, lowb, upb, this%n_part)
+   this%allocated_aux3 = .true.
 
   case(E_SQUARED)
-   this%aux8(lowb:upb) = values(:)
+   call assign(this%aux8, values, lowb, upb, this%n_part)
+   this%allocated_aux8 = .true.
 
   case(FX_COMP)
-   this%aux1(lowb:upb) = values(:)
+   call assign(this%aux1, values, lowb, upb, this%n_part)
+   this%allocated_aux1 = .true.
   case(FY_COMP)
-   this%aux2(lowb:upb) = values(:)
+   call assign(this%aux2, values, lowb, upb, this%n_part)
+   this%allocated_aux2 = .true.
   case(FZ_COMP)
-   this%aux3(lowb:upb) = values(:)
+   call assign(this%aux3, values, lowb, upb, this%n_part)
+   this%allocated_aux3 = .true.
   end select
 
  end subroutine

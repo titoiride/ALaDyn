@@ -315,7 +315,7 @@
    type( species_aux ) :: temp_spec
    real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
    integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
-   integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir
+   integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
    logical :: mask(old_np)
    !================ dir are cartesian coordinate index (x,y,z)
    !================ cdir are mpi-cartesian index (y,z,x)
@@ -372,6 +372,8 @@
    
    call sp_loc%sel_particles( sp_aux_new, 1, old_np )
    sp_aux_new = sp_aux_new%pack_species( mask(:) )
+   call sp_loc%sel_particles( sp1_aux_new, 1, old_np )
+   sp1_aux_new = sp1_aux_new%pack_species( mask(:) )
 
    ! TO BE FIXED UPDATING VSTORE TO NEW STRUCT
    ! vstore(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
@@ -428,27 +430,12 @@
    if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
    ! sends ns data to the right
    if (nr>0) then !receives nr data from left
-    
-    sp_aux_new = sp_aux_new%append(aux1)
-    kk = 0
-    p = npt
-    do n = 1, nl_recv
-     p = p + 1
-     do q = 1, ndv
-      kk = kk + 1
-      sp_aux(p, q) = aux2(kk)
-     end do
-    end do
-    !   adds...
-    p = npt
-    do n = 1, nl_recv
-     p = p + 1
-     do q = 1, ndv
-      kk = kk + 1
-      sp1_aux(p, q) = aux2(kk)
-     end do
-    end do
-    npt = p
+    n_tot = nl_recv*tot_size
+    call redistribute(temp_spec, aux2(1:n_tot), nl_recv)
+    sp_aux_new = sp_aux_new%append(temp_spec)
+    call redistribute(temp_spec, aux2( n_tot + 1: 2*n_tot), nl_recv)
+    sp1_aux_new = sp_aux_new%append(temp_spec)
+    npt = sp_aux_new%how_many()
    end if
  ! !===================
  !   ns = 2*ndv*nl_send

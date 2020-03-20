@@ -249,52 +249,6 @@ module particles_def
 
  end function
 
- subroutine redistribute( this, flat_array, num_particles )
-  class(species_new), intent(inout) :: this
-  real(dp), intent(in), dimension(:) :: flat_array
-  integer, intent(in) :: num_particles
-  integer :: i
-
-  i = 0
-  if( this%allocated_x ) then
-   this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_y ) then
-   this%y(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_z ) then
-   this%z(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_px ) then
-   this%px(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_py ) then
-   this%py(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_pz ) then
-   this%pz(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_gamma ) then
-   this%gamma_inv(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_weight ) then
-   this%weight(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-  if( this%allocated_index ) then
-   this%part_index(1:num_particles) = flat_array((i + 1): (i + num_particles))
-   i = i + num_particles
-  end if
-
- end subroutine
-
  subroutine sel_particles_bounds_spec( this, out_sp, lower_bound, upper_bound )
  !! Function that selects particles with respect to the given array boundaries
  !! (Memory position, NOT a particle index)
