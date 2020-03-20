@@ -1,17 +1,11 @@
 #!/bin/bash
 
-module purge
-
 export CRAY_CPU_TARGET=haswell
 module load PrgEnv-intel
-module load intel
-module load impi
 module load boost
 module load cmake
 
-export CC=/opt/intel/compilers_and_libraries_2019.3.199/linux/bin/intel64/icc
-export CXX=/opt/intel/compilers_and_libraries_2019.3.199/linux/bin/intel64/icpc
-export FC=/opt/intel/compilers_and_libraries_2019.3.199/linux/bin/intel64/ifort
+export FC=ftn
 export CLINKER=$CXX
 
 mkdir -p build ; cd build
