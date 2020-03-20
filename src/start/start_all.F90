@@ -46,7 +46,7 @@
   !WARNING if enabled with no need, the program sleeps at start without doing anything!
   !To enable the flag, uncomment the corresponding line in CMakeLists.txt
 #ifdef ENABLE_GDB_ATTACH
- call gdbattach
+! call gdbattach
 #endif
    call read_main_input
 

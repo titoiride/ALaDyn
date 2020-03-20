@@ -31,6 +31,12 @@
   integer, dimension(2, 3), protected, private :: COEFF_2
   integer, dimension(2, 2), protected, private :: COEFF_1
   integer, dimension(2, 1), protected, private :: COEFF_0
+  real(dp), parameter :: EPS = 1.e-06
+  !! Small parameter for WENO interpolation
+  real(dp), save :: EPS_P
+  !! Small parameter for density flux limiter
+  real(dp), dimension(3), parameter :: LDER = [ 0.5, -2., 1.5 ]
+  real(dp), dimension(3), parameter :: RDER = [ -1.5, 2., -0.5 ]
 
  contains
 
@@ -1557,12 +1563,6 @@
    real(dp) :: aphx, aphy, aphz
    integer :: i, j, k, ic, i01, i02, j01, j02, k01, k02, fcomp_tot
    real(dp) :: shy, shz
-   real(dp) :: dw(3), sl(2), sr(2), omgl(2), vv, s0
-   real(dp), parameter :: EPS = 1.e-06
-
-   real(dp), dimension(2), parameter :: W03 = [ 1./3., 2./3. ]
-   real(dp), dimension(3), parameter :: LDER = [ 0.5, -2., 1.5 ]
-   real(dp), dimension(3), parameter :: RDER = [ -1.5, 2., -0.5 ]
 
    ! Fourth order derivatives
    !real(dp), dimension(4), parameter :: LDER4 = [ 1./6., -1., 0.5, &
@@ -1600,7 +1600,8 @@
        var(i, ic) = flx(i, j, k, ic)
       end do
      end do
-     call weno3_nc(fcomp_tot, i01-2, i02+2, xl_bd, xr_bd)
+     call density_flux(var, ww0, fcomp, aphx, xl_bd, xr_bd, i01 - 2, i02 + 2)
+     call momentum_flux(var, ww0, fcomp, xl_bd, xr_bd, i01 - 2, i02 + 2)
      do ic = 1, fcomp !var=momenta
       do i = i01, i02
        ef(i, j, k, ic) = ef(i, j, k, ic) - aphx*ww0(i, ic)
@@ -1619,7 +1620,8 @@
      do j = j01 - 2, j02 + 2
       var(j, fcomp+1) = flx(i, j, k, fcomp+2)
      end do
-     call weno3_nc(fcomp+1, j01-2, j02+2, yl_bd, yr_bd) !rec[flux][j01-1,j02+1] 
+     call density_flux(var, ww0, fcomp, aphy, yl_bd, yr_bd, j01 - 2, j02 + 2)
+     call momentum_flux(var, ww0, fcomp, yl_bd, yr_bd, j01 - 2, j02 + 2)
      do ic = 1, fcomp
       do j = j01, j02
        shy = aphy*loc_yg(j-2, 3, imody)
@@ -1640,7 +1642,8 @@
      do k = k01 - 2, k02 + 2
       var(k, ic) = flx(i, j, k, fcomp+3)
      end do
-     call weno3_nc(fcomp+1, k01-2, k02+2, zl_bd, zr_bd)
+     call density_flux(var, ww0, fcomp, aphz, zl_bd, zr_bd, k01 - 2, k02 + 2)
+     call momentum_flux(var, ww0, fcomp, zl_bd, zr_bd, k01 - 2, k02 + 2)
      do ic = 1, fcomp
       do k = k01, k02
        shz = aphz*loc_zg(k-2, 3, imodz)
@@ -1649,118 +1652,305 @@
      end do
     end do
    end do
-   !=================================
-  contains
-   subroutine weno3_nc( nc, i1, np, lbd, rbd )
-    integer, intent (in) :: nc, i1, np
-    logical, intent (in) :: lbd, rbd
-    !  enter data [i1,np]  
-    integer :: ii, iic
+  end subroutine
 
-    !=======ENTER DATA [i1,np]
-    !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 
-    !wr_{i+1/2}  uses stencil [i,i+1,i+2] in range [i=i1,np-2] 
-    !            common interior points [i1+1,np-2
-    !            Dw first derivative in range[i1+2,np-2]
-    !            L-Boundary    Dw^r[i1+1] uses the [i1:i1+3] stencil for v<0
-    !            R-Boundary    Dw^L[np-1] uses the [np-3:np1] stencil
-    !===========================================
+  !=================================
+  subroutine density_flux( var_in, ww0_in, fcomp_in, aph, lbd, rbd, i1, np )
+   real(dp), intent(inout), dimension(:, :) :: var_in, ww0_in
+   real(dp), intent(in) :: aph
+   logical, intent(in) :: lbd, rbd
+   integer, intent(in) :: fcomp_in, i1, np
+   real(dp) :: vv
+   real(dp), allocatable, dimension(:) :: thetap, thetam, fluxlf, flux, &
+    uplus, uminus, ulfp, ulfm, flux_tmp
+   real(dp), allocatable, dimension(:, :) :: var_in_tmp
+   integer :: iic, ii, nc, lb, ub, lb1, ub1, jj
+   logical, allocatable, dimension(:) :: dens_maskp, dens_maskm
+   real(dp), parameter :: EPS_P = 1.e-03
+
+   nc = fcomp_in + 1
+   iic = nc - 1
+   do ii = i1, np
+    var_in(ii, nc+1) = var_in(ii, iic)*var_in(ii, nc) !in den array var_in(nc+1) => den*v
+   end do
+
+   !===================================
+   !upwind boundary derivatives
+   if (lbd) then
+
+    iic = nc
+    ii = i1
+    ww0_in(ii, iic) = 0.0
+    vv = var_in(ii, nc)
+    if (vv<0.0) ww0_in(ii, iic) = var_in(ii+1, nc+1) - var_in(ii, nc+1)
+    ii = i1 + 1
+    vv = var_in(ii, nc)
+    ww0_in(ii, iic) = var_in(ii, nc+1) - var_in(ii-1, nc+1)
+    if (vv<0.0) ww0_in(ii, iic) = dot_product(RDER(1:3), var_in(ii:ii+2,nc+1))
+
+   end if
+
+   if (rbd) then
+
+    iic = nc
+    ii = np - 1
+    vv = var_in(ii, nc)
+    ww0_in(ii, iic) = var_in(ii+1, nc+1) - var_in(ii, nc+1)
+    if (vv>0.0) ww0_in(ii, iic) = dot_product(LDER(1:3), var_in(ii-2:ii,nc+1))
+    ii = np
+    vv = var_in(ii, nc)
+    ww0_in(ii, iic) = 0.0
+    if (vv>0.0) ww0_in(ii, iic) = var_in(ii, nc+1) - var_in(ii-1, nc+1)
+
+   end if
+
+   !===================================
+   ! weno3_nc returns in wl and wr the interpolation
+   ! on the left and right stencil respectively
+   !
+   call weno3_nc(var_in, nc - 1, nc, i1, np)
+   
+   !===================================
+   ! LxF flux for density variable
+   !   F=nv=> 1/2(F_L+F_R)-|V_{max}|(den_R-den_L)]
+   
+   if (density_limiter) then
+    !==========================================
+    ! Density flux limiter as described in
+    ! Hu et al., "Positivity-preserving method 
+    ! for high-order conservative
+    ! schemes solving compressible Euler equations.", 
+    ! JCP 242 (2013).
+    ! Still in beta, should be validated.
+    !==========================================
 
     iic = nc - 1
-    do ii = i1, np
-     var(ii, nc+1) = var(ii, iic)*var(ii, nc) !in den array var(nc+1) => den*v
+    lb = i1
+    ub = np
+    lb1 = i1 + 1
+    ub1 = np - 2
+    allocate( thetam(lb:ub), thetap(lb:ub), source = one_dp )
+    allocate( flux(lb:ub), fluxlf(lb:ub), source = ww0_in(lb:ub, iic) )
+    allocate( uplus(lb1:ub1), uminus(lb1:ub1), ulfp(lb1:ub1), ulfm(lb1:ub1), &
+     flux_tmp(lb:ub), var_in_tmp(lb:ub, iic:nc) )
+    allocate( dens_maskp(lb1:ub1), dens_maskm(lb1:ub1), source=.false.)
+    !===================================
+    ! Max on the velocity in the surrounding of the point.
+    ! For a more robust (diffusive) LxF, use max on all the domain
+    vv = maxval(abs(var_in(lb1:ub1, nc)))
+    !===================================
+    ! In flux returns F_i based on reconstructed solution
+    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv )
+    ! Flux_tmp temporarily stores the shifted real flux
+    flux_tmp(lb:ub) = EOSHIFT(flux(lb:ub), -1)
+    ! Computing U_i^+= U_i - 2*(dt/dx)*F_{i+1/2}
+    uplus(lb1:ub1) = var_in(lb1:ub1, iic) - 2*aph*flux(lb1:ub1)
+    ! Computing U_i^-= U_i + 2*(dt/dx)*F_{i-1/2}
+    uminus(lb1:ub1) = var_in(lb1:ub1, iic) + 2*aph*flux_tmp(lb1:ub1)
+
+    dens_maskp(lb1:ub1) = uplus(lb1:ub1) < EPS_P
+    dens_maskm(lb1:ub1) = uminus(lb1:ub1) < EPS_P
+
+    if (ANY(dens_maskp .or. dens_maskm)) then
+     !call gdbattach
+     !===================================
+     ! In fluxlf returns F_i based on the piecewise solution
+     do jj = iic, nc
+      do ii = lb, ub
+       var_in_tmp(ii, jj) = var_in(ii + 1, jj)
+      end do
+     end do
+     call lxf_flux( fluxlf(lb:ub), var_in_tmp(lb:ub, iic:nc), var_in(lb:ub, iic:nc), vv, &
+      (dens_maskp .or. dens_maskm))
+     flux_tmp(lb:ub) = EOSHIFT(fluxlf(lb:ub), -1)
+     where( dens_maskp )
+      ! Computing U_i^+LF= U_i - 2*(dt/dx)*F_{i+1/2}^LF
+      ulfp(lb1:ub1) = var_in(lb1:ub1, iic) - 2*aph*fluxlf(lb1:ub1)
+      thetap(lb1:ub1) = (EPS_P - ulfp(lb1:ub1))/(uplus(lb1:ub1) - ulfp(lb1:ub1))
+     end where
+     if (ANY(thetap > 1) .or. ANY(thetap < 0)) then
+      write( 6, *) 'Warning, thetap not admissible'
+      call gdbattach
+     end if
+
+     where( dens_maskm )
+     ! Computing U_i^-LF= U_i + 2*(dt/dx)*F_{i-1/2}^LF
+      
+      ulfm(lb1:ub1) = var_in(lb1:ub1, iic) + 2*aph*flux_tmp(lb1:ub1)
+      thetam(lb1:ub1) = (EPS_P - ulfm(lb1:ub1))/(uminus(lb1:ub1) - ulfm(lb1:ub1))
+     end where
+     if (ANY(thetam > 1) .or. ANY(thetam < 0)) then
+      write( 6, *) 'Warning, thetam not admissible'
+      call gdbattach
+     end if
+     ! In thetap the min between each thetap and thetam is stored
+     thetap(lb:ub) = MERGE( thetap, thetam, thetap < thetam)
+    end if
+    where( thetap(lb1:ub1) < 1 )
+     flux(lb1:ub1) = (1 - thetap(lb1:ub1))*fluxlf(lb1:ub1) + &
+      thetap(lb1:ub1)*flux(lb1:ub1)
+    end where
+    do ii = lb1 + 1, ub1
+     ww0_in(ii, iic) = flux(ii) - flux(ii-1)
     end do
-    !================= reconstruct nc primitives (Px,Py,Pz,Den,V)
+
+   else
+    iic = nc - 1
+    lb1 = i1 + 1
+    ub1 = np - 2
+    lb = i1
+    ub = np
+    allocate( flux(lb:ub), source = ww0_in(lb:ub, iic) )
+    !===================================
+    ! Max on the velocity in the surrounding of the point.
+    ! For a more robust (diffusive) LxF, use max on all the domain
+    vv = maxval(abs(var_in(lb1:ub1, nc)))
+    !===================================
+    ! In flux returns F_i based on reconstructed solution
+    call lxf_flux( flux(lb:ub), wr(lb:ub, iic:nc), wl(lb:ub, iic:nc), vv )
+    do ii = lb1 + 1, ub1
+     ww0_in(ii, iic) = flux(ii) - flux(ii-1)
+    end do
+   end if
+   var_in(lb:ub, iic) = flux(lb:ub)
+
+   ! if ( allocated(thetap) ) deallocate(thetap)
+   ! if ( allocated(thetam) ) deallocate(thetam)
+   ! if ( allocated(flux) ) deallocate(flux)
+   ! if ( allocated(fluxlf) ) deallocate(fluxlf)
+   ! if ( allocated(uplus) ) deallocate(uplus)
+   ! if ( allocated(uminus) ) deallocate(uminus)
+   ! if ( allocated(ulfp) ) deallocate(ulfp)
+   ! if ( allocated(ulfm) ) deallocate(ulfm)
+   ! if ( allocated(dens_maskm) ) deallocate(dens_maskm)
+   ! if ( allocated(dens_maskp) ) deallocate(dens_maskp)
+  end subroutine
+  !=================================
+
+  subroutine momentum_flux( var_in, ww0_in, fcomp_in, lbd, rbd, i1, np )
+   real(dp), intent(inout), dimension(:, :) :: var_in, ww0_in
+   logical, intent(in) :: lbd, rbd
+   integer, intent(in) :: fcomp_in, i1, np
+   real(dp) :: vv, s0
+   integer :: iic, ii, nc
+
+   nc = fcomp_in - 1
+   !===================================
+   !upwind boundary derivatives
+   if (lbd) then
+
     do iic = 1, nc
-     do ii = i1 + 1, np - 1
-      dw(1) = var(ii, iic) - var(ii-1, iic) !DW_{i-1/2}
-      dw(2) = var(ii+1, iic) - var(ii, iic) !DW_{i+1/2}
-      omgl(1) = 1./(dw(1)*dw(1)+EPS)
-      omgl(2) = 1./(dw(2)*dw(2)+EPS)
-      omgl(:) = omgl(:) * omgl(:)
-      sl(1) = W03(1)*omgl(1)
-      sl(2) = W03(2)*omgl(2)
-      sr(1) = W03(2)*omgl(1)
-      sr(2) = W03(1)*omgl(2)
-      s0 = sl(1) + sl(2)
-      wl(ii, iic) = var(ii, iic) + 0.5*(dw(1)*sl(1)+dw(2)*sl(2))/s0
-      s0 = sr(1) + sr(2)
-      wr(ii-1, iic) = var(ii, iic) - 0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
-     end do
-    end do
-    !===================================
-    !upwind boundary derivatives
-    if (lbd) then
-     do iic = 1, nc - 2
-      ii = i1
-      ww0(ii, iic) = 0.0
-      vv = var(ii, nc)
-      if (vv<0.0) ww0(ii, iic) = vv*(var(ii+1,iic)-var(ii,iic))
-      ii = i1 + 1
-      vv = var(ii, nc)
-      ww0(ii, iic) = vv*(var(ii,iic)-var(ii-1,iic))
-      if (vv<0.0) ww0(ii, iic) = vv*dot_product(RDER(1:3), var(ii:ii+2,iic))
-     end do
-     iic = nc - 1
      ii = i1
-     ww0(ii, iic) = 0.0
-     vv = var(ii, nc)
-     if (vv<0.0) ww0(ii, iic) = var(ii+1, nc+1) - var(ii, nc+1)
+     ww0_in(ii, iic) = 0.0
+     vv = var_in(ii, fcomp_in + 1)
+     if (vv<0.0) ww0_in(ii, iic) = vv*(var_in(ii+1,iic)-var_in(ii,iic))
      ii = i1 + 1
-     vv = var(ii, nc)
-     ww0(ii, iic) = var(ii, nc+1) - var(ii-1, nc+1)
-     if (vv<0.0) ww0(ii, iic) = dot_product(RDER(1:3), var(ii:ii+2,nc+1))
-    end if
-    if (rbd) then
-     do iic = 1, nc - 2
-      ii = np - 1
-      vv = var(ii, nc)
-      ww0(ii, iic) = vv*(var(ii+1,iic)-var(ii,iic))
-      if (vv>0.0) ww0(ii, iic) = vv*dot_product(LDER(1:3), var(ii-2:ii,iic))
-      ii = np
-      vv = var(ii, nc)
-      ww0(ii, iic) = 0.0
-      if (vv>0.0) ww0(ii, iic) = vv*(var(ii,iic)-var(ii-1,iic))
-     end do
-     iic = nc - 1
-     ii = np - 1
-     vv = var(ii, nc)
-     ww0(ii, iic) = var(ii+1, nc+1) - var(ii, nc+1)
-     if (vv>0.0) ww0(ii, iic) = dot_product(LDER(1:3), var(ii-2:ii,nc+1))
-     ii = np
-     vv = var(ii, nc)
-     ww0(ii, iic) = 0.0
-     if (vv>0.0) ww0(ii, iic) = var(ii, nc+1) - var(ii-1, nc+1)
-    end if
-    !===================================
-    !   UPWINDING at interior points
-    !          Momenta
-    do iic = 1, nc - 2
-     do ii = i1 + 1, np - 2
-      vv = wr(ii, nc) + wl(ii, nc)
-      s0 = sign(one_dp, vv) !s0=1*sign(vv)
-      var(ii, iic) = max(0., s0)*wl(ii, iic) - min(0., s0)*wr(ii, iic)
-     end do
-     do ii = i1 + 2, np - 2
-      ww0(ii, iic) = var(ii, nc)*(var(ii,iic)-var(ii-1,iic))
-     end do
+     vv = var_in(ii, fcomp_in + 1)
+     ww0_in(ii, iic) = vv*(var_in(ii,iic)-var_in(ii-1,iic))
+     if (vv<0.0) ww0_in(ii, iic) = vv*dot_product(RDER(1:3), var_in(ii:ii+2,iic))
     end do
-    ! LxF flux for density variable
-    !   F=nv=> 1/2(F_L+F_R)-|V_{max}|(den_R-den_L)]
-    iic = nc - 1
+
+   end if
+
+   if (rbd) then
+
+    do iic = 1, nc
+     ii = np - 1
+     vv = var_in(ii, fcomp_in + 1)
+     ww0_in(ii, iic) = vv*(var_in(ii+1,iic)-var_in(ii,iic))
+     if (vv>0.0) ww0_in(ii, iic) = vv*dot_product(LDER(1:3), var_in(ii-2:ii,iic))
+     ii = np
+     vv = var_in(ii, fcomp_in + 1)
+     ww0_in(ii, iic) = 0.0
+     if (vv>0.0) ww0_in(ii, iic) = vv*(var_in(ii,iic)-var_in(ii-1,iic))
+    end do
+
+   end if
+
+   !===================================
+   ! weno3_nc returns in wl and wr the interpolation
+   ! on the left and right stencil respectively
+   !
+   call weno3_nc(var_in, 1, nc, i1, np)
+   !===================================
+   !   UPWINDING at interior points
+   !          Momenta
+   do iic = 1, nc
     do ii = i1 + 1, np - 2
-     dw(1) = var(ii-1, nc)
-     dw(2) = var(ii, nc)
-     dw(3) = var(ii+1, nc)
-     vv = maxval(abs(dw(1:3)))
-     var(ii, iic) = wr(ii, nc)*wr(ii, iic) + wl(ii, nc)*wl(ii, iic) - &
-       vv*(wr(ii,iic)-wl(ii,iic))
-     var(ii, iic) = 0.5*var(ii, iic)
+     vv = wr(ii, fcomp_in + 1) + wl(ii, fcomp_in + 1)
+     s0 = sign(one_dp, vv) !s0=1*sign(vv)
+     var_in(ii, iic) = max(0., s0)*wl(ii, iic) - min(0., s0)*wr(ii, iic)
     end do
     do ii = i1 + 2, np - 2
-     ww0(ii, iic) = var(ii, iic) - var(ii-1, iic)
+     ww0_in(ii, iic) = var_in(ii, fcomp_in + 1)*(var_in(ii,iic)-var_in(ii-1,iic))
     end do
-   end subroutine
+   end do
+
+  end subroutine
+  !=================================
+  subroutine weno3_nc( var_in, cmp_min, cmp_max, i1, np )
+   real(dp), intent(in), dimension(:, :) :: var_in
+   integer, intent (in) :: cmp_min, cmp_max, i1, np
+   !  enter data [i1,np]  
+   integer :: ii, iic
+   real(dp) :: dw(2), sl(2), sr(2), omgl(2), s0
+   real(dp), dimension(2), parameter :: W03 = [ 1./4., 3./4. ]
+   real(dp), dimension(2), parameter :: W03_OPT = [ 1./3., 2./3. ]
+
+   !=======ENTER DATA [i1,np]
+   !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 
+   !wr_{i+1/2}  uses stencil [i,i+1,i+2] in range [i=i1,np-2] 
+   !            common interior points [i1+1,np-2
+   !            Dw first derivative in range[i1+2,np-2]
+   !            L-Boundary    Dw^r[i1+1] uses the [i1:i1+3] stencil for v<0
+   !            R-Boundary    Dw^L[np-1] uses the [np-3:np1] stencil
+   !===========================================
+   !================= reconstruct nc primitives (Px,Py,Pz,Den,V)
+   do iic = cmp_min, cmp_max
+    do ii = i1 + 1, np - 1
+     dw(1) = var_in(ii, iic) - var_in(ii-1, iic) !DW_{i-1/2}
+     dw(2) = var_in(ii+1, iic) - var_in(ii, iic) !DW_{i+1/2}
+     omgl(1) = 1./(dw(1)*dw(1)+EPS)
+     omgl(2) = 1./(dw(2)*dw(2)+EPS)
+     omgl(:) = omgl(:) * omgl(:)
+     sl(1) = W03(1)*omgl(1)
+     sl(2) = W03(2)*omgl(2)
+     sr(1) = W03(2)*omgl(1)
+     sr(2) = W03(1)*omgl(2)
+     s0 = sl(1) + sl(2)
+     wl(ii, iic) = var_in(ii, iic) + 0.5*(dw(1)*sl(1)+dw(2)*sl(2))/s0
+     s0 = sr(1) + sr(2)
+     wr(ii-1, iic) = var_in(ii, iic) - 0.5*(dw(1)*sr(1)+dw(2)*sr(2))/s0
+    end do
+   end do
   end subroutine
 !====================================
+
+  subroutine lxf_flux(flx_in, wr_in, wl_in, vv, mask_in )
+   real(dp), intent(out), dimension(:) :: flx_in
+   real(dp), intent(in), dimension(:, :) :: wr_in, wl_in
+   real(dp), intent(in) :: vv
+   logical, intent(in), dimension(:), optional :: mask_in
+   integer :: dens_cmp, vel_cmp , lb, ub
+   logical, allocatable, dimension(:) :: mask
+   dens_cmp = 1
+   vel_cmp = dens_cmp + 1
+   lb = 1
+   ub = SIZE(flx_in)
+   if ( present(mask_in) ) then
+    allocate(mask(lb:ub), source=mask_in)
+   else
+    allocate(mask(lb:ub), source=.true.)
+   end if
+
+   where ( mask )
+
+    flx_in(lb:ub) = wr_in(lb:ub, vel_cmp)*wr_in(lb:ub, dens_cmp) + &
+      wl_in(lb:ub, vel_cmp)*wl_in(lb:ub, dens_cmp) - &
+      vv*(wr_in(lb:ub, dens_cmp)-wl_in(lb:ub, dens_cmp))
+    flx_in(lb:ub) = 0.5*flx_in(lb:ub)
+
+   end where
+
+  end subroutine
  end module
