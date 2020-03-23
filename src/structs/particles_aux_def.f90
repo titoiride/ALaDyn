@@ -104,6 +104,7 @@ module particles_aux_def
    procedure, public :: append => append_aux
    procedure, public :: call_component => call_component_aux
    procedure, public :: copy_scalars_from => copy_scalars_from_aux
+   procedure, public :: extend => extend_aux
    procedure, pass :: new_species => new_species_aux
    procedure, pass :: sel_particles_bounds => sel_particles_bounds_aux
    procedure, pass :: sel_particles_index => sel_particles_index_aux
@@ -393,6 +394,20 @@ module particles_aux_def
   end select
 
  end function
+
+ 
+ subroutine extend_aux( this, new_number )
+  class(species_aux), intent(inout) :: this
+  integer, intent(in) :: new_number
+  type(species_aux) :: temp
+  integer :: n_parts
+
+  n_parts = this%how_many()
+  call this%sel_particles(temp, 1, n_parts)
+  call this%new_species(new_number, this%dimensions)
+  call this%copy(temp)
+
+  end subroutine
 
  subroutine sel_particles_bounds_aux( this, out_sp, lower_bound, upper_bound )
   !! Function that selects particles with respect to the given array boundaries

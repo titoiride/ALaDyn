@@ -202,7 +202,7 @@
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
    n_parts = i2*j2*k2
-   index = index_array(n_parts)
+   !index = index_array(n_parts)
    allocate(u(n_parts))
    allocate(whz(n_parts))
 
@@ -227,7 +227,7 @@
     end do
 
     call loc_sp%set_component(whz(1:n_parts), W_COMP)
-    call loc_sp%set_component(index%indices(1:n_parts), INDEX_COMP)
+    call loc_sp%set_component(zero_dp*whz(1:n_parts), INDEX_COMP)
     call loc_sp%set_part_number(n_parts)
 
    case(3)
@@ -252,7 +252,7 @@
     end do
 
     call loc_sp%set_component(whz(1:n_parts), W_COMP)
-    call loc_sp%set_component(index%indices(1:n_parts), INDEX_COMP)
+    call loc_sp%set_component(zero_dp*whz(1:n_parts), INDEX_COMP)
     call loc_sp%set_part_number(n_parts)
 
    end select
@@ -1029,7 +1029,7 @@
     nps_loc(ic) = nptx_alloc(ic)*loc_jmax(imody, ic)*loc_kmax(imodz, ic)
    end do
    npmax = maxval(nps_loc(1:nsp))
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
    !==================================
    !==================== Local distribution of nptx particles==================
    call mpi_x_part_distrib(nsp)
@@ -1049,7 +1049,7 @@
   !=============================
   subroutine multi_layer_gas_target_old(spec_in, layer_mod, nyh_in, xf0)
 
-   type(species), dimension(:), intent(inout) :: spec_in
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: layer_mod, nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, i, j, i1, i2, ic
@@ -1541,7 +1541,7 @@
     nps_loc(ic) = nptx_alloc(ic)*loc_jmax(imody, ic)*loc_kmax(imodz, ic)
    end do
    npmax = maxval(nps_loc(1:nsp))
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(spec_in, ebfp, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !==================================
    !==================== Local distribution of nptx particles==================
    call mpi_x_part_distrib(nsp)
@@ -1562,7 +1562,7 @@
   !===============================
   subroutine preplasma_multisp_old(spec_in, nyh_in, xf0)
 
-   type(species), dimension(:), intent(inout) :: spec_in
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
@@ -1776,7 +1776,7 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(spec_in, ebfp, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -2041,7 +2041,7 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -2292,7 +2292,7 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -2341,7 +2341,7 @@
   !=======================
   subroutine multi_layer_twosp_target_old(spec_in, nyh_in, xf0)
 
-   type(species), dimension(:), intent(inout) :: spec_in
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip, l, i, i1, i2, ic, n_peak, nptx_loc(6)
@@ -2543,7 +2543,7 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(spec_in, ebfp, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -2787,7 +2787,7 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -2841,7 +2841,7 @@
   !=====================
   subroutine multi_layer_threesp_target_old(spec_in, nyh_in, xf0)
 
-   type(species), dimension(:), intent(inout) :: spec_in
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
@@ -3034,7 +3034,7 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(spec_in, ebfp, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -3497,7 +3497,7 @@
    !==============
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -3552,7 +3552,7 @@
   !============
   subroutine one_layer_nano_wires_old(spec_in, nyh_in, xf0)
 
-   type(species), dimension(:), intent(inout) :: spec_in
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
@@ -3958,7 +3958,7 @@
    !==============
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(spec_in, ebfp, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -4017,7 +4017,7 @@
   !============
   subroutine one_layer_nano_tubes_new(spec_in, nyh_in, xf0)
 
-   type(species_new), dimension(:), intent(inout) :: spec_in
+   type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    write(6, *) 'Warning: one_layer_nano_tubes still not adapted to new species'
@@ -4289,7 +4289,7 @@
    ! loc_npart(imody, imodz, imodx, 1:nsp) = nps_loc(1:nsp)
    ! npmax = maxval(nps_loc(1:nsp))
    ! npmax = max(npmax, 1)
-   ! call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   ! call p_alloc(spec_in, ebfp, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    ! !===========================
    ! call init_random_seed(mype)
    ! !============
@@ -4325,7 +4325,7 @@
   !====================================
   subroutine one_layer_nano_tubes_old(spec_in, nyh_in, xf0)
 
-   type(species), dimension(:), intent(inout) :: spec_in
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p
@@ -4596,7 +4596,7 @@
    loc_npart(imody, imodz, imodx, 1:nsp) = nps_loc(1:nsp)
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(spec_in, ebfp, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    call init_random_seed(mype)
    !============
@@ -4630,7 +4630,7 @@
   end subroutine
   !====================================
   subroutine part_distribute_new(spec_in, id, xf0)
-   type(species_new), dimension(:), intent(inout) :: spec_in
+   type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: id
    real (dp), intent (in) :: xf0
    integer :: ip, pp, l, p
@@ -4711,7 +4711,7 @@
   end subroutine
   !====================================
   subroutine part_distribute_old(spec_in, id, xf0)
-   type(species), dimension(:), intent(inout) :: spec_in
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: id
    real (dp), intent (in) :: xf0
    integer :: ip, pp, l, p

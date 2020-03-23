@@ -527,7 +527,7 @@
     endif
    else
     nb_loc(1) = nb
-    call p_alloc(nb, nd2+1, nb_loc, 1, lpf_ord, 1, 1, mem_psize)
+    call p_alloc(spec, ebfp, nb, nd2+1, nb_loc, 1, lpf_ord, 1, 1, mem_psize)
     do n = 1, nb
      spec(1)%part(n, 1:id_ch) = bunch(1)%part(n, 1:id_ch)
     end do

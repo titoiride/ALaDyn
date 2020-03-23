@@ -42,7 +42,7 @@
      ! vector potential Ay
     end select
    end if
-   call part_distribute(spec(1:nsp), dmodel_id, xf0)
+   call part_distribute(spec, dmodel_id, xf0)
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
 

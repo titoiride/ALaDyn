@@ -93,6 +93,8 @@ module base_species
 
   contains
    procedure, pass :: compute_gamma
+   procedure, pass, private :: copy_all
+   procedure, pass, private :: copy_boundaries
    procedure, pass :: count_particles
    procedure, pass :: how_many
    procedure, public, pass :: flatten
@@ -104,10 +106,12 @@ module base_species
    procedure, public, pass :: total_size
    procedure(call_component_abstract), deferred, pass :: call_component
    procedure(copy_scalars_abstract), deferred, pass :: copy_scalars_from
+   procedure(extend_abstract), deferred, pass :: extend
    procedure(sel_particles_bounds_abstract), deferred, pass :: sel_particles_bounds
    procedure(sel_particles_index_abstract), deferred, pass :: sel_particles_index
    procedure(set_component_abstract_real), deferred, pass :: set_component_real
    procedure(set_component_abstract_integer), deferred, pass :: set_component_integer
+   generic :: copy => copy_all, copy_boundaries
    generic :: sel_particles => sel_particles_bounds, sel_particles_index
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_int, set_charge_real
@@ -122,6 +126,23 @@ module base_species
     integer,       intent(in), optional                           :: lb, ub
     real(dp),                           allocatable, dimension(:) :: comp
    end function
+  end interface
+  
+  abstract interface
+   subroutine copy_scalars_abstract( this, other )
+    import base_species_T, dp
+    implicit none
+    class(base_species_T), intent(inout) :: this
+    class(base_species_T),  intent(in)  :: other
+   end subroutine
+  end interface
+
+  abstract interface
+   subroutine extend_abstract( this, new_number )
+    import base_species_T, dp
+    class(base_species_T), intent(inout) :: this
+    integer, intent(in) :: new_number
+   end subroutine
   end interface
 
   abstract interface
@@ -141,15 +162,6 @@ module base_species
     integer,       intent(in), dimension(:)          :: values
     integer,       intent(in)                        :: component
     integer,       intent(in),              optional :: lb, ub
-   end subroutine
-  end interface
-
-  abstract interface
-   subroutine copy_scalars_abstract( this, other )
-    import base_species_T, dp
-    implicit none
-    class(base_species_T), intent(inout) :: this
-    class(base_species_T),  intent(in)  :: other
    end subroutine
   end interface
 
@@ -320,6 +332,86 @@ module base_species
 
   end function
 
+  subroutine copy_all( this, other )
+   class(base_species_T), intent(inout) :: this
+   class(base_species_T), intent(in) :: other
+   integer :: tot
+
+   tot = other%n_part
+   if (tot > this%n_part) then
+    write(6, *) 'Array too small to copy'
+    return
+   end if
+
+   if (other%allocated_x) then
+    call assign(this%x, other%x, 1, tot)
+   end if
+   if (other%allocated_y) then
+    call assign(this%y, other%y, 1, tot)
+   end if
+   if (other%allocated_z) then
+    call assign(this%z, other%z, 1, tot)
+   end if
+   if (other%allocated_px) then
+    call assign(this%px, other%px, 1, tot)
+   end if
+   if (other%allocated_py) then
+    call assign(this%py, other%py, 1, tot)
+   end if
+   if (other%allocated_pz) then
+    call assign(this%pz, other%pz, 1, tot)
+   end if
+   if (other%allocated_gamma) then
+    call assign(this%gamma_inv, other%gamma_inv, 1, tot)
+   end if
+   if (other%allocated_weight) then
+    call assign(this%weight, other%weight, 1, tot)
+   end if
+   if (other%allocated_index) then
+    call assign(this%part_index, other%part_index, 1, tot)
+   end if
+  end subroutine
+
+  subroutine copy_boundaries( this, other, lower_bound, upper_bound )
+   class(base_species_T), intent(inout) :: this
+   class(base_species_T), intent(in) :: other
+   integer, intent(in) :: lower_bound, upper_bound
+   integer :: tot
+
+   tot = upper_bound - lower_bound + 1
+   if (tot > this%n_part) then
+    write(6, *) 'Array too small to copy'
+    return
+   end if
+
+   if (other%allocated_x) then
+    call assign(this%x, other%x(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_y) then
+    call assign(this%y, other%y(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_z) then
+    call assign(this%z, other%z(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_px) then
+    call assign(this%px, other%px(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_py) then
+    call assign(this%py, other%py(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_pz) then
+    call assign(this%pz, other%pz(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_gamma) then
+    call assign(this%gamma_inv, other%gamma_inv(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_weight) then
+    call assign(this%weight, other%weight(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_index) then
+    call assign(this%part_index, other%part_index(lower_bound:upper_bound), 1, tot)
+   end if
+  end subroutine
   
   pure function how_many( this ) result(n_parts)
    !! Number of particles in the species
@@ -495,7 +587,7 @@ module base_species
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
-  if ( (ub - lb + 1) /= size_value ) then
+  if ( (ub - lb + 1) > size_value ) then
    write( 6, *) 'Assigning wrong value size'
   end if
 
@@ -515,7 +607,7 @@ module base_species
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
-  if ( (ub - lb + 1) /= size_value ) then
+  if ( (ub - lb + 1) > size_value ) then
    write( 6, *) 'Assigning wrong value size'
   end if
 
@@ -535,7 +627,7 @@ module base_species
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
-  if ( (ub - lb + 1) /= size_value ) then
+  if ( (ub - lb + 1) > size_value ) then
    write( 6, *) 'Assigning wrong value size'
   end if
 
@@ -555,7 +647,7 @@ module base_species
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
-  if ( (ub - lb + 1) /= size_value ) then
+  if ( (ub - lb + 1) > size_value ) then
    write( 6, *) 'Assigning wrong value size'
   end if
 
@@ -575,7 +667,7 @@ module base_species
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
-  if ( (ub - lb + 1) /= size_value ) then
+  if ( (ub - lb + 1) > size_value ) then
    write( 6, *) 'Assigning wrong value size'
   end if
 
@@ -595,7 +687,7 @@ module base_species
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
-  if ( (ub - lb + 1) /= size_value ) then
+  if ( (ub - lb + 1) > size_value ) then
    write( 6, *) 'Assigning wrong value size'
   end if
 
@@ -615,7 +707,7 @@ module base_species
   integer :: size_value
 
   size_value = SIZE(values, DIM=1)
-  if ( (ub - lb + 1) /= size_value ) then
+  if ( (ub - lb + 1) > size_value ) then
    write( 6, *) 'Assigning wrong value size'
   end if
 

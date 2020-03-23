@@ -226,26 +226,29 @@
 
   end subroutine
 
-  subroutine old_p_alloc(npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
+  subroutine old_p_alloc(spec_in, spec_aux_in, npt_max, ncmp, np_s, ns, lp, mid, r_type, msize)
 
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
+   real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
    integer, intent (in) :: npt_max, ncmp, np_s(:), ns, lp, mid, r_type
    integer, intent (inout) :: msize
    integer :: nsize, ic, npt, allocstatus
 
    npt = 1
+   allocate (spec_in(4))
    select case (r_type)
    case (1) !Plasma particles
     nsize = 0
     do ic = 1, ns
      npt = max(np_s(ic), 1)
-     allocate (spec(ic)%part(npt,ncmp), stat=allocstatus)
+     allocate (spec_in(ic)%part(npt,ncmp), stat=allocstatus)
      nsize = nsize + ncmp*npt
-     spec(ic)%part(1:npt, 1:ncmp) = 0.0
+     spec_in(ic)%part(1:npt, 1:ncmp) = 0.0
     end do
     if (mid>0) then
-     allocate (ebfp(npt_max,ncmp), stat=allocstatus)
+     allocate (spec_aux_in(npt_max,ncmp), stat=allocstatus)
      nsize = nsize + ncmp*npt_max
-     ebfp(1:npt_max, 1:ncmp) = 0.0
+     spec_aux_in(1:npt_max, 1:ncmp) = 0.0
     end if
     if (lp>2) then
      allocate (ebfp0(npt_max,ncmp), stat=allocstatus)
@@ -266,21 +269,21 @@
   end subroutine
   !============================
   !DIR$ ATTRIBUTES INLINE :: p_realloc
-  subroutine p_realloc(pdata, npt_new, ndv)
-   type (species), intent (inout) :: pdata
+  subroutine p_realloc(spec_in, npt_new, ndv)
+   type(species), intent(inout) :: spec_in
    integer, intent (in) :: npt_new, ndv
    integer :: allocstatus, deallocstatus
 
-   if (allocated(pdata%part)) then
-    if (size(pdata%part,1)<npt_new) then
-     deallocate (pdata%part, stat=deallocstatus)
-     if (deallocstatus==0) allocate (pdata%part(1:npt_new,1:ndv), &
+   if (allocated(spec_in%part)) then
+    if (size(spec_in%part,1)<npt_new) then
+     deallocate (spec_in%part, stat=deallocstatus)
+     if (deallocstatus==0) allocate (spec_in%part(1:npt_new,1:ndv), &
        stat=allocstatus)
     end if
    else
-    allocate (pdata%part(1:npt_new,1:ndv), stat=allocstatus)
+    allocate (spec_in%part(1:npt_new,1:ndv), stat=allocstatus)
    end if
-   pdata%part(:, :) = 0.0
+   spec_in%part(:, :) = 0.0
   end subroutine
   !========================
   subroutine v_realloc(vdata, npt_new, ndv)

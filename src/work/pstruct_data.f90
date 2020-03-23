@@ -36,7 +36,7 @@
   real (dp), allocatable :: loc_ypt(:, :), loc_zpt(:, :), &
     loc_wghyz(:, :, :)
   real (dp), allocatable :: loc_xpt(:, :), loc_wghx(:, :)
-  type (species) :: spec(4), bunch(5)
+  type (species), allocatable, dimension(:) :: spec, bunch
   type (species_new), allocatable :: spec_new(:)
   type (species_aux) :: spec_aux, spec_aux_0, spec_aux_1
   integer (hp_int), parameter :: ihx = 3

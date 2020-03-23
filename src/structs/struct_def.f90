@@ -34,6 +34,7 @@
    integer, allocatable :: indices(:)
    contains
     procedure, public :: find_index
+    procedure, public :: count_index
   end type
 
   interface index_array
@@ -59,4 +60,10 @@
    index_in%indices = PACK( index_in%indices, mask )
   end subroutine
 
+  pure function count_index( this ) result(number)
+   !! Returns the number of indices (selected particles) available
+   class(index_array), intent(in) :: this
+   integer :: number
+   number = SIZE( this%indices, DIM=1 )
+  end function
  end module

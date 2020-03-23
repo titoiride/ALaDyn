@@ -707,7 +707,7 @@
    if(np_max >0)then                    !READS particles (if any)
     write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
     fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
-    call p_alloc(np_max, ndv, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+    call p_alloc(spec, ebfp, np_max, ndv, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
     lenw(1:npe) = ndv*ip_loc(1:npe)
     !=======================
     disp_col = 0

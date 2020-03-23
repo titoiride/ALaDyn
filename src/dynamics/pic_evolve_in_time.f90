@@ -41,8 +41,8 @@
 
   subroutine lpf2_evolve_old(iter_loc, spec_in, spec_aux_in)
    integer, intent (in) :: iter_loc
-   type(species), intent(inout), dimension(:) :: spec_in
-   real(dp), dimension(:, :), intent(inout) :: spec_aux_in
+   type(species), allocatable, intent(inout), dimension(:) :: spec_in
+   real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
    integer :: ic, np, id_ch
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
    logical, parameter :: mw = .false.
@@ -93,7 +93,7 @@
      ! For each species :
      ! spec_aux_in(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
      ! spec_aux_in(4:7) store old x^n positions and dt/gam at t^{n+1/2}
-     if (part) call cell_part_dist(mw)
+     if (part) call cell_part_dist(mw, spec_in, spec_aux_in)
      !
      np = loc_npart(imody, imodz, imodx, ic)
      call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)
@@ -120,7 +120,7 @@
   !===============
   subroutine lpf2_evolve_new(iter_loc, spec_in, spec_aux_in)
    integer, intent (in) :: iter_loc
-   type(species_new), intent(inout), dimension(:) :: spec_in
+   type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
    integer :: ic, np, id_ch
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
@@ -172,7 +172,7 @@
      ! For each species :
      ! spec_aux_in(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
      ! spec_aux_in(4:7) store old x^n positions and dt/gam at t^{n+1/2}
-     if (part) call cell_part_dist(mw)
+     if (part) call cell_part_dist(mw, spec_in, spec_aux_in)
      !
      np = loc_npart(imody, imodz, imodx, ic)
      call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)
@@ -214,14 +214,14 @@
    if (w_speed>0.0) then ! moves the computational box with w_speed>0.
     if (ts>=wi_time .and. ts<wf_time) then
      if (mod(iter_loc,w_sh)==0) then
-      call lp_window_xshift(w_sh, iter_loc)
+      call lp_window_xshift(w_sh, iter_loc, spec, ebfp)
      end if
     end if
    end if
    if (comoving) then
     if (ts>=wi_time .and. ts<wf_time) then
      if (mod(iter_loc,w_sh)==0) then
-      call comoving_coordinate(vbeam, w_sh, iter_loc)
+      call comoving_coordinate(vbeam, w_sh, iter_loc, spec, ebfp)
      end if
     end if
    end if
