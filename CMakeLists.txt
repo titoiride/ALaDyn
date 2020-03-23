@@ -86,7 +86,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/work/fstruct_data.f90
   src/work/phys_param.f90
   src/work/precision_def.F90
-  src/work/pstruct_data.f90
+  src/work/pstruct_data.F90
 )
 
 set(USING_PGI_COMPILER FALSE)
@@ -106,7 +106,7 @@ elseif(Fortran_COMPILER_NAME MATCHES "gfor*")
   string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -fdefault-real-8")
   string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fdefault-real-8 -Wall -Wextra")
   string(APPEND CMAKE_Fortran_FLAGS_PROFILING " -fdefault-real-8 -g -O2 -pg -Wall")
-  if(MARCONI_KNL OR CORI_HASWELL)
+  if(MARCONI_KNL OR CORI_HASWELL OR CORI_KNL)
     string(APPEND CMAKE_CXX_COMPILE_FLAGS " -mavx512f -mavx512cd -mavx512er -mavx512pf")
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -funroll-all-loops  -mavx512f -mavx512cd -mavx512er -mavx512pf -O3")
     string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -fbacktrace -fbounds-check -mavx512f -mavx512cd -mavx512er -mavx512pf -Og -g")

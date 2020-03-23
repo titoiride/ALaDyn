@@ -18,7 +18,7 @@
 !  You should have received a copy of the GNU General Public License                                  !
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
-
+#define OLD_SPECIES 1
 !--------------------------
  module pstruct_data
 
@@ -28,17 +28,23 @@
 
   implicit none
 
-  real (dp), allocatable :: ebfp(:, :), ebfb(:, :)
+  real (dp), allocatable :: ebfb(:, :)
   real (dp), allocatable :: ebfp0(:, :), ebfp1(:, :)
   real (dp), allocatable :: pdata_tracking(:, :, :)
   real (dp), allocatable :: track_aux(:)
   real (dp), allocatable :: xpt(:, :), ypt(:, :), zpt(:, :), wghpt(:, :)
   real (dp), allocatable :: loc_ypt(:, :), loc_zpt(:, :), &
-    loc_wghyz(:, :, :)
+  loc_wghyz(:, :, :)
   real (dp), allocatable :: loc_xpt(:, :), loc_wghx(:, :)
-  type (species), allocatable, dimension(:) :: spec, bunch
-  type (species_new), allocatable :: spec_new(:)
-  type (species_aux) :: spec_aux, spec_aux_0, spec_aux_1
+  type (species), allocatable, dimension(:) :: bunch
+#if defined(OLD_SPECIES)
+  type (species), allocatable, dimension(:) :: spec
+  real (dp), allocatable :: ebfp(:, :)
+#else
+  type (species_new), allocatable, dimension(:) :: spec
+  type (species_aux) :: ebfp
+#endif
+  type (species_aux) :: spec_aux_0, spec_aux_1
   integer (hp_int), parameter :: ihx = 3
 
  end module

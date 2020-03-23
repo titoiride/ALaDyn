@@ -1281,7 +1281,6 @@
       end if
      end do
     end if
-    if(allocated(sp_aux)) deallocate(sp_aux)
     return
    endif
 !=========== not mowing window section
@@ -1333,8 +1332,6 @@
      end if
     end do
    end if
-   if(allocated(sp_aux)) deallocate(sp_aux)
-   if(allocated(sp1_aux)) deallocate(sp1_aux)
 !==========================
    ymm = loc_ygrid(imody)%gmin
    ymx = loc_ygrid(imody)%gmax
@@ -1383,8 +1380,6 @@
      end if
     end do
    end if
-   if(allocated(sp_aux)) deallocate(sp_aux)
-   if(allocated(sp1_aux)) deallocate(sp1_aux)
    if (ndim>2) then
     zmm = loc_zgrid(imodz)%gmin
     zmx = loc_zgrid(imodz)%gmax
@@ -1435,8 +1430,6 @@
       end if
      end do
     end if
-    if(allocated(sp_aux))deallocate(sp_aux)
-    if(allocated(sp1_aux))deallocate(sp1_aux)
    end if
    !=====================
   end subroutine
