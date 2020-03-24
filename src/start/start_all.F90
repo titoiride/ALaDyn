@@ -234,7 +234,7 @@
      iout = id_new + 1
      ienout = 0
     end if
-    call restart(last_iter, tstart)
+    call restart(last_iter, tstart, spec, ebfp)
     call MPI_BARRIER(comm, error)
     call set_fxgrid(npe_xloc, sh_ix)
     if (tmax>0.0) then

@@ -94,7 +94,7 @@
    ! ==============================================
    ! if(inject_beam)then
    !  if(tnow <= t_inject.and.tnow+dt_loc >t_inject)then
-   !   call beam_inject
+   !   call beam_inject(spec(1), ebfp)
    !   call Part_numbers
    !   if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
    !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
@@ -115,7 +115,7 @@
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
    end do
-   !if (dump > 0) call dump_data(iter, tnow)
+   !if (dump > 0) call dump_data(iter, tnow, spec)
   end subroutine
 
   !--------------------------
@@ -129,7 +129,7 @@
    ! ==============================================
    ! if(inject_beam)then
    !  if(tnow <= t_inject.and.tnow+dt_loc >t_inject)then
-   !   call beam_inject
+   !   call beam_inject(spec(1), ebfp)
    !   call Part_numbers
    !   if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
    !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
@@ -152,7 +152,7 @@
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
    end do
-   if (dump > 0) call dump_data(iter, tnow)
+   if (dump > 0) call dump_data(iter, tnow, spec)
   end subroutine
   !======================
   subroutine data_out
@@ -162,7 +162,7 @@
    if (diag) then
     if (tnow >= tdia) then
      ienout = ienout + 1
-     call Envar( ienout )
+     call Envar( ienout, spec )
      tdia = tdia + dtdia
      if (pe0) then
       write (6, '(a10,i3,a10,e11.4)') ' rms data ', ienout, &
@@ -212,7 +212,7 @@
     endif
     if (nden>0) then
      do i = 1, nsp
-      call prl_den_energy_interp(i,nden)
+      call prl_den_energy_interp(spec(i), ebfp, i, nden)
       do iic = 1, min(2, nden)
        call den_energy_out( i, iic, iic )
       end do
@@ -223,15 +223,15 @@
       call fluid_den_mom_out(up, i, nfcomp)
      end do
     end if
-    !if (ionization) call part_ionz_out(tnow)
-    !if (gam_min > 1.) call part_high_gamma_out(gam_min, tnow)
+    if (ionization) call part_ionz_out(spec, tnow)
+    if (gam_min > 1.) call part_high_gamma_out(spec, gam_min, tnow)
     if (npout > 0) then
      iic = npout
      if (iic <= nsp) then
-      !call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, iic, pjump)
+      call part_pdata_out(spec, tnow, xp0_out, xp1_out, yp_out, iic, pjump)
      else
       do i = 1, nsp
-       !call part_pdata_out(tnow, xp0_out, xp1_out, yp_out, i, pjump)
+       call part_pdata_out(spec, tnow, xp0_out, xp1_out, yp_out, i, pjump)
       end do
      end if
     end if
@@ -247,7 +247,7 @@
        unix_time_now - unix_time_begin
     end if
     if (dump>0 .and. time_interval_dumps < 0.0) then
-     !if (iter>0) call dump_data(iter,tnow)
+     !if (iter>0) call dump_data(iter,tnow, spec)
     endif
     iout = iout + 1
    end if
@@ -255,7 +255,7 @@
    call CPU_TIME( unix_time_now )
 
    !if((unix_time_now - unix_time_last_dump) > time_interval_dumps .and. time_interval_dumps > 0.0) then
-   ! call dump_data(iter,tnow)
+   ! call dump_data(iter, tnow, spec)
    !endif
 
   end subroutine data_out

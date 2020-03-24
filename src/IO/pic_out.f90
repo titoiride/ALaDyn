@@ -27,12 +27,13 @@
   use common_param
   use grid_param
   use parallel
-
+  use array_alloc, only: v_realloc
   implicit none
 
   integer, parameter, private :: par_dim = 20
   integer, private :: int_par(par_dim), part_int_par(par_dim)
   real(sp), private :: real_par(par_dim), part_real_par(par_dim)
+  real(dp), allocatable, dimension(:, :), private :: pic_out_aux
 
 
   character(13), dimension(20), parameter, private :: rpar = [ ' time =      ', &
@@ -1485,9 +1486,10 @@
    end if
   end subroutine
   !================================
-  subroutine part_pdata_out(timenow, xmin_out, xmax_out, ymax_out, pid, &
+  subroutine part_pdata_out(spec_in, timenow, xmin_out, xmax_out, ymax_out, pid, &
     jmp)
 
+   type(species), dimension(:), intent(in) :: spec_in
    character (6), dimension (4), parameter :: part_files = [ 'Elpout', &
      'H1pout', 'Prpout', 'H2pout' ]
    character (8) :: fname
@@ -1509,18 +1511,19 @@
 
    ndv = nd2 + 2
    np = loc_npart(imody, imodz, imodx, pid)
+   call v_realloc( pic_out_aux, np, nd2+1 )
    ip = 0
    if (np>0) then
     if (ndim>2) then
      do p = 1, np, jmp
-      yy = spec(pid)%part(p, 2)
-      zz = spec(pid)%part(p, 3)
+      yy = spec_in(pid)%part(p, 2)
+      zz = spec_in(pid)%part(p, 3)
       if (abs(yy)<=ymax_out .and. abs(zz)<=ymax_out) then
-       xx = spec(pid)%part(p, 1)
+       xx = spec_in(pid)%part(p, 1)
        if (xx>=xmin_out .and. xx<=xmax_out) then
         ip = ip + 1
         do q = 1, nd2 + 1
-         ebfp(ip, q) = spec(pid)%part(p, q)
+         pic_out_aux(ip, q) = spec_in(pid)%part(p, q)
         end do
        end if
       end if
@@ -1528,13 +1531,13 @@
     else
      zz = 1.
      do p = 1, np, jmp
-      yy = spec(pid)%part(p, 2)
+      yy = spec_in(pid)%part(p, 2)
       if (abs(yy)<=ymax_out) then
-       xx = spec(pid)%part(p, 1)
+       xx = spec_in(pid)%part(p, 1)
        if (xx>=xmin_out .and. xx<=xmax_out) then
         ip = ip + 1
         do q = 1, nd2 + 1
-         ebfp(ip, q) = spec(pid)%part(p, q)
+         pic_out_aux(ip, q) = spec_in(pid)%part(p, q)
         end do
        end if
       end if
@@ -1566,9 +1569,9 @@
    do p = 1, ip_loc(mype+1)
     do q = 1, nd2
      ik = ik + 1
-     pdata(ik) = real(ebfp(p,q), sp)
+     pdata(ik) = real(pic_out_aux(p,q), sp)
     end do
-    wgh_cmp = ebfp(p, nd2+1)
+    wgh_cmp = pic_out_aux(p, nd2+1)
     ik = ik + 1
     pdata(ik) = wgh
     ik = ik + 1
@@ -1631,8 +1634,9 @@
   end subroutine
 
 !==========================
-  subroutine part_high_gamma_out(gam_in, timenow)
+  subroutine part_high_gamma_out(spec_in, gam_in, timenow)
 
+   type(species), dimension(:), intent(in) :: spec_in
    character (8), dimension (1), parameter :: part_files = [ 'E_hg_out' ]
    character (10) :: fname
    character (19) :: fname_out
@@ -1651,17 +1655,18 @@
    id_ch = nd2 + 1
    ndv = nd2 + 2
    ne = loc_npart(imody, imodz, imodx, 1)
+   call v_realloc( pic_out_aux, ne, nd2+1 )
    select case (nd2)
    case (4)
     ip = 0
     if (ne>0) then
      do p = 1, ne
-      pp(1:2) = spec(1)%part(p, 3:4)
+      pp(1:2) = spec_in(1)%part(p, 3:4)
       gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
       if (gam>gam_in) then
        ip = ip + 1
        do q = 1, nd2 + 1
-        ebfp(ip, q) = spec(1)%part(p, q)
+        pic_out_aux(ip, q) = spec_in(1)%part(p, q)
        end do
       end if
      end do
@@ -1670,12 +1675,12 @@
     ip = 0
     if (ne>0) then
      do p = 1, ne
-      pp(1:3) = spec(1)%part(p, 4:6)
+      pp(1:3) = spec_in(1)%part(p, 4:6)
       gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
       if (gam>gam_in) then
        ip = ip + 1
        do q = 1, nd2 + 1
-        ebfp(ip, q) = spec(1)%part(p, q)
+        pic_out_aux(ip, q) = spec_in(1)%part(p, q)
        end do
       end if
      end do
@@ -1704,9 +1709,9 @@
    do p = 1, ip
     do q = 1, nd2
      ik = ik + 1
-     pdata(ik) = real(ebfp(p,q), sp)
+     pdata(ik) = real(pic_out_aux(p,q), sp)
     end do
-    wgh_cmp = ebfp(p, nd2+1)
+    wgh_cmp = pic_out_aux(p, nd2+1)
     ik = ik + 1
     pdata(ik) = wgh
     ik = ik + 1
@@ -1760,8 +1765,9 @@
    end if
   end subroutine
 
-  subroutine part_bdata_out(timenow,pid,jmp)
+  subroutine part_bdata_out(spec_in, timenow,pid,jmp)
 
+   type(species), dimension(:), intent(in) :: spec_in
    character (11), dimension (1), parameter :: part_files = [ 'E_bunch_out' ]
    character (13) :: fname
    character (22) :: fname_out
@@ -1779,14 +1785,15 @@
    id_ch = nd2 + 1
    ndv = nd2 + 2
    ne = loc_npart(imody, imodz, imodx, 1)
+   call v_realloc( pic_out_aux, ne, nd2+1 )
    ip = 0
    if (ne>0) then
     do p = 1, ne,jmp
-     wgh_cmp = spec(1)%part(p, id_ch)
+     wgh_cmp = spec_in(1)%part(p, id_ch)
      if (part_ind ==pid) then
       ip = ip + 1
       do q = 1, nd2 + 1
-       ebfp(ip, q) = spec(1)%part(p, q)
+       pic_out_aux(ip, q) = spec_in(1)%part(p, q)
       end do
      end if
     end do
@@ -1814,9 +1821,9 @@
    do p = 1, ip
     do q = 1, nd2
      ik = ik + 1
-     pdata(ik) = real(ebfp(p,q), sp)
+     pdata(ik) = real(pic_out_aux(p,q), sp)
     end do
-    wgh_cmp = ebfp(p, nd2+1)
+    wgh_cmp = pic_out_aux(p, nd2+1)
     ik = ik + 1
     pdata(ik) = wgh
     ik = ik + 1
@@ -1871,8 +1878,9 @@
    end if
   end subroutine
   !==============================================
-  subroutine part_ionz_out(timenow)
+  subroutine part_ionz_out(spec_in, timenow)
 
+   type(species), dimension(:), intent(in) :: spec_in
    character (8), dimension (1), parameter :: part_files = [ 'Eionzout' ]
    character (10) :: fname
    character (19) :: fname_out
@@ -1892,14 +1900,15 @@
    ndv = nd2 + 2
    ch_ion = real(wgh_ion, sp)
    ne = loc_npart(imody, imodz, imodx, 1)
+   call v_realloc( pic_out_aux, ne, nd2 + 1)
    ip = 0
    if (ne>0) then
     do p = 1, ne
-     wgh_cmp = spec(1)%part(p, id_ch)
+     wgh_cmp = spec_in(1)%part(p, id_ch)
      if (part_ind < 0) then
       ip = ip + 1
       do q = 1, nd2 + 1
-       ebfp(ip, q) = spec(1)%part(p, q)
+       pic_out_aux(ip, q) = spec_in(1)%part(p, q)
       end do
      end if
     end do
@@ -1927,9 +1936,9 @@
    do p = 1, ip
     do q = 1, nd2
      ik = ik + 1
-     pdata(ik) = real(ebfp(p,q), sp)
+     pdata(ik) = real(pic_out_aux(p,q), sp)
     end do
-    wgh_cmp = ebfp(p, nd2+1)
+    wgh_cmp = pic_out_aux(p, nd2+1)
     ik = ik + 1
     pdata(ik) = wgh
     ik = ik + 1

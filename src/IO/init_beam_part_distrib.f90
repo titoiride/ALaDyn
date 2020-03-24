@@ -35,7 +35,7 @@
 
   implicit none
 
-  real (dp), allocatable :: bpart(:, :)
+  real (dp), allocatable, private :: bpart(:, :)
   !--------------------------
 
  contains
@@ -471,8 +471,10 @@
    end do
   end subroutine
   !=========================
-  subroutine beam_inject
+  subroutine beam_inject(spec_in, spec_aux_in)
 
+   type(species), intent(inout) :: spec_in
+   real(dp), allocatable, dimension(:, :), intent(out) :: spec_aux_in
    integer :: id_ch, np, nb, ic, ft_mod, ft_sym
    integer :: nps_loc(nsb),nb_loc(1), i1
    integer :: y1, y2, z1, z2
@@ -506,30 +508,33 @@
    nb=sum(nps_loc(1:nsb))                     !the total bunch particle number
                                               !on each mpi_task
 !=====================================
-   if (allocated(spec(1)%part)) then
+   if (allocated(spec_in%part)) then
     np = loc_npart(imody, imodz, imodx, 1)
     if(nb >0)then
+     call v_realloc(bpart, np, id_ch)
      do n = 1, np
-      ebfp(n, 1:id_ch) = spec(1)%part(n, 1:id_ch)
+      bpart(n, 1:id_ch) = spec_in%part(n, 1:id_ch)
      end do
-     deallocate (spec(1)%part)
-     allocate (spec(1)%part(np+nb,id_ch))
+     deallocate (spec_in%part)
+     allocate (spec_in%part(np+nb,id_ch))
      do n = 1, np
-      spec(1)%part(n, 1:id_ch) = ebfp(n, 1:id_ch)
+      spec_in%part(n, 1:id_ch) = bpart(n, 1:id_ch)
      end do
-     deallocate (ebfp)
+     deallocate (bpart)
      do n = 1, nb
       i1 = n + np
-      spec(1)%part(i1, 1:id_ch) = bunch(1)%part(n, 1:id_ch)
+      spec_in%part(i1, 1:id_ch) = bunch(1)%part(n, 1:id_ch)
      end do
-     allocate (ebfp(np+nb,id_ch))
+     call v_realloc(spec_aux_in, np+nb, id_ch)
      loc_npart(imody,imodz,imodx,1) = loc_npart(imody,imodz,imodx, 1) + nb
     endif
    else
     nb_loc(1) = nb
-    call p_alloc(spec, ebfp, nb, nd2+1, nb_loc, 1, lpf_ord, 1, 1, mem_psize)
+    call p_realloc(spec_in, nb, nd2+1)
+    call v_realloc(spec_aux_in, nb, nd2+1)
+
     do n = 1, nb
-     spec(1)%part(n, 1:id_ch) = bunch(1)%part(n, 1:id_ch)
+     spec_in%part(n, 1:id_ch) = bunch(1)%part(n, 1:id_ch)
     end do
     loc_npart(imody,imodz,imodx,1) = nb_loc(1)
    end if
@@ -574,7 +579,7 @@
    else
     do ic = 1, nsb
      np = loc_nbpart(imody, imodz, imodx, ic)
-     call set_grid_charge(bunch(1), ebfp, jc, np, 1)
+     call set_grid_charge(bunch(1), spec_aux_in, jc, np, 1)
     end do
     if (prl) call fill_curr_yzxbdsdata(jc,1)
     !============================

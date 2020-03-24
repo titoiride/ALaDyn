@@ -32,7 +32,8 @@
   real (dp), allocatable, private :: send_buff(:), recv_buff(:)
  contains
 
-  subroutine dump_data(it_loc, tloc)
+  subroutine dump_data(it_loc, tloc, spec_in)
+   type(species), dimension(:), intent(in) :: spec_in
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
    character (9) :: fname = '         '
@@ -216,7 +217,7 @@
       do j = 1, ndv
        do i = 1, np
         kk = kk + 1
-        send_buff(kk) = spec(ic)%part(i, j)
+        send_buff(kk) = spec_in(ic)%part(i, j)
        end do
       end do
      end if
@@ -380,7 +381,9 @@
    if (pe0) write (6, *) 'END TOTAL DUMP WRITE'
   end subroutine
   !==============================================================
-  subroutine restart(it_loc, tloc)
+  subroutine restart(it_loc, tloc, spec_in, spec_aux_in)
+   type(species), allocatable, dimension(:), intent(inout) :: spec_in
+   real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
    integer, intent (out) :: it_loc
    real (dp), intent (out) :: tloc
    character (9) :: fname = '         '
@@ -707,7 +710,7 @@
    if(np_max >0)then                    !READS particles (if any)
     write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
     fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
-    call p_alloc(spec, ebfp, np_max, ndv, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+    call p_alloc(spec_in, spec_aux_in, np_max, ndv, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
     lenw(1:npe) = ndv*ip_loc(1:npe)
     !=======================
     disp_col = 0
@@ -724,7 +727,7 @@
       do j = 1, ndv
        do i = 1, np
         kk = kk + 1
-        spec(ic)%part(i, j) = recv_buff(kk)
+        spec_in(ic)%part(i, j) = recv_buff(kk)
        end do
       end do
      end if
