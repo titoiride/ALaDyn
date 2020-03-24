@@ -188,81 +188,32 @@
   end subroutine
 
   !--------------------------
-  subroutine new_pspecies_distribute(loc_sp, t_x, ch, ic, i2)
+  subroutine new_pspecies_distribute(loc_sp, t_x, ch, p, ic, i2, q)
    type (species_new), intent (inout) :: loc_sp
    real (dp), intent (in) :: t_x, ch
    integer, intent (in) :: ic, i2
+   integer, intent(inout) :: p, q
    type(index_array) :: index
-   integer :: i, j, k, j2, k2, n_parts, p
-   real (dp), allocatable, dimension(:) :: u
-   real (dp), allocatable, dimension(:) :: whz
+   integer :: i, j, k, j2, k2, n_parts
 
+   q = p
    call init_random_seed(mype)
-   p = 1
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
    n_parts = i2*j2*k2
    !index = index_array(n_parts)
-   allocate(u(n_parts))
-   allocate(whz(n_parts))
-
+   call loc_sp%set_temperature(t_x)
    call loc_sp%set_charge(ch)
-   select case (curr_ndim)
-   case(2)
-    call loc_sp%set_component(loc_xpt(1:n_parts, ic), X_COMP)
-    call loc_sp%set_component(loc_ypt(1:n_parts, ic), Y_COMP)
-
-    call gasdev(u)
-    call loc_sp%set_component(u(1:n_parts)*t_x, PX_COMP)
-    call gasdev(u)
-    call loc_sp%set_component(u(1:n_parts)*t_x, PY_COMP)
-
-    do k = 1, 1
-     do j = 1, j2
-      do i = 1, i2
-       whz(p) = loc_wghx(i, ic)*loc_wghyz(j, k, ic)
-       p = p + 1
-      end do
-     end do
-    end do
-
-    call loc_sp%set_component(whz(1:n_parts), W_COMP)
-    call loc_sp%set_component(zero_dp*whz(1:n_parts), INDEX_COMP)
-    call loc_sp%set_part_number(n_parts)
-
-   case(3)
-    call loc_sp%set_component(loc_xpt(1:n_parts, ic), X_COMP)
-    call loc_sp%set_component(loc_ypt(1:n_parts, ic), Y_COMP)
-    call loc_sp%set_component(loc_zpt(1:n_parts, ic), Z_COMP)
-
-    call gasdev(u)
-    call loc_sp%set_component(u(1:n_parts)*t_x, PX_COMP)
-    call gasdev(u)
-    call loc_sp%set_component(u(1:n_parts)*t_x, PY_COMP)
-    call gasdev(u)
-    call loc_sp%set_component(u(1:n_parts)*t_x, PZ_COMP)
-
-    do k = 1, k2
-     do j = 1, j2
-      do i = 1, i2
-       whz(p) = loc_wghx(i, ic)*loc_wghyz(j, k, ic)
-       p = p + 1
-      end do
-     end do
-    end do
-
-    call loc_sp%set_component(whz(1:n_parts), W_COMP)
-    call loc_sp%set_component(zero_dp*whz(1:n_parts), INDEX_COMP)
-    call loc_sp%set_part_number(n_parts)
-
-   end select
+   call loc_sp%initialize_data(loc_xpt(:, ic), loc_ypt(:, ic), loc_zpt(:, ic), &
+   loc_wghx(:, ic), loc_wghyz(:, :, ic), i2, j2, k2)
+   q = q + n_parts
   end subroutine
 
   subroutine old_pspecies_distribute(loc_sp, t_x, ch, q, ic, i2, p)
    type (species), intent (inout) :: loc_sp
    real (dp), intent (in) :: t_x, ch
    integer, intent (in) :: q, ic, i2
-   integer, intent (out) :: p
+   integer, intent (inout) :: p
    integer :: i, j, k, j2, k2
    real (dp) :: u, whz
 
@@ -1042,8 +993,8 @@
    do ic = 1, nsp
     p = 0
     i2 = loc_nptx(ic)
-    if (i2>0) call pspecies_distribute(spec_in(ic), t0_pl(ic), &
-      unit_charge(ic), ic, i2)
+    if (i2>0) call pspecies_distribute(spec_in(ic), t0_pl(ic), unit_charge(ic), &
+     p, ic, i2, last_particle_index(ic))
     loc_npart(imody, imodz, imodx, ic) = last_particle_index(ic)
    end do
   end subroutine
@@ -2055,34 +2006,36 @@
    if (nxl(1)>0) then
     p = 0
     i2 = loc_imax(imodx, 3)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 3, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 3, &
+      i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 4)
-    call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), 4, &
-      i2)
+    call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), p, 4, &
+      i2, ip_ion)
    end if
    !=========================
    ! The second electron-ion solid electron-Z1 layer
    p = ip_el
    i2 = loc_imax(imodx, 1)
-   call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 1, i2)
+   call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 1, &
+    i2, ip_el)
 
    p = ip_ion
    i2 = loc_imax(imodx, 2)
-   call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), 2, i2)
+   call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), p, 2, &
+    i2, ip_ion)
    !============
    ! The third electron-proton layer
    !=========================
    if (nxl(5)>0.0) then
     p = ip_el
     i2 = loc_imax(imodx, 5)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 5, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 5, &
+      i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 6)
-    call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), 6, &
-      i2)
+    call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), p, 6, &
+      i2, ip_pr)
    end if
 
    do ic = 1, nsp
@@ -2307,34 +2260,36 @@
    if (nxl(1)>0) then
     p = 0
     i2 = loc_imax(imodx, 3)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 3, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 3, &
+      i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 4)
-    call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), 4, &
-      i2)
+    call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), p, 4, &
+      i2, ip_pr)
    end if
    !=========================
    ! The second electron-ion solid electron-Z1 layer
    p = ip_el
    i2 = loc_imax(imodx, 1)
-   call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 1, i2)
+   call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 1, &
+    i2, ip_el)
 
    p = 0
    i2 = loc_imax(imodx, 2)
-   call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), 2, i2)
+   call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), p, 2, &
+    i2, ip_ion)
    !============
    ! The third electron-proton layer
    !=========================
    if (nxl(5)>0.0) then
     p = ip_el
     i2 = loc_imax(imodx, 5)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 5, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 5, &
+      i2, ip)
     p = ip_pr
     i2 = loc_imax(imodx, 6)
-    call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), 6, &
-      i2)
+    call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), p, 6, &
+      i2, p)
    end if
 
    do ic = 1, nsp
@@ -2804,39 +2759,42 @@
    if (nxl(1)>0) then
     p = 0
     i2 = loc_imax(imodx, 4)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 4, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 4, &
+      i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 5)
-    call pspecies_distribute(spec_in(nsp), t0_pl(nsp), unit_charge(nsp), &
-      5, i2)
+    call pspecies_distribute(spec_in(nsp), t0_pl(nsp), unit_charge(nsp), p,&
+      5, i2, ip_pr)
     !Z3 for nsp=4  Z3=Z2 for nsp=3
    end if
    !=========================
    ! The second solid electron-Z1-Z2 layer
    p = ip_el
    i2 = loc_imax(imodx, 1)
-   call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 1, i2)
+   call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 1, &
+    i2, ip_el)
    p = 0
    i2 = loc_imax(imodx, 2)
-   call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), 2, i2)
+   call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), p, 2, &
+    i2, ip_ion)
    p = 0
    if (nsp==3) p = ip_pr
    i2 = loc_imax(imodx, 3)
-   call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), 3, i2)
+   call pspecies_distribute(spec_in(3), t0_pl(3), unit_charge(3), p, 3, &
+    i2, ip_ion)
    !============
    ! The third electron-proton layer
    !=========================
    if (nxl(5)>0.0) then
     p = ip_el
     i2 = loc_imax(imodx, 6)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 6, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 6, &
+      i2, ip)
     p = ip_pr
     if (nsp==3) p = ip_ion
     i2 = loc_imax(imodx, 7)
-    call pspecies_distribute(spec_in(nsp), t0_pl(nsp), unit_charge(nsp), &
-      7, i2)
+    call pspecies_distribute(spec_in(nsp), t0_pl(nsp), unit_charge(nsp), p, &
+      7, i2, ip)
    end if
 
    do ic = 1, nsp
@@ -3514,18 +3472,18 @@
    ! The first electron-Z1-ions nanowires layer
    if (nxl(3)>0) then
     i2 = loc_imax(imodx, 1)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 1, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 1, &
+      i2, ip_el)
     i2 = loc_imax(imodx, 2)
-    call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), 2, &
-      i2)
+    call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), p, 2, &
+      i2, ip_ion)
     if (np1>0.0) then
      i2 = loc_imax(imodx, 3)
-     call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 3, &
-       i2)
+     call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 3, &
+       i2, ip_el)
      i2 = loc_imax(imodx, 4)
-     call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), 4, &
-       i2)
+     call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), p, 4, &
+       i2, ip_ion)
     end if
    end if
    !=========================
@@ -3533,25 +3491,25 @@
    if (nxl(4)>0) then
     p = ip_el
     i2 = loc_imax(imodx, 5)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 5, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 5, &
+      i2, ip_el)
     p = ip_ion
     i2 = loc_imax(imodx, 6)
-    call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), 6, &
-      i2)
+    call pspecies_distribute(spec_in(2), t0_pl(2), unit_charge(2), p, 6, &
+      i2, ip_ion)
    end if
    !============
    ! The contaminant electron-ion solid layer Z3=proton ion element
    if (nxl(5)>0) then
     p = ip_el
     i2 = loc_imax(imodx, 7)
-    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), 7, &
-      i2)
+    call pspecies_distribute(spec_in(1), t0_pl(1), unit_charge(1), p, 7, &
+      i2, ip_el)
 
     p = 0
     i2 = loc_imax(imodx, 8)
-    call pspecies_distribute(spec_in(nsp), t0_pl(nsp), unit_charge(nsp), &
-      8, i2)
+    call pspecies_distribute(spec_in(nsp), t0_pl(nsp), unit_charge(nsp), p,&
+      8, i2, ip_ion)
    end if
    do ic = 1, nsp
     loc_npart(imody, imodz, imodx, ic) = nps_loc(ic)

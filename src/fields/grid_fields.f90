@@ -1752,7 +1752,6 @@
     dens_maskm(lb1:ub1) = uminus(lb1:ub1) < EPS_P
 
     if (ANY(dens_maskp .or. dens_maskm)) then
-     !call gdbattach
      !===================================
      ! In fluxlf returns F_i based on the piecewise solution
      do jj = iic, nc
@@ -1770,7 +1769,6 @@
      end where
      if (ANY(thetap > 1) .or. ANY(thetap < 0)) then
       write( 6, *) 'Warning, thetap not admissible'
-      call gdbattach
      end if
 
      where( dens_maskm )
@@ -1781,7 +1779,6 @@
      end where
      if (ANY(thetam > 1) .or. ANY(thetam < 0)) then
       write( 6, *) 'Warning, thetam not admissible'
-      call gdbattach
      end if
      ! In thetap the min between each thetap and thetam is stored
      thetap(lb:ub) = MERGE( thetap, thetam, thetap < thetam)

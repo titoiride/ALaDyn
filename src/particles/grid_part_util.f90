@@ -29,6 +29,11 @@
 
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
+
+  interface set_grid_charge
+   module procedure :: set_grid_charge_new
+   module procedure :: set_grid_charge_old
+  end interface
  contains
 
   !DIR$ ATTRIBUTES INLINE :: set_local_positions
@@ -263,7 +268,102 @@
    end select
   end subroutine
 !=================================
-  subroutine set_grid_charge(sp_loc, pt, den, np, ic)
+  subroutine set_grid_charge_new(sp_loc, pt, den, np, ic)
+
+   type(species_new), intent (in) :: sp_loc
+   type(species_aux), intent (inout) :: pt
+   real (dp), intent (inout) :: den(:, :, :, :)
+   integer, intent (in) :: np, ic
+   real (dp) :: dvol
+   real (dp), allocatable, dimension(:, :) :: ax0, ay0, az0, xx
+   real (dp), allocatable, dimension(:) :: weight
+   integer, allocatable, dimension(:) :: i, j, k
+   integer :: i1, j1, k1, i2, j2, k2, n, ch, spline
+   !======================
+   ! Computes charge density of species ic on a grid
+   !================================= 
+   allocate( ax0(np, 0:2) )
+   allocate( ay0(np, 0:2) )
+   allocate( i(np) )
+   allocate( j(np) )
+   allocate( weight(np) )
+
+   spline = 2
+   select case (ndim)
+   case (2)
+    allocate( xx(np, 2) )
+    weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    !==========================
+
+    interp = qden_2d_wgh( xx )
+
+    ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+
+    do n = 0, 2
+     ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
+    end do
+
+    do n = 1, np
+     do j1 = 0, spline
+      j2 = j(n) + j1
+      do i1 = 0, spline
+       i2 = i(n) + i1
+       dvol = ax0(n, i1)*ay0(n, j1)
+       den(i2, j2, 1, ic) = den(i2, j2, 1, ic) + dvol
+      end do
+     end do
+    end do
+
+   case (3)
+    allocate( az0(np, 0:2) )
+    allocate( k(np) )
+    allocate( xx(np, 3) )
+    weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    !==========================
+
+    interp = qden_3d_wgh( xx )
+
+    ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
+    ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+    az0(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+
+    i(1:np) = interp%ix_rank2(1:np)
+    j(1:np) = interp%iy_rank2(1:np)
+    k(1:np) = interp%iz_rank2(1:np)
+
+    do n = 0, 2
+     ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
+    end do
+    do n = 1, np
+     do k1 = 0, spline
+      k2 = k(n) + k1
+      do j1 = 0, spline
+       j2 = j(n) + j1
+       dvol = az0(n, k1)*ay0(n, j1)
+       do i1 = 0, spline
+        i2 = i(n) + i1
+        den(i2, j2, k2, ic) = den(i2, j2, k2, ic) + ax0(n, i1)*dvol
+       end do
+      end do
+     end do
+    end do
+    ! charge density on den(ic)
+   end select
+  end subroutine
+  !==========================
+!=================================
+  subroutine set_grid_charge_old(sp_loc, pt, den, np, ic)
 
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)

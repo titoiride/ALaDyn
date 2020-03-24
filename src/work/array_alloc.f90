@@ -204,23 +204,27 @@
    type(species_aux), intent(inout) :: spec_aux_in
    integer, intent (in) :: npt_max, ndims, np_s(:), ns, lp, mid
    integer, intent (inout) :: msize
-   integer :: nsize, ic, allocstatus
+   integer :: nsize, ic, allocstatus, ndim_tmp
 
+   ndim_tmp = ndims/2
+   if (ndim_tmp /= 2 .and. ndim_tmp /= 3) then
+    write(6, *) 'Warnint, wrong dimensions in palloc'
+   end if
    allocate( spec_in(ns), stat=allocstatus )
    nsize = 0
    do ic = 1, ns
-    call spec_in(ic)%new_species( np_s(ic), ndims)
+    call spec_in(ic)%new_species( np_s(ic), ndim_tmp)
     nsize = nsize + spec_in(ic)%total_size()*spec_in(ic)%how_many()
    end do
    if (mid>0) then
-    call spec_aux_in%new_species( npt_max, ndims)
+    call spec_aux_in%new_species( npt_max, ndim_tmp)
     nsize = nsize + spec_aux_in%total_size()*spec_aux_in%how_many()
    end if
    if (lp>2) then
-    call spec_aux_0%new_species( npt_max, ndims)
+    call spec_aux_0%new_species( npt_max, ndim_tmp)
     nsize = nsize + spec_aux_0%total_size()*spec_aux_0%how_many()
     if (lp==4) then
-     call spec_aux_1%new_species( npt_max, ndims)
+     call spec_aux_1%new_species( npt_max, ndim_tmp)
      nsize = nsize + spec_aux_1%total_size()*spec_aux_1%how_many()
     end if
    end if

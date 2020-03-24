@@ -97,7 +97,7 @@
    !To be checked, actually never used
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (out) :: pt
+   type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
 
    real(dp), allocatable, dimension(:, :) :: xx, axh, ax1, ap
@@ -244,7 +244,7 @@
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (out) :: pt
+   type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
 
    real(dp), allocatable, dimension(:, :) :: xx, ap
@@ -494,7 +494,7 @@
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (out) :: pt
+   type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
 
    real(dp), allocatable, dimension(:, :) :: xx, ap
@@ -735,7 +735,7 @@
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (out) :: pt
+   type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
 
    real (dp), allocatable, dimension(:, :) :: xx
@@ -1108,7 +1108,6 @@
     allocate( ay1(np, 0:2) )
     allocate( ayh1(np, 0:2) )
     k2 = 1
-
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     interp = qqh_2d_spline( xx )

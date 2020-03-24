@@ -51,6 +51,10 @@
     ' ny_loc =   ', ' nz_loc =   ', ' pjump  =   ' ]
 
 
+  interface part_pdata_out
+   module procedure :: part_pdata_out_new
+   module procedure :: part_pdata_out_old
+  end interface
  contains
 
 
@@ -1486,7 +1490,151 @@
    end if
   end subroutine
   !================================
-  subroutine part_pdata_out(spec_in, timenow, xmin_out, xmax_out, ymax_out, pid, &
+  subroutine part_pdata_out_new(spec_in, timenow, xmin_out, xmax_out, ymax_out, pid, &
+    jmp)
+
+   type(species_new), dimension(:), intent(in) :: spec_in
+   character (6), dimension (4), parameter :: part_files = [ 'Elpout', &
+     'H1pout', 'Prpout', 'H2pout' ]
+   character (8) :: fname
+   character (17) :: fname_out
+   character (12) :: fnamel
+   character (21) :: fname_outl
+   real (dp), intent (in) :: timenow, xmin_out, xmax_out, ymax_out
+   integer, intent (in) :: pid, jmp
+   real (sp), allocatable :: pdata(:)
+   integer (dp) :: nptot_global_reduced
+   integer :: ik, p, q, np, ip, ip_max, nptot, npt
+   integer :: lenp, ip_loc(npe), ndv, i_end
+   integer (offset_kind) :: disp, disp_col
+   type(index_array) :: out_parts
+   logical, allocatable, dimension(:) :: mask
+   character (4) :: foldername
+   integer, parameter :: file_version = 4
+
+   write (foldername, '(i4.4)') iout
+
+   ndv = nd2 + 2
+   np = loc_npart(imody, imodz, imodx, pid)
+   allocate(mask(np))
+   out_parts = index_array(np)
+   call v_realloc( pic_out_aux, np, nd2+1 )
+   if (np>0) then
+    if (ndim>2) then
+     associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np))
+      associate( yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np))
+       associate( zz => spec_in(pid)%call_component(Z_COMP, lb=1, ub=np))
+        mask(:) = ( xx>=xmin_out .and. xx<=xmax_out .and. &
+         abs(yy)<=ymax_out .and. abs(zz)<=ymax_out )
+       end associate
+      end associate
+     end associate
+     npt = COUNT(mask(:))
+     call out_parts%find_index(mask(:))
+
+    else
+     associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np))
+      associate( yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np))
+        mask(:) = ( xx>=xmin_out .and. xx<=xmax_out .and. abs(yy)<=ymax_out)
+      end associate
+     end associate
+     npt = COUNT(mask(:))
+     call out_parts%find_index(mask(:))
+
+    end if
+    
+    call spec_in(pid)%call_particle(pic_out_aux, out_parts%indices(1:npt:jmp))
+   end if
+   ip_loc(mype+1) = npt
+
+   ip = ip_loc(mype+1)
+   call intvec_distribute(ip, ip_loc, npe)
+
+   ! this differs from nptot_global since it represents just the reduced number of particles
+   ! that will be present in the output (should be equal to nptot_global for p_jump=1)!
+   nptot_global_reduced = 0
+   do ik=1,npe
+    nptot_global_reduced = nptot_global_reduced +ip_loc(ik)
+   end do
+   if (nptot_global<1e9) then
+    nptot = int(nptot_global_reduced)
+   else
+    nptot = -1
+   end if
+
+   ip_max = ip
+   if (pe0) ip_max = maxval(ip_loc(1:npe))
+   lenp = ndv*ip_loc(mype+1)
+   allocate (pdata(lenp))
+   ik = 0
+   do p = 1, ip_loc(mype+1)
+    do q = 1, nd2
+     ik = ik + 1
+     pdata(ik) = real(pic_out_aux(p,q), sp)
+    end do
+    wgh_cmp = pic_out_aux(p, nd2+1)
+    ik = ik + 1
+    pdata(ik) = wgh
+    ik = ik + 1
+    pdata(ik) = real(charge, sp)
+   end do
+   if (ik/=lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
+     ik
+
+   call endian(i_end)
+   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
+     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
+     real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
+     real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
+     real(j0_norm,sp), real(mass(pid),sp), real(xmin_out,sp), &
+     real(xmax_out,sp), real(ymax_out,sp), real(gam_min,sp) ]
+
+   part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
+     curr_ndim, mp_per_cell(pid), ion_min(1), lpf_ord, der_ord, iform, ndv, &
+     file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
+
+   write (fname, '(a6,i2.2)') part_files(pid), iout !serve sempre
+   write (fnamel, '(a6,i2.2,a1,i3.3)') part_files(pid), iout, '_', imodz !usare con mpi_write_part_col
+   fname_out = foldername // '/' // fname // '.bin'
+   fname_outl = foldername // '/' // fnamel // '.bin'
+   disp = 0
+   disp_col = 0
+   if (pe0) then
+    open (10, file=foldername//'/'//fname//'.dat', form='formatted')
+    write (10, *) ' Real parameters'
+    do q = 1, 20
+     write (10, '(a13,e11.4)') rpar(q), part_real_par(q)
+    end do
+    write (10, *) ' Integer parameters'
+    do p = 1, 20
+     write (10, '(a12,i8)') ipar(p), part_int_par(p)
+    end do
+    write (10, *) ' Number of particles in the output box'
+    write (10, '(4i20)') nptot_global_reduced
+    close (10)
+    write (6, *) 'Particles param written on file: ' // foldername // &
+      '/' // fname // '.dat'
+   else
+    disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
+   end if
+
+   if (mod(mype,npe_yloc)>0) disp_col = ndv*sum(ip_loc(imodz*npe_yloc+1: &
+     mype)) ! da usare con mpi_write_part_col
+
+   disp = disp*4 ! sia gli int che i float sono di 4 bytes
+   disp_col = disp_col*4
+
+   call mpi_write_part(pdata, lenp, ip, disp, 17, fname_out)
+
+   if (allocated(pdata)) deallocate (pdata)
+   if (pe0) then
+    write (6, *) 'Particles data written on file: ' // foldername // &
+      '/' // fname // '.bin'
+    write (6, *) ' Output logical flag ', l_force_singlefile_output
+   end if
+  end subroutine
+  !================================
+  subroutine part_pdata_out_old(spec_in, timenow, xmin_out, xmax_out, ymax_out, pid, &
     jmp)
 
    type(species), dimension(:), intent(in) :: spec_in

@@ -46,7 +46,7 @@
     mem_psize_max = 0.0
     call Part_numbers
     if (prl) then
-     call Max_pmemory_check(spec, ebfp, ebfp0, ebfp1)
+     call Max_pmemory_check(spec, ebfp)
     end if
     if (pe0) then
      call tot_num_part
@@ -704,13 +704,10 @@
   end subroutine
   !---------------------------
 
-  subroutine Max_pmemory_check_new(spec_in, spec_aux_1_in, ebfp0_in, ebfp1_in, &
-    bunch_in, bunch_aux_in)
+  subroutine Max_pmemory_check_new(spec_in, spec_aux_1_in)
 
    type(species_new), dimension(:), allocatable, intent(in) :: spec_in
-   type(species_aux), dimension(:), allocatable, intent(in) :: spec_aux_1_in
-   type(species_aux), dimension(:), allocatable, intent(in) :: ebfp0_in, ebfp1_in
-   type(species_new), dimension(:), allocatable, intent(in), optional :: bunch_in, bunch_aux_in
+   type(species_aux), intent(in) :: spec_aux_1_in
    integer :: ndv1, ndv2
    integer :: ic
    real (dp) :: mem_loc(1), max_mem(1)
@@ -725,37 +722,35 @@
      mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
     end do
    end if
-   if (allocated(spec_aux_1_in)) then
-    ndv1 = spec_aux_1_in(ic)%how_many()
-    ndv2 = spec_aux_1_in(ic)%total_size()
-    mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   end if
-   if (present(bunch_in) ) then
-    if (beam) then
-     if (allocated(bunch_in)) then
-      do ic = 1, SIZE(bunch_in)
-       ndv1 = bunch_in(ic)%how_many()
-       ndv2 = bunch_in(ic)%total_size()
-       mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-      end do
-     end if
-     if (allocated(bunch_aux_in)) then
-      ndv1 = bunch_aux_in(ic)%how_many()
-      ndv2 = bunch_aux_in(ic)%total_size()
-      mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-     end if
-    end if
-   end if
-   if (allocated(ebfp0_in)) then
-    ndv1 = ebfp0_in(ic)%how_many()
-    ndv2 = ebfp0_in(ic)%total_size()
-    mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   end if
-   if (allocated(ebfp1_in)) then
-    ndv1 = ebfp1_in(ic)%how_many()
-    ndv2 = ebfp1_in(ic)%total_size()
-    mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   end if
+   ndv1 = spec_aux_1_in%how_many()
+   ndv2 = spec_aux_1_in%total_size()
+   mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
+   ! if (present(bunch_in) ) then
+   !  if (beam) then
+   !   if (allocated(bunch_in)) then
+   !    do ic = 1, SIZE(bunch_in)
+   !     ndv1 = bunch_in(ic)%how_many()
+   !     ndv2 = bunch_in(ic)%total_size()
+   !     mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
+   !    end do
+   !   end if
+   !   if (allocated(bunch_aux_in)) then
+   !    ndv1 = bunch_aux_in(ic)%how_many()
+   !    ndv2 = bunch_aux_in(ic)%total_size()
+   !    mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
+   !   end if
+   !  end if
+   ! end if
+   ! if (allocated(ebfp0_in)) then
+   !  ndv1 = ebfp0_in(ic)%how_many()
+   !  ndv2 = ebfp0_in(ic)%total_size()
+   !  mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
+   ! end if
+   ! if (allocated(ebfp1_in)) then
+   !  ndv1 = ebfp1_in(ic)%how_many()
+   !  ndv2 = ebfp1_in(ic)%total_size()
+   !  mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
+   ! end if
    call allreduce_dpreal(maxv, mem_loc, max_mem, 1)
    mem_psize_max = kind(electron_charge_norm)*1.e-06*max_mem(1)
 

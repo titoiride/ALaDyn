@@ -370,7 +370,7 @@
    real (dp), intent (in) :: vb
    integer, intent (in) :: w_nst, loc_it
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), allocatable, intent(inout) :: spec_aux_in
+   type(species_aux), intent(inout) :: spec_aux_in
    integer :: i, ic, nshx
    real (dp) :: dt_tot, dt_step
    logical, parameter :: mw = .true.

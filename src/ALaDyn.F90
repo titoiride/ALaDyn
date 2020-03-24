@@ -53,7 +53,11 @@
   end if
   call Part_numbers
   if (prl) then
+#if defined(OLD_SPECIES)
    call Max_pmemory_check(spec, ebfp, ebfp0, ebfp1)
+#else
+   call Max_pmemory_check(spec, ebfp)
+#endif
   end if
   if (pe0)then
    call initial_run_info(new_sim)
@@ -152,7 +156,7 @@
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
    end do
-   if (dump > 0) call dump_data(iter, tnow, spec)
+   !if (dump > 0) call dump_data(iter, tnow, spec)
   end subroutine
   !======================
   subroutine data_out
@@ -212,9 +216,9 @@
     endif
     if (nden>0) then
      do i = 1, nsp
-      call prl_den_energy_interp(spec(i), ebfp, i, nden)
+      !call prl_den_energy_interp(spec(i), ebfp, i, nden)
       do iic = 1, min(2, nden)
-       call den_energy_out( i, iic, iic )
+       !call den_energy_out( i, iic, iic )
       end do
      end do
     end if
@@ -223,8 +227,8 @@
       call fluid_den_mom_out(up, i, nfcomp)
      end do
     end if
-    if (ionization) call part_ionz_out(spec, tnow)
-    if (gam_min > 1.) call part_high_gamma_out(spec, gam_min, tnow)
+    !if (ionization) call part_ionz_out(spec, tnow)
+    !if (gam_min > 1.) call part_high_gamma_out(spec, gam_min, tnow)
     if (npout > 0) then
      iic = npout
      if (iic <= nsp) then

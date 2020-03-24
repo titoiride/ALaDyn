@@ -22,6 +22,7 @@
 module base_species
 
  use precision_def
+ use util, only: gasdev
  implicit none
  public
 
@@ -45,6 +46,8 @@ module base_species
   !! Number of particles
   integer :: dimensions
   !! Number of dimensions in which particles live
+  real :: temperature
+  !! Initial temperature given to the species
 
   real(dp), allocatable :: x(:)
   !! Array containig the x particle positions
@@ -92,17 +95,22 @@ module base_species
   !! True if index array is allocated
 
   contains
+   procedure, private, pass :: call_particle_bounds
+   procedure, private, pass :: call_particle_index_array
+   procedure, private, pass :: call_particle_single
    procedure, pass :: compute_gamma
    procedure, pass, private :: copy_all
    procedure, pass, private :: copy_boundaries
    procedure, pass :: count_particles
-   procedure, pass :: how_many
    procedure, public, pass :: flatten
+   procedure, pass :: how_many
+   procedure, pass :: initialize_data
    procedure, pass :: new_species => new_species_abstract
    procedure, public, pass :: redistribute
    procedure, pass :: set_charge_int
    procedure, pass :: set_charge_real
    procedure, pass :: set_part_number
+   procedure, pass :: set_temperature
    procedure, public, pass :: total_size
    procedure(call_component_abstract), deferred, pass :: call_component
    procedure(copy_scalars_abstract), deferred, pass :: copy_scalars_from
@@ -111,6 +119,7 @@ module base_species
    procedure(sel_particles_index_abstract), deferred, pass :: sel_particles_index
    procedure(set_component_abstract_real), deferred, pass :: set_component_real
    procedure(set_component_abstract_integer), deferred, pass :: set_component_integer
+   generic :: call_particle => call_particle_single, call_particle_bounds, call_particle_index_array
    generic :: copy => copy_all, copy_boundaries
    generic :: sel_particles => sel_particles_bounds, sel_particles_index
    generic :: set_component => set_component_real, set_component_integer
@@ -231,8 +240,8 @@ module base_species
     this%allocated_gamma = .true.
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
-    allocate( this%part_index(n_particles), stat=allocstatus)
-    this%allocated_index = .true.
+    !allocate( this%part_index(n_particles), stat=allocstatus)
+    !this%allocated_index = .true.
    case(2)
    
     allocate( this%x(n_particles), stat=allocstatus)
@@ -247,8 +256,8 @@ module base_species
     this%allocated_gamma = .true.
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
-    allocate( this%part_index(n_particles), stat=allocstatus)
-    this%allocated_index = .true.
+    !allocate( this%part_index(n_particles), stat=allocstatus)
+    !this%allocated_index = .true.
    
    case(3)
    
@@ -268,12 +277,108 @@ module base_species
     this%allocated_gamma = .true.
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
-    allocate( this%part_index(n_particles), stat=allocstatus)
-    this%allocated_index = .true.
+    !allocate( this%part_index(n_particles), stat=allocstatus)
+    !this%allocated_index = .true.
    end select
   end subroutine
 
 !=== Type bound procedures
+  subroutine call_particle_single( this, particles, index_in)
+   class(base_species_T), intent(in) :: this
+   real(dp), dimension(:), intent(inout) :: particles
+   integer, intent(in) :: index_in
+
+   select case(this%dimensions)
+   case(1)
+    particles(1) = this%x(index_in)
+    particles(2) = this%px(index_in)
+    particles(3) = this%weight(index_in)
+   case(2)
+    particles(1) = this%x(index_in)
+    particles(2) = this%y(index_in)
+    particles(3) = this%px(index_in)
+    particles(4) = this%py(index_in)
+    particles(5) = this%weight(index_in)
+   case(3)
+    particles(1) = this%x(index_in)
+    particles(2) = this%y(index_in)
+    particles(3) = this%z(index_in)
+    particles(4) = this%px(index_in)
+    particles(5) = this%py(index_in)
+    particles(6) = this%pz(index_in)
+    particles(7) = this%weight(index_in)
+   end select
+  end subroutine
+
+  subroutine call_particle_bounds( this, particles, lb, ub)
+   class(base_species_T), intent(in) :: this
+   real(dp), dimension(:, :), intent(inout) :: particles
+   integer, intent(in) :: lb, ub
+
+   select case(this%dimensions)
+   case(1)
+    particles(1:(ub-lb+1), 1) = this%x(lb:ub)
+    particles(1:(ub-lb+1), 2) = this%px(lb:ub)
+    particles(1:(ub-lb+1), 3) = this%weight(lb:ub)
+   case(2)
+    particles(1:(ub-lb+1), 1) = this%x(lb:ub)
+    particles(1:(ub-lb+1), 2) = this%y(lb:ub)
+    particles(1:(ub-lb+1), 3) = this%px(lb:ub)
+    particles(1:(ub-lb+1), 4) = this%py(lb:ub)
+    particles(1:(ub-lb+1), 5) = this%weight(lb:ub)
+   case(3)
+    particles(1:(ub-lb+1), 1) = this%x(lb:ub)
+    particles(1:(ub-lb+1), 2) = this%y(lb:ub)
+    particles(1:(ub-lb+1), 3) = this%z(lb:ub)
+    particles(1:(ub-lb+1), 4) = this%px(lb:ub)
+    particles(1:(ub-lb+1), 5) = this%py(lb:ub)
+    particles(1:(ub-lb+1), 6) = this%pz(lb:ub)
+    particles(1:(ub-lb+1), 7) = this%weight(lb:ub)
+   end select
+  end subroutine
+
+  subroutine call_particle_index_array( this, particles, index_in)
+   class(base_species_T), intent(in) :: this
+   real(dp), dimension(:, :), intent(inout) :: particles
+   integer, dimension(:), intent(in) :: index_in
+   integer :: n, size_ind, idx, k
+
+   size_ind = SIZE(index_in, DIM=1)
+   k = 1
+   select case(this%dimensions)
+   case(1)
+    do n = 1, size_ind
+     idx = index_in(n)
+     particles(k, 1) = this%x(idx)
+     particles(k, 2) = this%px(idx)
+     particles(k, 3) = this%weight(idx)
+     k = k + 1
+    end do
+   case(2)
+    do n = 1, size_ind
+     idx = index_in(n)
+     particles(k, 1) = this%x(idx)
+     particles(k, 2) = this%y(idx)
+     particles(k, 3) = this%px(idx)
+     particles(k, 4) = this%py(idx)
+     particles(k, 5) = this%weight(idx)
+     k = k + 1 
+    end do
+   case(3)
+    do n = 1, size_ind
+     idx = index_in(n)
+     particles(k, 1) = this%x(idx)
+     particles(k, 2) = this%y(idx)
+     particles(k, 3) = this%z(idx)
+     particles(k, 4) = this%px(idx)
+     particles(k, 5) = this%py(idx)
+     particles(k, 6) = this%pz(idx)
+     particles(k, 7) = this%weight(idx)
+     k = k + 1
+    end do
+   end select
+  end subroutine
+
   subroutine compute_gamma( this, pond_pot )
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in), optional :: pond_pot(:)
@@ -473,6 +578,58 @@ module base_species
 
   end function
 
+  subroutine initialize_data( this, x_arr, y_arr, z_arr, &
+    weightx_arr, weightyz_arr, loc_x, loc_y, loc_z)
+   class( base_species_T), intent(inout) :: this
+   real(dp), dimension(:), intent(in) :: x_arr, y_arr, z_arr
+   real(dp), dimension(:), intent(in) :: weightx_arr
+   real(dp), dimension(:, :), intent(in) :: weightyz_arr
+   integer, intent(in) :: loc_x, loc_y, loc_z
+   real(dp) :: u, t_x
+   real(sp) :: whz
+   integer :: p, dim, i, j, k
+
+   t_x = this%temperature
+   dim = this%dimensions
+   p = 0
+   select case(dim)
+   case(2)
+    do k = 1, 1
+     do j = 1, loc_y
+      do i = 1, loc_x
+       p = p + 1
+       this%x(p) = x_arr(i)
+       this%y(p) = y_arr(j)
+       call gasdev(u)
+       this%px(p) = t_x*u
+       call gasdev(u)
+       this%py(p) = t_x*u
+       whz = real(weightx_arr(i)*weightyz_arr(j, k), sp)
+       this%weight(p) = whz
+      end do
+     end do
+    end do
+   case(3)
+    do k = 1, loc_z
+     do j = 1, loc_y
+      do i = 1, loc_x
+       p = p + 1
+       this%x(p) = x_arr(i)
+       this%y(p) = y_arr(j)
+       this%z(p) = z_arr(k)
+       call gasdev(u)
+       this%px(p) = t_x*u
+       call gasdev(u)
+       this%py(p) = t_x*u
+       call gasdev(u)
+       this%pz(p) = t_x*u
+       whz = weightx_arr(i)*weightyz_arr(j, k)
+       this%weight(p) = whz
+      end do
+     end do
+    end do
+   end select
+  end subroutine
   
   subroutine redistribute( this, flat_array, num_particles )
    class(base_species_T), intent(inout) :: this
@@ -540,6 +697,13 @@ module base_species
   integer, intent(in) :: n_parts
 
   this%n_part = n_parts
+ end subroutine
+
+ subroutine set_temperature( this, temperature)
+  class(base_species_T), intent(inout) :: this
+  real(dp), intent(in) :: temperature
+
+  this%temperature = temperature
  end subroutine
 
  pure function total_size( this ) result(size)
