@@ -146,6 +146,15 @@ module particles_aux_def
   this%allocated_weight = .false.
   this%allocated_index = .false.
  
+  this%allocated_aux1 = .false.
+  this%allocated_aux2 = .false.
+  this%allocated_aux3 = .false.
+  this%allocated_aux4 = .false.
+  this%allocated_aux5 = .false.
+  this%allocated_aux6 = .false.
+  this%allocated_aux7 = .false.
+  this%allocated_aux8 = .false.
+
   select case(curr_ndims)
   
   case(1)

@@ -22,12 +22,13 @@
  module interpolation_lib
 
   use precision_def
+  use array_alloc, only: array_realloc_1d
 
   implicit none
 
   real (dp), parameter, private :: PP1 = 0.25, PP2 = 0.5, &
    PP3 = 0.75, PP4 = 2./3., PP5 = 1./6.
-
+  real(dp), allocatable, dimension(:), private, save :: dx2, dx3
    type interp_coeff
    !! Type containing particle-grid relations during
    !! interpolation on grid
@@ -83,6 +84,9 @@
     !! Cell index along z for vectors
     integer, allocatable, dimension(:) :: ihz_rank2
     !! Half-cell index along z for vectors
+    integer :: n_parts
+    contains
+    procedure, pass, public :: new_interp
    end type
 
   interface zeroth_order
@@ -106,6 +110,61 @@
   end interface
 
   contains
+
+  subroutine new_interp(this, n_parts, order, h_order, dimensions)
+   class(interp_coeff), intent(inout) :: this
+   integer, intent(in) :: n_parts
+   integer, intent(in) :: order, h_order, dimensions
+
+   this%n_parts = n_parts
+   this%order = order
+   this%h_order = h_order
+
+   select case(dimensions)
+   case(1)
+    allocate( this%coeff_x(0:order) )
+    allocate( this%coeff_x_rank2(n_parts, 0:order) )
+    allocate( this%h_coeff_x(0:h_order) )
+    allocate( this%h_coeff_x_rank2(n_parts, 0:h_order) )
+    allocate( this%ix_rank2(n_parts) )
+    allocate( this%ihx_rank2(n_parts) )
+   case(2)
+    allocate( this%coeff_x(0:order) )
+    allocate( this%coeff_x_rank2(n_parts, 0:order) )
+    allocate( this%h_coeff_x(0:h_order) )
+    allocate( this%h_coeff_x_rank2(n_parts, 0:h_order) )
+    allocate( this%ix_rank2(n_parts) )
+    allocate( this%ihx_rank2(n_parts) )
+
+    allocate( this%coeff_y(0:order) )
+    allocate( this%coeff_y_rank2(n_parts, 0:order) )
+    allocate( this%h_coeff_y(0:h_order) )
+    allocate( this%h_coeff_y_rank2(n_parts, 0:h_order) )
+    allocate( this%iy_rank2(n_parts) )
+    allocate( this%ihy_rank2(n_parts) )
+   case(3)
+    allocate( this%coeff_x(0:order) )
+    allocate( this%coeff_x_rank2(n_parts, 0:order) )
+    allocate( this%h_coeff_x(0:h_order) )
+    allocate( this%h_coeff_x_rank2(n_parts, 0:h_order) )
+    allocate( this%ix_rank2(n_parts) )
+    allocate( this%ihx_rank2(n_parts) )
+
+    allocate( this%coeff_y(0:order) )
+    allocate( this%coeff_y_rank2(n_parts, 0:order) )
+    allocate( this%h_coeff_y(0:h_order) )
+    allocate( this%h_coeff_y_rank2(n_parts, 0:h_order) )
+    allocate( this%iy_rank2(n_parts) )
+    allocate( this%ihy_rank2(n_parts) )
+
+    allocate( this%coeff_z(0:order) )
+    allocate( this%coeff_z_rank2(n_parts, 0:order) )
+    allocate( this%h_coeff_z(0:h_order) )
+    allocate( this%h_coeff_z_rank2(n_parts, 0:h_order) )
+    allocate( this%iz_rank2(n_parts) )
+    allocate( this%ihz_rank2(n_parts) )
+   end select
+  end subroutine
   ! =======================================================
   !    Templates of spl=1,2,3 order shape functions for grid-particle  connection
   !==================================================
@@ -177,104 +236,101 @@
   !=======================
   ! End templates
   ! =======================================================
-  pure function zeroth_order_real(deltax) result(ax)
+  subroutine zeroth_order_real(deltax, ax0)
    real(dp), intent(in) :: deltax
-   real(dp) :: ax(1)
+   real(dp), intent(out) :: ax0
    ! Here dx should be computed as
    ! dx = x - int(x + 0.5)
-   ax(1) = one_dp
-  end function
+   ax0 = one_dp
+  end subroutine
 
-  pure function zeroth_order_vector(deltax) result(ax)
+  subroutine zeroth_order_vector(deltax, ax0)
    real(dp), intent(in), dimension(:) :: deltax
-   real(dp), allocatable :: ax(:, :)
+   real(dp), intent(inout), dimension(:, :) :: ax0
    integer :: length
    ! Here dx should be computed as
    ! dx = x - int(x + 0.5)
    length = SIZE( deltax )
-   allocate(ax(length, 1))
-   ax(1:length, 1) = one_dp
-  end function
+   ax0(1:length, 1) = one_dp
+  end subroutine
 
-  pure function first_order_real(deltax) result(ax)
+  subroutine first_order_real(deltax, ax1)
    real(dp), intent(in) :: deltax
-   real(dp) :: ax(2)
+   real(dp), dimension(:), intent(inout) :: ax1
    ! Here dx should be computed as
    ! dx = x - int(x)
-   ax(2) = deltax
-   ax(1) = one_dp - ax(2)
-  end function
+   ax1(2) = deltax
+   ax1(1) = one_dp - ax1(2)
+  end subroutine
 
-  pure function first_order_vector(deltax) result(ax)
-   real(dp), intent(in), dimension(:) :: deltax
-   real(dp), allocatable :: ax(:, :)
+  subroutine first_order_vector(deltax, ax1)
+   real(dp), dimension(:), intent(in) :: deltax
+   real(dp), dimension(:, :), intent(inout) :: ax1
    integer :: length
    ! Here dx should be computed as
    ! dx = x - int(x)
    length = SIZE( deltax )
-   allocate(ax(length, 2))
-   ax(1:length, 2) = deltax
-   ax(1:length, 1) = one_dp - ax(1:length, 2)
-  end function
+   ax1(1:length, 2) = deltax
+   ax1(1:length, 1) = one_dp - ax1(1:length, 2)
+  end subroutine
 
-  pure function second_order_real(deltax) result(ax)
+  subroutine second_order_real(deltax, ax2)
    real(dp), intent(in) :: deltax
-   real(dp) :: ax(3)
+   real(dp), dimension(:), intent(inout) :: ax2
    real(dp) :: dx2
    ! Here dx should be computed as
    ! dx = x - int(x + 0.5)
    dx2 = deltax*deltax
-   ax(2) = PP3 - dx2
-   ax(3) = PP2*(PP1 + deltax + dx2)
-   ax(1) = one_dp - ax(2) - ax(3)
-  end function
+   ax2(2) = PP3 - dx2
+   ax2(3) = PP2*(PP1 + deltax + dx2)
+   ax2(1) = one_dp - ax2(2) - ax2(3)
+  end subroutine
 
-  pure function second_order_vector(deltax) result(ax)
-   real(dp), intent(in), dimension(:) :: deltax
-   real(dp), allocatable :: ax(:, :), dx2(:)
+  subroutine second_order_vector(deltax, ax2)
+   real(dp), dimension(:), intent(in) :: deltax
+   real(dp), dimension(:, :), intent(inout) :: ax2
    integer :: length
    ! Here dx should be computed as
    ! dx = x - int(x)
    length = SIZE( deltax )
-   allocate(ax(length, 3))
-   allocate(dx2(length))
+   call array_realloc_1d(dx2, length)
    dx2(1:length) = deltax(1:length)*deltax(1:length)
-   ax(1:length, 2) = PP3 - dx2(1:length)
-   ax(1:length, 3) = PP2*(PP1 + deltax(1:length) + dx2(1:length))
-   ax(1:length, 1) = one_dp - ax(1:length, 2) - ax(1:length, 3)
-  end function
+   ax2(1:length, 2) = PP3 - dx2(1:length)
+   ax2(1:length, 3) = PP2*(PP1 + deltax(1:length) + dx2(1:length))
+   ax2(1:length, 1) = one_dp - ax2(1:length, 2) - ax2(1:length, 3)
+  end subroutine
 
-  pure function third_order_real(deltax) result(ax)
+  subroutine third_order_real(deltax, ax3)
    real(dp), intent(in) :: deltax
-   real(dp) :: ax(4)
+   real(dp), dimension(:), intent(inout) :: ax3
    real(dp) :: dx2, dx3
    ! Here dx should be computed as
    ! dx = x - int(x)
    dx2 = deltax*deltax
    dx3 = dx2*deltax
 
-   ax(2) = PP4 - dx2 + PP2*dx3
-   ax(3) = PP5 + PP2*(deltax + dx2 - dx3)
-   ax(4) = PP5*dx3
-   ax(1) = one_dp - ax(2) - ax(3) - ax(4)
-  end function
+   ax3(2) = PP4 - dx2 + PP2*dx3
+   ax3(3) = PP5 + PP2*(deltax + dx2 - dx3)
+   ax3(4) = PP5*dx3
+   ax3(1) = one_dp - ax3(2) - ax3(3) - ax3(4)
+  end subroutine
 
-  pure function third_order_vector(deltax) result(ax)
-   real(dp), intent(in), dimension(:) :: deltax
-   real(dp), allocatable :: ax(:, :), dx2(:), dx3(:)
+  subroutine third_order_vector(deltax, ax3)
+   real(dp), dimension(:), intent(in) :: deltax
+   real(dp), dimension(:, :), intent(inout) :: ax3
    integer :: length
    ! Here dx should be computed as
    ! dx = x - int(x)
    length = SIZE( deltax )
-   allocate(ax(length, 3))
-   allocate(dx2(length))
+   call array_realloc_1d(dx2, length)
    dx2(1:length) = deltax(1:length)*deltax(1:length)
    dx3(1:length) = dx2(1:length)*deltax(1:length)
 
-   ax(1:length, 2) = PP4 - dx2(1:length) + PP2*dx3(1:length)
-   ax(1:length, 3) = PP5 + PP2*(deltax(1:length) + dx2(1:length) - dx3(1:length))
-   ax(1:length, 4) = PP5*dx3(1:length)
-   ax(1:length, 1) = one_dp - ax(1:length, 2) - ax(1:length, 3) - ax(1:length, 4)
-  end function
+   ax3(1:length, 2) = PP4 - dx2(1:length) + PP2*dx3(1:length)
+   ax3(1:length, 3) = PP5 + PP2*(deltax(1:length) + dx2(1:length) - dx3(1:length))
+   ax3(1:length, 4) = PP5*dx3(1:length)
+   ax3(1:length, 1) = one_dp - ax3(1:length, 2) - ax3(1:length, 3) &
+    - ax3(1:length, 4)
+  end subroutine
 
  end module

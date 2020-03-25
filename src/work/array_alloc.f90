@@ -308,5 +308,20 @@
    vdata(:, :) = 0.0
   end subroutine
   !===========================
+  subroutine array_realloc_1d(vdata, npt_new)
+   real (dp), allocatable, intent (inout) :: vdata(:)
+   integer, intent (in) :: npt_new
+   integer :: allocstatus, deallocstatus
+
+   if (allocated(vdata)) then
+    if (size(vdata,1)<npt_new) then
+     deallocate (vdata, stat=deallocstatus)
+     allocate (vdata(1:npt_new), stat=allocstatus)
+    end if
+   else
+    allocate (vdata(1:npt_new), stat=allocstatus)
+   end if
+  end subroutine
+  !===========================
  end module
 

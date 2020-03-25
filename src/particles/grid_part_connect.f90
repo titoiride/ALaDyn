@@ -86,13 +86,14 @@
    module procedure :: ncdef_3d_curr_old
   end interface
 
-  type(interp_coeff), private :: interp
+  type(interp_coeff), private, save :: interp
+  type(interp_coeff), private, save :: interp_old
+  real(dp), dimension(:, :), allocatable, private, save :: gpc_xx
   !! Useful variable to store interpolation results
 
   !========= SECTION FOR FIELDS ASSIGNEMENT
  contains
 
-  !==========================================
   subroutine set_part1d_acc_new(ef, sp_loc, pt, np, ndf)
    !To be checked, actually never used
    real (dp), intent (in) :: ef(:, :, :, :)
@@ -100,30 +101,25 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
 
-   real(dp), allocatable, dimension(:, :) :: xx, axh, ax1, ap
-   integer, allocatable, dimension(:) :: i, ih
+   real(dp), allocatable, dimension(:, :) :: ap
    integer :: i1, i2, j2, n
-   !=====================
    !================================
-   allocate( xx(np, 1) )
-   allocate( axh(np, 0:2) )
-   allocate( ax1(np, 0:2) )
-   allocate( i(np) )
-   allocate( ih(np) )
-
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   call xx_realloc(gpc_xx, np, 1)
+   !================================
    select case (ndf)
    case (3)
 
     allocate( ap(np, 3), source=zero_dp )
     j2 = 1
-    xx(1:np, 1) = sp_loc%call_component(X_COMP)
+    gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np)
     
-    interp = qqh_1d_spline( xx )
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    call qqh_1d_spline( gpc_xx, interp )
 
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( axh => interp%h_coeff_x_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
 
     do i1 = 0, 2
      do n = 1, np
@@ -134,6 +130,11 @@
       ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
      end do
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
@@ -141,14 +142,14 @@
    case (6)
     j2 = 1
     allocate( ap(np, 3), source=zero_dp )
-    xx(1:np, 1) = sp_loc%call_component(X_COMP) !the current particle positions
+    gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP) !the current particle positions
     
-    interp = qqh_1d_spline( xx )
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
+    call qqh_1d_spline( gpc_xx, interp )
 
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( axh => interp%h_coeff_x_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
 
     do i1 = 0, 2
      do n = 1, np
@@ -162,6 +163,12 @@
       ap(n, 4) = ap(n, 4) + ax1(n, i1)*ef(i2, j2, 1, 4) !Bx(i)
      end do
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
@@ -182,7 +189,8 @@
    real (dp) :: xp1(3), ap(6)
    real (dp) :: axh(0:2), ax1(0:2)
    integer :: i, ih, i1, i2, j2, n
-   !=====================
+   !================================
+   call interp_realloc(interp, 1, 3)
    !================================
    select case (ndf)
    case (3)
@@ -191,7 +199,7 @@
      ap(1:3) = zero_dp
      xp1(1) = sp_loc%part(n, 1) !the current particle positions
 
-     interp = qqh_1d_spline( xp1 )
+     call qqh_1d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      axh(0:2) = interp%h_coeff_x(1:3)
@@ -215,7 +223,7 @@
      ap(1:6) = zero_dp
      xp1(1) = sp_loc%part(n, 1) !the current particle positions
 
-     interp = qqh_1d_spline( xp1 )
+     call qqh_1d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      axh(0:2) = interp%h_coeff_x(1:3)
@@ -247,41 +255,34 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
 
-   real(dp), allocatable, dimension(:, :) :: xx, ap
-   real(dp), allocatable, dimension(:, :) :: axh, ax1, ay1, ayh
-   integer, allocatable, dimension(:) :: i, ih, j, jh
+   real(dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol, dvol1
    integer :: i1, j1, i2, j2, n
    !================================
    ! Uses quadratic or linear shapes depending on staggering
    ! ndf is the number of field component
 
-   allocate( xx(np, 2) )
-   allocate( ax1(np, 0:2) )
-   allocate( axh(np, 0:1) )
-   allocate( ay1(np, 0:2) )
-   allocate( ayh(np, 0:1) )
-   allocate( i(np) )
-   allocate( ih(np) )
-   allocate( j(np) )
-   allocate( jh(np) )
+   !=====================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   call xx_realloc(gpc_xx, np, 2)
+   !================================
    select case (ndf) !Field components
    case (3)
     allocate( ap(np, 3), source=zero_dp )
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    interp = qlh_2d_spline( xx )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+
+    call qlh_2d_spline( gpc_xx, interp )
     
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    axh(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
-    ayh(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
-    
-    i(1:np) = interp%ix_rank2(1:np)
-    ih (1:np)= interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh (1:np)= interp%ihy_rank2(1:np)
-    
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( axh => interp%h_coeff_x_rank2 )
+    associate( ayh => interp%h_coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
+ 
     do n = 1, np
      do j1 = 0, 2
       j2 = j(n) + j1
@@ -307,6 +308,16 @@
       end do
      end do
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
@@ -314,19 +325,19 @@
    case (6)
     !=====================
     allocate( ap(np, 6), source=zero_dp )
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    interp = qlh_2d_spline( xx )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+
+    call qlh_2d_spline( gpc_xx, interp )
     
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    axh(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
-    ayh(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
-    
-    i(1:np) = interp%ix_rank2(1:np)
-    ih (1:np)= interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh (1:np)= interp%ihy_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( axh => interp%h_coeff_x_rank2 )
+    associate( ayh => interp%h_coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
 
     do n = 1, np
      do j1 = 0, 2
@@ -360,6 +371,16 @@
       end do
      end do
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
@@ -386,6 +407,9 @@
    !================================
    ! Uses quadratic or linear shapes depending on staggering
    ! ndf is the number of field component
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    xp1 = zero_dp
    do n = 1, np
     pt(n, 1:3) = sp_loc%part(n, 1:3)
@@ -398,7 +422,7 @@
      ap(1:3) = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     interp = qlh_2d_spline( xp1 )
+     call qlh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -442,7 +466,7 @@
      ap(1:6) = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     interp = qlh_2d_spline( xp1 )
+     call qlh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -497,9 +521,7 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
 
-   real(dp), allocatable, dimension(:, :) :: xx, ap
-   real(dp), allocatable, dimension(:, :) :: axh, ax1, ay1, ayh, azh, az1
-   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real(dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol
    integer :: i1, j1, i2, j2, k1, k2, n
 
@@ -509,38 +531,30 @@
    ! Quadratic shape at integer index
    !====================================
    !=============================================================
-   allocate( xx(np, 3) )
-   allocate( ax1(np, 0:2) )
-   allocate( axh(np, 0:1) )
-   allocate( ay1(np, 0:2) )
-   allocate( ayh(np, 0:1) )
-   allocate( i(np) )
-   allocate( ih(np) )
-   allocate( j(np) )
-   allocate( jh(np) )
-   allocate( k(np) )
-   allocate( kh(np) )
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   call xx_realloc(gpc_xx, np, 3)
+   !================================
    allocate( ap(np, 6), source=zero_dp )
 
-   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-   interp = qlh_3d_spline( xx )
+   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+
+   call qlh_3d_spline( gpc_xx, interp )
    !==========================
 
-   ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-   ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-   az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-   axh(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
-   ayh(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
-   azh(1:np, 0:1) = interp%h_coeff_z_rank2(1:np, 1:2)
-
-   i(1:np) = interp%ix_rank2(1:np)
-   ih (1:np)= interp%ihx_rank2(1:np)
-   j(1:np) = interp%iy_rank2(1:np)
-   jh (1:np)= interp%ihy_rank2(1:np)
-   k(1:np) = interp%iz_rank2(1:np)
-   kh (1:np)= interp%ihz_rank2(1:np)
+   associate( ax1 => interp%coeff_x_rank2 )
+   associate( ay1 => interp%coeff_y_rank2 )
+   associate( az1 => interp%coeff_z_rank2 )
+   associate( axh => interp%h_coeff_x_rank2 )
+   associate( ayh => interp%h_coeff_y_rank2 )
+   associate( azh => interp%h_coeff_z_rank2 )
+   associate( i => interp%ix_rank2 )
+   associate( ih => interp%ihx_rank2 )
+   associate( j => interp%iy_rank2 )
+   associate( jh => interp%ihy_rank2 )
+   associate( k => interp%iz_rank2 )
+   associate( kh => interp%ihz_rank2 )
     
    do n = 1, np
     ! Ex(i+1/2,j,k)
@@ -608,6 +622,19 @@
      end do
     end do
    end do
+
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
    call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
@@ -636,7 +663,9 @@
    ! Linear shape at half-index
    ! Quadratic shape at integer index
    !====================================
-   !=============================================================
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    do n = 1, np
     pt(n, 1:3) = sp_loc%part(n, 1:3)
    end do
@@ -646,7 +675,7 @@
     ap(1:6) = zero_dp
     xp1(1:3) = pt(n, 1:3)
 
-    interp = qlh_3d_spline( xp1 )
+    call qlh_3d_spline( xp1, interp )
 
     ax1(0:2) = interp%coeff_x(1:3)
     ay1(0:2) = interp%coeff_y(1:3)
@@ -738,10 +767,7 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
 
-   real (dp), allocatable, dimension(:, :) :: xx
-   real (dp), allocatable, dimension(:, :) :: ax1, axh, ay1, ayh, az1, azh
    real (dp), allocatable, dimension(:) :: ef_sqr
-   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
    real (dp) :: dvol, ex, ey, ez
    integer :: n, ip1, jp1, kp1, ip2, jp2, kp2
 
@@ -752,35 +778,28 @@
    !====================================
    ! fields are at t^n
 
+   !=============================================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   !================================
    allocate( ef_sqr(np), source=zero_dp )
-
+   
    select case (ndim)
    case (2)
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( xx(np, 2) )
-    allocate( ax1(np, 0:2) )
-    allocate( axh(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh(np, 0:2) )
-
+    call xx_realloc(gpc_xx, np, 2)
     kp2 = 1
     !==========================
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    interp = qqh_2d_spline( xx )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( gpc_xx, interp )
 
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( axh => interp%h_coeff_x_rank2 )
+    associate( ayh => interp%h_coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
     !==========================
     do n = 1, np
      ! Ex(i+1/2,j,k)
@@ -808,46 +827,40 @@
      end do
      !==============
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
     call pt%set_component( ef_sqr(1:np), &
      E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2
     !=======================================
 
    case (3)
-
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( k(np) )
-    allocate( kh(np) )
-    allocate( xx(np, 3) )
-    allocate( ax1(np, 0:2) )
-    allocate( axh(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh(np, 0:2) )
-    allocate( az1(np, 0:2) )
-    allocate( azh(np, 0:2) )
-
     !==========================
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call xx_realloc(gpc_xx, np, 3)
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
 
-    interp = qqh_2d_spline( xx )
+    call qqh_3d_spline( gpc_xx, interp )
 
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-    axh(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-    azh(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
-    k(1:np) = interp%iz_rank2(1:np)
-    kh(1:np) = interp%ihz_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( az1 => interp%coeff_z_rank2 )
+    associate( axh => interp%h_coeff_x_rank2 )
+    associate( ayh => interp%h_coeff_y_rank2 )
+    associate( azh => interp%h_coeff_z_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
+    associate( k => interp%iz_rank2 )
+    associate( kh => interp%ihz_rank2 )
     !==========================
     ! Here Quadratic shapes are used
     do n = 1, np
@@ -893,6 +906,19 @@
       end do
      end do
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
     call pt%set_component( ef_sqr(1:np), &
     E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2 + Ez(p)^2
 
@@ -921,6 +947,9 @@
    !                 For field assignements
    !====================================
    ! fields are at t^n
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    case (2)
     kp2 = 1
@@ -933,7 +962,7 @@
      ef_sqr = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     interp = qqh_2d_spline( xp1 )
+     call qqh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -984,7 +1013,7 @@
      ef_sqr = zero_dp
      xp1(1:3) = pt(n, 1:3)
 
-     interp = qqh_3d_spline( xp1 )
+     call qqh_3d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -1059,10 +1088,8 @@
    integer, intent (in) :: np
    real (dp), intent (in) :: dt_step
 
-   real (dp), allocatable, dimension(:, :) :: xx, ap
-   real (dp), allocatable, dimension(:, :) :: ax1, axh1, ay1, ayh1, az1, azh1
+   real (dp), allocatable, dimension(:, :) :: ap
    real (dp), allocatable, dimension(:) :: inv_gam, gam, aa1, b1, dgam
-   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
    real (dp) :: dvol, dvol1
    real (dp) :: dth, ch
    integer (kind=2) :: i1, j1, k1, i2, j2, k2, n
@@ -1088,39 +1115,34 @@
    !========================================
    dth = 0.5*dt_step
    ch = sp_loc%charge
-
+   
    allocate( gam(np) )
    allocate( dgam(np) )
    allocate( inv_gam(np) )
    allocate( aa1(np), source=zero_dp )
    allocate( b1(np), source=zero_dp )
+   !========================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   !========================================
    select case (ndim)
-   !==========================
    case (2)
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( xx(np, 2) )
+    !==========================
+    call xx_realloc(gpc_xx, np, 2)
+    !==========================
     allocate( ap(np, 6), source=zero_dp )
-    allocate( ax1(np, 0:2) )
-    allocate( axh1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh1(np, 0:2) )
     k2 = 1
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    interp = qqh_2d_spline( xx )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( gpc_xx, interp )
 
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( axh1 => interp%h_coeff_x_rank2 )
+    associate( ayh1 => interp%h_coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
 
     !     upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
     !     wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
@@ -1158,17 +1180,26 @@
       end do
      end do
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
     !=========================
     call sp_loc%compute_gamma(pond_pot=ap(1:np, 6)) ! Check if needed, probably can be computed in lpf_env_positions
     inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
     ap(1:np, 1:3) = ch*ap(1:np, 1:3)
     ap(1:np, 4:5) = 0.5*ch*ch*ap(1:np, 4:5)
-    xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
-    xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 2
-     aa1(1:np) = aa1(1:np) + ap(1:np, n)*xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
-     b1(1:np) = b1(1:np) + ap(1:np, n + 3)*xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+     aa1(1:np) = aa1(1:np) + ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + ap(1:np, n + 3)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
     end do
     gam(1:np) = one_dp/inv_gam(1:np)
     dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
@@ -1182,43 +1213,32 @@
     ! Lorentz force already multiplied by q    
     call pt%set_component(ap(1:np, 3), BZ_COMP, lb=1, ub=np)
     call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
-     BZ_COMP, lb=1, ub=np) !weight/gamp
+     W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
 
    case (3)
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( k(np) )
-    allocate( kh(np) )
-    allocate( xx(np, 3) )
+    !==========================
+    call xx_realloc(gpc_xx, np, 2)
+    !==========================
     allocate( ap(np, 10), source=zero_dp )
-    allocate( ax1(np, 0:2) )
-    allocate( axh1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh1(np, 0:2) )
-    allocate( az1(np, 0:2) )
-    allocate( azh1(np, 0:2) )
 
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    interp = qqh_2d_spline( xx )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qqh_3d_spline( gpc_xx, interp )
 
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-    azh1(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
-    k(1:np) = interp%iz_rank2(1:np)
-    kh(1:np) = interp%ihz_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( az1 => interp%coeff_z_rank2 )
+    associate( axh1 => interp%h_coeff_x_rank2 )
+    associate( ayh1 => interp%h_coeff_y_rank2 )
+    associate( azh1 => interp%h_coeff_z_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
+    associate( k => interp%iz_rank2 )
+    associate( kh => interp%ihz_rank2 )
 
     do n = 1, np
      do k1 = 0, stl
@@ -1279,19 +1299,31 @@
       end do
      end do
     end do
-     
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
     !=========================
     call sp_loc%compute_gamma(pond_pot=ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
     inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
     ap(1:np, 1:6) = ch*ap(1:np, 1:6)
     ap(1:np, 7:9) = 0.5*ch*ch*ap(1:np, 7:9)
-    xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
-    xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
-    xx(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 3
-     aa1(1:np) = aa1(1:np) + ap(1:np, n)*xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
-     b1(1:np) = b1(1:np) + ap(1:np, n + 6)*xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+     aa1(1:np) = aa1(1:np) + ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + ap(1:np, n + 6)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
     end do
     gam(1:np) = one_dp/inv_gam(1:np)
     dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
@@ -1308,7 +1340,7 @@
     call pt%set_component(ap(1:np, 5), BY_COMP, lb=1, ub=np)
     call pt%set_component(ap(1:np, 6), BZ_COMP, lb=1, ub=np)
     call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
-     BZ_COMP, lb=1, ub=np) !weight/gamp
+     W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
    end select
   end subroutine
@@ -1351,6 +1383,9 @@
    ! pt(1:7)  in 3D
    !========================================
    dth = 0.5*dt_step
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    !==========================
    case (2)
@@ -1369,7 +1404,7 @@
      upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
      wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
 
-     interp = qqh_2d_spline( xp1 )
+     call qqh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -1446,7 +1481,7 @@
      upart(1:3) = sp_loc%part(n, 4:6) !the current particle  momenta
      wgh_cmp = sp_loc%part(n, 7) !the current particle (weight,charge)
 
-     interp = qqh_3d_spline( xp1 )
+     call qqh_3d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -1550,9 +1585,7 @@
    integer, intent (in) :: np
    real (dp), intent (in) :: om0
 
-   real (dp), allocatable, dimension(:, :) :: xx, ap
-   real (dp), allocatable, dimension(:, :) :: ax1, axh1, ay1, ayh1, az1, azh1
-   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real (dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol, ddx, ddy
    integer :: i1, j1, i2, j2, k1, k2, n
    !==============================
@@ -1568,37 +1601,31 @@
    !====================================
    ddx = dx_inv
    ddy = dy_inv
-
+   !========================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   !========================================
    !===== enter species positions at t^{n+1} level========
    ! fields are at t^n
    select case (ndim)
    case (2)
-    k2 = 1
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( xx(np, 2) )
+    !==========================
+    call xx_realloc(gpc_xx, np, 2)
+    !==========================
     allocate( ap(np, 6), source=zero_dp )
-    allocate( ax1(np, 0:2) )
-    allocate( axh1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh1(np, 0:2) )
+    k2 = 1
 
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    interp = qqh_2d_spline( xx )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( gpc_xx, interp )
 
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
-
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( axh1 => interp%h_coeff_x_rank2 )
+    associate( ayh1 => interp%h_coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
     !==========================
     do n = 1, np
      do j1 = 0, 2
@@ -1626,6 +1653,14 @@
      end do
     end do
     !==================
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
     call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
      POND_COMP, lb=1, ub=np) !The interpolated |A| potential
     ap(1:np, 1) = om0*ap(1:np, 1) 
@@ -1644,41 +1679,29 @@
 
     !==========================
    case (3)
-
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( k(np) )
-    allocate( kh(np) )
-    allocate( xx(np, 3) )
-    allocate( ap(np, 6), source=zero_dp )
-    allocate( ax1(np, 0:2) )
-    allocate( axh1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh1(np, 0:2) )
-
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    interp = qqh_2d_spline( xx )
-
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-    azh1(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
-    k(1:np) = interp%iz_rank2(1:np)
-    kh(1:np) = interp%ihz_rank2(1:np)
-
     !==========================
+    call xx_realloc(gpc_xx, np, 3)
+    !==========================
+    allocate( ap(np, 6), source=zero_dp )
 
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qqh_3d_spline( gpc_xx, interp )
+
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( az1 => interp%coeff_z_rank2 )
+    associate( axh1 => interp%h_coeff_x_rank2 )
+    associate( ayh1 => interp%h_coeff_y_rank2 )
+    associate( azh1 => interp%h_coeff_z_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
+    associate( k => interp%iz_rank2 )
+    associate( kh => interp%ihz_rank2 )
+    !==========================
     do n = 1, np
      do k1 = 0, 2
       k2 = k(n) + k1
@@ -1707,6 +1730,18 @@
       end do
      end do
     end do
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
     call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
     POND_COMP, lb=1, ub=np) !The interpolated |A| potential
     ap(1:np, 1) = om0*ap(1:np, 1) 
@@ -1756,6 +1791,9 @@
    ddy = dy_inv
    !===== enter species positions at t^{n+1} level========
    ! fields are at t^n
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    case (2)
     ax1(0:2) = zero_dp
@@ -1772,7 +1810,7 @@
      ap(1:6) = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     interp = qqh_2d_spline( xp1 )
+     call qqh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -1836,7 +1874,7 @@
      ap(1:6) = zero_dp
      xp1(1:3) = pt(n, 1:3)
 
-     interp = qqh_3d_spline( xp1 )
+     call qqh_3d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -1900,9 +1938,7 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndm
 
-   real (dp), allocatable, dimension(:, :) :: xx, ap
-   real (dp), allocatable, dimension(:, :) :: ax1, axh1, ay1, ayh1, az1, azh1
-   integer, allocatable, dimension(:) :: i, ih, j, jh, k, kh
+   real (dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol, dvol1
    integer ::i1, j1, i2, j2, k1, k2, n
 
@@ -1919,37 +1955,30 @@
    !  ap(3)= [D_z(F)](i,j,k+1/2)
    !  ap(4)= [Phi](i,j,k)
    !===========================================
-
+   !========================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   !========================================
    select case (ndim)
    case (2)
-    k2 = 1
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( xx(np, 2) )
-    allocate( ap(np, 6), source=zero_dp )
-    allocate( ax1(np, 0:2) )
-    allocate( axh1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh1(np, 0:2) )
-
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    interp = qqh_2d_spline( xx )
-
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
-
     !==========================
+    call xx_realloc(gpc_xx, np, 2)
+    !==========================
+    allocate( ap(np, 3), source=zero_dp )
+    k2 = 1
 
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( gpc_xx, interp )
+
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( axh1 => interp%h_coeff_x_rank2 )
+    associate( ayh1 => interp%h_coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
+    !==========================
     do n = 1, np
      do j1 = 0, 2
       j2 = j(n) + j1
@@ -1971,48 +2000,45 @@
        ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[Phi]
       end do
      end do
-
-     !assigned grad[Phi] and Phi
-     call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-     call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-     call pt%set_component( ap(1:np, 3), POND_COMP, lb=1, ub=np)
     end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    !assigned grad[Phi] and Phi
+    call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), POND_COMP, lb=1, ub=np)
     !=================================
    case (3)
-    allocate( i(np) )
-    allocate( ih(np) )
-    allocate( j(np) )
-    allocate( jh(np) )
-    allocate( k(np) )
-    allocate( kh(np) )
-    allocate( xx(np, 3) )
-    allocate( ap(np, 6), source=zero_dp )
-    allocate( ax1(np, 0:2) )
-    allocate( axh1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( ayh1(np, 0:2) )
-
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    interp = qqh_2d_spline( xx )
-
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-    axh1(1:np, 0:2) = interp%h_coeff_x_rank2(1:np, 1:3)
-    ayh1(1:np, 0:2) = interp%h_coeff_y_rank2(1:np, 1:3)
-    azh1(1:np, 0:2) = interp%h_coeff_z_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    ih(1:np) = interp%ihx_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    jh(1:np) = interp%ihy_rank2(1:np)
-    k(1:np) = interp%iz_rank2(1:np)
-    kh(1:np) = interp%ihz_rank2(1:np)
-
     !==========================
+    call xx_realloc(gpc_xx, np, 3)
+    !==========================
+    allocate( ap(np, 6), source=zero_dp )
 
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qqh_3d_spline( gpc_xx, interp )
+
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( az1 => interp%coeff_z_rank2 )
+    associate( axh1 => interp%h_coeff_x_rank2 )
+    associate( ayh1 => interp%h_coeff_y_rank2 )
+    associate( azh1 => interp%h_coeff_z_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( ih => interp%ihx_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( jh => interp%ihy_rank2 )
+    associate( k => interp%iz_rank2 )
+    associate( kh => interp%ihz_rank2 )
+    !==========================
     do n = 1, np
      do k1 = 0, 2
       k2 = k(n) + k1
@@ -2047,13 +2073,25 @@
        end do
       end do
      end do
-     !assigned grad[Phi] and Phi
-     call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-     call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-     call pt%set_component( ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
-     call pt%set_component( ap(1:np, 4), POND_COMP, lb=1, ub=np)
-     !=================================
     end do
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    !assigned grad[Phi] and Phi
+    call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 4), POND_COMP, lb=1, ub=np)
+    !=================================
    end select
   end subroutine
   !===========================
@@ -2084,7 +2122,9 @@
    !  ap(3)= [D_z(F)](i,j,k+1/2)
    !  ap(4)= [Phi](i,j,k)
    !===========================================
-
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    case (2)
     dxe = dx_inv
@@ -2098,7 +2138,7 @@
      ap = 0.0
      xp1(1:2) = pt(n, 1:2)
 
-     interp = qqh_2d_spline( xp1 )
+     call qqh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -2147,7 +2187,7 @@
      ap = 0.0
      xp1(1:3) = pt(n, 1:3)
 
-     interp = qqh_3d_spline( xp1 )
+     call qqh_3d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -2210,10 +2250,7 @@
    real (dp), intent (inout) :: av(:, :, :, :)
    integer, intent (in) :: np, ic
 
-   real (dp), allocatable, dimension(:, :) :: xx
-   real (dp), allocatable, dimension(:, :) :: ax1, ay1, az1
    real (dp), allocatable, dimension(:) :: weight
-   integer, allocatable, dimension(:) :: i, j, k
    real (dp) :: dvol, dvol1
    integer :: i1, j1, i2, j2, k1, k2, n
    !===============================================
@@ -2221,27 +2258,24 @@
    ! exit av(:,:,:,ic) the den source in envelope equation :  <n*wgh/gamp> > 0
    ! exit efp(1:3) relative positions at time level n
    !=========================
-
+   !=============================================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   !================================
    select case (ndim)
    case (2)
     k2 = 1
-    allocate( i(np) )
-    allocate( j(np) )
+    call xx_realloc(gpc_xx, np, 2)
     allocate( weight(np) )
-    allocate( xx(np, 2) )
-    allocate( ax1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
 
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    interp = qden_2d_wgh( xx )
+    call qden_2d_wgh( gpc_xx, interp )
 
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( j => interp%iy_rank2 )
 
     weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
      !==========================
@@ -2257,28 +2291,25 @@
      end do
     end do
     !========================
+    end associate
+    end associate
+    end associate
+    end associate
    case (3)
-    allocate( i(np) )
-    allocate( j(np) )
-    allocate( k(np) )
+    call xx_realloc(gpc_xx, np, 3)
     allocate( weight(np) )
-    allocate( xx(np, 3) )
-    allocate( ax1(np, 0:2) )
-    allocate( ay1(np, 0:2) )
-    allocate( az1(np, 0:2) )
 
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    interp = qden_3d_wgh( xx )
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qden_3d_wgh( gpc_xx, interp )
 
-    ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    k(1:np) = interp%iz_rank2(1:np)
+    associate( ax1 => interp%coeff_x_rank2 )
+    associate( ay1 => interp%coeff_y_rank2 )
+    associate( az1 => interp%coeff_z_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( k => interp%iz_rank2 )
 
     weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
     do n = 1, np
@@ -2295,6 +2326,12 @@
       end do
      end do
     end do
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
    end select
    !In ebfp(1:3) exit relative (x,y,z) positions at current t^n level
    !In av(ic)  exit particle density
@@ -2320,6 +2357,9 @@
    ay1(0:2) = zero_dp
    az1(0:2) = zero_dp
 
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    case (2)
     k2 = 1
@@ -2328,7 +2368,7 @@
      xp1(1:2) = efp(n, 1:2)
      wghp = efp(n, 5) !the particle  wgh/gamp at current time
 
-     interp = qden_2d_wgh( xp1 )
+     call qden_2d_wgh( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -2353,7 +2393,7 @@
      xp1(1:3) = efp(n, 1:3) ! local x-y-z
      wghp = efp(n, 7) !the particle  wgh/gamp at current time
 
-     interp = qden_3d_wgh( xp1 )
+     call qden_3d_wgh( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(1:3)
      ay1(0:2) = interp%coeff_y(1:3)
@@ -2392,21 +2432,21 @@
    integer, intent (in) :: np
 
    real (dp), allocatable, dimension(:, :) :: xx, ap
-   real (dp), allocatable, dimension(:, :) :: ax0, ay0, axh0
-   real (dp), allocatable, dimension(:, :) :: ax1, ay1, axh, ayh, axh1
+   real (dp), allocatable, dimension(:, :) :: axh0, axh1
+   real (dp), allocatable, dimension(:, :) :: axh, ayh
    real (dp), allocatable, dimension(:, :) :: currx, curry
    real (dp), allocatable, dimension(:) :: weight
-   integer, allocatable, dimension(:) :: i, ii0, j, jj0, ih, jh
+   integer, allocatable, dimension(:) :: ih, jh
    integer, allocatable, dimension(:) :: x0, x1, y0, y1
    real (dp) :: dvol
    integer :: i1, j1, i2, j2, n
    !==========================
    !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
    ! ==============================Only new and old positions needed
-   allocate( ax1(np, 0:2) )
-   allocate( ay1(np, 0:2) )
-   allocate( ax0(np, 0:2) )
-   allocate( ay0(np, 0:2) )
+   !=============================================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   !=============================================================
    allocate( axh(np, 0:4), source=zero_dp )
    allocate( ayh(np, 0:4), source=zero_dp )
    allocate( currx(np, 0:4) )
@@ -2416,46 +2456,39 @@
    select case (ndim)
    case (2)
     if (curr_ndim==2) then !Two current components
-     allocate( xx(np, 2) )
+     call xx_realloc(gpc_xx, np, 2)
      allocate( x0(np) )
      allocate( x1(np) )
      allocate( y0(np) )
      allocate( y1(np) )
-     allocate( i(np) )
-     allocate( ii0(np) )
-     allocate( j(np) )
-     allocate( jj0(np) )
      allocate( ih(np) )
      allocate( jh(np) )
 
      weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
      ! Interpolation on new positions
-     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
      
-     interp = qden_2d_wgh( xx )
-     
-     ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-     ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-     
-     i(1:np) = interp%ix_rank2(1:np)
-     j(1:np) = interp%iy_rank2(1:np)
+     call qden_2d_wgh( gpc_xx, interp )
      
      ! Interpolation on old positions
-     xx(1:np, 1) = set_local_positions( pt, X_COMP )
-     xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
+     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
      
-     interp = qden_2d_wgh( xx )
-     
-     ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-     ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
+     call qden_2d_wgh( gpc_xx, interp_old )
 
-     ii0(1:np) = interp%ix_rank2(1:np)
-     jj0(1:np) = interp%iy_rank2(1:np)
+     associate( ax1 => interp%coeff_x_rank2 )
+     associate( ay1 => interp%coeff_y_rank2 )
+     associate( i => interp%ix_rank2 )
+     associate( j => interp%iy_rank2 )
+     associate( ax0 => interp_old%coeff_x_rank2 )
+     associate( ay0 => interp_old%coeff_y_rank2 )
+     associate( ii0 => interp_old%ix_rank2 )
+     associate( jj0 => interp_old%iy_rank2 )
 
      ih(1:np) = i(1:np) - ii0(1:np) + 1
-
+     
      !========================================
      do n = 1, np
       do i1 = 0, 2
@@ -2523,20 +2556,24 @@
        end do
       end do
      end do
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
     end if
      !========================================
     if (curr_ndim==3) then !Three currents conditions in 2D grid
 
      !============== ********************** =================
-     allocate( xx(np, 2) )
+     call xx_realloc(gpc_xx, np, 2)
      allocate( x0(np) )
      allocate( x1(np) )
      allocate( y0(np) )
      allocate( y1(np) )
-     allocate( i(np) )
-     allocate( ii0(np) )
-     allocate( j(np) )
-     allocate( jj0(np) )
      allocate( ih(np) )
      allocate( jh(np) )
      allocate( axh0(np, 0:4))
@@ -2545,38 +2582,35 @@
      weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
      ! Interpolation on new positions
-     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
      
-     interp = qden_2d_wgh( xx )
-     
-     ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-     ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-     
-     i(1:np) = interp%ix_rank2(1:np)
-     j(1:np) = interp%iy_rank2(1:np)
+     call qden_2d_wgh( xx, interp )
      
      ! Interpolation on old positions
-     xx(1:np, 1) = set_local_positions( pt, X_COMP )
-     xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
+     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
      
-     interp = qden_2d_wgh( xx )
-     
-     ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-     ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-
-     ii0(1:np) = interp%ix_rank2(1:np)
-     jj0(1:np) = interp%iy_rank2(1:np)
-
-     ih(1:np) = i(1:np) - ii0(1:np) + 1
+     call qden_2d_wgh( xx, interp_old )
 
      !========================================
      ! Computing velocity along z
-     xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
-     xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
+     gpc_xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
+     gpc_xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
 
      ! Storing z_new - z_old in xx(1:np, 1)
-     xx(1:np, 1) = weight(1:np)*(xx(1:np, 1) - xx(1:np, 2))/3.
+     gpc_xx(1:np, 1) = weight(1:np)*(xx(1:np, 1) - xx(1:np, 2))/3.
+     
+     associate( ax1 => interp%coeff_x_rank2 )
+     associate( ay1 => interp%coeff_y_rank2 )
+     associate( i => interp%ix_rank2 )
+     associate( j => interp%iy_rank2 )
+     associate( ax0 => interp_old%coeff_x_rank2 )
+     associate( ay0 => interp_old%coeff_y_rank2 )
+     associate( ii0 => interp_old%ix_rank2 )
+     associate( jj0 => interp_old%iy_rank2 )
+
+     ih(1:np) = i(1:np) - ii0(1:np) + 1
 
      do n = 1, np
       do i1 = 0, 2
@@ -2666,6 +2700,14 @@
        end do
       end do
      end do 
+     end associate
+     end associate
+     end associate
+     end associate
+     end associate
+     end associate
+     end associate
+     end associate
     end if
    end select
    !===================================
@@ -2691,6 +2733,9 @@
    ax0 = zero_dp
    ay0 = zero_dp
    !======================
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    case (2)
     if (curr_ndim==2) then !Two current components
@@ -2712,7 +2757,7 @@
       xp0(1:2) = pt(n, 3:4) !x-y  -old
       wght = real(pt(n,5), sp) !w*q
       !=====================
-      interp = qden_2d_wgh( xp0 )
+      call qden_2d_wgh( xp0, interp )
 
       ax0(0:2) = interp%coeff_x(1:3)
       ay0(0:2) = interp%coeff_y(1:3)
@@ -2721,7 +2766,7 @@
       jj0 = interp%iy
 
 
-      interp = qden_2d_wgh( xp1 )
+      call qden_2d_wgh( xp1, interp )
 
       ax1(0:2) = interp%coeff_x(1:3)
       ay1(0:2) = interp%coeff_y(1:3)
@@ -2803,7 +2848,7 @@
       vp(3) = wght*vp(3)/3. !dt*q*w*vz/3
       !=====================
 
-      interp = qden_2d_wgh( xp0 )
+      call qden_2d_wgh( xp0, interp )
 
       ax0(0:2) = interp%coeff_x(1:3)
       ay0(0:2) = interp%coeff_y(1:3)
@@ -2812,7 +2857,7 @@
       jj0 = interp%iy
 
 
-      interp = qden_2d_wgh( xp1 )
+      call qden_2d_wgh( xp1, interp )
 
       ax1(0:2) = interp%coeff_x(1:3)
       ay1(0:2) = interp%coeff_y(1:3)
@@ -2910,24 +2955,22 @@
    integer, intent (in) :: np
 
    real (dp), allocatable, dimension(:, :) :: xx, ap
-   real (dp), allocatable, dimension(:, :) :: ax0, ay0, az0
    real (dp), allocatable, dimension(:, :) :: axh0, axh1, ayh0, ayh1
-   real (dp), allocatable, dimension(:, :) :: ax1, ay1, az1, axh, ayh, azh
+   real (dp), allocatable, dimension(:, :) :: axh, ayh, azh
    real (dp), allocatable, dimension(:, :) :: currx, curry, currz
    real (dp), allocatable, dimension(:) :: weight
-   integer, allocatable, dimension(:) :: i, ii0, j, jj0, k, kk0, ih, jh, kh
+   integer, allocatable, dimension(:) :: ih, jh, kh
    integer, allocatable, dimension(:) :: x0, x1, y0, y1, z0, z1
    real (dp) :: dvol, dvolh
    integer :: i1, j1, i2, j2, k1, k2, n
    !==========================
    !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
    ! ==============================Only new and old positions needed
-   allocate( ax1(np, 0:2) )
-   allocate( ay1(np, 0:2) )
-   allocate( az1(np, 0:2) )
-   allocate( ax0(np, 0:2) )
-   allocate( ay0(np, 0:2) )
-   allocate( az0(np, 0:2) )
+   !=============================================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   call xx_realloc(gpc_xx, np, 3)
+   !=============================================================
    allocate( axh(np, 0:4), source=zero_dp )
    allocate( ayh(np, 0:4), source=zero_dp )
    allocate( azh(np, 0:4), source=zero_dp )
@@ -2935,19 +2978,12 @@
    allocate( curry(np, 0:4) )
    allocate( currz(np, 0:4) )
    allocate( weight(np) )
-   allocate( xx(np, 3) )
    allocate( x0(np) )
    allocate( x1(np) )
    allocate( y0(np) )
    allocate( y1(np) )
    allocate( z0(np) )
    allocate( z1(np) )
-   allocate( i(np) )
-   allocate( ii0(np) )
-   allocate( j(np) )
-   allocate( jj0(np) )
-   allocate( k(np) )
-   allocate( kk0(np) )
    allocate( ih(np) )
    allocate( jh(np) )
    allocate( kh(np) )
@@ -2959,34 +2995,31 @@
    weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
    ! Interpolation on new positions
-   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
    
-   interp = qden_2d_wgh( xx )
-   
-   ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-   ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-   az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-   
-   i(1:np) = interp%ix_rank2(1:np)
-   j(1:np) = interp%iy_rank2(1:np)
-   k(1:np) = interp%iz_rank2(1:np)
+   call qden_3d_wgh( gpc_xx, interp )
    
    ! Interpolation on old positions
-   xx(1:np, 1) = set_local_positions( pt, X_COMP )
-   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-   xx(1:np, 3) = set_local_positions( pt, Z_COMP )
+   gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
    
-   interp = qden_2d_wgh( xx )
-   
-   ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-   ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-   az0(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
+   call qden_3d_wgh( gpc_xx, interp_old )
 
-   ii0(1:np) = interp%ix_rank2(1:np)
-   jj0(1:np) = interp%iy_rank2(1:np)
-   kk0(1:np) = interp%iz_rank2(1:np)
+   associate( ax1 => interp%coeff_x_rank2 )
+   associate( ay1 => interp%coeff_y_rank2 )
+   associate( az1 => interp%coeff_z_rank2 )
+   associate( i => interp%ix_rank2 )
+   associate( j => interp%iy_rank2 )
+   associate( k => interp%iz_rank2 )
+   associate( ax0 => interp_old%coeff_x_rank2 )
+   associate( ay0 => interp_old%coeff_y_rank2 )
+   associate( az0 => interp_old%coeff_z_rank2 )
+   associate( ii0 => interp_old%ix_rank2 )
+   associate( jj0 => interp_old%iy_rank2 )
+   associate( kk0 => interp_old%iz_rank2 )
 
    ih(1:np) = i(1:np) - ii0(1:np) + 1
 
@@ -3113,6 +3146,19 @@
     end do
    end do
    !============= Curr data on [1:n+4] extended range
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+
   end subroutine
 
   subroutine esirkepov_3d_curr_old(sp_loc, pt, jcurr, np)
@@ -3132,6 +3178,9 @@
    !=======================
    !Enter pt(4:6) old positions sp_loc(1:3) new positions
 
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    ax1(0:2) = zero_dp
    ay1(0:2) = zero_dp
    az1(0:2) = zero_dp
@@ -3161,7 +3210,7 @@
     xp1(1:3) = pt(n, 1:3) !increments of the new positions
     xp0(1:3) = pt(n, 4:6) !increments of old positions
 
-    interp = qden_3d_wgh( xp0 )
+    call qden_3d_wgh( xp0, interp )
 
     ax0(0:2) = interp%coeff_x(1:3)
     ay0(0:2) = interp%coeff_y(1:3)
@@ -3171,7 +3220,7 @@
     jj0 = interp%iy
     kk0 = interp%iz
 
-    interp = qden_3d_wgh( xp1 )
+    call qden_3d_wgh( xp1, interp )
 
     ax1(0:2) = interp%coeff_x(1:3)
     ay1(0:2) = interp%coeff_y(1:3)
@@ -3301,38 +3350,19 @@
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
 
-   real (dp), allocatable, dimension(:, :) :: xx, vp
-   real (dp), allocatable, dimension(:, :) :: ax1, ay1
-   real (dp), allocatable, dimension(:, :) :: ax0, ay0
-   real (dp), allocatable, dimension(:, :) :: axh0, ayh0
-   real (dp), allocatable, dimension(:, :) :: axh1, ayh1
+   real (dp), allocatable, dimension(:, :) :: vp
    real (dp), allocatable, dimension(:) :: weight
-   integer, allocatable, dimension(:) :: i, j, ii0, jj0
-   integer, allocatable, dimension(:) :: ih, ih0, jh, jh0
    real (dp) ::dvol(3)
    integer :: i1, j1, i2, j2, n
    !=======================
    !Enter pt(3:4) old x-y positions
    !====================================
-
-   allocate( xx(np, 2) )
+   !=============================================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   call xx_realloc(gpc_xx, np, 2)
+   !=============================================================
    allocate( vp(np, 2) )
-   allocate( ax1(np, 0:2) )
-   allocate( ay1(np, 0:2) )
-   allocate( ax0(np, 0:2) )
-   allocate( ax0(np, 0:2) )
-   allocate( axh1(np, 0:1) )
-   allocate( ayh1(np, 0:1) )
-   allocate( axh0(np, 0:1) )
-   allocate( ayh0(np, 0:1) )
-   allocate( i(np) )
-   allocate( j(np) )
-   allocate( ih(np) )
-   allocate( jh(np) )
-   allocate( ii0(np) )
-   allocate( jj0(np) )
-   allocate( ih0(np) )
-   allocate( jh0(np) )
    allocate( weight(np) )
 
    weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
@@ -3348,37 +3378,33 @@
     sp_loc%call_component(PY_COMP, lb=1, ub=np)
 
    ! Interpolation on new positions
-   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-   interp = qlh_2d_spline( xx )
-
-   ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-   ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-   axh1(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
-   ayh1(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
-
-   i(1:np) = interp%ix_rank2(1:np)
-   ih(1:np) = interp%ihx_rank2(1:np)
-   j(1:np) = interp%iy_rank2(1:np)
-   jh(1:np) = interp%ihy_rank2(1:np)
+   call qlh_2d_spline( gpc_xx, interp )
 
    ! Interpolation on old positions
-   xx(1:np, 1) = set_local_positions( pt, X_COMP )
-   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
 
-   interp = qlh_2d_spline( xx )
-
-   ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-   ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-   axh0(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
-   ayh0(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
-
-   ii0(1:np) = interp%ix_rank2(1:np)
-   ih0(1:np) = interp%ihx_rank2(1:np)
-   jj0(1:np) = interp%iy_rank2(1:np)
-   jh0(1:np) = interp%ihy_rank2(1:np)
+   call qlh_2d_spline( gpc_xx, interp_old )
    
+   associate( ax1 => interp%coeff_x_rank2 )
+   associate( ay1 => interp%coeff_y_rank2 )
+   associate( axh1 => interp%h_coeff_x_rank2 )
+   associate( ayh1 => interp%h_coeff_y_rank2 )
+   associate( i => interp%ix_rank2 )
+   associate( ih => interp%ihx_rank2 )
+   associate( j => interp%iy_rank2 )
+   associate( jh => interp%ihy_rank2 )
+   associate( ax0 => interp_old%coeff_x_rank2 )
+   associate( ay0 => interp_old%coeff_y_rank2 )
+   associate( axh0 => interp_old%h_coeff_x_rank2 )
+   associate( ayh0 => interp_old%h_coeff_y_rank2 )
+   associate( ii0 => interp_old%ix_rank2 )
+   associate( ih0 => interp_old%ihx_rank2 )
+   associate( jj0 => interp_old%iy_rank2 )
+   associate( jh0 => interp_old%ihy_rank2 )
    do n = 1, np
     !===============Jx ========
     do j1 = 0, 2
@@ -3411,6 +3437,22 @@
      end do
     end do
    end do
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
   end subroutine
   !========================
   subroutine ncdef_2d_curr_old(sp_loc, pt, jcurr, np)
@@ -3429,6 +3471,9 @@
    !=======================
    !Enter pt(3:4) old x-y positions
    !=====================================
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    do n = 1, np
     pt(n, 1:2) = sp_loc%part(n, 1:2) !(x,y,z) new
    end do
@@ -3443,7 +3488,7 @@
     xp1(1:2) = pt(n, 1:2)
     xp0(1:2) = pt(n, 3:4)
 
-    interp = qlh_2d_spline( xp0 )
+    call qlh_2d_spline( xp0, interp )
 
     ax0(0:2) = interp%coeff_x(1:3)
     ay0(0:2) = interp%coeff_y(1:3)
@@ -3457,7 +3502,7 @@
 
     !====================
 
-    interp = qlh_2d_spline( xp1 )
+    call qlh_2d_spline( xp1, interp )
 
     ax1(0:2) = interp%coeff_x(1:3)
     ay1(0:2) = interp%coeff_y(1:3)
@@ -3509,14 +3554,8 @@
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
 
-   real (dp), allocatable, dimension(:, :) :: xx, vp
-   real (dp), allocatable, dimension(:, :) :: ax1, ay1, az1
-   real (dp), allocatable, dimension(:, :) :: ax0, ay0, az0
-   real (dp), allocatable, dimension(:, :) :: axh0, ayh0, azh0
-   real (dp), allocatable, dimension(:, :) :: axh1, ayh1, azh1
+   real (dp), allocatable, dimension(:, :) :: vp
    real (dp), allocatable, dimension(:) :: weight
-   integer, allocatable, dimension(:) :: i, j, k, ii0, jj0, kk0
-   integer, allocatable, dimension(:) :: ih, ih0, jh, jh0, kh, kh0
    real (dp) ::dvol(3)
    integer :: i1, j1, k1, i2, j2, k2, n
    !=======================
@@ -3527,24 +3566,12 @@
    ! Exit in jcurr(1:3) =[Drho,J_y,J_z]   !Drho= rho^{new}-rho^{old}
    ! Component J_x recovered by enforcing the continuity equation on a grid
    !=============================================
-   allocate( xx(np, 3) )
+   !=============================================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   call xx_realloc(gpc_xx, np, 3)
+   !=============================================================
    allocate( vp(np, 3) )
-   allocate( ax1(np, 0:2) )
-   allocate( ay1(np, 0:2) )
-   allocate( ax0(np, 0:2) )
-   allocate( ax0(np, 0:2) )
-   allocate( axh1(np, 0:1) )
-   allocate( ayh1(np, 0:1) )
-   allocate( axh0(np, 0:1) )
-   allocate( ayh0(np, 0:1) )
-   allocate( i(np) )
-   allocate( j(np) )
-   allocate( ih(np) )
-   allocate( jh(np) )
-   allocate( ii0(np) )
-   allocate( jj0(np) )
-   allocate( ih0(np) )
-   allocate( jh0(np) )
    allocate( weight(np) )
 
    weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
@@ -3563,46 +3590,43 @@
     sp_loc%call_component(PZ_COMP, lb=1, ub=np)
 
    ! Interpolation on new positions
-   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
  
-   interp = qlh_2d_spline( xx )
- 
-   ax1(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-   ay1(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-   az1(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-   axh1(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
-   ayh1(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
-   azh1(1:np, 0:1) = interp%h_coeff_z_rank2(1:np, 1:2)
- 
-   i(1:np) = interp%ix_rank2(1:np)
-   ih(1:np) = interp%ihx_rank2(1:np)
-   j(1:np) = interp%iy_rank2(1:np)
-   jh(1:np) = interp%ihy_rank2(1:np)
-   k(1:np) = interp%iz_rank2(1:np)
-   kh(1:np) = interp%ihz_rank2(1:np)
+   call qlh_3d_spline( gpc_xx, interp )
  
     ! Interpolation on old positions
-   xx(1:np, 1) = set_local_positions( pt, X_COMP )
-   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-   xx(1:np, 3) = set_local_positions( pt, Z_COMP )
+   gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
  
-   interp = qlh_2d_spline( xx )
- 
-   ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-   ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-   az0(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-   axh0(1:np, 0:1) = interp%h_coeff_x_rank2(1:np, 1:2)
-   ayh0(1:np, 0:1) = interp%h_coeff_y_rank2(1:np, 1:2)
-   azh0(1:np, 0:1) = interp%h_coeff_z_rank2(1:np, 1:2)
- 
-   ii0(1:np) = interp%ix_rank2(1:np)
-   ih0(1:np) = interp%ihx_rank2(1:np)
-   jj0(1:np) = interp%iy_rank2(1:np)
-   jh0(1:np) = interp%ihy_rank2(1:np)
-   kk0(1:np) = interp%iz_rank2(1:np)
-   kh0(1:np) = interp%ihz_rank2(1:np)
+   call qlh_3d_spline( gpc_xx, interp_old )
+
+   associate( ax1 => interp%coeff_x_rank2 )
+   associate( ay1 => interp%coeff_y_rank2 )
+   associate( az1 => interp%coeff_z_rank2 )
+   associate( axh1 => interp%h_coeff_x_rank2 )
+   associate( ayh1 => interp%h_coeff_y_rank2 )
+   associate( azh1 => interp%h_coeff_z_rank2 )
+   associate( i => interp%ix_rank2 )
+   associate( ih => interp%ihx_rank2 )
+   associate( j => interp%iy_rank2 )
+   associate( jh => interp%ihy_rank2 )
+   associate( k => interp%iz_rank2 )
+   associate( kh => interp%ihz_rank2 )
+   associate( ax0 => interp_old%coeff_x_rank2 )
+   associate( ay0 => interp_old%coeff_y_rank2 )
+   associate( az0 => interp_old%coeff_z_rank2 )
+   associate( axh0 => interp_old%h_coeff_x_rank2 )
+   associate( ayh0 => interp_old%h_coeff_y_rank2 )
+   associate( azh0 => interp_old%h_coeff_z_rank2 )
+   associate( ii0 => interp_old%ix_rank2 )
+   associate( ih0 => interp_old%ihx_rank2 )
+   associate( jj0 => interp_old%iy_rank2 )
+   associate( jh0 => interp_old%ihy_rank2 )
+   associate( kk0 => interp_old%iz_rank2 )
+   associate( kh0 => interp_old%ihz_rank2 )
 
    do n = 1, np
     !======================   Jx
@@ -3668,6 +3692,30 @@
      end do
     end do
    end do
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
+   end associate
    !============= Curr and density data on [0:n+3] extended range
   end subroutine
   !==========================
@@ -3695,6 +3743,9 @@
    ! Component J_x recovered by enforcing the continuity equation on a grid
    !=============================================
 
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    do n = 1, np
     pt(n, 1:3) = sp_loc%part(n, 1:3) !(x,y,z) new
    end do
@@ -3710,7 +3761,7 @@
     xp1(1:3) = pt(n, 1:3) !new relative coordinates
     xp0(1:3) = pt(n, 4:6) !old relative coordinates
 
-    interp = qlh_3d_spline( xp0 )
+    call qlh_3d_spline( xp0, interp )
 
     ax0(0:2) = interp%coeff_x(1:3)
     ay0(0:2) = interp%coeff_y(1:3)
@@ -3727,7 +3778,7 @@
     kh0 = interp%ihz
 
     !====================
-    interp = qlh_3d_spline( xp1 )
+    call qlh_3d_spline( xp1, interp )
 
     ax1(0:2) = interp%coeff_x(1:3)
     ay1(0:2) = interp%coeff_y(1:3)

@@ -29,6 +29,7 @@
 
   type(interp_coeff), private :: interp
   !! Useful variable to store interpolation results
+  real(dp), dimension(:, :), allocatable, private, save :: gpu_xx
 
   interface set_grid_charge
    module procedure :: set_grid_charge_new
@@ -102,6 +103,9 @@
    ay0(0:3) = zero_dp
    az0(0:3) = zero_dp
    spl = 3
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    case (2)
     ch = 5
@@ -116,7 +120,7 @@
      wght = real(pt(n,4), sp)
      xp(1:2) = pt(n, 1:2)
 
-     interp = cden_2d_wgh( xp )
+     call cden_2d_wgh( xp, interp )
 
      ax0(0:3) = interp%coeff_x(1:4)
      ay0(0:3) = interp%coeff_y(1:4)
@@ -148,7 +152,7 @@
      xp(1:3) = pt(n, 1:3)
      wght = real(pt(n,4), sp)
 
-     interp = cden_3d_wgh( xp )
+     call cden_3d_wgh( xp, interp )
 
      ax0(0:3) = interp%coeff_x(1:4)
      ay0(0:3) = interp%coeff_y(1:4)
@@ -195,6 +199,9 @@
    x1_loc=xmn
    y1_loc=yft_min
    z1_loc=zft_min
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    select case (ndim)
    case (2)
     ch = 5
@@ -209,7 +216,7 @@
      wght = real(pt(n,4), sp)
      xp(1:2) = pt(n, 1:2)
 
-     interp = qden_2d_wgh( xp )
+     call qden_2d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -241,7 +248,7 @@
      xp(1:3) = pt(n, 1:3)
      wght = real(pt(n,4), sp)
 
-     interp = qden_3d_wgh( xp )
+     call qden_3d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -275,36 +282,32 @@
    real (dp), intent (inout) :: den(:, :, :, :)
    integer, intent (in) :: np, ic
    real (dp) :: dvol
-   real (dp), allocatable, dimension(:, :) :: ax0, ay0, az0, xx
    real (dp), allocatable, dimension(:) :: weight
-   integer, allocatable, dimension(:) :: i, j, k
    integer :: i1, j1, k1, i2, j2, k2, n, ch, spline
    !======================
    ! Computes charge density of species ic on a grid
-   !================================= 
-   allocate( ax0(np, 0:2) )
-   allocate( ay0(np, 0:2) )
-   allocate( i(np) )
-   allocate( j(np) )
+   !=================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   !================================
    allocate( weight(np) )
 
    spline = 2
    select case (ndim)
    case (2)
-    allocate( xx(np, 2) )
+    call xx_realloc(gpu_xx, np, 2)
+
     weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     !==========================
 
-    interp = qden_2d_wgh( xx )
+    call qden_2d_wgh( gpu_xx, interp )
 
-    ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
+    associate( ax0 => interp%coeff_x_rank2 )
+    associate( ay0 => interp%coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( j => interp%iy_rank2 )
 
     do n = 0, 2
      ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
@@ -321,26 +324,28 @@
      end do
     end do
 
+    end associate
+    end associate
+    end associate
+    end associate
+
    case (3)
-    allocate( az0(np, 0:2) )
-    allocate( k(np) )
-    allocate( xx(np, 3) )
+    call xx_realloc(gpu_xx, np, 3)
     weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpu_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     !==========================
 
-    interp = qden_3d_wgh( xx )
+    call qden_3d_wgh( gpu_xx, interp )
 
-    ax0(1:np, 0:2) = interp%coeff_x_rank2(1:np, 1:3)
-    ay0(1:np, 0:2) = interp%coeff_y_rank2(1:np, 1:3)
-    az0(1:np, 0:2) = interp%coeff_z_rank2(1:np, 1:3)
-
-    i(1:np) = interp%ix_rank2(1:np)
-    j(1:np) = interp%iy_rank2(1:np)
-    k(1:np) = interp%iz_rank2(1:np)
+    associate( ax0 => interp%coeff_x_rank2 )
+    associate( ay0 => interp%coeff_y_rank2 )
+    associate( az0 => interp%coeff_z_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( k => interp%iz_rank2 )
 
     do n = 0, 2
      ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
@@ -359,6 +364,12 @@
      end do
     end do
     ! charge density on den(ic)
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
    end select
   end subroutine
   !==========================
@@ -374,7 +385,10 @@
    real (sp) :: wght
    !======================
    ! Computes charge density of species ic on a grid
-   !================================= 
+   !=================================
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp
    az0(0:2) = zero_dp
@@ -391,7 +405,7 @@
      wgh_cmp = sp_loc%part(n, 5)
      wght = charge*wgh
 
-     interp = qden_1d_wgh( xp )
+     call qden_1d_wgh( xp, interp )
 
      ax0(0:2) = wght*interp%coeff_x(1:3)
      i = interp%ix
@@ -414,7 +428,7 @@
      wght = real(pt(n,4), sp)
      xp(1:2) = pt(n, 1:2)
 
-     interp = qden_2d_wgh( xp )
+     call qden_2d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -446,7 +460,7 @@
      xp(1:3) = pt(n, 1:3)
      wght = real(pt(n,4), sp)
 
-     interp = qden_3d_wgh( xp )
+     call qden_3d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -486,6 +500,9 @@
    !======================
    !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
    !================================================
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    ax0(0:2) = 0.0
    ay0(0:2) = 0.0
    az0(0:2) = 0.0
@@ -505,7 +522,7 @@
      gam2 = pp(1)*pp(1) + pp(2)*pp(2)
      wgh_cmp = sp_loc%part(n, ch)
 
-     interp = qden_1d_wgh( xp )
+     call qden_1d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      i = interp%ix
@@ -537,7 +554,7 @@
       xp(1:2) = pt(n, 1:2)
       wgh_cmp = pt(n, ch)
 
-      interp = qden_2d_wgh( xp )
+      call qden_2d_wgh( xp, interp )
 
       ax0(0:2) = interp%coeff_x(1:3)
       ay0(0:2) = interp%coeff_y(1:3)
@@ -573,7 +590,7 @@
       xp(1:2) = pt(n, 1:2)
       wgh_cmp = pt(n, ch)
 
-      interp = qden_2d_wgh( xp )
+      call qden_2d_wgh( xp, interp )
 
       ax0(0:2) = interp%coeff_x(1:3)
       ay0(0:2) = interp%coeff_y(1:3)
@@ -615,7 +632,7 @@
      xp(1:3) = pt(n, 1:3)
      wgh_cmp = pt(n, ch)
 
-     interp = qden_3d_wgh( xp )
+     call qden_3d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -668,6 +685,9 @@
    !======================
    !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
    !================================================
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp
    az0(0:2) = zero_dp
@@ -683,7 +703,7 @@
      gam = sqrt(pp(1)*pp(1)+pp(2)*pp(2)+1.)
      wgh_cmp = sp_loc%part(n, ch)
 
-     interp = qden_1d_wgh( xp )
+     call qden_1d_wgh( xp, interp )
 
      ax0(0:2) = wgh*interp%coeff_x(1:3)
      i = interp%ix
@@ -708,7 +728,7 @@
      gam = pt(n, 4)
      wgh_cmp = pt(n, ch)
 
-     interp = qden_2d_wgh( xp )
+     call qden_2d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -740,7 +760,7 @@
      wgh_cmp = pt(n, ch)
      gam = pt(n, 4)
 
-     interp = qden_3d_wgh( xp )
+     call qden_3d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -782,6 +802,9 @@
    !======================
    !   Computes charge density and Jx current density at t^n current time
    !================================================
+   !================================
+   call interp_realloc(interp, 1, 3)
+   !================================
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp
    az0(0:2) = zero_dp
@@ -801,7 +824,7 @@
      vx = pt(n, 3)/gam
      wght = charge*wgh
 
-     interp = qden_2d_wgh( xp )
+     call qden_2d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)
@@ -834,7 +857,7 @@
      vx = pt(n, 4)/gam
      wght = charge*wgh
 
-     interp = qden_3d_wgh( xp )
+     call qden_3d_wgh( xp, interp )
 
      ax0(0:2) = interp%coeff_x(1:3)
      ay0(0:2) = interp%coeff_y(1:3)

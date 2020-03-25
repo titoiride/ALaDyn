@@ -199,7 +199,7 @@
   if (ibd == 1 .and. component == X_COMP) then !reflecting on the right
    if (per) then
     allocate(temp(1:old_np), source=sp_loc%call_component( vxdir, lb=1, ub=old_np))
-    xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
+    xp = sp_loc%call_component( component, lb=1, ub=old_np)
     where (xp > xr)
      xp = xr - (xp - xr)
      temp(:) = -sp_loc%call_component( vxdir, lb=1, ub=old_np)
@@ -210,7 +210,7 @@
    end if
   end if
 !================== copy in sp_aux particles not to be exchanged
-  xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
+  xp = sp_loc%call_component( component, lb=1, ub=old_np)
   call right_pind%find_index( xp > xr )
   call left_pind%find_index( xp <= xl )
   if ( nl_send /= SIZE( left_pind%indices(:) ) ) then
@@ -256,11 +256,11 @@
    end if
   end if
 
-  if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
+  if (max(ns, nr)>0) call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, left)
   ! sends ns data to the right
   if (nr>0) then !receives nr data from left
    n_tot = nl_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, sp_loc%dimensions)
    sp_aux_new = sp_aux_new%append(temp_spec)
   end if
 !===================
@@ -290,11 +290,11 @@
     aux_array1( 1:tot ) = temp_spec%flatten()
    end if
   end if   !END ns >0
-  if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, right)
+  if (max(ns, nr)>0) call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, right)
   ! sends ns data to the left recieves nr data from right
   if (nr>0) then
    n_tot = nr_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, sp_loc%dimensions)
    sp_aux_new = sp_aux_new%append(temp_spec)
   end if
 
@@ -509,7 +509,7 @@
    if (ibd == 1 .and. component == X_COMP) then !reflecting on the right
     if (per) then
      allocate(temp(1:old_np), source=sp_loc%call_component( vxdir, lb=1, ub=old_np))
-     xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
+     xp = sp_loc%call_component( component, lb=1, ub=old_np)
      where (xp > xr)
       xp = xr - (xp - xr)
       temp(:) = -sp_loc%call_component( vxdir, lb=1, ub=old_np)
@@ -520,7 +520,7 @@
     end if
    end if
  !================== copy in sp_aux particles not to be exchanged
-   xp(:) = sp_loc%call_component( component, lb=1, ub=old_np)
+   xp = sp_loc%call_component( component, lb=1, ub=old_np)
    call right_pind%find_index( xp > xr )
    call left_pind%find_index( xp <= xl )
    if ( nl_send /= SIZE( left_pind%indices(:) ) ) then
@@ -578,9 +578,7 @@
      
      call sp_loc%sel_particles( temp_spec, right_pind%indices(:) )
      tot = temp_spec%how_many()*tot_size
-     
      aux_array1( 1:tot ) = temp_spec%flatten()
-
      call aux_sp%sel_particles( temp_spec, right_pind%indices(:) )
      tot_aux = temp_spec%how_many()*tot_size
      tot_aux = tot_aux + tot
@@ -590,13 +588,13 @@
     end if
    end if
   
-   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, left)
+   if (max(ns, nr)>0) call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, left)
    ! sends ns data to the right
    if (nr>0) then !receives nr data from left
     n_tot = nl_recv*tot_size
-    call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv)
+    call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, sp_loc%dimensions)
     sp_aux_new = sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nl_recv)
+    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nl_recv, sp_loc%dimensions)
     sp1_aux_new = sp1_aux_new%append(temp_spec)
     npt = sp_aux_new%how_many()
    end if
@@ -644,13 +642,13 @@
     
     end if
    end if   !END ns >0
-   if (max(ns, nr)>0) call sr_pdata(aux1, aux2, ns, nr, cdir, right)
+   if (max(ns, nr)>0) call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, right)
    ! sends ns data to the left recieves nr data from right
    if (nr>0) then
     n_tot = nr_recv*tot_size
-    call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv)
+    call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, sp_loc%dimensions)
     sp_aux_new = sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nr_recv)
+    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nr_recv, sp_loc%dimensions)
     sp1_aux_new = sp1_aux_new%append(temp_spec)
     npt = sp_aux_new%how_many()
    end if
@@ -906,7 +904,7 @@
 
    if (ib==2) then
     dxp = xr - xl
-    xp(:) = loc_sp%call_component( component, lb=1, ub=np_new )
+    xp = loc_sp%call_component( component, lb=1, ub=np_new )
     where ( xp < xl )
      xp = xp + dxp
     else where ( xp > xr )
@@ -916,7 +914,7 @@
     return
    end if
 
-   xp(:) = loc_sp%call_component( component, lb=1, ub=np_new )
+   xp = loc_sp%call_component( component, lb=1, ub=np_new )
    call right_pind%find_index( xp > xr )
    call left_pind%find_index( xp <= xl )
 
@@ -1043,7 +1041,7 @@
       np = loc_npart(imody, imodz, imodx, ic)
       np_new = np
       n_sr = 0
-      call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, 1, np, &
+      call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
        n_sr, np_new)
      ! Allocate the aux array with lenght np + n_recieve
      ! because it needs to receive before to send
@@ -1065,7 +1063,7 @@
       np = loc_npart(imody, imodz, imodx, ic)
       if (np > 0) then
        call reset_all_part_dist(spec_in(ic), spec_aux_in, xmm, xmx, ibx, np, ndv, &
-        1, np_new, moving_wind)
+        X_COMP, np_new, moving_wind)
        if (np_new < np) then
         loc_npart(imody, imodz, imodx, ic) = np_new
         call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
@@ -1090,7 +1088,7 @@
      np = loc_npart(imody, imodz, imodx, ic)
      np_new = np
      n_sr = 0
-     call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, 1, np, &
+     call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
        n_sr, np_new)
      ! Allocate the aux array with lenght np + n_recieve
      ! because it needs to recieve before to send
@@ -1098,7 +1096,7 @@
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
       call part_prl_exchange(spec_in(ic), spec_aux_in, xmm, xmx, lbd_min, rbd_max, &
-        pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
+        pex0, pex1, ibx, X_COMP, ndv, np, n_sr, np_out)
       if (np_out /= np_new) then
        write (6, *) 'error in x-part count', mype, np_out, np_new
        ier = 99
@@ -1113,7 +1111,7 @@
      np = loc_npart(imody, imodz, imodx, ic)
      if (np > 0) then
       call reset_all_part_dist(spec_in(ic), spec_aux_in, xmm, xmx, ibx, np, ndv, &
-        1, np_new, moving_wind)
+        X_COMP, np_new, moving_wind)
       if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
        call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
@@ -1132,13 +1130,13 @@
      n_sr = 0
      np = loc_npart(imody, imodz, imodx, ic)
      np_new = np
-     call traffic_size_eval(spec_in(ic), ymm, ymx, pe0y, pe1y, iby, 2, np, &
+     call traffic_size_eval(spec_in(ic), ymm, ymx, pe0y, pe1y, iby, Y_COMP, np, &
       n_sr, np_new)
      np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
       call part_prl_exchange(spec_in(ic), spec_aux_in, ymm, ymx, lbd_min, &
-        rbd_max, pe0y, pe1y, iby, 2, ndv, np, n_sr, np_out)
+        rbd_max, pe0y, pe1y, iby, Y_COMP, ndv, np, n_sr, np_out)
       if (np_out /= np_new) then
        write (6, *) 'error in y-part count', mype, np_out, np_new
        ier = 99
@@ -1153,7 +1151,7 @@
      np = loc_npart(imody, imodz, imodx, ic)
      if (np > 0) then
       call reset_all_part_dist(spec_in(ic), spec_aux_in, ymm, ymx, iby, np, ndv, &
-        2, np_new, moving_wind)
+        Y_COMP, np_new, moving_wind)
       if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
        call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
@@ -1172,14 +1170,14 @@
       np = loc_npart(imody, imodz, imodx, ic)
       np_new = np
       n_sr = 0
-      call traffic_size_eval(spec_in(ic), zmm, zmx, pe0z, pe1z, ibz, 3, &
+      call traffic_size_eval(spec_in(ic), zmm, zmx, pe0z, pe1z, ibz, Z_COMP, &
        np, n_sr, np_new)
       np_new_allocate = np_new + SUM( n_sr(1:2) )
       np_rs = maxval(n_sr(1:4))
       if (np_rs>0) then
        !=====================
        call part_prl_exchange(spec_in(ic), spec_aux_in, zmm, zmx, lbd_min, &
-         rbd_max, pe0z, pe1z, ibz, 3, ndv, np, n_sr, np_out)
+         rbd_max, pe0z, pe1z, ibz, Z_COMP, ndv, np, n_sr, np_out)
        if (np_out /= np_new) then
         write (6, *) 'error in z-part count', mype, np_out, np_new
         ier = 99
@@ -1194,7 +1192,7 @@
       np = loc_npart(imody, imodz, imodx, ic)
       if (np>0) then
        call reset_all_part_dist(spec_in(ic), spec_aux_in, zmm, zmx, ibz, np, ndv, &
-         3, np_new, moving_wind)
+         Z_COMP, np_new, moving_wind)
        if (np_new < np) then
         loc_npart(imody, imodz, imodx, ic) = np_new
         call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)

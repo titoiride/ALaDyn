@@ -26,15 +26,15 @@ module base_species
  implicit none
  public
 
- integer, parameter :: X_COMP = 1
- integer, parameter :: Y_COMP = 2
- integer, parameter :: Z_COMP = 3
- integer, parameter :: PX_COMP = 4
- integer, parameter :: PY_COMP = 5
- integer, parameter :: PZ_COMP = 6
- integer, parameter :: INV_GAMMA_COMP = 7
- integer, parameter :: W_COMP = 8
- integer, parameter :: INDEX_COMP = -1
+ integer, parameter :: X_COMP = 100
+ integer, parameter :: Y_COMP = 200
+ integer, parameter :: Z_COMP = 300
+ integer, parameter :: PX_COMP = 400
+ integer, parameter :: PY_COMP = 500
+ integer, parameter :: PZ_COMP = 600
+ integer, parameter :: INV_GAMMA_COMP = 700
+ integer, parameter :: W_COMP = 800
+ integer, parameter :: INDEX_COMP = -100
  
  type, abstract :: base_species_T
 
@@ -631,13 +631,14 @@ module base_species
    end select
   end subroutine
   
-  subroutine redistribute( this, flat_array, num_particles )
+  subroutine redistribute( this, flat_array, num_particles, dimensions )
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in), dimension(:) :: flat_array
-   integer, intent(in) :: num_particles
+   integer, intent(in) :: num_particles, dimensions
    integer :: i
 
    i = 0
+   call this%new_species(num_particles, dimensions)
    if( this%allocated_x ) then
     this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
