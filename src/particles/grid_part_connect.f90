@@ -201,8 +201,8 @@
 
      call qqh_1d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     axh(0:2) = interp%h_coeff_x(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     axh(0:2) = interp%h_coeff_x(0:2)
 
      i = interp%ix
      ih = interp%ihx
@@ -225,8 +225,8 @@
 
      call qqh_1d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     axh(0:2) = interp%h_coeff_x(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     axh(0:2) = interp%h_coeff_x(0:2)
 
      i = interp%ix
      ih = interp%ihx
@@ -424,10 +424,10 @@
 
      call qlh_2d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh(0:1) = interp%h_coeff_x(1:2)
-     ayh(0:1) = interp%h_coeff_y(1:2)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     axh(0:1) = interp%h_coeff_x(0:1)
+     ayh(0:1) = interp%h_coeff_y(0:1)
 
      i = interp%ix
      ih = interp%ihx
@@ -468,10 +468,10 @@
 
      call qlh_2d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh(0:1) = interp%h_coeff_x(1:2)
-     ayh(0:1) = interp%h_coeff_y(1:2)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     axh(0:1) = interp%h_coeff_x(0:1)
+     ayh(0:1) = interp%h_coeff_y(0:1)
 
      i = interp%ix
      ih = interp%ihx
@@ -677,12 +677,12 @@
 
     call qlh_3d_spline( xp1, interp )
 
-    ax1(0:2) = interp%coeff_x(1:3)
-    ay1(0:2) = interp%coeff_y(1:3)
-    az1(0:2) = interp%coeff_z(1:3)
-    axh(0:1) = interp%h_coeff_x(1:2)
-    ayh(0:1) = interp%h_coeff_y(1:2)
-    azh(0:1) = interp%h_coeff_z(1:2)
+    ax1(0:2) = interp%coeff_x(0:2)
+    ay1(0:2) = interp%coeff_y(0:2)
+    az1(0:2) = interp%coeff_z(0:2)
+    axh(0:1) = interp%h_coeff_x(0:1)
+    ayh(0:1) = interp%h_coeff_y(0:1)
+    azh(0:1) = interp%h_coeff_z(0:1)
 
     i = interp%ix
     ih = interp%ihx
@@ -964,10 +964,10 @@
 
      call qqh_2d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh(0:2) = interp%h_coeff_x(1:3)
-     ayh(0:2) = interp%h_coeff_y(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     axh(0:2) = interp%h_coeff_x(0:2)
+     ayh(0:2) = interp%h_coeff_y(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -1015,12 +1015,12 @@
 
      call qqh_3d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     az1(0:2) = interp%coeff_z(1:3)
-     axh(0:2) = interp%h_coeff_x(1:3)
-     ayh(0:2) = interp%h_coeff_y(1:3)
-     azh(0:2) = interp%h_coeff_z(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     az1(0:2) = interp%coeff_z(0:2)
+     axh(0:2) = interp%h_coeff_x(0:2)
+     ayh(0:2) = interp%h_coeff_y(0:2)
+     azh(0:2) = interp%h_coeff_z(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -1406,10 +1406,10 @@
 
      call qqh_2d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh1(0:2) = interp%h_coeff_x(1:3)
-     ayh1(0:2) = interp%h_coeff_y(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     axh1(0:2) = interp%h_coeff_x(0:2)
+     ayh1(0:2) = interp%h_coeff_y(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -1483,12 +1483,12 @@
 
      call qqh_3d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     az1(0:2) = interp%coeff_z(1:3)
-     axh1(0:2) = interp%h_coeff_x(1:3)
-     ayh1(0:2) = interp%h_coeff_y(1:3)
-     azh1(0:2) = interp%h_coeff_z(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     az1(0:2) = interp%coeff_z(0:2)
+     axh1(0:2) = interp%h_coeff_x(0:2)
+     ayh1(0:2) = interp%h_coeff_y(0:2)
+     azh1(0:2) = interp%h_coeff_z(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -1812,10 +1812,10 @@
 
      call qqh_2d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh1(0:2) = interp%h_coeff_x(1:3)
-     ayh1(0:2) = interp%h_coeff_y(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     axh1(0:2) = interp%h_coeff_x(0:2)
+     ayh1(0:2) = interp%h_coeff_y(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -1876,12 +1876,12 @@
 
      call qqh_3d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     az1(0:2) = interp%coeff_z(1:3)
-     axh1(0:2) = interp%h_coeff_x(1:3)
-     ayh1(0:2) = interp%h_coeff_y(1:3)
-     azh1(0:2) = interp%h_coeff_z(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     az1(0:2) = interp%coeff_z(0:2)
+     axh1(0:2) = interp%h_coeff_x(0:2)
+     ayh1(0:2) = interp%h_coeff_y(0:2)
+     azh1(0:2) = interp%h_coeff_z(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -2140,10 +2140,10 @@
 
      call qqh_2d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     axh1(0:2) = interp%h_coeff_x(1:3)
-     ayh1(0:2) = interp%h_coeff_y(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     axh1(0:2) = interp%h_coeff_x(0:2)
+     ayh1(0:2) = interp%h_coeff_y(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -2189,12 +2189,12 @@
 
      call qqh_3d_spline( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     az1(0:2) = interp%coeff_z(1:3)
-     axh1(0:2) = interp%h_coeff_x(1:3)
-     ayh1(0:2) = interp%h_coeff_y(1:3)
-     azh1(0:2) = interp%h_coeff_z(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     az1(0:2) = interp%coeff_z(0:2)
+     axh1(0:2) = interp%h_coeff_x(0:2)
+     ayh1(0:2) = interp%h_coeff_y(0:2)
+     azh1(0:2) = interp%h_coeff_z(0:2)
  
      i = interp%ix
      ih = interp%ihx
@@ -2370,8 +2370,8 @@
 
      call qden_2d_wgh( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -2395,9 +2395,9 @@
 
      call qden_3d_wgh( xp1, interp )
 
-     ax1(0:2) = interp%coeff_x(1:3)
-     ay1(0:2) = interp%coeff_y(1:3)
-     az1(0:2) = interp%coeff_z(1:3)
+     ax1(0:2) = interp%coeff_x(0:2)
+     ay1(0:2) = interp%coeff_y(0:2)
+     az1(0:2) = interp%coeff_z(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -2759,8 +2759,8 @@
       !=====================
       call qden_2d_wgh( xp0, interp )
 
-      ax0(0:2) = interp%coeff_x(1:3)
-      ay0(0:2) = interp%coeff_y(1:3)
+      ax0(0:2) = interp%coeff_x(0:2)
+      ay0(0:2) = interp%coeff_y(0:2)
  
       ii0 = interp%ix
       jj0 = interp%iy
@@ -2768,8 +2768,8 @@
 
       call qden_2d_wgh( xp1, interp )
 
-      ax1(0:2) = interp%coeff_x(1:3)
-      ay1(0:2) = interp%coeff_y(1:3)
+      ax1(0:2) = interp%coeff_x(0:2)
+      ay1(0:2) = interp%coeff_y(0:2)
  
       i = interp%ix
       j = interp%iy
@@ -2850,8 +2850,8 @@
 
       call qden_2d_wgh( xp0, interp )
 
-      ax0(0:2) = interp%coeff_x(1:3)
-      ay0(0:2) = interp%coeff_y(1:3)
+      ax0(0:2) = interp%coeff_x(0:2)
+      ay0(0:2) = interp%coeff_y(0:2)
  
       ii0 = interp%ix
       jj0 = interp%iy
@@ -2859,8 +2859,8 @@
 
       call qden_2d_wgh( xp1, interp )
 
-      ax1(0:2) = interp%coeff_x(1:3)
-      ay1(0:2) = interp%coeff_y(1:3)
+      ax1(0:2) = interp%coeff_x(0:2)
+      ay1(0:2) = interp%coeff_y(0:2)
  
       i = interp%ix
       j = interp%iy
@@ -3212,9 +3212,9 @@
 
     call qden_3d_wgh( xp0, interp )
 
-    ax0(0:2) = interp%coeff_x(1:3)
-    ay0(0:2) = interp%coeff_y(1:3)
-    az0(0:2) = interp%coeff_z(1:3)
+    ax0(0:2) = interp%coeff_x(0:2)
+    ay0(0:2) = interp%coeff_y(0:2)
+    az0(0:2) = interp%coeff_z(0:2)
 
     ii0 = interp%ix
     jj0 = interp%iy
@@ -3222,9 +3222,9 @@
 
     call qden_3d_wgh( xp1, interp )
 
-    ax1(0:2) = interp%coeff_x(1:3)
-    ay1(0:2) = interp%coeff_y(1:3)
-    az1(0:2) = interp%coeff_z(1:3)
+    ax1(0:2) = interp%coeff_x(0:2)
+    ay1(0:2) = interp%coeff_y(0:2)
+    az1(0:2) = interp%coeff_z(0:2)
 
     i = interp%ix
     j = interp%iy
@@ -3490,10 +3490,10 @@
 
     call qlh_2d_spline( xp0, interp )
 
-    ax0(0:2) = interp%coeff_x(1:3)
-    ay0(0:2) = interp%coeff_y(1:3)
-    axh0(0:1) = interp%h_coeff_x(1:2)
-    ayh0(0:1) = interp%h_coeff_y(1:2)
+    ax0(0:2) = interp%coeff_x(0:2)
+    ay0(0:2) = interp%coeff_y(0:2)
+    axh0(0:1) = interp%h_coeff_x(0:1)
+    ayh0(0:1) = interp%h_coeff_y(0:1)
 
     ii0 = interp%ix
     ih0 = interp%ihx
@@ -3504,10 +3504,10 @@
 
     call qlh_2d_spline( xp1, interp )
 
-    ax1(0:2) = interp%coeff_x(1:3)
-    ay1(0:2) = interp%coeff_y(1:3)
-    axh1(0:1) = interp%h_coeff_x(1:2)
-    ayh1(0:1) = interp%h_coeff_y(1:2)
+    ax1(0:2) = interp%coeff_x(0:2)
+    ay1(0:2) = interp%coeff_y(0:2)
+    axh1(0:1) = interp%h_coeff_x(0:1)
+    ayh1(0:1) = interp%h_coeff_y(0:1)
 
     i = interp%ix
     ih = interp%ihx
@@ -3763,12 +3763,12 @@
 
     call qlh_3d_spline( xp0, interp )
 
-    ax0(0:2) = interp%coeff_x(1:3)
-    ay0(0:2) = interp%coeff_y(1:3)
-    az0(0:2) = interp%coeff_z(1:3)
-    axh0(0:1) = interp%h_coeff_x(1:2)
-    ayh0(0:1) = interp%h_coeff_y(1:2)
-    azh0(0:1) = interp%h_coeff_z(1:2)
+    ax0(0:2) = interp%coeff_x(0:2)
+    ay0(0:2) = interp%coeff_y(0:2)
+    az0(0:2) = interp%coeff_z(0:2)
+    axh0(0:1) = interp%h_coeff_x(0:1)
+    ayh0(0:1) = interp%h_coeff_y(0:1)
+    azh0(0:1) = interp%h_coeff_z(0:1)
 
     ii0 = interp%ix
     ih0 = interp%ihx
@@ -3780,12 +3780,12 @@
     !====================
     call qlh_3d_spline( xp1, interp )
 
-    ax1(0:2) = interp%coeff_x(1:3)
-    ay1(0:2) = interp%coeff_y(1:3)
-    az1(0:2) = interp%coeff_z(1:3)
-    axh1(0:1) = interp%h_coeff_x(1:2)
-    ayh1(0:1) = interp%h_coeff_y(1:2)
-    azh1(0:1) = interp%h_coeff_z(1:2)
+    ax1(0:2) = interp%coeff_x(0:2)
+    ay1(0:2) = interp%coeff_y(0:2)
+    az1(0:2) = interp%coeff_z(0:2)
+    axh1(0:1) = interp%h_coeff_x(0:1)
+    ayh1(0:1) = interp%h_coeff_y(0:1)
+    azh1(0:1) = interp%h_coeff_z(0:1)
 
     i = interp%ix
     ih = interp%ihx

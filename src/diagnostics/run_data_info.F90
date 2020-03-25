@@ -46,7 +46,11 @@
     mem_psize_max = 0.0
     call Part_numbers
     if (prl) then
+#if defined(OLD_SPECIES)
+     call Max_pmemory_check(spec, ebfp, ebfp0, ebfp1)
+#else
      call Max_pmemory_check(spec, ebfp)
+#endif
     end if
     if (pe0) then
      call tot_num_part

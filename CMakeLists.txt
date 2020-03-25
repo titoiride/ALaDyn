@@ -10,7 +10,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 if(NOT WIN32)
   add_definitions(-DUSE_GDB_ATTACH)
 endif()
-
+# Old species (provisional)
+# add_definitions(-DOLD_SPECIES)
 # you can force FFTW if necessary, avoiding MKL (which is preferred on Intel systems)
 set(FORCE_FFTW OFF CACHE BOOL "Forcing FFTW libraries")
 
@@ -32,7 +33,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/cpp_lib/cpp_folder_tree.cpp
   src/cpp_lib/find_last_addr.cpp 
   src/diagnostics/diag_part_and_fields.f90
-  src/diagnostics/run_data_info.f90
+  src/diagnostics/run_data_info.F90
   src/dynamics/boris_push.f90
   src/dynamics/curr_and_fields_util.f90
   src/dynamics/env_evolve_in_time.f90

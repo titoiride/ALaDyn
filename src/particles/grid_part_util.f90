@@ -122,8 +122,8 @@
 
      call cden_2d_wgh( xp, interp )
 
-     ax0(0:3) = interp%coeff_x(1:4)
-     ay0(0:3) = interp%coeff_y(1:4)
+     ax0(0:3) = interp%coeff_x(0:3)
+     ay0(0:3) = interp%coeff_y(0:3)
 
      i = interp%ix
      j = interp%iy
@@ -154,9 +154,9 @@
 
      call cden_3d_wgh( xp, interp )
 
-     ax0(0:3) = interp%coeff_x(1:4)
-     ay0(0:3) = interp%coeff_y(1:4)
-     az0(0:3) = interp%coeff_z(1:4)
+     ax0(0:3) = interp%coeff_x(0:3)
+     ay0(0:3) = interp%coeff_y(0:3)
+     az0(0:3) = interp%coeff_z(0:3)
 
      i = interp%ix
      j = interp%iy
@@ -218,8 +218,8 @@
 
      call qden_2d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -250,9 +250,9 @@
 
      call qden_3d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
-     az0(0:2) = interp%coeff_z(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
+     az0(0:2) = interp%coeff_z(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -407,7 +407,7 @@
 
      call qden_1d_wgh( xp, interp )
 
-     ax0(0:2) = wght*interp%coeff_x(1:3)
+     ax0(0:2) = wght*interp%coeff_x(0:2)
      i = interp%ix
 
      do i1 = 0, 2
@@ -430,8 +430,8 @@
 
      call qden_2d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -462,9 +462,9 @@
 
      call qden_3d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
-     az0(0:2) = interp%coeff_z(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
+     az0(0:2) = interp%coeff_z(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -524,7 +524,7 @@
 
      call qden_1d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
      i = interp%ix
 
      do i1 = 0, 2
@@ -556,8 +556,8 @@
 
       call qden_2d_wgh( xp, interp )
 
-      ax0(0:2) = interp%coeff_x(1:3)
-      ay0(0:2) = interp%coeff_y(1:3)
+      ax0(0:2) = interp%coeff_x(0:2)
+      ay0(0:2) = interp%coeff_y(0:2)
  
       i = interp%ix
       j = interp%iy
@@ -592,8 +592,8 @@
 
       call qden_2d_wgh( xp, interp )
 
-      ax0(0:2) = interp%coeff_x(1:3)
-      ay0(0:2) = interp%coeff_y(1:3)
+      ax0(0:2) = interp%coeff_x(0:2)
+      ay0(0:2) = interp%coeff_y(0:2)
  
       i = interp%ix
       j = interp%iy
@@ -634,9 +634,9 @@
 
      call qden_3d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
-     az0(0:2) = interp%coeff_z(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
+     az0(0:2) = interp%coeff_z(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -705,7 +705,7 @@
 
      call qden_1d_wgh( xp, interp )
 
-     ax0(0:2) = wgh*interp%coeff_x(1:3)
+     ax0(0:2) = wgh*interp%coeff_x(0:2)
      i = interp%ix
 
      do i1 = 0, 2
@@ -730,8 +730,8 @@
 
      call qden_2d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -762,9 +762,9 @@
 
      call qden_3d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
-     az0(0:2) = interp%coeff_z(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
+     az0(0:2) = interp%coeff_z(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -826,8 +826,8 @@
 
      call qden_2d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
 
      i = interp%ix
      j = interp%iy
@@ -859,9 +859,9 @@
 
      call qden_3d_wgh( xp, interp )
 
-     ax0(0:2) = interp%coeff_x(1:3)
-     ay0(0:2) = interp%coeff_y(1:3)
-     az0(0:2) = interp%coeff_z(1:3)
+     ax0(0:2) = interp%coeff_x(0:2)
+     ay0(0:2) = interp%coeff_y(0:2)
+     az0(0:2) = interp%coeff_z(0:2)
 
      i = interp%ix
      j = interp%iy
