@@ -1092,8 +1092,9 @@
    real (dp), allocatable, dimension(:) :: inv_gam, gam, aa1, b1, dgam
    real (dp) :: dvol, dvol1
    real (dp) :: dth, ch
-   integer (kind=2) :: i1, j1, k1, i2, j2, k2, n
+   integer (kind=2) :: i1, j1, k1, i2, j2, k2
    integer (kind=2), parameter :: stl = 2
+   integer :: n
    !===============================================
    !===============================================
    ! Uses quadratic shape functions at integer and half-integer grid points
@@ -1146,7 +1147,6 @@
 
     !     upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
     !     wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
-    
     !==========================
     do n = 1, np
      do j1 = 0, stl

@@ -27,6 +27,8 @@
   use common_param
 
   implicit none
+
+  real(dp), allocatable, dimension(:, :), private, save :: bp_pp
   interface init_lpf_momenta
    module procedure :: init_lpf_momenta_new
    module procedure :: init_lpf_momenta_old
@@ -47,6 +49,22 @@
    module procedure :: lpf_env_positions_old
   end interface
  contains
+
+  subroutine pp_realloc( xx_in, npart_new, dimensions )
+   real(dp), allocatable, dimension(:, :), intent(inout) :: xx_in
+   integer, intent(in) :: npart_new, dimensions
+   integer :: allocstatus, deallocstatus
+
+   if ( allocated(xx_in) ) then   
+    if (SIZE(xx_in, DIM=1) < npart_new .or. &
+     SIZE(xx_in, DIM=2) < dimensions ) then
+     deallocate(xx_in, stat=deallocstatus)
+     allocate(xx_in(npart_new, dimensions), stat=allocstatus)
+    end if
+   else
+    allocate(xx_in(npart_new, dimensions), stat=allocstatus)
+   end if
+  end subroutine
   ! SECTION for Leap-frog integrators in LP regime
   !==========================
   subroutine init_lpf_momenta_new(sp_loc, pt, np, ic)
@@ -54,7 +72,6 @@
    type(species_aux), intent(inout) :: pt
    integer, intent(in) :: np, ic
    real (dp) :: alp, dth_lp
-   real (dp), allocatable :: pp(:, :)
  
    dth_lp = 0.5*dt_loc
    alp = dth_lp*lorentz_fact(ic) ! Lfact =1./m
@@ -62,53 +79,52 @@
    !=========================
    ! from p^n to p^{n-1/2}
    !==========================
+   !=============================================
+   call pp_realloc( bp_pp, np, sp_loc%dimensions)
+   !=============================================
    select case (curr_ndim)
 
    case (2)
 
-    allocate( pp( np, 2) )
-
-    pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
+    bp_pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
-    pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
+    bp_pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EY_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component(pp(1:np, 1), PX_COMP, lb=1, ub=np)
-    call sp_loc%set_component(pp(1:np, 2), PY_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 1), PX_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), PY_COMP, lb=1, ub=np)
 
    case (3)
 
-    allocate( pp( np, 3) )
-
-    pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
+    bp_pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BY_COMP, lb=1, ub=np) * sp_loc%call_component(PZ_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
-    pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
+    bp_pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EY_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BX_COMP, lb=1, ub=np) * sp_loc%call_component(PZ_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
-    pp(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np) - &
+    bp_pp(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EZ_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BY_COMP, lb=1, ub=np) * sp_loc%call_component(PX_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) + &
     alp*pt%call_component(BX_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
     sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component(pp(1:np, 1), PX_COMP, lb=1, ub=np)
-    call sp_loc%set_component(pp(1:np, 2), PY_COMP, lb=1, ub=np)
-    call sp_loc%set_component(pp(1:np, 3), PZ_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 1), PX_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), PY_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 3), PZ_COMP, lb=1, ub=np)
 
    end select
   end subroutine
@@ -162,7 +178,7 @@
 
    integer :: p
    real (dp) :: alp, dt_lp, dth_lp
-   real (dp), allocatable :: pp(:, :), gam(:), gam02(:), &
+   real (dp), allocatable :: gam(:), gam02(:), &
     b2(:), bv(:), bb(:, :), aux(:)
    !========================================
    ! uses exact explicit solution for
@@ -173,22 +189,23 @@
    dt_lp = dt_loc
    dth_lp = 0.5*dt_lp
    alp = dth_lp*lorentz_fact(ic)
-
+   !=============================================
+   call pp_realloc( bp_pp, np, sp_loc%dimensions)
+   !=============================================
    select case (curr_ndim)
    case (2)
-    allocate( pp(np, 2) )
     allocate( gam02(np) )
     allocate( gam(np) )
     allocate( b2(np) )
 
     !Old momenta
-    pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+    bp_pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
     pt%call_component( EX_COMP, lb=1, ub=np )*alp
-    pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+    bp_pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
     pt%call_component( EY_COMP, lb=1, ub=np )*alp
 
     do p = 1, np
-     gam02(p) = 1. + dot_product(pp(p, 1:2), pp(p, 1:2))
+     gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
     end do
 
     b2(1:np) = alp * alp * pt%call_component( BZ_COMP, lb=1, ub=np ) * &
@@ -204,13 +221,13 @@
     gam(1:np) = sqrt(gam02(1:np))
 
     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*(gam02(1:np)*pp(1:np, 1) + &
-     gam(1:np)*pp(1:np, 2) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
+    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 1) + &
+     gam(1:np)*bp_pp(1:np, 2) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
      (gam02(1:np) * b2(1:np)) - sp_loc%call_component( PX_COMP, lb=1, ub=np), &
      PX_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component( 2.*(gam02(1:np)*pp(1:np, 2) - &
-     gam(1:np)*pp(1:np, 1) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
+    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 2) - &
+     gam(1:np)*bp_pp(1:np, 1) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
      (gam02(1:np) * b2(1:np)) - sp_loc%call_component( PY_COMP, lb=1, ub=np), &
      PY_COMP, lb=1, ub=np)
 
@@ -228,15 +245,14 @@
     call pt%set_component( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
      sp_loc%call_component( PY_COMP, lb=1, ub=np), VY_COMP, lb=1, ub=np)
 
-    pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
-    pp(1:np, 2) = sp_loc%call_component(Y_COMP, lb=1, ub=np) + pt%call_component(VY_COMP, lb=1, ub=np)
+    bp_pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
+    bp_pp(1:np, 2) = sp_loc%call_component(Y_COMP, lb=1, ub=np) + pt%call_component(VY_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component(pp(1:np, 1), X_COMP, lb=1, ub=np)
-    call sp_loc%set_component(pp(1:np, 2), Y_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 1), X_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), Y_COMP, lb=1, ub=np)
 
    case (3)
 
-    allocate( pp(np, 3) )
     allocate( gam02(np) )
     allocate( gam(np) )
     allocate( b2(np) )
@@ -245,15 +261,15 @@
     allocate( aux(np) )
 
     !Old momenta
-    pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+    bp_pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
     pt%call_component( EX_COMP, lb=1, ub=np )*alp
-    pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+    bp_pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
     pt%call_component( EY_COMP, lb=1, ub=np )*alp
-    pp(1:np, 3) = sp_loc%call_component( PZ_COMP, lb=1, ub=np) + &
+    bp_pp(1:np, 3) = sp_loc%call_component( PZ_COMP, lb=1, ub=np) + &
     pt%call_component( EZ_COMP, lb=1, ub=np )*alp
 
     do p = 1, np
-     gam02(p) = 1. + dot_product(pp(p, 1:3), pp(p, 1:3))
+     gam02(p) = 1. + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3))
     end do
 
     bb(1:np, 1) = alp * alp * pt%call_component( BX_COMP, lb=1, ub=np ) * &
@@ -265,7 +281,7 @@
 
     do p = 1, np
      b2(p) = dot_product(bb(p, 1:3), bb(p, 1:3))
-     bv(p) = dot_product(bb(p, 1:3), pp(p, 1:3))
+     bv(p) = dot_product(bb(p, 1:3), bp_pp(p, 1:3))
     end do
 
     !gam0 in Boris push
@@ -278,27 +294,27 @@
     gam(1:np) = sqrt(gam02(1:np))
 
     ! New PX_COMP calculation
-    aux(1:np) = gam02(1:np)*pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(pp(1:np, 2)*bb(1:np, 3) - &
-     pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
+    aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
+     bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
     
     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%call_component( PX_COMP, lb=1, ub=np), &
      PX_COMP, lb=1, ub=np)
 
     ! New PY_COMP calculation
-    aux(1:np) = gam02(1:np)*pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(pp(1:np, 3)*bb(1:np, 1) - &
-     pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
+    aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
+     bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
     
     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%call_component( PY_COMP, lb=1, ub=np), &
      PY_COMP, lb=1, ub=np)
 
     ! New PZ_COMP calculation
-    aux(1:np) = gam02(1:np)*pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(pp(1:np, 1)*bb(1:np, 2) - &
-     pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
+    aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
+     bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
     
     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%call_component( PZ_COMP, lb=1, ub=np), &
@@ -321,13 +337,13 @@
     call pt%set_component( pt%call_component( OLD_GAMMA_COMP, lb=1, ub=np) * &
      sp_loc%call_component( PZ_COMP, lb=1, ub=np), VZ_COMP, lb=1, ub=np)
 
-    pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
-    pp(1:np, 2) = sp_loc%call_component(Y_COMP, lb=1, ub=np) + pt%call_component(VY_COMP, lb=1, ub=np)
-    pp(1:np, 2) = sp_loc%call_component(Z_COMP, lb=1, ub=np) + pt%call_component(VZ_COMP, lb=1, ub=np)
+    bp_pp(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np) + pt%call_component(VX_COMP, lb=1, ub=np)
+    bp_pp(1:np, 2) = sp_loc%call_component(Y_COMP, lb=1, ub=np) + pt%call_component(VY_COMP, lb=1, ub=np)
+    bp_pp(1:np, 2) = sp_loc%call_component(Z_COMP, lb=1, ub=np) + pt%call_component(VZ_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component(pp(1:np, 1), X_COMP, lb=1, ub=np)
-    call sp_loc%set_component(pp(1:np, 2), Y_COMP, lb=1, ub=np)
-    call sp_loc%set_component(pp(1:np, 2), Z_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 1), X_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), Y_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), Z_COMP, lb=1, ub=np)
 
    end select
    !====================
@@ -448,7 +464,7 @@
    type (species_aux), intent (inout) :: f_pt
    integer, intent (in) :: np, ic
    integer :: p
-   real (dp), allocatable :: pp(:, :), b2(:), bb(:, :), vp(:), bv(:)
+   real (dp), allocatable :: b2(:), bb(:, :), vp(:), bv(:)
    real (dp) :: alp, dt_lp
 
    dt_lp = dt_loc
@@ -456,29 +472,31 @@
    !==========================
    ! Enter F_pt(1:2)= q*(E+0.5q*grad[F]/gamp) and
    ! F_pt(3)=q*B/gamp     where F=|A|^2/2
+   !=============================================
+   call pp_realloc( bp_pp, np, sp_loc%dimensions)
+   !=============================================
    select case (curr_ndim)
    case (2)
     !F_pt(5)=wgh/gamp
-    allocate( pp(np, 2) )
     allocate( bb(np, 1) )
     allocate( b2(np) )
     allocate( vp(np) )
 
     !u^{-} = p_{n-1/2} + Lz_fact*Dt/2
-    pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
-     f_pt%call_component( EX_COMP, lb=1, ub=np )*alp
-    pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
-     f_pt%call_component( EY_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+     f_pt%call_component( FX_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+     f_pt%call_component( FY_COMP, lb=1, ub=np )*alp
+
 
     bb(1:np, 1) = alp * f_pt%call_component( BZ_COMP, lb=1, ub=np )
     b2(1:np) = one_dp + bb(1:np, 1) * bb(1:np, 1)
     !==============================
     
-    vp(1:np) = 2*(pp(1:np, 1) + pp(1:np, 2)*bb(1:np, 1))/b2(1:np) - &
+    vp(1:np) = 2*(bp_pp(1:np, 1) + bp_pp(1:np, 2)*bb(1:np, 1))/b2(1:np) - &
      sp_loc%call_component( PX_COMP, lb=1, ub=np)
     call sp_loc%set_component(vp(1:np), PX_COMP, lb=1, ub=np)
-
-    vp(1:np) = 2*(pp(1:np, 2) - pp(1:np, 1)*bb(1:np, 1))/b2(1:np) - &
+    vp(1:np) = 2*(bp_pp(1:np, 2) - bp_pp(1:np, 1)*bb(1:np, 1))/b2(1:np) - &
      sp_loc%call_component( PY_COMP, lb=1, ub=np)
     call sp_loc%set_component(vp(1:np), PY_COMP, lb=1, ub=np)
 
@@ -489,19 +507,18 @@
     !F_pt(5)=wgh/gamp unchanged
    case (3)
 
-    allocate( pp(np, 3) )
     allocate( bb(np, 3) )
     allocate( b2(np) )
     allocate( vp(np) )
     allocate( bv(np) )
 
     !F_pt(7)=wgh/gamp
-    pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
-     f_pt%call_component( EX_COMP, lb=1, ub=np )*alp
-    pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
-     f_pt%call_component( EY_COMP, lb=1, ub=np )*alp
-    pp(1:np, 3) = sp_loc%call_component( PZ_COMP, lb=1, ub=np) + &
-     f_pt%call_component( EZ_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+     f_pt%call_component( FX_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+     f_pt%call_component( FY_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 3) = sp_loc%call_component( PZ_COMP, lb=1, ub=np) + &
+     f_pt%call_component( FZ_COMP, lb=1, ub=np )*alp
 
     bb(1:np, 1) = alp * f_pt%call_component( BX_COMP, lb=1, ub=np )
     bb(1:np, 2) = alp * f_pt%call_component( BY_COMP, lb=1, ub=np )
@@ -511,15 +528,15 @@
     !=========================
     do p = 1, np
      b2(p) = 1. + dot_product(bb(p, 1:3), bb(p, 1:3))
-     bv(p) = dot_product(bb(p, 1:3), pp(p, 1:3))
+     bv(p) = dot_product(bb(p, 1:3), bp_pp(p, 1:3))
     end do
-    vp(1:np) = 2*(pp(1:np, 1) + pp(1:np, 2)*bb(1:np, 3) - pp(1:np, 3)*bb(1:np, 2) +&
+    vp(1:np) = 2*(bp_pp(1:np, 1) + bp_pp(1:np, 2)*bb(1:np, 3) - bp_pp(1:np, 3)*bb(1:np, 2) +&
      bb(1:np, 1)*bv(1:np))/b2(1:np) - sp_loc%call_component( PX_COMP, lb=1, ub=np)
     call sp_loc%set_component(vp(1:np), PX_COMP, lb=1, ub=np)
-    vp(1:np) = 2*(pp(1:np, 2) + pp(1:np, 3)*bb(1:np, 1) - pp(1:np, 1)*bb(1:np, 3) +&
+    vp(1:np) = 2*(bp_pp(1:np, 2) + bp_pp(1:np, 3)*bb(1:np, 1) - bp_pp(1:np, 1)*bb(1:np, 3) +&
      bb(1:np, 2)*bv(1:np))/b2(1:np) - sp_loc%call_component( PY_COMP, lb=1, ub=np)
     call sp_loc%set_component(vp(1:np), PY_COMP, lb=1, ub=np)
-    vp(1:np) = 2*(pp(1:np, 3) + pp(1:np, 1)*bb(1:np, 2) - pp(1:np, 2)*bb(1:np, 1) +&
+    vp(1:np) = 2*(bp_pp(1:np, 3) + bp_pp(1:np, 1)*bb(1:np, 2) - bp_pp(1:np, 2)*bb(1:np, 1) +&
      bb(1:np, 3)*bv(1:np))/b2(1:np) - sp_loc%call_component( PZ_COMP, lb=1, ub=np)
     call sp_loc%set_component(vp(1:np), PZ_COMP, lb=1, ub=np)
 
@@ -596,33 +613,35 @@
 
    integer, intent (in) :: np
    integer :: p
-   real (dp), allocatable :: pp(:, :), vp(:, :), gam(:), ff(:)
+   real (dp), allocatable :: vp(:, :), gam(:), ff(:)
    real (dp), allocatable :: b2(:), gam_inv(:)
    real (dp) :: dt_lp, dth_lp
 
    dt_lp = dt_loc
    dth_lp = 0.5*dt_lp
+   !=============================================
+   call pp_realloc( bp_pp, np, sp_loc%dimensions)
+   !=============================================
    !==========================
    select case (curr_ndim)
    !============  enter F_pt(3)=F, F_pt (1:2) Grad[F] where F=|A|^2/2
    !             at time level t^{n+1/2} assigned to the x^n positions
    case (2)
 
-    allocate( pp(np, 2) )
     allocate( vp(np, 2) )
     allocate( gam(np) )
     allocate( gam_inv(np) )
     allocate( ff(np) )
     allocate( b2(np) )
-    pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) !p^{n+1/2}
-    pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) !p^{n+1/2}
+    bp_pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) !p^{n+1/2}
+    bp_pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) !p^{n+1/2}
     vp(1:np, 1) = f_pt%call_component( GRADF_X_COMP, lb=1, ub=np) !grad[F]_x
     vp(1:np, 2) = f_pt%call_component( GRADF_Y_COMP, lb=1, ub=np) !grad[F]_y
     !=============================
     ff(1:np) = f_pt%call_component( POND_COMP, lb=1, ub=np )
     do p = 1, np
-     gam(p) = one_dp + dot_product(pp(p, 1:2), pp(p, 1:2)) + ff(p)
-     b2(p) = 0.25*dot_product(pp(p, 1:2), vp(p, 1:2))
+     gam(p) = one_dp + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2)) + ff(p)
+     b2(p) = 0.25*dot_product(bp_pp(p, 1:2), vp(p, 1:2))
     end do
     gam(1:np) = sqrt(gam(1:np))
     !=========================== def gamma_p
@@ -637,8 +656,8 @@
      OLD_X_COMP, lb=1, ub=np)
     call f_pt%set_component(sp_loc%call_component( Y_COMP, lb=1, ub=np), &
      OLD_Y_COMP, lb=1, ub=np)
-    vp(1:np, 1) = dt_lp*gam_inv(1:np)*pp(1:np, 1)
-    vp(1:np, 2) = dt_lp*gam_inv(1:np)*pp(1:np, 2)
+    vp(1:np, 1) = dt_lp*gam_inv(1:np)*bp_pp(1:np, 1)
+    vp(1:np, 2) = dt_lp*gam_inv(1:np)*bp_pp(1:np, 2)
     
     !dt*V^{n+1/2}  velocities
     call f_pt%set_component(vp(1:np, 1), VX_COMP, lb=1, ub=np)
@@ -650,24 +669,23 @@
    case (3)
     !============enter F_pt(4)=F, F_pt (1:3) Grad[F] where F=|A|^2/2 at t^{n+1/2}
     ! assigned at x^n
-    allocate( pp(np, 3) )
     allocate( vp(np, 3) )
     allocate( gam(np) )
     allocate( gam_inv(np) )
     allocate( ff(np) )
     allocate( b2(np) )
 
-    pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) !p^{n+1/2}
-    pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) !p^{n+1/2}
-    pp(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np) !p^{n+1/2}
+    bp_pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) !p^{n+1/2}
+    bp_pp(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np) !p^{n+1/2}
+    bp_pp(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np) !p^{n+1/2}
     vp(1:np, 1) = f_pt%call_component( GRADF_X_COMP, lb=1, ub=np) !grad[F]_x
     vp(1:np, 2) = f_pt%call_component( GRADF_Y_COMP, lb=1, ub=np) !grad[F]_y
     vp(1:np, 3) = f_pt%call_component( GRADF_Z_COMP, lb=1, ub=np) !grad[F]_y
     !=============================
     ff(1:np) = f_pt%call_component( POND_COMP, lb=1, ub=np )
     do p = 1, np
-     gam(p) = one_dp + dot_product(pp(p, 1:3), pp(p, 1:3)) + ff(p)
-     b2(p) = 0.25*dot_product(pp(p, 1:3), vp(p, 1:3))
+     gam(p) = one_dp + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3)) + ff(p)
+     b2(p) = 0.25*dot_product(bp_pp(p, 1:3), vp(p, 1:3))
     end do
     gam(1:np) = sqrt(gam(1:np))
     !=============================
@@ -677,9 +695,9 @@
 
     call sp_loc%set_component(gam_inv(1:np), INV_GAMMA_COMP, lb=1, ub=np)
 
-    vp(1:np, 1) = dt_lp*gam_inv(1:np)*pp(1:np, 1)
-    vp(1:np, 2) = dt_lp*gam_inv(1:np)*pp(1:np, 2)
-    vp(1:np, 3) = dt_lp*gam_inv(1:np)*pp(1:np, 3)
+    vp(1:np, 1) = dt_lp*gam_inv(1:np)*bp_pp(1:np, 1)
+    vp(1:np, 2) = dt_lp*gam_inv(1:np)*bp_pp(1:np, 2)
+    vp(1:np, 3) = dt_lp*gam_inv(1:np)*bp_pp(1:np, 3)
 
     call f_pt%set_component(sp_loc%call_component( X_COMP, lb=1, ub=np), &
      OLD_X_COMP, lb=1, ub=np)
