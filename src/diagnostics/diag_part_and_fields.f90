@@ -674,7 +674,7 @@
    !  do ik=1,nsb
    !   call enb_bunch(nst,ik)
    !  end do
-   ! endif
+   ! end if
 
    ! !   END PARTICLE SECTION
    ! !======================== Field  section
@@ -913,7 +913,7 @@
     do ik=1,nsb
      call enb_bunch(spec_in, nst,ik)
     end do
-   endif
+   end if
 
    !   END PARTICLE SECTION
    !======================== Field  section

@@ -234,7 +234,7 @@
     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
       fnamel_out)
     if (pe0) write (6, *) 'Particles data dumped'
-   endif
+   end if
    !=== END PARTICLES DUMP SECTION ===
 
    !=== ELECTROMAGNETIC FIELD DUMP SECTION ===
@@ -556,7 +556,7 @@
      sd = .false.
      call exchange_2d_grdata(sd, xpt, nptx_max, nsp, pe_min, mype + 100)
      call exchange_2d_grdata(sd, wghpt, nptx_max, nsp, pe_min, mype + 400)
-    endif
+    end if
     !===========================
     if (hybrid) then
      if (nxf>0) then
@@ -568,7 +568,7 @@
       else
        sd = .false.
        call exchange_1d_grdata(sd, fluid_x_profile, nxf, pe_min, mype + 10)
-      endif
+      end if
      end if
     end if
    end if
@@ -993,7 +993,7 @@
      sd = .false.
      call exchange_2d_grdata(sd, xpt, nptx_max, nsp, pe_min, mype + 100)
      call exchange_2d_grdata(sd, wghpt, nptx_max, nsp, pe_min, mype + 400)
-    endif
+    end if
     !===========================
     if (hybrid) then
      if (nxf>0) then
@@ -1005,7 +1005,7 @@
       else
        sd = .false.
        call exchange_1d_grdata(sd, fluid_x_profile, nxf, pe_min, mype + 10)
-      endif
+      end if
      end if
     end if
    end if

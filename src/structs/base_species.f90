@@ -26,20 +26,22 @@ module base_species
  implicit none
  public
 
- integer, parameter :: X_COMP = 100
- integer, parameter :: Y_COMP = 200
- integer, parameter :: Z_COMP = 300
- integer, parameter :: PX_COMP = 400
- integer, parameter :: PY_COMP = 500
- integer, parameter :: PZ_COMP = 600
- integer, parameter :: INV_GAMMA_COMP = 700
- integer, parameter :: W_COMP = 800
- integer, parameter :: INDEX_COMP = -100
+ integer, parameter :: X_COMP = 1
+ integer, parameter :: Y_COMP = 2
+ integer, parameter :: Z_COMP = 3
+ integer, parameter :: PX_COMP = 4
+ integer, parameter :: PY_COMP = 5
+ integer, parameter :: PZ_COMP = 6
+ integer, parameter :: INV_GAMMA_COMP = 7
+ integer, parameter :: W_COMP = 8
+ integer, parameter :: INDEX_COMP = -1
  
  type, abstract :: base_species_T
 
-  logical :: initialized
+  logical, allocatable :: initialized
   !! Flag that states if the species has been initialized
+  logical :: empty
+  !! Flag that states if there are particles
   real(dp) :: charge
   !! Particle charge
   integer, public :: n_part
@@ -95,17 +97,21 @@ module base_species
   !! True if index array is allocated
 
   contains
+   procedure, public, pass :: add_data
+   procedure, pass :: array_size
    procedure, private, pass :: call_particle_bounds
    procedure, private, pass :: call_particle_index_array
    procedure, private, pass :: call_particle_single
    procedure, pass :: compute_gamma
    procedure, pass, private :: copy_all
    procedure, pass, private :: copy_boundaries
-   procedure, pass :: count_particles
    procedure, public, pass :: flatten
    procedure, pass :: how_many
    procedure, pass :: initialize_data
    procedure, pass :: new_species => new_species_abstract
+   procedure, private :: pack_into_logical
+   procedure, private :: pack_into_array
+   procedure, public, pass :: reallocate
    procedure, public, pass :: redistribute
    procedure, pass :: set_charge_int
    procedure, pass :: set_charge_real
@@ -119,8 +125,10 @@ module base_species
    procedure(sel_particles_index_abstract), deferred, pass :: sel_particles_index
    procedure(set_component_abstract_real), deferred, pass :: set_component_real
    procedure(set_component_abstract_integer), deferred, pass :: set_component_integer
+   procedure(sweep_abstract), deferred, pass :: sweep
    generic :: call_particle => call_particle_single, call_particle_bounds, call_particle_index_array
    generic :: copy => copy_all, copy_boundaries
+   generic :: pack_into => pack_into_array, pack_into_logical
    generic :: sel_particles => sel_particles_bounds, sel_particles_index
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_int, set_charge_real
@@ -130,10 +138,10 @@ module base_species
    pure function call_component_abstract( this, component, lb, ub ) result(comp)
     import :: base_species_T, dp
     implicit none
-    class(base_species_T), intent(in)                                     :: this
-    integer,       intent(in)                                     :: component
-    integer,       intent(in), optional                           :: lb, ub
-    real(dp),                           allocatable, dimension(:) :: comp
+    class(base_species_T), intent(in) :: this
+    integer, intent(in) :: component
+    integer, intent(in), optional :: lb, ub
+    real(dp), allocatable, dimension(:) :: comp
    end function
   end interface
   
@@ -158,19 +166,19 @@ module base_species
    subroutine set_component_abstract_real( this, values, component, lb, ub )
     import :: base_species_T, dp
     implicit none
-    class(base_species_T), intent(inout)                     :: this
-    real(dp),      intent(in), dimension(:)          :: values
-    integer,       intent(in)                        :: component
-    integer,       intent(in),              optional :: lb, ub
+    class(base_species_T), intent(inout) :: this
+    real(dp), intent(in), dimension(:) :: values
+    integer, intent(in) :: component
+    integer, intent(in), optional :: lb, ub
    end subroutine
 
    subroutine set_component_abstract_integer( this, values, component, lb, ub )
     import :: base_species_T, dp
     implicit none
-    class(base_species_T), intent(inout)                     :: this
-    integer,       intent(in), dimension(:)          :: values
-    integer,       intent(in)                        :: component
-    integer,       intent(in),              optional :: lb, ub
+    class(base_species_T), intent(inout) :: this
+    integer, intent(in), dimension(:) :: values
+    integer, intent(in) :: component
+    integer, intent(in), optional :: lb, ub
    end subroutine
   end interface
 
@@ -187,6 +195,15 @@ module base_species
     class(base_species_T), intent(in) :: this
     class(base_species_T), intent(inout) :: out_sp
     integer, intent(in) :: lower_bound, upper_bound
+   end subroutine
+
+  end interface
+
+  abstract interface
+
+   subroutine sweep_abstract( this )
+    import base_species_T, dp
+    class(base_species_T), intent(inout) :: this
    end subroutine
 
   end interface
@@ -209,15 +226,21 @@ module base_species
    integer, intent(in) :: n_particles, curr_ndims
    integer :: allocstatus
   
-   if (n_particles <= 0) then
-    this%initialized = .false.
-    this%n_part = 0
+   if (n_particles < 0) then
     return
    end if
   
+   if ( .not. allocated(this%initialized)) then
+    allocate(this%initialized)
+   end if
    this%initialized = .true.
    this%n_part = n_particles
    this%dimensions = curr_ndims
+   if (n_particles == 0) then
+    this%empty = .true.
+    return
+   end if
+   this%empty = .false.
    this%allocated_x = .false.
    this%allocated_y = .false.
    this%allocated_z = .false.
@@ -283,6 +306,60 @@ module base_species
   end subroutine
 
 !=== Type bound procedures
+
+  subroutine add_data( this, x_arr, y_arr, z_arr, &
+   weightx_arr, weightyz_arr, loc_x, loc_y, loc_z, np_old)
+   class( base_species_T), intent(inout) :: this
+   real(dp), dimension(:), intent(in) :: x_arr, y_arr, z_arr
+   real(dp), dimension(:), intent(in) :: weightx_arr
+   real(dp), dimension(:, :), intent(in) :: weightyz_arr
+   integer, intent(in) :: loc_x, loc_y, loc_z, np_old
+   real(dp) :: u, t_x
+   real(sp) :: whz
+   integer :: p, dim, i, j, k
+
+   t_x = this%temperature
+   dim = this%dimensions
+   p = np_old
+   select case(dim)
+   case(2)
+    do k = 1, 1
+     do j = 1, loc_y
+      do i = 1, loc_x
+       p = p + 1
+       this%x(p) = x_arr(i)
+       this%y(p) = y_arr(j)
+       call gasdev(u)
+       this%px(p) = t_x*u
+       call gasdev(u)
+       this%py(p) = t_x*u
+       whz = real(weightx_arr(i)*weightyz_arr(j, k), sp)
+       this%weight(p) = whz
+      end do
+     end do
+    end do
+   case(3)
+    do k = 1, loc_z
+     do j = 1, loc_y
+      do i = 1, loc_x
+       p = p + 1
+       this%x(p) = x_arr(i)
+       this%y(p) = y_arr(j)
+       this%z(p) = z_arr(k)
+       call gasdev(u)
+       this%px(p) = t_x*u
+       call gasdev(u)
+       this%py(p) = t_x*u
+       call gasdev(u)
+       this%pz(p) = t_x*u
+       whz = weightx_arr(i)*weightyz_arr(j, k)
+       this%weight(p) = whz
+      end do
+     end do
+    end do
+   end select
+  end subroutine
+
   subroutine call_particle_single( this, particles, index_in)
    class(base_species_T), intent(in) :: this
    real(dp), dimension(:), intent(inout) :: particles
@@ -409,7 +486,7 @@ module base_species
 
   end subroutine
 
-  pure function count_particles( this ) result( number )
+  pure function array_size( this ) result( number )
    class(base_species_T), intent(in) :: this
    integer :: number
 
@@ -443,37 +520,36 @@ module base_species
    integer :: tot
 
    tot = other%n_part
-   if (tot > this%n_part) then
-    write(6, *) 'Array too small to copy'
-    return
-   end if
+
+   call this%reallocate(tot, other%dimensions)
+   call this%set_charge(other%charge)
 
    if (other%allocated_x) then
-    call assign(this%x, other%x, 1, tot)
+    call assign(this%x, other%x(1:tot), 1, tot)
    end if
    if (other%allocated_y) then
-    call assign(this%y, other%y, 1, tot)
+    call assign(this%y, other%y(1:tot), 1, tot)
    end if
    if (other%allocated_z) then
-    call assign(this%z, other%z, 1, tot)
+    call assign(this%z, other%z(1:tot), 1, tot)
    end if
    if (other%allocated_px) then
-    call assign(this%px, other%px, 1, tot)
+    call assign(this%px, other%px(1:tot), 1, tot)
    end if
    if (other%allocated_py) then
-    call assign(this%py, other%py, 1, tot)
+    call assign(this%py, other%py(1:tot), 1, tot)
    end if
    if (other%allocated_pz) then
-    call assign(this%pz, other%pz, 1, tot)
+    call assign(this%pz, other%pz(1:tot), 1, tot)
    end if
    if (other%allocated_gamma) then
-    call assign(this%gamma_inv, other%gamma_inv, 1, tot)
+    call assign(this%gamma_inv, other%gamma_inv(1:tot), 1, tot)
    end if
    if (other%allocated_weight) then
-    call assign(this%weight, other%weight, 1, tot)
+    call assign(this%weight, other%weight(1:tot), 1, tot)
    end if
    if (other%allocated_index) then
-    call assign(this%part_index, other%part_index, 1, tot)
+    call assign(this%part_index, other%part_index(1:tot), 1, tot)
    end if
   end subroutine
 
@@ -484,10 +560,9 @@ module base_species
    integer :: tot
 
    tot = upper_bound - lower_bound + 1
-   if (tot > this%n_part) then
-    write(6, *) 'Array too small to copy'
-    return
-   end if
+
+   call this%reallocate(tot, other%dimensions)
+   call this%set_charge(other%charge)
 
    if (other%allocated_x) then
     call assign(this%x, other%x(lower_bound:upper_bound), 1, tot)
@@ -532,45 +607,45 @@ module base_species
    integer :: array_size, num_comps, i
    real(dp), allocatable :: temp(:, :), flat_array(:)
 
-   array_size = this%count_particles()
+   array_size = this%how_many()
    num_comps = this%total_size()
    allocate(temp( array_size, num_comps ))
 
    i = 1
    if( this%allocated_x ) then
-    temp( :, i ) = this%x(:)
+    temp( :, i ) = this%x(1:array_size)
     i = i + 1
    end if
    if( this%allocated_y ) then
-    temp( :, i ) = this%y(:)
+    temp( :, i ) = this%y(1:array_size)
     i = i + 1
    end if
    if( this%allocated_z ) then
-    temp( :, i ) = this%z(:)
+    temp( :, i ) = this%z(1:array_size)
     i = i + 1
    end if
    if( this%allocated_px ) then
-    temp( :, i ) = this%px(:)
+    temp( :, i ) = this%px(1:array_size)
     i = i + 1
    end if
    if( this%allocated_py ) then
-    temp( :, i ) = this%py(:)
+    temp( :, i ) = this%py(1:array_size)
     i = i + 1
    end if
    if( this%allocated_pz ) then
-    temp( :, i ) = this%pz(:)
+    temp( :, i ) = this%pz(1:array_size)
     i = i + 1
    end if
    if( this%allocated_gamma ) then
-    temp( :, i ) = this%gamma_inv(:)
+    temp( :, i ) = this%gamma_inv(1:array_size)
     i = i + 1
    end if
    if( this%allocated_weight ) then
-    temp( :, i ) = this%weight(:)
+    temp( :, i ) = this%weight(1:array_size)
     i = i + 1
    end if
    if( this%allocated_index ) then
-    temp( :, i ) = this%part_index(:)
+    temp( :, i ) = this%part_index(1:array_size)
     i = i + 1
    end if
 
@@ -579,58 +654,104 @@ module base_species
   end function
 
   subroutine initialize_data( this, x_arr, y_arr, z_arr, &
-    weightx_arr, weightyz_arr, loc_x, loc_y, loc_z)
-   class( base_species_T), intent(inout) :: this
+   weightx_arr, weightyz_arr, loc_x, loc_y, loc_z)
+   class( base_species_T ), intent(inout) :: this
    real(dp), dimension(:), intent(in) :: x_arr, y_arr, z_arr
    real(dp), dimension(:), intent(in) :: weightx_arr
    real(dp), dimension(:, :), intent(in) :: weightyz_arr
    integer, intent(in) :: loc_x, loc_y, loc_z
-   real(dp) :: u, t_x
-   real(sp) :: whz
-   integer :: p, dim, i, j, k
 
-   t_x = this%temperature
-   dim = this%dimensions
-   p = 0
-   select case(dim)
-   case(2)
-    do k = 1, 1
-     do j = 1, loc_y
-      do i = 1, loc_x
-       p = p + 1
-       this%x(p) = x_arr(i)
-       this%y(p) = y_arr(j)
-       call gasdev(u)
-       this%px(p) = t_x*u
-       call gasdev(u)
-       this%py(p) = t_x*u
-       whz = real(weightx_arr(i)*weightyz_arr(j, k), sp)
-       this%weight(p) = whz
-      end do
-     end do
-    end do
-   case(3)
-    do k = 1, loc_z
-     do j = 1, loc_y
-      do i = 1, loc_x
-       p = p + 1
-       this%x(p) = x_arr(i)
-       this%y(p) = y_arr(j)
-       this%z(p) = z_arr(k)
-       call gasdev(u)
-       this%px(p) = t_x*u
-       call gasdev(u)
-       this%py(p) = t_x*u
-       call gasdev(u)
-       this%pz(p) = t_x*u
-       whz = weightx_arr(i)*weightyz_arr(j, k)
-       this%weight(p) = whz
-      end do
-     end do
-    end do
-   end select
+   call this%add_data( x_arr, y_arr, z_arr, &
+   weightx_arr, weightyz_arr, loc_x, loc_y, loc_z, 0)
+
   end subroutine
-  
+
+  subroutine pack_into_logical( this, packed, mask )
+   class(base_species_T), intent(in) :: this
+   class(base_species_T), intent(inout) :: packed
+   logical, intent(in) :: mask
+   integer :: np
+ 
+   np = this%how_many()
+   call packed%new_species(np, this%dimensions)
+   call packed%set_charge(this%charge)
+ 
+   if( this%allocated_x ) then
+    packed%x = PACK( this%x(1:np), mask)
+   end if
+   if( this%allocated_y ) then
+    packed%y = PACK( this%y(1:np), mask)
+   end if
+   if( this%allocated_z ) then
+    packed%z = PACK( this%z(1:np), mask)
+   end if
+   if( this%allocated_px ) then
+    packed%px = PACK( this%px(1:np), mask)
+   end if
+   if( this%allocated_py ) then
+    packed%py = PACK( this%py(1:np), mask)
+   end if
+   if( this%allocated_pz ) then
+    packed%pz = PACK( this%pz(1:np), mask)
+   end if
+   if( this%allocated_gamma ) then
+    packed%gamma_inv = PACK( this%gamma_inv(1:np), mask)
+   end if
+   if( this%allocated_weight ) then
+    packed%weight = PACK( this%weight(1:np), mask)
+   end if
+   if( this%allocated_index ) then
+    packed%part_index = PACK( this%part_index(1:np), mask)
+   end if
+ 
+   packed%n_part = packed%array_size()
+ 
+  end subroutine
+ 
+  subroutine pack_into_array( this, packed, mask )
+   class(base_species_T), intent(in) :: this
+   class(base_species_T), intent(inout) :: packed
+   logical, intent(in) :: mask(:)
+   integer :: tot_parts, np
+ 
+   tot_parts = COUNT( mask )
+   np = this%how_many()
+   call packed%new_species(tot_parts, this%dimensions)
+   call packed%set_charge(this%charge)
+ 
+   if (tot_parts == 0) then
+    return
+   end if
+   if( this%allocated_x ) then
+    packed%x = PACK( this%x(1:np), mask(:) )
+   end if
+   if( this%allocated_y ) then
+    packed%y = PACK( this%y(1:np), mask(:) )
+   end if
+   if( this%allocated_z ) then
+    packed%z = PACK( this%z(1:np), mask(:) )
+   end if
+   if( this%allocated_px ) then
+    packed%px = PACK( this%px(1:np), mask(:) )
+   end if
+   if( this%allocated_py ) then
+    packed%py = PACK( this%py(1:np), mask(:) )
+   end if
+   if( this%allocated_pz ) then
+    packed%pz = PACK( this%pz(1:np), mask(:) )
+   end if
+   if( this%allocated_gamma ) then
+    packed%gamma_inv = PACK( this%gamma_inv(1:np), mask(:) )
+   end if
+   if( this%allocated_weight ) then
+    packed%weight = PACK( this%weight(1:np), mask(:) )
+   end if
+   if( this%allocated_index ) then
+    packed%part_index = PACK( this%part_index(1:np), mask(:) )
+   end if
+ 
+  end subroutine
+
   subroutine redistribute( this, flat_array, num_particles, dimensions )
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in), dimension(:) :: flat_array
@@ -638,7 +759,7 @@ module base_species
    integer :: i
 
    i = 0
-   call this%new_species(num_particles, dimensions)
+   call this%reallocate(num_particles, dimensions)
    if( this%allocated_x ) then
     this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
@@ -678,6 +799,23 @@ module base_species
 
   end subroutine
 
+  subroutine reallocate(this, n_parts, n_dimensions)
+   class(base_species_T), intent(inout) :: this
+   integer :: n_parts, n_dimensions, sp_charge
+
+   if ( allocated(this%initialized) ) then
+    if (this%n_part < n_parts ) then
+     sp_charge = this%charge
+     call this%sweep()
+     call this%new_species(n_parts, n_dimensions)
+     call this%set_charge(sp_charge)
+    end if
+   else
+    call this%new_species(n_parts, n_dimensions)
+   end if
+
+  end subroutine
+
   subroutine set_charge_int( this, ch)
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: ch
@@ -698,6 +836,13 @@ module base_species
   integer, intent(in) :: n_parts
 
   this%n_part = n_parts
+  if ( n_parts > 0 ) then
+   this%empty = .false.
+  else if (n_parts == 0) then
+   this%empty = .true. 
+  else
+   write(6, *) 'Error in part number'
+  end if
  end subroutine
 
  subroutine set_temperature( this, temperature)
@@ -709,36 +854,18 @@ module base_species
 
  pure function total_size( this ) result(size)
   class(base_species_T), intent(in) :: this
-  integer :: size, i
-  i = 0
-  if( this%allocated_x ) then
-   i = i + 1
-  end if
-  if( this%allocated_y ) then
-   i = i + 1
-  end if
-  if( this%allocated_z ) then
-   i = i + 1
-  end if
-  if( this%allocated_px ) then
-   i = i + 1
-  end if
-  if( this%allocated_py ) then
-   i = i + 1
-  end if
-  if( this%allocated_pz ) then
-   i = i + 1
-  end if
-  if( this%allocated_gamma ) then
-   i = i + 1
-  end if
-  if( this%allocated_weight ) then
-   i = i + 1
-  end if
-  if( this%allocated_index ) then
-   i = i + 1
-  end if
-  size = i
+  integer :: size
+
+  select case(this%dimensions)
+  case(1)
+   size = 5
+  case(2)
+   size = 7
+  case(3)
+   size = 9
+  case default
+   size = -1
+  end select
 
  end function
 
@@ -884,6 +1011,20 @@ module base_species
 
  end subroutine
 
+ subroutine check_array_1d( array, size_array )
+  real(dp), allocatable, dimension(:), intent(inout) :: array
+  integer, intent(in) :: size_array
+
+  if ( allocated(array) ) then
+   if ( SIZE(array) < size_array ) then
+    deallocate(array)
+    allocate(array(size_array))
+   endif
+  else
+   allocate(array(size_array))
+  end if
+  
+ end subroutine
  pure function component_dictionary( component ) result(cdir)
  !! Dictionary wrapper for send_recieve routines in parallel.F90
  !! that need the cdir parameter
@@ -896,6 +1037,8 @@ module base_species
    cdir = 1
   case(Z_COMP)
    cdir = 2
+  case default
+   cdir = -10
   end select
  end function
 
@@ -923,6 +1066,8 @@ module base_species
    pm_comp = Y_COMP
   case(PZ_COMP)
    pm_comp = Z_COMP
+  case default
+   pm_comp = -10
   end select
  end function
 

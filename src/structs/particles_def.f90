@@ -35,13 +35,11 @@ module particles_def
    procedure, public :: copy_scalars_from => copy_scalars_from_spec
    procedure, public :: extend => extend_spec
    procedure, public :: new_species => new_species_spec
-   procedure, private :: pack_species_logical
-   procedure, private :: pack_species_array
    procedure, public :: set_component_real
    procedure, public :: set_component_integer
    procedure, pass :: sel_particles_bounds => sel_particles_bounds_spec
    procedure, pass :: sel_particles_index => sel_particles_index_spec
-   generic :: pack_species => pack_species_array, pack_species_logical
+   procedure, pass :: sweep => sweep_spec
  end type
 
  interface operator(*)
@@ -60,12 +58,12 @@ module particles_def
   integer, intent(in) :: n_particles, curr_ndims
   integer :: allocstatus
  
-  if (n_particles <= 0) then
-   this%initialized = .false.
-   this%n_part = 0
+  if (n_particles < 0) then
    return
   end if
- 
+  if ( .not. allocated(this%initialized)) then
+   allocate(this%initialized)
+  end if
   this%initialized = .true.
   this%n_part = n_particles
   this%dimensions = curr_ndims
@@ -78,6 +76,11 @@ module particles_def
   this%allocated_gamma = .false.
   this%allocated_weight = .false.
   this%allocated_index = .false.
+  if (n_particles == 0) then
+   this%empty = .true.
+   return
+  end if
+  this%empty = .false.
  
   select case(curr_ndims)
   
@@ -134,6 +137,57 @@ module particles_def
  end subroutine
 
  !========================================
+ ! CLEANING PROCEDURES
+ !========================================
+ 
+ subroutine sweep_spec( this )
+  class(species_new), intent(inout) :: this
+
+  if ( .not. allocated(this%initialized) ) then
+   return
+  else
+   deallocate( this%initialized )
+  end if
+
+  if ( this%allocated_x ) then
+   this%allocated_x = .false.
+   deallocate( this%x )
+  end if
+  if ( this%allocated_y ) then
+   this%allocated_y = .false.
+   deallocate( this%y )
+  end if
+  if ( this%allocated_z ) then
+   this%allocated_z = .false.
+   deallocate( this%z )
+  end if
+  if ( this%allocated_px ) then
+   this%allocated_px = .false.
+   deallocate( this%px )
+  end if
+  if ( this%allocated_py ) then
+   this%allocated_py = .false.
+   deallocate( this%py )
+  end if
+  if ( this%allocated_pz ) then
+   this%allocated_pz = .false.
+   deallocate( this%pz )
+  end if
+  if ( this%allocated_weight ) then
+   this%allocated_weight = .false.
+   deallocate( this%weight )
+  end if
+  if ( this%allocated_gamma ) then
+   this%allocated_gamma = .false.
+   deallocate( this%gamma_inv )
+  end if
+  if ( this%allocated_index ) then
+   this%allocated_index = .false.
+   deallocate( this%part_index )
+  end if
+
+ end subroutine
+ !========================================
  ! TYPE BOUND PROCEDURES
  !========================================
 
@@ -144,41 +198,50 @@ module particles_def
   integer :: tot_size
 
   tot_size = this%how_many()+other%how_many()
+
+  if (this%empty) then
+   call spec%copy(other, 1, other%how_many())
+   return
+  else if (other%empty) then
+   call spec%copy(this, 1, this%how_many())
+   return
+  end if
+
   call spec%new_species(tot_size, this%dimensions)
   
-  if(this%allocated_x) then
+  if(other%allocated_x) then
    call assign(spec%x, [this%call_component(X_COMP), other%call_component(X_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_y) then
+  if(other%allocated_y) then
    call assign(spec%y, [this%call_component(Y_COMP), other%call_component(Y_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_z) then
+  if(other%allocated_z) then
    call assign(spec%z, [this%call_component(Z_COMP), other%call_component(Z_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_px) then
+  if(other%allocated_px) then
    call assign(spec%px, [this%call_component(PX_COMP), other%call_component(PX_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_py) then
+  if(other%allocated_py) then
    call assign(spec%py, [this%call_component(PY_COMP), other%call_component(PY_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_pz) then
+  if(other%allocated_pz) then
    call assign(spec%pz, [this%call_component(PZ_COMP), other%call_component(PZ_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_gamma) then
+  if(other%allocated_gamma) then
    call assign(spec%gamma_inv, [this%call_component(INV_GAMMA_COMP), other%call_component(INV_GAMMA_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_weight) then
+  if(other%allocated_weight) then
    call assign(spec%weight, [this%call_component(W_COMP), other%call_component(W_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_index) then
+  if(other%allocated_index) then
    call assign(spec%part_index, [this%call_component(INDEX_COMP), other%call_component(INDEX_COMP)], &
     1, tot_size, tot_size)
   end if
@@ -265,7 +328,10 @@ module particles_def
   integer :: n_parts
 
   n_parts = this%how_many()
-  call this%sel_particles(temp, 1, n_parts)
+  if ( n_parts >= new_number ) then
+   return
+  end if
+  call temp%copy(this)
   call this%new_species(new_number, this%dimensions)
   call this%copy(temp)
 
@@ -312,7 +378,7 @@ module particles_def
    out_sp%part_index = this%part_index(lower_bound:upper_bound)
   end if
 
-  out_sp%n_part = out_sp%count_particles()
+  out_sp%n_part = out_sp%array_size()
 
  end subroutine
 
@@ -385,86 +451,6 @@ module particles_def
   end if
 
  end subroutine
-
- function pack_species_logical( this, mask ) result(packed)
-  class(species_new), intent(in) :: this
-  logical, intent(in) :: mask
-  type(species_new) :: packed
-
-  call packed%new_species(this%n_part, this%dimensions)
-  call packed%set_charge(this%charge)
-
-  if( this%allocated_x ) then
-   packed%x = PACK( this%x(:), mask)
-  end if
-  if( this%allocated_y ) then
-   packed%y = PACK( this%y(:), mask)
-  end if
-  if( this%allocated_z ) then
-   packed%z = PACK( this%z(:), mask)
-  end if
-  if( this%allocated_px ) then
-   packed%px = PACK( this%px(:), mask)
-  end if
-  if( this%allocated_py ) then
-   packed%py = PACK( this%py(:), mask)
-  end if
-  if( this%allocated_pz ) then
-   packed%pz = PACK( this%pz(:), mask)
-  end if
-  if( this%allocated_gamma ) then
-   packed%gamma_inv = PACK( this%gamma_inv(:), mask)
-  end if
-  if( this%allocated_weight ) then
-   packed%weight = PACK( this%weight(:), mask)
-  end if
-  if( this%allocated_index ) then
-   packed%part_index = PACK( this%part_index(:), mask)
-  end if
-
-  packed%n_part = packed%count_particles()
-
- end function
-
- function pack_species_array( this, mask ) result(packed)
-  class(species_new), intent(in) :: this
-  logical, intent(in) :: mask(:)
-  type(species_new) :: packed
-  integer :: tot_parts
-
-  tot_parts = COUNT( mask )
-  call packed%new_species(tot_parts, this%dimensions)
-  call packed%set_charge(this%charge)
-
-  if( this%allocated_x ) then
-   packed%x = PACK( this%x(:), mask(:) )
-  end if
-  if( this%allocated_y ) then
-   packed%y = PACK( this%y(:), mask(:) )
-  end if
-  if( this%allocated_z ) then
-   packed%z = PACK( this%z(:), mask(:) )
-  end if
-  if( this%allocated_px ) then
-   packed%px = PACK( this%px(:), mask(:) )
-  end if
-  if( this%allocated_py ) then
-   packed%py = PACK( this%py(:), mask(:) )
-  end if
-  if( this%allocated_pz ) then
-   packed%pz = PACK( this%pz(:), mask(:) )
-  end if
-  if( this%allocated_gamma ) then
-   packed%gamma_inv = PACK( this%gamma_inv(:), mask(:) )
-  end if
-  if( this%allocated_weight ) then
-   packed%weight = PACK( this%weight(:), mask(:) )
-  end if
-  if( this%allocated_index ) then
-   packed%part_index = PACK( this%part_index(:), mask(:) )
-  end if
-
- end function
 
  subroutine set_component_real( this, values, component, lb, ub )
   !! Assigns an array of real values to a given `species_new` component

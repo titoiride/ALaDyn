@@ -96,7 +96,7 @@
    !  exit      xi=part(n) the  particle position in uniform grid
    !               normalized to the Dxi cell size
    !==========================================
-   x_params%const = 0
+   x_params%const = -loc_xgrid(imodx)%gmin
    x_params%smin = str_xgrid%smin
    x_params%smax = str_xgrid%smax
    x_params%xs = nx_stretch*dx
@@ -111,7 +111,7 @@
 
     do n = 1, np
      xp = pt(n)
-     pt(n) = invert_uniform_grid(xp, x_params) - x_params%init_cell
+     pt(n) = invert_uniform_grid(xp, x_params)
     end do
 
    case default
@@ -144,7 +144,7 @@
    !  exit      xi=part(ic1,n) the  particle position in uniform grid
    !               normalized to the Dxi cell size
    !==========================================
-   x_params%const = one_dp*nx*dx/2
+   x_params%const = -loc_xgrid(imodx)%gmin
    x_params%smin = str_xgrid%smin
    x_params%smax = str_xgrid%smax
    x_params%xs = nx_stretch*dx
@@ -163,7 +163,7 @@
      xp_loc = invert_stretched_grid(xp, x_params)
      xp_loc = nx - xp_loc - x_params%init_cell
     else
-     xp_loc = invert_uniform_grid(xp, x_params) - x_params%init_cell
+     xp_loc = invert_uniform_grid(xp, x_params)
     end if
     pt(n, ic1) = xp_loc
    end do

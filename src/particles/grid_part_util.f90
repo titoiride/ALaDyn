@@ -27,7 +27,7 @@
 
   implicit none
 
-  type(interp_coeff), private :: interp
+  type(interp_coeff), allocatable, private :: interp
   !! Useful variable to store interpolation results
   real(dp), dimension(:, :), allocatable, private, save :: gpu_xx
 
@@ -287,6 +287,10 @@
    !======================
    ! Computes charge density of species ic on a grid
    !=================================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if (np == 0) return
    call interp_realloc(interp, np, sp_loc%dimensions)
    !================================
    allocate( weight(np) )

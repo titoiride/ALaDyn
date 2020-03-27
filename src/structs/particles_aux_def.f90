@@ -110,6 +110,7 @@ module particles_aux_def
    procedure, pass :: sel_particles_index => sel_particles_index_aux
    procedure, public :: set_component_real => set_component_aux_real
    procedure, public :: set_component_integer => set_component_aux_integer
+   procedure, pass :: sweep => sweep_aux
 
  end type species_aux
 
@@ -127,12 +128,12 @@ module particles_aux_def
   integer, intent(in) :: n_particles, curr_ndims
   integer :: allocstatus
  
-  if (n_particles <= 0) then
-   this%initialized = .false.
-   this%n_part = 0
+  if (n_particles < 0) then
    return
   end if
- 
+  if ( .not. allocated(this%initialized)) then
+   allocate(this%initialized)
+  end if
   this%initialized = .true.
   this%n_part = n_particles
   this%dimensions = curr_ndims
@@ -145,7 +146,7 @@ module particles_aux_def
   this%allocated_gamma = .false.
   this%allocated_weight = .false.
   this%allocated_index = .false.
- 
+  
   this%allocated_aux1 = .false.
   this%allocated_aux2 = .false.
   this%allocated_aux3 = .false.
@@ -154,6 +155,12 @@ module particles_aux_def
   this%allocated_aux6 = .false.
   this%allocated_aux7 = .false.
   this%allocated_aux8 = .false.
+  
+  if (n_particles == 0) then
+   this%empty = .true.
+   return
+  end if
+  this%empty = .false.
 
   select case(curr_ndims)
   
@@ -213,6 +220,90 @@ module particles_aux_def
  end subroutine
 
  !========================================
+ ! CLEANING PROCEDURES
+ !========================================
+ 
+ subroutine sweep_aux( this )
+  class(species_aux), intent(inout) :: this
+
+  if ( .not. allocated(this%initialized) ) then
+   return
+  else
+   deallocate( this%initialized )
+  end if
+
+  if ( this%allocated_x ) then
+   this%allocated_x = .false.
+   deallocate( this%x )
+  end if
+  if ( this%allocated_y ) then
+   this%allocated_y = .false.
+   deallocate( this%y )
+  end if
+  if ( this%allocated_z ) then
+   this%allocated_z = .false.
+   deallocate( this%z )
+  end if
+  if ( this%allocated_px ) then
+   this%allocated_px = .false.
+   deallocate( this%px )
+  end if
+  if ( this%allocated_py ) then
+   this%allocated_py = .false.
+   deallocate( this%py )
+  end if
+  if ( this%allocated_pz ) then
+   this%allocated_pz = .false.
+   deallocate( this%pz )
+  end if
+  if ( this%allocated_weight ) then
+   this%allocated_weight = .false.
+   deallocate( this%weight )
+  end if
+  if ( this%allocated_gamma ) then
+   this%allocated_gamma = .false.
+   deallocate( this%gamma_inv )
+  end if
+  if ( this%allocated_index ) then
+   this%allocated_index = .false.
+   deallocate( this%part_index )
+  end if
+  if ( this%allocated_aux1 ) then
+   this%allocated_aux1 = .false.
+   deallocate( this%aux1 )
+  end if
+  if ( this%allocated_aux2 ) then
+   this%allocated_aux2 = .false.
+   deallocate( this%aux2 )
+  end if
+  if ( this%allocated_aux3 ) then
+   this%allocated_aux3 = .false.
+   deallocate( this%aux3 )
+  end if
+  if ( this%allocated_aux4 ) then
+   this%allocated_aux4 = .false.
+   deallocate( this%aux4 )
+  end if
+  if ( this%allocated_aux5 ) then
+   this%allocated_aux5 = .false.
+   deallocate( this%aux5 )
+  end if
+  if ( this%allocated_aux6 ) then
+   this%allocated_aux6 = .false.
+   deallocate( this%aux6 )
+  end if
+  if ( this%allocated_aux7 ) then
+   this%allocated_aux7 = .false.
+   deallocate( this%aux7 )
+  end if
+  if ( this%allocated_aux8 ) then
+   this%allocated_aux8 = .false.
+   deallocate( this%aux8 )
+  end if
+
+ end subroutine
+
+ !========================================
  ! TYPE BOUND PROCEDURES
  !========================================
 
@@ -223,41 +314,50 @@ module particles_aux_def
   integer :: tot_size
 
   tot_size = this%how_many()+other%how_many()
+
+  if (this%empty) then
+   call spec%copy(other, 1, other%how_many())
+   return
+  else if (other%empty) then
+   call spec%copy(this, 1, this%how_many())
+   return
+  end if
+
   call spec%new_species(tot_size, this%dimensions)
   
-  if(this%allocated_x) then
+  if(other%allocated_x) then
    call assign(spec%x, [this%call_component(X_COMP), other%call_component(X_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_y) then
+  if(other%allocated_y) then
    call assign(spec%y, [this%call_component(Y_COMP), other%call_component(Y_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_z) then
+  if(other%allocated_z) then
    call assign(spec%z, [this%call_component(Z_COMP), other%call_component(Z_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_px) then
+  if(other%allocated_px) then
    call assign(spec%px, [this%call_component(PX_COMP), other%call_component(PX_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_py) then
+  if(other%allocated_py) then
    call assign(spec%py, [this%call_component(PY_COMP), other%call_component(PY_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_pz) then
+  if(other%allocated_pz) then
    call assign(spec%pz, [this%call_component(PZ_COMP), other%call_component(PZ_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_gamma) then
+  if(other%allocated_gamma) then
    call assign(spec%gamma_inv, [this%call_component(INV_GAMMA_COMP), other%call_component(INV_GAMMA_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_weight) then
+  if(other%allocated_weight) then
    call assign(spec%weight, [this%call_component(W_COMP), other%call_component(W_COMP)], &
     1, tot_size, tot_size)
   end if
-  if(this%allocated_index) then
+  if(other%allocated_index) then
    call assign(spec%part_index, [this%call_component(INDEX_COMP), other%call_component(INDEX_COMP)], &
     1, tot_size, tot_size)
   end if
@@ -412,7 +512,11 @@ module particles_aux_def
   integer :: n_parts
 
   n_parts = this%how_many()
-  call this%sel_particles(temp, 1, n_parts)
+  if ( n_parts >= new_number ) then
+   return
+  end if
+
+  call temp%copy(this)
   call this%new_species(new_number, this%dimensions)
   call this%copy(temp)
 
@@ -458,7 +562,7 @@ module particles_aux_def
     out_sp%part_index = this%part_index(lower_bound:upper_bound)
    end if
  
-   out_sp%n_part = out_sp%count_particles()
+   out_sp%n_part = out_sp%array_size()
  
   end subroutine
  
@@ -579,46 +683,60 @@ module particles_aux_def
    this%allocated_weight = .true.
 
   case(EX_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(EY_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(EZ_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
   case(BX_COMP)
+   call check_array_1d(this%aux4, upb - lowb + 1)
    call assign(this%aux4, values, lowb, upb, this%n_part)
    this%allocated_aux4 = .true.
   case(BY_COMP)
+   call check_array_1d(this%aux5, upb - lowb + 1)
    call assign(this%aux5, values, lowb, upb, this%n_part)
    this%allocated_aux5 = .true.
   case(BZ_COMP)
+   call check_array_1d(this%aux6, upb - lowb + 1)
    call assign(this%aux6, values, lowb, upb, this%n_part)
    this%allocated_aux6 = .true.
 
   case(AUX1_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(AUX2_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(AUX3_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
   case(AUX4_COMP)
+   call check_array_1d(this%aux4, upb - lowb + 1)
    call assign(this%aux4, values, lowb, upb, this%n_part)
    this%allocated_aux4 = .true.
   case(AUX5_COMP)
+   call check_array_1d(this%aux5, upb - lowb + 1)
    call assign(this%aux5, values, lowb, upb, this%n_part)
    this%allocated_aux5 = .true.
   case(AUX6_COMP)
+   call check_array_1d(this%aux6, upb - lowb + 1)
    call assign(this%aux6, values, lowb, upb, this%n_part)
    this%allocated_aux6 = .true.
   case(AUX7_COMP)
+   call check_array_1d(this%aux7, upb - lowb + 1)
    call assign(this%aux7, values, lowb, upb, this%n_part)
    this%allocated_aux7 = .true.
   case(AUX8_COMP)
+   call check_array_1d(this%aux8, upb - lowb + 1)
    call assign(this%aux8, values, lowb, upb, this%n_part)
    this%allocated_aux8 = .true.
 
@@ -655,29 +773,37 @@ module particles_aux_def
    this%allocated_pz = .true.
 
   case(POND_COMP)
+   call check_array_1d(this%aux4, upb - lowb + 1)
    call assign(this%aux4, values, lowb, upb, this%n_part)
    this%allocated_aux4 = .true.
   case(GRADF_X_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(GRADF_Y_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(GRADF_Z_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
 
   case(E_SQUARED)
+   call check_array_1d(this%aux8, upb - lowb + 1)
    call assign(this%aux8, values, lowb, upb, this%n_part)
    this%allocated_aux8 = .true.
 
   case(FX_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(FY_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(FZ_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
   end select
@@ -731,46 +857,60 @@ module particles_aux_def
    this%allocated_weight = .true.
 
   case(EX_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(EY_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(EZ_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
   case(BX_COMP)
+   call check_array_1d(this%aux4, upb - lowb + 1)
    call assign(this%aux4, values, lowb, upb, this%n_part)
    this%allocated_aux4 = .true.
   case(BY_COMP)
+   call check_array_1d(this%aux5, upb - lowb + 1)
    call assign(this%aux5, values, lowb, upb, this%n_part)
    this%allocated_aux5 = .true.
   case(BZ_COMP)
+   call check_array_1d(this%aux6, upb - lowb + 1)
    call assign(this%aux6, values, lowb, upb, this%n_part)
    this%allocated_aux6 = .true.
 
   case(AUX1_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(AUX2_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(AUX3_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
   case(AUX4_COMP)
+   call check_array_1d(this%aux4, upb - lowb + 1)
    call assign(this%aux4, values, lowb, upb, this%n_part)
    this%allocated_aux4 = .true.
   case(AUX5_COMP)
+   call check_array_1d(this%aux5, upb - lowb + 1)
    call assign(this%aux5, values, lowb, upb, this%n_part)
    this%allocated_aux5 = .true.
   case(AUX6_COMP)
+   call check_array_1d(this%aux6, upb - lowb + 1)
    call assign(this%aux6, values, lowb, upb, this%n_part)
    this%allocated_aux6 = .true.
   case(AUX7_COMP)
+   call check_array_1d(this%aux7, upb - lowb + 1)
    call assign(this%aux7, values, lowb, upb, this%n_part)
    this%allocated_aux7 = .true.
   case(AUX8_COMP)
+   call check_array_1d(this%aux8, upb - lowb + 1)
    call assign(this%aux8, values, lowb, upb, this%n_part)
    this%allocated_aux8 = .true.
 
@@ -807,29 +947,37 @@ module particles_aux_def
    this%allocated_pz = .true.
 
   case(POND_COMP)
+   call check_array_1d(this%aux4, upb - lowb + 1)
    call assign(this%aux4, values, lowb, upb, this%n_part)
    this%allocated_aux4 = .true.
   case(GRADF_X_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(GRADF_Y_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(GRADF_Z_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
 
   case(E_SQUARED)
+   call check_array_1d(this%aux8, upb - lowb + 1)
    call assign(this%aux8, values, lowb, upb, this%n_part)
    this%allocated_aux8 = .true.
 
   case(FX_COMP)
+   call check_array_1d(this%aux1, upb - lowb + 1)
    call assign(this%aux1, values, lowb, upb, this%n_part)
    this%allocated_aux1 = .true.
   case(FY_COMP)
+   call check_array_1d(this%aux2, upb - lowb + 1)
    call assign(this%aux2, values, lowb, upb, this%n_part)
    this%allocated_aux2 = .true.
   case(FZ_COMP)
+   call check_array_1d(this%aux3, upb - lowb + 1)
    call assign(this%aux3, values, lowb, upb, this%n_part)
    this%allocated_aux3 = .true.
   end select

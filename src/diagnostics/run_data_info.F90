@@ -64,7 +64,7 @@
         write (6, '(a21,i10,a1,i10)') ' part min/max distr. ', np_min, &
          ' ', np_max
         write (6, '(a18,2i8)') ' where pmin/pmax  ', pe_npmin, pe_npmax
-       endif
+       end if
        write (6, '(a24,e12.5)') ' max part memory in MB= ', &
           mem_psize_max
        write (6, '(a20,e12.5)') ' Max part  address= ', mem_max_addr
@@ -112,7 +112,7 @@
    np_min = minval(nploc(1:npe))
    if(.not.part)then
     if(np_max > 0) part=.true.
-   endif
+   end if
    do ip = 0, npe - 1
     if (nploc(ip+1) == np_min) pe_npmin = ip
     if (nploc(ip+1) == np_max) pe_npmax = ip

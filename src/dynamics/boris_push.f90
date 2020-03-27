@@ -79,6 +79,10 @@
    !=========================
    ! from p^n to p^{n-1/2}
    !==========================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================
    call pp_realloc( bp_pp, np, sp_loc%dimensions)
    !=============================================
@@ -189,6 +193,12 @@
    dt_lp = dt_loc
    dth_lp = 0.5*dt_lp
    alp = dth_lp*lorentz_fact(ic)
+   call pt%set_part_number( sp_loc%how_many() )
+   call pt%extend( sp_loc%how_many())
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================
    call pp_realloc( bp_pp, np, sp_loc%dimensions)
    !=============================================
@@ -472,6 +482,12 @@
    !==========================
    ! Enter F_pt(1:2)= q*(E+0.5q*grad[F]/gamp) and
    ! F_pt(3)=q*B/gamp     where F=|A|^2/2
+   call f_pt%set_part_number(sp_loc%how_many())
+   call f_pt%extend( sp_loc%how_many())
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================
    call pp_realloc( bp_pp, np, sp_loc%dimensions)
    !=============================================
@@ -619,6 +635,12 @@
 
    dt_lp = dt_loc
    dth_lp = 0.5*dt_lp
+   call f_pt%set_part_number( sp_loc%how_many())
+   call f_pt%extend( sp_loc%how_many())
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================
    call pp_realloc( bp_pp, np, sp_loc%dimensions)
    !=============================================

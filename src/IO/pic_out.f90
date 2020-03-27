@@ -1516,6 +1516,7 @@
 
    ndv = nd2 + 2
    np = loc_npart(imody, imodz, imodx, pid)
+   npt = 0
    allocate(mask(np))
    out_parts = index_array(np)
    call v_realloc( pic_out_aux, np, nd2+1 )

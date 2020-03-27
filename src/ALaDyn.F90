@@ -61,7 +61,7 @@
   end if
   if (pe0)then
    call initial_run_info(new_sim)
-  endif
+  end if
   !=============================
   call CPU_TIME( unix_time_now )
   unix_time_begin = unix_time_now
@@ -103,7 +103,7 @@
    !   if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
    !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
    !  end if
-   ! endif
+   ! end if
    call Data_out
    do while (tnow<tmax)
    !=======================
@@ -138,7 +138,7 @@
    !   if (pe0) write (6, '(a24,e11.4)') ' Injected beam at time =', tnow
    !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
    !  end if
-   ! endif
+   ! end if
    call Data_out
    !================
    tk_ind = 0
@@ -172,7 +172,7 @@
       write (6, '(a10,i3,a10,e11.4)') ' rms data ', ienout, &
        ' at time =', tnow
       write(6,*)'=========================='
-     endif
+     end if
     end if
    end if
 
@@ -213,7 +213,7 @@
      do i = 1, curr_ndim
       call density_flux_out(jc,i)
      end do
-    endif
+    end if
     if (nden>0) then
      do i = 1, nsp
       !call prl_den_energy_interp(spec(i), ebfp, i, nden)
@@ -252,7 +252,7 @@
     end if
     if (dump>0 .and. time_interval_dumps < 0.0) then
      !if (iter>0) call dump_data(iter,tnow, spec)
-    endif
+    end if
     iout = iout + 1
    end if
 
@@ -260,7 +260,7 @@
 
    !if((unix_time_now - unix_time_last_dump) > time_interval_dumps .and. time_interval_dumps > 0.0) then
    ! call dump_data(iter, tnow, spec)
-   !endif
+   !end if
 
   end subroutine data_out
   !--------------------------

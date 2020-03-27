@@ -470,7 +470,7 @@
      end do
     end do
     i01=ix1+1
-   endif
+   end if
    if(xr_bd)then
     do k = kz1, kz2
      do j = jy1, jy2
@@ -481,7 +481,7 @@
      end do
     end do
     i02=ix2-2
-   endif
+   end if
    do k = kz1, kz2
     do j = jy1, jy2
      do i = i01, i02 
@@ -890,10 +890,10 @@
 
    if (present(init_ic)) then
     comp1 = init_ic
-   endif
+   end if
    if (present(end_ic)) then
     comp2 = end_ic
-   endif
+   end if
    j1 = jy1
    j2 = jy2
    k1 = kz1

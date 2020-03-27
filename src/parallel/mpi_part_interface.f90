@@ -30,7 +30,7 @@
   implicit none
   real (dp) :: loc_pstore(7)
   real (dp), allocatable :: sp_aux(:, :), sp1_aux(:, :)
-  type(species_new), allocatable :: sp_aux_new, sp1_aux_new
+  type(species_new) :: sp_aux_new, sp1_aux_new
 
   interface traffic_size_eval
    module procedure :: traffic_size_eval_old
@@ -71,15 +71,15 @@
    integer, intent (inout) :: npnew
    integer :: p, q
    integer :: nl_send, nl_recv, nr_send, nr_recv, cdir
-
+ 
    cdir = component_dictionary( component )
    p = 0
    q = 0
    nr_recv = 0
    nl_recv = 0
    if (npold>0) then
-    p = COUNT( sp_loc%call_component( component ) > xr)
-    q = COUNT( sp_loc%call_component( component ) < xl)
+    p = COUNT( sp_loc%call_component( component ) > xr )
+    q = COUNT( sp_loc%call_component( component ) < xl )
    end if
    nr_send = p
    nl_send = q
@@ -165,7 +165,7 @@
   type(index_array) :: left_pind, right_pind
   type( species_aux ) :: temp_spec
   real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
-  integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
+  integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size, sp_charge
   integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
   logical :: mask(old_np)
   !================ dir are cartesian coordinate index (x,y,z)
@@ -179,15 +179,14 @@
   vxdir = link_position_momentum( component )
   !================== checks memory
   tot_size = sp_loc%total_size()
+  sp_charge = sp_loc%charge
   p = tot_size*max(nl_send, nr_send)
   if (p > 0) then
-   allocate(aux_array1(p))
-   aux_array1(:) = zero_dp
+   allocate(aux_array1(p), source=zero_dp)
   end if
   q = tot_size*max(nl_recv, nr_recv)
   if (q > 0) then
-   allocate(aux_array2(q))
-   aux_array2(:) = zero_dp
+   allocate(aux_array2(q), source=zero_dp)
   end if
   !==================== copy remaining part => spec_aux_in
   right_pind = index_array(old_np)
@@ -223,8 +222,7 @@
   mask(:) = (xp > xl .and. xp <= xr)
   npt = COUNT( mask(:) )
 
-  call sp_loc%sel_particles( sp_aux_new, 1, old_np )
-  sp_aux_new = sp_aux_new%pack_species( mask(:) )
+  call sp_loc%pack_into( sp_aux_new, mask(:) )
   !=======================
   ns = tot_size*nr_send
   nr = tot_size*nl_recv
@@ -262,10 +260,11 @@
    n_tot = nl_recv*tot_size
    call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, sp_loc%dimensions)
    sp_aux_new = sp_aux_new%append(temp_spec)
+   npt = npt + nl_recv
   end if
 !===================
-  ns = ndv*nl_send
-  nr = ndv*nr_recv
+  ns = tot_size*nl_send
+  nr = tot_size*nr_recv
   if (ibd < 2) then
    if (pel) ns = 0
    if (per) nr = 0
@@ -296,8 +295,9 @@
    n_tot = nr_recv*tot_size
    call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, sp_loc%dimensions)
    sp_aux_new = sp_aux_new%append(temp_spec)
+   npt = npt + nr_recv
   end if
-
+  call sp_aux_new%set_charge(sp_charge)
 !  EXIT old+new data in sp_aux(:,:)
  end subroutine
 !==============================================
@@ -477,7 +477,7 @@
    type(index_array) :: left_pind, right_pind
    type( species_aux ) :: temp_spec
    real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
-   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
+   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size, sp_charge
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
    logical :: mask(old_np)
    !================ dir are cartesian coordinate index (x,y,z)
@@ -491,21 +491,20 @@
    vxdir = link_position_momentum( component )
    !================== checks memory
    tot_size = sp_loc%total_size()
+   sp_charge = sp_loc%charge
    p = 2*tot_size*max(nl_send, nr_send)
    if (p > 0) then
-    allocate(aux_array1(p))
-    aux_array1(:) = zero_dp
+    allocate(aux_array1(p), source=zero_dp)
    end if
    q = 2*tot_size*max(nl_recv, nr_recv)
    if (q > 0) then
-    allocate(aux_array2(q))
-    aux_array2(:) = zero_dp
+    allocate(aux_array2(q), source=zero_dp)
    end if
    !==================== copy remaining part => spec_aux_in
    !CHECK if index is the fastest way to select particles in species_new
    right_pind = index_array(old_np)
    left_pind = index_array(old_np)
-  
+   npt = 0
    if (ibd == 1 .and. component == X_COMP) then !reflecting on the right
     if (per) then
      allocate(temp(1:old_np), source=sp_loc%call_component( vxdir, lb=1, ub=old_np))
@@ -533,10 +532,8 @@
    mask(:) = (xp > xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
-   call sp_loc%sel_particles( sp_aux_new, 1, old_np )
-   sp_aux_new = sp_aux_new%pack_species( mask(:) )
-   call aux_sp%sel_particles( sp1_aux_new, 1, old_np )
-   sp1_aux_new = sp1_aux_new%pack_species( mask(:) )
+   call sp_loc%pack_into(sp_aux_new, mask(:))
+   call aux_sp%pack_into(sp1_aux_new, mask(:))
 
    ! TO BE FIXED UPDATING VSTORE TO NEW STRUCT
    ! vstore(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
@@ -596,11 +593,11 @@
     sp_aux_new = sp_aux_new%append(temp_spec)
     call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nl_recv, sp_loc%dimensions)
     sp1_aux_new = sp1_aux_new%append(temp_spec)
-    npt = sp_aux_new%how_many()
+    npt = npt + nl_recv
    end if
  ! !===================
-   ns = 2*ndv*nl_send
-   nr = 2*ndv*nr_recv
+   ns = 2*tot_size*nl_send
+   nr = 2*tot_size*nr_recv
    if (ibd < 2) then
     if (pel) ns = 0
     if (per) nr = 0
@@ -650,9 +647,9 @@
     sp_aux_new = sp_aux_new%append(temp_spec)
     call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nr_recv, sp_loc%dimensions)
     sp1_aux_new = sp1_aux_new%append(temp_spec)
-    npt = sp_aux_new%how_many()
+    npt = npt + nr_recv
    end if
-  
+   call sp_aux_new%set_charge(sp_charge)
  !  EXIT old+new data in sp_aux(:,:) and sp1_aux(:,:)
  end subroutine
  !================
@@ -894,50 +891,47 @@
    logical, allocatable, dimension(:) :: mask
    !===========================
    np_new = np
-   allocate( mask(np_new) )
+   allocate( mask(np) )
    p = 0
    pout = 0
    cdir = component_dictionary( component )
    vxdir = link_position_momentum( component )
-   right_pind = index_array(np_new)
-   left_pind = index_array(np_new)
+   right_pind = index_array(np)
+   left_pind = index_array(np)
 
    if (ib==2) then
     dxp = xr - xl
-    xp = loc_sp%call_component( component, lb=1, ub=np_new )
+    xp = loc_sp%call_component( component, lb=1, ub=np )
     where ( xp < xl )
      xp = xp + dxp
     else where ( xp > xr )
      xp = xp - dxp
     end where
-    call loc_sp%set_component(xp, component, lb=1, ub=np_new)
+    call loc_sp%set_component(xp, component, lb=1, ub=np )
     return
    end if
 
-   xp = loc_sp%call_component( component, lb=1, ub=np_new )
+   xp = loc_sp%call_component( component, lb=1, ub=np )
    call right_pind%find_index( xp > xr )
    call left_pind%find_index( xp <= xl )
-
+ 
    pout = left_pind%count_index() + right_pind%count_index()
    if (pout>0) then
     if(mwin)then
      mask(:) = (xp > xl .and. xp <= xr)
      npt = COUNT( mask(:) )
 
-     call loc_sp%sel_particles( sp_aux_new, 1, np_new )
-     sp_aux_new = sp_aux_new%pack_species( mask(:) )
+     call loc_sp%pack_into( sp_aux_new, mask(:))
 
     else
 
      mask(:) = (xp > xl .and. xp <= xr)
      npt = COUNT( mask(:) )
 
-     call loc_sp%sel_particles( sp_aux_new, 1, np_new )
-     sp_aux_new = sp_aux_new%pack_species( mask(:) )
-     call aux_sp%sel_particles( sp1_aux_new, 1, np_new )
-     sp1_aux_new = sp1_aux_new%pack_species( mask(:) )
+     call loc_sp%pack_into( sp_aux_new, mask(:) )
+     call aux_sp%pack_into( sp1_aux_new, mask(:) )
 
-    endif
+    end if
     np_new = npt
    end if
   end subroutine
@@ -996,7 +990,7 @@
        sp1_aux(p, 1:ndv) = pstore(n, 1:ndv)
       end if
      end do
-    endif
+    end if
     np_new = p
    end if
   end subroutine
@@ -1027,9 +1021,6 @@
    !x-boundary are removed
    !==========================================
    !=========== mowing window section
-   if (.not. allocated(sp_aux_new)) then
-    allocate (sp_aux_new)
-   end if
    if(moving_wind)then
     nspx = nsp
     xmm = loc_xgrid(imodx)%gmin
@@ -1054,7 +1045,11 @@
         write (6, *) 'error in x-part w-count', mype, np_out, np_new
         ier = 99
        end if
-       call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
+       call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_in(ic)%set_part_number( np_new )
+       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+       call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_aux_in%set_part_number( np_new )
        loc_npart(imody, imodz, imodx, ic) = np_new
       end if
      end do
@@ -1066,18 +1061,15 @@
         X_COMP, np_new, moving_wind)
        if (np_new < np) then
         loc_npart(imody, imodz, imodx, ic) = np_new
-        call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
+        call spec_in(ic)%copy(sp_aux_new, 1, np_new)
+        call spec_in(ic)%set_part_number(np_new)
        end if
       end if
      end do
     end if
-    if(allocated(sp_aux_new)) deallocate(sp_aux_new)
     return
-   endif
-!=========== not mowing window section
-   if (.not. allocated(sp1_aux_new)) then
-    allocate (sp1_aux_new)
    end if
+!=========== not mowing window section
    nspx = nsp_run
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
@@ -1101,8 +1093,12 @@
        write (6, *) 'error in x-part count', mype, np_out, np_new
        ier = 99
       end if
-      call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
-      call sp1_aux_new%sel_particles( spec_aux_in, 1, np_new)
+      call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_in(ic)%set_part_number( np_new )
+      call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+      call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_aux_in%set_part_number( np_new )
+      call spec_aux_in%copy( sp1_aux_new, 1, np_new )
       loc_npart(imody, imodz, imodx, ic) = np_new
      end if
     end do
@@ -1114,8 +1110,10 @@
         X_COMP, np_new, moving_wind)
       if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
-       call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
-       call sp1_aux_new%sel_particles( spec_aux_in, 1, np_new)
+       call spec_in(ic)%copy(sp_aux_new, 1, np_new)
+       call spec_in(ic)%set_part_number(np_new)
+       call spec_aux_in%copy(sp1_aux_new, 1, np_new)
+       call spec_aux_in%set_part_number(np_new)
       end if
      end if
     end do
@@ -1141,8 +1139,12 @@
        write (6, *) 'error in y-part count', mype, np_out, np_new
        ier = 99
       end if
-      call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
-      call sp1_aux_new%sel_particles( spec_aux_in, 1, np_new)
+      call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_in(ic)%set_part_number( np_new )
+      call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+      call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_aux_in%set_part_number( np_new )
+      call spec_aux_in%copy( sp1_aux_new, 1, np_new )
       loc_npart(imody, imodz, imodx, ic) = np_new
      end if
     end do
@@ -1154,8 +1156,10 @@
         Y_COMP, np_new, moving_wind)
       if (np_new < np) then
        loc_npart(imody, imodz, imodx, ic) = np_new
-       call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
-       call sp1_aux_new%sel_particles( spec_aux_in, 1, np_new)
+       call spec_in(ic)%copy(sp_aux_new, 1, np_new)
+       call spec_in(ic)%set_part_number(np_new)
+       call spec_aux_in%copy(sp1_aux_new, 1, np_new)
+       call spec_aux_in%set_part_number(np_new)
       end if
      end if
     end do
@@ -1182,8 +1186,12 @@
         write (6, *) 'error in z-part count', mype, np_out, np_new
         ier = 99
        end if
-       call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
-       call sp1_aux_new%sel_particles( spec_aux_in, 1, np_new)
+       call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_in(ic)%set_part_number( np_new )
+       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+       call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_aux_in%set_part_number( np_new )
+       call spec_aux_in%copy( sp1_aux_new, 1, np_new )
        loc_npart(imody, imodz, imodx, ic) = np_new
       end if
      end do
@@ -1195,15 +1203,15 @@
          Z_COMP, np_new, moving_wind)
        if (np_new < np) then
         loc_npart(imody, imodz, imodx, ic) = np_new
-        call sp_aux_new%sel_particles( spec_in(ic), 1, np_new)
-        call sp1_aux_new%sel_particles( spec_aux_in, 1, np_new)
+        call spec_in(ic)%copy(sp_aux_new, 1, np_new)
+        call spec_in(ic)%set_part_number(np_new)
+        call spec_aux_in%copy(sp1_aux_new, 1, np_new)
+        call spec_aux_in%set_part_number(np_new)
        end if
       end if
      end do
     end if
    end if
-   if(allocated(sp_aux_new))deallocate(sp_aux_new)
-   if(allocated(sp1_aux_new))deallocate(sp1_aux_new)
    !=====================
   end subroutine
   !=========================
@@ -1280,7 +1288,7 @@
      end do
     end if
     return
-   endif
+   end if
 !=========== not mowing window section
    nspx = nsp_run
    xmm = loc_xgrid(imodx)%gmin

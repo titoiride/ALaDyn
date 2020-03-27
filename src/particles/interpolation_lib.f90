@@ -87,6 +87,7 @@
     integer :: n_parts
     contains
     procedure, pass, public :: new_interp
+    procedure, pass, public :: sweep
    end type
 
   interface zeroth_order
@@ -164,6 +165,68 @@
     allocate( this%iz_rank2(n_parts) )
     allocate( this%ihz_rank2(n_parts) )
    end select
+  end subroutine
+
+  subroutine sweep( this )
+   class(interp_coeff), intent(inout) :: this
+
+   if ( allocated(this%coeff_x) ) then
+    deallocate(this%coeff_x)
+   end if
+   if ( allocated(this%coeff_x_rank2) ) then
+    deallocate(this%coeff_x_rank2)
+   end if
+   if ( allocated(this%h_coeff_x) ) then
+    deallocate(this%h_coeff_x)
+   end if
+   if ( allocated(this%h_coeff_x_rank2) ) then
+    deallocate(this%h_coeff_x_rank2)
+   end if
+   if ( allocated(this%ix_rank2) ) then
+    deallocate(this%ix_rank2)
+   end if
+   if ( allocated(this%ihx_rank2) ) then
+    deallocate(this%ihx_rank2)
+   end if
+   
+   if ( allocated(this%coeff_y) ) then
+    deallocate(this%coeff_y)
+   end if
+   if ( allocated(this%coeff_y_rank2) ) then
+    deallocate(this%coeff_y_rank2)
+   end if
+   if ( allocated(this%h_coeff_y) ) then
+    deallocate(this%h_coeff_y)
+   end if
+   if ( allocated(this%h_coeff_y_rank2) ) then
+    deallocate(this%h_coeff_y_rank2)
+   end if
+   if ( allocated(this%iy_rank2) ) then
+    deallocate(this%iy_rank2)
+   end if
+   if ( allocated(this%ihy_rank2) ) then
+    deallocate(this%ihy_rank2)
+   end if
+   
+   if ( allocated(this%coeff_z) ) then
+    deallocate(this%coeff_z)
+   end if
+   if ( allocated(this%coeff_z_rank2) ) then
+    deallocate(this%coeff_z_rank2)
+   end if
+   if ( allocated(this%h_coeff_z) ) then
+    deallocate(this%h_coeff_z)
+   end if
+   if ( allocated(this%h_coeff_z_rank2) ) then
+    deallocate(this%h_coeff_z_rank2)
+   end if
+   if ( allocated(this%iz_rank2) ) then
+    deallocate(this%iz_rank2)
+   end if
+   if ( allocated(this%ihz_rank2) ) then
+    deallocate(this%ihz_rank2)
+   end if
+   
   end subroutine
   ! =======================================================
   !    Templates of spl=1,2,3 order shape functions for grid-particle  connection

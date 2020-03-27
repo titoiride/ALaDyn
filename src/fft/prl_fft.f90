@@ -64,7 +64,7 @@
     do ip=nh+4,npe_yloc-1
      loc_yft_ord(ip)=loc_yft_ord(nh+3)
     end do
-   endif
+   end if
     loc_zft_ord(0:npe_zloc-1)=1
    if(npe_zloc >4)then
     do ip=0,npe_zloc/2-1            ![ x  |   |   |   ]
@@ -77,7 +77,7 @@
     do ip=npe_zloc/2+3,npe_zloc-1
      loc_zft_ord(ip)=loc_zft_ord(npe_zloc/2+2)
     end do
-   endif
+   end if
   end subroutine
    
 
@@ -129,7 +129,7 @@
       pes=yp_prev(ip)
       call mpi_send(w_s(1,1,1), lenw, mpi_sd, pes, tag, comm_col(dd), error)
      end do
-    endif 
+    end if 
     j1=loc_yft_ord(imody)
     do ip=1,jr
      per=yp_next(ip)
@@ -140,7 +140,7 @@
      j2=j1+nft2-1
      w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
     end do
-   endif
+   end if
    !sends imody=nh to (nh+1,nh+2,nh+3) up to
    !imody=npe_yloc-3 to npe_yloc-2,npe_yloc-1) ybd=2
    !imody=npe_yloc-2 to npe_yloc-1)            ybd=1
@@ -163,7 +163,7 @@
      j2=j1+nft2-1
      w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
     end do
-   endif
+   end if
 !================== end prly====================
 !=============
   if(prlz)then 
@@ -181,7 +181,7 @@
       pes=zp_prev(ip)
       call mpi_send(w_s(1,1,1), lenw, mpi_sd, pes, tag, comm_col(dd), error)
      end do
-    endif
+    end if
     k1=loc_zft_ord(imodz)
     do ip=1,kr
      tag=100+ip
@@ -192,7 +192,7 @@
      k2=k1+nft3-1
      w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
     end do
-   endif
+   end if
    !sends nhz => (nhz+1,nhz+2,nhz+3)      => npe_zloc-2 > npe_zloc-1 (zbd=1)
    if(imodz > (nhz-1))then
     kkr=imodz-nhz
@@ -212,8 +212,8 @@
      k2=k1+nft3-1
      w_r(1:nft1,j1:j2,k1:k2)=fp1(1:nft1,1:nft2,1:nft3)
     end do
-   endif
-  endif
+   end if
+  end if
   end subroutine
    
   subroutine swap_yx_3data(waux, wdata, n1_loc, n2, n3)

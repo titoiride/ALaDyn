@@ -86,8 +86,8 @@
    module procedure :: ncdef_3d_curr_old
   end interface
 
-  type(interp_coeff), private, save :: interp
-  type(interp_coeff), private, save :: interp_old
+  type(interp_coeff), private, allocatable, save :: interp
+  type(interp_coeff), private, allocatable, save :: interp_old
   real(dp), dimension(:, :), allocatable, private, save :: gpc_xx
   !! Useful variable to store interpolation results
 
@@ -103,6 +103,10 @@
 
    real(dp), allocatable, dimension(:, :) :: ap
    integer :: i1, i2, j2, n
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    call xx_realloc(gpc_xx, np, 1)
@@ -114,7 +118,7 @@
     j2 = 1
     gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np)
     
-    call qqh_1d_spline( gpc_xx, interp )
+    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( axh => interp%h_coeff_x_rank2 )
@@ -144,7 +148,7 @@
     allocate( ap(np, 3), source=zero_dp )
     gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP) !the current particle positions
     
-    call qqh_1d_spline( gpc_xx, interp )
+    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( axh => interp%h_coeff_x_rank2 )
@@ -262,6 +266,10 @@
    ! Uses quadratic or linear shapes depending on staggering
    ! ndf is the number of field component
 
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=====================
    call interp_realloc(interp, np, sp_loc%dimensions)
    call xx_realloc(gpc_xx, np, 2)
@@ -272,7 +280,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qlh_2d_spline( gpc_xx, interp )
+    call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
     
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -328,7 +336,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qlh_2d_spline( gpc_xx, interp )
+    call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
     
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -530,6 +538,10 @@
    ! Linear shape at half-index
    ! Quadratic shape at integer index
    !====================================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    call xx_realloc(gpc_xx, np, 3)
@@ -540,7 +552,7 @@
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
 
-   call qlh_3d_spline( gpc_xx, interp )
+   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp )
    !==========================
 
    associate( ax1 => interp%coeff_x_rank2 )
@@ -778,6 +790,10 @@
    !====================================
    ! fields are at t^n
 
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    !================================
@@ -790,7 +806,7 @@
     !==========================
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qqh_2d_spline( gpc_xx, interp )
+    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -847,7 +863,7 @@
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
 
-    call qqh_3d_spline( gpc_xx, interp )
+    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -1116,7 +1132,10 @@
    !========================================
    dth = 0.5*dt_step
    ch = sp_loc%charge
-   
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    allocate( gam(np) )
    allocate( dgam(np) )
    allocate( inv_gam(np) )
@@ -1134,7 +1153,7 @@
     k2 = 1
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qqh_2d_spline( gpc_xx, interp )
+    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -1225,7 +1244,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qqh_3d_spline( gpc_xx, interp )
+    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -1599,6 +1618,10 @@
    !===============================================
    ! Quadratic shape functions
    !====================================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    ddx = dx_inv
    ddy = dy_inv
    !========================================
@@ -1687,7 +1710,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qqh_3d_spline( gpc_xx, interp )
+    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -1955,6 +1978,10 @@
    !  ap(3)= [D_z(F)](i,j,k+1/2)
    !  ap(4)= [Phi](i,j,k)
    !===========================================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !========================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    !========================================
@@ -1968,7 +1995,7 @@
 
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qqh_2d_spline( gpc_xx, interp )
+    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -2024,7 +2051,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qqh_3d_spline( gpc_xx, interp )
+    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -2258,6 +2285,10 @@
    ! exit av(:,:,:,ic) the den source in envelope equation :  <n*wgh/gamp> > 0
    ! exit efp(1:3) relative positions at time level n
    !=========================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    !================================
@@ -2270,7 +2301,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qden_2d_wgh( gpc_xx, interp )
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -2302,7 +2333,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qden_3d_wgh( gpc_xx, interp )
+    call qden_3d_wgh( gpc_xx(1:np, 1:3), interp )
 
     associate( ax1 => interp%coeff_x_rank2 )
     associate( ay1 => interp%coeff_y_rank2 )
@@ -2443,6 +2474,10 @@
    !==========================
    !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
    ! ==============================Only new and old positions needed
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    call interp_realloc(interp_old, np, sp_loc%dimensions)
@@ -2470,13 +2505,13 @@
      gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
      gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
      
-     call qden_2d_wgh( gpc_xx, interp )
+     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
      
      ! Interpolation on old positions
      gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
      gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
      
-     call qden_2d_wgh( gpc_xx, interp_old )
+     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
 
      associate( ax1 => interp%coeff_x_rank2 )
      associate( ay1 => interp%coeff_y_rank2 )
@@ -2966,6 +3001,10 @@
    !==========================
    !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
    ! ==============================Only new and old positions needed
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    call interp_realloc(interp_old, np, sp_loc%dimensions)
@@ -2999,14 +3038,14 @@
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
    
-   call qden_3d_wgh( gpc_xx, interp )
+   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp )
    
    ! Interpolation on old positions
    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
    
-   call qden_3d_wgh( gpc_xx, interp_old )
+   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp_old )
 
    associate( ax1 => interp%coeff_x_rank2 )
    associate( ay1 => interp%coeff_y_rank2 )
@@ -3357,6 +3396,10 @@
    !=======================
    !Enter pt(3:4) old x-y positions
    !====================================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    call interp_realloc(interp_old, np, sp_loc%dimensions)
@@ -3381,13 +3424,13 @@
    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-   call qlh_2d_spline( gpc_xx, interp )
+   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
 
    ! Interpolation on old positions
    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
 
-   call qlh_2d_spline( gpc_xx, interp_old )
+   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp_old )
    
    associate( ax1 => interp%coeff_x_rank2 )
    associate( ay1 => interp%coeff_y_rank2 )
@@ -3566,6 +3609,10 @@
    ! Exit in jcurr(1:3) =[Drho,J_y,J_z]   !Drho= rho^{new}-rho^{old}
    ! Component J_x recovered by enforcing the continuity equation on a grid
    !=============================================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%dimensions)
    call interp_realloc(interp_old, np, sp_loc%dimensions)
@@ -3594,14 +3641,14 @@
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
  
-   call qlh_3d_spline( gpc_xx, interp )
+   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp )
  
     ! Interpolation on old positions
    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
  
-   call qlh_3d_spline( gpc_xx, interp_old )
+   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp_old )
 
    associate( ax1 => interp%coeff_x_rank2 )
    associate( ay1 => interp%coeff_y_rank2 )

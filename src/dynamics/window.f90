@@ -56,74 +56,21 @@
   end interface
  contains
 
- !=========== STILL TO BE FIXED! =============0
   subroutine add_particles_new(spec_in, np, i1, i2, ic)
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: np, i1, i2, ic
    type(species_new) :: temp_spec
    integer :: n, ix, j, k, j2, k2, n_parts, i
-   real (dp) :: tmp0
-   real (dp), allocatable, dimension(:) :: u
-   real (dp), allocatable, dimension(:) :: whz
-   tmp0 = t0_pl(ic)
-   n = 1
-   part_ind = 0
+
+   n = np
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
    n_parts = (i2 - i1 + 1)*j2*k2
    call init_random_seed(mype)
-   allocate(u(n_parts))
-   allocate(whz(n_parts))
 
-   select case (curr_ndim)
-   case(3)
-    call temp_spec%set_component(xpt(i1:i2, ic), X_COMP)
-    call temp_spec%set_component(loc_ypt(1:j2, ic), Y_COMP)
-    call temp_spec%set_component(loc_zpt(1:k2, ic), Z_COMP)
-    call gasdev(u)
-    call temp_spec%set_component(u(1:n_parts)*tmp0, PX_COMP)
-    call gasdev(u)
-    call temp_spec%set_component(u(1:n_parts)*tmp0, PY_COMP)
-    call gasdev(u)
-    call temp_spec%set_component(u(1:n_parts)*tmp0, PZ_COMP)
+   call spec_in(ic)%add_data(xpt(:, ic), loc_ypt(:, ic), loc_zpt(:, ic), &
+   wghpt(:, ic), loc_wghyz(:, :, ic), i2, j2, k2, np)
 
-    do k = 1, k2
-     do j = 1, j2
-      do i = i1, i2
-       whz(n) = wghpt(i, ic)*loc_wghyz(j, k, ic)
-       n = n + 1
-      end do
-     end do
-    end do
-
-    call temp_spec%set_component(whz(1:n_parts), W_COMP)
-    call temp_spec%set_component(zero_dp*whz(1:n_parts), INDEX_COMP)
-    call temp_spec%set_part_number(n_parts)
-
-    spec_in(ic) = spec_in(ic)%append(temp_spec)
-   case(2)
-    call temp_spec%set_component(xpt(i1:i2, ic), X_COMP)
-    call temp_spec%set_component(loc_ypt(1:j2, ic), Y_COMP)
-    call gasdev(u)
-    call temp_spec%set_component(u(1:n_parts)*tmp0, PX_COMP)
-    call gasdev(u)
-    call temp_spec%set_component(u(1:n_parts)*tmp0, PY_COMP)
-
-    do k = 1, 1
-     do j = 1, j2
-      do i = i1, i2
-       whz(n) = wghpt(i, ic)*loc_wghyz(j, k, ic)
-       n = n + 1
-      end do
-     end do
-    end do
-
-    call temp_spec%set_component(whz(1:n_parts), W_COMP)
-    call temp_spec%set_component(zero_dp*whz(1:n_parts), INDEX_COMP)
-    call temp_spec%set_part_number(n_parts)
-
-    spec_in(ic) = spec_in(ic)%append(temp_spec)
-   end select
   end subroutine
   !---------------------------
   subroutine add_particles_old(spec_in, np, i1, i2, ic)
@@ -210,7 +157,7 @@
      i2 = i1 - 1
     end if
     nptx(ic) = i2
-    ! endif
+    ! end if
     !==========================
     ! Partcles to be injected have index ix [i1,i2]
     !============================
@@ -235,6 +182,9 @@
      ! Shouldn't need reallocation with new species
      !call v_realloc( spec_aux_in, np_new, ndv )
      !=========================
+
+     call spec_in(ic)%extend(np_new)
+     call spec_aux_in%extend(np_new)
      q = np_old
      call add_particles(spec_in, q, i1, i2, ic)
      loc_npart(imody, imodz, imodx, ic) = np_new
@@ -275,7 +225,7 @@
      i2 = i1 - 1
     end if
     nptx(ic) = i2
-    ! endif
+    ! end if
     !==========================
     ! Partcles to be injected have index ix [i1,i2]
     !============================

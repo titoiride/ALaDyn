@@ -527,7 +527,7 @@
      end do
      call v_realloc(spec_aux_in, np+nb, id_ch)
      loc_npart(imody,imodz,imodx,1) = loc_npart(imody,imodz,imodx, 1) + nb
-    endif
+    end if
    else
     nb_loc(1) = nb
     call p_realloc(spec_in, nb, nd2+1)
@@ -548,7 +548,7 @@
      allocate(pot(n1ft+5,n2ft_loc+5,n3ft_loc+5,1))
     else
      allocate(pot(n1ft+5,n2ft_loc+5,n3ft_loc,1))
-    endif
+    end if
     pot(:, :, :, 1) = 0.0
     call mpi_beam_ftgrid_distribute(ndim) !local bpart data are stored in bunch(1)%part in ftgrid
     nps_loc(1:nsb) = loc_nbpart(imody, imodz, imodx, 1:nsb)
@@ -595,7 +595,7 @@
      nz_loc, ix1, ix2, y1, y2, z1, z2, ft_mod, ft_sym, 0)
     !Solves Laplacian[poten]=ompe*rho in Fourier space using sin() transform
     !Exit beam potential in jc(1) 
-   endif
+   end if
    jc(:,:,:,2) = bet0*jc(:,:,:,1)
    !==========================
    if(allocated(ebfb))deallocate(ebfb)

@@ -104,15 +104,17 @@
 
   
   subroutine interp_realloc(interp_in, npart_new, dimensions)
-   type(interp_coeff), intent(inout) :: interp_in
+   type(interp_coeff), allocatable, intent(inout) :: interp_in
    integer, intent(in) :: npart_new, dimensions
 
-   if ( allocated(interp_in%coeff_x) ) then   
+   if ( allocated(interp_in) ) then   
     if (interp_in%n_parts < npart_new ) then
+     call interp_in%sweep()
      call interp_in%new_interp(npart_new, max_order, &
       max_h_order, dimensions)
     end if
    else
+    allocate( interp_in )
     call interp_in%new_interp(npart_new, max_order, &
       max_h_order, dimensions)
    end if
@@ -180,13 +182,13 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
 
    interp_in%ihx_rank2(1:length) = int(gpl_xx(1:length))
    gpl_sx(1:length) = gpl_xx(1:length) - &
    real(interp_in%ihx_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%h_coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ihx_rank2(1:length) - 1
@@ -227,7 +229,7 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
   end subroutine
@@ -284,16 +286,16 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
-   call first_order( gpl_sx + half, interp_in%h_coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call first_order( gpl_sx(1:length) + half, interp_in%h_coeff_x_rank2 )
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_y_rank2 )
-   call first_order( gpl_sx + half, interp_in%h_coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
+   call first_order( gpl_sx(1:length) + half, interp_in%h_coeff_y_rank2 )
 
    interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
@@ -358,26 +360,26 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
 
    interp_in%ihx_rank2(1:length) = int(gpl_xx(1:length))
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ihx_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx, interp_in%h_coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 )
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
 
    interp_in%ihy_rank2(1:length) = int(gpl_xx(1:length))
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ihy_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx, interp_in%h_coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%h_coeff_y_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ihx_rank2(1:length) - 1
@@ -426,14 +428,14 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) + half )
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
@@ -479,14 +481,14 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call third_order( gpl_sx, interp_in%coeff_x_rank2 )
+   call third_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) )
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call third_order( gpl_sx, interp_in%coeff_y_rank2 )
+   call third_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
@@ -550,24 +552,24 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
-   call first_order( gpl_sx, interp_in%h_coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call first_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 )
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_y_rank2 )
-   call first_order( gpl_sx, interp_in%h_coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
+   call first_order( gpl_sx(1:length), interp_in%h_coeff_y_rank2 )
 
    gpl_xx(1:length) = shz + xp(1:length, 3)
    interp_in%iz_rank2(1:length) = int(gpl_xx(1:length) + half)
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_z_rank2 )
-   call first_order( gpl_sx, interp_in%h_coeff_z_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_z_rank2 )
+   call first_order( gpl_sx(1:length), interp_in%h_coeff_z_rank2 )
 
    interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
@@ -644,39 +646,39 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
 
    interp_in%ihx_rank2(1:length) = int(gpl_xx(1:length))
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ihx_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx, interp_in%h_coeff_x_rank2 ) 
+   call second_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 ) 
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
 
    interp_in%ihy_rank2(1:length) = int(gpl_xx(1:length))
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ihy_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx, interp_in%h_coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%h_coeff_y_rank2 )
 
    gpl_xx(1:length) = shz + xp(1:length, 3)
    interp_in%iz_rank2(1:length) = int(gpl_xx(1:length) + half)
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_z_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_z_rank2 )
 
    interp_in%ihz_rank2(1:length) = int(gpl_xx(1:length))
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ihz_rank2(1:length), dp) - half
 
-    call second_order( gpl_sx, interp_in%h_coeff_z_rank2 )
+    call second_order( gpl_sx(1:length), interp_in%h_coeff_z_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ihx_rank2(1:length) - 1
@@ -734,21 +736,21 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_x_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) + half )
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx, interp_in%coeff_y_rank2 )
+   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
 
    gpl_xx(1:length) = shz + xp(1:length, 3)
    interp_in%iz_rank2(1:length) = int( gpl_xx(1:length) + half )
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-    call second_order( gpl_sx, interp_in%coeff_z_rank2 )
+    call second_order( gpl_sx(1:length), interp_in%coeff_z_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
@@ -803,21 +805,21 @@
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call third_order( gpl_sx, interp_in%coeff_x_rank2)
+   call third_order( gpl_sx(1:length), interp_in%coeff_x_rank2)
 
    gpl_xx(1:length) = shy + xp(1:length, 2)
    interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) )
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call third_order( gpl_sx, interp_in%coeff_y_rank2)
+   call third_order( gpl_sx(1:length), interp_in%coeff_y_rank2)
 
    gpl_xx(1:length) = shz + xp(1:length, 3)
    interp_in%iz_rank2(1:length) = int( gpl_xx(1:length) )
    gpl_sx(1:length) = gpl_xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-   call third_order( gpl_sx, interp_in%coeff_y_rank2)
+   call third_order( gpl_sx(1:length), interp_in%coeff_y_rank2)
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1

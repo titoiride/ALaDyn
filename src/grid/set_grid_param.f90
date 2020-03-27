@@ -391,7 +391,7 @@
      end do
      last_ind=last_ind+n_loc
     enddo
-   endif
+   end if
 !=========================
    loc_zftgrid(0)%gmin = zft(1)
    ip = loc_zftgrid(0)%ng
@@ -469,7 +469,7 @@
      end do
      last_ind=last_ind+n_loc
     enddo
-   endif
+   end if
 
    end subroutine
 
@@ -847,7 +847,7 @@
     n3=nint(dz_inv*lz_box)
     if(mod(n2,npe2)>0) n2=n2+npe2-mod(n2,npe2)
     if(mod(n3,npe3)>0) n3=n3+npe3-mod(n3,npe3)
-   endif
+   end if
 !============= set grid point numbers in common.param
    n1ft=n1
    n2ft=n2

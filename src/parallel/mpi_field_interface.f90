@@ -255,7 +255,7 @@
       end do
      end do
     end do
-   endif
+   end if
    if(pex1)then
     do ic = ic1, ic2-1
      do iz = k1, k2
@@ -266,7 +266,7 @@
       end do
      end do
     end do
-   endif
+   end if
    ! now replaces (i2+1:i2+xsh=n1p)
    if (prlx) then
     if (pex1) aux2(1:lenws) = 0.0
@@ -293,7 +293,7 @@
       end do
      end do
     end do
-   endif
+   end if
 
   end subroutine
   !==================================

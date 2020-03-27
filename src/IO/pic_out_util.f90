@@ -98,7 +98,7 @@
        call set_grid_env_den_energy(spec_in, spec_aux_in, jc, np, 3)
       else
        !call set_grid_den_energy(spec_in, spec_aux_in, jc, np) !ic >1 in envelope scheme
-      endif
+      end if
      else
       !call set_grid_den_energy(spec_in, spec_aux_in, jc, np)
      ! in jc(1) is plasma norm density in jc(2) <(gam-1)density> using kinetic
@@ -139,7 +139,7 @@
      end do
      end select
     end if
-   endif
+   end if
    !======================
   end subroutine
   !=====================
