@@ -30,8 +30,8 @@
 
   type str_params
    real(dp) :: const, smin, smax, xs, dli_inv, ratio, &
-    dl_inv, init_cell
-   integer :: nl_stretch
+    dl_inv
+   integer :: nl_stretch, init_cell
   end type
 
   type(str_params) :: y_params, z_params, x_params
@@ -125,7 +125,7 @@
       xp_loc = invert_stretched_grid(xp, x_params)
       xp_loc = nx - xp_loc - x_params%init_cell
      else
-      xp_loc = invert_uniform_grid(xp, x_params) - x_params%init_cell
+      xp_loc = invert_uniform_grid(xp, x_params)
      end if
      pt(n) = xp_loc
     end do

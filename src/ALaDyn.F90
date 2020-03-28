@@ -216,9 +216,9 @@
     end if
     if (nden>0) then
      do i = 1, nsp
-      !call prl_den_energy_interp(spec(i), ebfp, i, nden)
+      call prl_den_energy_interp(spec(i), ebfp, i, nden)
       do iic = 1, min(2, nden)
-       !call den_energy_out( i, iic, iic )
+       call den_energy_out( i, iic, iic )
       end do
      end do
     end if

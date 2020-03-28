@@ -69,7 +69,7 @@
    call init_random_seed(mype)
 
    call spec_in(ic)%add_data(xpt(:, ic), loc_ypt(:, ic), loc_zpt(:, ic), &
-   wghpt(:, ic), loc_wghyz(:, :, ic), i2, j2, k2, np)
+   wghpt(:, ic), loc_wghyz(:, :, ic), i1, i2, j2, k2, np)
 
   end subroutine
   !---------------------------

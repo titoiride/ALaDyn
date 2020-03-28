@@ -517,6 +517,7 @@ module particles_aux_def
   end if
 
   call temp%copy(this)
+  call this%sweep()
   call this%new_species(new_number, this%dimensions)
   call this%copy(temp)
 
@@ -531,6 +532,11 @@ module particles_aux_def
    integer :: tot_len
  
    tot_len = upper_bound - lower_bound
+
+   if ( allocated(out_sp%initialized) ) then
+    call out_sp%sweep()
+   end if
+
    call out_sp%new_species( tot_len, this%dimensions )
    call out_sp%set_charge(this%charge)
  
@@ -573,7 +579,11 @@ module particles_aux_def
    integer :: i, tot_len, n
  
    tot_len = SIZE(index_array, DIM=1)
-   
+
+   if ( allocated(out_sp%initialized) ) then
+    call out_sp%sweep()
+   end if
+
    call out_sp%new_species( tot_len, this%dimensions )
    call out_sp%set_charge(this%charge)
  

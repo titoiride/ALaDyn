@@ -86,7 +86,7 @@ module base_species
   logical :: allocated_gamma
   !! True if gamma array is allocated
   
-  real (sp), allocatable :: weight(:)
+  real (dp), allocatable :: weight(:)
   !! Array containig the particle weights
   logical :: allocated_weight
   !! True if weight array is allocated
@@ -308,14 +308,14 @@ module base_species
 !=== Type bound procedures
 
   subroutine add_data( this, x_arr, y_arr, z_arr, &
-   weightx_arr, weightyz_arr, loc_x, loc_y, loc_z, np_old)
+   weightx_arr, weightyz_arr, loc_x0, loc_x, loc_y, loc_z, np_old)
    class( base_species_T), intent(inout) :: this
    real(dp), dimension(:), intent(in) :: x_arr, y_arr, z_arr
    real(dp), dimension(:), intent(in) :: weightx_arr
    real(dp), dimension(:, :), intent(in) :: weightyz_arr
-   integer, intent(in) :: loc_x, loc_y, loc_z, np_old
+   integer, intent(in) :: loc_x0, loc_x, loc_y, loc_z, np_old
    real(dp) :: u, t_x
-   real(sp) :: whz
+   real(dp) :: whz
    integer :: p, dim, i, j, k
 
    t_x = this%temperature
@@ -325,7 +325,7 @@ module base_species
    case(2)
     do k = 1, 1
      do j = 1, loc_y
-      do i = 1, loc_x
+      do i = loc_x0, loc_x
        p = p + 1
        this%x(p) = x_arr(i)
        this%y(p) = y_arr(j)
@@ -333,15 +333,14 @@ module base_species
        this%px(p) = t_x*u
        call gasdev(u)
        this%py(p) = t_x*u
-       whz = real(weightx_arr(i)*weightyz_arr(j, k), sp)
-       this%weight(p) = whz
+       this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
       end do
      end do
     end do
    case(3)
     do k = 1, loc_z
      do j = 1, loc_y
-      do i = 1, loc_x
+      do i = loc_x0, loc_x
        p = p + 1
        this%x(p) = x_arr(i)
        this%y(p) = y_arr(j)
@@ -370,12 +369,16 @@ module base_species
     particles(1) = this%x(index_in)
     particles(2) = this%px(index_in)
     particles(3) = this%weight(index_in)
+    particles(4) = this%gamma_inv(index_in)
+    particles(5) = this%part_index(index_in)
    case(2)
     particles(1) = this%x(index_in)
     particles(2) = this%y(index_in)
     particles(3) = this%px(index_in)
     particles(4) = this%py(index_in)
     particles(5) = this%weight(index_in)
+    particles(6) = this%gamma_inv(index_in)
+    particles(7) = this%part_index(index_in)
    case(3)
     particles(1) = this%x(index_in)
     particles(2) = this%y(index_in)
@@ -384,6 +387,8 @@ module base_species
     particles(5) = this%py(index_in)
     particles(6) = this%pz(index_in)
     particles(7) = this%weight(index_in)
+    particles(8) = this%gamma_inv(index_in)
+    particles(9) = this%part_index(index_in)
    end select
   end subroutine
 
@@ -397,12 +402,16 @@ module base_species
     particles(1:(ub-lb+1), 1) = this%x(lb:ub)
     particles(1:(ub-lb+1), 2) = this%px(lb:ub)
     particles(1:(ub-lb+1), 3) = this%weight(lb:ub)
+    particles(1:(ub-lb+1), 4) = this%gamma_inv(lb:ub)
+    particles(1:(ub-lb+1), 5) = this%part_index(lb:ub)
    case(2)
     particles(1:(ub-lb+1), 1) = this%x(lb:ub)
     particles(1:(ub-lb+1), 2) = this%y(lb:ub)
     particles(1:(ub-lb+1), 3) = this%px(lb:ub)
     particles(1:(ub-lb+1), 4) = this%py(lb:ub)
     particles(1:(ub-lb+1), 5) = this%weight(lb:ub)
+    particles(1:(ub-lb+1), 6) = this%gamma_inv(lb:ub)
+    particles(1:(ub-lb+1), 7) = this%part_index(lb:ub)
    case(3)
     particles(1:(ub-lb+1), 1) = this%x(lb:ub)
     particles(1:(ub-lb+1), 2) = this%y(lb:ub)
@@ -411,6 +420,8 @@ module base_species
     particles(1:(ub-lb+1), 5) = this%py(lb:ub)
     particles(1:(ub-lb+1), 6) = this%pz(lb:ub)
     particles(1:(ub-lb+1), 7) = this%weight(lb:ub)
+    particles(1:(ub-lb+1), 8) = this%gamma_inv(lb:ub)
+    particles(1:(ub-lb+1), 9) = this%part_index(lb:ub)
    end select
   end subroutine
 
@@ -429,6 +440,8 @@ module base_species
      particles(k, 1) = this%x(idx)
      particles(k, 2) = this%px(idx)
      particles(k, 3) = this%weight(idx)
+     particles(k, 4) = this%gamma_inv(idx)
+     particles(k, 5) = this%part_index(idx)
      k = k + 1
     end do
    case(2)
@@ -439,6 +452,8 @@ module base_species
      particles(k, 3) = this%px(idx)
      particles(k, 4) = this%py(idx)
      particles(k, 5) = this%weight(idx)
+     particles(k, 6) = this%gamma_inv(idx)
+     particles(k, 7) = this%part_index(idx)
      k = k + 1 
     end do
    case(3)
@@ -451,6 +466,8 @@ module base_species
      particles(k, 5) = this%py(idx)
      particles(k, 6) = this%pz(idx)
      particles(k, 7) = this%weight(idx)
+     particles(k, 8) = this%gamma_inv(idx)
+     particles(k, 9) = this%part_index(idx)
      k = k + 1
     end do
    end select
@@ -662,7 +679,7 @@ module base_species
    integer, intent(in) :: loc_x, loc_y, loc_z
 
    call this%add_data( x_arr, y_arr, z_arr, &
-   weightx_arr, weightyz_arr, loc_x, loc_y, loc_z, 0)
+   weightx_arr, weightyz_arr, 1, loc_x, loc_y, loc_z, 0)
 
   end subroutine
 
@@ -673,6 +690,7 @@ module base_species
    integer :: np
  
    np = this%how_many()
+   call packed%sweep()
    call packed%new_species(np, this%dimensions)
    call packed%set_charge(this%charge)
  
@@ -716,6 +734,7 @@ module base_species
  
    tot_parts = COUNT( mask )
    np = this%how_many()
+   call packed%sweep()
    call packed%new_species(tot_parts, this%dimensions)
    call packed%set_charge(this%charge)
  

@@ -29,6 +29,12 @@
 
   implicit none
   !=====Contains functions to prepare selected output variables=======
+
+  interface prl_den_energy_interp
+   module procedure :: prl_den_energy_interp_new
+   module procedure :: prl_den_energy_interp_old
+  end interface
+   
  contains
   subroutine fill_density_data(den, ic)
    real (dp), intent (inout) :: den(:, :, :, :)
@@ -60,9 +66,9 @@
    end do
   end subroutine
   !============================
-  subroutine prl_den_energy_interp(spec_in, spec_aux_in, ic,cmp_out)
-   type(species), intent(in) :: spec_in
-   real(dp), dimension(:, :), intent(inout) :: spec_aux_in
+  subroutine prl_den_energy_interp_new(spec_in, spec_aux_in, ic,cmp_out)
+   type(species_new), intent(in) :: spec_in
+   type(species_aux), intent(inout) :: spec_aux_in
    integer, intent (in) :: ic, cmp_out
    real (dp) :: dery, derz, ar, ai
    integer :: np, i, j, k, jj, kk
@@ -101,6 +107,89 @@
       end if
      else
       !call set_grid_den_energy(spec_in, spec_aux_in, jc, np)
+     ! in jc(1) is plasma norm density in jc(2) <(gam-1)density> using kinetic
+     ! gamma  for each species
+     end if
+    end select
+    if (prl) call fill_curr_yzxbdsdata(jc,cmp_out)
+    do kk = 1, cmp_out
+     call den_zyxbd(jc, kk)
+    end do
+    if (ic==1) jc(:, :, :, 1) = -jc(:, :, :, 1)
+    if (cmp_out==2) jc(:, :, :, 2) = mass(ic)*electron_mass* &
+     jc(:, :, :, 2)
+   !=========== energy density in Mev*n/n_0
+
+    if (stretch) then
+     select case (ndim)
+     case (2)
+     k = 1
+     do j = jy1, jy2
+      jj = j - 2
+      dery = loc_yg(jj, 3, imody)
+      do i = ix1, ix2
+       jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
+      end do
+     end do
+     case (3)
+     do k = kz1, kz2
+      kk = k - 2
+      derz = loc_zg(kk, 3, imodz)
+      do j = jy1, jy2
+       jj = j - 2
+       dery = loc_yg(jj, 3, imody)*derz
+       do i = ix1, ix2
+        jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
+       end do
+      end do
+     end do
+     end select
+    end if
+   end if
+   !======================
+  end subroutine
+  !============================
+  subroutine prl_den_energy_interp_old(spec_in, spec_aux_in, ic,cmp_out)
+   type(species), intent(in) :: spec_in
+   real(dp), dimension(:, :), intent(inout) :: spec_aux_in
+   integer, intent (in) :: ic, cmp_out
+   real (dp) :: dery, derz, ar, ai
+   integer :: np, i, j, k, jj, kk
+
+   !=============================
+   ! nden=1 only charge density
+   ! nden =2 charge and energy <n(gamma-1)> density
+   !=============================
+   do i = 1, cmp_out
+    jc(:, :, :, i) = 0.0
+   end do
+   !===========================
+   np = loc_npart(imody, imodz, imodx, ic)
+   if(part)then
+    select case (cmp_out)
+    case (1)
+     call set_grid_charge(spec_in, spec_aux_in, jc, np, 1)
+     !nden=1 exit density for each ic species
+    case (2)
+     !nden=2 exit density and energy density for each species
+     if (envelope) then
+      if(ic==1)then
+       do k = kz1, kz2
+        do j = jy1, jy2
+         do i = ix1, ix2
+          ar = .5*(env(i,j,k,1)+env(i,j,k,3))
+          ai = .5*(env(i,j,k,2)+env(i,j,k,4))
+          jc(i, j, k, 3) = 0.5*(ar*ar+ai*ai)
+         end do
+        end do
+       end do
+       if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
+       call set_grid_env_den_energy(spec_in, spec_aux_in, jc, np, 3)
+      else
+       call set_grid_den_energy(spec_in, spec_aux_in, jc, np) !ic >1 in envelope scheme
+      end if
+     else
+      call set_grid_den_energy(spec_in, spec_aux_in, jc, np)
      ! in jc(1) is plasma norm density in jc(2) <(gam-1)density> using kinetic
      ! gamma  for each species
      end if

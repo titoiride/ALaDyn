@@ -1502,9 +1502,10 @@
    character (21) :: fname_outl
    real (dp), intent (in) :: timenow, xmin_out, xmax_out, ymax_out
    integer, intent (in) :: pid, jmp
+   real(sp) :: ch
    real (sp), allocatable :: pdata(:)
    integer (dp) :: nptot_global_reduced
-   integer :: ik, p, q, np, ip, ip_max, nptot, npt
+   integer :: ik, p, q, np, ip, ip_max, nptot, npt, n_comp_out
    integer :: lenp, ip_loc(npe), ndv, i_end
    integer (offset_kind) :: disp, disp_col
    type(index_array) :: out_parts
@@ -1514,12 +1515,16 @@
 
    write (foldername, '(i4.4)') iout
 
-   ndv = nd2 + 2
+   ndv = spec_in(pid)%total_size()
+   n_comp_out = ndv - 1
+   ! We exclude for now gamma_inv and part_index
+   ! but we add the charge
    np = loc_npart(imody, imodz, imodx, pid)
    npt = 0
+   ch = real(spec_in(pid)%charge, sp)
    allocate(mask(np))
    out_parts = index_array(np)
-   call v_realloc( pic_out_aux, np, nd2+1 )
+   call v_realloc( pic_out_aux, np, ndv )
    if (np>0) then
     if (ndim>2) then
      associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np))
@@ -1554,10 +1559,10 @@
    ! this differs from nptot_global since it represents just the reduced number of particles
    ! that will be present in the output (should be equal to nptot_global for p_jump=1)!
    nptot_global_reduced = 0
-   do ik=1,npe
-    nptot_global_reduced = nptot_global_reduced +ip_loc(ik)
+   do ik = 1, npe
+    nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
-   if (nptot_global<1e9) then
+   if (nptot_global < 1e9) then
     nptot = int(nptot_global_reduced)
    else
     nptot = -1
@@ -1565,21 +1570,18 @@
 
    ip_max = ip
    if (pe0) ip_max = maxval(ip_loc(1:npe))
-   lenp = ndv*ip_loc(mype+1)
+   lenp = (n_comp_out)*ip_loc(mype+1)
    allocate (pdata(lenp))
    ik = 0
    do p = 1, ip_loc(mype+1)
-    do q = 1, nd2
+    do q = 1, n_comp_out - 1
      ik = ik + 1
      pdata(ik) = real(pic_out_aux(p,q), sp)
     end do
-    wgh_cmp = pic_out_aux(p, nd2+1)
     ik = ik + 1
-    pdata(ik) = wgh
-    ik = ik + 1
-    pdata(ik) = real(charge, sp)
+    pdata(ik) = ch
    end do
-   if (ik/=lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
+   if (ik /= lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
      ik
 
    call endian(i_end)
@@ -1591,7 +1593,7 @@
      real(xmax_out,sp), real(ymax_out,sp), real(gam_min,sp) ]
 
    part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(pid), ion_min(1), lpf_ord, der_ord, iform, ndv, &
+     curr_ndim, mp_per_cell(pid), ion_min(1), lpf_ord, der_ord, iform, n_comp_out, &
      file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
 
    write (fname, '(a6,i2.2)') part_files(pid), iout !serve sempre
@@ -1616,10 +1618,10 @@
     write (6, *) 'Particles param written on file: ' // foldername // &
       '/' // fname // '.dat'
    else
-    disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
+    disp = mype + n_comp_out*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
    end if
 
-   if (mod(mype,npe_yloc)>0) disp_col = ndv*sum(ip_loc(imodz*npe_yloc+1: &
+   if (mod(mype,npe_yloc)>0) disp_col = n_comp_out*sum(ip_loc(imodz*npe_yloc+1: &
      mype)) ! da usare con mpi_write_part_col
 
    disp = disp*4 ! sia gli int che i float sono di 4 bytes

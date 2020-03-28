@@ -35,6 +35,11 @@
    module procedure :: set_grid_charge_new
    module procedure :: set_grid_charge_old
   end interface
+
+  interface set_grid_env_den_energy
+   module procedure :: set_grid_env_den_energy_new
+   module procedure :: set_grid_env_den_energy_old
+  end interface
  contains
 
   !DIR$ ATTRIBUTES INLINE :: set_local_positions
@@ -290,7 +295,7 @@
    !=================================
    ! Do not execute without particles
    !=================================
-   if (np == 0) return
+   if ( sp_loc%empty ) return
    call interp_realloc(interp, np, sp_loc%dimensions)
    !================================
    allocate( weight(np) )
@@ -306,7 +311,7 @@
     gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     !==========================
 
-    call qden_2d_wgh( gpu_xx, interp )
+    call qden_2d_wgh( gpu_xx(1:np, 1:2), interp )
 
     associate( ax0 => interp%coeff_x_rank2 )
     associate( ay0 => interp%coeff_y_rank2 )
@@ -342,7 +347,7 @@
     gpu_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     !==========================
 
-    call qden_3d_wgh( gpu_xx, interp )
+    call qden_3d_wgh( gpu_xx(1:np, 1:3), interp )
 
     associate( ax0 => interp%coeff_x_rank2 )
     associate( ay0 => interp%coeff_y_rank2 )
@@ -492,7 +497,221 @@
   end subroutine
   !==========================
   !==========================
-  subroutine set_grid_env_den_energy(sp_loc, pt, eden, np, icp)
+  subroutine set_grid_env_den_energy_new(sp_loc, pt, eden, np, icp)
+
+   type (species_new), intent (in) :: sp_loc
+   type (species_aux), intent (inout) :: pt
+   real (dp), intent (inout) :: eden(:, :, :, :)
+   integer, intent (in) :: np, icp
+   real (dp), allocatable, dimension(:) :: gam
+   real (dp) :: dvol, gam2, gam_p
+   integer :: i1, j1, k1, i2, j2, k2, n, ch, spline
+   !======================
+   !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
+   !================================================
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
+   !================================
+   call interp_realloc(interp, np, sp_loc%dimensions)
+   !================================
+   allocate( gam(np) )
+
+   spline = 2
+   select case (ndim)
+   case (1)
+    call xx_realloc(gpu_xx, np, 1)
+
+    gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np)
+
+    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    
+    call qden_1d_wgh( gpu_xx(1:np, 1:1), interp )
+    
+    j2 = 1
+
+    associate( ax0 => interp%coeff_x_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+
+    do n = 1, np
+     do i1 = 0, spline
+      i2 = i(n) + i1
+      dvol = ax0(n, i1)
+      gam(n) = gam(n) + dvol*eden(i2, j2, 1, icp)
+     end do
+    end do
+    gam(1:np) = sqrt( one_dp + gam(1:np))
+    do i1 = 0, spline
+     ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+    end do
+    do n = 1, np
+     do i1 = 0, spline
+      i2 = i(n) + i1
+      dvol = ax0(n, i1)
+      eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%charge
+      eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1)*dvol
+     end do
+    end do
+
+   end associate
+   end associate
+   end associate
+
+   case (2)
+
+    call xx_realloc(gpu_xx, np, 2)
+
+    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    
+    call qden_2d_wgh( gpu_xx(1:np, 1:2), interp )
+
+    associate( ax0 => interp%coeff_x_rank2 )
+    associate( ay0 => interp%coeff_y_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+
+    if (curr_ndim==2) then
+
+     gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+     sp_loc%call_component( PY_COMP, lb=1, ub=np)*sp_loc%call_component( PY_COMP, lb=1, ub=np)
+
+     do n = 1, np
+      do j1 = 0, spline
+       j2 = j(n) + j1
+       do i1 = 0, spline
+        i2 = i(n) + i1
+        dvol = ax0(n, i1)*ay0(n, j1)
+        gam(n) = gam(n) + dvol*eden(i2, j2, 1, icp)
+       end do
+      end do
+     end do
+     gam(1:np) = sqrt(one_dp + gam(1:np))
+     do i1 = 0, spline
+      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+     end do
+     do n = 1, np
+      do j1 = 0, spline
+       j2 = j(n) + j1
+       do i1 = 0, spline
+        i2 = i(n) + i1
+        dvol = ax0(n, i1)*ay0(n, j1)
+        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%charge
+        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1.)*dvol
+       end do
+      end do
+     end do
+    end if
+    if (curr_ndim==3) then
+
+     gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+     sp_loc%call_component( PY_COMP, lb=1, ub=np)*sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+     sp_loc%call_component( PZ_COMP, lb=1, ub=np)*sp_loc%call_component( PZ_COMP, lb=1, ub=np)
+
+     do n = 1, np
+      !============ adds iparticle assigned [A^2/2]_p contribution
+      do j1 = 0, spline
+       j2 = j(n) + j1
+       do i1 = 0, spline
+        i2 = i(n) + i1
+        dvol = ax0(n, i1)*ay0(n, j1)
+        gam(n) = gam(n) + dvol*eden(i2, j2, 1, icp)
+       end do
+      end do
+     end do
+     gam(1:np) = sqrt(one_dp + gam(1:np))
+     do i1 = 0, spline
+      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+     end do
+     do n = 1, np
+      do j1 = 0, spline
+       j2 = j(n) + j1
+       do i1 = 0, spline
+        i2 = i(n) + i1
+        dvol = ax0(n, i1)*ay0(n, j1)
+        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%charge
+        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n) - 1.)*dvol
+       end do
+      end do
+     end do
+    end if
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+
+   case (3)
+
+    call xx_realloc(gpu_xx, np, 3)
+
+    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    gpu_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    
+    call qden_3d_wgh( gpu_xx(1:np, 1:3), interp )
+
+    associate( ax0 => interp%coeff_x_rank2 )
+    associate( ay0 => interp%coeff_y_rank2 )
+    associate( az0 => interp%coeff_z_rank2 )
+    associate( i => interp%ix_rank2 )
+    associate( j => interp%iy_rank2 )
+    associate( k => interp%iz_rank2 )
+    associate( weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+
+    gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
+     sp_loc%call_component( PY_COMP, lb=1, ub=np)*sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
+     sp_loc%call_component( PZ_COMP, lb=1, ub=np)*sp_loc%call_component( PZ_COMP, lb=1, ub=np)
+
+    do n = 1, np
+     do k1 = 0, spline
+      k2 = k(n) + k1
+      do j1 = 0, spline
+       j2 = j(n) + j1
+       dvol = az0(n, k1)*ay0(n, j1)
+       do i1 = 0, spline
+        i2 = i(n) + i1
+        gam(n) = gam(n) + ax0(n, i1)*dvol*eden(i2, j2, k2, icp)
+       end do
+      end do
+     end do
+    end do
+    gam(1:np) = sqrt(one_dp + gam(1:np))
+    do i1 = 0, spline
+     ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+    end do
+    do n = 1, np
+     do k1 = 0, spline
+      k2 = k(n) + k1
+      do j1 = 0, spline
+       j2 = j(n) + j1
+       dvol = az0(n, k1)*ay0(n, j1)
+       do i1 = 0, spline
+        i2 = i(n) + i1
+        eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(n, i1)*dvol*sp_loc%charge
+        eden(i2, j2, k2, 2) = eden(i2, j2, k2, 2) + &
+          (gam(n) - 1.)*ax0(n, i1)*dvol
+       end do
+      end do
+     end do
+    end do
+
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+    end associate
+   end select
+   !===========================
+  end subroutine
+  !==========================
+  subroutine set_grid_env_den_energy_old(sp_loc, pt, eden, np, icp)
 
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)

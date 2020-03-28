@@ -191,9 +191,6 @@
   !==================== copy remaining part => spec_aux_in
   right_pind = index_array(old_np)
   left_pind = index_array(old_np)
-
-  p = 0
-  q = 0
   npt = 0
   if (ibd == 1 .and. component == X_COMP) then !reflecting on the right
    if (per) then
@@ -248,9 +245,9 @@
    else
     !To be checked case ibd == 1
     call sp_loc%sel_particles( temp_spec, right_pind%indices(:) )
-    tot = temp_spec%how_many()*tot_size
-     
+    tot = temp_spec%how_many()*tot_size 
     aux_array1( 1:tot ) = temp_spec%flatten()
+
    end if
   end if
 
@@ -534,10 +531,6 @@
    
    call sp_loc%pack_into(sp_aux_new, mask(:))
    call aux_sp%pack_into(sp1_aux_new, mask(:))
-
-   ! TO BE FIXED UPDATING VSTORE TO NEW STRUCT
-   ! vstore(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
-   ! vstore(4:7) store old x^n positions and dt/gam at t^{n+1/2}
    !=======================
    ns = 2*tot_size*nr_send
    nr = 2*tot_size*nl_recv
@@ -579,7 +572,6 @@
      call aux_sp%sel_particles( temp_spec, right_pind%indices(:) )
      tot_aux = temp_spec%how_many()*tot_size
      tot_aux = tot_aux + tot
-
      aux_array1( (tot+1):tot_aux ) = temp_spec%flatten()
 
     end if
@@ -1040,7 +1032,7 @@
       np_rs = maxval(n_sr(1:4))
       if (np_rs > 0) then
        call part_prl_wexchange(spec_in(ic), xmm, xmx, lbd_min, rbd_max, &
-        pex0, pex1, ibx, 1, ndv, np, n_sr, np_out)
+        pex0, pex1, ibx, X_COMP, ndv, np, n_sr, np_out)
        if (np_out /= np_new) then
         write (6, *) 'error in x-part w-count', mype, np_out, np_new
         ier = 99

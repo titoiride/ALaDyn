@@ -836,7 +836,8 @@
    real(dp), allocatable, dimension(:) :: position
 
    np = pt_array%how_many()
-   position = pt_array%call_component( component )
+   allocate( position(np) )
+   position(1:np) = pt_array%call_component( component, lb=1, ub=np )
 
    select case(component)
    case(X_COMP)
@@ -856,7 +857,8 @@
    real(dp), allocatable, dimension(:) :: position
 
    np = pt_array%how_many()
-   position = pt_array%call_component( component )
+   allocate( position(np) )
+   position(1:np) = pt_array%call_component( component, lb=1, ub=np )
 
    select case(component)
    case(X_COMP)
