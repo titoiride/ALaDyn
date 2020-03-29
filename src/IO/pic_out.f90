@@ -1521,7 +1521,7 @@
    ! but we add the charge
    np = loc_npart(imody, imodz, imodx, pid)
    npt = 0
-   ch = real(spec_in(pid)%charge, sp)
+   ch = real(spec_in(pid)%pick_charge(), sp)
    allocate(mask(np))
    out_parts = index_array(np)
    call v_realloc( pic_out_aux, np, ndv )

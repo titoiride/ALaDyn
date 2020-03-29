@@ -731,7 +731,7 @@
     do ic = 1, nsp
      np = loc_npart(imody, imodz, imodx, ic)
      if (np>0) then
-      select case( spec_in(ic)%dimensions)
+      select case( spec_in(ic)%pick_dimensions())
       case(2)
        call spec_in(ic)%set_component(recv_buff(kk:np + kk - 1), X_COMP, lb=1, ub=np)
        kk = np + kk

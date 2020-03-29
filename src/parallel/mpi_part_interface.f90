@@ -164,9 +164,11 @@
   integer, intent (out) :: npt
   type(index_array) :: left_pind, right_pind
   type( species_aux ) :: temp_spec
+  type( scalars ) :: part_properties
   real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
-  integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size, sp_charge
+  integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
   integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
+  real (dp) :: sp_charge
   logical :: mask(old_np)
   !================ dir are cartesian coordinate index (x,y,z)
   !================ cdir are mpi-cartesian index (y,z,x)
@@ -179,7 +181,8 @@
   vxdir = link_position_momentum( component )
   !================== checks memory
   tot_size = sp_loc%total_size()
-  sp_charge = sp_loc%charge
+  part_properties = sp_loc%pick_properties()
+  sp_charge = sp_loc%pick_charge()
   p = tot_size*max(nl_send, nr_send)
   if (p > 0) then
    allocate(aux_array1(p), source=zero_dp)
@@ -218,7 +221,6 @@
 
   mask(:) = (xp > xl .and. xp <= xr)
   npt = COUNT( mask(:) )
-
   call sp_loc%pack_into( sp_aux_new, mask(:) )
   !=======================
   ns = tot_size*nr_send
@@ -255,7 +257,7 @@
   ! sends ns data to the right
   if (nr>0) then !receives nr data from left
    n_tot = nl_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, sp_loc%dimensions)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties)
    sp_aux_new = sp_aux_new%append(temp_spec)
    npt = npt + nl_recv
   end if
@@ -290,11 +292,11 @@
   ! sends ns data to the left recieves nr data from right
   if (nr>0) then
    n_tot = nr_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, sp_loc%dimensions)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties)
    sp_aux_new = sp_aux_new%append(temp_spec)
    npt = npt + nr_recv
   end if
-  call sp_aux_new%set_charge(sp_charge)
+  call sp_aux_new%set_properties(part_properties)
 !  EXIT old+new data in sp_aux(:,:)
  end subroutine
 !==============================================
@@ -473,9 +475,11 @@
    integer, intent (out) :: npt
    type(index_array) :: left_pind, right_pind
    type( species_aux ) :: temp_spec
+   type( scalars ) :: part_properties, part_properties_sr
    real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
-   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size, sp_charge
+   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
+   real (dp) :: sp_charge
    logical :: mask(old_np)
    !================ dir are cartesian coordinate index (x,y,z)
    !================ cdir are mpi-cartesian index (y,z,x)
@@ -488,7 +492,8 @@
    vxdir = link_position_momentum( component )
    !================== checks memory
    tot_size = sp_loc%total_size()
-   sp_charge = sp_loc%charge
+   sp_charge = sp_loc%pick_charge()
+   part_properties = sp_loc%pick_properties()
    p = 2*tot_size*max(nl_send, nr_send)
    if (p > 0) then
     allocate(aux_array1(p), source=zero_dp)
@@ -577,13 +582,17 @@
     end if
    end if
   
-   if (max(ns, nr)>0) call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, left)
+   if (max(ns, nr)>0) then
+    call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, left)
+    ! call exchange_part_properties(part_properties, part_properties_sr, &
+    !  ns, nr, cdir, left)
+   end if
    ! sends ns data to the right
    if (nr>0) then !receives nr data from left
     n_tot = nl_recv*tot_size
-    call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, sp_loc%dimensions)
+    call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties)
     sp_aux_new = sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nl_recv, sp_loc%dimensions)
+    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nl_recv, part_properties)
     sp1_aux_new = sp1_aux_new%append(temp_spec)
     npt = npt + nl_recv
    end if
@@ -620,28 +629,30 @@
     !============ NON PERIODIC EXCHANGE
      call sp_loc%sel_particles( temp_spec, left_pind%indices(:) )
      tot = temp_spec%how_many()*tot_size
-     
      aux_array1( 1:tot ) = temp_spec%flatten()
 
      call aux_sp%sel_particles( temp_spec, left_pind%indices(:) )
      tot_aux = temp_spec%how_many()*tot_size
      tot_aux = tot_aux + tot
-
      aux_array1( (tot+1):tot_aux ) = temp_spec%flatten()
-    
+
     end if
    end if   !END ns >0
-   if (max(ns, nr)>0) call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, right)
+   if (max(ns, nr)>0) then
+    call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, right)
    ! sends ns data to the left recieves nr data from right
+    ! call exchange_part_properties(part_properties, part_properties_sr, &
+    !  ns, nr, cdir, left)
+   end if
    if (nr>0) then
     n_tot = nr_recv*tot_size
-    call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, sp_loc%dimensions)
+    call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties)
     sp_aux_new = sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nr_recv, sp_loc%dimensions)
+    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nr_recv, part_properties)
     sp1_aux_new = sp1_aux_new%append(temp_spec)
     npt = npt + nr_recv
    end if
-   call sp_aux_new%set_charge(sp_charge)
+   call sp_aux_new%set_properties(part_properties)
  !  EXIT old+new data in sp_aux(:,:) and sp1_aux(:,:)
  end subroutine
  !================
@@ -1014,9 +1025,12 @@
    !==========================================
    !=========== mowing window section
    if(moving_wind)then
-    nspx = nsp
+   
+   nspx = nsp
     xmm = loc_xgrid(imodx)%gmin
     xmx = loc_xgrid(imodx)%gmax
+    ! Warning, loc_xgrid(0) may not be known from all tasks.
+    ! Please double check
     lbd_min = loc_xgrid(0)%gmin
     rbd_max = loc_xgrid(npe_xloc-1)%gmax
     if (prlx) then
@@ -1037,10 +1051,10 @@
         write (6, *) 'error in x-part w-count', mype, np_out, np_new
         ier = 99
        end if
-       call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_dimensions())
        call spec_in(ic)%set_part_number( np_new )
        call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-       call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_dimensions())
        call spec_aux_in%set_part_number( np_new )
        loc_npart(imody, imodz, imodx, ic) = np_new
       end if
@@ -1065,6 +1079,8 @@
    nspx = nsp_run
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
+   ! Warning, loc_xgrid(0) may not be known from all tasks.
+   ! Please double check
    lbd_min = loc_xgrid(0)%gmin
    rbd_max = loc_xgrid(npe_xloc-1)%gmax
    if (prlx) then
@@ -1085,10 +1101,10 @@
        write (6, *) 'error in x-part count', mype, np_out, np_new
        ier = 99
       end if
-      call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_dimensions())
       call spec_in(ic)%set_part_number( np_new )
       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-      call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_dimensions())
       call spec_aux_in%set_part_number( np_new )
       call spec_aux_in%copy( sp1_aux_new, 1, np_new )
       loc_npart(imody, imodz, imodx, ic) = np_new
@@ -1131,10 +1147,10 @@
        write (6, *) 'error in y-part count', mype, np_out, np_new
        ier = 99
       end if
-      call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_dimensions())
       call spec_in(ic)%set_part_number( np_new )
       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-      call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+      call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_dimensions())
       call spec_aux_in%set_part_number( np_new )
       call spec_aux_in%copy( sp1_aux_new, 1, np_new )
       loc_npart(imody, imodz, imodx, ic) = np_new
@@ -1178,10 +1194,10 @@
         write (6, *) 'error in z-part count', mype, np_out, np_new
         ier = 99
        end if
-       call spec_in(ic)%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_dimensions())
        call spec_in(ic)%set_part_number( np_new )
        call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-       call spec_aux_in%reallocate( np_new, spec_in(ic)%dimensions)
+       call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_dimensions())
        call spec_aux_in%set_part_number( np_new )
        call spec_aux_in%copy( sp1_aux_new, 1, np_new )
        loc_npart(imody, imodz, imodx, ic) = np_new

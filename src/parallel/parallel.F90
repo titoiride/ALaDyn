@@ -22,6 +22,7 @@
  module parallel
   use mpi_var
   use common_param
+  use base_species, only: scalars
   use util, only: init_random_seed
 
 #if !defined (_CRESCO)
@@ -566,6 +567,7 @@
       status, error)
    end if
   end subroutine
+
   subroutine exchange_grdata(sr, dat0, lenw, dir, ipe)
    integer, intent (in) :: lenw, dir, ipe
    real (dp), intent (inout) :: dat0(:, :, :, :)
@@ -582,6 +584,76 @@
 
     call mpi_recv(dat0(1,1,1,1), lenw, mpi_sd, ipe, tag, comm_col(dir), &
       status, error)
+   end if
+
+  end subroutine
+
+  subroutine sr_part_properties(part_prop_send, part_prop_rcv, ns, nr, dir, side)
+   type (scalars), intent(in) :: part_prop_send
+   type (scalars), intent(inout) :: part_prop_rcv
+   integer, intent (in) :: ns, nr, dir, side
+   real (dp) :: dat0(3), dat1(3)
+   integer :: tag, pes, per
+
+   tag = 30 + dir
+   select case (dir)
+   case (1)
+    if (side>0) then
+     pes = yp_prev(side)
+     per = yp_next(side)
+    else
+     pes = yp_next(-side)
+     per = yp_prev(-side)
+    end if
+   case (2)
+    if (side>0) then
+     pes = zp_prev(side)
+     per = zp_next(side)
+    else
+     pes = zp_next(-side)
+     per = zp_prev(-side)
+    end if
+   case (3)
+    if (side>0) then
+     pes = xp_prev(side)
+     per = xp_next(side)
+    else
+     pes = xp_next(-side)
+     per = xp_prev(-side)
+    end if
+   end select
+   if (ns*nr>0) then
+
+    dat0(1) = part_prop_send%pick_temperature()
+    dat0(2) = part_prop_send%pick_charge()
+    dat0(3) = part_prop_send%pick_dimensions()
+
+    call mpi_sendrecv(dat0(1), 3, mpi_sd, pes, tag, dat1(1), 3, &
+      mpi_sd, per, tag, comm_col(dir), status, error)
+
+    call part_prop_rcv%set_temperature( dat1(1) )
+    call part_prop_rcv%set_charge( dat1(2) )
+    call part_prop_rcv%set_dimensions( int(dat1(3)) )
+
+   else
+    if (ns>0) then
+
+     dat0(1) = part_prop_send%pick_temperature()
+     dat0(2) = part_prop_send%pick_charge()
+     dat0(3) = part_prop_send%pick_dimensions()
+
+     call mpi_send(dat0(1), 3, mpi_sd, pes, tag, &
+      comm_col(dir), error)
+    end if
+    if (nr>0) then
+
+     call mpi_recv(dat1(1), 3, mpi_sd, per, tag, &
+      comm_col(dir), status, error)
+     
+     call part_prop_rcv%set_temperature( dat1(1) )
+     call part_prop_rcv%set_charge( dat1(2) )
+     call part_prop_rcv%set_dimensions( int(dat1(3)) )
+    end if
    end if
 
   end subroutine

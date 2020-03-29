@@ -108,7 +108,7 @@
    !=================================
    if ( sp_loc%empty ) return
    !================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 1)
    !================================
    select case (ndf)
@@ -271,7 +271,7 @@
    !=================================
    if ( sp_loc%empty ) return
    !=====================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 2)
    !================================
    select case (ndf) !Field components
@@ -543,7 +543,7 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 3)
    !================================
    allocate( ap(np, 6), source=zero_dp )
@@ -795,7 +795,7 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !================================
    allocate( ef_sqr(np), source=zero_dp )
    
@@ -1108,7 +1108,7 @@
    real (dp), allocatable, dimension(:) :: inv_gam, gam, aa1, b1, dgam
    real (dp) :: dvol, dvol1
    real (dp) :: dth, ch
-   integer (kind=2) :: i1, j1, k1, i2, j2, k2
+   integer :: i1, j1, k1, i2, j2, k2
    integer (kind=2), parameter :: stl = 2
    integer :: n
    !===============================================
@@ -1131,7 +1131,7 @@
    ! pt(1:7)  in 3D
    !========================================
    dth = 0.5*dt_step
-   ch = sp_loc%charge
+   ch = sp_loc%pick_charge()
    !=================================
    ! Do not execute without particles
    !=================================
@@ -1142,7 +1142,7 @@
    allocate( aa1(np), source=zero_dp )
    allocate( b1(np), source=zero_dp )
    !========================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !========================================
    select case (ndim)
    case (2)
@@ -1380,7 +1380,7 @@
    real (dp) :: ayh1(0:2), ay1(0:2)
    real (dp) :: azh1(0:2), az1(0:2)
    integer :: i, ih, j, jh, i2, j2, k, kh, k2, n
-   integer (kind=2) :: i1, j1, k1
+   integer :: i1, j1, k1
    integer (kind=2), parameter :: stl = 2
    !===============================================
    !===============================================
@@ -1625,7 +1625,7 @@
    ddx = dx_inv
    ddy = dy_inv
    !========================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !========================================
    !===== enter species positions at t^{n+1} level========
    ! fields are at t^n
@@ -1983,7 +1983,7 @@
    !=================================
    if ( sp_loc%empty ) return
    !========================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !========================================
    select case (ndim)
    case (2)
@@ -2290,7 +2290,7 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !================================
    select case (ndim)
    case (2)
@@ -2479,8 +2479,8 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
-   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
    !=============================================================
    allocate( axh(np, 0:4), source=zero_dp )
    allocate( ayh(np, 0:4), source=zero_dp )
@@ -2499,7 +2499,7 @@
      allocate( ih(np) )
      allocate( jh(np) )
 
-     weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
      ! Interpolation on new positions
      gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2614,7 +2614,7 @@
      allocate( axh0(np, 0:4))
      allocate( axh1(np, 0:4))
 
-     weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
      ! Interpolation on new positions
      gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2989,7 +2989,6 @@
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
 
-   real (dp), allocatable, dimension(:, :) :: xx, ap
    real (dp), allocatable, dimension(:, :) :: axh0, axh1, ayh0, ayh1
    real (dp), allocatable, dimension(:, :) :: axh, ayh, azh
    real (dp), allocatable, dimension(:, :) :: currx, curry, currz
@@ -3006,8 +3005,8 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
-   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 3)
    !=============================================================
    allocate( axh(np, 0:4), source=zero_dp )
@@ -3031,7 +3030,7 @@
    allocate( ayh0(np, 0:4))
    allocate( ayh1(np, 0:4))
 
-   weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+   weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
    ! Interpolation on new positions
    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -3401,14 +3400,14 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
-   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 2)
    !=============================================================
    allocate( vp(np, 2) )
    allocate( weight(np) )
 
-   weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+   weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
    !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
    ! is dt/gam and not just 1/gam ===
@@ -3614,14 +3613,14 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
-   call interp_realloc(interp_old, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 3)
    !=============================================================
    allocate( vp(np, 3) )
    allocate( weight(np) )
 
-   weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+   weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
    !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
    ! is dt/gam and not just 1/gam ===

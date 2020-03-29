@@ -296,7 +296,7 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !================================
    allocate( weight(np) )
 
@@ -305,7 +305,7 @@
    case (2)
     call xx_realloc(gpu_xx, np, 2)
 
-    weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
     gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -340,7 +340,7 @@
 
    case (3)
     call xx_realloc(gpu_xx, np, 3)
-    weight(1:np) = sp_loc%charge*sp_loc%call_component( W_COMP, lb=1, ub=np)
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
     gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -514,7 +514,7 @@
    !=================================
    if ( sp_loc%empty ) return
    !================================
-   call interp_realloc(interp, np, sp_loc%dimensions)
+   call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !================================
    allocate( gam(np) )
 
@@ -550,7 +550,7 @@
      do i1 = 0, spline
       i2 = i(n) + i1
       dvol = ax0(n, i1)
-      eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%charge
+      eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
       eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1)*dvol
      end do
     end do
@@ -599,7 +599,7 @@
        do i1 = 0, spline
         i2 = i(n) + i1
         dvol = ax0(n, i1)*ay0(n, j1)
-        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%charge
+        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
         eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1.)*dvol
        end do
       end do
@@ -632,7 +632,7 @@
        do i1 = 0, spline
         i2 = i(n) + i1
         dvol = ax0(n, i1)*ay0(n, j1)
-        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%charge
+        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
         eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n) - 1.)*dvol
        end do
       end do
@@ -692,7 +692,7 @@
        dvol = az0(n, k1)*ay0(n, j1)
        do i1 = 0, spline
         i2 = i(n) + i1
-        eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(n, i1)*dvol*sp_loc%charge
+        eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(n, i1)*dvol*sp_loc%pick_charge()
         eden(i2, j2, k2, 2) = eden(i2, j2, k2, 2) + &
           (gam(n) - 1.)*ax0(n, i1)*dvol
        end do

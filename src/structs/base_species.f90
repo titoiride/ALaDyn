@@ -35,21 +35,36 @@ module base_species
  integer, parameter :: INV_GAMMA_COMP = 7
  integer, parameter :: W_COMP = 8
  integer, parameter :: INDEX_COMP = -1
- 
+
+ type scalars
+  real(dp), private :: charge
+  !! Particle charge
+  integer, private :: n_part
+  !! Number of particles
+  integer, private :: dimensions
+  !! Number of dimensions in which particles live
+  real, private :: temperature
+  !! Initial temperature given to the species
+ contains
+  procedure, public, pass :: how_many => how_many_scalars
+  procedure, public, pass :: pick_charge => pick_charge_scalars
+  procedure, public, pass :: set_charge => set_charge_scalars
+  procedure, public, pass :: pick_dimensions => pick_dimensions_scalars
+  procedure, public, pass :: set_dimensions => set_dimensions_scalars
+  procedure, public, pass :: set_part_number => set_part_number_scalars
+  procedure, public, pass :: pick_temperature => pick_temperature_scalars
+  procedure, public, pass :: set_temperature => set_temperature_scalars
+ end type scalars
+
  type, abstract :: base_species_T
 
   logical, allocatable :: initialized
   !! Flag that states if the species has been initialized
   logical :: empty
   !! Flag that states if there are particles
-  real(dp) :: charge
-  !! Particle charge
-  integer, public :: n_part
-  !! Number of particles
-  integer :: dimensions
-  !! Number of dimensions in which particles live
-  real :: temperature
-  !! Initial temperature given to the species
+
+  type(scalars) :: properties
+  !! Contains the informations of the species
 
   real(dp), allocatable :: x(:)
   !! Array containig the x particle positions
@@ -113,9 +128,15 @@ module base_species
    procedure, private :: pack_into_array
    procedure, public, pass :: reallocate
    procedure, public, pass :: redistribute
+   procedure, public, pass :: pick_charge
+   procedure, public, pass :: pick_dimensions
+   procedure, public, pass :: pick_properties
+   procedure, public, pass :: pick_temperature
    procedure, pass :: set_charge_int
    procedure, pass :: set_charge_real
+   procedure, pass :: set_dimensions
    procedure, pass :: set_part_number
+   procedure, pass :: set_properties
    procedure, pass :: set_temperature
    procedure, public, pass :: total_size
    procedure(call_component_abstract), deferred, pass :: call_component
@@ -229,18 +250,12 @@ module base_species
    if (n_particles < 0) then
     return
    end if
-  
    if ( .not. allocated(this%initialized)) then
     allocate(this%initialized)
    end if
    this%initialized = .true.
-   this%n_part = n_particles
-   this%dimensions = curr_ndims
-   if (n_particles == 0) then
-    this%empty = .true.
-    return
-   end if
-   this%empty = .false.
+   call this%set_part_number(n_particles)
+   call this%set_dimensions(curr_ndims)
    this%allocated_x = .false.
    this%allocated_y = .false.
    this%allocated_z = .false.
@@ -250,6 +265,11 @@ module base_species
    this%allocated_gamma = .false.
    this%allocated_weight = .false.
    this%allocated_index = .false.
+   if (n_particles == 0) then
+    this%empty = .true.
+    return
+   end if
+   this%empty = .false.
   
    select case(curr_ndims)
    
@@ -318,8 +338,8 @@ module base_species
    real(dp) :: whz
    integer :: p, dim, i, j, k
 
-   t_x = this%temperature
-   dim = this%dimensions
+   t_x = this%pick_temperature()
+   dim = this%pick_dimensions()
    p = np_old
    select case(dim)
    case(2)
@@ -364,7 +384,7 @@ module base_species
    real(dp), dimension(:), intent(inout) :: particles
    integer, intent(in) :: index_in
 
-   select case(this%dimensions)
+   select case(this%pick_dimensions())
    case(1)
     particles(1) = this%x(index_in)
     particles(2) = this%px(index_in)
@@ -397,7 +417,7 @@ module base_species
    real(dp), dimension(:, :), intent(inout) :: particles
    integer, intent(in) :: lb, ub
 
-   select case(this%dimensions)
+   select case(this%pick_dimensions())
    case(1)
     particles(1:(ub-lb+1), 1) = this%x(lb:ub)
     particles(1:(ub-lb+1), 2) = this%px(lb:ub)
@@ -433,7 +453,7 @@ module base_species
 
    size_ind = SIZE(index_in, DIM=1)
    k = 1
-   select case(this%dimensions)
+   select case(this%pick_dimensions())
    case(1)
     do n = 1, size_ind
      idx = index_in(n)
@@ -536,10 +556,10 @@ module base_species
    class(base_species_T), intent(in) :: other
    integer :: tot
 
-   tot = other%n_part
+   tot = other%how_many()
 
-   call this%reallocate(tot, other%dimensions)
-   call this%set_charge(other%charge)
+   call this%reallocate(tot, other%pick_dimensions())
+   call this%set_properties(other%pick_properties())
 
    if (other%allocated_x) then
     call assign(this%x, other%x(1:tot), 1, tot)
@@ -578,8 +598,8 @@ module base_species
 
    tot = upper_bound - lower_bound + 1
 
-   call this%reallocate(tot, other%dimensions)
-   call this%set_charge(other%charge)
+   call this%reallocate(tot, other%pick_dimensions())
+   call this%set_properties(other%pick_properties())
 
    if (other%allocated_x) then
     call assign(this%x, other%x(lower_bound:upper_bound), 1, tot)
@@ -610,12 +630,20 @@ module base_species
    end if
   end subroutine
   
+  pure function how_many_scalars( this ) result(n_parts)
+   class(scalars), intent(in) :: this
+   integer :: n_parts
+
+   n_parts = this%n_part
+  
+  end function
+  
   pure function how_many( this ) result(n_parts)
    !! Number of particles in the species
    class(base_species_T), intent(in) :: this
    integer :: n_parts
 
-   n_parts = this%n_part
+   n_parts = this%properties%n_part
   
   end function
 
@@ -691,8 +719,8 @@ module base_species
  
    np = this%how_many()
    call packed%sweep()
-   call packed%new_species(np, this%dimensions)
-   call packed%set_charge(this%charge)
+   call packed%new_species(np, this%pick_dimensions())
+   call packed%set_properties(this%pick_properties())
  
    if( this%allocated_x ) then
     packed%x = PACK( this%x(1:np), mask)
@@ -722,7 +750,7 @@ module base_species
     packed%part_index = PACK( this%part_index(1:np), mask)
    end if
  
-   packed%n_part = packed%array_size()
+   call packed%set_part_number(packed%array_size())
  
   end subroutine
  
@@ -735,8 +763,8 @@ module base_species
    tot_parts = COUNT( mask )
    np = this%how_many()
    call packed%sweep()
-   call packed%new_species(tot_parts, this%dimensions)
-   call packed%set_charge(this%charge)
+   call packed%new_species(tot_parts, this%pick_dimensions())
+   call packed%set_properties(this%pick_properties())
  
    if (tot_parts == 0) then
     return
@@ -771,14 +799,15 @@ module base_species
  
   end subroutine
 
-  subroutine redistribute( this, flat_array, num_particles, dimensions )
+  subroutine redistribute( this, flat_array, num_particles, properties_in )
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in), dimension(:) :: flat_array
-   integer, intent(in) :: num_particles, dimensions
+   integer, intent(in) :: num_particles
+   type(scalars), intent(in) :: properties_in
    integer :: i
 
    i = 0
-   call this%reallocate(num_particles, dimensions)
+   call this%reallocate(num_particles, properties_in%pick_dimensions())
    if( this%allocated_x ) then
     this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
@@ -815,19 +844,22 @@ module base_species
     this%part_index(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
    end if
+ 
+   call this%set_properties( properties_in )
 
   end subroutine
 
   subroutine reallocate(this, n_parts, n_dimensions)
    class(base_species_T), intent(inout) :: this
-   integer :: n_parts, n_dimensions, sp_charge
+   integer :: n_parts, n_dimensions
+   type (scalars) :: old_properties
 
    if ( allocated(this%initialized) ) then
-    if (this%n_part < n_parts ) then
-     sp_charge = this%charge
+    if (this%how_many() < n_parts ) then
+     old_properties = this%pick_properties()
      call this%sweep()
      call this%new_species(n_parts, n_dimensions)
-     call this%set_charge(sp_charge)
+     call this%set_properties(old_properties)
     end if
    else
     call this%new_species(n_parts, n_dimensions)
@@ -835,58 +867,166 @@ module base_species
 
   end subroutine
 
+  pure function pick_charge_scalars( this ) result(ch)
+   class(scalars), intent(in) :: this
+   real(dp) :: ch
+
+   ch = this%charge
+
+  end function
+
+  pure function pick_charge( this ) result(ch)
+   class(base_species_T), intent(in) :: this
+   real(dp) :: ch
+
+   ch = this%properties%charge
+
+  end function
+  
+  pure function pick_temperature_scalars( this ) result(tem)
+   class(scalars), intent(in) :: this
+   real(dp) :: tem
+
+   tem = this%temperature
+
+  end function
+  
+  pure function pick_temperature( this ) result(tem)
+   class(base_species_T), intent(in) :: this
+   real(dp) :: tem
+
+   tem = this%properties%temperature
+
+  end function
+
+  pure function pick_dimensions_scalars( this ) result(dims)
+   class(scalars), intent(in) :: this
+   integer :: dims
+
+   dims = this%dimensions
+
+  end function
+
+  pure function pick_dimensions( this ) result(dims)
+   class(base_species_T), intent(in) :: this
+   integer :: dims
+
+   dims = this%properties%dimensions
+
+  end function
+  
+  function pick_properties( this ) result(properties)
+   class(base_species_T), intent(in) :: this
+   type(scalars) :: properties
+
+   call properties%set_charge(this%pick_charge())
+   call properties%set_temperature(this%pick_temperature())
+   call properties%set_dimensions(this%pick_dimensions())
+
+  end function
+
+  subroutine set_properties( this, properties_in )
+   class(base_species_T), intent(inout) :: this
+   type(scalars), intent(in) :: properties_in
+
+   call this%set_charge(properties_in%pick_charge())
+   call this%set_temperature(properties_in%pick_temperature())
+   call this%set_dimensions(properties_in%pick_dimensions())
+
+  end subroutine
+
   subroutine set_charge_int( this, ch)
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: ch
    
-   this%charge = real(ch, dp)
+   this%properties%charge = real(ch, dp)
+
   end subroutine
   
   subroutine set_charge_real( this, ch)
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in) :: ch
    
+   this%properties%charge = ch
+
+  end subroutine
+  
+  subroutine set_charge_scalars( this, ch)
+   class(scalars), intent(inout) :: this
+   real(dp), intent(in) :: ch
+   
    this%charge = ch
+
+  end subroutine
+  
+  subroutine set_dimensions_scalars( this, dimens)
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: dimens
+   
+   this%dimensions = dimens
+
+  end subroutine
+  
+  subroutine set_dimensions( this, dimens)
+   class(base_species_T), intent(inout) :: this
+   integer, intent(in) :: dimens
+   
+   this%properties%dimensions = dimens
+
   end subroutine
 
-  
- subroutine set_part_number( this, n_parts)
-  class(base_species_T), intent(inout) :: this
-  integer, intent(in) :: n_parts
+  subroutine set_part_number( this, n_parts)
+   class(base_species_T), intent(inout) :: this
+   integer, intent(in) :: n_parts
 
-  this%n_part = n_parts
-  if ( n_parts > 0 ) then
-   this%empty = .false.
-  else if (n_parts == 0) then
-   this%empty = .true. 
-  else
-   write(6, *) 'Error in part number'
-  end if
- end subroutine
+   this%properties%n_part = n_parts
+   if ( n_parts > 0 ) then
+    this%empty = .false.
+   else if (n_parts == 0) then
+    this%empty = .true. 
+   else
+    write(6, *) 'Error in part number'
+   end if
+  end subroutine
 
- subroutine set_temperature( this, temperature)
-  class(base_species_T), intent(inout) :: this
-  real(dp), intent(in) :: temperature
+  subroutine set_part_number_scalars( this, n_parts)
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: n_parts
 
-  this%temperature = temperature
- end subroutine
+   this%n_part = n_parts
 
- pure function total_size( this ) result(size)
-  class(base_species_T), intent(in) :: this
-  integer :: size
+  end subroutine
 
-  select case(this%dimensions)
-  case(1)
-   size = 5
-  case(2)
-   size = 7
-  case(3)
-   size = 9
-  case default
-   size = -1
-  end select
+  subroutine set_temperature( this, temperature)
+   class(base_species_T), intent(inout) :: this
+   real(dp), intent(in) :: temperature
 
- end function
+   this%properties%temperature = temperature
+  end subroutine
+
+  subroutine set_temperature_scalars( this, temperature)
+   class(scalars), intent(inout) :: this
+   real(dp), intent(in) :: temperature
+
+   this%temperature = temperature
+  end subroutine
+
+  pure function total_size( this ) result(size)
+   class(base_species_T), intent(in) :: this
+   integer :: size
+
+   select case(this%pick_dimensions())
+   case(1)
+    size = 5
+   case(2)
+    size = 7
+   case(3)
+    size = 9
+   case default
+    size = -1
+   end select
+
+  end function
 
 !==== Procedures not bound to type ======
 

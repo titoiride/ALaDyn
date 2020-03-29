@@ -179,8 +179,6 @@
      np_new = 0
      np_old = loc_npart(imody, imodz, imodx, ic)
      np_new = max(np_old+npt_inj(ic), np_new)
-     ! Shouldn't need reallocation with new species
-     !call v_realloc( spec_aux_in, np_new, ndv )
      !=========================
 
      call spec_in(ic)%extend(np_new)

@@ -993,7 +993,7 @@
    do ic = 1, nsp
     p = 0
     i2 = loc_nptx(ic)
-    if (i2>0) call pspecies_distribute(spec_in(ic), t0_pl(ic), unit_charge(ic), &
+    call pspecies_distribute(spec_in(ic), t0_pl(ic), unit_charge(ic), &
      p, ic, i2, last_particle_index(ic))
     loc_npart(imody, imodz, imodx, ic) = last_particle_index(ic)
    end do

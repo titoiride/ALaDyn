@@ -802,11 +802,11 @@
    do ip = 0, npez - 1     !from negative to positive z coordinate 
     nloc = loc_zgrid(ip)%ng
     do iz = 1, nloc
-     zz = loc_zg(iy, 1, ip)
+     zz = loc_zg(iz, 1, ip)
      do ii = 1, loc_nft
       if(zz < loc_zft(ii,ip)) exit
      end do
-     zft_ind(iy, ip) = ii-1
+     zft_ind(iz, ip) = ii-1
     end do
    end do
   end subroutine

@@ -111,7 +111,7 @@
    integer, intent (in) :: np, ncmp
    real(dp) :: ch
 
-   ch = sp_loc%charge
+   ch = sp_loc%pick_charge()
    !==========================
    apt = apt * ch
    ! EXIT p-assigned (E,B) fields multiplied by charge
