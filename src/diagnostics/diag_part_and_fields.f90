@@ -188,8 +188,8 @@
    integer :: ip, ik
    real (dp) :: xp(3), vp(3), gamm, gam1
 
-   ! ek = 0.0
-   ! ekmax = 0.0
+   ek = 0.0
+   ekmax = 0.0
    ! if (curr_ndim<3) then
    !  do ip = 1, np
    !   vp(1:2) = sp_loc%part(ip, 3:4)

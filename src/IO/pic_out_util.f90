@@ -103,10 +103,10 @@
        if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
        call set_grid_env_den_energy(spec_in, spec_aux_in, jc, np, 3)
       else
-       !call set_grid_den_energy(spec_in, spec_aux_in, jc, np) !ic >1 in envelope scheme
+       call set_grid_den_energy(spec_in, spec_aux_in, jc, np) !ic >1 in envelope scheme
       end if
      else
-      !call set_grid_den_energy(spec_in, spec_aux_in, jc, np)
+      call set_grid_den_energy(spec_in, spec_aux_in, jc, np)
      ! in jc(1) is plasma norm density in jc(2) <(gam-1)density> using kinetic
      ! gamma  for each species
      end if
