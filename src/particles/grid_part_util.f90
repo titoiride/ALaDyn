@@ -313,10 +313,10 @@
 
     call qden_2d_wgh( gpu_xx(1:np, 1:2), interp )
 
-    associate( ax0 => interp%coeff_x_rank2 )
-    associate( ay0 => interp%coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( j => interp%iy_rank2 )
+    associate( ax0 => interp%coeff_x_rank2, &
+               ay0 => interp%coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2 )
 
     do n = 0, 2
      ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
@@ -334,9 +334,6 @@
     end do
 
     end associate
-    end associate
-    end associate
-    end associate
 
    case (3)
     call xx_realloc(gpu_xx, np, 3)
@@ -349,12 +346,12 @@
 
     call qden_3d_wgh( gpu_xx(1:np, 1:3), interp )
 
-    associate( ax0 => interp%coeff_x_rank2 )
-    associate( ay0 => interp%coeff_y_rank2 )
-    associate( az0 => interp%coeff_z_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( k => interp%iz_rank2 )
+    associate( ax0 => interp%coeff_x_rank2, &
+               ay0 => interp%coeff_y_rank2, &
+               az0 => interp%coeff_z_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2, &
+               k => interp%iz_rank2 )
 
     do n = 0, 2
      ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
@@ -373,11 +370,6 @@
      end do
     end do
     ! charge density on den(ic)
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
    end select
   end subroutine
@@ -531,9 +523,9 @@
     
     j2 = 1
 
-    associate( ax0 => interp%coeff_x_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+    associate( ax0 => interp%coeff_x_rank2, &
+               i => interp%ix_rank2, &
+               weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
 
     do n = 1, np
      do i1 = 0, spline
@@ -556,8 +548,6 @@
     end do
 
    end associate
-   end associate
-   end associate
 
    case (2)
 
@@ -568,11 +558,11 @@
     
     call qden_2d_wgh( gpu_xx(1:np, 1:2), interp )
 
-    associate( ax0 => interp%coeff_x_rank2 )
-    associate( ay0 => interp%coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+    associate( ax0 => interp%coeff_x_rank2, &
+               ay0 => interp%coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2, &
+               weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
 
     if (curr_ndim==2) then
 
@@ -640,10 +630,6 @@
     end if
 
     end associate
-    end associate
-    end associate
-    end associate
-    end associate
 
    case (3)
 
@@ -655,13 +641,13 @@
     
     call qden_3d_wgh( gpu_xx(1:np, 1:3), interp )
 
-    associate( ax0 => interp%coeff_x_rank2 )
-    associate( ay0 => interp%coeff_y_rank2 )
-    associate( az0 => interp%coeff_z_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( k => interp%iz_rank2 )
-    associate( weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+    associate( ax0 => interp%coeff_x_rank2, &
+               ay0 => interp%coeff_y_rank2, &
+               az0 => interp%coeff_z_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2, &
+               k => interp%iz_rank2, &
+               weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
 
     gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
      sp_loc%call_component( PY_COMP, lb=1, ub=np)*sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
@@ -700,12 +686,6 @@
      end do
     end do
 
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
    end select
    !===========================

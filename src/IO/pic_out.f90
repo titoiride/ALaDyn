@@ -1527,22 +1527,19 @@
    call v_realloc( pic_out_aux, np, ndv )
    if (np>0) then
     if (ndim>2) then
-     associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np))
-      associate( yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np))
-       associate( zz => spec_in(pid)%call_component(Z_COMP, lb=1, ub=np))
+     associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np), &
+                yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np), &
+                zz => spec_in(pid)%call_component(Z_COMP, lb=1, ub=np))
         mask(:) = ( xx>=xmin_out .and. xx<=xmax_out .and. &
          abs(yy)<=ymax_out .and. abs(zz)<=ymax_out )
-       end associate
-      end associate
      end associate
      npt = COUNT(mask(:))
      call out_parts%find_index(mask(:))
 
     else
-     associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np))
-      associate( yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np))
+     associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np), &
+                yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np))
         mask(:) = ( xx>=xmin_out .and. xx<=xmax_out .and. abs(yy)<=ymax_out)
-      end associate
      end associate
      npt = COUNT(mask(:))
      call out_parts%find_index(mask(:))

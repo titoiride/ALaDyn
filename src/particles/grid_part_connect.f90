@@ -120,10 +120,10 @@
     
     call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( axh => interp%h_coeff_x_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               axh => interp%h_coeff_x_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2 )
 
     do i1 = 0, 2
      do n = 1, np
@@ -136,9 +136,6 @@
     end do
 
     end associate
-    end associate
-    end associate
-    end associate
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
@@ -150,10 +147,10 @@
     
     call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( axh => interp%h_coeff_x_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               axh => interp%h_coeff_x_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2 )
 
     do i1 = 0, 2
      do n = 1, np
@@ -168,9 +165,6 @@
      end do
     end do
 
-    end associate
-    end associate
-    end associate
     end associate
 
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
@@ -282,14 +276,14 @@
 
     call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
     
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( axh => interp%h_coeff_x_rank2 )
-    associate( ayh => interp%h_coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               axh => interp%h_coeff_x_rank2, &
+               ayh => interp%h_coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2 )
  
     do n = 1, np
      do j1 = 0, 2
@@ -318,13 +312,6 @@
     end do
 
     end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
 
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
@@ -338,14 +325,14 @@
 
     call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
     
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( axh => interp%h_coeff_x_rank2 )
-    associate( ayh => interp%h_coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               axh => interp%h_coeff_x_rank2, &
+               ayh => interp%h_coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2 )
 
     do n = 1, np
      do j1 = 0, 2
@@ -380,13 +367,6 @@
      end do
     end do
 
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
 
     call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
@@ -555,18 +535,18 @@
    call qlh_3d_spline( gpc_xx(1:np, 1:3), interp )
    !==========================
 
-   associate( ax1 => interp%coeff_x_rank2 )
-   associate( ay1 => interp%coeff_y_rank2 )
-   associate( az1 => interp%coeff_z_rank2 )
-   associate( axh => interp%h_coeff_x_rank2 )
-   associate( ayh => interp%h_coeff_y_rank2 )
-   associate( azh => interp%h_coeff_z_rank2 )
-   associate( i => interp%ix_rank2 )
-   associate( ih => interp%ihx_rank2 )
-   associate( j => interp%iy_rank2 )
-   associate( jh => interp%ihy_rank2 )
-   associate( k => interp%iz_rank2 )
-   associate( kh => interp%ihz_rank2 )
+   associate( ax1 => interp%coeff_x_rank2, &
+              ay1 => interp%coeff_y_rank2, &
+              az1 => interp%coeff_z_rank2, &
+              axh => interp%h_coeff_x_rank2, &
+              ayh => interp%h_coeff_y_rank2, &
+              azh => interp%h_coeff_z_rank2, &
+              i => interp%ix_rank2, &
+              ih => interp%ihx_rank2, &
+              j => interp%iy_rank2, &
+              jh => interp%ihy_rank2, &
+              k => interp%iz_rank2, &
+              kh => interp%ihz_rank2 )
     
    do n = 1, np
     ! Ex(i+1/2,j,k)
@@ -635,17 +615,6 @@
     end do
    end do
 
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
    end associate
    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
@@ -808,14 +777,14 @@
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( axh => interp%h_coeff_x_rank2 )
-    associate( ayh => interp%h_coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               axh => interp%h_coeff_x_rank2, &
+               ayh => interp%h_coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2 )
     !==========================
     do n = 1, np
      ! Ex(i+1/2,j,k)
@@ -845,13 +814,6 @@
     end do
 
     end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     call pt%set_component( ef_sqr(1:np), &
      E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2
     !=======================================
@@ -865,18 +827,18 @@
 
     call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( az1 => interp%coeff_z_rank2 )
-    associate( axh => interp%h_coeff_x_rank2 )
-    associate( ayh => interp%h_coeff_y_rank2 )
-    associate( azh => interp%h_coeff_z_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
-    associate( k => interp%iz_rank2 )
-    associate( kh => interp%ihz_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               az1 => interp%coeff_z_rank2, &
+               axh => interp%h_coeff_x_rank2, &
+               ayh => interp%h_coeff_y_rank2, &
+               azh => interp%h_coeff_z_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2, &
+               k => interp%iz_rank2, &
+               kh => interp%ihz_rank2 )
     !==========================
     ! Here Quadratic shapes are used
     do n = 1, np
@@ -923,17 +885,6 @@
      end do
     end do
 
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
     call pt%set_component( ef_sqr(1:np), &
     E_SQUARED, lb=1, ub=np) !Ex(p)^2 + Ey(p)^2 + Ez(p)^2
@@ -1155,14 +1106,14 @@
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( axh1 => interp%h_coeff_x_rank2 )
-    associate( ayh1 => interp%h_coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               axh1 => interp%h_coeff_x_rank2, &
+               ayh1 => interp%h_coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2 )
 
     !     upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
     !     wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
@@ -1200,13 +1151,6 @@
      end do
     end do
 
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
     !=========================
     call sp_loc%compute_gamma(pond_pot=ap(1:np, 6)) ! Check if needed, probably can be computed in lpf_env_positions
@@ -1246,18 +1190,18 @@
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( az1 => interp%coeff_z_rank2 )
-    associate( axh1 => interp%h_coeff_x_rank2 )
-    associate( ayh1 => interp%h_coeff_y_rank2 )
-    associate( azh1 => interp%h_coeff_z_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
-    associate( k => interp%iz_rank2 )
-    associate( kh => interp%ihz_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               az1 => interp%coeff_z_rank2, &
+               axh1 => interp%h_coeff_x_rank2, &
+               ayh1 => interp%h_coeff_y_rank2, &
+               azh1 => interp%h_coeff_z_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2, &
+               k => interp%iz_rank2, &
+               kh => interp%ihz_rank2 )
 
     do n = 1, np
      do k1 = 0, stl
@@ -1319,17 +1263,6 @@
      end do
     end do
 
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
     !=========================
     call sp_loc%compute_gamma(pond_pot=ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
@@ -1641,14 +1574,14 @@
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     call qqh_2d_spline( gpc_xx, interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( axh1 => interp%h_coeff_x_rank2 )
-    associate( ayh1 => interp%h_coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               axh1 => interp%h_coeff_x_rank2, &
+               ayh1 => interp%h_coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2 )
     !==========================
     do n = 1, np
      do j1 = 0, 2
@@ -1676,13 +1609,6 @@
      end do
     end do
     !==================
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
     call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
      POND_COMP, lb=1, ub=np) !The interpolated |A| potential
@@ -1712,18 +1638,18 @@
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( az1 => interp%coeff_z_rank2 )
-    associate( axh1 => interp%h_coeff_x_rank2 )
-    associate( ayh1 => interp%h_coeff_y_rank2 )
-    associate( azh1 => interp%h_coeff_z_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
-    associate( k => interp%iz_rank2 )
-    associate( kh => interp%ihz_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               az1 => interp%coeff_z_rank2, &
+               axh1 => interp%h_coeff_x_rank2, &
+               ayh1 => interp%h_coeff_y_rank2, &
+               azh1 => interp%h_coeff_z_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2, &
+               k => interp%iz_rank2, &
+               kh => interp%ihz_rank2 )
     !==========================
     do n = 1, np
      do k1 = 0, 2
@@ -1753,17 +1679,6 @@
       end do
      end do
     end do
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
     call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
     POND_COMP, lb=1, ub=np) !The interpolated |A| potential
@@ -1997,14 +1912,14 @@
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( axh1 => interp%h_coeff_x_rank2 )
-    associate( ayh1 => interp%h_coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               axh1 => interp%h_coeff_x_rank2, &
+               ayh1 => interp%h_coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2 )
     !==========================
     do n = 1, np
      do j1 = 0, 2
@@ -2030,13 +1945,6 @@
     end do
 
     end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     !assigned grad[Phi] and Phi
     call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
     call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
@@ -2053,18 +1961,18 @@
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( az1 => interp%coeff_z_rank2 )
-    associate( axh1 => interp%h_coeff_x_rank2 )
-    associate( ayh1 => interp%h_coeff_y_rank2 )
-    associate( azh1 => interp%h_coeff_z_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( ih => interp%ihx_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( jh => interp%ihy_rank2 )
-    associate( k => interp%iz_rank2 )
-    associate( kh => interp%ihz_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               az1 => interp%coeff_z_rank2, &
+               axh1 => interp%h_coeff_x_rank2, &
+               ayh1 => interp%h_coeff_y_rank2, &
+               azh1 => interp%h_coeff_z_rank2, &
+               i => interp%ix_rank2, &
+               ih => interp%ihx_rank2, &
+               j => interp%iy_rank2, &
+               jh => interp%ihy_rank2, &
+               k => interp%iz_rank2, &
+               kh => interp%ihz_rank2 )
     !==========================
     do n = 1, np
      do k1 = 0, 2
@@ -2101,17 +2009,6 @@
       end do
      end do
     end do
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
     !assigned grad[Phi] and Phi
     call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
@@ -2303,10 +2200,10 @@
 
     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( j => interp%iy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2 )
 
     weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
      !==========================
@@ -2323,9 +2220,6 @@
     end do
     !========================
     end associate
-    end associate
-    end associate
-    end associate
    case (3)
     call xx_realloc(gpc_xx, np, 3)
     allocate( weight(np) )
@@ -2335,12 +2229,12 @@
     gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     call qden_3d_wgh( gpc_xx(1:np, 1:3), interp )
 
-    associate( ax1 => interp%coeff_x_rank2 )
-    associate( ay1 => interp%coeff_y_rank2 )
-    associate( az1 => interp%coeff_z_rank2 )
-    associate( i => interp%ix_rank2 )
-    associate( j => interp%iy_rank2 )
-    associate( k => interp%iz_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               az1 => interp%coeff_z_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2, &
+               k => interp%iz_rank2 )
 
     weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
     do n = 1, np
@@ -2357,11 +2251,6 @@
       end do
      end do
     end do
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end associate
    end select
    !In ebfp(1:3) exit relative (x,y,z) positions at current t^n level
@@ -2513,14 +2402,14 @@
      
      call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
 
-     associate( ax1 => interp%coeff_x_rank2 )
-     associate( ay1 => interp%coeff_y_rank2 )
-     associate( i => interp%ix_rank2 )
-     associate( j => interp%iy_rank2 )
-     associate( ax0 => interp_old%coeff_x_rank2 )
-     associate( ay0 => interp_old%coeff_y_rank2 )
-     associate( ii0 => interp_old%ix_rank2 )
-     associate( jj0 => interp_old%iy_rank2 )
+     associate( ax1 => interp%coeff_x_rank2, &
+                ay1 => interp%coeff_y_rank2, &
+                i => interp%ix_rank2, &
+                j => interp%iy_rank2, &
+                ax0 => interp_old%coeff_x_rank2, &
+                ay0 => interp_old%coeff_y_rank2, &
+                ii0 => interp_old%ix_rank2, &
+                jj0 => interp_old%iy_rank2 )
 
      ih(1:np) = i(1:np) - ii0(1:np) + 1
      
@@ -2592,13 +2481,6 @@
       end do
      end do
     end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
-    end associate
     end if
      !========================================
     if (curr_ndim==3) then !Three currents conditions in 2D grid
@@ -2636,14 +2518,14 @@
      ! Storing z_new - z_old in xx(1:np, 1)
      gpc_xx(1:np, 1) = weight(1:np)*(xx(1:np, 1) - xx(1:np, 2))/3.
      
-     associate( ax1 => interp%coeff_x_rank2 )
-     associate( ay1 => interp%coeff_y_rank2 )
-     associate( i => interp%ix_rank2 )
-     associate( j => interp%iy_rank2 )
-     associate( ax0 => interp_old%coeff_x_rank2 )
-     associate( ay0 => interp_old%coeff_y_rank2 )
-     associate( ii0 => interp_old%ix_rank2 )
-     associate( jj0 => interp_old%iy_rank2 )
+     associate( ax1 => interp%coeff_x_rank2, &
+                ay1 => interp%coeff_y_rank2, &
+                i => interp%ix_rank2, &
+                j => interp%iy_rank2, &
+                ax0 => interp_old%coeff_x_rank2, &
+                ay0 => interp_old%coeff_y_rank2, &
+                ii0 => interp_old%ix_rank2, &
+                jj0 => interp_old%iy_rank2 )
 
      ih(1:np) = i(1:np) - ii0(1:np) + 1
 
@@ -2735,13 +2617,6 @@
        end do
       end do
      end do 
-     end associate
-     end associate
-     end associate
-     end associate
-     end associate
-     end associate
-     end associate
      end associate
     end if
    end select
@@ -3046,18 +2921,18 @@
    
    call qden_3d_wgh( gpc_xx(1:np, 1:3), interp_old )
 
-   associate( ax1 => interp%coeff_x_rank2 )
-   associate( ay1 => interp%coeff_y_rank2 )
-   associate( az1 => interp%coeff_z_rank2 )
-   associate( i => interp%ix_rank2 )
-   associate( j => interp%iy_rank2 )
-   associate( k => interp%iz_rank2 )
-   associate( ax0 => interp_old%coeff_x_rank2 )
-   associate( ay0 => interp_old%coeff_y_rank2 )
-   associate( az0 => interp_old%coeff_z_rank2 )
-   associate( ii0 => interp_old%ix_rank2 )
-   associate( jj0 => interp_old%iy_rank2 )
-   associate( kk0 => interp_old%iz_rank2 )
+   associate( ax1 => interp%coeff_x_rank2, &
+              ay1 => interp%coeff_y_rank2, &
+              az1 => interp%coeff_z_rank2, &
+              i => interp%ix_rank2, &
+              j => interp%iy_rank2, &
+              k => interp%iz_rank2, &
+              ax0 => interp_old%coeff_x_rank2, &
+              ay0 => interp_old%coeff_y_rank2, &
+              az0 => interp_old%coeff_z_rank2, &
+              ii0 => interp_old%ix_rank2, &
+              jj0 => interp_old%iy_rank2, &
+              kk0 => interp_old%iz_rank2 )
 
    ih(1:np) = i(1:np) - ii0(1:np) + 1
 
@@ -3184,17 +3059,6 @@
     end do
    end do
    !============= Curr data on [1:n+4] extended range
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
    end associate
 
   end subroutine
@@ -3431,22 +3295,22 @@
 
    call qlh_2d_spline( gpc_xx(1:np, 1:2), interp_old )
    
-   associate( ax1 => interp%coeff_x_rank2 )
-   associate( ay1 => interp%coeff_y_rank2 )
-   associate( axh1 => interp%h_coeff_x_rank2 )
-   associate( ayh1 => interp%h_coeff_y_rank2 )
-   associate( i => interp%ix_rank2 )
-   associate( ih => interp%ihx_rank2 )
-   associate( j => interp%iy_rank2 )
-   associate( jh => interp%ihy_rank2 )
-   associate( ax0 => interp_old%coeff_x_rank2 )
-   associate( ay0 => interp_old%coeff_y_rank2 )
-   associate( axh0 => interp_old%h_coeff_x_rank2 )
-   associate( ayh0 => interp_old%h_coeff_y_rank2 )
-   associate( ii0 => interp_old%ix_rank2 )
-   associate( ih0 => interp_old%ihx_rank2 )
-   associate( jj0 => interp_old%iy_rank2 )
-   associate( jh0 => interp_old%ihy_rank2 )
+   associate( ax1 => interp%coeff_x_rank2, &
+              ay1 => interp%coeff_y_rank2, &
+              axh1 => interp%h_coeff_x_rank2, &
+              ayh1 => interp%h_coeff_y_rank2, &
+              i => interp%ix_rank2, &
+              ih => interp%ihx_rank2, &
+              j => interp%iy_rank2, &
+              jh => interp%ihy_rank2, &
+              ax0 => interp_old%coeff_x_rank2, &
+              ay0 => interp_old%coeff_y_rank2, &
+              axh0 => interp_old%h_coeff_x_rank2, &
+              ayh0 => interp_old%h_coeff_y_rank2, &
+              ii0 => interp_old%ix_rank2, &
+              ih0 => interp_old%ihx_rank2, &
+              jj0 => interp_old%iy_rank2, &
+              jh0 => interp_old%ihy_rank2 )
    do n = 1, np
     !===============Jx ========
     do j1 = 0, 2
@@ -3479,21 +3343,6 @@
      end do
     end do
    end do
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
    end associate
   end subroutine
   !========================
@@ -3649,30 +3498,30 @@
  
    call qlh_3d_spline( gpc_xx(1:np, 1:3), interp_old )
 
-   associate( ax1 => interp%coeff_x_rank2 )
-   associate( ay1 => interp%coeff_y_rank2 )
-   associate( az1 => interp%coeff_z_rank2 )
-   associate( axh1 => interp%h_coeff_x_rank2 )
-   associate( ayh1 => interp%h_coeff_y_rank2 )
-   associate( azh1 => interp%h_coeff_z_rank2 )
-   associate( i => interp%ix_rank2 )
-   associate( ih => interp%ihx_rank2 )
-   associate( j => interp%iy_rank2 )
-   associate( jh => interp%ihy_rank2 )
-   associate( k => interp%iz_rank2 )
-   associate( kh => interp%ihz_rank2 )
-   associate( ax0 => interp_old%coeff_x_rank2 )
-   associate( ay0 => interp_old%coeff_y_rank2 )
-   associate( az0 => interp_old%coeff_z_rank2 )
-   associate( axh0 => interp_old%h_coeff_x_rank2 )
-   associate( ayh0 => interp_old%h_coeff_y_rank2 )
-   associate( azh0 => interp_old%h_coeff_z_rank2 )
-   associate( ii0 => interp_old%ix_rank2 )
-   associate( ih0 => interp_old%ihx_rank2 )
-   associate( jj0 => interp_old%iy_rank2 )
-   associate( jh0 => interp_old%ihy_rank2 )
-   associate( kk0 => interp_old%iz_rank2 )
-   associate( kh0 => interp_old%ihz_rank2 )
+   associate( ax1 => interp%coeff_x_rank2, &
+              ay1 => interp%coeff_y_rank2, &
+              az1 => interp%coeff_z_rank2, &
+              axh1 => interp%h_coeff_x_rank2, &
+              ayh1 => interp%h_coeff_y_rank2, &
+              azh1 => interp%h_coeff_z_rank2, &
+              i => interp%ix_rank2, &
+              ih => interp%ihx_rank2, &
+              j => interp%iy_rank2, &
+              jh => interp%ihy_rank2, &
+              k => interp%iz_rank2, &
+              kh => interp%ihz_rank2, &
+              ax0 => interp_old%coeff_x_rank2, &
+              ay0 => interp_old%coeff_y_rank2, &
+              az0 => interp_old%coeff_z_rank2, &
+              axh0 => interp_old%h_coeff_x_rank2, &
+              ayh0 => interp_old%h_coeff_y_rank2, &
+              azh0 => interp_old%h_coeff_z_rank2, &
+              ii0 => interp_old%ix_rank2, &
+              ih0 => interp_old%ihx_rank2, &
+              jj0 => interp_old%iy_rank2, &
+              jh0 => interp_old%ihy_rank2, &
+              kk0 => interp_old%iz_rank2, &
+              kh0 => interp_old%ihz_rank2 )
 
    do n = 1, np
     !======================   Jx
@@ -3738,29 +3587,6 @@
      end do
     end do
    end do
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
-   end associate
    end associate
    !============= Curr and density data on [0:n+3] extended range
   end subroutine
