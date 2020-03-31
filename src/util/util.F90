@@ -32,7 +32,7 @@
 
   implicit none
   private
-  public :: gasdev, init_random_seed, bunch_gen, write_warning
+  public :: gasdev, init_random_seed, bunch_gen, write_warning, endian
 
  contains
 
@@ -338,4 +338,17 @@
    end select
   end subroutine
 
+  subroutine endian(iend)
+   implicit none
+   integer, intent (out) :: iend
+   integer, parameter :: ik1 = selected_int_kind(2)
+   integer, parameter :: ik4 = selected_int_kind(9)
+
+   iend = 0
+   if (btest(transfer(int([1,0,0,0],ik1),1_ik4),0)) then
+    iend = 1
+   else
+    iend = 2
+   end if
+  end subroutine
  end module

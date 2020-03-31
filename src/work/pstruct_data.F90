@@ -30,7 +30,6 @@
   real (dp), allocatable :: ebfb(:, :)
   real (dp), allocatable :: ebfp0(:, :), ebfp1(:, :)
   real (dp), allocatable :: pdata_tracking(:, :, :)
-  real (dp), allocatable :: track_aux(:)
   real (dp), allocatable :: xpt(:, :), ypt(:, :), zpt(:, :), wghpt(:, :)
   real (dp), allocatable :: loc_ypt(:, :), loc_zpt(:, :), &
   loc_wghyz(:, :, :)

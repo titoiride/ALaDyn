@@ -42,6 +42,13 @@
    module procedure :: old_p_alloc
    module procedure :: new_p_alloc
   end interface
+
+  interface array_realloc_1d
+   module procedure :: array_realloc_1d_dp
+   module procedure :: array_realloc_1d_sp
+   module procedure :: array_realloc_1d_logical
+  end interface
+
  contains
 
   subroutine mpi_buffer_alloc(n1_loc, n2_loc, n3_loc, nvd)
@@ -310,8 +317,38 @@
    vdata(:, :) = 0.0
   end subroutine
   !===========================
-  subroutine array_realloc_1d(vdata, npt_new)
+  subroutine array_realloc_1d_dp(vdata, npt_new)
    real (dp), allocatable, intent (inout) :: vdata(:)
+   integer, intent (in) :: npt_new
+   integer :: allocstatus, deallocstatus
+
+   if (allocated(vdata)) then
+    if (size(vdata,1)<npt_new) then
+     deallocate (vdata, stat=deallocstatus)
+     allocate (vdata(1:npt_new), stat=allocstatus)
+    end if
+   else
+    allocate (vdata(1:npt_new), stat=allocstatus)
+   end if
+  end subroutine
+  !===========================
+  subroutine array_realloc_1d_sp(vdata, npt_new)
+   real (sp), allocatable, intent (inout) :: vdata(:)
+   integer, intent (in) :: npt_new
+   integer :: allocstatus, deallocstatus
+
+   if (allocated(vdata)) then
+    if (size(vdata,1)<npt_new) then
+     deallocate (vdata, stat=deallocstatus)
+     allocate (vdata(1:npt_new), stat=allocstatus)
+    end if
+   else
+    allocate (vdata(1:npt_new), stat=allocstatus)
+   end if
+  end subroutine
+  !===========================
+  subroutine array_realloc_1d_logical(vdata, npt_new)
+   logical, allocatable, intent (inout) :: vdata(:)
    integer, intent (in) :: npt_new
    integer :: allocstatus, deallocstatus
 

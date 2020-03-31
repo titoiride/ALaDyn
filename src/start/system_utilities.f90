@@ -41,6 +41,11 @@
    if (pe0) call create_folder('diagnostics')
   end subroutine
 
+  subroutine create_tracking_folders
+
+   if (pe0) call create_folder('tracking')
+  end subroutine
+
 
 
 !---------------------------

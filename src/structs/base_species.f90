@@ -36,6 +36,27 @@ module base_species
  integer, parameter :: W_COMP = 8
  integer, parameter :: INDEX_COMP = -1
 
+ type track_data_t
+  logical, private :: tracked
+  !! Flag to track the particles
+  integer, public :: n_tracked
+  !! Number of tracked particles
+  real(dp), public :: xmin
+  !! Minimum x position of the tracked particles
+  real(dp), public :: xmax
+  !! Maximum x position of the tracked particles
+  real(dp), public :: ymin
+  !! Minimum y position of the tracked particles
+  real(dp), public :: ymax
+  !! Maximum y position of the tracked particles
+  real(dp), public :: zmin
+  !! Minimum z position of the tracked particles
+  real(dp), public :: zmax
+  !! Maximum z position of the tracked particles
+  integer, public :: jump
+  !! Jump parameter in particles selection
+ end type
+
  type scalars
   real(dp), private :: charge
   !! Particle charge
@@ -45,8 +66,8 @@ module base_species
   !! Number of dimensions in which particles live
   real, private :: temperature
   !! Initial temperature given to the species
-  logical, private :: tracked
-  !! Flag to track the particles
+  type(track_data_t), private :: track_data
+  !! Type containing all the tracking datas 
  contains
   procedure, public, pass :: how_many => how_many_scalars
   procedure, public, pass :: pick_charge => pick_charge_scalars
@@ -143,6 +164,9 @@ module base_species
    procedure, pass :: set_part_number
    procedure, pass :: set_properties
    procedure, pass :: set_temperature
+   procedure, public, pass :: pick_track_params
+   procedure, public, pass :: set_track_params
+   procedure, public, pass :: set_tot_tracked_parts
    procedure, public, pass :: track
    procedure, public, pass :: istracked
    procedure, public, pass :: total_size
@@ -1117,7 +1141,7 @@ module base_species
    class(base_species_T), intent(inout) :: this
    logical, intent(in) :: track_flag
 
-   this%properties%tracked = track_flag
+   this%properties%track_data%tracked = track_flag
 
   end subroutine
 
@@ -1125,7 +1149,7 @@ module base_species
    class(scalars), intent(inout) :: this
    logical, intent(in) :: track_flag
 
-   this%tracked = track_flag
+   this%track_data%tracked = track_flag
 
   end subroutine
 
@@ -1133,7 +1157,7 @@ module base_species
    class(base_species_T), intent(in) :: this
    logical :: tracked
 
-   tracked = this%properties%tracked
+   tracked = this%properties%track_data%tracked
 
   end function
 
@@ -1141,9 +1165,46 @@ module base_species
    class(scalars), intent(in) :: this
    logical :: tracked
 
-   tracked = this%tracked
+   tracked = this%track_data%tracked
 
   end function
+
+  subroutine set_track_params( this, xmn, xmx, ymn, ymx, zmn, zmx, jmp)
+   class(base_species_T), intent(inout) :: this
+   integer, intent(in) :: xmn, xmx, ymn, ymx, zmn, zmx, jmp
+
+   this%properties%track_data%xmin = xmn
+   this%properties%track_data%xmax = xmx
+   this%properties%track_data%ymin = ymn
+   this%properties%track_data%ymax = ymx
+   this%properties%track_data%zmin = zmn
+   this%properties%track_data%zmax = zmx
+   this%properties%track_data%jump = jmp
+
+  end subroutine
+
+  pure function pick_track_params( this ) result(track_out)
+   class(base_species_T), intent(in) :: this
+   type(track_data_t) :: track_out
+
+   track_out%n_tracked = this%properties%track_data%n_tracked
+   track_out%xmin = this%properties%track_data%xmin
+   track_out%xmax = this%properties%track_data%xmax
+   track_out%ymin = this%properties%track_data%ymin
+   track_out%ymax = this%properties%track_data%ymax
+   track_out%zmin = this%properties%track_data%zmin
+   track_out%zmax = this%properties%track_data%zmax
+   track_out%jump = this%properties%track_data%jump
+
+  end function
+
+  subroutine set_tot_tracked_parts( this, n_tracked )
+   class(base_species_T), intent(inout) :: this
+   integer, intent(in) :: n_tracked
+
+   this%properties%track_data%n_tracked = n_tracked
+
+  end subroutine
 
   pure function total_size( this ) result(size)
    class(base_species_T), intent(in) :: this
