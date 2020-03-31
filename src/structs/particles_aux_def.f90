@@ -103,7 +103,6 @@ module particles_aux_def
   contains
    procedure, public :: append => append_aux
    procedure, public :: call_component => call_component_aux
-   procedure, public :: copy_scalars_from => copy_scalars_from_aux
    procedure, public :: extend => extend_aux
    procedure, pass :: new_species => new_species_aux
    procedure, pass :: sel_particles_bounds => sel_particles_bounds_aux
@@ -122,10 +121,11 @@ module particles_aux_def
  !========================================
  ! CONSTRUCTOR
  !========================================
- subroutine new_species_aux( this, n_particles, curr_ndims )
+ subroutine new_species_aux( this, n_particles, curr_ndims, tracked )
   !! Constructor for the `species_new` type
   class(species_aux), intent(inout) :: this
   integer, intent(in) :: n_particles, curr_ndims
+  logical, intent(in), optional :: tracked
   integer :: allocstatus
  
   if (n_particles < 0) then
@@ -137,6 +137,11 @@ module particles_aux_def
   this%initialized = .true.
   call this%set_part_number(n_particles)
   call this%set_dimensions(curr_ndims)
+  if ( present(tracked) ) then
+   call this%track( tracked )
+  else
+   call this%track( .false. )
+  end if
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.
@@ -174,8 +179,10 @@ module particles_aux_def
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
+   if (this%istracked()) then
+    allocate( this%part_index(n_particles), stat=allocstatus)
+    this%allocated_index = .true.
+   end if
   case(2)
   
    allocate( this%x(n_particles), stat=allocstatus)
@@ -190,8 +197,10 @@ module particles_aux_def
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
+   if (this%istracked()) then
+    allocate( this%part_index(n_particles), stat=allocstatus)
+    this%allocated_index = .true.
+   end if
   
   case(3)
   
@@ -211,9 +220,10 @@ module particles_aux_def
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
-
+   if (this%istracked()) then
+    allocate( this%part_index(n_particles), stat=allocstatus)
+    this%allocated_index = .true.
+   end if
   case default
 
   end select
@@ -316,9 +326,9 @@ module particles_aux_def
   if ( .not. allocated(this%initialized) .and. .not. allocated(other%initialized) ) then
    return
   else if ( .not. allocated(this%initialized) ) then
-   call this%new_species(0, other%pick_dimensions())
+   call this%new_species(0, other%pick_dimensions(), tracked=other%istracked())
   else if ( .not. allocated(other%initialized) ) then
-   call other%new_species(0, other%pick_dimensions())
+   call other%new_species(0, this%pick_dimensions(), tracked=this%istracked())
   end if
   
   if ( allocated(this%initialized) .and. allocated(other%initialized) ) then
@@ -334,7 +344,7 @@ module particles_aux_def
   end if
   
   tot_size = this%how_many()+other%how_many()
-  call spec%new_species(tot_size, this%pick_dimensions())
+  call spec%new_species(tot_size, this%pick_dimensions(), tracked=this%istracked())
   
   if(other%allocated_x) then
    call assign(spec%x, [this%call_component(X_COMP), other%call_component(X_COMP)], &
@@ -373,27 +383,6 @@ module particles_aux_def
     1, tot_size, tot_size)
   end if
  end function
-
- subroutine copy_scalars_from_aux( this, other )
-  !! Copies all the non-array values from a `species_new` to another
-  class(species_aux), intent(inout) :: this
-  class(base_species_T), intent(in) :: other
-
-  call this%set_charge(other%pick_charge())
-  call this%set_dimensions(other%pick_dimensions())
-  this%initialized = other%initialized
-  call this%set_part_number(other%how_many())
-  this%allocated_x = other%allocated_x
-  this%allocated_y = other%allocated_y
-  this%allocated_z = other%allocated_z
-  this%allocated_px = other%allocated_px
-  this%allocated_py = other%allocated_py
-  this%allocated_pz = other%allocated_pz
-  this%allocated_gamma = other%allocated_gamma
-  this%allocated_weight = other%allocated_weight
-  this%allocated_index = other%allocated_index
-
- end subroutine
 
  pure function call_component_aux( this, component, lb, ub ) result(comp)
  !! Function that hides the underlying array and calls the
@@ -534,7 +523,7 @@ module particles_aux_def
 
   call temp%copy(this)
   call this%sweep()
-  call this%new_species(new_number, this%pick_dimensions())
+  call this%new_species(new_number, this%pick_dimensions(), tracked=this%istracked())
   call this%copy(temp)
 
   end subroutine
@@ -553,7 +542,7 @@ module particles_aux_def
     call out_sp%sweep()
    end if
 
-   call out_sp%new_species( tot_len, this%pick_dimensions() )
+   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked())
    call out_sp%set_charge(this%pick_charge())
  
    if( this%allocated_x ) then
@@ -600,7 +589,7 @@ module particles_aux_def
     call out_sp%sweep()
    end if
 
-   call out_sp%new_species( tot_len, this%pick_dimensions() )
+   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked())
    call out_sp%set_charge(this%pick_charge())
  
    if( this%allocated_x ) then
@@ -881,6 +870,10 @@ module particles_aux_def
   case(W_COMP)
    call assign(this%weight, values, lowb, upb, this%how_many())
    this%allocated_weight = .true.
+  case(INDEX_COMP)
+   call assign(this%part_index, values, lowb, upb, this%how_many())
+   this%allocated_index = .true.
+   call this%track( .true. )
 
   case(EX_COMP)
    call check_array_1d(this%aux1, upb - lowb + 1)
@@ -1020,63 +1013,69 @@ module particles_aux_def
   type(species_aux) :: dot
   integer :: np
 
-  np = this%how_many()
-  call dot%new_species(this%how_many(), this%pick_dimensions())
-  call dot%set_charge(this%pick_charge())
-
-  if( this%allocated_x ) then
-   call assign(dot%x, number*this%call_component(X_COMP), 1, np)
-  end if
-  if( this%allocated_y ) then
-   call assign(dot%y, number*this%call_component(Y_COMP), 1, np)
-  end if
-  if( this%allocated_z ) then
-   call assign(dot%z, number*this%call_component(Z_COMP), 1, np)
-  end if
-  if( this%allocated_px ) then
-   call assign(dot%px, number*this%call_component(PX_COMP), 1, np)
-  end if
-  if( this%allocated_py ) then
-   call assign(dot%py, number*this%call_component(PY_COMP), 1, np)
-  end if
-  if( this%allocated_pz ) then
-   call assign(dot%pz, number*this%call_component(PZ_COMP), 1, np)
-  end if
-  if( this%allocated_gamma ) then
-   call assign(dot%gamma_inv, number*this%call_component(INV_GAMMA_COMP), 1, np)
-  end if
-  if( this%allocated_weight ) then
-   call assign(dot%weight, number*this%call_component(W_COMP), 1, np)
-  end if
-  if( this%allocated_index ) then
-   call assign(dot%part_index, number*this%call_component(INDEX_COMP), 1, np)
+  if ( .not. allocated(this%initialized) ) then
+   write(6, *) 'Error, particle aux vector not initialized'
   end if
 
-  if( this%allocated_aux1 ) then
-   call assign(dot%aux1, number*this%call_component(AUX1_COMP), 1, np)
-  end if
-  if( this%allocated_aux2 ) then
-   call assign(dot%aux2, number*this%call_component(AUX2_COMP), 1, np)
-  end if
-  if( this%allocated_aux3 ) then
-   call assign(dot%aux3, number*this%call_component(AUX3_COMP), 1, np)
-  end if
-  if( this%allocated_aux4 ) then
-   call assign(dot%aux4, number*this%call_component(AUX4_COMP), 1, np)
-  end if
-  if( this%allocated_aux5 ) then
-   call assign(dot%aux5, number*this%call_component(AUX5_COMP), 1, np)
-  end if
-  if( this%allocated_aux6 ) then
-   call assign(dot%aux6, number*this%call_component(AUX6_COMP), 1, np)
-  end if
-  if( this%allocated_aux7 ) then
-   call assign(dot%aux7, number*this%call_component(AUX7_COMP), 1, np)
-  end if
-  if( this%allocated_aux8 ) then
-   call assign(dot%aux8, number*this%call_component(AUX8_COMP), 1, np)
-  end if
+  if ( this%empty ) then
+   call dot%new_species(this%how_many(), this%pick_dimensions())
+  else
+   np = this%how_many()
+   call dot%new_species(this%how_many(), this%pick_dimensions())
+   call dot%set_charge(this%pick_charge())
+   if( this%allocated_x ) then
+    call assign(dot%x, number*this%call_component(X_COMP), 1, np)
+   end if
+   if( this%allocated_y ) then
+    call assign(dot%y, number*this%call_component(Y_COMP), 1, np)
+   end if
+   if( this%allocated_z ) then
+    call assign(dot%z, number*this%call_component(Z_COMP), 1, np)
+   end if
+   if( this%allocated_px ) then
+    call assign(dot%px, number*this%call_component(PX_COMP), 1, np)
+   end if
+   if( this%allocated_py ) then
+    call assign(dot%py, number*this%call_component(PY_COMP), 1, np)
+   end if
+   if( this%allocated_pz ) then
+    call assign(dot%pz, number*this%call_component(PZ_COMP), 1, np)
+   end if
+   if( this%allocated_gamma ) then
+    call assign(dot%gamma_inv, number*this%call_component(INV_GAMMA_COMP), 1, np)
+   end if
+   if( this%allocated_weight ) then
+    call assign(dot%weight, number*this%call_component(W_COMP), 1, np)
+   end if
+   if( this%allocated_index ) then
+    call assign(dot%part_index, number*this%call_component(INDEX_COMP), 1, np)
+   end if
 
+   if( this%allocated_aux1 ) then
+    call assign(dot%aux1, number*this%call_component(AUX1_COMP), 1, np)
+   end if
+   if( this%allocated_aux2 ) then
+    call assign(dot%aux2, number*this%call_component(AUX2_COMP), 1, np)
+   end if
+   if( this%allocated_aux3 ) then
+    call assign(dot%aux3, number*this%call_component(AUX3_COMP), 1, np)
+   end if
+   if( this%allocated_aux4 ) then
+    call assign(dot%aux4, number*this%call_component(AUX4_COMP), 1, np)
+   end if
+   if( this%allocated_aux5 ) then
+    call assign(dot%aux5, number*this%call_component(AUX5_COMP), 1, np)
+   end if
+   if( this%allocated_aux6 ) then
+    call assign(dot%aux6, number*this%call_component(AUX6_COMP), 1, np)
+   end if
+   if( this%allocated_aux7 ) then
+    call assign(dot%aux7, number*this%call_component(AUX7_COMP), 1, np)
+   end if
+   if( this%allocated_aux8 ) then
+    call assign(dot%aux8, number*this%call_component(AUX8_COMP), 1, np)
+   end if
+  end if
   
  end function
 end module

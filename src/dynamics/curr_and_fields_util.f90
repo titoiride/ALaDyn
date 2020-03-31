@@ -29,6 +29,7 @@
   use grid_part_connect
   use grid_fields
   use init_grid_field
+  use util, only: write_warning
   
   implicit none
   interface set_lpf_acc
@@ -54,7 +55,7 @@
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (out) :: apt
+   type (species_aux), intent (inout) :: apt
    integer, intent (in) :: np, nf
 
    ! Uses alternating order quadratic or linear shapes

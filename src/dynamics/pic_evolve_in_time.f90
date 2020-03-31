@@ -29,6 +29,7 @@
   use init_grid_field
   use ionize
   use fluid_density_momenta
+  use util, only: write_warning
 
   implicit none
 
@@ -164,7 +165,7 @@
    do ic = 1, nsp_run
     np = loc_npart(imody, imodz, imodx, ic)
      !============
-     call set_lpf_acc(ebf, spec_in(ic), spec_aux_in, np, nfield)
+    call set_lpf_acc(ebf, spec_in(ic), spec_aux_in, np, nfield)
      call field_charge_multiply(spec_in(ic), spec_aux_in, np, nfield)
 
      if (initial_time) call init_lpf_momenta(spec_in(ic), spec_aux_in, np, ic)
@@ -209,7 +210,6 @@
    !=========================
    call lpf2_evolve(iter_loc, spec, ebfp)
    !===================================
-   
    ts = t_loc
    if (w_speed>0.0) then ! moves the computational box with w_speed>0.
     if (ts>=wi_time .and. ts<wf_time) then

@@ -1516,9 +1516,14 @@
    write (foldername, '(i4.4)') iout
 
    ndv = spec_in(pid)%total_size()
-   n_comp_out = ndv - 1
-   ! We exclude for now gamma_inv and part_index
+   if (spec_in(pid)%istracked()) then
+    n_comp_out = ndv - 1
+   else
+    n_comp_out = ndv
+   end if
+   ! We exclude for now gamma_inv
    ! but we add the charge
+   ! (part_index is automatically removed by total_size)
    np = loc_npart(imody, imodz, imodx, pid)
    npt = 0
    ch = real(spec_in(pid)%pick_charge(), sp)

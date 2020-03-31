@@ -23,6 +23,7 @@
 
   use init_laser_field
   use init_part_distrib
+  use util, only: write_warning
 
   implicit none
 

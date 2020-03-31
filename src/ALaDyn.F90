@@ -32,6 +32,7 @@
   use init_beam_part_distrib,only : beam_inject
   use pic_evolve, only: Lp_run
   use env_evolve, only: Env_run
+  use util, only: write_warning
 
   implicit none
 

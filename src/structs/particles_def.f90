@@ -32,7 +32,6 @@ module particles_def
   contains
    procedure, public :: append => append_spec
    procedure, public :: call_component => call_component_spec
-   procedure, public :: copy_scalars_from => copy_scalars_from_spec
    procedure, public :: extend => extend_spec
    procedure, public :: new_species => new_species_spec
    procedure, public :: set_component_real
@@ -52,10 +51,11 @@ module particles_def
  ! CONSTRUCTOR
  !========================================
  
- subroutine new_species_spec( this, n_particles, curr_ndims )
+ subroutine new_species_spec( this, n_particles, curr_ndims, tracked )
   !! Constructor for the `species_new` type
   class(species_new), intent(inout) :: this
   integer, intent(in) :: n_particles, curr_ndims
+  logical, intent(in), optional :: tracked
   integer :: allocstatus
  
   if (n_particles < 0) then
@@ -67,6 +67,11 @@ module particles_def
   this%initialized = .true.
   call this%set_part_number(n_particles)
   call this%set_dimensions(curr_ndims)
+  if ( present(tracked) ) then
+   call this%track( tracked )
+  else
+   call this%track( .false. )
+  end if
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.
@@ -94,8 +99,10 @@ module particles_def
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
+   if (this%istracked()) then
+    allocate( this%part_index(n_particles), stat=allocstatus)
+    this%allocated_index = .true.
+   end if
   case(2)
   
    allocate( this%x(n_particles), stat=allocstatus)
@@ -110,8 +117,10 @@ module particles_def
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
+   if (this%istracked()) then
+    allocate( this%part_index(n_particles), stat=allocstatus)
+    this%allocated_index = .true.
+   end if
   
   case(3)
   
@@ -131,8 +140,10 @@ module particles_def
    this%allocated_gamma = .true.
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
-   allocate( this%part_index(n_particles), stat=allocstatus)
-   this%allocated_index = .true.
+   if (this%istracked()) then
+    allocate( this%part_index(n_particles), stat=allocstatus)
+    this%allocated_index = .true.
+   end if
   end select
  end subroutine
 
@@ -200,9 +211,9 @@ module particles_def
   if ( .not. allocated(this%initialized) .and. .not. allocated(other%initialized) ) then
    return
   else if ( .not. allocated(this%initialized) ) then
-   call this%new_species(0, other%pick_dimensions())
+   call this%new_species(0, other%pick_dimensions(), tracked=other%istracked())
   else if ( .not. allocated(other%initialized) ) then
-   call other%new_species(0, other%pick_dimensions())
+   call other%new_species(0, this%pick_dimensions(), tracked=this%istracked())
   end if
 
   if ( allocated(this%initialized) .and. allocated(other%initialized) ) then
@@ -218,7 +229,7 @@ module particles_def
   end if
   
   tot_size = this%how_many()+other%how_many()
-  call spec%new_species(tot_size, this%pick_dimensions())
+  call spec%new_species(tot_size, this%pick_dimensions(), tracked=this%istracked())
   
   if(other%allocated_x) then
    call assign(spec%x, [this%call_component(X_COMP), other%call_component(X_COMP)], &
@@ -257,27 +268,6 @@ module particles_def
     1, tot_size, tot_size)
   end if
  end function
-
- subroutine copy_scalars_from_spec( this, other )
-  !! Copies all the non-array values from a `species_new` to another
-  class(species_new), intent(inout) :: this
-  class(base_species_T), intent(in) :: other
-
-  call this%set_charge(other%pick_charge())
-  call this%set_dimensions(other%pick_dimensions())
-  this%initialized = other%initialized
-  call this%set_part_number(other%how_many())
-  this%allocated_x = other%allocated_x
-  this%allocated_y = other%allocated_y
-  this%allocated_z = other%allocated_z
-  this%allocated_px = other%allocated_px
-  this%allocated_py = other%allocated_py
-  this%allocated_pz = other%allocated_pz
-  this%allocated_gamma = other%allocated_gamma
-  this%allocated_weight = other%allocated_weight
-  this%allocated_index = other%allocated_index
-
- end subroutine
 
  pure function call_component_spec( this, component, lb, ub ) result(comp)
  !! Function that hides the underlying array and calls the
@@ -350,7 +340,7 @@ module particles_def
   end if
   call temp%copy(this)
   call this%sweep()
-  call this%new_species(new_number, this%pick_dimensions())
+  call this%new_species(new_number, this%pick_dimensions(), tracked=this%istracked())
   call this%copy(temp)
 
  end subroutine
@@ -369,7 +359,7 @@ module particles_def
    call out_sp%sweep()
   end if
 
-  call out_sp%new_species( tot_len, this%pick_dimensions() )
+  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked() )
   call out_sp%set_charge(this%pick_charge())
 
   if( this%allocated_x ) then
@@ -416,7 +406,7 @@ module particles_def
    call out_sp%sweep()
   end if
 
-  call out_sp%new_species( tot_len, this%pick_dimensions() )
+  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked() )
   call out_sp%set_charge(this%pick_charge())
 
   if( this%allocated_x ) then
@@ -575,6 +565,7 @@ module particles_def
   case(INDEX_COMP)
    call assign(this%part_index, values, lowb, upb, this%how_many())
    this%allocated_index = .true.
+   call this%track( .true. )
   end select
 
  end subroutine
@@ -587,9 +578,11 @@ module particles_def
   real(dp), intent(in) :: number
   type(species_new) :: dot
   integer :: np
-
+  !===========================================
+  ! WARNING: THIS FUNCTION IS CLEARLY WRONG
+  !===========================================
   np = this%how_many()
-  call dot%new_species(this%how_many(), this%pick_dimensions())
+  call dot%new_species(this%how_many(), this%pick_dimensions(), tracked=this%istracked())
   call dot%set_charge(this%pick_charge())
 
   if( this%allocated_x ) then

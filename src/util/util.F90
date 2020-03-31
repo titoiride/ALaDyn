@@ -28,10 +28,11 @@
 #else
   use random_generator
 #endif
+  use warnings
 
   implicit none
   private
-  public :: gasdev, init_random_seed, bunch_gen
+  public :: gasdev, init_random_seed, bunch_gen, write_warning
 
  contains
 

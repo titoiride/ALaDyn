@@ -45,6 +45,8 @@ module base_species
   !! Number of dimensions in which particles live
   real, private :: temperature
   !! Initial temperature given to the species
+  logical, private :: tracked
+  !! Flag to track the particles
  contains
   procedure, public, pass :: how_many => how_many_scalars
   procedure, public, pass :: pick_charge => pick_charge_scalars
@@ -54,6 +56,9 @@ module base_species
   procedure, public, pass :: set_part_number => set_part_number_scalars
   procedure, public, pass :: pick_temperature => pick_temperature_scalars
   procedure, public, pass :: set_temperature => set_temperature_scalars
+  procedure, public, pass :: pick_properties => pick_properties_scalars
+  procedure, public, pass :: track => track_scalars
+  procedure, public, pass :: istracked => istracked_scalars
  end type scalars
 
  type, abstract :: base_species_T
@@ -138,9 +143,10 @@ module base_species
    procedure, pass :: set_part_number
    procedure, pass :: set_properties
    procedure, pass :: set_temperature
+   procedure, public, pass :: track
+   procedure, public, pass :: istracked
    procedure, public, pass :: total_size
    procedure(call_component_abstract), deferred, pass :: call_component
-   procedure(copy_scalars_abstract), deferred, pass :: copy_scalars_from
    procedure(extend_abstract), deferred, pass :: extend
    procedure(sel_particles_bounds_abstract), deferred, pass :: sel_particles_bounds
    procedure(sel_particles_index_abstract), deferred, pass :: sel_particles_index
@@ -164,15 +170,6 @@ module base_species
     integer, intent(in), optional :: lb, ub
     real(dp), allocatable, dimension(:) :: comp
    end function
-  end interface
-  
-  abstract interface
-   subroutine copy_scalars_abstract( this, other )
-    import base_species_T, dp
-    implicit none
-    class(base_species_T), intent(inout) :: this
-    class(base_species_T),  intent(in)  :: other
-   end subroutine
   end interface
 
   abstract interface
@@ -241,10 +238,11 @@ module base_species
   contains
   
   !==== Constructor ===
-  subroutine new_species_abstract( this, n_particles, curr_ndims )
+  subroutine new_species_abstract( this, n_particles, curr_ndims, tracked )
    !! Constructor for the `species_new` type
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: n_particles, curr_ndims
+   logical, intent(in), optional :: tracked
    integer :: allocstatus
   
    if (n_particles < 0) then
@@ -256,6 +254,11 @@ module base_species
    this%initialized = .true.
    call this%set_part_number(n_particles)
    call this%set_dimensions(curr_ndims)
+   if ( present(tracked) ) then
+    call this%track( tracked )
+   else
+    call this%track( .false. )
+   end if
    this%allocated_x = .false.
    this%allocated_y = .false.
    this%allocated_z = .false.
@@ -283,8 +286,10 @@ module base_species
     this%allocated_gamma = .true.
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
-    !allocate( this%part_index(n_particles), stat=allocstatus)
-    !this%allocated_index = .true.
+    if (this%istracked()) then
+     allocate( this%part_index(n_particles), stat=allocstatus)
+     this%allocated_index = .true.
+    end if
    case(2)
    
     allocate( this%x(n_particles), stat=allocstatus)
@@ -299,8 +304,10 @@ module base_species
     this%allocated_gamma = .true.
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
-    !allocate( this%part_index(n_particles), stat=allocstatus)
-    !this%allocated_index = .true.
+    if (this%istracked()) then
+     allocate( this%part_index(n_particles), stat=allocstatus)
+     this%allocated_index = .true.
+    end if
    
    case(3)
    
@@ -320,8 +327,10 @@ module base_species
     this%allocated_gamma = .true.
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
-    !allocate( this%part_index(n_particles), stat=allocstatus)
-    !this%allocated_index = .true.
+    if (this%istracked()) then
+     allocate( this%part_index(n_particles), stat=allocstatus)
+     this%allocated_index = .true.
+    end if
    end select
   end subroutine
 
@@ -379,10 +388,19 @@ module base_species
    end select
   end subroutine
 
-  subroutine call_particle_single( this, particles, index_in)
+  subroutine call_particle_single( this, particles, index_in, tracking )
    class(base_species_T), intent(in) :: this
    real(dp), dimension(:), intent(inout) :: particles
    integer, intent(in) :: index_in
+   logical, intent(in), optional :: tracking
+   logical :: track_out
+
+   track_out = .false.
+   if ( present(tracking) ) then
+    if (tracking) then
+     track_out = .true.
+    end if
+   end if
 
    select case(this%pick_dimensions())
    case(1)
@@ -390,7 +408,9 @@ module base_species
     particles(2) = this%px(index_in)
     particles(3) = this%weight(index_in)
     particles(4) = this%gamma_inv(index_in)
-    particles(5) = this%part_index(index_in)
+    if ( track_out ) then
+     particles(5) = this%part_index(index_in)
+    end if
    case(2)
     particles(1) = this%x(index_in)
     particles(2) = this%y(index_in)
@@ -398,7 +418,9 @@ module base_species
     particles(4) = this%py(index_in)
     particles(5) = this%weight(index_in)
     particles(6) = this%gamma_inv(index_in)
-    particles(7) = this%part_index(index_in)
+    if ( track_out ) then
+     particles(7) = this%part_index(index_in)
+    end if
    case(3)
     particles(1) = this%x(index_in)
     particles(2) = this%y(index_in)
@@ -408,14 +430,25 @@ module base_species
     particles(6) = this%pz(index_in)
     particles(7) = this%weight(index_in)
     particles(8) = this%gamma_inv(index_in)
-    particles(9) = this%part_index(index_in)
+    if ( track_out ) then
+     particles(9) = this%part_index(index_in)
+    end if
    end select
   end subroutine
 
-  subroutine call_particle_bounds( this, particles, lb, ub)
+  subroutine call_particle_bounds( this, particles, lb, ub, tracking)
    class(base_species_T), intent(in) :: this
    real(dp), dimension(:, :), intent(inout) :: particles
    integer, intent(in) :: lb, ub
+   logical, intent(in), optional :: tracking
+   logical :: track_out
+
+   track_out = .false.
+   if ( present(tracking) ) then
+    if (tracking) then
+     track_out = .true.
+    end if
+   end if
 
    select case(this%pick_dimensions())
    case(1)
@@ -423,7 +456,9 @@ module base_species
     particles(1:(ub-lb+1), 2) = this%px(lb:ub)
     particles(1:(ub-lb+1), 3) = this%weight(lb:ub)
     particles(1:(ub-lb+1), 4) = this%gamma_inv(lb:ub)
-    particles(1:(ub-lb+1), 5) = this%part_index(lb:ub)
+    if ( track_out ) then
+     particles(1:(ub-lb+1), 5) = this%part_index(lb:ub)
+    end if
    case(2)
     particles(1:(ub-lb+1), 1) = this%x(lb:ub)
     particles(1:(ub-lb+1), 2) = this%y(lb:ub)
@@ -431,7 +466,9 @@ module base_species
     particles(1:(ub-lb+1), 4) = this%py(lb:ub)
     particles(1:(ub-lb+1), 5) = this%weight(lb:ub)
     particles(1:(ub-lb+1), 6) = this%gamma_inv(lb:ub)
-    particles(1:(ub-lb+1), 7) = this%part_index(lb:ub)
+    if ( track_out ) then
+     particles(1:(ub-lb+1), 7) = this%part_index(lb:ub)
+    end if
    case(3)
     particles(1:(ub-lb+1), 1) = this%x(lb:ub)
     particles(1:(ub-lb+1), 2) = this%y(lb:ub)
@@ -441,56 +478,105 @@ module base_species
     particles(1:(ub-lb+1), 6) = this%pz(lb:ub)
     particles(1:(ub-lb+1), 7) = this%weight(lb:ub)
     particles(1:(ub-lb+1), 8) = this%gamma_inv(lb:ub)
-    particles(1:(ub-lb+1), 9) = this%part_index(lb:ub)
+    if ( track_out ) then
+     particles(1:(ub-lb+1), 9) = this%part_index(lb:ub)
+    end if
    end select
   end subroutine
 
-  subroutine call_particle_index_array( this, particles, index_in)
+  subroutine call_particle_index_array( this, particles, index_in, tracking)
    class(base_species_T), intent(in) :: this
    real(dp), dimension(:, :), intent(inout) :: particles
    integer, dimension(:), intent(in) :: index_in
+   logical, intent(in), optional :: tracking
    integer :: n, size_ind, idx, k
+   logical :: track_out
+
+   track_out = .false.
+   if ( present(tracking) ) then
+    if (tracking) then
+     track_out = .true.
+    end if
+   end if
 
    size_ind = SIZE(index_in, DIM=1)
    k = 1
-   select case(this%pick_dimensions())
-   case(1)
-    do n = 1, size_ind
-     idx = index_in(n)
-     particles(k, 1) = this%x(idx)
-     particles(k, 2) = this%px(idx)
-     particles(k, 3) = this%weight(idx)
-     particles(k, 4) = this%gamma_inv(idx)
-     particles(k, 5) = this%part_index(idx)
-     k = k + 1
-    end do
-   case(2)
-    do n = 1, size_ind
-     idx = index_in(n)
-     particles(k, 1) = this%x(idx)
-     particles(k, 2) = this%y(idx)
-     particles(k, 3) = this%px(idx)
-     particles(k, 4) = this%py(idx)
-     particles(k, 5) = this%weight(idx)
-     particles(k, 6) = this%gamma_inv(idx)
-     particles(k, 7) = this%part_index(idx)
-     k = k + 1 
-    end do
-   case(3)
-    do n = 1, size_ind
-     idx = index_in(n)
-     particles(k, 1) = this%x(idx)
-     particles(k, 2) = this%y(idx)
-     particles(k, 3) = this%z(idx)
-     particles(k, 4) = this%px(idx)
-     particles(k, 5) = this%py(idx)
-     particles(k, 6) = this%pz(idx)
-     particles(k, 7) = this%weight(idx)
-     particles(k, 8) = this%gamma_inv(idx)
-     particles(k, 9) = this%part_index(idx)
-     k = k + 1
-    end do
-   end select
+   if ( track_out ) then
+    select case(this%pick_dimensions())
+    case(1)
+     do n = 1, size_ind
+      idx = index_in(n)
+      particles(k, 1) = this%x(idx)
+      particles(k, 2) = this%px(idx)
+      particles(k, 3) = this%weight(idx)
+      particles(k, 4) = this%gamma_inv(idx)
+      particles(k, 5) = this%part_index(idx)
+      k = k + 1
+     end do
+    case(2)
+     do n = 1, size_ind
+      idx = index_in(n)
+      particles(k, 1) = this%x(idx)
+      particles(k, 2) = this%y(idx)
+      particles(k, 3) = this%px(idx)
+      particles(k, 4) = this%py(idx)
+      particles(k, 5) = this%weight(idx)
+      particles(k, 6) = this%gamma_inv(idx)
+      particles(k, 7) = this%part_index(idx)
+      k = k + 1 
+     end do
+    case(3)
+     do n = 1, size_ind
+      idx = index_in(n)
+      particles(k, 1) = this%x(idx)
+      particles(k, 2) = this%y(idx)
+      particles(k, 3) = this%z(idx)
+      particles(k, 4) = this%px(idx)
+      particles(k, 5) = this%py(idx)
+      particles(k, 6) = this%pz(idx)
+      particles(k, 7) = this%weight(idx)
+      particles(k, 8) = this%gamma_inv(idx)
+      particles(k, 9) = this%part_index(idx)
+      k = k + 1
+     end do
+    end select
+   else
+    select case(this%pick_dimensions())
+    case(1)
+     do n = 1, size_ind
+      idx = index_in(n)
+      particles(k, 1) = this%x(idx)
+      particles(k, 2) = this%px(idx)
+      particles(k, 3) = this%weight(idx)
+      particles(k, 4) = this%gamma_inv(idx)
+      k = k + 1
+     end do
+    case(2)
+     do n = 1, size_ind
+      idx = index_in(n)
+      particles(k, 1) = this%x(idx)
+      particles(k, 2) = this%y(idx)
+      particles(k, 3) = this%px(idx)
+      particles(k, 4) = this%py(idx)
+      particles(k, 5) = this%weight(idx)
+      particles(k, 6) = this%gamma_inv(idx)
+      k = k + 1 
+     end do
+    case(3)
+     do n = 1, size_ind
+      idx = index_in(n)
+      particles(k, 1) = this%x(idx)
+      particles(k, 2) = this%y(idx)
+      particles(k, 3) = this%z(idx)
+      particles(k, 4) = this%px(idx)
+      particles(k, 5) = this%py(idx)
+      particles(k, 6) = this%pz(idx)
+      particles(k, 7) = this%weight(idx)
+      particles(k, 8) = this%gamma_inv(idx)
+      k = k + 1
+     end do
+    end select
+   end if
   end subroutine
 
   subroutine compute_gamma( this, pond_pot )
@@ -558,7 +644,7 @@ module base_species
 
    tot = other%how_many()
 
-   call this%reallocate(tot, other%pick_dimensions())
+   call this%reallocate(tot, other%pick_properties())
    call this%set_properties(other%pick_properties())
 
    if (other%allocated_x) then
@@ -598,7 +684,7 @@ module base_species
 
    tot = upper_bound - lower_bound + 1
 
-   call this%reallocate(tot, other%pick_dimensions())
+   call this%reallocate(tot, other%pick_properties())
    call this%set_properties(other%pick_properties())
 
    if (other%allocated_x) then
@@ -807,7 +893,7 @@ module base_species
    integer :: i
 
    i = 0
-   call this%reallocate(num_particles, properties_in%pick_dimensions())
+   call this%reallocate(num_particles, properties_in%pick_properties())
    if( this%allocated_x ) then
     this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
@@ -849,20 +935,23 @@ module base_species
 
   end subroutine
 
-  subroutine reallocate(this, n_parts, n_dimensions)
+  subroutine reallocate(this, n_parts, properties_in)
    class(base_species_T), intent(inout) :: this
-   integer :: n_parts, n_dimensions
+   integer, intent(in) :: n_parts
+   type (scalars), intent(in) :: properties_in
    type (scalars) :: old_properties
 
    if ( allocated(this%initialized) ) then
     if (this%how_many() < n_parts ) then
      old_properties = this%pick_properties()
      call this%sweep()
-     call this%new_species(n_parts, n_dimensions)
+     call this%new_species(n_parts, old_properties%pick_dimensions(), &
+      tracked=old_properties%istracked() )
      call this%set_properties(old_properties)
     end if
    else
-    call this%new_species(n_parts, n_dimensions)
+    call this%new_species(n_parts, properties_in%pick_dimensions(), &
+     tracked=properties_in%istracked() )
    end if
 
   end subroutine
@@ -915,6 +1004,17 @@ module base_species
 
   end function
   
+  function pick_properties_scalars( this ) result(properties)
+   class(scalars), intent(in) :: this
+   type(scalars) :: properties
+
+   call properties%set_charge(this%pick_charge())
+   call properties%set_temperature(this%pick_temperature())
+   call properties%set_dimensions(this%pick_dimensions())
+   call properties%track(this%istracked())
+
+  end function
+  
   function pick_properties( this ) result(properties)
    class(base_species_T), intent(in) :: this
    type(scalars) :: properties
@@ -922,6 +1022,7 @@ module base_species
    call properties%set_charge(this%pick_charge())
    call properties%set_temperature(this%pick_temperature())
    call properties%set_dimensions(this%pick_dimensions())
+   call properties%track(this%istracked())
 
   end function
 
@@ -932,6 +1033,7 @@ module base_species
    call this%set_charge(properties_in%pick_charge())
    call this%set_temperature(properties_in%pick_temperature())
    call this%set_dimensions(properties_in%pick_dimensions())
+   call this%track(properties_in%istracked())
 
   end subroutine
 
@@ -1011,20 +1113,65 @@ module base_species
    this%temperature = temperature
   end subroutine
 
+  subroutine track( this, track_flag )
+   class(base_species_T), intent(inout) :: this
+   logical, intent(in) :: track_flag
+
+   this%properties%tracked = track_flag
+
+  end subroutine
+
+  subroutine track_scalars( this, track_flag )
+   class(scalars), intent(inout) :: this
+   logical, intent(in) :: track_flag
+
+   this%tracked = track_flag
+
+  end subroutine
+
+  pure function istracked( this ) result(tracked)
+   class(base_species_T), intent(in) :: this
+   logical :: tracked
+
+   tracked = this%properties%tracked
+
+  end function
+
+  pure function istracked_scalars( this ) result(tracked)
+   class(scalars), intent(in) :: this
+   logical :: tracked
+
+   tracked = this%tracked
+
+  end function
+
   pure function total_size( this ) result(size)
    class(base_species_T), intent(in) :: this
    integer :: size
 
-   select case(this%pick_dimensions())
-   case(1)
-    size = 5
-   case(2)
-    size = 7
-   case(3)
-    size = 9
-   case default
-    size = -1
-   end select
+   if (this%istracked()) then
+    select case(this%pick_dimensions())
+    case(1)
+     size = 5
+    case(2)
+     size = 7
+    case(3)
+     size = 9
+    case default
+     size = -1
+    end select
+   else
+    select case(this%pick_dimensions())
+    case(1)
+     size = 4
+    case(2)
+     size = 6
+    case(3)
+     size = 8
+    case default
+     size = -1
+    end select
+   end if
 
   end function
 
