@@ -1054,6 +1054,7 @@
        call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
        call spec_in(ic)%set_part_number( np_new )
        call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+       call spec_in(ic)%check_tracking()
        call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
        call spec_aux_in%set_part_number( np_new )
        loc_npart(imody, imodz, imodx, ic) = np_new
@@ -1069,6 +1070,7 @@
         loc_npart(imody, imodz, imodx, ic) = np_new
         call spec_in(ic)%copy(sp_aux_new, 1, np_new)
         call spec_in(ic)%set_part_number(np_new)
+        call spec_in(ic)%check_tracking()
        end if
       end if
      end do
@@ -1104,6 +1106,7 @@
       call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
       call spec_in(ic)%set_part_number( np_new )
       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+      call spec_in(ic)%check_tracking()
       call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
       call spec_aux_in%set_part_number( np_new )
       call spec_aux_in%copy( sp1_aux_new, 1, np_new )
@@ -1120,6 +1123,7 @@
        loc_npart(imody, imodz, imodx, ic) = np_new
        call spec_in(ic)%copy(sp_aux_new, 1, np_new)
        call spec_in(ic)%set_part_number(np_new)
+       call spec_in(ic)%check_tracking()
        call spec_aux_in%copy(sp1_aux_new, 1, np_new)
        call spec_aux_in%set_part_number(np_new)
       end if
@@ -1150,6 +1154,7 @@
       call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
       call spec_in(ic)%set_part_number( np_new )
       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+      call spec_in(ic)%check_tracking()
       call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
       call spec_aux_in%set_part_number( np_new )
       call spec_aux_in%copy( sp1_aux_new, 1, np_new )
@@ -1166,6 +1171,7 @@
        loc_npart(imody, imodz, imodx, ic) = np_new
        call spec_in(ic)%copy(sp_aux_new, 1, np_new)
        call spec_in(ic)%set_part_number(np_new)
+       call spec_in(ic)%check_tracking()
        call spec_aux_in%copy(sp1_aux_new, 1, np_new)
        call spec_aux_in%set_part_number(np_new)
       end if
@@ -1197,6 +1203,7 @@
        call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
        call spec_in(ic)%set_part_number( np_new )
        call spec_in(ic)%copy( sp_aux_new, 1, np_new )
+       call spec_in(ic)%check_tracking()
        call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
        call spec_aux_in%set_part_number( np_new )
        call spec_aux_in%copy( sp1_aux_new, 1, np_new )
@@ -1213,6 +1220,7 @@
         loc_npart(imody, imodz, imodx, ic) = np_new
         call spec_in(ic)%copy(sp_aux_new, 1, np_new)
         call spec_in(ic)%set_part_number(np_new)
+        call spec_in(ic)%check_tracking()
         call spec_aux_in%copy(sp1_aux_new, 1, np_new)
         call spec_aux_in%set_part_number(np_new)
        end if

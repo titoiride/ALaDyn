@@ -382,7 +382,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 ```
 + `P_tracking` logical flag: if true the particle tracking is enabled
 + `nkjump` a tracked particle every `nkjump` is written in the output file
-+ `tkjump` a snapshot of the tracked particles phase space is taken every `tkjump` timestep
++ `every_track` a snapshot of the tracked particles phase space is taken every `enery_track` timestep
 + `txmin` to select particles with initial longitudinal coordinate `x > txmin` to be tracked
 + `txmax` to select particles with initial longitudinal coordinate `x < txmax` to be tracked
 + `tymin` to select particles with initial transverse coordinate `y > tymin` to be tracked

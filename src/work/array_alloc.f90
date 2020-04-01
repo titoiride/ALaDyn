@@ -214,7 +214,7 @@
    integer :: nsize, ic, allocstatus, ndim_tmp
    logical :: tracked
 
-   tracked = .true.
+   tracked = .false.
    ndim_tmp = ndims/2
    if (ndim_tmp /= 2 .and. ndim_tmp /= 3) then
     write(6, *) 'Warnint, wrong dimensions in palloc'

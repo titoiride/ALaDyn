@@ -50,5 +50,7 @@
    write( 90, *) '====================='
    write( 90, *) text
    write( 90, *) '====================='
+
+   close( 90 )
   end subroutine
  end module

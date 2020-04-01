@@ -23,6 +23,7 @@
 
   use init_laser_field
   use init_part_distrib
+  use tracking
   use util, only: write_warning
 
   implicit none
@@ -47,6 +48,7 @@
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
 
+   call initialize_tracking( spec )
   end subroutine
 
  end module

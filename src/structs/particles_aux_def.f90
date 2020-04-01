@@ -138,7 +138,7 @@ module particles_aux_def
   call this%set_part_number(n_particles)
   call this%set_dimensions(curr_ndims)
   if ( present(tracked) ) then
-   call this%track( tracked )
+   call this%track( tracked , allocate_now=.false.)
   else
    call this%track( .false. )
   end if
@@ -180,7 +180,7 @@ module particles_aux_def
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
    if (this%istracked()) then
-    allocate( this%part_index(n_particles), stat=allocstatus)
+    allocate( this%part_index(n_particles), stat=allocstatus, source=0)
     this%allocated_index = .true.
    end if
   case(2)
@@ -198,7 +198,7 @@ module particles_aux_def
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
    if (this%istracked()) then
-    allocate( this%part_index(n_particles), stat=allocstatus)
+    allocate( this%part_index(n_particles), stat=allocstatus, source=0)
     this%allocated_index = .true.
    end if
   
@@ -221,7 +221,7 @@ module particles_aux_def
    allocate( this%weight(n_particles), stat=allocstatus)
    this%allocated_weight = .true.
    if (this%istracked()) then
-    allocate( this%part_index(n_particles), stat=allocstatus)
+    allocate( this%part_index(n_particles), stat=allocstatus, source=0)
     this%allocated_index = .true.
    end if
   case default
@@ -379,7 +379,7 @@ module particles_aux_def
     1, tot_size, tot_size)
   end if
   if(other%allocated_index) then
-   call assign(spec%part_index, [this%call_component(INDEX_COMP), other%call_component(INDEX_COMP)], &
+   call assign(spec%part_index, [int(this%call_component(INDEX_COMP)), int(other%call_component(INDEX_COMP))], &
     1, tot_size, tot_size)
   end if
  end function
@@ -873,7 +873,6 @@ module particles_aux_def
   case(INDEX_COMP)
    call assign(this%part_index, values, lowb, upb, this%how_many())
    this%allocated_index = .true.
-   call this%track( .true. )
 
   case(EX_COMP)
    call check_array_1d(this%aux1, upb - lowb + 1)

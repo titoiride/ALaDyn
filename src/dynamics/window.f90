@@ -28,7 +28,8 @@
   use grid_param
   use mpi_field_interface
   use mpi_part_interface
-  use run_data_info, only : part_numbers
+  use run_data_info, only: part_numbers
+  use tracking, only: generate_track_index
 
   implicit none
   !===============================
@@ -59,18 +60,30 @@
   subroutine add_particles_new(spec_in, np, i1, i2, ic)
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: np, i1, i2, ic
-   type(species_new) :: temp_spec
-   integer :: n, ix, j, k, j2, k2, n_parts, i
-
+   integer :: n, j2, k2, n_parts
+   integer, allocatable, dimension(:) :: t_index
    n = np
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
-   n_parts = (i2 - i1 + 1)*j2*k2
+   n_parts = 0
+   select case( spec_in(ic)%pick_dimensions() )
+   case(1)
+    n_parts = (i2 - i1 + 1)
+   case(2)
+    n_parts = (i2 - i1 + 1)*j2
+   case(3)
+    n_parts = (i2 - i1 + 1)*j2*k2
+   end select
    call init_random_seed(mype)
 
-   call spec_in(ic)%add_data(xpt(:, ic), loc_ypt(:, ic), loc_zpt(:, ic), &
-   wghpt(:, ic), loc_wghyz(:, :, ic), i1, i2, j2, k2, np)
+   call generate_track_index( spec_in(ic), t_index, n_parts)
 
+   if ( pex1 .or. (i2 < i1 )) then
+    call spec_in(ic)%add_data(xpt(:, ic), loc_ypt(:, ic), loc_zpt(:, ic), &
+    wghpt(:, ic), loc_wghyz(:, :, ic), i1, i2, j2, k2, np, track_index=t_index)
+   end if
+
+   call spec_in(ic)%check_tracking()
   end subroutine
   !---------------------------
   subroutine add_particles_old(spec_in, np, i1, i2, ic)
@@ -161,32 +174,30 @@
     !==========================
     ! Partcles to be injected have index ix [i1,i2]
     !============================
-    if (i2 > i1) then
-     !==========================
-     npt_inj(ic) = 0
-     !=========== injects particles with coordinates index i1<= ix <=i2
-     select case (ndim)
-     case (1)
-      npt_inj(ic) = (i2 - i1 + 1)
-     case (2)
-      j2 = loc_npty(ic)
-      npt_inj(ic) = (i2 - i1 + 1)*j2
-     case (3)
-      k2 = loc_nptz(ic)
-      j2 = loc_npty(ic)
-      npt_inj(ic) = (i2 - i1 + 1)*j2*k2
-     end select
-     np_new = 0
-     np_old = loc_npart(imody, imodz, imodx, ic)
-     np_new = max(np_old+npt_inj(ic), np_new)
-     !=========================
+    !==========================
+    npt_inj(ic) = 0
+    !=========== injects particles with coordinates index i1<= ix <=i2
+    select case (ndim)
+    case (1)
+     npt_inj(ic) = (i2 - i1 + 1)
+    case (2)
+     j2 = loc_npty(ic)
+     npt_inj(ic) = (i2 - i1 + 1)*j2
+    case (3)
+     k2 = loc_nptz(ic)
+     j2 = loc_npty(ic)
+     npt_inj(ic) = (i2 - i1 + 1)*j2*k2
+    end select
+    np_new = 0
+    np_old = loc_npart(imody, imodz, imodx, ic)
+    np_new = max(np_old+npt_inj(ic), np_new)
+    !=========================
 
-     call spec_in(ic)%extend(np_new)
-     call spec_aux_in%extend(np_new)
-     q = np_old
-     call add_particles(spec_in, q, i1, i2, ic)
-     loc_npart(imody, imodz, imodx, ic) = np_new
-    end if
+    call spec_in(ic)%extend(np_new)
+    call spec_aux_in%extend(np_new)
+    q = np_old
+    call add_particles(spec_in, q, i1, i2, ic)
+    loc_npart(imody, imodz, imodx, ic) = np_new
    end do
    !=======================
   end subroutine
@@ -481,11 +492,9 @@
    if (part) then
     call cell_part_dist(mw, spec_in, spec_aux_in) !particles are redistributes along the
     ! right-shifted x-coordinate in MPI domains
-    if (pex1) then
-     if (targ_in<=xmax) then
-      if (targ_end>xmax) then
-       call particles_inject(xmax, spec_in, spec_aux_in)
-      end if
+    if (targ_in<=xmax) then
+     if (targ_end>xmax) then
+      call particles_inject(loc_xgrid(imodx)%gmax, spec_in, spec_aux_in)
      end if
     end if
     call part_numbers

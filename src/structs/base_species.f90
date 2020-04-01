@@ -23,6 +23,7 @@ module base_species
 
  use precision_def
  use util, only: gasdev
+ use warnings, only: write_warning
  implicit none
  public
 
@@ -41,20 +42,21 @@ module base_species
   !! Flag to track the particles
   integer, public :: n_tracked
   !! Number of tracked particles
-  real(dp), public :: xmin
+  real(dp), allocatable, public :: xmin
   !! Minimum x position of the tracked particles
-  real(dp), public :: xmax
+  real(dp), allocatable, public :: xmax
   !! Maximum x position of the tracked particles
-  real(dp), public :: ymin
+  real(dp), allocatable, public :: ymin
   !! Minimum y position of the tracked particles
-  real(dp), public :: ymax
+  real(dp), allocatable, public :: ymax
   !! Maximum y position of the tracked particles
-  real(dp), public :: zmin
+  real(dp), allocatable, public :: zmin
   !! Minimum z position of the tracked particles
-  real(dp), public :: zmax
+  real(dp), allocatable, public :: zmax
   !! Maximum z position of the tracked particles
   integer, public :: jump
   !! Jump parameter in particles selection
+  integer, public :: highest_index
  end type
 
  type scalars
@@ -143,9 +145,11 @@ module base_species
    procedure, private, pass :: call_particle_bounds
    procedure, private, pass :: call_particle_index_array
    procedure, private, pass :: call_particle_single
+   procedure, public, pass :: check_tracking
    procedure, pass :: compute_gamma
    procedure, pass, private :: copy_all
    procedure, pass, private :: copy_boundaries
+   procedure, pass, public :: count_tracked_particles
    procedure, public, pass :: flatten
    procedure, pass :: how_many
    procedure, pass :: initialize_data
@@ -165,6 +169,7 @@ module base_species
    procedure, pass :: set_properties
    procedure, pass :: set_temperature
    procedure, public, pass :: pick_track_params
+   procedure, public, pass :: set_highest_track_index
    procedure, public, pass :: set_track_params
    procedure, public, pass :: set_tot_tracked_parts
    procedure, public, pass :: track
@@ -279,7 +284,7 @@ module base_species
    call this%set_part_number(n_particles)
    call this%set_dimensions(curr_ndims)
    if ( present(tracked) ) then
-    call this%track( tracked )
+    call this%track( tracked , allocate_now=.false. )
    else
     call this%track( .false. )
    end if
@@ -311,7 +316,7 @@ module base_species
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
     if (this%istracked()) then
-     allocate( this%part_index(n_particles), stat=allocstatus)
+     allocate( this%part_index(n_particles), stat=allocstatus, source=0)
      this%allocated_index = .true.
     end if
    case(2)
@@ -329,7 +334,7 @@ module base_species
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
     if (this%istracked()) then
-     allocate( this%part_index(n_particles), stat=allocstatus)
+     allocate( this%part_index(n_particles), stat=allocstatus, source=0)
      this%allocated_index = .true.
     end if
    
@@ -352,7 +357,7 @@ module base_species
     allocate( this%weight(n_particles), stat=allocstatus)
     this%allocated_weight = .true.
     if (this%istracked()) then
-     allocate( this%part_index(n_particles), stat=allocstatus)
+     allocate( this%part_index(n_particles), stat=allocstatus, source=0)
      this%allocated_index = .true.
     end if
    end select
@@ -361,55 +366,105 @@ module base_species
 !=== Type bound procedures
 
   subroutine add_data( this, x_arr, y_arr, z_arr, &
-   weightx_arr, weightyz_arr, loc_x0, loc_x, loc_y, loc_z, np_old)
+   weightx_arr, weightyz_arr, loc_x0, loc_x, loc_y, loc_z, np_old, track_index)
    class( base_species_T), intent(inout) :: this
    real(dp), dimension(:), intent(in) :: x_arr, y_arr, z_arr
    real(dp), dimension(:), intent(in) :: weightx_arr
    real(dp), dimension(:, :), intent(in) :: weightyz_arr
    integer, intent(in) :: loc_x0, loc_x, loc_y, loc_z, np_old
+   integer, dimension(:), intent(in), optional :: track_index
+   integer :: p
    real(dp) :: u, t_x
    real(dp) :: whz
-   integer :: p, dim, i, j, k
+   integer :: dim, i, j, k
+   logical :: tracked
 
    t_x = this%pick_temperature()
    dim = this%pick_dimensions()
+   tracked = this%istracked()
    p = np_old
-   select case(dim)
-   case(2)
-    do k = 1, 1
-     do j = 1, loc_y
-      do i = loc_x0, loc_x
-       p = p + 1
-       this%x(p) = x_arr(i)
-       this%y(p) = y_arr(j)
-       call gasdev(u)
-       this%px(p) = t_x*u
-       call gasdev(u)
-       this%py(p) = t_x*u
-       this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
+
+   if ( .not. tracked ) then
+    select case(dim)
+    case(2)
+     do k = 1, 1
+      do j = 1, loc_y
+       do i = loc_x0, loc_x
+        p = p + 1
+        this%x(p) = x_arr(i)
+        this%y(p) = y_arr(j)
+        call gasdev(u)
+        this%px(p) = t_x*u
+        call gasdev(u)
+        this%py(p) = t_x*u
+        this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
+       end do
       end do
      end do
-    end do
-   case(3)
-    do k = 1, loc_z
-     do j = 1, loc_y
-      do i = loc_x0, loc_x
-       p = p + 1
-       this%x(p) = x_arr(i)
-       this%y(p) = y_arr(j)
-       this%z(p) = z_arr(k)
-       call gasdev(u)
-       this%px(p) = t_x*u
-       call gasdev(u)
-       this%py(p) = t_x*u
-       call gasdev(u)
-       this%pz(p) = t_x*u
-       whz = weightx_arr(i)*weightyz_arr(j, k)
-       this%weight(p) = whz
+    case(3)
+     do k = 1, loc_z
+      do j = 1, loc_y
+       do i = loc_x0, loc_x
+        p = p + 1
+        this%x(p) = x_arr(i)
+        this%y(p) = y_arr(j)
+        this%z(p) = z_arr(k)
+        call gasdev(u)
+        this%px(p) = t_x*u
+        call gasdev(u)
+        this%py(p) = t_x*u
+        call gasdev(u)
+        this%pz(p) = t_x*u
+        whz = weightx_arr(i)*weightyz_arr(j, k)
+        this%weight(p) = whz
+       end do
       end do
      end do
-    end do
-   end select
+    end select
+   else
+    if (.not. present(track_index) ) then
+     call write_warning('ERROR: track index not given')
+    end if
+    select case(dim)
+    case(2)
+     do k = 1, 1
+      do j = 1, loc_y
+       do i = loc_x0, loc_x
+        p = p + 1
+        this%x(p) = x_arr(i)
+        this%y(p) = y_arr(j)
+        call gasdev(u)
+        this%px(p) = t_x*u
+        call gasdev(u)
+        this%py(p) = t_x*u
+        this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
+        this%part_index(p) = track_index(p - np_old)
+       end do
+      end do
+     end do
+    case(3)
+     do k = 1, loc_z
+      do j = 1, loc_y
+       do i = loc_x0, loc_x
+        p = p + 1
+        this%x(p) = x_arr(i)
+        this%y(p) = y_arr(j)
+        this%z(p) = z_arr(k)
+        call gasdev(u)
+        this%px(p) = t_x*u
+        call gasdev(u)
+        this%py(p) = t_x*u
+        call gasdev(u)
+        this%pz(p) = t_x*u
+        this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
+        this%part_index(p) = track_index(p - np_old)
+       end do
+      end do
+     end do
+    end select
+   end if
+    
+
   end subroutine
 
   subroutine call_particle_single( this, particles, index_in, tracking )
@@ -829,7 +884,7 @@ module base_species
  
    np = this%how_many()
    call packed%sweep()
-   call packed%new_species(np, this%pick_dimensions())
+   call packed%new_species(np, this%pick_dimensions(), tracked=this%istracked())
    call packed%set_properties(this%pick_properties())
  
    if( this%allocated_x ) then
@@ -873,7 +928,7 @@ module base_species
    tot_parts = COUNT( mask )
    np = this%how_many()
    call packed%sweep()
-   call packed%new_species(tot_parts, this%pick_dimensions())
+   call packed%new_species(tot_parts, this%pick_dimensions(), tracked=this%istracked())
    call packed%set_properties(this%pick_properties())
  
    if (tot_parts == 0) then
@@ -951,7 +1006,7 @@ module base_species
     i = i + num_particles
    end if
    if( this%allocated_index ) then
-    this%part_index(1:num_particles) = flat_array((i + 1): (i + num_particles))
+    this%part_index(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
     i = i + num_particles
    end if
  
@@ -1137,11 +1192,22 @@ module base_species
    this%temperature = temperature
   end subroutine
 
-  subroutine track( this, track_flag )
+  subroutine track( this, track_flag, allocate_now )
    class(base_species_T), intent(inout) :: this
    logical, intent(in) :: track_flag
+   logical, intent(in), optional :: allocate_now
+   logical :: alloc
+
+   alloc = .false.
+   if ( present(allocate_now) ) then
+    alloc = allocate_now
+   end if
 
    this%properties%track_data%tracked = track_flag
+   if (track_flag .and. (.not. this%allocated_index) .and. alloc ) then
+    allocate( this%part_index(this%array_size()), source=0 )
+    this%allocated_index = .true.
+   end if
 
   end subroutine
 
@@ -1171,15 +1237,32 @@ module base_species
 
   subroutine set_track_params( this, xmn, xmx, ymn, ymx, zmn, zmx, jmp)
    class(base_species_T), intent(inout) :: this
-   integer, intent(in) :: xmn, xmx, ymn, ymx, zmn, zmx, jmp
+   real(dp), intent(in), optional :: xmn, xmx, ymn, ymx, zmn, zmx
+   integer, intent(in), optional :: jmp
 
-   this%properties%track_data%xmin = xmn
-   this%properties%track_data%xmax = xmx
-   this%properties%track_data%ymin = ymn
-   this%properties%track_data%ymax = ymx
-   this%properties%track_data%zmin = zmn
-   this%properties%track_data%zmax = zmx
-   this%properties%track_data%jump = jmp
+   if ( present(xmn) ) then
+    allocate( this%properties%track_data%xmin, source=xmn)
+   end if
+   if ( present(xmx) ) then
+    allocate( this%properties%track_data%xmax, source=xmx)
+   end if
+   if ( present(ymn) ) then
+    allocate( this%properties%track_data%ymin, source=ymn)
+   end if
+   if ( present(ymx) ) then
+    allocate( this%properties%track_data%ymax, source=ymx)
+   end if
+   if ( present(zmn) ) then
+    allocate( this%properties%track_data%zmin, source=zmn)
+   end if
+   if ( present(zmx) ) then
+    allocate( this%properties%track_data%zmax, source=zmx)
+   end if
+   if ( present(jmp) ) then
+    this%properties%track_data%jump = jmp
+   else
+    this%properties%track_data%jump = 1
+   end if
 
   end subroutine
 
@@ -1188,13 +1271,26 @@ module base_species
    type(track_data_t) :: track_out
 
    track_out%n_tracked = this%properties%track_data%n_tracked
-   track_out%xmin = this%properties%track_data%xmin
-   track_out%xmax = this%properties%track_data%xmax
-   track_out%ymin = this%properties%track_data%ymin
-   track_out%ymax = this%properties%track_data%ymax
-   track_out%zmin = this%properties%track_data%zmin
-   track_out%zmax = this%properties%track_data%zmax
+   if ( allocated(this%properties%track_data%xmin) ) then
+    track_out%xmin = this%properties%track_data%xmin
+   end if
+   if ( allocated(this%properties%track_data%xmax) ) then
+    track_out%xmax = this%properties%track_data%xmax
+   end if
+   if ( allocated(this%properties%track_data%ymin) ) then
+    track_out%ymin = this%properties%track_data%ymin
+   end if
+   if ( allocated(this%properties%track_data%ymax) ) then
+    track_out%ymax = this%properties%track_data%ymax
+   end if
+   if ( allocated(this%properties%track_data%zmin) ) then
+    track_out%zmin = this%properties%track_data%zmin
+   end if
+   if ( allocated(this%properties%track_data%zmax) ) then
+    track_out%zmax = this%properties%track_data%zmax
+   end if
    track_out%jump = this%properties%track_data%jump
+   track_out%highest_index = this%properties%track_data%highest_index
 
   end function
 
@@ -1203,6 +1299,50 @@ module base_species
    integer, intent(in) :: n_tracked
 
    this%properties%track_data%n_tracked = n_tracked
+
+  end subroutine
+
+  pure function count_tracked_particles( this ) result(n_tracked)
+   class(base_species_T), intent(in) :: this
+   integer :: n_tracked
+   integer :: np
+
+   n_tracked = 0
+   if ( this%empty .or. ( .not. this%istracked() ) ) return
+   np = this%how_many()
+   n_tracked = COUNT( int(this%call_component(INDEX_COMP, lb=1, ub=np)) > 0 )
+
+  end function
+
+  subroutine set_highest_track_index( this, max_index )
+   class(base_species_T), intent(inout) :: this
+   integer, intent(in) :: max_index
+
+   this%properties%track_data%highest_index = max_index
+
+  end subroutine
+
+  subroutine check_tracking( this )
+   class(base_species_T), intent(inout) :: this
+   integer :: np_track
+   integer :: max_index
+
+   if ( .not. this%istracked() ) return
+
+   if ( this%empty ) then
+    call this%set_tot_tracked_parts(0)
+    return
+   end if
+
+   np_track = this%count_tracked_particles()
+   if ( np_track == 0 ) then
+    call this%set_highest_track_index(0)
+    call this%set_tot_tracked_parts(0)
+   else
+    max_index = MAXVAL( int(this%call_component(INDEX_COMP)) )
+    call this%set_highest_track_index(max_index)
+    call this%set_tot_tracked_parts(np_track)
+   end if
 
   end subroutine
 

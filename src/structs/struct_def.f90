@@ -43,13 +43,20 @@
 
   contains
 
-  function new_index_array(length) result(this)
+  function new_index_array(length, lb ) result(this)
    !! Constructor for the index_array type
    integer, intent(in) :: length
+   integer, intent(in), optional :: lb
    type(index_array) :: this
-   integer :: i
+   integer :: i, lowb
+
+   lowb = 1
+   if ( present(lb) ) then
+    lowb = lb
+   end if
+
    allocate( this%indices(length) )
-   this%indices = [ (i, i = 1, length) ]
+   this%indices = [ (i, i = lowb, length + lowb - 1) ]
   end function
 
   subroutine find_index( index_in, mask )

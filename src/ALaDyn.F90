@@ -147,6 +147,7 @@
    !=================================
     call env_run( tnow, iter )
 
+    call track_out( spec, tnow, iter )
     call timing !iter=iter+1  tnow=tnow+dt_loc
     call Data_out
 

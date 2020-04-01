@@ -58,10 +58,19 @@
   real (dp) :: tnow, tmax, tscale, dt_loc, dt, cfl
   logical :: initial_time
   !====================
-  integer :: tkjump, nkjump, track_tot_nstep
-  real (dp) :: txmin, txmax, tymin, tymax, tzmin, tzmax, t_in, t_out
+  ! TRACKING
+  !====================
+  integer :: every_track(ref_nspec), nkjump(ref_nspec), track_tot_nstep
+  real (dp) :: txmin(ref_nspec), txmax(ref_nspec)
+  real (dp) :: tymin(ref_nspec), tymax(ref_nspec)
+  real (dp) :: tzmin(ref_nspec), tzmax(ref_nspec)
+  real (dp) :: t_in(ref_nspec), t_out(ref_nspec)
+  logical ::  p_tracking(ref_nspec)
+  !====================
+  ! END TRACKING
+  !====================
   integer :: nprocx, nprocy, nprocz
-  logical :: g_prof, p_tracking, comoving
+  logical :: g_prof, comoving
   logical :: beam, hybrid, wake, envelope, solid_target
   logical :: ionization, ions
   logical :: part, stretch, channel, inject_beam
