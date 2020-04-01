@@ -78,7 +78,7 @@
 
    call generate_track_index( spec_in(ic), t_index, n_parts)
 
-   if ( pex1 .or. (i2 < i1 )) then
+   if ( pex1 ) then
     call spec_in(ic)%add_data(xpt(:, ic), loc_ypt(:, ic), loc_zpt(:, ic), &
     wghpt(:, ic), loc_wghyz(:, :, ic), i1, i2, j2, k2, np, track_index=t_index)
    end if
@@ -192,12 +192,13 @@
     np_old = loc_npart(imody, imodz, imodx, ic)
     np_new = max(np_old+npt_inj(ic), np_new)
     !=========================
-
-    call spec_in(ic)%extend(np_new)
-    call spec_aux_in%extend(np_new)
+    if ( pex1 ) then
+     call spec_in(ic)%extend(np_new)
+     call spec_aux_in%extend(np_new)
+     loc_npart(imody, imodz, imodx, ic) = np_new
+    end if
     q = np_old
     call add_particles(spec_in, q, i1, i2, ic)
-    loc_npart(imody, imodz, imodx, ic) = np_new
    end do
    !=======================
   end subroutine

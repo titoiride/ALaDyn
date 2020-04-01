@@ -48,7 +48,7 @@
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
 
-   call initialize_tracking( spec )
+   call initialize_tracking( spec, ebfp )
   end subroutine
 
  end module

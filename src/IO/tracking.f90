@@ -68,8 +68,9 @@ module tracking
 
   end subroutine
 
-  subroutine initialize_tracking( spec_in )
+  subroutine initialize_tracking( spec_in, spec_aux_in )
    type(species_new), dimension(:), intent(inout) :: spec_in
+   type(species_aux), intent(inout) :: spec_aux_in
    logical :: tracking
    integer :: ic
 
@@ -84,6 +85,7 @@ module tracking
     call spec_in(ic)%set_tot_tracked_parts( 0 )
    end do
 
+   call spec_aux_in%track( p_tracking(1), allocate_now=.true. )
    do ic = 1, nsp
     if ( spec_in(ic)%istracked() ) then
      call spec_in(ic)%set_track_params( txmin(ic), txmax(ic), &
