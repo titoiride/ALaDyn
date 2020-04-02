@@ -366,103 +366,57 @@ module base_species
 !=== Type bound procedures
 
   subroutine add_data( this, x_arr, y_arr, z_arr, &
-   weightx_arr, weightyz_arr, loc_x0, loc_x, loc_y, loc_z, np_old, track_index)
+   weightx_arr, weightyz_arr, loc_x0, loc_x, loc_y, loc_z, np_old)
    class( base_species_T), intent(inout) :: this
    real(dp), dimension(:), intent(in) :: x_arr, y_arr, z_arr
    real(dp), dimension(:), intent(in) :: weightx_arr
    real(dp), dimension(:, :), intent(in) :: weightyz_arr
    integer, intent(in) :: loc_x0, loc_x, loc_y, loc_z, np_old
-   integer, dimension(:), intent(in), optional :: track_index
    integer :: p
    real(dp) :: u, t_x
    real(dp) :: whz
    integer :: dim, i, j, k
-   logical :: tracked
 
    t_x = this%pick_temperature()
    dim = this%pick_dimensions()
-   tracked = this%istracked()
    p = np_old
 
-   if ( .not. tracked ) then
-    select case(dim)
-    case(2)
-     do k = 1, 1
-      do j = 1, loc_y
-       do i = loc_x0, loc_x
-        p = p + 1
-        this%x(p) = x_arr(i)
-        this%y(p) = y_arr(j)
-        call gasdev(u)
-        this%px(p) = t_x*u
-        call gasdev(u)
-        this%py(p) = t_x*u
-        this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
-       end do
+   select case(dim)
+   case(2)
+    do k = 1, 1
+     do j = 1, loc_y
+      do i = loc_x0, loc_x
+       p = p + 1
+       this%x(p) = x_arr(i)
+       this%y(p) = y_arr(j)
+       call gasdev(u)
+       this%px(p) = t_x*u
+       call gasdev(u)
+       this%py(p) = t_x*u
+       this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
       end do
      end do
-    case(3)
-     do k = 1, loc_z
-      do j = 1, loc_y
-       do i = loc_x0, loc_x
-        p = p + 1
-        this%x(p) = x_arr(i)
-        this%y(p) = y_arr(j)
-        this%z(p) = z_arr(k)
-        call gasdev(u)
-        this%px(p) = t_x*u
-        call gasdev(u)
-        this%py(p) = t_x*u
-        call gasdev(u)
-        this%pz(p) = t_x*u
-        whz = weightx_arr(i)*weightyz_arr(j, k)
-        this%weight(p) = whz
-       end do
+    end do
+   case(3)
+    do k = 1, loc_z
+     do j = 1, loc_y
+      do i = loc_x0, loc_x
+       p = p + 1
+       this%x(p) = x_arr(i)
+       this%y(p) = y_arr(j)
+       this%z(p) = z_arr(k)
+       call gasdev(u)
+       this%px(p) = t_x*u
+       call gasdev(u)
+       this%py(p) = t_x*u
+       call gasdev(u)
+       this%pz(p) = t_x*u
+       whz = weightx_arr(i)*weightyz_arr(j, k)
+       this%weight(p) = whz
       end do
      end do
-    end select
-   else
-    if (.not. present(track_index) ) then
-     call write_warning('ERROR: track index not given')
-    end if
-    select case(dim)
-    case(2)
-     do k = 1, 1
-      do j = 1, loc_y
-       do i = loc_x0, loc_x
-        p = p + 1
-        this%x(p) = x_arr(i)
-        this%y(p) = y_arr(j)
-        call gasdev(u)
-        this%px(p) = t_x*u
-        call gasdev(u)
-        this%py(p) = t_x*u
-        this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
-        this%part_index(p) = track_index(p - np_old)
-       end do
-      end do
-     end do
-    case(3)
-     do k = 1, loc_z
-      do j = 1, loc_y
-       do i = loc_x0, loc_x
-        p = p + 1
-        this%x(p) = x_arr(i)
-        this%y(p) = y_arr(j)
-        this%z(p) = z_arr(k)
-        call gasdev(u)
-        this%px(p) = t_x*u
-        call gasdev(u)
-        this%py(p) = t_x*u
-        call gasdev(u)
-        this%pz(p) = t_x*u
-        this%weight(p) = weightx_arr(i)*weightyz_arr(j, k)
-        this%part_index(p) = track_index(p - np_old)
-       end do
-      end do
-     end do
-    end select
-   end if
+    end do
+   end select
     
 
   end subroutine

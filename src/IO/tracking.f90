@@ -20,6 +20,7 @@
 !*****************************************************************************************************!
 
 module tracking
+ !! Module to manage the tracked particles
 
  use parallel
  use pstruct_data
@@ -36,7 +37,15 @@ module tracking
  logical, allocatable, dimension(:), private, save :: track_mask
  contains
 
+ !====== PARTICLE TRACKING UTILITIES ==========
+
   subroutine generate_track_index( spec_in, index_in, new_parts )
+   !! This subroutine generate a shared array for particle index
+   !! to avoid duplicated indexes.
+   !! @warning
+   !! This requires a sendrecieve, so it should be executed by all MPI tasks
+   !! @endwarning
+
    type(species_new), intent(in) :: spec_in
    integer, allocatable, dimension(:), intent(inout) :: index_in
    integer, intent(in) :: new_parts
@@ -56,19 +65,113 @@ module tracking
    last_collective_index = MAXVAL( max_index_loc(:) )
 
    tot_newparts = SUM( new_parts_loc(:) )
-
+   
+   allocate ( index_in( new_parts ), source=0 )
    if ( tot_newparts == 0 ) return
 
    new_inds = index_array(tot_newparts, lb=last_collective_index + 1)
 
-   allocate ( index_in( new_parts ) )
    cum_sum = SUM( new_parts_loc(1:mype) )
 
    index_in(1:new_parts) = new_inds%indices((cum_sum + 1):( cum_sum + new_parts))
 
   end subroutine
+  
+  subroutine set_tracked_particle_index( spec_in, lowb, upb, ic)
+   !! Assigns to every new tracked particle a unique index for identification
+
+   type(species_new), dimension(:), intent(inout) :: spec_in
+   integer, intent(in) :: lowb, upb, ic
+   integer, allocatable, dimension(:) :: parts, track_index, temp_track_index
+   integer :: npt, np, part_jump, npt_jump
+   type(track_data_t) :: track_data
+
+   if ( .not. spec_in(ic)%istracked() ) return
+
+   np = upb - lowb + 1
+
+   call array_realloc_1d( track_mask, np )
+   track_mask(1:np) = .true.
+
+   allocate ( parts(np), source=0 )
+
+   track_data = spec_in(ic)%pick_track_params()
+   part_jump = track_data%jump
+
+   if (ndim>2) then
+
+    associate( xx => spec_in(ic)%call_component(X_COMP, lb=lowb, ub=upb), &
+               yy => spec_in(ic)%call_component(Y_COMP, lb=lowb, ub=upb), &
+               zz => spec_in(ic)%call_component(Z_COMP, lb=lowb, ub=upb))
+               
+               if ( allocated(track_data%xmin) ) then
+                track_mask(1:np) = ( xx(1:np) >= track_data%xmin .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%xmax) ) then
+                track_mask(1:np) = ( xx(1:np) <= track_data%xmax .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%ymin) ) then
+                track_mask(1:np) = ( yy(1:np) >= track_data%ymin .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%ymax) ) then
+                track_mask(1:np) = ( yy(1:np) <= track_data%ymax .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%zmin) ) then
+                track_mask(1:np) = ( zz(1:np) >= track_data%zmin .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%zmax) ) then
+                track_mask(1:np) = ( zz(1:np) <= track_data%zmax .and. track_mask(1:np) )
+               end if
+    end associate
+
+    npt = COUNT(track_mask(1:np))
+
+   else
+    associate( xx => spec_in(ic)%call_component(X_COMP, lb=lowb, ub=upb), &
+               yy => spec_in(ic)%call_component(Y_COMP, lb=lowb, ub=upb))
+
+               if ( allocated(track_data%xmin) ) then
+                track_mask(1:np) = ( xx(1:np) >= track_data%xmin .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%xmax) ) then
+                track_mask(1:np) = ( xx(1:np) <= track_data%xmax .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%ymin) ) then
+                track_mask(1:np) = ( yy(1:np) >= track_data%ymin .and. track_mask(1:np) )
+               end if
+               if ( allocated(track_data%ymax) ) then
+                track_mask(1:np) = ( yy(1:np) <= track_data%ymax .and. track_mask(1:np) )
+               end if
+
+    end associate
+
+    npt = COUNT(track_mask(1:np))
+
+   end if
+
+   call generate_track_index( spec_in(ic), temp_track_index, npt)
+
+   if (np <= 0 ) return
+
+   allocate(track_index(npt), source=0)
+   do i = 1, npt, part_jump
+    track_index(i) = temp_track_index(i)
+   end do
+   npt_jump = CEILING(real(npt)/part_jump)
+   parts = UNPACK( track_index(1:npt), track_mask(1:np), parts(1:np) )
+
+   call spec_in(ic)%set_component(parts, INDEX_COMP, lb=lowb, ub=upb)
+   call spec_in(ic)%set_tot_tracked_parts( npt_jump )
+   call spec_in(ic)%set_highest_track_index( MAXVAL(track_index) )
+
+  end subroutine
+
+ !====== PARTICLE TRACKING INITIALIZATION ==========
 
   subroutine initialize_tracking( spec_in, spec_aux_in )
+   !! Initializes the particle tracking at the beginning of
+   !! the simulation
+
    type(species_new), dimension(:), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
    logical :: tracking
@@ -101,8 +204,9 @@ module tracking
 
   end subroutine
 
-  !=============== Initialize Tracking particles============
   subroutine initialize_particle_index( spec_in, ic )
+   !! Initializes particle indexes at the beginning of the simulation
+
    type(species_new), dimension(:), intent(inout) :: spec_in
    integer, intent(in) :: ic
    integer, allocatable, dimension(:) :: parts, track_index
@@ -110,82 +214,18 @@ module tracking
    type (track_data_t) :: track_data
 
    if ( .not. spec_in(ic)%istracked() ) return
-   call xx_realloc(track_aux, np, spec_in(ic)%total_size())
-
-   part_jump = 1
+   
    np = spec_in(ic)%how_many()
-   call array_realloc_1d( track_mask, np )
-   track_mask(1:np) = .true.
-   allocate ( parts(np), source=0 )
-
-   track_data = spec_in(ic)%pick_track_params()
-   part_jump = track_data%jump
-
-   if (ndim>2) then
-
-    associate( xx => spec_in(ic)%call_component(X_COMP, lb=1, ub=np), &
-               yy => spec_in(ic)%call_component(Y_COMP, lb=1, ub=np), &
-               zz => spec_in(ic)%call_component(Z_COMP, lb=1, ub=np))
-               
-               if ( allocated(track_data%xmin) ) then
-                track_mask(1:np) = ( xx >= track_data%xmin .and. track_mask )
-               end if
-               if ( allocated(track_data%xmax) ) then
-                track_mask(1:np) = ( xx <= track_data%xmax .and. track_mask )
-               end if
-               if ( allocated(track_data%ymin) ) then
-                track_mask(1:np) = ( yy >= track_data%ymin .and. track_mask )
-               end if
-               if ( allocated(track_data%ymax) ) then
-                track_mask(1:np) = ( yy <= track_data%ymax .and. track_mask )
-               end if
-               if ( allocated(track_data%zmin) ) then
-                track_mask(1:np) = ( z >= track_data%zmin .and. track_mask )
-               end if
-               if ( allocated(track_data%zmax) ) then
-                track_mask(1:np) = ( zz <= track_data%zmax .and. track_mask )
-               end if
-    end associate
-
-    npt = COUNT(track_mask(1:np))
-
-   else
-    associate( xx => spec_in(ic)%call_component(X_COMP, lb=1, ub=np), &
-               yy => spec_in(ic)%call_component(Y_COMP, lb=1, ub=np))
-
-               if ( allocated(track_data%xmin) ) then
-                track_mask(1:np) = ( xx >= track_data%xmin .and. track_mask )
-               end if
-               if ( allocated(track_data%xmax) ) then
-                track_mask(1:np) = ( xx <= track_data%xmax .and. track_mask )
-               end if
-               if ( allocated(track_data%ymin) ) then
-                track_mask(1:np) = ( yy >= track_data%ymin .and. track_mask )
-               end if
-               if ( allocated(track_data%ymax) ) then
-                track_mask(1:np) = ( yy <= track_data%ymax .and. track_mask )
-               end if
-
-    end associate
-
-    npt = COUNT(track_mask(1:np))
-
-   end if
-
-   call generate_track_index( spec_in(ic), track_index, npt)
-
-   parts = UNPACK( track_index(1:npt), track_mask(1:np), parts(1:np) )
-
-   write(6, *) '======================'
-   write(6, *) 'Initial npt = ', npt
-   write(6, *) '======================'
-   call spec_in(ic)%set_component(parts, INDEX_COMP, lb=1, ub=np)
-   call spec_in(ic)%set_tot_tracked_parts( npt )
-   call spec_in(ic)%set_highest_track_index( MAXVAL(track_index) )
+   call set_tracked_particle_index( spec_in, 1, np, ic)
 
   end subroutine
 
+ !====== PARTICLE TRACKING I/O ==========
+
   subroutine tracking_write_output(  spec_in, timenow, iter, pid )
+   !! Tracking I/O with the same strategy as part_pdata_out_new.
+   !! The printed file contains the particle phase space (2*n_dimension),
+   !! the particle weight, Lorentz gamma and index
 
   type(species_new), intent(in) :: spec_in
   real (dp), intent (in) :: timenow
@@ -236,7 +276,6 @@ module tracking
   
   cc = COUNT(track_mask(1:np) )
   if (npt /= cc ) then
-   call gdbattach
    call write_warning(text='Error in counting tracked particles', task=mype)
   end if
 
@@ -294,6 +333,8 @@ module tracking
  end subroutine
  !================================
  subroutine track_out( spec_in, timenow, iter)
+  !! Wrapper for the tracking I/O routine
+
   type(species_new), intent(in), dimension(:) :: spec_in
   real(dp), intent(in) :: timenow
   integer, intent(in) :: iter
@@ -305,173 +346,5 @@ module tracking
    end if
   end do
  end subroutine
-   !=============== Tracking particles============
-  ! subroutine initial_tparticles_select(tx1, ty1)
-  
-  !  real (dp), intent (in) :: tx1, ty1
-  
-  !  integer :: np, p, ik, ndv, ik_max
-  !  integer (hp_int) :: plab, last_ind
-  !  integer, parameter :: tp_numb = 10
-  !  real (dp) :: yy(tp_numb), ym, ymx
-  !  !========================
-  !  ! Define track_tot_nstep
-  !  p = 0
-  !  if (dt_loc>0.0) p = nint((t_out-t_in)/dt_loc)
-  !  track_tot_nstep = nint(real(p,dp)/real(tkjump,dp))
-  !  ndv = nd2 + 1
-  
-  !  ! Select particles on each mpi_task
-  !  ! xp defined by tx1
-  !  ! yp [-4,-3,-2.-1.,0,1,2,3,4], 9 test particles allocated
-  !  !
-  !  yy(1) = ty1
-  !  do p = 2, tp_numb
-  !   yy(p) = yy(p-1) + 1.
-  !  end do
-  !  ym = loc_ygrid(imody)%gmin
-  !  ymx = loc_ygrid(imody)%gmax
-  !  np = loc_npart(imody, imodz, imodx, 1)
-  !  ik = 0
-  !  if (allocated(spec(1)%part)) then
-  !   deallocate (spec(1)%part)
-  !   deallocate (ebfp)
-  !   loc_npart(imody, imodz, imodx, 1) = 0
-  !  end if
-  !  select case (ndim)
-  !  case (2)
-  !   do p = 1, tp_numb
-  !    if (ym<yy(p) .and. ymx>=yy(p)) then
-  !     ik = ik + 1
-  !    end if
-  !   end do
-  !   if (ik>0) then
-  !    loc_npart(imody, imodz, imodx, 1) = ik
-  !    allocate (spec(1)%part(ik,5))
-  !    np = 0
-  !    do p = 1, tp_numb
-  !     if (ym<yy(p) .and. ymx>=yy(p)) then
-  !      np = np + 1
-  !      spec(1)%part(np, 1) = tx1
-  !      spec(1)%part(np, 2) = yy(p)
-  !      spec(1)%part(np, 3:4) = t0_pl(1)
-  !      part_ind = int(np, hp_int)
-  !      wgh = real(0.0, sp)
-  !      charge = int(-1., hp_int)
-  !      spec(1)%part(np, 5) = wgh_cmp
-  !     end if
-  !    end do
-  !   end if
-  !  case (3)
-  !   return
-  !  end select
-  !  np = loc_npart(imody, imodz, imodx, 1)
-  !  loc_tpart(mype+1) = np
-  !  call intvec_distribute(np, loc_tpart, npe)
-  !  track_tot_part = sum(loc_tpart(1:npe))
-  !  ik_max = maxval(loc_tpart(1:npe))
-  !  last_ind = 0
-  !  if (mype==1) last_ind = loc_tpart(1)
-  !  if (mype>1) last_ind = sum(loc_tpart(1:mype))
-  !  !if(loc_tpart(mype+1)>0)write(6,*)'last particle index',mype,last_ind
-  !  if (np>0) then
-  !   do p = 1, np
-  !    wgh_cmp = spec(1)%part(p, ndv)
-  !    if (part_ind>0) part_ind = part_ind + last_ind
-  !    spec(1)%part(p, ndv) = wgh_cmp
-  !   end do
-  !  end if
-  !  allocate (track_aux(2*ndv*ik_max))
-  !  if (.not. allocated(ebfp)) allocate (ebfp(ik_max,ndv))
-  !  if (pe0) then
-  !   allocate (pdata_tracking(ndv,track_tot_part,track_tot_nstep))
-  !   write (6, *) '==== Initial track-Particle data==========='
-  !   write (6, '(a19,i6)') '  tot_track_steps  ', track_tot_nstep
-  !   write (6, '(a19,2i6)') '  tot_track_parts  ', track_tot_part, &
-  !     tp_numb
-  !   write (6, '(a18,i8)') '  short_int size  ', huge(plab)
-  !   write (6, '(a20,e11.4)') '  track memory(MB) ', &
-  !     1.e-06*real(4*ndv*track_tot_nstep*track_tot_part, dp)
-  !  end if
-  ! end subroutine
-
-  ! subroutine t_particles_collect(time_ind)
-
-  !  integer, intent (in) :: time_ind
-
-  !  integer :: np, ik, ik_max, ip, p, ndv, ndvp, ipe, kk, ik1, ik2, nst
-  !  logical :: sr
-  !  real :: xm, ym, zm
-
-  !  if (time_ind>track_tot_nstep) return
-  !  xm = loc_xgrid(imodx)%gmin
-  !  ym = loc_ygrid(imody)%gmin
-  !  zm = loc_zgrid(imodz)%gmin
-  !  np = loc_npart(imody, imodz, imodx, 1)
-  !  nst = 0
-  !  ndv = nd2 + 1
-  !  ndvp = ndv
-  !  if (stretch) nst = str_indx(imody, imodz)
-  !  !===================
-  !  np = loc_npart(imody, imodz, imodx, 1)
-  !  ik = 0
-  !  !=========== each pe counts track particle number
-  !  do p = 1, np
-  !   wgh_cmp = spec(1)%part(p, ndv)
-  !   if (part_ind>0) ik = ik + 1
-  !  end do
-  !  loc_tpart(mype+1) = ik
-  !  call intvec_distribute(ik, loc_tpart, npe)
-  !  ik_max = maxval(loc_tpart(1:npe))
-  !  if (ndvp*ik_max>size(track_aux)) then
-  !   deallocate (track_aux)
-  !   allocate (track_aux(ndvp*ik_max))
-  !  end if
-  !  !========= each pe stores tpart data in track_aux(ndv,loc_tpart)
-  !  kk = 0
-  !  do p = 1, np
-  !   wgh_cmp = spec(1)%part(p, ndv)
-  !   if (part_ind>0) then
-  !    do ip = 1, ndv
-  !     kk = kk + 1
-  !     track_aux(kk) = spec(1)%part(p, ip)
-  !    end do
-  !   end if
-  !  end do
-  !  !=================
-  !  !  all data are gathered onto pe0 
-  !  if (pe0) then
-  !   sr = .false.
-  !   ik1 = 0
-  !   do ipe = 1, npe - 1
-  !    ik = loc_tpart(ipe+1)
-  !    if (ik>0) then
-  !     call exchange_1d_grdata(sr, track_aux, ik*ndvp, ipe, ipe+10)
-  !     !pe0 receives from ipe ik sp_aux data and collects on track array
-  !     kk = 0
-  !     do p = 1, ik
-  !      ik2 = ik1 + p
-  !      do ip = 1, ndv - 1
-  !       kk = kk + 1
-  !       pdata_tracking(ip, ik2, time_ind) = track_aux(kk)
-  !       !pdata_tracking(ip,ik2,time_ind)=track_aux(kk)
-  !      end do
-  !      kk = kk + 1
-  !      wgh_cmp = track_aux(kk)
-  !      pdata_tracking(ndv, ik2, time_ind) = real(part_ind, dp)
-  !     end do
-  !     ik1 = ik2
-  !    end if
-  !   end do
-  !   loc_tpart(1) = ik2
-  !  else
-  !   ik = loc_tpart(mype+1)
-  !   if (ik>0) then
-  !    sr = .true.
-  !    call exchange_1d_grdata(sr, track_aux, ik*ndvp, 0, mype+10) !sends ik data to pe0
-  !   end if
-  !  end if
-  ! end subroutine
-  ! !=================================================
 
  end module

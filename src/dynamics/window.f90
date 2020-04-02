@@ -29,7 +29,7 @@
   use mpi_field_interface
   use mpi_part_interface
   use run_data_info, only: part_numbers
-  use tracking, only: generate_track_index
+  use tracking, only: set_tracked_particle_index
 
   implicit none
   !===============================
@@ -66,6 +66,7 @@
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
    n_parts = 0
+
    select case( spec_in(ic)%pick_dimensions() )
    case(1)
     n_parts = (i2 - i1 + 1)
@@ -74,15 +75,15 @@
    case(3)
     n_parts = (i2 - i1 + 1)*j2*k2
    end select
-   call init_random_seed(mype)
 
-   call generate_track_index( spec_in(ic), t_index, n_parts)
+   call init_random_seed(mype)
 
    if ( pex1 ) then
     call spec_in(ic)%add_data(xpt(:, ic), loc_ypt(:, ic), loc_zpt(:, ic), &
-    wghpt(:, ic), loc_wghyz(:, :, ic), i1, i2, j2, k2, np, track_index=t_index)
+    wghpt(:, ic), loc_wghyz(:, :, ic), i1, i2, j2, k2, np)
    end if
 
+   call set_tracked_particle_index( spec_in, np + 1, np + n_parts, ic)
    call spec_in(ic)%check_tracking()
   end subroutine
   !---------------------------
@@ -159,17 +160,20 @@
    ndv = nd2 + 1
    do ic = 1, nsp
     i1 = 1 + nptx(ic)
-    if (i1<=sptx_max(ic)) then
-    !while particle index is less then the max index
-     do ix = i1, sptx_max(ic)
-      if (xpt(ix,ic)>xmx) exit
-     end do
-     i2 = ix - 1
-     if (ix==sptx_max(ic)) i2 = ix
-    else
-     i2 = i1 - 1
+    i2 = i1 - 1
+    if (pex1) then
+     if (i1<=sptx_max(ic)) then
+     !while particle index is less then the max index
+      do ix = i1, sptx_max(ic)
+       if (xpt(ix,ic)>xmx) exit
+      end do
+      i2 = ix - 1
+      if (ix==sptx_max(ic)) i2 = ix
+     else
+      i2 = i1 - 1
+     end if
+     nptx(ic) = i2
     end if
-    nptx(ic) = i2
     ! end if
     !==========================
     ! Partcles to be injected have index ix [i1,i2]

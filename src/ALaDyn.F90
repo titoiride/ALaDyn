@@ -147,7 +147,7 @@
    !=================================
     call env_run( tnow, iter )
 
-    call track_out( spec, tnow, iter )
+    !call track_out( spec, tnow, iter )
     call timing !iter=iter+1  tnow=tnow+dt_loc
     call Data_out
 
@@ -180,6 +180,7 @@
 
    if (tnow >= tout) then
     call create_timestep_folder( iout )
+    call track_out( spec, tnow, 0 )
     tout = tout + dtout
     if (diag) then
      if (pe0) call en_data( ienout, iter, idata )
