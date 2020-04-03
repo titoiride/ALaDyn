@@ -24,8 +24,11 @@ module tracking
 
  use parallel
  use pstruct_data
- use precision_def
+ use phys_param
  use system_utilities
+! !#if defined(OPENPMD)
+!  use hdf5io_class
+! !#endif
  use array_alloc, only: array_realloc_1d
  use grid_part_lib, only: xx_realloc
  use util, only: endian
@@ -347,4 +350,213 @@ module tracking
   end do
  end subroutine
 
+! !#if defined(OPENPMD)
+!  subroutine track_write_hdf5( spec_in, timenow, dt_loc_in, iter, ic )
+!   type( species_new), intent(in) :: spec_in
+!   real(dp), intent(in) :: timenow, dt_loc_in
+!   integer, intent(in) :: iter, ic
+!   integer :: np, npt, i
+!   type(hdf5file) :: file
+!   real(sp), allocatable, dimension(:) :: prova
+
+!   !np = spec_in%how_many()
+!   np = 100
+!   npt = spec_in%pick_tot_tracked_parts()
+
+!   allocate(prova(np))
+
+!   do i=1, np
+!    prova(i) = i
+!   end do
+!   ! Writing particle properties
+!   call file%new(iter=iter,&
+!    &particleName=spec_in%pick_name(),&
+!    &unitDimension=unit_dimensions_mass,&
+!    &records='mass',&
+!    &unitSI=electron_mass_Kg,&
+!    ! &iterationEncoding='groupBased',&
+!    &component='')
+
+!   call pwpart(communicator, file, electron_mass_norm, ierr)
+  
+!   call file%new(iter=iter,&
+!    &particleName=spec_in%pick_name(),&
+!    &unitDimension=unit_dimensions_mass,&
+!    &records='charge',&
+!    &unitSI=e_charge_C,&
+!    ! &iterationEncoding='groupBased',&
+!    &component='')
+  
+!   call pwpart(communicator, file, electron_charge_norm, ierr)
+
+!   ! ! Writing particle phase space
+!   ! ! Gamma
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_gamma, &
+!   !  &unitSI=one_dp,&
+!   !  &records='gamma',&
+!   !  &component='')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_tracked_component(INV_GAMMA_COMP, lb=1, ub=np), sp), npt, ierr)
+
+!   ! ! Weight
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_weight, &
+!   !  &unitSI=one_dp,&
+!   !  &records='weight',&
+!   !  &component='')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_tracked_component(W_COMP, lb=1, ub=np), sp), npt, ierr)
+
+!   ! ! Index
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_index, &
+!   !  &unitSI=one_dp,&
+!   !  &records='index',&
+!   !  &component='')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_tracked_component(INDEX_COMP, lb=1, ub=np), sp), npt, ierr)
+
+!   ! X coord
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_positions, &
+!   !  &unitSI=unit_SI_position,&
+!   !  &records='position',&
+!   !  &component='x')
+
+!   call file%new(iter=iter,&
+!   &particleName='electron',&
+!   &unitDimension=unit_dimensions_positions,&
+!   &records='position',&
+!   &component='x')
+
+!   call pwpart(communicator, file,&
+!    real(spec_in%call_component(X_COMP, lb=1, ub=np), sp), np, ierr)
+
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_positions, &
+!   !  &unitSI=unit_SI_position,&
+!   !  &records='positionOffset',&
+!   !  &component='x')
+
+!   ! call pwpart(communicator, file, zero_dp, ierr)
+
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_momentum, &
+!   !  &records='momentum',&
+!   !  &component='x')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_tracked_component(PX_COMP, lb=1, ub=np), sp), np, ierr)
+
+!   ! if(ndim < 2) return 
+  
+!   ! ! Y coord
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_positions, &
+!   !  &unitSI=unit_SI_position,&
+!   !  &records='position',&
+!   !  &component='y')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_component(Y_COMP, lb=1, ub=np), sp), np, ierr)
+
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_positions, &
+!   !  &unitSI=unit_SI_position,&
+!   !  &records='positionOffset',&
+!   !  &component='y')
+
+!   ! call pwpart(communicator, file, zero_dp, ierr)
+
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_momentum, &
+!   !  &records='momentum',&
+!   !  &component='y')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_tracked_component(PY_COMP, lb=1, ub=np), sp), npt, ierr)
+
+!   ! if(ndim < 3) return 
+
+!   ! ! Y coord
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_positions, &
+!   !  &unitSI=unit_SI_position,&
+!   !  &records='position',&
+!   !  &component='z')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_tracked_component(Z_COMP, lb=1, ub=np), sp), npt, ierr)
+
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_positions, &
+!   !  &unitSI=unit_SI_position,&
+!   !  &records='positionOffset',&
+!   !  &component='z')
+
+!   ! call pwpart(communicator, file, zero_dp, ierr)
+
+!   ! call file%new(iter=iter,&
+!   !  &time=real(timenow, sp),&
+!   !  &dt=real(dt_loc_in, sp),&
+!   !  &particleName=spec_in%pick_name(),&
+!   !  ! &iterationEncoding='groupBased',&
+!   !  &unitDimension=unit_dimensions_momentum, &
+!   !  &records='momentum',&
+!   !  &component='z')
+
+!   ! call pwpart(communicator, file,&
+!   !  real(spec_in%call_tracked_component(PZ_COMP, lb=1, ub=np), sp), npt, ierr)
+
+!  end subroutine
+
+!#endif
  end module

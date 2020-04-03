@@ -22,6 +22,7 @@
 module base_species
 
  use precision_def
+ use index_array_module
  use util, only: gasdev
  use warnings, only: write_warning
  implicit none
@@ -60,6 +61,8 @@ module base_species
  end type
 
  type scalars
+  character(len=100), private :: name = 'electron'
+  !! Species name
   real(dp), private :: charge
   !! Particle charge
   integer, private :: n_part
@@ -71,17 +74,19 @@ module base_species
   type(track_data_t), private :: track_data
   !! Type containing all the tracking datas 
  contains
+  procedure, public, pass :: istracked => istracked_scalars
   procedure, public, pass :: how_many => how_many_scalars
   procedure, public, pass :: pick_charge => pick_charge_scalars
-  procedure, public, pass :: set_charge => set_charge_scalars
   procedure, public, pass :: pick_dimensions => pick_dimensions_scalars
-  procedure, public, pass :: set_dimensions => set_dimensions_scalars
-  procedure, public, pass :: set_part_number => set_part_number_scalars
-  procedure, public, pass :: pick_temperature => pick_temperature_scalars
-  procedure, public, pass :: set_temperature => set_temperature_scalars
+  procedure, public, pass :: pick_name => pick_name_scalars
   procedure, public, pass :: pick_properties => pick_properties_scalars
+  procedure, public, pass :: pick_temperature => pick_temperature_scalars
+  procedure, public, pass :: set_charge => set_charge_scalars
+  procedure, public, pass :: set_dimensions => set_dimensions_scalars
+  procedure, public, pass :: set_name => set_name_scalars
+  procedure, public, pass :: set_part_number => set_part_number_scalars
+  procedure, public, pass :: set_temperature => set_temperature_scalars
   procedure, public, pass :: track => track_scalars
-  procedure, public, pass :: istracked => istracked_scalars
  end type scalars
 
  type, abstract :: base_species_T
@@ -153,29 +158,33 @@ module base_species
    procedure, public, pass :: flatten
    procedure, pass :: how_many
    procedure, pass :: initialize_data
+   procedure, public, pass :: istracked
    procedure, pass :: new_species => new_species_abstract
    procedure, private :: pack_into_logical
    procedure, private :: pack_into_array
-   procedure, public, pass :: reallocate
-   procedure, public, pass :: redistribute
    procedure, public, pass :: pick_charge
    procedure, public, pass :: pick_dimensions
+   procedure, public, pass :: pick_name
    procedure, public, pass :: pick_properties
    procedure, public, pass :: pick_temperature
+   procedure, public, pass :: pick_tot_tracked_parts
+   procedure, public, pass :: pick_track_params
+   procedure, public, pass :: reallocate
+   procedure, public, pass :: redistribute
    procedure, pass :: set_charge_int
    procedure, pass :: set_charge_real
    procedure, pass :: set_dimensions
+   procedure, public, pass :: set_highest_track_index
+   procedure, public, pass :: set_name
    procedure, pass :: set_part_number
    procedure, pass :: set_properties
    procedure, pass :: set_temperature
-   procedure, public, pass :: pick_track_params
-   procedure, public, pass :: set_highest_track_index
-   procedure, public, pass :: set_track_params
    procedure, public, pass :: set_tot_tracked_parts
+   procedure, public, pass :: set_track_params
    procedure, public, pass :: track
-   procedure, public, pass :: istracked
    procedure, public, pass :: total_size
    procedure(call_component_abstract), deferred, pass :: call_component
+   procedure(call_tracked_component_abstract), deferred, pass :: call_tracked_component
    procedure(extend_abstract), deferred, pass :: extend
    procedure(sel_particles_bounds_abstract), deferred, pass :: sel_particles_bounds
    procedure(sel_particles_index_abstract), deferred, pass :: sel_particles_index
@@ -192,6 +201,17 @@ module base_species
 
   abstract interface
    pure function call_component_abstract( this, component, lb, ub ) result(comp)
+    import :: base_species_T, dp
+    implicit none
+    class(base_species_T), intent(in) :: this
+    integer, intent(in) :: component
+    integer, intent(in), optional :: lb, ub
+    real(dp), allocatable, dimension(:) :: comp
+   end function
+  end interface
+
+  abstract interface
+   pure function call_tracked_component_abstract( this, component, lb, ub ) result(comp)
     import :: base_species_T, dp
     implicit none
     class(base_species_T), intent(in) :: this
@@ -1037,6 +1057,23 @@ module base_species
 
   end function
   
+
+  pure function pick_name( this ) result(name)
+   class(base_species_T), intent(in) :: this
+   character(len=100) :: name
+
+   name = trim(this%properties%name)
+
+  end function
+
+  pure function pick_name_scalars( this ) result(name)
+   class(scalars), intent(in) :: this
+   character(len=100) :: name
+
+   name = trim(this%name)
+
+  end function
+  
   function pick_properties_scalars( this ) result(properties)
    class(scalars), intent(in) :: this
    type(scalars) :: properties
@@ -1056,6 +1093,16 @@ module base_species
    call properties%set_temperature(this%pick_temperature())
    call properties%set_dimensions(this%pick_dimensions())
    call properties%track(this%istracked())
+
+  end function
+  
+  pure function pick_tot_tracked_parts( this ) result(n_tracked)
+   class(base_species_T), intent(in) :: this
+   type(track_data_t) :: track_data
+   integer :: n_tracked
+
+   track_data = this%pick_track_params()
+   n_tracked = track_data%n_tracked
 
   end function
 
@@ -1107,6 +1154,22 @@ module base_species
    integer, intent(in) :: dimens
    
    this%properties%dimensions = dimens
+
+  end subroutine
+  
+  subroutine set_name( this, name)
+   class(base_species_T), intent(inout) :: this
+   character(len=*), intent(in) :: name
+   
+   this%properties%name = trim(name)
+
+  end subroutine
+  
+  subroutine set_name_scalars( this, name)
+   class(scalars), intent(inout) :: this
+   character(len=*), intent(in) :: name
+   
+   this%name = trim(name)
 
   end subroutine
 

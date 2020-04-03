@@ -32,6 +32,7 @@ module particles_def
   contains
    procedure, public :: append => append_spec
    procedure, public :: call_component => call_component_spec
+   procedure, public :: call_tracked_component => call_tracked_component_spec
    procedure, public :: extend => extend_spec
    procedure, public :: new_species => new_species_spec
    procedure, public :: set_component_real
@@ -319,6 +320,51 @@ module particles_def
   case(INDEX_COMP)
    comp = real( this%part_index(lowb:upb), dp )
   end select
+
+ end function
+
+ pure function call_tracked_component_spec( this, component, lb, ub ) result(comp)
+ !! Function that hides the underlying array and calls the
+ !! corresponding component from the particle structure.
+ !! @warning
+ !! This function gives back always an array of reals!
+ !! When using for weights and particle indexes remember to
+ !! cast it again to the right type.
+ !! @endwarning
+
+  class(species_new), intent(in) :: this
+  integer, intent(in) :: component
+  integer, intent(in), optional :: lb, ub
+  real(dp), allocatable, dimension(:) :: comp
+  integer :: lowb, upb, n_parts
+  logical :: tracked
+  logical, allocatable, dimension(:) :: track_mask
+
+  n_parts = this%how_many()
+  tracked = this%istracked()
+
+  if ( .not. tracked ) return
+
+  allocate( track_mask(n_parts) )
+
+  if ( present(lb) ) then
+   lowb = lb
+  else
+   lowb = 1
+  end if
+
+  if ( present(ub) ) then
+   upb = ub
+  else
+   upb = n_parts
+  end if
+
+  associate (inds => this%call_component(INDEX_COMP, lb=lowb, ub=upb), &
+             xx => this%call_component(component, lb=lowb, ub=upb))
+
+   track_mask(1:n_parts) = (int(inds) > 0)
+   comp = PACK(xx(1:n_parts), track_mask(1:n_parts))
+  end associate
 
  end function
 

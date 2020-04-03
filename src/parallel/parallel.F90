@@ -37,6 +37,14 @@
  implicit none
 #endif
 
+  type :: communicator_T
+   integer, private :: world_comm
+   !! Stores the MPI_COMM_WORLD
+   contains
+    procedure, public :: setworld
+    procedure, public :: getworld
+  end type
+
   integer, parameter :: offset_kind = mpi_offset_kind, &
     whence = mpi_seek_set
 
@@ -46,10 +54,30 @@
 
   integer :: status(mpi_status_size), error, mpi_sd
 
- contains
-  !==================
+  type(communicator_T) :: communicator
+  
+  contains
 
-  subroutine check_decomposition
+ !=== Subroutine for communicator type ===
+
+ subroutine setworld( this, comm_in )
+  class(communicator_T), intent(inout) :: this
+  integer, intent(in) :: comm_in
+  
+  this%world_comm = comm_in
+  
+ end subroutine
+ 
+ pure function getworld( this ) result( comm_out )
+  class(communicator_T), intent(in) :: this
+  integer :: comm_out
+
+  comm_out = this%world_comm
+
+ end function
+
+ !==================
+ subroutine check_decomposition
 
    if (npe_yz>0) then
     nprocy = npe_yz
@@ -79,6 +107,8 @@
    call mpi_init(error)
    call mpi_comm_size(mpi_comm_world, mpi_size, error)
    call mpi_comm_rank(mpi_comm_world, mpi_rank, error)
+
+   call communicator%setworld( mpi_comm_world )
 
    call check_decomposition
    !===================================

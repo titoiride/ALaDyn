@@ -4,14 +4,17 @@ enable_language(Fortran)
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+cmake_policy(SET CMP0074 NEW)
 
 # uncomment the following definition to enable GDB attach to debug while running
 # add_definitions(-DENABLE_GDB_ATTACH)
 if(NOT WIN32)
   add_definitions(-DUSE_GDB_ATTACH)
 endif()
+
 # Old species (provisional)
 # add_definitions(-DOLD_SPECIES)
+
 # you can force FFTW if necessary, avoiding MKL (which is preferred on Intel systems)
 set(FORCE_FFTW OFF CACHE BOOL "Forcing FFTW libraries")
 
@@ -75,6 +78,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/start/system_utilities.f90
   src/structs/base_species.f90
   src/structs/grid_def.f90
+  src/structs/index_array.f90
   src/structs/particles_aux_def.f90
   src/structs/particles_def.f90
   src/structs/struct_def.f90
