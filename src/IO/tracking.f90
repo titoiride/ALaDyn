@@ -38,6 +38,11 @@ module tracking
  real(sp), allocatable, dimension(:), private, save :: track_pdata
  integer, private, save :: iter_index
  logical, allocatable, dimension(:), private, save :: track_mask
+ logical, save :: tracking_written
+ character(len=8), public, parameter :: tracking_folder = 'tracking'
+ character(len=23), private, parameter :: track_dic = 'tracking_dictionary.dat'
+ integer, private, parameter :: track_iounit = 50
+
  contains
 
  !====== PARTICLE TRACKING UTILITIES ==========
@@ -180,11 +185,18 @@ module tracking
    logical :: tracking
    integer :: ic
 
+   tracking_written = .false.
    tracking = ANY(p_tracking, DIM=1)
    if (.not. tracking) return
 
-   call create_tracking_folders
+   call create_tracking_folders(tracking_folder)
 
+   if (pe0) then
+    open(unit=track_iounit, file=tracking_folder//'/'//track_dic, &
+     form='formatted', status='new')
+    write(track_iounit, '(a9,a4,a4)') 'Iteration', '    ', 'Time'
+    close(track_iounit)
+   end if
    iter_index = 0
    do ic = 1, nsp
     call spec_in(ic)%track( p_tracking(ic), allocate_now=.true. )
@@ -346,8 +358,17 @@ module tracking
   do ic = 1, nsp
    if ( MOD(iter, every_track(ic) ) == 0 .and. spec_in(ic)%istracked()) then
     call tracking_write_output(spec_in(ic), timenow, iter, ic)
+    if (pe0) then
+     open(unit=track_iounit, file=tracking_folder//'/'//track_dic, &
+      form='formatted', status='old', position="append", action="write")
+     write(track_iounit, '(i6.6, e12.5)') iter_index - 1, timenow
+     close(track_iounit)
+    end if
+    tracking_written = .true.
    end if
   end do
+  ! Warning: both dictionary writing and tracking_written flag
+  ! must be switched to array if employing multiple species tracking
  end subroutine
 
 ! !#if defined(OPENPMD)

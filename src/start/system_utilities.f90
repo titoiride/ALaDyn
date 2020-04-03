@@ -41,9 +41,9 @@
    if (pe0) call create_folder('diagnostics')
   end subroutine
 
-  subroutine create_tracking_folders
-
-   if (pe0) call create_folder('tracking')
+  subroutine create_tracking_folders( name )
+   character(len=*), intent(in) :: name
+   if (pe0) call create_folder(name)
   end subroutine
 
 

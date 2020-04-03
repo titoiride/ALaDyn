@@ -147,10 +147,11 @@
    !=================================
     call env_run( tnow, iter )
 
-    !call track_out( spec, tnow, iter )
+    call track_out( spec, tnow, iter )
     call timing !iter=iter+1  tnow=tnow+dt_loc
     call Data_out
 
+    tracking_written = .false.
     if (ier /= 0) then
      call error_message
      exit
@@ -180,6 +181,8 @@
 
    if (tnow >= tout) then
     call create_timestep_folder( iout )
+    ! Setting 0 on track_out iter so that it is
+    ! always writing inside Data_out
     call track_out( spec, tnow, 0 )
     tout = tout + dtout
     if (diag) then
