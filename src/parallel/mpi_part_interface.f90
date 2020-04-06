@@ -166,7 +166,7 @@
   type( species_aux ) :: temp_spec
   type( scalars ) :: part_properties
   real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
-  integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
+  integer :: kk, p, q, ns, nr, cdir, tot, tot_aux, tot_size, dump
   integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
   real (dp) :: sp_charge
   logical :: mask(old_np)
@@ -184,6 +184,9 @@
   part_properties = sp_loc%pick_properties()
   sp_charge = sp_loc%pick_charge()
   p = tot_size*max(nl_send, nr_send)
+  ! Set ndv to zero to remove the "unused" warning
+  ! Variables are only kept for compatibility with old routine
+  dump = ndv
   if (p > 0) then
    allocate(aux_array1(p), source=zero_dp)
   end if
@@ -475,9 +478,9 @@
    integer, intent (out) :: npt
    type(index_array) :: left_pind, right_pind
    type( species_aux ) :: temp_spec
-   type( scalars ) :: part_properties, part_properties_sr
+   type( scalars ) :: part_properties
    real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
-   integer :: k, kk, n, p, q, ns, nr, cdir, tot, tot_aux, tot_size
+   integer :: kk, p, q, ns, nr, cdir, tot, tot_aux, tot_size, dump
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
    real (dp) :: sp_charge
    logical :: mask(old_np)
@@ -495,6 +498,10 @@
    sp_charge = sp_loc%pick_charge()
    part_properties = sp_loc%pick_properties()
    p = 2*tot_size*max(nl_send, nr_send)
+
+   ! Set ndv to zero to remove the "unused" warning
+   ! Variables are only kept for compatibility with old routine
+   dump = ndv
    if (p > 0) then
     allocate(aux_array1(p), source=zero_dp)
    end if
@@ -890,10 +897,13 @@
    real (dp), allocatable, dimension(:) :: xp
    type(index_array) :: left_pind, right_pind
    real (dp) :: dxp
-   integer :: n, p, pout, cdir, vxdir, npt
+   integer :: p, pout, cdir, vxdir, npt, dump
    logical, allocatable, dimension(:) :: mask
    !===========================
    np_new = np
+   ! Set ndv to zero to remove the "unused" warning
+   ! Variables are only kept for compatibility with old routine
+   dump = ndv
    allocate( mask(np) )
    p = 0
    pout = 0
@@ -1002,7 +1012,7 @@
    logical, intent (in) :: moving_wind
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   integer :: ic, nspx, n, np, np_new, np_new_allocate, ndv, &
+   integer :: ic, nspx, np, np_new, np_new_allocate, ndv, &
      np_rs, np_out
    integer :: n_sr(4)
    real (dp) :: ymm, ymx, lbd_min, rbd_max

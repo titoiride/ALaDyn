@@ -368,7 +368,7 @@ module particles_def
   class(species_new), intent(inout) :: this
   integer, intent(in) :: new_number
   type(species_new) :: temp
-  integer :: n_parts, dimensions
+  integer :: n_parts
 
 
   if ( .not. allocated(this%initialized) ) then

@@ -113,8 +113,7 @@
    real (dp), intent (in) :: evf(:, :, :, :)
    real (dp), intent (out) :: av(:, :, :, :)
    integer, intent (in) :: spl_in, spr_in
-   integer :: ix, iy, iz, ord
-   real (dp) :: ar, ai
+   integer :: ord
    real (dp), parameter :: frac = one_dp/8.
    !===================
    ord = 2
@@ -135,10 +134,10 @@
    !=====================
   end subroutine
   !===========================
-  subroutine env_amp_prepare(envf, av, ord, spl_in, spr_in)
+  subroutine env_amp_prepare(envf, av, spl_in, spr_in)
    real (dp), intent (in) :: envf(:, :, :, :)
    real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: ord, spl_in, spr_in
+   integer, intent (in) :: spl_in, spr_in
    integer :: spl, spr
    !real(dp) :: ar,ai
    !===================
@@ -202,7 +201,7 @@
    integer, intent (in) :: it_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   integer :: np, ic, id_ch
+   integer :: np, ic
    real (dp) :: ef2_ion, loc_ef2_ion(2)
    logical, parameter :: mw = .false.
    !============================
@@ -271,7 +270,7 @@
    if (Two_color) then
     call env_amp_two_fields_prepare(env, env1, jc, 2, 2, 2)
    else
-    call env_amp_prepare(env, jc, 2, 2, 2)
+    call env_amp_prepare(env, jc, 2, 2)
    end if
    !======================================
    ! exit jc(1)=|a|^2/2 at t^n
@@ -442,7 +441,7 @@
    if (Two_color) then
     call env_amp_two_fields_prepare(env, env1, jc, 2, 2, 2)
    else
-    call env_amp_prepare(env, jc, 2, 2, 2)
+    call env_amp_prepare(env, jc, 2, 2)
    end if
    !======================================
    ! exit jc(1)=|a|^2/2 at t^n

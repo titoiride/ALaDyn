@@ -367,7 +367,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 
 ```fortran
 &TRACKING
- P_tracking     = .true.,
+ P_tracking       = .true.,
  nkjump           = 1,
  tkjump           = 4,
  txmin            = 55.,
@@ -376,8 +376,6 @@ Copper    (atomic_number = 29) - mass_number = 63.54
  tymax            = 80.,
  tzmin            = -20.,
  tzmax            = 20.,
- t_in             = 0.,
- t_out            = 200.,
 /
 ```
 + `P_tracking` logical flag: if true the particle tracking is enabled
@@ -389,8 +387,6 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 + `tymax` to select particles with initial transverse coordinate `y < tymax` to be tracked
 + `tzmin` to select particles with initial transverse coordinate `z > tzmin` to be tracked
 + `tzmax` to select particles with initial transverse coordinate `z < tzmax` to be tracked
-+ `t_in` initial tracking time
-+ `t_out` final tracking time
 
 ## MPIPARAMS namelist block
 

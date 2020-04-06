@@ -193,8 +193,7 @@
    real (dp), intent (in) :: t_x, ch
    integer, intent (in) :: ic, i2
    integer, intent(inout) :: p, q
-   type(index_array) :: index
-   integer :: i, j, k, j2, k2, n_parts
+   integer :: j2, k2, n_parts
 
    q = p
    call init_random_seed(mype)
@@ -4572,7 +4571,7 @@
    !============
    do ic = 1, nsp
     i2 = loc_nptx(ic)
-    charge = int(unit_charge(ic))
+    charge = int(unit_charge(ic), hp_int)
     p = 0
     do k1 = 1, loc_npty(ic)
      do i = 1, i2

@@ -61,7 +61,7 @@
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    integer, intent (in) :: np, i1, i2, ic
    integer :: n, j2, k2, n_parts
-   integer, allocatable, dimension(:) :: t_index
+
    n = np
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
@@ -144,9 +144,8 @@
    type(species_aux), intent(inout) :: spec_aux_in
    real (dp), intent (in) :: xmx
    integer :: ic, ix, npt_inj(4), np_old, np_new
-   integer :: i1, i2, n, q
+   integer :: i1, i2, q
    integer :: j2, k2, ndv
-   integer :: j, k
 
    !========== inject particles from the right 
    !   xmx is the box xmax grid value at current time after window move
@@ -212,7 +211,7 @@
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
    real (dp), intent (in) :: xmx
    integer :: ic, ix, npt_inj(4), np_old, np_new
-   integer :: i1, i2, n, q
+   integer :: i1, i2, q
    integer :: j2, k2, ndv
    integer :: j, k
 

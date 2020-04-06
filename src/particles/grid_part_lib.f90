@@ -146,7 +146,6 @@
     !! cells
    real (dp), intent (in) :: xp(:)
    type(interp_coeff), intent(inout) :: interp_in
-   integer :: ix, ihx
    real (dp) :: xx, sx
    !======================
 
@@ -243,7 +242,7 @@
   !! half-integer cells
    real (dp), intent (in) :: xp(:)
    type(interp_coeff), intent(inout) :: interp_in
-   integer :: ix, ihx, iy, ihy
+   integer :: ix, iy
    real (dp) :: xx, sx
    !======================
 
@@ -502,7 +501,7 @@
    !! half-integer cells
    real (dp), intent (in) :: xp(:)
    type(interp_coeff), intent(inout) :: interp_in
-   integer :: ix, ihx, iy, ihy, iz, ihz
+   integer :: ix, iy, iz
    real (dp) :: xx, sx
    !======================
 

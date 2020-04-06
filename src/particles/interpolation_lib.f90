@@ -300,10 +300,11 @@
   ! End templates
   ! =======================================================
   subroutine zeroth_order_real(deltax, ax0)
-   real(dp), intent(in) :: deltax
+   real(dp), intent(inout) :: deltax
    real(dp), intent(out) :: ax0
    ! Here dx should be computed as
    ! dx = x - int(x + 0.5)
+   deltax = zero_dp
    ax0 = one_dp
   end subroutine
 

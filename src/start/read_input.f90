@@ -177,6 +177,7 @@
 
    !--- reading tracking parameters ---!
    p_tracking = .false.
+   every_track = 1
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, tracking, iostat=nml_ierr)
    nml_error_message = 'TRACKING'

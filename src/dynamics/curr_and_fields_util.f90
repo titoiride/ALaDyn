@@ -109,9 +109,13 @@
 
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: apt
-   integer, intent (in) :: np, ncmp
+   integer, intent (inout) :: np, ncmp
    real(dp) :: ch
 
+   ! Set np and ncmp to zero to remove the "unused" warning
+   ! Variables are only kept for compatibility with old routine
+   np = 0
+   ncmp = 0
    ch = sp_loc%pick_charge()
    !==========================
    call multiply_field_charge(apt, ch)
@@ -378,8 +382,8 @@
   end subroutine
   !========================================================
 
-  subroutine wave_field_left_inject(ef, x_left)
-   real (dp), intent (inout) :: ef(:, :, :, :)
+  subroutine wave_field_left_inject(ef_in, x_left)
+   real (dp), intent (inout) :: ef_in(:, :, :, :)
    real (dp), intent (in) :: x_left
    real (dp) :: tnew, xm
    integer :: wmodel_id, ic
@@ -393,9 +397,9 @@
     if (lp_in(ic) < x_left) then
      if (lp_end(ic) >= xm) then
       lp_inject = .true.
-      if (model_id<3) call inflow_lp_fields(ebf, lp_amp, tnew, t0_lp, &
+      if (model_id<3) call inflow_lp_fields(ef_in, lp_amp, tnew, t0_lp, &
         w0_x, w0_y, xf_loc(ic), oml, wmodel_id, ix1, jy1, jy2, kz1, kz2)
-      if (model_id==3) call inflow_cp_fields(ebf, lp_amp, tnew, t0_lp, &
+      if (model_id==3) call inflow_cp_fields(ef_in, lp_amp, tnew, t0_lp, &
         w0_x, w0_y, xf_loc(ic), wmodel_id, ix1, jy1, jy2, kz1, kz2)
      end if
     end if
@@ -406,7 +410,7 @@
     if (lp_ionz_in < x_left) then
      if (lp_ionz_end >= xm) then
       lp_inject = .true.
-      call inflow_lp_fields(ebf, lp1_amp, tnew, t1_lp, w1_x, w1_y, xf1, &
+      call inflow_lp_fields(ef_in, lp1_amp, tnew, t1_lp, w1_x, w1_y, xf1, &
         om1, model_id, ix1, jy1, jy2, kz1, kz2)
      end if
     end if

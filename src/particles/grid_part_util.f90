@@ -293,7 +293,7 @@
    integer, intent (in) :: np, ic
    real (dp) :: dvol
    real (dp), allocatable, dimension(:) :: weight
-   integer :: i1, j1, k1, i2, j2, k2, n, ch, spline
+   integer :: i1, j1, k1, i2, j2, k2, n, spline
    !======================
    ! Computes charge density of species ic on a grid
    !=================================
@@ -501,8 +501,8 @@
    real (dp), intent (inout) :: eden(:, :, :, :)
    integer, intent (in) :: np, icp
    real (dp), allocatable, dimension(:) :: gam
-   real (dp) :: dvol, gam2, gam_p
-   integer :: i1, j1, k1, i2, j2, k2, n, ch, spline
+   real (dp) :: dvol, gam_p
+   integer :: i1, j1, k1, i2, j2, k2, n, spline
    !======================
    !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
    !================================================
@@ -889,7 +889,7 @@
    integer, intent (in) :: np
    real (dp), allocatable, dimension(:) :: gam
    real (dp) :: dvol
-   integer :: i1, j1, k1, i2, j2, k2, n, ch, spline
+   integer :: i1, j1, k1, i2, j2, k2, n, spline
    !================================================
    !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
    !================================================

@@ -22,6 +22,7 @@
 module tracking
  !! Module to manage the tracked particles
 
+ use common_param, only: ref_nspec
  use parallel
  use pstruct_data
  use phys_param
@@ -36,12 +37,14 @@ module tracking
 
  real(dp), allocatable, dimension(:, :), private, save :: track_aux
  real(sp), allocatable, dimension(:), private, save :: track_pdata
- integer, private, save :: iter_index
+ integer, private, save, dimension(ref_nspec) :: iter_index
  logical, allocatable, dimension(:), private, save :: track_mask
  logical, save :: tracking_written
  character(len=8), public, parameter :: tracking_folder = 'tracking'
- character(len=23), private, parameter :: track_dic = 'tracking_dictionary.dat'
- integer, private, parameter :: track_iounit = 50
+ character(len=25), private,&
+  dimension(ref_nspec) :: track_dic
+ integer, private, parameter, &
+  dimension(ref_nspec) :: track_iounit = [(50 + i - 1, i = 1, ref_nspec)]
 
  contains
 
@@ -191,16 +194,17 @@ module tracking
 
    call create_tracking_folders(tracking_folder)
 
-   if (pe0) then
-    open(unit=track_iounit, file=tracking_folder//'/'//track_dic, &
-     form='formatted', status='new')
-    write(track_iounit, '(a9,a4,a4)') 'Iteration', '    ', 'Time'
-    close(track_iounit)
-   end if
    iter_index = 0
    do ic = 1, nsp
     call spec_in(ic)%track( p_tracking(ic), allocate_now=.true. )
     call spec_in(ic)%set_tot_tracked_parts( 0 )
+    write(track_dic(ic), '(a20,i1.1,a4)') 'tracking_dictionary_',ic,'.dat'
+    if (pe0) then
+     open(unit=track_iounit(ic), file=tracking_folder//'/'//track_dic(ic), &
+      form='formatted', status='new')
+     write(track_iounit(ic), '(a9,a4,a4)') 'Iteration', '    ', 'Time'
+     close(track_iounit(ic))
+    end if
    end do
 
    call spec_aux_in%track( p_tracking(1), allocate_now=.true. )
@@ -224,9 +228,7 @@ module tracking
 
    type(species_new), dimension(:), intent(inout) :: spec_in
    integer, intent(in) :: ic
-   integer, allocatable, dimension(:) :: parts, track_index
-   integer :: np, part_jump
-   type (track_data_t) :: track_data
+   integer :: np
 
    if ( .not. spec_in(ic)%istracked() ) return
    
@@ -237,14 +239,14 @@ module tracking
 
  !====== PARTICLE TRACKING I/O ==========
 
-  subroutine tracking_write_output(  spec_in, timenow, iter, pid )
+  subroutine tracking_write_output(  spec_in, timenow, pid )
    !! Tracking I/O with the same strategy as part_pdata_out_new.
    !! The printed file contains the particle phase space (2*n_dimension),
    !! the particle weight, Lorentz gamma and index
 
   type(species_new), intent(in) :: spec_in
   real (dp), intent (in) :: timenow
-  integer, intent (in) :: iter, pid
+  integer, intent (in) :: pid
 
   character (12) :: fname
   character (8) :: foldername
@@ -259,7 +261,7 @@ module tracking
   type(track_data_t) :: track_data
 
   write (foldername, '(a8)') 'tracking'
-  write( fname, '(a6, i1.1, a1, i4.4)') 'Track_', pid, '_', iter_index
+  write( fname, '(a6, i1.1, a1, i4.4)') 'Track_', pid, '_', iter_index(pid)
 
   fname_out = foldername // '/' // fname // '.bin'
 
@@ -339,11 +341,17 @@ module tracking
   disp = disp*4 ! sia gli int che i float sono di 4 bytes
 
   call mpi_write_part(track_pdata, lenp, ip, disp, 25, fname_out)
-  iter_index = iter_index + 1
+  iter_index(pid) = iter_index(pid) + 1
   if (pe0) then
    write(6, *)            '==========================================='
    write(6, '(a35,i2.2)') ' Tracking data written for species ', pid
    write(6, *)            '==========================================='
+  end if
+  if (pe0) then
+   open(unit=track_iounit(pid), file=tracking_folder//'/'//track_dic(pid), &
+    form='formatted', status='old', position="append", action="write")
+   write(track_iounit(pid), '(i6.6, e12.5)') iter_index(pid) - 1, timenow
+   close(track_iounit(pid))
   end if
  end subroutine
  !================================
@@ -356,15 +364,11 @@ module tracking
   integer :: ic
 
   do ic = 1, nsp
-   if ( MOD(iter, every_track(ic) ) == 0 .and. spec_in(ic)%istracked()) then
-    call tracking_write_output(spec_in(ic), timenow, iter, ic)
-    if (pe0) then
-     open(unit=track_iounit, file=tracking_folder//'/'//track_dic, &
-      form='formatted', status='old', position="append", action="write")
-     write(track_iounit, '(i6.6, e12.5)') iter_index - 1, timenow
-     close(track_iounit)
+   if (spec_in(ic)%istracked()) then
+    if ( MOD(iter, every_track(ic) ) == 0 ) then
+     call tracking_write_output(spec_in(ic), timenow, ic)
+     tracking_written = .true.
     end if
-    tracking_written = .true.
    end if
   end do
   ! Warning: both dictionary writing and tracking_written flag

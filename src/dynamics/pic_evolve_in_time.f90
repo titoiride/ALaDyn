@@ -114,7 +114,7 @@
    end if
    !=======================
    ! Inject fields at i=i1-1  for inflow Lp_inject=T
-   !call wave_field_left_inject(xmn)  !(Bz=Ey By=Ez are injected at i1-1 point
+   !call wave_field_left_inject(ebf, xmn)  !(Bz=Ey By=Ez are injected at i1-1 point
    call advance_lpf_fields(ebf, jc, 0)
    !============================
   end subroutine
@@ -123,7 +123,7 @@
    integer, intent (in) :: iter_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   integer :: ic, np, id_ch
+   integer :: ic, np
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
    logical, parameter :: mw = .false.
    !============================
@@ -193,7 +193,7 @@
    end if
    !=======================
    ! Inject fields at i=i1-1  for inflow Lp_inject=T
-   !call wave_field_left_inject(xmn)  !(Bz=Ey By=Ez are injected at i1-1 point
+   !call wave_field_left_inject(ebf, xmn)  !(Bz=Ey By=Ez are injected at i1-1 point
    call advance_lpf_fields(ebf, jc, 0)
    !============================
   end subroutine

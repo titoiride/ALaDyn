@@ -749,6 +749,7 @@
    dvol = 1./ekt(1)
    
    if (part) then
+    allocate( np_all(nsp) )
     np_all = loc_npart(imody, imodz, imodx, 1:nsp)
     call v_realloc( diag_part_aux, maxval(np_all), nd2 + 1)
     p_energy_norm = np_per_cell*mev_to_joule

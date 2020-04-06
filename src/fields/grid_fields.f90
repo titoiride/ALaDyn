@@ -220,7 +220,7 @@
    integer, intent (in) :: ic1, ic2, isch
    integer :: i1, n1p, i, j, k, ii, ic, ind
    real (dp) :: aphx, aphx_exp, aphx_impl, a, b, c, b1, c1, an, bn
-   real (dp), dimension (3), parameter :: RDER = [ -3., 4., -1. ]
+   !real (dp), dimension (3), parameter :: RDER = [ -3., 4., -1. ]
    !=====================
    ! APPLIES also for prlx=.true. (MPI x decomposition)
    !=============================================
@@ -598,7 +598,7 @@
    integer :: i, j, k, ic
    real (dp) :: dt2, dx1_inv, dhx1_inv, aph_opt(2)
    real (dp) :: kfact, k2_fact, skfact
-   real (dp), dimension (0:2), parameter :: LDER = [ 1.0, -4.0, 3.0 ]
+   !real (dp), dimension (0:2), parameter :: LDER = [ 1.0, -4.0, 3.0 ]
    !==========================
    ! EXPLICIT INTEGRATION of Maxwell ENVELOPE EVOLUTION EQUATION
    ! See: D.Terzani P. Londrillo " A fast and accurate numerical
@@ -875,7 +875,7 @@
    real(dp) :: shx, shy, shz, smy, smz, alpha
    integer :: i, j, k, iic, i1, i2, j1, j2, k1, k2, point
    integer :: comp1, comp2
-   integer, dimension(:, :), allocatable :: COEFF
+   !integer, dimension(:, :), allocatable :: COEFF
    integer :: stenc
 
    COEFF_2(1, :) = [3, -3, 1]
@@ -903,7 +903,7 @@
 
    shx = dx_inv
    stenc = 3
-   COEFF = - TRANSPOSE( COEFF_2 )
+   !COEFF = - TRANSPOSE( COEFF_2 )
 
    if(xl_bd) then
     if (ibx == 0) then
@@ -1892,7 +1892,8 @@
    integer :: ii, iic
    real(dp) :: dw(2), sl(2), sr(2), omgl(2), s0
    real(dp), dimension(2), parameter :: W03 = [ 1./4., 3./4. ]
-   real(dp), dimension(2), parameter :: W03_OPT = [ 1./3., 2./3. ]
+   !De-comment the optimized coefficient to substitute W03
+   !real(dp), dimension(2), parameter :: W03_OPT = [ 1./3., 2./3. ]
 
    !=======ENTER DATA [i1,np]
    !wl_{i+1/2}  uses stencil [i-1,i,i+1] in range [i=i1+1,np-1] 

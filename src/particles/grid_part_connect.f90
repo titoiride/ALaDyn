@@ -2351,7 +2351,7 @@
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
 
-   real (dp), allocatable, dimension(:, :) :: xx, ap
+   real (dp), allocatable, dimension(:, :) :: xx
    real (dp), allocatable, dimension(:, :) :: axh0, axh1
    real (dp), allocatable, dimension(:, :) :: axh, ayh
    real (dp), allocatable, dimension(:, :) :: currx, curry
