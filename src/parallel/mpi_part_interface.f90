@@ -30,6 +30,7 @@
   implicit none
   real (dp) :: loc_pstore(7)
   real (dp), allocatable :: sp_aux(:, :), sp1_aux(:, :)
+  real (dp), allocatable, dimension(:), private, save :: aux_array1, aux_array2
   type(species_new) :: sp_aux_new, sp1_aux_new
 
   interface traffic_size_eval
@@ -165,7 +166,7 @@
   type(index_array) :: left_pind, right_pind
   type( species_aux ) :: temp_spec
   type( scalars ) :: part_properties
-  real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
+  real(dp), allocatable :: temp(:), xp(:)
   integer :: kk, p, q, ns, nr, cdir, tot, tot_aux, tot_size, dump
   integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
   real (dp) :: sp_charge
@@ -187,13 +188,9 @@
   ! Set ndv to zero to remove the "unused" warning
   ! Variables are only kept for compatibility with old routine
   dump = ndv
-  if (p > 0) then
-   allocate(aux_array1(p), source=zero_dp)
-  end if
+  call array_realloc_1d(aux_array1, p)
   q = tot_size*max(nl_recv, nr_recv)
-  if (q > 0) then
-   allocate(aux_array2(q), source=zero_dp)
-  end if
+  call array_realloc_1d(aux_array2, q)
   !==================== copy remaining part => spec_aux_in
   right_pind = index_array(old_np)
   left_pind = index_array(old_np)
@@ -479,7 +476,7 @@
    type(index_array) :: left_pind, right_pind
    type( species_aux ) :: temp_spec
    type( scalars ) :: part_properties
-   real(dp), allocatable :: temp(:), xp(:), aux_array1(:), aux_array2(:)
+   real(dp), allocatable :: temp(:), xp(:)
    integer :: kk, p, q, ns, nr, cdir, tot, tot_aux, tot_size, dump
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
    real (dp) :: sp_charge
@@ -497,18 +494,15 @@
    tot_size = sp_loc%total_size()
    sp_charge = sp_loc%pick_charge()
    part_properties = sp_loc%pick_properties()
-   p = 2*tot_size*max(nl_send, nr_send)
-
+   
    ! Set ndv to zero to remove the "unused" warning
    ! Variables are only kept for compatibility with old routine
    dump = ndv
-   if (p > 0) then
-    allocate(aux_array1(p), source=zero_dp)
-   end if
+
+   p = 2*tot_size*max(nl_send, nr_send)
+   call array_realloc_1d(aux_array1, p)
    q = 2*tot_size*max(nl_recv, nr_recv)
-   if (q > 0) then
-    allocate(aux_array2(q), source=zero_dp)
-   end if
+   call array_realloc_1d(aux_array2, q)
    !==================== copy remaining part => spec_aux_in
    !CHECK if index is the fastest way to select particles in species_new
    right_pind = index_array(old_np)

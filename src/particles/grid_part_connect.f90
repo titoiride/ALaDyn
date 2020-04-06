@@ -2393,7 +2393,6 @@
      ! Interpolation on new positions
      gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
      gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-     
      call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
      
      ! Interpolation on old positions

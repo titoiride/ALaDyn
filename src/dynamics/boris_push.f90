@@ -90,6 +90,8 @@
 
    case (2)
 
+    call sp_loc%compute_gamma()
+
     bp_pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(BZ_COMP, lb=1, ub=np) * sp_loc%call_component(PY_COMP, lb=1, ub=np) *&
@@ -104,6 +106,8 @@
     call sp_loc%set_component(bp_pp(1:np, 2), PY_COMP, lb=1, ub=np)
 
    case (3)
+
+    call sp_loc%compute_gamma()
 
     bp_pp(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np) - &
     alp*pt%call_component(EX_COMP, lb=1, ub=np) - &
@@ -364,9 +368,9 @@
    !In comoving frame vbeam >0
    if (vbeam>0.) then
     call sp_loc%set_component(sp_loc%call_component(X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
-     X_COMP, lb=1, ub=np)
+    X_COMP, lb=1, ub=np)
     call pt%set_component(pt%call_component(OLD_X_COMP, lb=1, ub=np) - dt_lp*vbeam, &
-     OLD_X_COMP, lb=1, ub=np)
+    OLD_X_COMP, lb=1, ub=np)
    end if
   end subroutine
   !=============================

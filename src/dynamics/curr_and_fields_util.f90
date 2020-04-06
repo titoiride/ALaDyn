@@ -110,12 +110,13 @@
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: apt
    integer, intent (inout) :: np, ncmp
+   integer :: dump
    real(dp) :: ch
 
    ! Set np and ncmp to zero to remove the "unused" warning
    ! Variables are only kept for compatibility with old routine
-   np = 0
-   ncmp = 0
+   dump = np
+   dump = ncmp
    ch = sp_loc%pick_charge()
    !==========================
    call multiply_field_charge(apt, ch)

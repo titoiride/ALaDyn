@@ -164,7 +164,7 @@
    !curr_clean
    do ic = 1, nsp_run
     np = loc_npart(imody, imodz, imodx, ic)
-     !============
+    !============
     call set_lpf_acc(ebf, spec_in(ic), spec_aux_in, np, nfield)
     call field_charge_multiply(spec_in(ic), spec_aux_in, np, nfield)
 
