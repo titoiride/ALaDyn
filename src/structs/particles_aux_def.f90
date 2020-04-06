@@ -114,9 +114,6 @@ module particles_aux_def
 
  end type species_aux
 
- interface operator(*)
-  module procedure :: multiply_number_aux
- end interface
  contains
 
  !========================================
@@ -1052,75 +1049,43 @@ module particles_aux_def
  ! NOT TYPE BOUND PROCEDURES
  !========================================
 
- function multiply_number_aux( this, number ) result(dot)
-  type(species_aux), intent(in) :: this
+ subroutine multiply_field_charge( this, number )
+  type(species_aux), intent(inout) :: this
   real(dp), intent(in) :: number
-  type(species_aux) :: dot
   integer :: np
 
   if ( .not. allocated(this%initialized) ) then
    write(6, *) 'Error, particle aux vector not initialized'
   end if
 
-  if ( this%empty ) then
-   call dot%new_species(this%how_many(), this%pick_dimensions())
-  else
-   np = this%how_many()
-   call dot%new_species(this%how_many(), this%pick_dimensions())
-   call dot%set_charge(this%pick_charge())
-   if( this%allocated_x ) then
-    call assign(dot%x, number*this%call_component(X_COMP), 1, np)
-   end if
-   if( this%allocated_y ) then
-    call assign(dot%y, number*this%call_component(Y_COMP), 1, np)
-   end if
-   if( this%allocated_z ) then
-    call assign(dot%z, number*this%call_component(Z_COMP), 1, np)
-   end if
-   if( this%allocated_px ) then
-    call assign(dot%px, number*this%call_component(PX_COMP), 1, np)
-   end if
-   if( this%allocated_py ) then
-    call assign(dot%py, number*this%call_component(PY_COMP), 1, np)
-   end if
-   if( this%allocated_pz ) then
-    call assign(dot%pz, number*this%call_component(PZ_COMP), 1, np)
-   end if
-   if( this%allocated_gamma ) then
-    call assign(dot%gamma_inv, number*this%call_component(INV_GAMMA_COMP), 1, np)
-   end if
-   if( this%allocated_weight ) then
-    call assign(dot%weight, number*this%call_component(W_COMP), 1, np)
-   end if
-   if( this%allocated_index ) then
-    call assign(dot%part_index, number*this%call_component(INDEX_COMP), 1, np)
-   end if
+  if ( this%empty ) return
+ 
+  np = this%how_many()
 
-   if( this%allocated_aux1 ) then
-    call assign(dot%aux1, number*this%call_component(AUX1_COMP), 1, np)
-   end if
-   if( this%allocated_aux2 ) then
-    call assign(dot%aux2, number*this%call_component(AUX2_COMP), 1, np)
-   end if
-   if( this%allocated_aux3 ) then
-    call assign(dot%aux3, number*this%call_component(AUX3_COMP), 1, np)
-   end if
-   if( this%allocated_aux4 ) then
-    call assign(dot%aux4, number*this%call_component(AUX4_COMP), 1, np)
-   end if
-   if( this%allocated_aux5 ) then
-    call assign(dot%aux5, number*this%call_component(AUX5_COMP), 1, np)
-   end if
-   if( this%allocated_aux6 ) then
-    call assign(dot%aux6, number*this%call_component(AUX6_COMP), 1, np)
-   end if
-   if( this%allocated_aux7 ) then
-    call assign(dot%aux7, number*this%call_component(AUX7_COMP), 1, np)
-   end if
-   if( this%allocated_aux8 ) then
-    call assign(dot%aux8, number*this%call_component(AUX8_COMP), 1, np)
-   end if
+  if( this%allocated_aux1 ) then
+   call this%set_component( number*this%call_component(AUX1_COMP, lb=1, ub=np),&
+    AUX1_COMP, lb=1, ub=np)
   end if
-  
- end function
+  if( this%allocated_aux2 ) then
+   call this%set_component( number*this%call_component(AUX2_COMP, lb=1, ub=np),&
+    AUX2_COMP, lb=1, ub=np)
+  end if
+  if( this%allocated_aux3 ) then
+   call this%set_component( number*this%call_component(AUX3_COMP, lb=1, ub=np),&
+    AUX3_COMP, lb=1, ub=np)
+  end if
+  if( this%allocated_aux4 ) then
+   call this%set_component( number*this%call_component(AUX4_COMP, lb=1, ub=np),&
+    AUX4_COMP, lb=1, ub=np)
+  end if
+  if( this%allocated_aux5 ) then
+   call this%set_component( number*this%call_component(AUX5_COMP, lb=1, ub=np),&
+    AUX5_COMP, lb=1, ub=np)
+  end if
+  if( this%allocated_aux6 ) then
+   call this%set_component( number*this%call_component(AUX6_COMP, lb=1, ub=np),&
+    AUX6_COMP, lb=1, ub=np)
+  end if
+
+ end subroutine
 end module

@@ -42,10 +42,6 @@ module particles_def
    procedure, pass :: sweep => sweep_spec
  end type
 
- interface operator(*)
-  module procedure :: multiply_number_spec
- end interface
-
  contains
 
  !========================================
@@ -618,45 +614,4 @@ module particles_def
  ! NOT TYPE BOUND PROCEDURES
  !========================================
 
- function multiply_number_spec( this, number ) result(dot)
-  type(species_new), intent(in) :: this
-  real(dp), intent(in) :: number
-  type(species_new) :: dot
-  integer :: np
-  !===========================================
-  ! WARNING: THIS FUNCTION IS CLEARLY WRONG
-  !===========================================
-  np = this%how_many()
-  call dot%new_species(this%how_many(), this%pick_dimensions(), tracked=this%istracked())
-  call dot%set_charge(this%pick_charge())
-
-  if( this%allocated_x ) then
-   call assign(dot%x, number*this%call_component(X_COMP), 1, np)
-  end if
-  if( this%allocated_y ) then
-   call assign(dot%y, number*this%call_component(Y_COMP), 1, np)
-  end if
-  if( this%allocated_z ) then
-   call assign(dot%z, number*this%call_component(Z_COMP), 1, np)
-  end if
-  if( this%allocated_px ) then
-   call assign(dot%px, number*this%call_component(PX_COMP), 1, np)
-  end if
-  if( this%allocated_py ) then
-   call assign(dot%py, number*this%call_component(PY_COMP), 1, np)
-  end if
-  if( this%allocated_pz ) then
-   call assign(dot%pz, number*this%call_component(PZ_COMP), 1, np)
-  end if
-  if( this%allocated_gamma ) then
-   call assign(dot%gamma_inv, number*this%call_component(INV_GAMMA_COMP), 1, np)
-  end if
-  if( this%allocated_weight ) then
-   call assign(dot%weight, number*this%call_component(W_COMP), 1, np)
-  end if
-  if( this%allocated_index ) then
-   call assign(dot%part_index, number*this%call_component(INDEX_COMP), 1, np)
-  end if
-
- end function
 end module

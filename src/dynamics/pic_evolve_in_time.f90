@@ -166,18 +166,18 @@
     np = loc_npart(imody, imodz, imodx, ic)
      !============
     call set_lpf_acc(ebf, spec_in(ic), spec_aux_in, np, nfield)
-     call field_charge_multiply(spec_in(ic), spec_aux_in, np, nfield)
+    call field_charge_multiply(spec_in(ic), spec_aux_in, np, nfield)
 
-     if (initial_time) call init_lpf_momenta(spec_in(ic), spec_aux_in, np, ic)
-     call lpf_momenta_and_positions(spec_in(ic), spec_aux_in, np, ic)
-     ! For each species :
-     ! spec_aux_in(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
-     ! spec_aux_in(4:7) store old x^n positions and dt/gam at t^{n+1/2}
-     if (part) call cell_part_dist(mw, spec_in, spec_aux_in)
-     !
-     np = loc_npart(imody, imodz, imodx, ic)
-     call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)
-     !================= only old ion charge saved
+    if (initial_time) call init_lpf_momenta(spec_in(ic), spec_aux_in, np, ic)
+    call lpf_momenta_and_positions(spec_in(ic), spec_aux_in, np, ic)
+    ! For each species :
+    ! spec_aux_in(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
+    ! spec_aux_in(4:7) store old x^n positions and dt/gam at t^{n+1/2}
+    if (part) call cell_part_dist(mw, spec_in, spec_aux_in)
+    !
+    np = loc_npart(imody, imodz, imodx, ic)
+    call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)
+    !================= only old ion charge saved
    end do
    !==========================================
    if (part) call curr_mpi_collect(jc)

@@ -193,8 +193,6 @@
    dt_lp = dt_loc
    dth_lp = 0.5*dt_lp
    alp = dth_lp*lorentz_fact(ic)
-   call pt%extend( sp_loc%how_many())
-   call pt%set_part_number( sp_loc%how_many() )
    !=================================
    ! Do not execute without particles
    !=================================
@@ -208,7 +206,7 @@
     allocate( gam(np) )
     allocate( b2(np) )
 
-    !Old momenta
+    !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
     bp_pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
     pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
@@ -233,16 +231,15 @@
     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
     call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 1) + &
      gam(1:np)*bp_pp(1:np, 2) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
-     (gam02(1:np) * b2(1:np)) - sp_loc%call_component( PX_COMP, lb=1, ub=np), &
+     (gam02(1:np) + b2(1:np)) - sp_loc%call_component( PX_COMP, lb=1, ub=np), &
      PX_COMP, lb=1, ub=np)
 
     call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 2) - &
      gam(1:np)*bp_pp(1:np, 1) * alp * pt%call_component( BZ_COMP, lb=1, ub=np ))/ &
-     (gam02(1:np) * b2(1:np)) - sp_loc%call_component( PY_COMP, lb=1, ub=np), &
+     (gam02(1:np) + b2(1:np)) - sp_loc%call_component( PY_COMP, lb=1, ub=np), &
      PY_COMP, lb=1, ub=np)
 
-    !Updated momenta
-    call sp_loc%compute_gamma()
+    call sp_loc%set_component(one_dp/gam(1:np), INV_GAMMA_COMP, lb=1, ub=np)
 
     !Stores old positions
     call pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
@@ -331,7 +328,7 @@
      PZ_COMP, lb=1, ub=np)
 
     !Updated momenta
-    call sp_loc%compute_gamma()
+     call sp_loc%set_component(one_dp/gam(1:np), INV_GAMMA_COMP, lb=1, ub=np)
 
     !Stores old positions
     call pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)

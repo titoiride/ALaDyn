@@ -114,7 +114,7 @@
 
    ch = sp_loc%pick_charge()
    !==========================
-   apt = apt * ch
+   call multiply_field_charge(apt, ch)
    ! EXIT p-assigned (E,B) fields multiplied by charge
   end subroutine
 

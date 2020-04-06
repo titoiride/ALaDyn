@@ -185,7 +185,7 @@ module tracking
    logical :: tracking
    integer :: ic
 
-   tracking_written = .false.
+   tracking_written = .true.
    tracking = ANY(p_tracking, DIM=1)
    if (.not. tracking) return
 
