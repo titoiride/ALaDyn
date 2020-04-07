@@ -255,7 +255,7 @@
 
    real(dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol, dvol1
-   integer :: i1, j1, i2, j2, n
+   integer :: i1, j1, i2, j2, n, spl_cell, spl_h_cell
    !================================
    ! Uses quadratic or linear shapes depending on staggering
    ! ndf is the number of field component
@@ -268,6 +268,8 @@
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 2)
    !================================
+   spl_cell = 2
+   spl_h_cell = 1
    select case (ndf) !Field components
    case (3)
     allocate( ap(np, 3), source=zero_dp )
@@ -275,7 +277,6 @@
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
     call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
-    
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
                axh => interp%h_coeff_x_rank2, &
@@ -286,24 +287,24 @@
                jh => interp%ihy_rank2 )
  
     do n = 1, np
-     do j1 = 0, 2
+     do j1 = 0, spl_cell
       j2 = j(n) + j1
       dvol = ay1(n, j1)
-      do i1 = 0, 1
+      do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
       end do
      end do
-     do j1 = 0, 1
+     do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
       dvol = ayh(n, j1)
-      do i1 = 0, 2
+      do i1 = 0, spl_cell
        i2 = i(n) + i1
        dvol1 = ax1(n, i1)*dvol
        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
       end do
-      do i1 = 0, 1
+      do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
        ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
@@ -335,31 +336,31 @@
                jh => interp%ihy_rank2 )
 
     do n = 1, np
-     do j1 = 0, 2
+     do j1 = 0, spl_cell
       j2 = j(n) + j1
       dvol = ay1(n, j1)
-      do i1 = 0, 1
+      do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
        ap(n, 5) = ap(n, 5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
       end do
-      do i1 = 0, 2
+      do i1 = 0, spl_cell
        i2 = i1 + i(n)
        dvol1 = ax1(n, i1)*dvol
        ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
       end do
      end do
-     do j1 = 0, 1
+     do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
       dvol = ayh(n, j1)
-      do i1 = 0, 2
+      do i1 = 0, spl_cell
        i2 = i(n) + i1
        dvol1 = ax1(n, i1)*dvol
        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
        ap(n, 4) = ap(n, 4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
       end do
-      do i1 = 0, 1
+      do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
        ap(n, 6) = ap(n, 6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)

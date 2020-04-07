@@ -303,10 +303,10 @@
    call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
    call first_order( gpl_sx(1:length) + half, interp_in%h_coeff_y_rank2 )
 
-   interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
-   interp_in%ihy_rank2(1:length) = interp_in%iy_rank2(1:length)
+   interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
+   interp_in%ihy_rank2(1:length) = interp_in%iy_rank2(1:length)
    
   end subroutine
   !====================
@@ -586,12 +586,12 @@
    call second_order( gpl_sx(1:length), interp_in%coeff_z_rank2 )
    call first_order( gpl_sx(1:length), interp_in%h_coeff_z_rank2 )
 
-   interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
-   interp_in%ihy_rank2(1:length) = interp_in%iy_rank2(1:length)
+   interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
-   interp_in%ihz_rank2(1:length) = interp_in%iz_rank2(1:length)
+   interp_in%ihy_rank2(1:length) = interp_in%iy_rank2(1:length)
    interp_in%iz_rank2(1:length) = interp_in%iz_rank2(1:length) - 1
+   interp_in%ihz_rank2(1:length) = interp_in%iz_rank2(1:length)
   end subroutine
   !=================================
 
