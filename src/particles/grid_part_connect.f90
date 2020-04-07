@@ -100,6 +100,7 @@
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
+   integer :: spl_cell, spl_h_cell
 
    real(dp), allocatable, dimension(:, :) :: ap
    integer :: i1, i2, j2, n
@@ -111,6 +112,8 @@
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 1)
    !================================
+   spl_cell = 2
+   spl_h_cell = 2
    select case (ndf)
    case (3)
 
@@ -125,7 +128,7 @@
                i => interp%ix_rank2, &
                ih => interp%ihx_rank2 )
 
-    do i1 = 0, 2
+    do i1 = 0, spl_cell
      do n = 1, np
       i2 = i1 + ih(n)
       ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
@@ -152,7 +155,7 @@
                i => interp%ix_rank2, &
                ih => interp%ihx_rank2 )
 
-    do i1 = 0, 2
+    do i1 = 0, spl_cell
      do n = 1, np
       i2 = i1 + ih(n)
       ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
@@ -269,14 +272,14 @@
    call xx_realloc(gpc_xx, np, 2)
    !================================
    spl_cell = 2
-   spl_h_cell = 1
+   spl_h_cell = 2
    select case (ndf) !Field components
    case (3)
     allocate( ap(np, 3), source=zero_dp )
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
+    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
                axh => interp%h_coeff_x_rank2, &
@@ -324,7 +327,7 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
+    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
     
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -512,7 +515,7 @@
 
    real(dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol
-   integer :: i1, j1, i2, j2, k1, k2, n
+   integer :: i1, j1, i2, j2, k1, k2, n, spl_cell, spl_h_cell
 
    !===============================================
    !Staggered shapes
@@ -533,7 +536,9 @@
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
 
-   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp )
+   spl_cell = 2
+   spl_h_cell = 2
+   call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
    !==========================
 
    associate( ax1 => interp%coeff_x_rank2, &
@@ -558,24 +563,24 @@
     !==============
     ! Bz(i+1/2,j+1/2,k)
     !==============
-    do k1 = 0, 2
+    do k1 = 0, spl_cell
      k2 = k(n) + k1
-     do j1 = 0, 2
+     do j1 = 0, spl_cell
       j2 = j(n) + j1
       dvol = ay1(n, j1)*az1(n, k1)
-      do i1 = 0, 1
+      do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        ap(n, 1) = ap(n, 1) + axh(n, i1)*dvol*ef(i2, j2, k2, 1)
       end do
      end do
-     do j1 = 0, 1
+     do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
       dvol = ayh(n, j1)*az1(n, k1)
-      do i1 = 0, 2
+      do i1 = 0, spl_cell
        i2 = i(n) + i1
        ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2)
       end do
-      do i1 = 0, 1
+      do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        ap(n, 6) = ap(n, 6) + axh(n, i1)*dvol*ef(i2, j2, k2, 6)
       end do
@@ -591,24 +596,24 @@
     ! Ez(i,j,k+1/2)
     !==============
 
-    do k1 = 0, 1
+    do k1 = 0, spl_h_cell
      k2 = kh(n) + k1
-     do j1 = 0, 1
+     do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
       dvol = ayh(n, j1)*azh(n, k1)
-      do i1 = 0, 2
+      do i1 = 0, spl_cell
        i2 = i1 + i(n)
        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4)
       end do
      end do
-     do j1 = 0, 2
+     do j1 = 0, spl_cell
       j2 = j(n) + j1
       dvol = ay1(n, j1)*azh(n, k1)
-      do i1 = 0, 1
+      do i1 = 0, spl_h_cell
        i2 = ih(n) + i1
        ap(n, 5) = ap(n, 5) + axh(n, i1)*dvol*ef(i2, j2, k2, 5)
       end do
-      do i1 = 0, 2
+      do i1 = 0, spl_cell
        i2 = i1 + i(n)
        ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*ef(i2, j2, k2, 3)
       end do
