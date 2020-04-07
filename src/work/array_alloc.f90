@@ -301,6 +301,7 @@
    spec_in%part(:, :) = 0.0
   end subroutine
   !========================
+  !DIR$ ATTRIBUTES INLINE :: v_realloc
   subroutine v_realloc(vdata, npt_new, ndv)
    real (dp), allocatable, intent (inout) :: vdata(:, :)
    integer, intent (in) :: npt_new, ndv
@@ -317,6 +318,7 @@
    vdata(:, :) = 0.0
   end subroutine
   !===========================
+  !DIR$ ATTRIBUTES INLINE :: array_realloc_1d_dp
   subroutine array_realloc_1d_dp(vdata, npt_new)
    real (dp), allocatable, intent (inout) :: vdata(:)
    integer, intent (in) :: npt_new
@@ -332,6 +334,7 @@
    end if
   end subroutine
   !===========================
+  !DIR$ ATTRIBUTES INLINE :: array_realloc_1d_sp
   subroutine array_realloc_1d_sp(vdata, npt_new)
    real (sp), allocatable, intent (inout) :: vdata(:)
    integer, intent (in) :: npt_new
@@ -347,6 +350,7 @@
    end if
   end subroutine
   !===========================
+  !DIR$ ATTRIBUTES INLINE :: array_realloc_1d_logical
   subroutine array_realloc_1d_logical(vdata, npt_new)
    logical, allocatable, intent (inout) :: vdata(:)
    integer, intent (in) :: npt_new

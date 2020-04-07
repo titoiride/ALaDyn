@@ -121,6 +121,7 @@
 
   end subroutine
   !==========================================
+  !DIR$ ATTRIBUTES INLINE :: xx_realloc
   subroutine xx_realloc( xx_in, npart_new, dimensions )
    real(dp), allocatable, dimension(:, :), intent(inout) :: xx_in
    integer, intent(in) :: npart_new, dimensions
@@ -141,6 +142,7 @@
    !=======================
    !  1D
    !=======================
+  !DIR$ ATTRIBUTES INLINE :: qqh_1d_spline_real
   subroutine qqh_1d_spline_real( xp, interp_in )
     !! Quadratic interpolation at both integer and half-integer
     !! cells
@@ -164,6 +166,7 @@
   end subroutine
   !=======================
 
+  !DIR$ ATTRIBUTES INLINE :: qqh_1d_spline_vector
   subroutine qqh_1d_spline_vector( xp, interp_in )
     !! Quadratic interpolation at both integer and half-integer
     !! cells
@@ -195,6 +198,7 @@
   end subroutine
   !=======================
 
+  !DIR$ ATTRIBUTES INLINE :: qden_1d_wgh_real
   subroutine qden_1d_wgh_real( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in) :: xp(:)
@@ -212,6 +216,7 @@
    interp_in%ix = ix - 1
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: qden_1d_wgh_vector
   subroutine qden_1d_wgh_vector( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
@@ -237,6 +242,7 @@
   !  2D
   !=======================
 
+  !DIR$ ATTRIBUTES INLINE :: qlh_2d_spline_real
   subroutine qlh_2d_spline_real( xp, interp_in )
   !! Quadratic interpolation at integer cells, linear at
   !! half-integer cells
@@ -268,6 +274,7 @@
    
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: qlh_2d_spline_vector
   subroutine qlh_2d_spline_vector( xp, interp_in )
   !! Quadratic interpolation at integer cells, linear at
   !! half-integer cells
@@ -304,6 +311,7 @@
   end subroutine
   !====================
 
+  !DIR$ ATTRIBUTES INLINE :: qqh_2d_spline_real
   subroutine qqh_2d_spline_real( xp, interp_in )
    !! Quadratic interpolation at both integer and half-integer
    !! cells
@@ -342,6 +350,7 @@
   end subroutine
   !=======================================
 
+  !DIR$ ATTRIBUTES INLINE :: qqh_2d_spline_vector
   subroutine qqh_2d_spline_vector( xp, interp_in )
   !! Quadratic interpolation at integer cells, linear at
   !! half-integer cells
@@ -388,6 +397,7 @@
   end subroutine
   !====================
 
+  !DIR$ ATTRIBUTES INLINE :: qden_2d_wgh_real
   subroutine qden_2d_wgh_real( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in) :: xp(:)
@@ -412,6 +422,7 @@
   end subroutine
   !======================
 
+  !DIR$ ATTRIBUTES INLINE :: qden_2d_wgh_vector
   subroutine qden_2d_wgh_vector( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
@@ -441,6 +452,7 @@
 
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: cden_2d_wgh_real
   subroutine cden_2d_wgh_real( xp, interp_in )
    !! Cubic interpolation at integer cells
    real (dp), intent (in) :: xp(:)
@@ -465,6 +477,7 @@
   end subroutine
   !==========================
 
+  !DIR$ ATTRIBUTES INLINE :: cden_2d_wgh_vector
   subroutine cden_2d_wgh_vector( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
@@ -496,6 +509,8 @@
   !=======================
   !  3D
   !=======================
+
+  !DIR$ ATTRIBUTES INLINE :: qlh_3d_spline_real
   subroutine qlh_3d_spline_real( xp, interp_in )
    !! Quadratic interpolation at integer cells, linear at
    !! half-integer cells
@@ -535,6 +550,7 @@
   end subroutine
   !=================================
 
+  !DIR$ ATTRIBUTES INLINE :: qlh_3d_spline_vector
   subroutine qlh_3d_spline_vector( xp, interp_in )
    !! Quadratic interpolation at integer cells, linear at
    !! half-integer cells
@@ -578,6 +594,8 @@
    interp_in%iz_rank2(1:length) = interp_in%iz_rank2(1:length) - 1
   end subroutine
   !=================================
+
+  !DIR$ ATTRIBUTES INLINE :: qqh_3d_spline_real
   subroutine qqh_3d_spline_real( xp, interp_in )
    !! Quadratic interpolation at both integer and half-integer
    !! cells
@@ -628,6 +646,7 @@
    interp_in%ihz = ihz - 1
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: qqh_3d_spline_vector
   subroutine qqh_3d_spline_vector( xp, interp_in )
   !! Quadratic interpolation at integer cells, linear at
   !! half-integer cells
@@ -689,6 +708,7 @@
   end subroutine
   !====================
 
+  !DIR$ ATTRIBUTES INLINE :: qden_3d_wgh_real
   subroutine qden_3d_wgh_real( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in) :: xp(:)
@@ -720,6 +740,7 @@
   end subroutine
   !================================
 
+  !DIR$ ATTRIBUTES INLINE :: qden_3d_wgh_vector
   subroutine qden_3d_wgh_vector( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
@@ -757,6 +778,7 @@
 
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: cden_3d_wgh_real
   subroutine cden_3d_wgh_real( xp, interp_in )
    !! Cubic interpolation at integer cells
    real (dp), intent (in) :: xp(:)
@@ -789,6 +811,7 @@
 
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: cden_3d_wgh_vector
   subroutine cden_3d_wgh_vector( xp, interp_in )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
@@ -827,7 +850,7 @@
   end subroutine
   !====================================
 
-  !DIR$ ATTRIBUTES INLINE :: ql_interpolate
+  !DIR$ ATTRIBUTES INLINE :: set_local_positions_sn
   function set_local_positions_sn( pt_array, component ) result(position)
    type (species_new), intent(in) :: pt_array
    integer, intent(in) :: component
@@ -849,6 +872,7 @@
 
   end function
 
+  !DIR$ ATTRIBUTES INLINE :: set_local_positions_sa
   function set_local_positions_sa( pt_array, component ) result(position)
    type (species_aux), intent(in) :: pt_array
    integer, intent(in) :: component

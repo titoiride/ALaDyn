@@ -299,6 +299,8 @@
   !=======================
   ! End templates
   ! =======================================================
+
+  !DIR$ ATTRIBUTES INLINE :: zeroth_order_real
   subroutine zeroth_order_real(deltax, ax0)
    real(dp), intent(inout) :: deltax
    real(dp), intent(out) :: ax0
@@ -308,6 +310,7 @@
    ax0 = one_dp
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: zeroth_order_vector
   subroutine zeroth_order_vector(deltax, ax0)
    real(dp), intent(in), dimension(:) :: deltax
    real(dp), intent(inout), dimension(:, :) :: ax0
@@ -318,6 +321,7 @@
    ax0(1:length, 1) = one_dp
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: first_order_real
   subroutine first_order_real(deltax, ax1)
    real(dp), intent(in) :: deltax
    real(dp), dimension(:), intent(inout) :: ax1
@@ -327,6 +331,7 @@
    ax1(1) = one_dp - ax1(2)
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: first_order_vector
   subroutine first_order_vector(deltax, ax1)
    real(dp), dimension(:), intent(in) :: deltax
    real(dp), dimension(:, :), intent(inout) :: ax1
@@ -338,6 +343,7 @@
    ax1(1:length, 1) = one_dp - ax1(1:length, 2)
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: second_order_real
   subroutine second_order_real(deltax, ax2)
    real(dp), intent(in) :: deltax
    real(dp), dimension(:), intent(inout) :: ax2
@@ -350,6 +356,7 @@
    ax2(1) = one_dp - ax2(2) - ax2(3)
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: second_order_vector
   subroutine second_order_vector(deltax, ax2)
    real(dp), dimension(:), intent(in) :: deltax
    real(dp), dimension(:, :), intent(inout) :: ax2
@@ -364,6 +371,7 @@
    ax2(1:length, 1) = one_dp - ax2(1:length, 2) - ax2(1:length, 3)
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: third_order_real
   subroutine third_order_real(deltax, ax3)
    real(dp), intent(in) :: deltax
    real(dp), dimension(:), intent(inout) :: ax3
@@ -379,6 +387,7 @@
    ax3(1) = one_dp - ax3(2) - ax3(3) - ax3(4)
   end subroutine
 
+  !DIR$ ATTRIBUTES INLINE :: third_order_vector
   subroutine third_order_vector(deltax, ax3)
    real(dp), dimension(:), intent(in) :: deltax
    real(dp), dimension(:, :), intent(inout) :: ax3

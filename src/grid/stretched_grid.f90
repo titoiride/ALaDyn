@@ -57,6 +57,7 @@
  contains
   !============== Mapping for stretched grids==========
 
+ !DIR$ ATTRIBUTES INLINE :: invert_stretched_grid
   pure function invert_stretched_grid(yp_in, params) result(stretched)
    real(dp), intent(in) :: yp_in
    type(str_params), intent(in) :: params
@@ -73,6 +74,7 @@
 
   end function
 
+  !DIR$ ATTRIBUTES INLINE :: invert_uniform_grid
   pure function invert_uniform_grid(yp_in, params) result(uniform)
    real(dp), intent(in) :: yp_in
    type(str_params), intent(in) :: params

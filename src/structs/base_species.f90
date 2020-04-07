@@ -385,6 +385,7 @@ module base_species
 
 !=== Type bound procedures
 
+!DIR$ ATTRIBUTES INLINE:: add_data
   subroutine add_data( this, x_arr, y_arr, z_arr, &
    weightx_arr, weightyz_arr, loc_x0, loc_x, loc_y, loc_z, np_old)
    class( base_species_T), intent(inout) :: this
@@ -441,6 +442,7 @@ module base_species
 
   end subroutine
 
+!DIR$ ATTRIBUTES INLINE:: call_particle_single
   subroutine call_particle_single( this, particles, index_in, tracking )
    class(base_species_T), intent(in) :: this
    real(dp), dimension(:), intent(inout) :: particles
@@ -489,6 +491,7 @@ module base_species
    end select
   end subroutine
 
+!DIR$ ATTRIBUTES INLINE:: call_particle_bounds
   subroutine call_particle_bounds( this, particles, lb, ub, tracking)
    class(base_species_T), intent(in) :: this
    real(dp), dimension(:, :), intent(inout) :: particles
@@ -537,6 +540,7 @@ module base_species
    end select
   end subroutine
 
+!DIR$ ATTRIBUTES INLINE:: call_particle_index_array
   subroutine call_particle_index_array( this, particles, index_in, tracking)
    class(base_species_T), intent(in) :: this
    real(dp), dimension(:, :), intent(inout) :: particles
@@ -690,6 +694,7 @@ module base_species
 
   end function
 
+!DIR$ ATTRIBUTES INLINE:: copy_all
   subroutine copy_all( this, other )
    class(base_species_T), intent(inout) :: this
    class(base_species_T), intent(in) :: other
@@ -729,6 +734,7 @@ module base_species
    end if
   end subroutine
 
+!DIR$ ATTRIBUTES INLINE:: copy_boundaries
   subroutine copy_boundaries( this, other, lower_bound, upper_bound )
    class(base_species_T), intent(inout) :: this
    class(base_species_T), intent(in) :: other
@@ -776,7 +782,8 @@ module base_species
    n_parts = this%n_part
   
   end function
-  
+
+!DIR$ ATTRIBUTES INLINE:: how_many
   pure function how_many( this ) result(n_parts)
    !! Number of particles in the species
    class(base_species_T), intent(in) :: this
@@ -786,6 +793,7 @@ module base_species
   
   end function
 
+!DIR$ ATTRIBUTES INLINE:: flatten
    pure function flatten( this ) result(flat_array)
    class(base_species_T), intent(in) :: this
    integer :: array_size, num_comps, i
@@ -850,6 +858,7 @@ module base_species
 
   end subroutine
 
+!DIR$ ATTRIBUTES INLINE:: pack_into_logical
   subroutine pack_into_logical( this, packed, mask )
    class(base_species_T), intent(in) :: this
    class(base_species_T), intent(inout) :: packed
@@ -892,7 +901,8 @@ module base_species
    call packed%set_part_number(packed%array_size())
  
   end subroutine
- 
+
+!DIR$ ATTRIBUTES INLINE:: pack_into_arrays
   subroutine pack_into_array( this, packed, mask )
    class(base_species_T), intent(in) :: this
    class(base_species_T), intent(inout) :: packed
@@ -938,6 +948,7 @@ module base_species
  
   end subroutine
 
+!DIR$ ATTRIBUTES INLINE:: redistribute
   subroutine redistribute( this, flat_array, num_particles, properties_in )
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in), dimension(:) :: flat_array
