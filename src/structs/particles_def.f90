@@ -283,6 +283,11 @@ module particles_def
 
   n_parts = this%how_many()
 
+  if (this%empty) then
+   allocate( comp(0) )
+   return
+  end if
+
   if ( present(lb) ) then
    lowb = lb
   else
