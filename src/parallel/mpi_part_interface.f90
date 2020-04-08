@@ -189,10 +189,8 @@
   ! Variables are only kept for compatibility with old routine
   dump = ndv
   call array_realloc_1d(aux_array1, p)
-  aux_array1(:) = zero_dp
   q = tot_size*max(nl_recv, nr_recv)
   call array_realloc_1d(aux_array2, q)
-  aux_array2(:) = zero_dp
   !==================== copy remaining part => spec_aux_in
   right_pind = index_array(old_np)
   left_pind = index_array(old_np)
@@ -503,10 +501,8 @@
 
    p = 2*tot_size*max(nl_send, nr_send)
    call array_realloc_1d(aux_array1, p)
-   aux_array1(:) = zero_dp
    q = 2*tot_size*max(nl_recv, nr_recv)
    call array_realloc_1d(aux_array2, q)
-   aux_array2(:) = zero_dp
    !==================== copy remaining part => spec_aux_in
    !CHECK if index is the fastest way to select particles in species_new
    right_pind = index_array(old_np)

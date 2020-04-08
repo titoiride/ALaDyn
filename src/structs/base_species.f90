@@ -911,11 +911,6 @@ module base_species
  
    tot_parts = COUNT( mask )
    np = this%how_many()
-   if (np /= SIZE(mask) ) then
-    write(6, *) '========================'
-    write(6, *) 'Problem in packing array'
-    write(6, *) '========================'
-   end if
    call packed%sweep()
    call packed%new_species(tot_parts, this%pick_dimensions(), tracked=this%istracked())
    call packed%set_properties(this%pick_properties())
@@ -1001,6 +996,7 @@ module base_species
    end if
  
    call this%set_properties( properties_in )
+   call this%set_part_number( num_particles )
 
   end subroutine
 
