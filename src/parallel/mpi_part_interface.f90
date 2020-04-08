@@ -189,8 +189,10 @@
   ! Variables are only kept for compatibility with old routine
   dump = ndv
   call array_realloc_1d(aux_array1, p)
+  aux_array1(:) = zero_dp
   q = tot_size*max(nl_recv, nr_recv)
   call array_realloc_1d(aux_array2, q)
+  aux_array2(:) = zero_dp
   !==================== copy remaining part => spec_aux_in
   right_pind = index_array(old_np)
   left_pind = index_array(old_np)
@@ -501,8 +503,10 @@
 
    p = 2*tot_size*max(nl_send, nr_send)
    call array_realloc_1d(aux_array1, p)
+   aux_array1(:) = zero_dp
    q = 2*tot_size*max(nl_recv, nr_recv)
    call array_realloc_1d(aux_array2, q)
+   aux_array2(:) = zero_dp
    !==================== copy remaining part => spec_aux_in
    !CHECK if index is the fastest way to select particles in species_new
    right_pind = index_array(old_np)
@@ -1006,7 +1010,7 @@
    logical, intent (in) :: moving_wind
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   integer :: ic, nspx, np, np_new, np_new_allocate, ndv, &
+   integer :: ic, nspx, np, np_new, ndv, &
      np_rs, np_out
    integer :: n_sr(4)
    real (dp) :: ymm, ymx, lbd_min, rbd_max
@@ -1044,9 +1048,6 @@
       n_sr = 0
       call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
        n_sr, np_new)
-     ! Allocate the aux array with lenght np + n_recieve
-     ! because it needs to receive before to send
-      np_new_allocate = np_new + SUM( n_sr(1:2) )
       np_rs = maxval(n_sr(1:4))
       if (np_rs > 0) then
        call part_prl_wexchange(spec_in(ic), xmm, xmx, lbd_min, rbd_max, &
@@ -1096,9 +1097,6 @@
      n_sr = 0
      call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
        n_sr, np_new)
-     ! Allocate the aux array with lenght np + n_recieve
-     ! because it needs to recieve before to send
-     np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
       call part_prl_exchange(spec_in(ic), spec_aux_in, xmm, xmx, lbd_min, rbd_max, &
@@ -1146,7 +1144,6 @@
      np_new = np
      call traffic_size_eval(spec_in(ic), ymm, ymx, pe0y, pe1y, iby, Y_COMP, np, &
       n_sr, np_new)
-     np_new_allocate = np_new + SUM( n_sr(1:2) )
      np_rs = maxval(n_sr(1:4))
      if (np_rs > 0) then
       call part_prl_exchange(spec_in(ic), spec_aux_in, ymm, ymx, lbd_min, &
@@ -1194,7 +1191,6 @@
       n_sr = 0
       call traffic_size_eval(spec_in(ic), zmm, zmx, pe0z, pe1z, ibz, Z_COMP, &
        np, n_sr, np_new)
-      np_new_allocate = np_new + SUM( n_sr(1:2) )
       np_rs = maxval(n_sr(1:4))
       if (np_rs>0) then
        !=====================

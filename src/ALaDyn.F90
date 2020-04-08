@@ -110,9 +110,11 @@
    !=======================
     call lp_run( tnow, iter )
 
+    call track_out( spec, tnow, iter )
     call timing
     call Data_out
 
+    tracking_written = .false.
     if (ier /= 0) then
      call error_message
      exit
@@ -142,7 +144,6 @@
    ! end if
    call Data_out
    !================
-   tk_ind = 0
    do while (tnow < tmax)
    !=================================
     call env_run( tnow, iter )

@@ -911,6 +911,11 @@ module base_species
  
    tot_parts = COUNT( mask )
    np = this%how_many()
+   if (np /= SIZE(mask) ) then
+    write(6, *) '========================'
+    write(6, *) 'Problem in packing array'
+    write(6, *) '========================'
+   end if
    call packed%sweep()
    call packed%new_species(tot_parts, this%pick_dimensions(), tracked=this%istracked())
    call packed%set_properties(this%pick_properties())
@@ -919,31 +924,31 @@ module base_species
     return
    end if
    if( this%allocated_x ) then
-    packed%x = PACK( this%x(1:np), mask(:) )
+    packed%x(1:tot_parts) = PACK( this%x(1:np), mask(:) )
    end if
    if( this%allocated_y ) then
-    packed%y = PACK( this%y(1:np), mask(:) )
+    packed%y(1:tot_parts) = PACK( this%y(1:np), mask(:) )
    end if
    if( this%allocated_z ) then
-    packed%z = PACK( this%z(1:np), mask(:) )
+    packed%z(1:tot_parts) = PACK( this%z(1:np), mask(:) )
    end if
    if( this%allocated_px ) then
-    packed%px = PACK( this%px(1:np), mask(:) )
+    packed%px(1:tot_parts) = PACK( this%px(1:np), mask(:) )
    end if
    if( this%allocated_py ) then
-    packed%py = PACK( this%py(1:np), mask(:) )
+    packed%py(1:tot_parts) = PACK( this%py(1:np), mask(:) )
    end if
    if( this%allocated_pz ) then
-    packed%pz = PACK( this%pz(1:np), mask(:) )
+    packed%pz(1:tot_parts) = PACK( this%pz(1:np), mask(:) )
    end if
    if( this%allocated_gamma ) then
-    packed%gamma_inv = PACK( this%gamma_inv(1:np), mask(:) )
+    packed%gamma_inv(1:tot_parts) = PACK( this%gamma_inv(1:np), mask(:) )
    end if
    if( this%allocated_weight ) then
-    packed%weight = PACK( this%weight(1:np), mask(:) )
+    packed%weight(1:tot_parts) = PACK( this%weight(1:np), mask(:) )
    end if
    if( this%allocated_index ) then
-    packed%part_index = PACK( this%part_index(1:np), mask(:) )
+    packed%part_index(1:tot_parts) = PACK( this%part_index(1:np), mask(:) )
    end if
  
   end subroutine
