@@ -211,7 +211,7 @@
 !================== copy in sp_aux particles not to be exchanged
   xp = sp_loc%call_component( component, lb=1, ub=old_np)
   call right_pind%find_index( xp > xr )
-  call left_pind%find_index( xp <= xl )
+  call left_pind%find_index( xp < xl )
   if ( nl_send /= SIZE( left_pind%indices(:) ) ) then
    write (6, *) 'Error in counting particles sent to the left'
   end if
@@ -219,7 +219,7 @@
    write (6, *) 'Error in counting particles sent to the right'
   end if
 
-  mask(:) = (xp > xl .and. xp <= xr)
+  mask(:) = (xp >= xl .and. xp <= xr)
   npt = COUNT( mask(:) )
   call sp_loc%pack_into( sp_aux_new, mask(:) )
   !=======================
@@ -524,7 +524,7 @@
  !================== copy in sp_aux particles not to be exchanged
    xp = sp_loc%call_component( component, lb=1, ub=old_np)
    call right_pind%find_index( xp > xr )
-   call left_pind%find_index( xp <= xl )
+   call left_pind%find_index( xp < xl )
    if ( nl_send /= SIZE( left_pind%indices(:) ) ) then
     write (6, *) 'Error in counting particles sent to the left'
    end if
@@ -532,7 +532,7 @@
     write (6, *) 'Error in counting particles sent to the right'
    end if
 
-   mask(:) = (xp > xl .and. xp <= xr)
+   mask(:) = (xp >= xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
    call sp_loc%pack_into(sp_aux_new, mask(:))
@@ -920,19 +920,19 @@
 
    xp = loc_sp%call_component( component, lb=1, ub=np )
    call right_pind%find_index( xp > xr )
-   call left_pind%find_index( xp <= xl )
+   call left_pind%find_index( xp < xl )
  
    pout = left_pind%count_index() + right_pind%count_index()
    if (pout>0) then
     if(mwin)then
-     mask(:) = (xp > xl .and. xp <= xr)
+     mask(:) = (xp >= xl .and. xp <= xr)
      npt = COUNT( mask(:) )
 
      call loc_sp%pack_into( sp_aux_new, mask(:))
 
     else
 
-     mask(:) = (xp > xl .and. xp <= xr)
+     mask(:) = (xp >= xl .and. xp <= xr)
      npt = COUNT( mask(:) )
 
      call loc_sp%pack_into( sp_aux_new, mask(:) )
