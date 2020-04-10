@@ -1002,10 +1002,11 @@
    end if
   end subroutine
   !==============
-  subroutine cell_part_dist_new(moving_wind, spec_in, spec_aux_in)
+  subroutine cell_part_dist_new(moving_wind, spec_in, spec_aux_in, ic_in)
    logical, intent (in) :: moving_wind
-   type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
+   type(species_new), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
+   integer, intent(in) :: ic_in
    integer :: ic, nspx, np, np_new, ndv, &
      np_rs, np_out
    integer :: n_sr(4)
@@ -1030,7 +1031,6 @@
    !=========== mowing window section
    if(moving_wind)then
    
-   nspx = nsp
     xmm = loc_xgrid(imodx)%gmin
     xmx = loc_xgrid(imodx)%gmax
     ! Warning, loc_xgrid(0) may not be known from all tasks.
@@ -1038,48 +1038,43 @@
     lbd_min = loc_xgrid(0)%gmin
     rbd_max = loc_xgrid(npe_xloc-1)%gmax
     if (prlx) then
-     do ic = 1, nspx
-      np = loc_npart(imody, imodz, imodx, ic)
-      np_new = np
-      n_sr = 0
-      call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
-       n_sr, np_new)
-      np_rs = maxval(n_sr(1:4))
-      if (np_rs > 0) then
-       call part_prl_wexchange(spec_in(ic), xmm, xmx, lbd_min, rbd_max, &
-        pex0, pex1, ibx, X_COMP, ndv, np, n_sr, np_out)
-       if (np_out /= np_new) then
-        write (6, *) 'error in x-part w-count', mype, np_out, np_new
-        ier = 99
-       end if
-       call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
-       call spec_in(ic)%set_part_number( np_new )
-       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-       call spec_in(ic)%check_tracking()
-       call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
-       call spec_aux_in%set_part_number( np_new )
-       loc_npart(imody, imodz, imodx, ic) = np_new
+     np = loc_npart(imody, imodz, imodx, ic_in)
+     np_new = np
+     n_sr = 0
+     call traffic_size_eval(spec_in, xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
+      n_sr, np_new)
+     np_rs = maxval(n_sr(1:4))
+     if (np_rs > 0) then
+      call part_prl_wexchange(spec_in, xmm, xmx, lbd_min, rbd_max, &
+       pex0, pex1, ibx, X_COMP, ndv, np, n_sr, np_out)
+      if (np_out /= np_new) then
+       write (6, *) 'error in x-part w-count', mype, np_out, np_new
+       ier = 99
       end if
-     end do
+      call spec_in%reallocate( np_new, spec_in%pick_properties())
+      call spec_in%set_part_number( np_new )
+      call spec_in%copy( sp_aux_new, 1, np_new )
+      call spec_in%check_tracking()
+      call spec_aux_in%reallocate( np_new, spec_in%pick_properties())
+      call spec_aux_in%set_part_number( np_new )
+      loc_npart(imody, imodz, imodx, ic_in) = np_new
+     end if
     else
-     do ic = 1, nspx
-      np = loc_npart(imody, imodz, imodx, ic)
-      if (np > 0) then
-       call reset_all_part_dist(spec_in(ic), spec_aux_in, xmm, xmx, ibx, np, ndv, &
-        X_COMP, np_new, moving_wind)
-       if (np_new < np) then
-        loc_npart(imody, imodz, imodx, ic) = np_new
-        call spec_in(ic)%copy(sp_aux_new, 1, np_new)
-        call spec_in(ic)%set_part_number(np_new)
-        call spec_in(ic)%check_tracking()
-       end if
+     np = loc_npart(imody, imodz, imodx, ic_in)
+     if (np > 0) then
+      call reset_all_part_dist(spec_in, spec_aux_in, xmm, xmx, ibx, np, ndv, &
+       X_COMP, np_new, moving_wind)
+      if (np_new < np) then
+       loc_npart(imody, imodz, imodx, ic_in) = np_new
+       call spec_in%copy(sp_aux_new, 1, np_new)
+       call spec_in%set_part_number(np_new)
+       call spec_in%check_tracking()
       end if
-     end do
+     end if
     end if
     return
    end if
 !=========== not mowing window section
-   nspx = nsp_run
    xmm = loc_xgrid(imodx)%gmin
    xmx = loc_xgrid(imodx)%gmax
    ! Warning, loc_xgrid(0) may not be known from all tasks.
@@ -1087,46 +1082,42 @@
    lbd_min = loc_xgrid(0)%gmin
    rbd_max = loc_xgrid(npe_xloc-1)%gmax
    if (prlx) then
-    do ic = 1, nspx
-     np = loc_npart(imody, imodz, imodx, ic)
-     np_new = np
-     n_sr = 0
-     call traffic_size_eval(spec_in(ic), xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
-       n_sr, np_new)
-     np_rs = maxval(n_sr(1:4))
-     if (np_rs > 0) then
-      call part_prl_exchange(spec_in(ic), spec_aux_in, xmm, xmx, lbd_min, rbd_max, &
-        pex0, pex1, ibx, X_COMP, ndv, np, n_sr, np_out)
-      if (np_out /= np_new) then
-       write (6, *) 'error in x-part count', mype, np_out, np_new
-       ier = 99
-      end if
-      call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
-      call spec_in(ic)%set_part_number( np_new )
-      call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-      call spec_in(ic)%check_tracking()
-      call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
-      call spec_aux_in%set_part_number( np_new )
-      call spec_aux_in%copy( sp1_aux_new, 1, np_new )
-      loc_npart(imody, imodz, imodx, ic) = np_new
+    np = loc_npart(imody, imodz, imodx, ic_in)
+    np_new = np
+    n_sr = 0
+    call traffic_size_eval(spec_in, xmm, xmx, pex0, pex1, ibx, X_COMP, np, &
+      n_sr, np_new)
+    np_rs = maxval(n_sr(1:4))
+    if (np_rs > 0) then
+     call part_prl_exchange(spec_in, spec_aux_in, xmm, xmx, lbd_min, rbd_max, &
+       pex0, pex1, ibx, X_COMP, ndv, np, n_sr, np_out)
+     if (np_out /= np_new) then
+      write (6, *) 'error in x-part count', mype, np_out, np_new
+      ier = 99
      end if
-    end do
+     call spec_in%reallocate( np_new, spec_in%pick_properties())
+     call spec_in%set_part_number( np_new )
+     call spec_in%copy( sp_aux_new, 1, np_new )
+     call spec_in%check_tracking()
+     call spec_aux_in%reallocate( np_new, spec_in%pick_properties())
+     call spec_aux_in%set_part_number( np_new )
+     call spec_aux_in%copy( sp1_aux_new, 1, np_new )
+     loc_npart(imody, imodz, imodx, ic_in) = np_new
+    end if
    else
-    do ic = 1, nspx
-     np = loc_npart(imody, imodz, imodx, ic)
-     if (np > 0) then
-      call reset_all_part_dist(spec_in(ic), spec_aux_in, xmm, xmx, ibx, np, ndv, &
-        X_COMP, np_new, moving_wind)
-      if (np_new < np) then
-       loc_npart(imody, imodz, imodx, ic) = np_new
-       call spec_in(ic)%copy(sp_aux_new, 1, np_new)
-       call spec_in(ic)%set_part_number(np_new)
-       call spec_in(ic)%check_tracking()
-       call spec_aux_in%copy(sp1_aux_new, 1, np_new)
-       call spec_aux_in%set_part_number(np_new)
-      end if
+    np = loc_npart(imody, imodz, imodx, ic_in)
+    if (np > 0) then
+     call reset_all_part_dist(spec_in, spec_aux_in, xmm, xmx, ibx, np, ndv, &
+       X_COMP, np_new, moving_wind)
+     if (np_new < np) then
+      loc_npart(imody, imodz, imodx, ic_in) = np_new
+      call spec_in%copy(sp_aux_new, 1, np_new)
+      call spec_in%set_part_number(np_new)
+      call spec_in%check_tracking()
+      call spec_aux_in%copy(sp1_aux_new, 1, np_new)
+      call spec_aux_in%set_part_number(np_new)
      end if
-    end do
+    end if
    end if
 !==========================
    ymm = loc_ygrid(imody)%gmin
@@ -1134,46 +1125,42 @@
    lbd_min = loc_ygrid(0)%gmin
    rbd_max = loc_ygrid(npe_yloc-1)%gmax
    if (prly) then
-    do ic = 1, nsp_run
-     n_sr = 0
-     np = loc_npart(imody, imodz, imodx, ic)
-     np_new = np
-     call traffic_size_eval(spec_in(ic), ymm, ymx, pe0y, pe1y, iby, Y_COMP, np, &
-      n_sr, np_new)
-     np_rs = maxval(n_sr(1:4))
-     if (np_rs > 0) then
-      call part_prl_exchange(spec_in(ic), spec_aux_in, ymm, ymx, lbd_min, &
-        rbd_max, pe0y, pe1y, iby, Y_COMP, ndv, np, n_sr, np_out)
-      if (np_out /= np_new) then
-       write (6, *) 'error in y-part count', mype, np_out, np_new
-       ier = 99
-      end if
-      call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
-      call spec_in(ic)%set_part_number( np_new )
-      call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-      call spec_in(ic)%check_tracking()
-      call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
-      call spec_aux_in%set_part_number( np_new )
-      call spec_aux_in%copy( sp1_aux_new, 1, np_new )
-      loc_npart(imody, imodz, imodx, ic) = np_new
+    n_sr = 0
+    np = loc_npart(imody, imodz, imodx, ic_in)
+    np_new = np
+    call traffic_size_eval(spec_in, ymm, ymx, pe0y, pe1y, iby, Y_COMP, np, &
+     n_sr, np_new)
+    np_rs = maxval(n_sr(1:4))
+    if (np_rs > 0) then
+     call part_prl_exchange(spec_in, spec_aux_in, ymm, ymx, lbd_min, &
+       rbd_max, pe0y, pe1y, iby, Y_COMP, ndv, np, n_sr, np_out)
+     if (np_out /= np_new) then
+      write (6, *) 'error in y-part count', mype, np_out, np_new
+      ier = 99
      end if
-    end do
+     call spec_in%reallocate( np_new, spec_in%pick_properties())
+     call spec_in%set_part_number( np_new )
+     call spec_in%copy( sp_aux_new, 1, np_new )
+     call spec_in%check_tracking()
+     call spec_aux_in%reallocate( np_new, spec_in%pick_properties())
+     call spec_aux_in%set_part_number( np_new )
+     call spec_aux_in%copy( sp1_aux_new, 1, np_new )
+     loc_npart(imody, imodz, imodx, ic_in) = np_new
+    end if
    else
-    do ic = 1, nsp_run
-     np = loc_npart(imody, imodz, imodx, ic)
-     if (np > 0) then
-      call reset_all_part_dist(spec_in(ic), spec_aux_in, ymm, ymx, iby, np, ndv, &
-        Y_COMP, np_new, moving_wind)
-      if (np_new < np) then
-       loc_npart(imody, imodz, imodx, ic) = np_new
-       call spec_in(ic)%copy(sp_aux_new, 1, np_new)
-       call spec_in(ic)%set_part_number(np_new)
-       call spec_in(ic)%check_tracking()
-       call spec_aux_in%copy(sp1_aux_new, 1, np_new)
-       call spec_aux_in%set_part_number(np_new)
-      end if
+    np = loc_npart(imody, imodz, imodx, ic_in)
+    if (np > 0) then
+     call reset_all_part_dist(spec_in, spec_aux_in, ymm, ymx, iby, np, ndv, &
+       Y_COMP, np_new, moving_wind)
+     if (np_new < np) then
+      loc_npart(imody, imodz, imodx, ic_in) = np_new
+      call spec_in%copy(sp_aux_new, 1, np_new)
+      call spec_in%set_part_number(np_new)
+      call spec_in%check_tracking()
+      call spec_aux_in%copy(sp1_aux_new, 1, np_new)
+      call spec_aux_in%set_part_number(np_new)
      end if
-    end do
+    end if
    end if
    if (ndim>2) then
     zmm = loc_zgrid(imodz)%gmin
@@ -1181,56 +1168,53 @@
     lbd_min = loc_zgrid(0)%gmin
     rbd_max = loc_zgrid(npe_zloc-1)%gmax
     if (prlz) then
-     do ic = 1, nsp_run
-      np = loc_npart(imody, imodz, imodx, ic)
-      np_new = np
-      n_sr = 0
-      call traffic_size_eval(spec_in(ic), zmm, zmx, pe0z, pe1z, ibz, Z_COMP, &
-       np, n_sr, np_new)
-      np_rs = maxval(n_sr(1:4))
-      if (np_rs>0) then
-       !=====================
-       call part_prl_exchange(spec_in(ic), spec_aux_in, zmm, zmx, lbd_min, &
-         rbd_max, pe0z, pe1z, ibz, Z_COMP, ndv, np, n_sr, np_out)
-       if (np_out /= np_new) then
-        write (6, *) 'error in z-part count', mype, np_out, np_new
-        ier = 99
-       end if
-       call spec_in(ic)%reallocate( np_new, spec_in(ic)%pick_properties())
-       call spec_in(ic)%set_part_number( np_new )
-       call spec_in(ic)%copy( sp_aux_new, 1, np_new )
-       call spec_in(ic)%check_tracking()
-       call spec_aux_in%reallocate( np_new, spec_in(ic)%pick_properties())
-       call spec_aux_in%set_part_number( np_new )
-       call spec_aux_in%copy( sp1_aux_new, 1, np_new )
-       loc_npart(imody, imodz, imodx, ic) = np_new
+     np = loc_npart(imody, imodz, imodx, ic_in)
+     np_new = np
+     n_sr = 0
+     call traffic_size_eval(spec_in, zmm, zmx, pe0z, pe1z, ibz, Z_COMP, &
+      np, n_sr, np_new)
+     np_rs = maxval(n_sr(1:4))
+     if (np_rs>0) then
+      !=====================
+      call part_prl_exchange(spec_in, spec_aux_in, zmm, zmx, lbd_min, &
+        rbd_max, pe0z, pe1z, ibz, Z_COMP, ndv, np, n_sr, np_out)
+      if (np_out /= np_new) then
+       write (6, *) 'error in z-part count', mype, np_out, np_new
+       ier = 99
       end if
-     end do
+      call spec_in%reallocate( np_new, spec_in%pick_properties())
+      call spec_in%set_part_number( np_new )
+      call spec_in%copy( sp_aux_new, 1, np_new )
+      call spec_in%check_tracking()
+      call spec_aux_in%reallocate( np_new, spec_in%pick_properties())
+      call spec_aux_in%set_part_number( np_new )
+      call spec_aux_in%copy( sp1_aux_new, 1, np_new )
+      loc_npart(imody, imodz, imodx, ic_in) = np_new
+     end if
     else
-     do ic = 1, nsp_run
-      np = loc_npart(imody, imodz, imodx, ic)
-      if (np>0) then
-       call reset_all_part_dist(spec_in(ic), spec_aux_in, zmm, zmx, ibz, np, ndv, &
-         Z_COMP, np_new, moving_wind)
-       if (np_new < np) then
-        loc_npart(imody, imodz, imodx, ic) = np_new
-        call spec_in(ic)%copy(sp_aux_new, 1, np_new)
-        call spec_in(ic)%set_part_number(np_new)
-        call spec_in(ic)%check_tracking()
-        call spec_aux_in%copy(sp1_aux_new, 1, np_new)
-        call spec_aux_in%set_part_number(np_new)
-       end if
+     np = loc_npart(imody, imodz, imodx, ic_in)
+     if (np>0) then
+      call reset_all_part_dist(spec_in, spec_aux_in, zmm, zmx, ibz, np, ndv, &
+        Z_COMP, np_new, moving_wind)
+      if (np_new < np) then
+       loc_npart(imody, imodz, imodx, ic_in) = np_new
+       call spec_in%copy(sp_aux_new, 1, np_new)
+       call spec_in%set_part_number(np_new)
+       call spec_in%check_tracking()
+       call spec_aux_in%copy(sp1_aux_new, 1, np_new)
+       call spec_aux_in%set_part_number(np_new)
       end if
-     end do
+     end if
     end if
    end if
    !=====================
   end subroutine
   !=========================
-  subroutine cell_part_dist_old(moving_wind, spec_in, spec_aux_in)
+  subroutine cell_part_dist_old(moving_wind, spec_in, spec_aux_in, ic_in)
    logical, intent (in) :: moving_wind
    type(species), allocatable, dimension(:), intent(inout) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
+   integer, intent(in) :: ic_in
    integer :: ic, nspx, n, np, np_new, np_new_allocate, ndv, &
      np_rs, np_out
    integer :: n_sr(4)

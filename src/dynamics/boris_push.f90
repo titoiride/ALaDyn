@@ -189,9 +189,11 @@
    real (dp), allocatable :: gam(:), gam02(:), &
     b2(:), bv(:), bb(:, :), aux(:)
    !========================================
+   ! Higuera pusher 
    ! uses exact explicit solution for
    ! p^{n}=(p^{n+1/2}+p^{n-1/2})/2 and gamma^n=sqrt( 1+p^n*p^n)
    ! v^n=p^n/gamma^n
+   ! Higuera, POP, 2017
    !========================================
    !Enter Fields multiplied by particle charge
    dt_lp = dt_loc
@@ -210,7 +212,7 @@
     allocate( gam(np) )
     allocate( b2(np) )
 
-    !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
+    !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Higuera push
     bp_pp(1:np, 1) = sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
     pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
@@ -223,7 +225,7 @@
     b2(1:np) = alp * alp * pt%call_component( BZ_COMP, lb=1, ub=np ) * &
      pt%call_component( BZ_COMP, lb=1, ub=np )
 
-    !gam0 in Boris push
+    !gam0 in Higuera push
     gam02(1:np) = gam02(1:np) - b2(1:np)
 
     !exact gam^2 solution

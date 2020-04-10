@@ -156,19 +156,31 @@
    x_params%nl_stretch = nx_stretch
    x_params%init_cell = loc_xgrid(imodx)%min_cell
 
-   do n = 1, np
-    xp = pt(n, ic1)
-    if (xp <= x_params%smin) then
-     xp_loc = invert_stretched_grid(xp, x_params) - x_params%init_cell
-    else if (xp >= x_params%smax) then
-     xp = 2*SYMM_CENTER - xp
-     xp_loc = invert_stretched_grid(xp, x_params)
-     xp_loc = nx - xp_loc - x_params%init_cell
-    else
-     xp_loc = invert_uniform_grid(xp, x_params)
-    end if
-    pt(n, ic1) = xp_loc
-   end do
+   select case(x_params%nl_stretch)
+   case(0)
+
+    do n = 1, np
+     xp = pt(n, ic1)
+     pt(n, ic1) = invert_uniform_grid(xp, x_params)
+    end do
+
+   case default
+
+    do n = 1, np
+     xp = pt(n, ic1)
+     if (xp <= x_params%smin) then
+      xp_loc = invert_stretched_grid(xp, x_params) - x_params%init_cell
+     else if (xp >= x_params%smax) then
+      xp = 2*SYMM_CENTER - xp
+      xp_loc = invert_stretched_grid(xp, x_params)
+      xp_loc = nx - xp_loc - x_params%init_cell
+     else
+      xp_loc = invert_uniform_grid(xp, x_params)
+     end if
+     pt(n, ic1) = xp_loc
+    end do
+
+   end select
   end subroutine
 
   subroutine map2dy_part_sind_new(np, pt)

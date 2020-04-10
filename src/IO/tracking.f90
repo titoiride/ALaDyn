@@ -94,7 +94,7 @@ module tracking
    type(species_new), dimension(:), intent(inout) :: spec_in
    integer, intent(in) :: lowb, upb, ic
    integer, allocatable, dimension(:) :: parts, track_index, temp_track_index
-   integer :: npt, np, part_jump, npt_jump
+   integer :: npt, np, part_jump, npt_jump, i
    type(track_data_t) :: track_data
 
    if ( .not. spec_in(ic)%istracked() ) return
@@ -256,9 +256,10 @@ module tracking
   integer :: npt, npt_loc(npe), cc
   integer :: ik, p, q, np, ip, ip_max, nptot, n_comp_out
   integer :: lenp, ip_loc(npe), ndv, i_end
-  integer (offset_kind) :: disp
+  integer (offset_kind) :: disp, disp_col
   type(index_array) :: out_parts
   type(track_data_t) :: track_data
+  real(dp) :: ch
 
   write (foldername, '(a8)') 'tracking'
   write( fname, '(a6, i1.1, a1, i4.4)') 'Track_', pid, '_', iter_index(pid)
@@ -342,11 +343,11 @@ module tracking
 
   call mpi_write_part(track_pdata, lenp, ip, disp, 25, fname_out)
   iter_index(pid) = iter_index(pid) + 1
-  if (pe0) then
-   write(6, *)            '==========================================='
-   write(6, '(a35,i2.2)') ' Tracking data written for species ', pid
-   write(6, *)            '==========================================='
-  end if
+  ! if (pe0) then
+  !  write(6, *)            '==========================================='
+  !  write(6, '(a35,i2.2)') ' Tracking data written for species ', pid
+  !  write(6, *)            '==========================================='
+  ! end if
   if (pe0) then
    open(unit=track_iounit(pid), file=tracking_folder//'/'//track_dic(pid), &
     form='formatted', status='old', position="append", action="write")

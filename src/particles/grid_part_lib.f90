@@ -149,16 +149,19 @@
    real (dp), intent (in) :: xp(:)
    type(interp_coeff), intent(inout) :: interp_in
    real (dp) :: xx, sx
+   integer :: ord, h_ord
    !======================
+   ord = 2
+   h_ord = 2
 
    xx = shx + xp(1)
    interp_in%ix = int(xx+half)
    sx = xx - real(interp_in%ix, dp)
-   call second_order( sx, interp_in%coeff_x )
+   call second_order( sx, interp_in%coeff_x(0:ord) )
 
    interp_in%ihx = int(xx)
    sx = xx - real(interp_in%ihx, dp)
-   call second_order( sx, interp_in%h_coeff_x )
+   call second_order( sx, interp_in%h_coeff_x(0:h_ord) )
 
    interp_in%ix = interp_in%ix - 1
    interp_in%ihx = interp_in%ihx - 1
@@ -205,13 +208,15 @@
    type(interp_coeff), intent(inout) :: interp_in
    integer :: ix
    real (dp) :: xx, sx
+   integer :: ord
    !======================
+   ord = 2
 
    xx = shx + xp(1)
    ix = int(xx+half)
    sx = xx - real(ix, dp)
 
-   call second_order( sx, interp_in%coeff_x)
+   call second_order( sx, interp_in%coeff_x(0:ord))
 
    interp_in%ix = ix - 1
   end subroutine
@@ -250,21 +255,24 @@
    type(interp_coeff), intent(inout) :: interp_in
    integer :: ix, iy
    real (dp) :: xx, sx
+   integer :: ord, h_ord
    !======================
+   ord = 2
+   h_ord = 2
 
    xx = shx + xp(1)
    ix = int(xx+half)
    sx = xx - real(ix, dp)
 
-   call second_order( sx, interp_in%coeff_x )
-   call first_order( sx + half, interp_in%h_coeff_x )
+   call second_order( sx, interp_in%coeff_x(0:ord) )
+   call first_order( sx + half, interp_in%h_coeff_x(0:h_ord) )
 
    xx = shy + xp(2)
    iy = int(xx+half)
    sx = xx - real(iy, dp)
 
-   call second_order( sx, interp_in%coeff_y )
-   call first_order( sx + half, interp_in%h_coeff_y )
+   call second_order( sx, interp_in%coeff_y(0:ord) )
+   call first_order( sx + half, interp_in%h_coeff_y(0:h_ord) )
 
 
    interp_in%ix = ix - 1

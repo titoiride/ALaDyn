@@ -372,7 +372,9 @@
     end do
    end do
    !======================
-   call cell_part_dist(mw, spec_in, spec_aux_in) !particles are redistributes along the
+   do ic = 1, nsp
+    call cell_part_dist(mw, spec_in(ic), spec_aux_in, ic) !particles are redistributes along the
+   end do
    if (pex1) then
     if (targ_in<=xmax .and. targ_end>xmax) then
      call particles_inject(xmax, spec_in, spec_aux_in)
@@ -424,7 +426,7 @@
     end do
    end do
    !======================
-   call cell_part_dist(mw, spec_in, spec_aux_in) !particles are redistributes along the
+   call cell_part_dist(mw, spec_in, spec_aux_in, ic) !particles are redistributes along the
    if (pex1) then
     if (targ_in<=xmax .and. targ_end>xmax) then
      call particles_inject(xmax, spec_in, spec_aux_in)
@@ -437,7 +439,7 @@
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
    integer :: i1, n1p, nc_env
-   integer :: ix, nshx, wi2
+   integer :: ix, nshx, wi2, ic
    real (dp), save :: xlapse, dt_step
    integer, save :: wi1
    logical, parameter :: mw = .true.
@@ -494,7 +496,9 @@
    !shifts fields data and inject right ebf(wi2+1:n1p) x-grid nshx new data
    !===========================
    if (part) then
-    call cell_part_dist(mw, spec_in, spec_aux_in) !particles are redistributes along the
+    do ic = 1, nsp
+     call cell_part_dist(mw, spec_in(ic), spec_aux_in, ic) !particles are redistributes along the
+    end do
     ! right-shifted x-coordinate in MPI domains
     if (targ_in<=xmax) then
      if (targ_end>xmax) then
@@ -511,7 +515,7 @@
    type(species), allocatable, dimension(:), intent(inout) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
    integer :: i1, n1p, nc_env
-   integer :: ix, nshx, wi2
+   integer :: ix, nshx, wi2, ic
    real (dp), save :: xlapse, dt_step
    integer, save :: wi1
    logical, parameter :: mw = .true.
@@ -568,7 +572,7 @@
    !shifts fields data and inject right ebf(wi2+1:n1p) x-grid nshx new data
    !===========================
    if (part) then
-    call cell_part_dist(mw, spec_in, spec_aux_in) !particles are redistributes along the
+    call cell_part_dist(mw, spec_in, spec_aux_in, ic) !particles are redistributes along the
     ! right-shifted x-coordinate in MPI domains
     if (pex1) then
      if (targ_in<=xmax) then

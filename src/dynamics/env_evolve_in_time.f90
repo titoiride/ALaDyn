@@ -344,7 +344,7 @@
    !===========================
    ! spec_aux_in(1:3) dt*V^{n+1/2}  spec_aux_in(4:6) old positions for curr J^{n+1/2}
    ! spec_aux_in(7)=dt*gam_inv
-   if (part) call cell_part_dist(mw, spec_in, spec_aux_in)
+   if (part) call cell_part_dist(mw, spec_in(ic), spec_aux_in, ic)
 !  particle number has changed
    np = loc_npart(imody, imodz, imodx, ic)
    !=======collects in jc(1:curr_ndim) currents due to electrons
@@ -516,7 +516,7 @@
    !===========================
    ! spec_aux_in(1:3) dt*V^{n+1/2}  spec_aux_in(4:6) old positions for curr J^{n+1/2}
    ! spec_aux_in(7)=dt*gam_inv
-   if (part) call cell_part_dist(mw, spec_in, spec_aux_in)
+   if (part) call cell_part_dist(mw, spec_in, spec_aux_in, ic)
 !  particle number has changed
    np = loc_npart(imody, imodz, imodx, ic)
    !=======collects in jc(1:curr_ndim) currents due to electrons
