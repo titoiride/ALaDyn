@@ -47,8 +47,9 @@
    call part_distribute(spec, ebfp, dmodel_id, xf0)
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
-
+#if !defined(OLD_SPECIES)
    call initialize_tracking( spec, ebfp )
+#endif
   end subroutine
 
  end module

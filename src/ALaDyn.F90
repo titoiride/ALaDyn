@@ -109,12 +109,14 @@
    do while (tnow<tmax)
    !=======================
     call lp_run( tnow, iter )
-
+#if !defined(OLD_SPECIES)
     call track_out( spec, tnow, iter )
+#endif
     call timing
     call Data_out
-
+#if !defined(OLD_SPECIES)
     tracking_written = .false.
+#endif
     if (ier /= 0) then
      call error_message
      exit
@@ -147,12 +149,14 @@
    do while (tnow < tmax)
    !=================================
     call env_run( tnow, iter )
-
+#if !defined(OLD_SPECIES)
     call track_out( spec, tnow, iter )
+#endif
     call timing !iter=iter+1  tnow=tnow+dt_loc
     call Data_out
-
+#if !defined(OLD_SPECIES)
     tracking_written = .false.
+#endif
     if (ier /= 0) then
      call error_message
      exit
@@ -184,7 +188,9 @@
     call create_timestep_folder( iout )
     ! Setting 0 on track_out iter so that it is
     ! always writing inside Data_out
+#if !defined(OLD_SPECIES)
     call track_out( spec, tnow, 0 )
+#endif
     tout = tout + dtout
     if (diag) then
      if (pe0) call en_data( ienout, iter, idata )

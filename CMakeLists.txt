@@ -54,7 +54,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/grid/stretched_grid.f90
   src/ionization/ionize.f90
   src/ionization/ionz_data.f90
-  src/IO/pic_in.f90
+  src/IO/pic_in.F90
   src/IO/init_laser_field.f90
   src/IO/init_part_distrib.f90
   src/IO/init_beam_part_distrib.f90
