@@ -414,12 +414,12 @@
      ap(1:3) = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     call qlh_2d_spline( xp1, interp )
+     call qqh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(0:2)
      ay1(0:2) = interp%coeff_y(0:2)
-     axh(0:1) = interp%h_coeff_x(0:1)
-     ayh(0:1) = interp%h_coeff_y(0:1)
+     axh(0:2) = interp%h_coeff_x(0:2)
+     ayh(0:2) = interp%h_coeff_y(0:2)
 
      i = interp%ix
      ih = interp%ihx
@@ -429,13 +429,13 @@
      do j1 = 0, 2
       j2 = j + j1
       dvol = ay1(j1)
-      do i1 = 0, 1
+      do i1 = 0, 2
        i2 = i1 + ih
        dvol1 = axh(i1)*dvol
        ap(1) = ap(1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
       end do
      end do
-     do j1 = 0, 1
+     do j1 = 0, 2
       j2 = jh + j1
       dvol = ayh(j1)
       do i1 = 0, 2
@@ -443,7 +443,7 @@
        dvol1 = ax1(i1)*dvol
        ap(2) = ap(2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
       end do
-      do i1 = 0, 1
+      do i1 = 0, 2
        i2 = i1 + ih
        dvol1 = axh(i1)*dvol
        ap(3) = ap(3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
@@ -458,12 +458,12 @@
      ap(1:6) = zero_dp
      xp1(1:2) = pt(n, 1:2)
 
-     call qlh_2d_spline( xp1, interp )
+     call qqh_2d_spline( xp1, interp )
 
      ax1(0:2) = interp%coeff_x(0:2)
      ay1(0:2) = interp%coeff_y(0:2)
-     axh(0:1) = interp%h_coeff_x(0:1)
-     ayh(0:1) = interp%h_coeff_y(0:1)
+     axh(0:2) = interp%h_coeff_x(0:2)
+     ayh(0:2) = interp%h_coeff_y(0:2)
 
      i = interp%ix
      ih = interp%ihx
@@ -473,7 +473,7 @@
      do j1 = 0, 2
       j2 = j + j1
       dvol = ay1(j1)
-      do i1 = 0, 1
+      do i1 = 0, 2
        i2 = i1 + ih
        dvol1 = axh(i1)*dvol
        ap(1) = ap(1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
@@ -485,7 +485,7 @@
        ap(3) = ap(3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
       end do
      end do
-     do j1 = 0, 1
+     do j1 = 0, 2
       j2 = jh + j1
       dvol = ayh(j1)
       do i1 = 0, 2
@@ -494,7 +494,7 @@
        ap(2) = ap(2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
        ap(4) = ap(4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
       end do
-      do i1 = 0, 1
+      do i1 = 0, 2
        i2 = i1 + ih
        dvol1 = axh(i1)*dvol
        ap(6) = ap(6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
@@ -662,14 +662,14 @@
     ap(1:6) = zero_dp
     xp1(1:3) = pt(n, 1:3)
 
-    call qlh_3d_spline( xp1, interp )
+    call qqh_3d_spline( xp1, interp )
 
     ax1(0:2) = interp%coeff_x(0:2)
     ay1(0:2) = interp%coeff_y(0:2)
     az1(0:2) = interp%coeff_z(0:2)
-    axh(0:1) = interp%h_coeff_x(0:1)
-    ayh(0:1) = interp%h_coeff_y(0:1)
-    azh(0:1) = interp%h_coeff_z(0:1)
+    axh(0:2) = interp%h_coeff_x(0:2)
+    ayh(0:2) = interp%h_coeff_y(0:2)
+    azh(0:2) = interp%h_coeff_z(0:2)
 
     i = interp%ix
     ih = interp%ihx
@@ -690,19 +690,19 @@
      do j1 = 0, 2
       j2 = j + j1
       dvol = ay1(j1)*az1(k1)
-      do i1 = 0, 1
+      do i1 = 0, 2
        i2 = i1 + ih
        ap(1) = ap(1) + axh(i1)*dvol*ef(i2, j2, k2, 1)
       end do
      end do
-     do j1 = 0, 1
+     do j1 = 0, 2
       j2 = jh + j1
       dvol = ayh(j1)*az1(k1)
       do i1 = 0, 2
        i2 = i + i1
        ap(2) = ap(2) + ax1(i1)*dvol*ef(i2, j2, k2, 2)
       end do
-      do i1 = 0, 1
+      do i1 = 0, 2
        i2 = i1 + ih
        ap(6) = ap(6) + axh(i1)*dvol*ef(i2, j2, k2, 6)
       end do
@@ -718,9 +718,9 @@
     ! Ez(i,j,k+1/2)
     !==============
 
-    do k1 = 0, 1
+    do k1 = 0, 2
      k2 = kh + k1
-     do j1 = 0, 1
+     do j1 = 0, 2
       j2 = jh + j1
       dvol = ayh(j1)*azh(k1)
       do i1 = 0, 2
@@ -731,7 +731,7 @@
      do j1 = 0, 2
       j2 = j + j1
       dvol = ay1(j1)*azh(k1)
-      do i1 = 0, 1
+      do i1 = 0, 2
        i2 = ih + i1
        ap(5) = ap(5) + axh(i1)*dvol*ef(i2, j2, k2, 5)
       end do
