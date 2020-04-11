@@ -245,7 +245,7 @@
      (gam02(1:np) + b2(1:np)) - sp_loc%call_component( PY_COMP, lb=1, ub=np), &
      PY_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component(one_dp/gam(1:np), INV_GAMMA_COMP, lb=1, ub=np)
+    call sp_loc%compute_gamma()
 
     !Stores old positions
     call pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)
@@ -334,7 +334,7 @@
      PZ_COMP, lb=1, ub=np)
 
     !Updated momenta
-     call sp_loc%set_component(one_dp/gam(1:np), INV_GAMMA_COMP, lb=1, ub=np)
+     call sp_loc%compute_gamma()
 
     !Stores old positions
     call pt%set_component( sp_loc%call_component( X_COMP, lb=1, ub=np), OLD_X_COMP, lb=1, ub=np)

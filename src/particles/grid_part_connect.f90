@@ -1159,7 +1159,7 @@
 
     end associate
     !=========================
-    call sp_loc%compute_gamma(pond_pot=ap(1:np, 6)) ! Check if needed, probably can be computed in lpf_env_positions
+    call sp_loc%compute_gamma(pond_pot=ap(1:np, 6))
     inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
     ap(1:np, 1:3) = ch*ap(1:np, 1:3)
     ap(1:np, 4:5) = 0.5*ch*ch*ap(1:np, 4:5)
