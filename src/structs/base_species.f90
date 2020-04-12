@@ -38,6 +38,9 @@ module base_species
  integer, parameter :: W_COMP = 8
  integer, parameter :: INDEX_COMP = -1
 
+ real(dp), allocatable, dimension(:), save :: bs_temp_1d
+ real(dp), allocatable, dimension(:, :), save :: bs_temp_2d
+
  type track_data_t
   logical, private :: tracked
   !! Flag to track the particles
@@ -155,12 +158,11 @@ module base_species
    procedure, pass, private :: copy_all
    procedure, pass, private :: copy_boundaries
    procedure, pass, public :: count_tracked_particles
-   procedure, public, pass :: flatten
+   procedure, public, pass :: flatten_into
    procedure, pass :: how_many
    procedure, pass :: initialize_data
    procedure, public, pass :: istracked
    procedure, pass :: new_species => new_species_abstract
-   procedure, private :: pack_into_logical
    procedure, private :: pack_into_array
    procedure, public, pass :: pick_charge
    procedure, public, pass :: pick_dimensions
@@ -193,7 +195,7 @@ module base_species
    procedure(sweep_abstract), deferred, pass :: sweep
    generic :: call_particle => call_particle_single, call_particle_bounds, call_particle_index_array
    generic :: copy => copy_all, copy_boundaries
-   generic :: pack_into => pack_into_array, pack_into_logical
+   generic :: pack_into => pack_into_array
    generic :: sel_particles => sel_particles_bounds, sel_particles_index
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_int, set_charge_real
@@ -639,30 +641,32 @@ module base_species
   subroutine compute_gamma( this, pond_pot )
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in), optional :: pond_pot(:)
-   real(dp), allocatable :: temp(:)
    integer :: np
 
    np = this%how_many()
-   allocate( temp(np), source=zero_dp )
+   if ( this%empty ) return
+
+   call realloc_temp_1d( bs_temp_1d, np )
+   bs_temp_1d(1:np) = zero_dp
 
    if ( this%allocated_px ) then
-    temp(1:np) = temp(1:np) + this%call_component( PX_COMP )*this%call_component( PX_COMP )
+    bs_temp_1d(1:np) = bs_temp_1d(1:np) + this%px(1:np)*this%px(1:np)
    end if
 
    if ( this%allocated_py ) then
-    temp(1:np) = temp(1:np) + this%call_component( PY_COMP )*this%call_component( PY_COMP )
+    bs_temp_1d(1:np) = bs_temp_1d(1:np) + this%py(1:np)*this%py(1:np)
    end if
 
    if ( this%allocated_pz ) then
-    temp(1:np) = temp(1:np) + this%call_component( PZ_COMP )*this%call_component( PZ_COMP )
+    bs_temp_1d(1:np) = bs_temp_1d(1:np) + this%pz(1:np)*this%pz(1:np)
    end if
 
    if( present( pond_pot ) ) then
-    temp(1:np) = temp(1:np) + pond_pot(1:np)
+    bs_temp_1d(1:np) = bs_temp_1d(1:np) + pond_pot(1:np)
    end if
 
-   temp(1:np) = one_dp/sqrt(one_dp + temp(1:np))
-   call this%set_component(temp(1:np), INV_GAMMA_COMP, lb=1, ub=np)
+   bs_temp_1d(1:np) = one_dp/sqrt(one_dp + bs_temp_1d(1:np))
+   call assign(this%gamma_inv, bs_temp_1d(1:np), 1, np, np)
 
   end subroutine
 
@@ -704,6 +708,7 @@ module base_species
 
    call this%reallocate(tot, other%pick_properties())
    call this%set_properties(other%pick_properties())
+   call this%set_part_number(tot)
 
    if (other%allocated_x) then
     call assign(this%x, other%x(1:tot), 1, tot)
@@ -745,6 +750,7 @@ module base_species
 
    call this%reallocate(tot, other%pick_properties())
    call this%set_properties(other%pick_properties())
+   call this%set_part_number(tot)
 
    if (other%allocated_x) then
     call assign(this%x, other%x(lower_bound:upper_bound), 1, tot)
@@ -793,57 +799,56 @@ module base_species
   
   end function
 
-!DIR$ ATTRIBUTES INLINE:: flatten
-   pure function flatten( this ) result(flat_array)
+!DIR$ ATTRIBUTES INLINE:: flatten_into
+  subroutine flatten_into( this, flat_array)
    class(base_species_T), intent(in) :: this
-   integer :: array_size, num_comps, i
-   real(dp), allocatable :: temp(:, :), flat_array(:)
+   real(dp), allocatable, dimension(:), intent(inout) :: flat_array
+   integer :: array_sz, num_comps, pack_size, lb
 
-   array_size = this%how_many()
+   array_sz = this%how_many()
    num_comps = this%total_size()
-   allocate(temp( array_size, num_comps ))
+   pack_size = array_sz*num_comps
+   call realloc_temp_1d( flat_array, pack_size)
 
-   i = 1
+   lb = 1
    if( this%allocated_x ) then
-    temp( :, i ) = this%x(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%x(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_y ) then
-    temp( :, i ) = this%y(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%y(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_z ) then
-    temp( :, i ) = this%z(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%z(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_px ) then
-    temp( :, i ) = this%px(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%px(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_py ) then
-    temp( :, i ) = this%py(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%py(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_pz ) then
-    temp( :, i ) = this%pz(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%pz(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_gamma ) then
-    temp( :, i ) = this%gamma_inv(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%gamma_inv(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_weight ) then
-    temp( :, i ) = this%weight(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%weight(1:array_sz)
+    lb = lb + array_sz
    end if
    if( this%allocated_index ) then
-    temp( :, i ) = this%part_index(1:array_size)
-    i = i + 1
+    flat_array( lb:(lb + array_sz - 1) ) = this%part_index(1:array_sz)
+    lb = lb + array_sz
    end if
 
-   flat_array = PACK( temp(:, :), .true. )
-
-  end function
+  end subroutine
 
   subroutine initialize_data( this, x_arr, y_arr, z_arr, &
    weightx_arr, weightyz_arr, loc_x, loc_y, loc_z)
@@ -858,94 +863,48 @@ module base_species
 
   end subroutine
 
-!DIR$ ATTRIBUTES INLINE:: pack_into_logical
-  subroutine pack_into_logical( this, packed, mask )
-   class(base_species_T), intent(in) :: this
-   class(base_species_T), intent(inout) :: packed
-   logical, intent(in) :: mask
-   integer :: np
- 
-   np = this%how_many()
-   call packed%sweep()
-   call packed%new_species(np, this%pick_dimensions(), tracked=this%istracked())
-   call packed%set_properties(this%pick_properties())
- 
-   if( this%allocated_x ) then
-    packed%x = PACK( this%x(1:np), mask)
-   end if
-   if( this%allocated_y ) then
-    packed%y = PACK( this%y(1:np), mask)
-   end if
-   if( this%allocated_z ) then
-    packed%z = PACK( this%z(1:np), mask)
-   end if
-   if( this%allocated_px ) then
-    packed%px = PACK( this%px(1:np), mask)
-   end if
-   if( this%allocated_py ) then
-    packed%py = PACK( this%py(1:np), mask)
-   end if
-   if( this%allocated_pz ) then
-    packed%pz = PACK( this%pz(1:np), mask)
-   end if
-   if( this%allocated_gamma ) then
-    packed%gamma_inv = PACK( this%gamma_inv(1:np), mask)
-   end if
-   if( this%allocated_weight ) then
-    packed%weight = PACK( this%weight(1:np), mask)
-   end if
-   if( this%allocated_index ) then
-    packed%part_index = PACK( this%part_index(1:np), mask)
-   end if
- 
-   call packed%set_part_number(packed%array_size())
- 
-  end subroutine
-
 !DIR$ ATTRIBUTES INLINE:: pack_into_arrays
-  subroutine pack_into_array( this, packed, mask )
+  subroutine pack_into_array( this, packed, mask, new_np )
    class(base_species_T), intent(in) :: this
    class(base_species_T), intent(inout) :: packed
    logical, intent(in) :: mask(:)
-   integer :: tot_parts, np
+   integer, intent(in) :: new_np
+   integer :: np
  
-   tot_parts = COUNT( mask )
    np = this%how_many()
-   call packed%sweep()
-   call packed%new_species(tot_parts, this%pick_dimensions(), tracked=this%istracked())
+   call packed%reallocate(new_np, this%pick_properties())
    call packed%set_properties(this%pick_properties())
  
-   if (tot_parts == 0) then
-    return
-   end if
    if( this%allocated_x ) then
-    packed%x(1:tot_parts) = PACK( this%x(1:np), mask(:) )
+    packed%x(1:new_np) = PACK( this%x(1:np), mask(:) )
    end if
    if( this%allocated_y ) then
-    packed%y(1:tot_parts) = PACK( this%y(1:np), mask(:) )
+    packed%y(1:new_np) = PACK( this%y(1:np), mask(:) )
    end if
    if( this%allocated_z ) then
-    packed%z(1:tot_parts) = PACK( this%z(1:np), mask(:) )
+    packed%z(1:new_np) = PACK( this%z(1:np), mask(:) )
    end if
    if( this%allocated_px ) then
-    packed%px(1:tot_parts) = PACK( this%px(1:np), mask(:) )
+    packed%px(1:new_np) = PACK( this%px(1:np), mask(:) )
    end if
    if( this%allocated_py ) then
-    packed%py(1:tot_parts) = PACK( this%py(1:np), mask(:) )
+    packed%py(1:new_np) = PACK( this%py(1:np), mask(:) )
    end if
    if( this%allocated_pz ) then
-    packed%pz(1:tot_parts) = PACK( this%pz(1:np), mask(:) )
+    packed%pz(1:new_np) = PACK( this%pz(1:np), mask(:) )
    end if
    if( this%allocated_gamma ) then
-    packed%gamma_inv(1:tot_parts) = PACK( this%gamma_inv(1:np), mask(:) )
+    packed%gamma_inv(1:new_np) = PACK( this%gamma_inv(1:np), mask(:) )
    end if
    if( this%allocated_weight ) then
-    packed%weight(1:tot_parts) = PACK( this%weight(1:np), mask(:) )
+    packed%weight(1:new_np) = PACK( this%weight(1:np), mask(:) )
    end if
    if( this%allocated_index ) then
-    packed%part_index(1:tot_parts) = PACK( this%part_index(1:np), mask(:) )
+    packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(:) )
    end if
- 
+
+   call packed%set_part_number(new_np)
+
   end subroutine
 
 !DIR$ ATTRIBUTES INLINE:: redistribute
@@ -1007,7 +966,7 @@ module base_species
    type (scalars) :: old_properties
 
    if ( allocated(this%initialized) ) then
-    if (this%how_many() < n_parts ) then
+    if (this%array_size() < n_parts ) then
      old_properties = this%pick_properties()
      call this%sweep()
      call this%new_species(n_parts, old_properties%pick_dimensions(), &
@@ -1607,4 +1566,37 @@ module base_species
   end select
  end function
 
+ !===========================
+ !DIR$ ATTRIBUTES INLINE :: realloc_temp_1d
+ subroutine realloc_temp_1d(vdata, npt_new)
+  real (dp), allocatable, intent (inout) :: vdata(:)
+  integer, intent (in) :: npt_new
+  integer :: allocstatus, deallocstatus
+
+  if (allocated(vdata)) then
+   if (SIZE(vdata,1) < npt_new) then
+    deallocate (vdata, stat=deallocstatus)
+    allocate (vdata(1:npt_new), stat=allocstatus)
+   end if
+  else
+   allocate (vdata(1:npt_new), stat=allocstatus)
+  end if
+ end subroutine
+ !===========================
+
+ !DIR$ ATTRIBUTES INLINE :: realloc_temp_2d
+ subroutine realloc_temp_2d(vdata, npt_new, n_comp)
+  real (dp), allocatable, intent (inout) :: vdata(:, :)
+  integer, intent (in) :: npt_new, n_comp
+  integer :: allocstatus, deallocstatus
+
+  if (allocated(vdata)) then
+   if (SIZE(vdata, 1) < npt_new .or. SIZE(vdata, 2) < n_comp) then
+    deallocate (vdata, stat=deallocstatus)
+    allocate (vdata(npt_new, n_comp), stat=allocstatus)
+   end if
+  else
+   allocate (vdata(npt_new, n_comp), stat=allocstatus)
+  end if
+ end subroutine
 end module

@@ -392,8 +392,8 @@
 
    real (dp) :: dvol, dvol1
    real (dp) :: xp1(3), ap(6)
-   real (dp) :: axh(0:1), ax1(0:2)
-   real (dp) :: ayh(0:1), ay1(0:2)
+   real (dp) :: axh(0:2), ax1(0:2)
+   real (dp) :: ayh(0:2), ay1(0:2)
 
    integer :: i, ih, j, jh, i1, j1, i2, j2, n
    !================================
@@ -640,9 +640,9 @@
    integer, intent (in) :: np
 
    real (dp) :: dvol, ap(6), xp1(3)
-   real (dp) :: axh(0:1), ax1(0:2)
-   real (dp) :: ayh(0:1), ay1(0:2)
-   real (dp) :: azh(0:1), az1(0:2)
+   real (dp) :: axh(0:2), ax1(0:2)
+   real (dp) :: ayh(0:2), ay1(0:2)
+   real (dp) :: azh(0:2), az1(0:2)
    integer :: i, ih, j, jh, i1, j1, i2, j2, k, kh, k1, k2, n
 
    !===============================================

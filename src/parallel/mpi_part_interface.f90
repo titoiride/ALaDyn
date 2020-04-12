@@ -31,7 +31,7 @@
   real (dp) :: loc_pstore(7)
   real (dp), allocatable :: sp_aux(:, :), sp1_aux(:, :)
   real (dp), allocatable, dimension(:), private, save :: aux_array1, aux_array2
-  type(species_new) :: sp_aux_new, sp1_aux_new
+  type(species_new), save :: sp_aux_new, sp1_aux_new
 
   interface traffic_size_eval
    module procedure :: traffic_size_eval_old
@@ -221,7 +221,7 @@
 
   mask(:) = (xp >= xl .and. xp <= xr)
   npt = COUNT( mask(:) )
-  call sp_loc%pack_into( sp_aux_new, mask(:) )
+  call sp_loc%pack_into( sp_aux_new, mask(:), npt )
   !=======================
   ns = tot_size*nr_send
   nr = tot_size*nl_recv
@@ -248,7 +248,7 @@
     !To be checked case ibd == 1
     call sp_loc%sel_particles( temp_spec, right_pind%indices(:) )
     tot = temp_spec%how_many()*tot_size 
-    aux_array1( 1:tot ) = temp_spec%flatten()
+    call temp_spec%flatten_into(aux_array1)
 
    end if
   end if
@@ -258,7 +258,7 @@
   if (nr>0) then !receives nr data from left
    n_tot = nl_recv*tot_size
    call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties)
-   sp_aux_new = sp_aux_new%append(temp_spec)
+   call sp_aux_new%append(temp_spec)
    npt = npt + nl_recv
   end if
 !===================
@@ -285,7 +285,7 @@
     call sp_loc%sel_particles( temp_spec, left_pind%indices(:) )
     tot = temp_spec%how_many()*tot_size
     
-    aux_array1( 1:tot ) = temp_spec%flatten()
+    call temp_spec%flatten_into(aux_array1)
    end if
   end if   !END ns >0
   if (max(ns, nr)>0) call sr_pdata(aux_array1, aux_array2, ns, nr, cdir, right)
@@ -293,7 +293,7 @@
   if (nr>0) then
    n_tot = nr_recv*tot_size
    call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties)
-   sp_aux_new = sp_aux_new%append(temp_spec)
+   call sp_aux_new%append(temp_spec)
    npt = npt + nr_recv
   end if
   call sp_aux_new%set_properties(part_properties)
@@ -535,8 +535,8 @@
    mask(:) = (xp >= xl .and. xp <= xr)
    npt = COUNT( mask(:) )
    
-   call sp_loc%pack_into(sp_aux_new, mask(:))
-   call aux_sp%pack_into(sp1_aux_new, mask(:))
+   call sp_loc%pack_into(sp_aux_new, mask(:), npt)
+   call aux_sp%pack_into(sp1_aux_new, mask(:), npt)
    !=======================
    ns = 2*tot_size*nr_send
    nr = 2*tot_size*nl_recv
@@ -574,11 +574,13 @@
      
      call sp_loc%sel_particles( temp_spec, right_pind%indices(:) )
      tot = temp_spec%how_many()*tot_size
-     aux_array1( 1:tot ) = temp_spec%flatten()
+     call temp_spec%flatten_into(aux_array1)
      call aux_sp%sel_particles( temp_spec, right_pind%indices(:) )
      tot_aux = temp_spec%how_many()*tot_size
      tot_aux = tot_aux + tot
-     aux_array1( (tot+1):tot_aux ) = temp_spec%flatten()
+     ! Using temporary array bs_temp_1d to store data
+     call temp_spec%flatten_into(bs_temp_1d)
+     aux_array1( (tot+1):tot_aux ) = bs_temp_1d(1:tot)
 
     end if
    end if
@@ -592,9 +594,9 @@
    if (nr>0) then !receives nr data from left
     n_tot = nl_recv*tot_size
     call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties)
-    sp_aux_new = sp_aux_new%append(temp_spec)
+    call sp_aux_new%append(temp_spec)
     call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nl_recv, part_properties)
-    sp1_aux_new = sp1_aux_new%append(temp_spec)
+    call sp1_aux_new%append(temp_spec)
     npt = npt + nl_recv
    end if
  ! !===================
@@ -630,12 +632,14 @@
     !============ NON PERIODIC EXCHANGE
      call sp_loc%sel_particles( temp_spec, left_pind%indices(:) )
      tot = temp_spec%how_many()*tot_size
-     aux_array1( 1:tot ) = temp_spec%flatten()
+     call temp_spec%flatten_into(aux_array1)
 
      call aux_sp%sel_particles( temp_spec, left_pind%indices(:) )
      tot_aux = temp_spec%how_many()*tot_size
      tot_aux = tot_aux + tot
-     aux_array1( (tot+1):tot_aux ) = temp_spec%flatten()
+     ! Using temporary array bs_temp_1d to store data
+     call temp_spec%flatten_into(bs_temp_1d)
+     aux_array1( (tot+1):tot_aux ) = bs_temp_1d(1:tot)
 
     end if
    end if   !END ns >0
@@ -648,9 +652,9 @@
    if (nr>0) then
     n_tot = nr_recv*tot_size
     call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties)
-    sp_aux_new = sp_aux_new%append(temp_spec)
+    call sp_aux_new%append(temp_spec)
     call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nr_recv, part_properties)
-    sp1_aux_new = sp1_aux_new%append(temp_spec)
+    call sp1_aux_new%append(temp_spec)
     npt = npt + nr_recv
    end if
    call sp_aux_new%set_properties(part_properties)
@@ -928,15 +932,15 @@
      mask(:) = (xp >= xl .and. xp <= xr)
      npt = COUNT( mask(:) )
 
-     call loc_sp%pack_into( sp_aux_new, mask(:))
+     call loc_sp%pack_into( sp_aux_new, mask(:), npt)
 
     else
 
      mask(:) = (xp >= xl .and. xp <= xr)
      npt = COUNT( mask(:) )
 
-     call loc_sp%pack_into( sp_aux_new, mask(:) )
-     call aux_sp%pack_into( sp1_aux_new, mask(:) )
+     call loc_sp%pack_into( sp_aux_new, mask(:), npt )
+     call aux_sp%pack_into( sp1_aux_new, mask(:), npt )
 
     end if
     np_new = npt

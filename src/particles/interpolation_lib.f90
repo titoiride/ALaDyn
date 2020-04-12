@@ -347,12 +347,12 @@
   subroutine second_order_real(deltax, ax2)
    real(dp), intent(in) :: deltax
    real(dp), dimension(:), intent(inout) :: ax2
-   real(dp) :: dx2
+   real(dp) :: dx2_r
    ! Here dx should be computed as
    ! dx = x - int(x + 0.5)
-   dx2 = deltax*deltax
-   ax2(2) = PP3 - dx2
-   ax2(3) = PP2*(PP1 + deltax + dx2)
+   dx2_r = deltax*deltax
+   ax2(2) = PP3 - dx2_r
+   ax2(3) = PP2*(PP1 + deltax + dx2_r)
    ax2(1) = one_dp - ax2(2) - ax2(3)
   end subroutine
 
@@ -375,15 +375,15 @@
   subroutine third_order_real(deltax, ax3)
    real(dp), intent(in) :: deltax
    real(dp), dimension(:), intent(inout) :: ax3
-   real(dp) :: dx2, dx3
+   real(dp) :: dx2_r, dx3_r
    ! Here dx should be computed as
    ! dx = x - int(x)
-   dx2 = deltax*deltax
-   dx3 = dx2*deltax
+   dx2_r = deltax*deltax
+   dx3_r = dx2_r*deltax
 
-   ax3(2) = PP4 - dx2 + PP2*dx3
-   ax3(3) = PP5 + PP2*(deltax + dx2 - dx3)
-   ax3(4) = PP5*dx3
+   ax3(2) = PP4 - dx2_r + PP2*dx3_r
+   ax3(3) = PP5 + PP2*(deltax + dx2_r - dx3_r)
+   ax3(4) = PP5*dx3_r
    ax3(1) = one_dp - ax3(2) - ax3(3) - ax3(4)
   end subroutine
 

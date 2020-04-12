@@ -42,6 +42,8 @@ module particles_def
    procedure, pass :: sweep => sweep_spec
  end type
 
+ type(species_new), save :: pd_temp_spec
+
  contains
 
  !========================================
@@ -199,72 +201,70 @@ module particles_def
  ! TYPE BOUND PROCEDURES
  !========================================
 
- function append_spec( this, other ) result(spec)
+ subroutine append_spec( this, other )
   class(species_new), intent(inout) :: this
   class(base_species_T), intent(inout) :: other
-  type(species_new) :: spec
-  integer :: tot_size
+  integer :: tot_size, np1, np2
 
-  if ( .not. allocated(this%initialized) .and. .not. allocated(other%initialized) ) then
-   return
-  else if ( .not. allocated(this%initialized) ) then
-   call this%new_species(0, other%pick_dimensions(), tracked=other%istracked())
-  else if ( .not. allocated(other%initialized) ) then
-   call other%new_species(0, this%pick_dimensions(), tracked=this%istracked())
+  ! Other is always already initialized (check in any case)
+  if ( (.not. allocated(this%initialized)) .or. this%empty ) then
+    call this%copy(other, 1, other%how_many())
+    return
   end if
-
-  if ( allocated(this%initialized) .and. allocated(other%initialized) ) then
-   if ( this%empty .and. .not. other%empty ) then
-    call spec%copy(other, 1, other%how_many())
+  if ( other%empty ) then
     return
-   else if (other%empty .and. .not. this%empty) then
-    call spec%copy(this, 1, this%how_many())
-    return
-   else if (other%empty .and. this%empty) then
-    return
-   end if
   end if
   
-  tot_size = this%how_many()+other%how_many()
-  call spec%new_species(tot_size, this%pick_dimensions(), tracked=this%istracked())
+  np1 = this%how_many()
+  np2 = other%how_many()
+  tot_size = np1 + np2
+
+  if (this%array_size() < tot_size ) then
+   call pd_temp_spec%copy( this, 1, np1 )
+   call this%reallocate( tot_size, this%pick_properties() )
+   call this%copy( pd_temp_spec, 1, np1 )
+  end if
   
   if(other%allocated_x) then
-   call assign(spec%x, [this%call_component(X_COMP), other%call_component(X_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%x, other%x(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_y) then
-   call assign(spec%y, [this%call_component(Y_COMP), other%call_component(Y_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%y, other%y(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_z) then
-   call assign(spec%z, [this%call_component(Z_COMP), other%call_component(Z_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%z, other%z(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_px) then
-   call assign(spec%px, [this%call_component(PX_COMP), other%call_component(PX_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%px, other%px(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_py) then
-   call assign(spec%py, [this%call_component(PY_COMP), other%call_component(PY_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%py, other%py(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_pz) then
-   call assign(spec%pz, [this%call_component(PZ_COMP), other%call_component(PZ_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%pz, other%pz(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_gamma) then
-   call assign(spec%gamma_inv, [this%call_component(INV_GAMMA_COMP), other%call_component(INV_GAMMA_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%gamma_inv, other%gamma_inv(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_weight) then
-   call assign(spec%weight, [this%call_component(W_COMP), other%call_component(W_COMP)], &
-    1, tot_size, tot_size)
+   call assign(this%weight, other%weight(1:np2), &
+    np1 + 1, tot_size, tot_size)
   end if
   if(other%allocated_index) then
-   call assign(spec%part_index, [int(this%call_component(INDEX_COMP)), int(other%call_component(INDEX_COMP))], &
-    1, tot_size, tot_size)
+   call assign(this%part_index, int(other%part_index(1:np2)), &
+    np1 + 1, tot_size, tot_size)
   end if
- end function
+
+  call this%set_part_number(tot_size)
+
+ end subroutine
 
  pure function call_component_spec( this, component, lb, ub ) result(comp)
  !! Function that hides the underlying array and calls the
@@ -360,10 +360,9 @@ module particles_def
    upb = n_parts
   end if
 
-  associate (inds => this%call_component(INDEX_COMP, lb=lowb, ub=upb), &
-             xx => this%call_component(component, lb=lowb, ub=upb))
+  associate (xx => this%call_component(component, lb=lowb, ub=upb))
 
-   track_mask(1:n_parts) = (int(inds) > 0)
+   track_mask(1:n_parts) = ( this%part_index(lowb:upb) > 0 )
    comp = PACK(xx(1:n_parts), track_mask(1:n_parts))
   end associate
 
@@ -521,44 +520,45 @@ module particles_def
   real (dp), intent(in) :: values(:)
   integer, intent(in) :: component
   integer, intent(in), optional :: lb, ub
-  integer :: lowb, upb
+  integer :: lowb, upb, np
 
+  np = this%how_many()
   if ( present(lb) ) then
    lowb = lb
   else
-   lowb = lbound(this%call_component( component ), 1)
+   lowb = 1
   end if
 
   if ( present(ub) ) then
    upb = ub
   else
-   upb = ubound(this%call_component( component ), 1)
+   upb = SIZE(values, DIM=1)
   end if
 
   select case(component)
   case(X_COMP)
-   call assign(this%x, values, lowb, upb, this%how_many())
+   call assign(this%x, values, lowb, upb, np)
    this%allocated_x = .true.
   case(Y_COMP)
-   call assign(this%y, values, lowb, upb, this%how_many())
+   call assign(this%y, values, lowb, upb, np)
    this%allocated_y = .true.
   case(Z_COMP)
-   call assign(this%z, values, lowb, upb, this%how_many())
+   call assign(this%z, values, lowb, upb, np)
    this%allocated_z = .true.
   case(PX_COMP)
-   call assign(this%px, values, lowb, upb, this%how_many())
+   call assign(this%px, values, lowb, upb, np)
    this%allocated_px = .true.
   case(PY_COMP)
-   call assign(this%py, values, lowb, upb, this%how_many())
+   call assign(this%py, values, lowb, upb, np)
    this%allocated_py = .true.
   case(PZ_COMP)
-   call assign(this%pz, values, lowb, upb, this%how_many())
+   call assign(this%pz, values, lowb, upb, np)
    this%allocated_pz = .true.
   case(INV_GAMMA_COMP)
-   call assign(this%gamma_inv, values, lowb, upb, this%how_many())
+   call assign(this%gamma_inv, values, lowb, upb, np)
    this%allocated_gamma = .true.
   case(W_COMP)
-   call assign(this%weight, values, lowb, upb, this%how_many())
+   call assign(this%weight, values, lowb, upb, np)
    this%allocated_weight = .true.
   end select
 
@@ -570,47 +570,48 @@ module particles_def
   integer, intent(in) :: values(:)
   integer, intent(in) :: component
   integer, intent(in), optional :: lb, ub
-  integer :: lowb, upb
+  integer :: lowb, upb, np
 
+  np = this%how_many()
   if ( present(lb) ) then
    lowb = lb
   else
-   lowb = lbound(this%call_component( component ), 1)
+   lowb = 1
   end if
 
   if ( present(ub) ) then
    upb = ub
   else
-   upb = ubound(this%call_component( component ), 1)
+   upb = SIZE(values, DIM=1)
   end if
 
   select case(component)
   case(X_COMP)
-   call assign(this%x, values, lowb, upb, this%how_many())
+   call assign(this%x, values, lowb, upb, np)
    this%allocated_x = .true.
   case(Y_COMP)
-   call assign(this%y, values, lowb, upb, this%how_many())
+   call assign(this%y, values, lowb, upb, np)
    this%allocated_y = .true.
   case(Z_COMP)
-   call assign(this%z, values, lowb, upb, this%how_many())
+   call assign(this%z, values, lowb, upb, np)
    this%allocated_z = .true.
   case(PX_COMP)
-   call assign(this%px, values, lowb, upb, this%how_many())
+   call assign(this%px, values, lowb, upb, np)
    this%allocated_px = .true.
   case(PY_COMP)
-   call assign(this%py, values, lowb, upb, this%how_many())
+   call assign(this%py, values, lowb, upb, np)
    this%allocated_py = .true.
   case(PZ_COMP)
-   call assign(this%pz, values, lowb, upb, this%how_many())
+   call assign(this%pz, values, lowb, upb, np)
    this%allocated_pz = .true.
   case(INV_GAMMA_COMP)
-   call assign(this%gamma_inv, values, lowb, upb, this%how_many())
+   call assign(this%gamma_inv, values, lowb, upb, np)
    this%allocated_gamma = .true.
   case(W_COMP)
-   call assign(this%weight, values, lowb, upb, this%how_many())
+   call assign(this%weight, values, lowb, upb, np)
    this%allocated_weight = .true.
   case(INDEX_COMP)
-   call assign(this%part_index, values, lowb, upb, this%how_many())
+   call assign(this%part_index, values, lowb, upb, np)
    this%allocated_index = .true.
   end select
 
