@@ -343,39 +343,39 @@ module particles_aux_def
  
   if(other%allocated_x) then
    call assign(this%x, other%x(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_y) then
    call assign(this%y, other%y(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_z) then
    call assign(this%z, other%z(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_px) then
    call assign(this%px, other%px(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_py) then
    call assign(this%py, other%py(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_pz) then
    call assign(this%pz, other%pz(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_gamma) then
    call assign(this%gamma_inv, other%gamma_inv(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_weight) then
    call assign(this%weight, other%weight(1:np2), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
   if(other%allocated_index) then
    call assign(this%part_index, int(other%part_index(1:np2)), &
-    np1 + 1, tot_size, tot_size)
+    np1 + 1, tot_size)
   end if
 
   call this%set_part_number(tot_size)
@@ -555,23 +555,23 @@ module particles_aux_def
  subroutine extend_aux( this, new_number )
   class(species_aux), intent(inout) :: this
   integer, intent(in) :: new_number
-  type(species_aux) :: temp
-  integer :: n_parts
+  integer :: n_size
 
   if ( .not. allocated(this%initialized) ) then
    write (6, *) 'Warning, cannot extend uninitialized species'
    return
   end if
 
-  n_parts = this%how_many()
-  if ( n_parts >= new_number ) then
+  n_size = this%array_size()
+  if ( n_size >= new_number ) then
+   call this%set_part_number(new_number)
    return
   end if
 
-  call temp%copy(this)
-  call this%sweep()
-  call this%new_species(new_number, this%pick_dimensions(), tracked=this%istracked())
-  call this%copy(temp)
+  call pda_temp_spec%copy(this)
+  call this%reallocate(new_number, this%pick_properties())
+  call this%copy(pda_temp_spec)
+  call this%set_part_number(new_number)
 
   end subroutine
 

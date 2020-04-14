@@ -917,6 +917,12 @@ module base_species
 
    i = 0
    call this%reallocate(num_particles, properties_in%pick_properties())
+   call this%set_properties( properties_in )
+   call this%set_part_number( num_particles )
+   if ( num_particles == 0 ) then
+    return
+   end if
+
    if( this%allocated_x ) then
     this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
@@ -954,8 +960,7 @@ module base_species
     i = i + num_particles
    end if
  
-   call this%set_properties( properties_in )
-   call this%set_part_number( num_particles )
+   
 
   end subroutine
 
@@ -1371,7 +1376,12 @@ module base_species
   real(dp), dimension(:), intent(in)  :: values
   integer, intent(in)  :: lb, ub
   integer, intent(in), optional  :: n_parts
-  integer :: size_value
+  integer :: size_value, np
+
+  np = 0
+  if ( present(n_parts) ) then
+   np = n_parts
+  end if
 
   size_value = SIZE(values, DIM=1)
   if ( (ub - lb + 1) > size_value ) then
@@ -1379,7 +1389,7 @@ module base_species
   end if
 
   if ( .not. allocated(array) ) then
-   allocate( array(n_parts) )
+   allocate( array(np) )
   end if
 
   array(lb:ub) = values(:)
@@ -1391,7 +1401,12 @@ module base_species
   integer, dimension(:), intent(in)  :: values
   integer, intent(in)  :: lb, ub
   integer, intent(in), optional  :: n_parts
-  integer :: size_value
+  integer :: size_value, np
+
+  np = 0
+  if ( present(n_parts) ) then
+   np = n_parts
+  end if
 
   size_value = SIZE(values, DIM=1)
   if ( (ub - lb + 1) > size_value ) then
@@ -1399,7 +1414,7 @@ module base_species
   end if
 
   if ( .not. allocated(array) ) then
-   allocate( array(n_parts) )
+   allocate( array(np) )
   end if
 
   array(lb:ub) = real(values(:), dp)
@@ -1411,7 +1426,12 @@ module base_species
   real(dp), dimension(:), intent(in)  :: values
   integer, intent(in)  :: lb, ub
   integer, intent(in), optional  :: n_parts
-  integer :: size_value
+  integer :: size_value, np
+
+  np = 0
+  if ( present(n_parts) ) then
+   np = n_parts
+  end if
 
   size_value = SIZE(values, DIM=1)
   if ( (ub - lb + 1) > size_value ) then
@@ -1419,7 +1439,7 @@ module base_species
   end if
 
   if ( .not. allocated(array) ) then
-   allocate( array(n_parts) )
+   allocate( array(np) )
   end if
 
   array(lb:ub) = real(values(:), sp)
@@ -1431,7 +1451,12 @@ module base_species
   real(sp), dimension(:), intent(in)  :: values
   integer, intent(in)  :: lb, ub
   integer, intent(in), optional  :: n_parts
-  integer :: size_value
+  integer :: size_value, np
+
+  np = 0
+  if ( present(n_parts) ) then
+   np = n_parts
+  end if
 
   size_value = SIZE(values, DIM=1)
   if ( (ub - lb + 1) > size_value ) then
@@ -1439,7 +1464,7 @@ module base_species
   end if
 
   if ( .not. allocated(array) ) then
-   allocate( array(n_parts) )
+   allocate( array(np) )
   end if
 
   array(lb:ub) = values(:)
@@ -1451,7 +1476,12 @@ module base_species
   integer, dimension(:), intent(in)  :: values
   integer, intent(in)  :: lb, ub
   integer, intent(in), optional  :: n_parts
-  integer :: size_value
+  integer :: size_value, np
+
+  np = 0
+  if ( present(n_parts) ) then
+   np = n_parts
+  end if
 
   size_value = SIZE(values, DIM=1)
   if ( (ub - lb + 1) > size_value ) then
@@ -1459,7 +1489,7 @@ module base_species
   end if
 
   if ( .not. allocated(array) ) then
-   allocate( array(n_parts) )
+   allocate( array(np) )
   end if
 
   array(lb:ub) = real(values(:), sp)
@@ -1471,7 +1501,12 @@ module base_species
   real(dp), dimension(:), intent(in)  :: values
   integer, intent(in)  :: lb, ub
   integer, intent(in), optional  :: n_parts
-  integer :: size_value
+  integer :: size_value, np
+
+  np = 0
+  if ( present(n_parts) ) then
+   np = n_parts
+  end if
 
   size_value = SIZE(values, DIM=1)
   if ( (ub - lb + 1) > size_value ) then
@@ -1479,7 +1514,7 @@ module base_species
   end if
 
   if ( .not. allocated(array) ) then
-   allocate( array(n_parts) )
+   allocate( array(np) )
   end if
 
   array(lb:ub) = int(values(:))
@@ -1491,7 +1526,12 @@ module base_species
   integer, dimension(:), intent(in)  :: values
   integer, intent(in)  :: lb, ub
   integer, intent(in), optional  :: n_parts
-  integer :: size_value
+  integer :: size_value, np
+
+  np = 0
+  if ( present(n_parts) ) then
+   np = n_parts
+  end if
 
   size_value = SIZE(values, DIM=1)
   if ( (ub - lb + 1) > size_value ) then
@@ -1499,7 +1539,7 @@ module base_species
   end if
 
   if ( .not. allocated(array) ) then
-   allocate( array(n_parts) )
+   allocate( array(np) )
   end if
 
   array(lb:ub) = values(:)
