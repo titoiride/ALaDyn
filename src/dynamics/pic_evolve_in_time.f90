@@ -33,11 +33,14 @@
 
   implicit none
 
+  integer, parameter :: n_substeps = 10
+
   interface lpf2_evolve
    module procedure :: lpf2_evolve_new
    module procedure :: lpf2_evolve_old
   end interface
 
+ 
  contains
 
   subroutine lpf2_evolve_old(iter_loc, spec_in, spec_aux_in)
@@ -123,9 +126,9 @@
    integer, intent (in) :: iter_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   integer :: ic, np
+   integer :: ic, np, step
+   real(dp) :: dt_step
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
-   logical, parameter :: mw = .false.
    !============================
    call pfields_prepare(ebf, nfield, 2, 2)
    ! =================================
@@ -162,19 +165,15 @@
    !=============================================
    jc(:, :, :, :) = zero_dp
    !curr_clean
+   dt_step = dt_loc/real(n_substeps, dp)
    do ic = 1, nsp_run
-    np = loc_npart(imody, imodz, imodx, ic)
-    !============
-    call set_lpf_acc(ebf, spec_in(ic), spec_aux_in, np, nfield)
-    call field_charge_multiply(spec_in(ic), spec_aux_in, np, nfield)
-
-    if (initial_time) call init_lpf_momenta(spec_in(ic), spec_aux_in, np, ic)
-    call lpf_momenta_and_positions(spec_in(ic), spec_aux_in, np, ic)
-    ! For each species :
-    ! spec_aux_in(1:3) store (X^{n+1}-X_n)=V^{n+1/2}*dt
-    ! spec_aux_in(4:7) store old x^n positions and dt/gam at t^{n+1/2}
-    if (part) call cell_part_dist(mw, spec_in(ic), spec_aux_in, ic)
-    !
+    do step = 1, n_substeps
+     np = loc_npart(imody, imodz, imodx, ic)
+     !============
+     call particle_motion( ebf, spec_in(ic), spec_aux_in, dt_step, &
+      np, nfield, ic, initial_time)
+    end do
+   !============
     np = loc_npart(imody, imodz, imodx, ic)
     call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)
     !================= only old ion charge saved
@@ -230,6 +229,43 @@
    !vbeam >0 uses the xw=(x+vbeam*t)
    !x=xi=(xw-vbeam*t) fixed
    !==============================
+  end subroutine
+
+  subroutine particle_motion(ef, spec_in, spec_aux_in, dt_in, np, nfields, &
+    ic, initial_time_in)
+
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (inout) :: spec_in
+   type (species_aux), intent (inout) :: spec_aux_in
+   real (dp), intent (in) :: dt_in
+   integer, intent (in) :: np, nfields, ic
+   logical, intent (inout) :: initial_time_in
+   logical, parameter :: mw = .false.
+
+
+   !==========================================================
+   ! Fields interpolation on particles positions
+   call set_lpf_acc(ef, spec_in, spec_aux_in, np, nfields)
+
+   !==========================================================
+   ! Fields are multiplied by the particles charge
+   call field_charge_multiply(spec_in, spec_aux_in)
+
+   !==========================================================
+   ! Initializes particles momenta on the initial time
+   call init_lpf_momenta(spec_in, spec_aux_in, dt_in, np, ic, initial_time_in)
+
+   !==========================================================
+   ! Particles are pushed via the chosen pusher
+   call lpf_momenta_and_positions(spec_in, spec_aux_in, dt_in, np, ic)
+    ! For each species :
+    ! spec_aux_in%V_COMP stores (X^{n+1}-X_n)=V^{n+1/2}*dt
+    ! spec_aux_in%OLD_COMP stores old x^n positions
+    ! spec_aux_in%INV_GAMMA_COMP stores dt/gam at t^{n+1/2}
+   !==========================================================
+   ! MPI particles exchange
+   if (part) call cell_part_dist(mw, spec_in, spec_aux_in, ic)
+
   end subroutine
 
  end module

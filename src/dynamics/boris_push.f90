@@ -67,13 +67,19 @@
   end subroutine
   ! SECTION for Leap-frog integrators in LP regime
   !==========================
-  subroutine init_lpf_momenta_new(sp_loc, pt, np, ic)
+  subroutine init_lpf_momenta_new(sp_loc, pt, dt_in, np, ic, initial_time_in)
    type(species_new), intent(inout) :: sp_loc
    type(species_aux), intent(inout) :: pt
+   real (dp), intent(in) :: dt_in
    integer, intent(in) :: np, ic
+   logical, intent(inout) :: initial_time_in
    real (dp) :: alp, dth_lp
  
-   dth_lp = 0.5*dt_loc
+   !======================================
+   ! Only executes on the initial timestep
+   if (.not. initial_time_in) return
+
+   dth_lp = 0.5*dt_in
    alp = dth_lp*lorentz_fact(ic) ! Lfact =1./m
    ! Fields are already multiplied by particle(ic) charge
    !=========================
@@ -135,6 +141,8 @@
     call sp_loc%set_component(bp_pp(1:np, 3), PZ_COMP, lb=1, ub=np)
 
    end select
+
+   initial_time_in = .false.
   end subroutine
   !==========================
   subroutine init_lpf_momenta_old(sp_loc, pt, np, ic)
@@ -178,10 +186,11 @@
    end select
   end subroutine
   !======================================
-  subroutine lpf_momenta_and_positions_new(sp_loc, pt, np, ic)
+  subroutine lpf_momenta_and_positions_new(sp_loc, pt, dt_in, np, ic)
 
    type (species_new), intent (inout) :: sp_loc
    type (species_aux), intent (inout) :: pt
+   real (dp), intent(in) :: dt_in
    integer, intent (in) :: np, ic
 
    integer :: p
@@ -196,7 +205,7 @@
    ! Higuera, POP, 2017
    !========================================
    !Enter Fields multiplied by particle charge
-   dt_lp = dt_loc
+   dt_lp = dt_in
    dth_lp = 0.5*dt_lp
    alp = dth_lp*lorentz_fact(ic)
    !=================================
