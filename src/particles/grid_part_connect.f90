@@ -118,7 +118,7 @@
     call xx_realloc(gpc_ap, np, 3)
     gpc_ap(1:np, 1:3) = zero_dp
     j2 = 1
-    gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 1) = sp_loc%x(1:np)
     
     call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
 
@@ -146,7 +146,7 @@
     j2 = 1
     call xx_realloc(gpc_ap, np, 6)
     gpc_ap(1:np, 1:6) = zero_dp
-    gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP) !the current particle positions
+    gpc_xx(1:np, 1) = sp_loc%x(1:np) !the current particle positions
     
     call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
 
@@ -1157,11 +1157,11 @@
     end associate
     !=========================
     call sp_loc%compute_gamma(pond_pot=gpc_ap(1:np, 6))
-    inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
+    inv_gam(1:np) = sp_loc%gamma_inv(1:np) !1/gamma^{n-1/2}
     gpc_ap(1:np, 1:3) = ch*gpc_ap(1:np, 1:3)
     gpc_ap(1:np, 4:5) = 0.5*ch*ch*gpc_ap(1:np, 4:5)
-    gpc_xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
-    gpc_xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 1) = sp_loc%px(1:np)
+    gpc_xx(1:np, 2) = sp_loc%py(1:np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 2
      aa1(1:np) = aa1(1:np) + gpc_ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
@@ -1178,7 +1178,7 @@
     call pt%set_component(gpc_ap(1:np, 2) - gpc_ap(1:np, 5), FY_COMP, lb=1, ub=np)
     ! Lorentz force already multiplied by q    
     call pt%set_component(gpc_ap(1:np, 3), BZ_COMP, lb=1, ub=np)
-    call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
+    call pt%set_component(inv_gam(1:np)*sp_loc%weight(1:np), &
      W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
 
@@ -1270,12 +1270,12 @@
     end associate
     !=========================
     call sp_loc%compute_gamma(pond_pot=gpc_ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
-    inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
+    inv_gam(1:np) = sp_loc%gamma_inv(1:np) !1/gamma^{n-1/2}
     gpc_ap(1:np, 1:6) = ch*gpc_ap(1:np, 1:6)
     gpc_ap(1:np, 7:9) = 0.5*ch*ch*gpc_ap(1:np, 7:9)
-    gpc_xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
-    gpc_xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
-    gpc_xx(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np)
+    gpc_xx(1:np, 1) = sp_loc%px(1:np)
+    gpc_xx(1:np, 2) = sp_loc%py(1:np)
+    gpc_xx(1:np, 3) = sp_loc%pz(1:np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 3
      aa1(1:np) = aa1(1:np) + gpc_ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
@@ -1295,7 +1295,7 @@
     call pt%set_component(gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
     call pt%set_component(gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
     call pt%set_component(gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
-    call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
+    call pt%set_component(inv_gam(1:np)*sp_loc%weight(1:np), &
      W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
    end select
@@ -2211,7 +2211,7 @@
                i => interp%ix_rank2, &
                j => interp%iy_rank2 )
 
-    weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
+    weight = sp_loc%weight(1:np)
      !==========================
     do n = 1, np
      do j1 = 0, 2
@@ -2242,7 +2242,7 @@
                j => interp%iy_rank2, &
                k => interp%iz_rank2 )
 
-    weight = sp_loc%call_component( W_COMP, lb=1, ub=np)
+    weight = sp_loc%weight(1:np)
     do n = 1, np
      do k1 = 0, 2
       k2 = k(n) + k1
@@ -2394,7 +2394,7 @@
      allocate( ih(np) )
      allocate( jh(np) )
 
-     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
+     weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
      ! Interpolation on new positions
      gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2501,7 +2501,7 @@
      allocate( axh0(np, 0:4))
      allocate( axh1(np, 0:4))
 
-     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
+     weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
      ! Interpolation on new positions
      gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2910,7 +2910,7 @@
    allocate( ayh0(np, 0:4))
    allocate( ayh1(np, 0:4))
 
-   weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
+   weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
    ! Interpolation on new positions
    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -3276,17 +3276,13 @@
    allocate( vp(np, 2) )
    allocate( weight(np) )
 
-   weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
+   weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
    !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
    ! is dt/gam and not just 1/gam ===
 
-   vp(1:np, 1) = 0.5*weight(1:np) * &
-    pt%call_component(INV_GAMMA_COMP, lb=1, ub=np) * &
-    sp_loc%call_component(PX_COMP, lb=1, ub=np)
-   vp(1:np, 2) = 0.5*weight(1:np) * &
-    pt%call_component(INV_GAMMA_COMP, lb=1, ub=np) * &
-    sp_loc%call_component(PY_COMP, lb=1, ub=np)
+   vp(1:np, 1) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%px(1:np)
+   vp(1:np, 2) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%py(1:np)
 
    ! Interpolation on new positions
    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -3474,20 +3470,14 @@
    allocate( vp(np, 3) )
    allocate( weight(np) )
 
-   weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
+   weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
    !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
    ! is dt/gam and not just 1/gam ===
 
-   vp(1:np, 1) = 0.5*weight(1:np) * &
-    pt%call_component(INV_GAMMA_COMP, lb=1, ub=np) * &
-    sp_loc%call_component(PX_COMP, lb=1, ub=np)
-   vp(1:np, 2) = 0.5*weight(1:np) * &
-    pt%call_component(INV_GAMMA_COMP, lb=1, ub=np) * &
-    sp_loc%call_component(PY_COMP, lb=1, ub=np)
-   vp(1:np, 3) = 0.5*weight(1:np) * &
-    pt%call_component(INV_GAMMA_COMP, lb=1, ub=np) * &
-    sp_loc%call_component(PZ_COMP, lb=1, ub=np)
+   vp(1:np, 1) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%px(1:np)
+   vp(1:np, 2) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%py(1:np)
+   vp(1:np, 3) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%pz(1:np)
 
    ! Interpolation on new positions
    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
