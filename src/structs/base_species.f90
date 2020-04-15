@@ -876,31 +876,31 @@ module base_species
    call packed%set_properties(this%pick_properties())
  
    if( this%allocated_x ) then
-    packed%x(1:new_np) = PACK( this%x(1:np), mask(:) )
+    packed%x(1:new_np) = PACK( this%x(1:np), mask(1:np) )
    end if
    if( this%allocated_y ) then
-    packed%y(1:new_np) = PACK( this%y(1:np), mask(:) )
+    packed%y(1:new_np) = PACK( this%y(1:np), mask(1:np) )
    end if
    if( this%allocated_z ) then
-    packed%z(1:new_np) = PACK( this%z(1:np), mask(:) )
+    packed%z(1:new_np) = PACK( this%z(1:np), mask(1:np) )
    end if
    if( this%allocated_px ) then
-    packed%px(1:new_np) = PACK( this%px(1:np), mask(:) )
+    packed%px(1:new_np) = PACK( this%px(1:np), mask(1:np) )
    end if
    if( this%allocated_py ) then
-    packed%py(1:new_np) = PACK( this%py(1:np), mask(:) )
+    packed%py(1:new_np) = PACK( this%py(1:np), mask(1:np) )
    end if
    if( this%allocated_pz ) then
-    packed%pz(1:new_np) = PACK( this%pz(1:np), mask(:) )
+    packed%pz(1:new_np) = PACK( this%pz(1:np), mask(1:np) )
    end if
    if( this%allocated_gamma ) then
-    packed%gamma_inv(1:new_np) = PACK( this%gamma_inv(1:np), mask(:) )
+    packed%gamma_inv(1:new_np) = PACK( this%gamma_inv(1:np), mask(1:np) )
    end if
    if( this%allocated_weight ) then
-    packed%weight(1:new_np) = PACK( this%weight(1:np), mask(:) )
+    packed%weight(1:new_np) = PACK( this%weight(1:np), mask(1:np) )
    end if
    if( this%allocated_index ) then
-    packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(:) )
+    packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(1:np) )
    end if
 
    call packed%set_part_number(new_np)
