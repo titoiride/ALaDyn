@@ -88,7 +88,7 @@
 
   type(interp_coeff), private, allocatable, save :: interp
   type(interp_coeff), private, allocatable, save :: interp_old
-  real(dp), dimension(:, :), allocatable, private, save :: gpc_xx
+  real(dp), dimension(:, :), allocatable, private, save :: gpc_xx, gpc_ap
   !! Useful variable to store interpolation results
 
   !========= SECTION FOR FIELDS ASSIGNEMENT
@@ -101,8 +101,6 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
    integer :: spl_cell, spl_h_cell
-
-   real(dp), allocatable, dimension(:, :) :: ap
    integer :: i1, i2, j2, n
    !=================================
    ! Do not execute without particles
@@ -117,7 +115,8 @@
    select case (ndf)
    case (3)
 
-    allocate( ap(np, 3), source=zero_dp )
+    call xx_realloc(gpc_ap, np, 3)
+    gpc_ap(1:np, 1:3) = zero_dp
     j2 = 1
     gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP, lb=1, ub=np)
     
@@ -131,21 +130,22 @@
     do i1 = 0, spl_cell
      do n = 1, np
       i2 = i1 + ih(n)
-      ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
-      ap(n, 3) = ap(n, 3) + axh(n, i1)*ef(i2, j2, 1, 3) !Bz(i+1/2)
+      gpc_ap(n, 1) = gpc_ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
+      gpc_ap(n, 3) = gpc_ap(n, 3) + axh(n, i1)*ef(i2, j2, 1, 3) !Bz(i+1/2)
       i2 = i1 + i(n)
-      ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
+      gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
      end do
     end do
 
     end associate
-    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 3), BZ_COMP, lb=1, ub=np)
    !========================
    case (6)
     j2 = 1
-    allocate( ap(np, 3), source=zero_dp )
+    call xx_realloc(gpc_ap, np, 6)
+    gpc_ap(1:np, 1:6) = zero_dp
     gpc_xx(1:np, 1) = sp_loc%call_component(X_COMP) !the current particle positions
     
     call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
@@ -158,24 +158,24 @@
     do i1 = 0, spl_cell
      do n = 1, np
       i2 = i1 + ih(n)
-      ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
-      ap(n, 5) = ap(n, 5) + axh(n, i1)*ef(i2, j2, 1, 5) !By(i+1/2)
-      ap(n, 6) = ap(n, 6) + axh(n, i1)*ef(i2, j2, 1, 6) !Bz(i+1/2)
+      gpc_ap(n, 1) = gpc_ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
+      gpc_ap(n, 5) = gpc_ap(n, 5) + axh(n, i1)*ef(i2, j2, 1, 5) !By(i+1/2)
+      gpc_ap(n, 6) = gpc_ap(n, 6) + axh(n, i1)*ef(i2, j2, 1, 6) !Bz(i+1/2)
       i2 = i1 + i(n)
-      ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
-      ap(n, 3) = ap(n, 3) + ax1(n, i1)*ef(i2, j2, 1, 3) !Ez(i)
-      ap(n, 4) = ap(n, 4) + ax1(n, i1)*ef(i2, j2, 1, 4) !Bx(i)
+      gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
+      gpc_ap(n, 3) = gpc_ap(n, 3) + ax1(n, i1)*ef(i2, j2, 1, 3) !Ez(i)
+      gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*ef(i2, j2, 1, 4) !Bx(i)
      end do
     end do
 
     end associate
 
-    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
   end subroutine
 
@@ -255,8 +255,6 @@
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
-
-   real(dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol, dvol1
    integer :: i1, j1, i2, j2, n, spl_cell, spl_h_cell
    !================================
@@ -275,7 +273,8 @@
    spl_h_cell = 2
    select case (ndf) !Field components
    case (3)
-    allocate( ap(np, 3), source=zero_dp )
+    call xx_realloc( gpc_ap, np, 3)
+    gpc_ap(1:np, 1:3) = zero_dp
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
@@ -296,7 +295,7 @@
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
       end do
      end do
      do j1 = 0, spl_h_cell
@@ -305,25 +304,26 @@
       do i1 = 0, spl_cell
        i2 = i(n) + i1
        dvol1 = ax1(n, i1)*dvol
-       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
+       gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
       end do
      end do
     end do
 
     end associate
 
-    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 3), BZ_COMP, lb=1, ub=np)
     !==============
    case (6)
     !=====================
-    allocate( ap(np, 6), source=zero_dp )
+    call xx_realloc( gpc_ap, np, 6)
+    gpc_ap(1:np, 1:6) = zero_dp
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
@@ -345,13 +345,13 @@
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
-       ap(n, 5) = ap(n, 5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
+       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+       gpc_ap(n, 5) = gpc_ap(n, 5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
       end do
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
        dvol1 = ax1(n, i1)*dvol
-       ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
+       gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
       end do
      end do
      do j1 = 0, spl_h_cell
@@ -360,25 +360,25 @@
       do i1 = 0, spl_cell
        i2 = i(n) + i1
        dvol1 = ax1(n, i1)*dvol
-       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
-       ap(n, 4) = ap(n, 4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
+       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+       gpc_ap(n, 4) = gpc_ap(n, 4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       ap(n, 6) = ap(n, 6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
+       gpc_ap(n, 6) = gpc_ap(n, 6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
       end do
      end do
     end do
 
     end associate
 
-    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
    !=====================
   end subroutine
@@ -512,8 +512,6 @@
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
-
-   real(dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol
    integer :: i1, j1, i2, j2, k1, k2, n, spl_cell, spl_h_cell
 
@@ -530,8 +528,8 @@
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call xx_realloc(gpc_xx, np, 3)
    !================================
-   allocate( ap(np, 6), source=zero_dp )
-
+   call xx_realloc(gpc_ap, np, 6)
+   gpc_ap(1:np, 1:6) = zero_dp
    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
@@ -570,7 +568,7 @@
       dvol = ay1(n, j1)*az1(n, k1)
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       ap(n, 1) = ap(n, 1) + axh(n, i1)*dvol*ef(i2, j2, k2, 1)
+       gpc_ap(n, 1) = gpc_ap(n, 1) + axh(n, i1)*dvol*ef(i2, j2, k2, 1)
       end do
      end do
      do j1 = 0, spl_h_cell
@@ -578,11 +576,11 @@
       dvol = ayh(n, j1)*az1(n, k1)
       do i1 = 0, spl_cell
        i2 = i(n) + i1
-       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2)
+       gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       ap(n, 6) = ap(n, 6) + axh(n, i1)*dvol*ef(i2, j2, k2, 6)
+       gpc_ap(n, 6) = gpc_ap(n, 6) + axh(n, i1)*dvol*ef(i2, j2, k2, 6)
       end do
      end do
     end do
@@ -603,7 +601,7 @@
       dvol = ayh(n, j1)*azh(n, k1)
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
-       ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4)
+       gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4)
       end do
      end do
      do j1 = 0, spl_cell
@@ -611,23 +609,23 @@
       dvol = ay1(n, j1)*azh(n, k1)
       do i1 = 0, spl_h_cell
        i2 = ih(n) + i1
-       ap(n, 5) = ap(n, 5) + axh(n, i1)*dvol*ef(i2, j2, k2, 5)
+       gpc_ap(n, 5) = gpc_ap(n, 5) + axh(n, i1)*dvol*ef(i2, j2, k2, 5)
       end do
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
-       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*ef(i2, j2, k2, 3)
+       gpc_ap(n, 3) = gpc_ap(n, 3) + ax1(n, i1)*dvol*ef(i2, j2, k2, 3)
       end do
      end do
     end do
    end do
 
    end associate
-   call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
-   call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
-   call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-   call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
-   call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
-   call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+   call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
+   call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
+   call pt%set_component( gpc_ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+   call pt%set_component( gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
+   call pt%set_component( gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
+   call pt%set_component( gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
 
   end subroutine
   !======================================
@@ -1060,8 +1058,6 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
    real (dp), intent (in) :: dt_step
-
-   real (dp), allocatable, dimension(:, :) :: ap
    real (dp), allocatable, dimension(:) :: inv_gam, gam, aa1, b1, dgam
    real (dp) :: dvol, dvol1
    real (dp) :: dth, ch
@@ -1105,8 +1101,9 @@
    case (2)
     !==========================
     call xx_realloc(gpc_xx, np, 2)
+    call xx_realloc(gpc_ap, np, 6)
     !==========================
-    allocate( ap(np, 6), source=zero_dp )
+    gpc_ap(1:np, 1:6) = zero_dp
     k2 = 1
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -1130,13 +1127,13 @@
       dvol = ay1(n, j1)
       do i1 = 0, stl
        i2 = i(n) + i1
-       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned F=a^2/2 field
+       gpc_ap(n, 6) = gpc_ap(n, 6) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned F=a^2/2 field
       end do
       do i1 = 0, stl
        i2 = ih(n) + i1
        dvol1 = dvol*axh1(n, i1)
-       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
-       ap(n, 4) = ap(n, 4) + dvol1*av(i2, j2, k2, 2)
+       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
+       gpc_ap(n, 4) = gpc_ap(n, 4) + dvol1*av(i2, j2, k2, 2)
        !ap(4)=ap(4)+dvol1*dx_inv*(av(i2+1,j2,k2,1)-av(i2,j2,k2,1))
       end do
      end do
@@ -1146,41 +1143,41 @@
       do i1 = 0, stl
        i2 = i(n) + i1
        dvol1 = dvol*ax1(n, i1)
-       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
-       ap(n, 5) = ap(n, 5) + dvol1*av(i2, j2, k2, 3)
+       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
+       gpc_ap(n, 5) = gpc_ap(n, 5) + dvol1*av(i2, j2, k2, 3)
        !ap(5)=ap(5)+dvol1*dy_inv*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))
       end do
       do i1 = 0, stl
        i2 = ih(n) + i1
-       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*ef(i2, j2, k2, 3) !Bz(i+1/2,j+1/2,k)
+       gpc_ap(n, 3) = gpc_ap(n, 3) + axh1(n, i1)*dvol*ef(i2, j2, k2, 3) !Bz(i+1/2,j+1/2,k)
       end do
      end do
     end do
 
     end associate
     !=========================
-    call sp_loc%compute_gamma(pond_pot=ap(1:np, 6))
+    call sp_loc%compute_gamma(pond_pot=gpc_ap(1:np, 6))
     inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
-    ap(1:np, 1:3) = ch*ap(1:np, 1:3)
-    ap(1:np, 4:5) = 0.5*ch*ch*ap(1:np, 4:5)
+    gpc_ap(1:np, 1:3) = ch*gpc_ap(1:np, 1:3)
+    gpc_ap(1:np, 4:5) = 0.5*ch*ch*gpc_ap(1:np, 4:5)
     gpc_xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
     gpc_xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 2
-     aa1(1:np) = aa1(1:np) + ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
-     b1(1:np) = b1(1:np) + ap(1:np, n + 3)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+     aa1(1:np) = aa1(1:np) + gpc_ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + gpc_ap(1:np, n + 3)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
     end do
     gam(1:np) = one_dp/inv_gam(1:np)
     dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
     inv_gam(1:np) = (gam(1:np)-dgam(1:np))*inv_gam(1:np)*inv_gam(1:np)
     !ap(3)=q*B/gamp, ap(4:5)= q*Grad[F]/2*gamp
     do n = 3, 5
-     ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
+     gpc_ap(1:np, n) = gpc_ap(1:np, n)*inv_gam(1:np)
     end do
-    call pt%set_component(ap(1:np, 1) - ap(1:np, 4), FX_COMP, lb=1, ub=np)
-    call pt%set_component(ap(1:np, 2) - ap(1:np, 5), FY_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 1) - gpc_ap(1:np, 4), FX_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 2) - gpc_ap(1:np, 5), FY_COMP, lb=1, ub=np)
     ! Lorentz force already multiplied by q    
-    call pt%set_component(ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 3), BZ_COMP, lb=1, ub=np)
     call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
      W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
@@ -1189,7 +1186,8 @@
     !==========================
     call xx_realloc(gpc_xx, np, 2)
     !==========================
-    allocate( ap(np, 10), source=zero_dp )
+    call xx_realloc(gpc_ap, np, 10)
+    gpc_ap(1:np, 1:10) = zero_dp
 
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -1217,13 +1215,13 @@
        dvol = ay1(n, j1)*az1(n, k1)
        do i1 = 0, stl
         i2 = i1 + i(n)
-        ap(n, 10) = ap(n, 10) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned Phi=a^2/2 field
+        gpc_ap(n, 10) = gpc_ap(n, 10) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned Phi=a^2/2 field
        end do
        do i1 = 0, stl
         i2 = i1 + ih(n)
         dvol1 = dvol*axh1(n, i1)
-        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
-        ap(n, 7) = ap(n, 7) + dvol1*av(i2, j2, k2, 2)
+        gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
+        gpc_ap(n, 7) = gpc_ap(n, 7) + dvol1*av(i2, j2, k2, 2)
        end do
       end do
       do j1 = 0, stl
@@ -1232,12 +1230,12 @@
        do i1 = 0, 2
         i2 = i(n) + i1
         dvol1 = dvol*ax1(n, i1)
-        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
-        ap(n, 8) = ap(n, 8) + dvol1*av(i2, j2, k2, 3)
+        gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
+        gpc_ap(n, 8) = gpc_ap(n, 8) + dvol1*av(i2, j2, k2, 3)
        end do
        do i1 = 0, stl
         i2 = i1 + ih(n)
-        ap(n, 6) = ap(n, 6) + axh1(n, i1)*dvol*ef(i2, j2, k2, 6) !Bz(i+1/2,j+1/2,k)
+        gpc_ap(n, 6) = gpc_ap(n, 6) + axh1(n, i1)*dvol*ef(i2, j2, k2, 6) !Bz(i+1/2,j+1/2,k)
        end do
       end do
      end do
@@ -1249,7 +1247,7 @@
        dvol = ayh1(n, j1)*azh1(n, k1)
        do i1 = 0, stl
         i2 = i1 + i(n)
-        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4) !Bx(i,j+1/2,k+1/2)
+        gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4) !Bx(i,j+1/2,k+1/2)
        end do
       end do
       do j1 = 0, stl
@@ -1257,13 +1255,13 @@
        dvol = ay1(n, j1)*azh1(n, k1)
        do i1 = 0, stl
         i2 = ih(n) + i1
-        ap(n, 5) = ap(n, 5) + axh1(n, i1)*dvol*ef(i2, j2, k2, 5) !By(i+1/2,j,k+1/2)
+        gpc_ap(n, 5) = gpc_ap(n, 5) + axh1(n, i1)*dvol*ef(i2, j2, k2, 5) !By(i+1/2,j,k+1/2)
        end do
        do i1 = 0, stl
         i2 = i1 + i(n)
         dvol1 = dvol*ax1(n, i1)
-        ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, k2, 3) !Ez and Dz[F] (i,j,k+1/2)
-        ap(n, 9) = ap(n, 9) + dvol1*av(i2, j2, k2, 4)
+        gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*ef(i2, j2, k2, 3) !Ez and Dz[F] (i,j,k+1/2)
+        gpc_ap(n, 9) = gpc_ap(n, 9) + dvol1*av(i2, j2, k2, 4)
        end do
       end do
      end do
@@ -1271,32 +1269,32 @@
 
     end associate
     !=========================
-    call sp_loc%compute_gamma(pond_pot=ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
+    call sp_loc%compute_gamma(pond_pot=gpc_ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
     inv_gam(1:np) = sp_loc%call_component(INV_GAMMA_COMP, lb=1, ub=np) !1/gamma^{n-1/2}
-    ap(1:np, 1:6) = ch*ap(1:np, 1:6)
-    ap(1:np, 7:9) = 0.5*ch*ch*ap(1:np, 7:9)
+    gpc_ap(1:np, 1:6) = ch*gpc_ap(1:np, 1:6)
+    gpc_ap(1:np, 7:9) = 0.5*ch*ch*gpc_ap(1:np, 7:9)
     gpc_xx(1:np, 1) = sp_loc%call_component(PX_COMP, lb=1, ub=np)
     gpc_xx(1:np, 2) = sp_loc%call_component(PY_COMP, lb=1, ub=np)
     gpc_xx(1:np, 3) = sp_loc%call_component(PZ_COMP, lb=1, ub=np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 3
-     aa1(1:np) = aa1(1:np) + ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
-     b1(1:np) = b1(1:np) + ap(1:np, n + 6)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+     aa1(1:np) = aa1(1:np) + gpc_ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + gpc_ap(1:np, n + 6)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
     end do
     gam(1:np) = one_dp/inv_gam(1:np)
     dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
     inv_gam(1:np) = (gam(1:np)-dgam(1:np))*inv_gam(1:np)*inv_gam(1:np)
     !  ap(1:3)=q(Ex,Ey,Ez)   ap(4:6)=q(Bx,By,Bz),ap(7:9)=q[Dx,Dy,Dz]F/2
     do n = 4, 9
-     ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
+     gpc_ap(1:np, n) = gpc_ap(1:np, n)*inv_gam(1:np)
     end do
     ! Lorentz force already multiplied by q    
-    call pt%set_component(ap(1:np, 1) - ap(1:np, 7), FX_COMP, lb=1, ub=np)
-    call pt%set_component(ap(1:np, 2) - ap(1:np, 8), FY_COMP, lb=1, ub=np)
-    call pt%set_component(ap(1:np, 3) - ap(1:np, 9), FZ_COMP, lb=1, ub=np)
-    call pt%set_component(ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component(ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component(ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 1) - gpc_ap(1:np, 7), FX_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 2) - gpc_ap(1:np, 8), FY_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 3) - gpc_ap(1:np, 9), FZ_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component(gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
     call pt%set_component(inv_gam(1:np)*sp_loc%call_component(W_COMP, lb=1, ub=np), &
      W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
@@ -1572,8 +1570,9 @@
    case (2)
     !==========================
     call xx_realloc(gpc_xx, np, 2)
+    call xx_realloc(gpc_ap, np, 6)
     !==========================
-    allocate( ap(np, 6), source=zero_dp )
+    gpc_ap(1:np, 1:6) = zero_dp
     k2 = 1
 
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -1595,13 +1594,13 @@
       dvol = ay1(n, j1)
       do i1 = 0, 2
        i2 = i1 + i(n)
-       ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
-       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+       gpc_ap(n, 1) = gpc_ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
+       gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
       end do
       do i1 = 0, 2
        i2 = i1 + ih(n)
-       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
-       ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+       gpc_ap(n, 3) = gpc_ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+       gpc_ap(n, 4) = gpc_ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
       end do
      end do
      do j1 = 0, 2
@@ -1609,26 +1608,26 @@
       dvol = ayh1(n, j1)
       do i1 = 0, 2
        i2 = i(n) + i1
-       ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
-       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+       gpc_ap(n, 5) = gpc_ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+       gpc_ap(n, 6) = gpc_ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
       end do
      end do
     end do
     !==================
     end associate
-    call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
+    call pt%set_component( sqrt(gpc_ap(1:np, 1)*gpc_ap(1:np, 1)+gpc_ap(1:np, 2)*gpc_ap(1:np, 2)), &
      POND_COMP, lb=1, ub=np) !The interpolated |A| potential
-    ap(1:np, 1) = om0*ap(1:np, 1) 
-    ap(1:np, 2) = om0*ap(1:np, 2)
-    ap(1:np, 3) = ddx*ap(1:np, 3)
-    ap(1:np, 4) = ddx*ap(1:np, 4)
-    ap(1:np, 5) = ddy*ap(1:np, 5)
-    ap(1:np, 6) = ddy*ap(1:np, 6)
+    gpc_ap(1:np, 1) = om0*gpc_ap(1:np, 1) 
+    gpc_ap(1:np, 2) = om0*gpc_ap(1:np, 2)
+    gpc_ap(1:np, 3) = ddx*gpc_ap(1:np, 3)
+    gpc_ap(1:np, 4) = ddx*gpc_ap(1:np, 4)
+    gpc_ap(1:np, 5) = ddy*gpc_ap(1:np, 5)
+    gpc_ap(1:np, 6) = ddy*gpc_ap(1:np, 6)
 
-    associate( aux => ap(1:np, 1)*ap(1:np, 1) + ap(1:np, 2)*ap(1:np, 2) + &
-               ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
-               ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
-               2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
+    associate( aux => gpc_ap(1:np, 1)*gpc_ap(1:np, 1) + gpc_ap(1:np, 2)*gpc_ap(1:np, 2) + &
+               gpc_ap(1:np, 3)*gpc_ap(1:np, 3) + gpc_ap(1:np, 4)*gpc_ap(1:np, 4) + &
+               gpc_ap(1:np, 5)*gpc_ap(1:np, 5) + gpc_ap(1:np, 6)*gpc_ap(1:np, 6) + &
+               2*one_dp*(gpc_ap(1:np, 1)*gpc_ap(1:np, 4) - gpc_ap(1:np, 2)*gpc_ap(1:np, 3)))
      call pt%set_component( aux, E_SQUARED, lb=1, ub=np )
     end associate
 
@@ -1636,8 +1635,9 @@
    case (3)
     !==========================
     call xx_realloc(gpc_xx, np, 3)
+    call xx_realloc(gpc_ap, np, 6)
     !==========================
-    allocate( ap(np, 6), source=zero_dp )
+    gpc_ap(1:np, 1:6) = zero_dp
 
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -1665,13 +1665,13 @@
        dvol = ay1(n, j1)*az1(n, k1)
        do i1 = 0, 2
         i2 = i1 + i(n)
-        ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
-        ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+        gpc_ap(n, 1) = gpc_ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
+        gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
        end do
        do i1 = 0, 2
         i2 = i1 + ih(n)
-        ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
-        ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+        gpc_ap(n, 3) = gpc_ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+        gpc_ap(n, 4) = gpc_ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
        end do
       end do
       do j1 = 0, 2
@@ -1679,26 +1679,26 @@
        dvol = ayh1(n, j1)*az1(n, k1)
        do i1 = 0, 2
         i2 = i(n) + i1
-        ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
-        ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+        gpc_ap(n, 5) = gpc_ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+        gpc_ap(n, 6) = gpc_ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
        end do
       end do
      end do
     end do
     end associate
-    call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
+    call pt%set_component( sqrt(gpc_ap(1:np, 1)*gpc_ap(1:np, 1)+gpc_ap(1:np, 2)*gpc_ap(1:np, 2)), &
     POND_COMP, lb=1, ub=np) !The interpolated |A| potential
-    ap(1:np, 1) = om0*ap(1:np, 1) 
-    ap(1:np, 2) = om0*ap(1:np, 2)
-    ap(1:np, 3) = ddx*ap(1:np, 3)
-    ap(1:np, 4) = ddx*ap(1:np, 4)
-    ap(1:np, 5) = ddy*ap(1:np, 5)
-    ap(1:np, 6) = ddy*ap(1:np, 6)
+    gpc_ap(1:np, 1) = om0*gpc_ap(1:np, 1) 
+    gpc_ap(1:np, 2) = om0*gpc_ap(1:np, 2)
+    gpc_ap(1:np, 3) = ddx*gpc_ap(1:np, 3)
+    gpc_ap(1:np, 4) = ddx*gpc_ap(1:np, 4)
+    gpc_ap(1:np, 5) = ddy*gpc_ap(1:np, 5)
+    gpc_ap(1:np, 6) = ddy*gpc_ap(1:np, 6)
     
-    associate( aux => ap(1:np, 1)*ap(1:np, 1) + ap(1:np, 2)*ap(1:np, 2) + &
-     ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
-     ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
-     2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
+    associate( aux => gpc_ap(1:np, 1)*gpc_ap(1:np, 1) + gpc_ap(1:np, 2)*gpc_ap(1:np, 2) + &
+     gpc_ap(1:np, 3)*gpc_ap(1:np, 3) + gpc_ap(1:np, 4)*gpc_ap(1:np, 4) + &
+     gpc_ap(1:np, 5)*gpc_ap(1:np, 5) + gpc_ap(1:np, 6)*gpc_ap(1:np, 6) + &
+     2*one_dp*(gpc_ap(1:np, 1)*gpc_ap(1:np, 4) - gpc_ap(1:np, 2)*gpc_ap(1:np, 3)))
      call pt%set_component( aux, E_SQUARED, lb=1, ub=np )
     end associate
 
@@ -1881,8 +1881,6 @@
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndm
-
-   real (dp), allocatable, dimension(:, :) :: ap
    real (dp) :: dvol, dvol1
    integer ::i1, j1, i2, j2, k1, k2, n
 
@@ -1910,8 +1908,9 @@
    case (2)
     !==========================
     call xx_realloc(gpc_xx, np, 2)
+    call xx_realloc(gpc_ap, np, 3)
     !==========================
-    allocate( ap(np, 3), source=zero_dp )
+    gpc_ap(1:np, 1:3) = zero_dp
     k2 = 1
 
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -1934,9 +1933,9 @@
       do i1 = 0, 2
        i2 = i1 + ih(n)
        dvol1 = dvol*axh1(n, i1)
-       ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[Phi]
+       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[Phi]
        i2 = i1 + i(n)
-       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) ![Phi]
+       gpc_ap(n, 3) = gpc_ap(n, 3) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) ![Phi]
       end do
      end do
      do j1 = 0, 2
@@ -1945,22 +1944,23 @@
       do i1 = 0, 2
        i2 = i(n) + i1
        dvol1 = dvol*ax1(n, i1)
-       ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[Phi]
+       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[Phi]
       end do
      end do
     end do
 
     end associate
     !assigned grad[Phi] and Phi
-    call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 3), POND_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 3), POND_COMP, lb=1, ub=np)
     !=================================
    case (3)
     !==========================
     call xx_realloc(gpc_xx, np, 3)
+    call xx_realloc(gpc_ap, np, 4)
     !==========================
-    allocate( ap(np, 6), source=zero_dp )
+    gpc_ap(1:np, 1:4) = zero_dp
 
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -1989,9 +1989,9 @@
        do i1 = 0, 2
         i2 = i1 + ih(n)
         dvol1 = dvol*axh1(n, i1)
-        ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[F]
+        gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[F]
         i2 = i1 + i(n)
-        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !Phi
+        gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !Phi
        end do
       end do
       do j1 = 0, 2
@@ -2000,7 +2000,7 @@
        do i1 = 0, 2
         i2 = i(n) + i1
         dvol1 = dvol*ax1(n, i1)
-        ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[F]
+        gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[F]
        end do
       end do
       k2 = kh(n) + k1
@@ -2010,17 +2010,17 @@
        do i1 = 0, 2
         i2 = i(n) + i1
         dvol1 = dvol*ax1(n, i1)
-        ap(n, 3) = ap(n, 3) + dvol1*av(i2, j2, k2, 4) !Dz[F]
+        gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*av(i2, j2, k2, 4) !Dz[F]
        end do
       end do
      end do
     end do
     end associate
     !assigned grad[Phi] and Phi
-    call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
-    call pt%set_component( ap(1:np, 4), POND_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
+    call pt%set_component( gpc_ap(1:np, 4), POND_COMP, lb=1, ub=np)
     !=================================
    end select
   end subroutine
