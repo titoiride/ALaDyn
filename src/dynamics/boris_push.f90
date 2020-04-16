@@ -32,6 +32,16 @@
   integer, parameter :: HIGUERA = 1
   integer, parameter :: BORIS = 2
 
+  interface boris_pusher
+   module procedure :: boris_pusher_new
+   module procedure :: boris_pusher_old
+  end interface
+
+  interface higuera_pusher
+   module procedure :: higuera_pusher_new
+   module procedure :: higuera_pusher_old
+  end interface
+
   interface init_lpf_momenta
    module procedure :: init_lpf_momenta_new
    module procedure :: init_lpf_momenta_old
@@ -190,7 +200,23 @@
   end subroutine
   !======================================
   subroutine lpf_momenta_and_positions_new(sp_loc, pt, dt_in, np, ic)
+   type (species_new), intent (inout) :: sp_loc
+   type (species_aux), intent (inout) :: pt
+   real (dp), intent(in) :: dt_in
+   integer, intent (in) :: np, ic
 
+   select case(pusher)
+   case(HIGUERA)
+    call higuera_pusher(sp_loc, pt, dt_in, np, ic)
+   case(BORIS)
+    call boris_pusher(sp_loc, pt, dt_in, np, ic)
+   case default
+    call higuera_pusher(sp_loc, pt, dt_in, np, ic)
+   end select
+
+  end subroutine
+
+  subroutine boris_pusher_new(sp_loc, pt, dt_in, np, ic)
    type (species_new), intent (inout) :: sp_loc
    type (species_aux), intent (inout) :: pt
    real (dp), intent(in) :: dt_in
@@ -201,7 +227,171 @@
    real (dp), dimension(:), allocatable :: gam, gam02, b2, bv, aux
    real (dp), dimension(:, :), allocatable :: bb
    !========================================
-   ! Higuera pusher 
+   ! Boris push 
+   ! p^{n}=(p^{n+1/2}+p^{n-1/2})/2 and gamma^n=sqrt( 1+p^n*p^n)
+   ! v^n=p^n/gamma^n
+   !========================================
+   !Enter Fields multiplied by particle charge
+   dt_lp = dt_in
+   dth_lp = 0.5*dt_lp
+   alp = dth_lp*lorentz_fact(ic)
+   !=================================
+   ! Do not execute without particles
+   !=================================
+   if ( sp_loc%empty ) return
+   !=============================================
+   call pp_realloc( bp_pp, np, sp_loc%pick_dimensions())
+   !=============================================
+   select case (curr_ndim)
+   case (2)
+    allocate( gam02(np) )
+    allocate( gam(np) )
+    allocate( b2(np) )
+    allocate( bb(np, 1) )
+
+    !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
+    bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
+    bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp
+
+    !gam0 in Boris push gam0^2 = 1 + (u^-)^2
+    do p = 1, np
+     gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
+    end do
+
+    b2(1:np) = bb(1:np, 1) * bb(1:np, 1)
+
+    gam(1:np) = sqrt(gam02(1:np))
+
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 1) + &
+     gam(1:np)*bp_pp(1:np, 2) * bb(1:np, 1))/ &
+     (gam02(1:np) + b2(1:np)) - sp_loc%px(1:np), &
+     PX_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 2) - &
+     gam(1:np)*bp_pp(1:np, 1) * bb(1:np, 1))/ &
+     (gam02(1:np) + b2(1:np)) - sp_loc%py(1:np), &
+     PY_COMP, lb=1, ub=np)
+
+    call sp_loc%compute_gamma()
+
+    !Stores old positions
+    call pt%set_component( sp_loc%x(1:np), OLD_X_COMP, lb=1, ub=np)
+    call pt%set_component( sp_loc%y(1:np), OLD_Y_COMP, lb=1, ub=np)
+    call pt%set_component(dt_lp*sp_loc%gamma_inv(1:np), &
+     OLD_GAMMA_COMP, lb=1, ub=np)
+
+    call pt%set_component( pt%gamma_inv(1:np) * sp_loc%px(1:np), VX_COMP, lb=1, ub=np)
+    call pt%set_component( pt%gamma_inv(1:np) * sp_loc%py(1:np), VY_COMP, lb=1, ub=np)
+
+    bp_pp(1:np, 1) = sp_loc%x(1:np) + pt%call_component(VX_COMP, lb=1, ub=np)
+    bp_pp(1:np, 2) = sp_loc%y(1:np) + pt%call_component(VY_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component(bp_pp(1:np, 1), X_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), Y_COMP, lb=1, ub=np)
+
+   case (3)
+
+    allocate( gam02(np) )
+    allocate( gam(np) )
+    allocate( b2(np) )
+    allocate( bb(np, 3) )
+    allocate( bv(np) )
+    allocate( aux(np) )
+
+    !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
+    bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
+    bp_pp(1:np, 3) = sp_loc%pz(1:np) + pt%call_component( EZ_COMP, lb=1, ub=np )*alp
+
+    !gam0 in Boris push gam0^2 = 1 + (u^-)^2
+    do p = 1, np
+     gam02(p) = 1. + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3))
+    end do
+
+    bb(1:np, 1) = alp * pt%call_component( BX_COMP, lb=1, ub=np )
+    bb(1:np, 2) = alp * pt%call_component( BY_COMP, lb=1, ub=np )
+    bb(1:np, 3) = alp * pt%call_component( BZ_COMP, lb=1, ub=np )
+
+    do p = 1, np
+     b2(p) = dot_product(bb(p, 1:3), bb(p, 1:3))
+     bv(p) = dot_product(bb(p, 1:3), bp_pp(p, 1:3))
+    end do
+
+    gam(1:np) = sqrt(gam02(1:np))
+
+    ! New PX_COMP calculation
+    aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
+     bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
+    
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%px(1:np), &
+     PX_COMP, lb=1, ub=np)
+
+    ! New PY_COMP calculation
+    aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
+     bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
+    
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%py(1:np), &
+     PY_COMP, lb=1, ub=np)
+
+    ! New PZ_COMP calculation
+    aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
+    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
+     bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
+    
+    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
+     PZ_COMP, lb=1, ub=np)
+
+    !Updated momenta
+    call sp_loc%compute_gamma()
+
+    !Stores old positions
+    call pt%set_component( sp_loc%x(1:np), OLD_X_COMP, lb=1, ub=np)
+    call pt%set_component( sp_loc%y(1:np), OLD_Y_COMP, lb=1, ub=np)
+    call pt%set_component( sp_loc%z(1:np), OLD_Z_COMP, lb=1, ub=np)
+    call pt%set_component(dt_lp*sp_loc%gamma_inv(1:np), &
+     OLD_GAMMA_COMP, lb=1, ub=np)
+
+    call pt%set_component( pt%gamma_inv(1:np) * sp_loc%px(1:np), VX_COMP, lb=1, ub=np)
+    call pt%set_component( pt%gamma_inv(1:np) * sp_loc%py(1:np), VY_COMP, lb=1, ub=np)
+    call pt%set_component( pt%gamma_inv(1:np) * sp_loc%pz(1:np), VZ_COMP, lb=1, ub=np)
+
+    bp_pp(1:np, 1) = sp_loc%x(1:np) + pt%call_component(VX_COMP, lb=1, ub=np)
+    bp_pp(1:np, 2) = sp_loc%y(1:np) + pt%call_component(VY_COMP, lb=1, ub=np)
+    bp_pp(1:np, 2) = sp_loc%z(1:np) + pt%call_component(VZ_COMP, lb=1, ub=np)
+
+    call sp_loc%set_component(bp_pp(1:np, 1), X_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), Y_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 2), Z_COMP, lb=1, ub=np)
+
+   end select
+
+   !In comoving frame vbeam >0
+   if (vbeam>0.) then
+    call sp_loc%set_component(sp_loc%x(1:np) - dt_lp*vbeam, &
+    X_COMP, lb=1, ub=np)
+    call pt%set_component(pt%x(1:np) - dt_lp*vbeam, OLD_X_COMP, lb=1, ub=np)
+   end if
+  end subroutine
+
+  subroutine higuera_pusher_new(sp_loc, pt, dt_in, np, ic)
+   type (species_new), intent (inout) :: sp_loc
+   type (species_aux), intent (inout) :: pt
+   real (dp), intent(in) :: dt_in
+   integer, intent (in) :: np, ic
+
+   integer :: p
+   real (dp) :: alp, dt_lp, dth_lp
+   real (dp), dimension(:), allocatable :: gam, gam02, b2, bv, aux
+   real (dp), dimension(:, :), allocatable :: bb
+   !========================================
+   ! Higuera push
    ! uses exact explicit solution for
    ! p^{n}=(p^{n+1/2}+p^{n-1/2})/2 and gamma^n=sqrt( 1+p^n*p^n)
    ! v^n=p^n/gamma^n
@@ -366,9 +556,116 @@
     call pt%set_component(pt%x(1:np) - dt_lp*vbeam, OLD_X_COMP, lb=1, ub=np)
    end if
   end subroutine
+
   !=============================
   subroutine lpf_momenta_and_positions_old(sp_loc, pt, np, ic)
+   type (species), intent (inout) :: sp_loc
+   real (dp), intent (inout) :: pt(:, :)
+   integer, intent (in) :: np, ic
 
+   select case(pusher)
+   case(HIGUERA)
+    call higuera_pusher(sp_loc, pt, np, ic)
+   case(BORIS)
+    call boris_pusher(sp_loc, pt, np, ic)
+   case default
+    call higuera_pusher(sp_loc, pt, np, ic)
+   end select
+
+  end subroutine
+
+  subroutine boris_pusher_old(sp_loc, pt, np, ic)
+   type (species), intent (inout) :: sp_loc
+   real (dp), intent (inout) :: pt(:, :)
+
+   integer, intent (in) :: np, ic
+   integer :: p, ch
+   real (dp) :: alp, dt_lp, dth_lp, bb(3), pp(3), vp(3), vph(3), efp(6), &
+     b2, bv, gam02, gam2, gam
+   !========================================
+   ! uses exact explicit solution for
+   ! p^{n}=(p^{n+1/2}+p^{n-1/2})/2 and gamma^n=sqrt( 1+p^n*p^n)
+   ! v^n=p^n/gamma^n
+   !========================================
+   !Enter Fields multiplied by particle charge
+   dt_lp = dt_loc
+   dth_lp = 0.5*dt_lp
+   alp = dth_lp*lorentz_fact(ic)
+   ch = -1
+   select case (curr_ndim)
+   case (2)
+    ch = 5
+    do p = 1, np
+     pp(1:2) = sp_loc%part(p, 3:4) !p_{n-1/2}
+     efp(1:3) = alp*pt(p, 1:3) !q*Lfact*(Ex,Ey,Bz)*Dt/2
+     vp(1:2) = pp(1:2) + efp(1:2) !u^{-} in Boris push
+     vp(3) = efp(3) !b_z
+     gam02 = 1. + dot_product(vp(1:2), vp(1:2)) !gam0 in Boris push
+     b2 = vp(3)*vp(3) !b_z*b_z
+     gam = sqrt(gam2)
+     !==============================
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     vph(1) = gam2*vp(1) + gam*vp(2)*vp(3)
+     vph(2) = gam2*vp(2) - gam*vp(1)*vp(3)
+     vph(1:2) = vph(1:2)/(gam2+b2)
+     sp_loc%part(p, 3:4) = 2.*vph(1:2) - pp(1:2)
+     !=========== the new momenta
+     !        update positions
+     pt(p, 3:4) = sp_loc%part(p, 1:2) !old positions stored
+     pp(1:2) = sp_loc%part(p, 3:4)
+     gam2 = 1. + dot_product(pp(1:2), pp(1:2))
+     pt(p, 5) = dt_lp/sqrt(gam2)
+     vp(1:2) = pt(p, 5)*pp(1:2) !velocities
+     pt(p, 1:2) = vp(1:2) !stores DT*V^{n+1/2}
+     sp_loc%part(p, 1:2) = sp_loc%part(p, 1:2) + vp(1:2) !new positions
+    end do
+   case (3)
+    ch = 7
+    do p = 1, np
+     pp(1:3) = sp_loc%part(p, 4:6)
+     efp(1:6) = alp*pt(p, 1:6) !q*Lfact*(E,B) on p-th-particle
+     vp(1:3) = pp(1:3) + efp(1:3) !p^{-} in Boris push
+     bb(1:3) = efp(4:6)
+     gam02 = 1. + dot_product(vp(1:3), vp(1:3)) !the lower order gamma in Boris scheme
+     !=============================
+     b2 = dot_product(bb(1:3), bb(1:3))
+     bv = dot_product(bb(1:3), vp(1:3))
+     gam = sqrt(gam2)
+     !============================
+     vph(1:3) = gam2*vp(1:3) + bb(1:3)*bv
+     vph(1) = vph(1) + gam*(vp(2)*bb(3)-vp(3)*bb(2))
+     vph(2) = vph(2) + gam*(vp(3)*bb(1)-vp(1)*bb(3))
+     vph(3) = vph(3) + gam*(vp(1)*bb(2)-vp(2)*bb(1))
+     vph(1:3) = vph(1:3)/(b2+gam2) !p_n=(p_{n+1/2)+p_{n-1/2})/2
+     !======== advance momenta
+     sp_loc%part(p, 4:6) = 2.*vph(1:3) - pp(1:3)
+     !==========
+     pt(p, 4:6) = sp_loc%part(p, 1:3) !stores old positions
+     pp(1:3) = sp_loc%part(p, 4:6)
+     gam2 = 1. + dot_product(pp(1:3), pp(1:3))
+     pt(p, 7) = dt_lp/sqrt(gam2)
+     vp(1:3) = pt(p, 7)*pp(1:3)
+     pt(p, 1:3) = vp(1:3) !stores dt*V 
+     sp_loc%part(p, 1:3) = sp_loc%part(p, 1:3) + vp(1:3) !new positions
+    end do
+   end select
+   !====================
+   if (iform<2) then
+    !old charge stored for charge preserving schemes
+    do p = 1, np
+     pt(p, ch) = sp_loc%part(p, ch)
+    end do
+   end if
+   !In comoving frame vbeam >0
+   if (vbeam>0.) then
+    do p = 1, np
+     sp_loc%part(p, 1) = sp_loc%part(p, 1) - dt_lp*vbeam
+     pt(p, 1) = pt(p, 1) - dt_lp*vbeam ! 
+    end do
+   end if
+  end subroutine
+
+  subroutine higuera_pusher_old(sp_loc, pt, np, ic)
    type (species), intent (inout) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)
 
@@ -462,6 +759,7 @@
     end do
    end if
   end subroutine
+
   !=============================
   subroutine lpf_env_momenta_new(sp_loc, f_pt, np, ic)
 
