@@ -222,9 +222,10 @@
    real (dp), intent(in) :: dt_in
    integer, intent (in) :: np, ic
 
-   integer :: p
+   integer :: p, nss, nstep
    real (dp) :: alp, dt_lp, dth_lp
    real (dp), dimension(:), allocatable :: gam, gam02, b2, bv, aux
+   real (dp), dimension(:), allocatable :: pyp, pxp, pypo, pxpo
    real (dp), dimension(:, :), allocatable :: bb
    !========================================
    ! Boris push 
@@ -248,11 +249,16 @@
     allocate( gam(np) )
     allocate( b2(np) )
     allocate( bb(np, 1) )
+    allocate( pxp(np) )
+    allocate( pyp(np) )
+    allocate( pxpo(np) )
+    allocate( pypo(np) )
 
+    nstep = 50
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
-    bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp
+    bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp/nstep
 
     !gam0 in Boris push gam0^2 = 1 + (u^-)^2
     do p = 1, np
@@ -263,15 +269,25 @@
 
     gam(1:np) = sqrt(gam02(1:np))
 
+    pxpo(1:np) = bp_pp(1:np, 1)
+    pypo(1:np) = bp_pp(1:np, 2)
+
+    do nss = 1, nstep
+      !gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
+      !gam(1:np) = sqrt(gam02(1:np))
+      pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*gam(1:np)*pypo(1:np)*bb(1:np, 1))/ &
+        &(gam02(1:np) + b2(1:np))
+      pyp(1:np) = ((gam02(1:np) - b2(1:np))*pypo(1:np) - 2*gam(1:np)*pxpo(1:np)*bb(1:np, 1))/ &
+        &(gam02(1:np) + b2(1:np))
+      pxpo(1:np) = pxp(1:np)
+      pypo(1:np) = pyp(1:np)
+    end do
+
     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 1) + &
-     gam(1:np)*bp_pp(1:np, 2) * bb(1:np, 1))/ &
-     (gam02(1:np) + b2(1:np)) - sp_loc%px(1:np), &
+    call sp_loc%set_component( (pxp(1:np) + bp_pp(1:np, 1)) - sp_loc%px(1:np), &
      PX_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 2) - &
-     gam(1:np)*bp_pp(1:np, 1) * bb(1:np, 1))/ &
-     (gam02(1:np) + b2(1:np)) - sp_loc%py(1:np), &
+    call sp_loc%set_component( (pyp(1:np) + bp_pp(1:np, 2)) - sp_loc%py(1:np), &
      PY_COMP, lb=1, ub=np)
 
     call sp_loc%compute_gamma()
