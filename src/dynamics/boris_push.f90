@@ -29,6 +29,9 @@
   implicit none
 
   real(dp), allocatable, dimension(:, :), private, save :: bp_pp
+  integer, parameter :: HIGUERA = 1
+  integer, parameter :: BORIS = 2
+
   interface init_lpf_momenta
    module procedure :: init_lpf_momenta_new
    module procedure :: init_lpf_momenta_old

@@ -31,6 +31,7 @@
   use control_bunch_input, only: reduced_charge, bunch_charge, epsy,&
   epsz, sxb, syb, gam, rhob, jb_norm
   use phys_param, only: electron_charge_norm
+  use boris_push, only: BORIS, HIGUERA
   implicit none
 
   interface Max_pmemory_check
@@ -203,6 +204,17 @@
     if (lpf_ord>2) then
      write (60, *) '  RK multi-step fourth order time scheme '
      write (60, *) '  Explicit fourth order Space Derivative'
+    end if
+    write(60, *) '      === Particle push ===      '
+    if (pusher == HIGUERA) then
+     write(60, *) 'Particles are pushed according to the Higuera push'
+    end if
+    if (pusher == BORIS) then
+     write(60, *) 'Particles are pushed according to the Boris push'
+    end if
+    if ( n_substeps > 1 ) then
+     write(60, *) 'Particle motion is divided in ', n_substeps, &
+     &' substeps every time cycle'
     end if
    end if
    if (charge_cons) then

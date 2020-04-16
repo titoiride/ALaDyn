@@ -33,8 +33,6 @@
 
   implicit none
 
-  integer, parameter :: n_substeps = 10
-
   interface lpf2_evolve
    module procedure :: lpf2_evolve_new
    module procedure :: lpf2_evolve_old
