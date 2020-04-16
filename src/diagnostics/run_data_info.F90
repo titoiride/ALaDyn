@@ -207,13 +207,13 @@
     end if
     write(60, *) '      === Particle push ===      '
     if (pusher == HIGUERA) then
-     write(60, *) 'Particles are pushed according to the Higuera push'
+     write(60, *) '  Particles are pushed according to the Higuera push'
     end if
     if (pusher == BORIS) then
-     write(60, *) 'Particles are pushed according to the Boris push'
+     write(60, *) '  Particles are pushed according to the Boris push'
     end if
     if ( n_substeps > 1 ) then
-     write(60, *) 'Particle motion is divided in ', n_substeps, &
+     write(60, *) '  Particle motion is divided in ', n_substeps, &
      &' substeps every time cycle'
     end if
    end if

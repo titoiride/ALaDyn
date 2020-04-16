@@ -46,6 +46,7 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
  ibz              = 0,
  ibeam            = 1
  density_limiter  = .false.,
+ n_substeps       = 1,
 /
 ```
 
@@ -83,6 +84,7 @@ With those parameters, the full box size (in μm) is: `Lx = nx / k0`, `Ly = yx_r
   + `2` For Envelope-fluid LWFA model (model_id = 4). Code solves Euler equations for plasma density with the laser described as an envelope.
 + `density_limiter` (default is false) bool variable that activates the density flux limiter in the fluid equations.
 This enforces density positivity. **WARNING** Still in beta, use is not recommended
++ `n_substeps` number of substeps the particle pusher has to be divided into every time cycle
 
 ## TARGET_DESCRIPTION namelist block
 
