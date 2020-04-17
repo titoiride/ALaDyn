@@ -78,15 +78,17 @@
    call set_grid(nx, ny, nz, ibx, nx_stretch, ny_stretch, k0, yx_rat, &
      zx_rat)
    dt = cfl*dx
+   ! dt always assumes cubic cells so that doesn't depend on transverse
+   ! resolution
    select case (ndim)
    case (1)
     dt = cfl/sqrt(dx_inv*dx_inv)
     gvol_inv = dx_inv*dx_inv*dx_inv
    case (2)
-    dt = cfl/sqrt(dx_inv*dx_inv+dy_inv*dy_inv)
+    dt = cfl*dx/sqrt(2)
     gvol_inv = dx_inv*dy_inv*dy_inv
    case (3)
-    dt = cfl/sqrt(dx_inv*dx_inv+dy_inv*dy_inv+dz_inv*dz_inv)
+    dt = cfl*dx/sqrt(3)
     gvol_inv = dx_inv*dy_inv*dz_inv
    end select
    gvol = 1./gvol_inv
