@@ -252,7 +252,6 @@
     allocate( b2(np) )
     allocate( bb(np, 1) )
 
-
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
@@ -260,11 +259,11 @@
     b2(1:np) = bb(1:np, 1) * bb(1:np, 1)
 
     if (nstep == 1) then
+     ! Single substep version (fewer arrays employed)
      !gam0 in Boris push gam0^2 = 1 + (u^-)^2
      do p = 1, np
       gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
      end do
-
 
      gam(1:np) = sqrt(gam02(1:np))
 
@@ -280,6 +279,7 @@
      PY_COMP, lb=1, ub=np)
 
     else if (nstep > 1) then
+     ! Multiple substeps version
      allocate( pxp(np) )
      allocate( pyp(np) )
      allocate( pxpo(np) )
@@ -288,6 +288,7 @@
      pypo(1:np) = bp_pp(1:np, 2)
 
      do nss = 1, nstep
+      ! Gamma is recomputed within each substep
       gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
       gam(1:np) = sqrt(gam02(1:np))
       pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*gam(1:np)*pypo(1:np)*bb(1:np, 1))/ &
@@ -347,6 +348,7 @@
     end do
 
     if ( nstep == 1 ) then
+     ! Single substep version (fewer arrays employed)
      !gam0 in Boris push gam0^2 = 1 + (u^-)^2
      do p = 1, np
       gam02(p) = 1. + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3))
@@ -381,7 +383,7 @@
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
       PZ_COMP, lb=1, ub=np)
     else if(nstep > 1) then
-
+     ! Multiple substeps version
      allocate( pxp(np) )
      allocate( pyp(np) )
      allocate( pzp(np) )
@@ -394,6 +396,7 @@
      pzpo(1:np) = bp_pp(1:np, 3)
 
      do nss = 1, nstep
+      ! Gamma is recomputed within each substep
       gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np) + &
       pzpo(1:np)*pzpo(1:np)
       gam(1:np) = sqrt(gam02(1:np))
@@ -495,6 +498,7 @@
     b2(1:np) = bb(1:np, 1) * bb(1:np, 1)
 
     if ( nstep == 1 ) then
+     ! Single substep version (fewer arrays employed)
      do p = 1, np 
       gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
      end do
@@ -519,6 +523,7 @@
       (gam02(1:np) + b2(1:np)) - sp_loc%py(1:np), &
       PY_COMP, lb=1, ub=np)
     else if ( nstep > 1 ) then
+     ! Multiple substeps version
      allocate( pxp(np) )
      allocate( pyp(np) )
      allocate( pxpo(np) )
@@ -527,6 +532,7 @@
      pypo(1:np) = bp_pp(1:np, 2)
 
      do nss = 1, nstep
+      ! Gamma is recomputed within each substep
       gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
       gam02(1:np) = gam02(1:np) - b2(1:np)
       gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &

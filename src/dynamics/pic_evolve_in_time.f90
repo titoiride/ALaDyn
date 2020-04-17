@@ -162,6 +162,7 @@
    !                   are injected
    !=============================================
    jc(:, :, :, :) = zero_dp
+   dt_step = dt_loc
    !curr_clean
    do ic = 1, nsp_run
     np = loc_npart(imody, imodz, imodx, ic)
