@@ -149,6 +149,7 @@ module base_species
 
   contains
    procedure, public, pass :: add_data
+   procedure, pass :: array_component
    procedure, pass :: array_size
    procedure, private, pass :: call_particle_bounds
    procedure, private, pass :: call_particle_index_array
@@ -173,6 +174,7 @@ module base_species
    procedure, public, pass :: pick_track_params
    procedure, public, pass :: reallocate
    procedure, public, pass :: redistribute
+   procedure, public, pass :: return_gamma
    procedure, pass :: set_charge_int
    procedure, pass :: set_charge_real
    procedure, pass :: set_dimensions
@@ -443,6 +445,72 @@ module base_species
     
 
   end subroutine
+
+  pure function array_component( this, component ) result(ac)
+   class(base_species_T), intent(in) :: this
+   integer, intent(in) :: component
+   integer :: ac
+
+   select case(this%pick_dimensions())
+   case(1)
+    select case(component)
+    case(X_COMP)
+     ac = 1
+    case(PX_COMP)
+     ac = 2
+    case(W_COMP)
+     ac = 3
+    case(INV_GAMMA_COMP)
+     ac = 4
+    case(INDEX_COMP)
+     ac = 5
+    case default
+     ac = -1
+    end select
+   case(2)
+    select case(component)
+    case(X_COMP)
+     ac = 1
+    case(Y_COMP)
+     ac = 2
+    case(PX_COMP)
+     ac = 3
+    case(PY_COMP)
+     ac = 4
+    case(W_COMP)
+     ac = 5
+    case(INV_GAMMA_COMP)
+     ac = 6
+    case(INDEX_COMP)
+     ac = 7
+    case default
+     ac = -1
+    end select
+   case(3)
+    select case(component)
+    case(X_COMP)
+     ac = 1
+    case(Y_COMP)
+     ac = 2
+    case(Z_COMP)
+     ac = 3
+    case(PX_COMP)
+     ac = 4
+    case(PY_COMP)
+     ac = 5
+    case(PZ_COMP)
+     ac = 6
+    case(W_COMP)
+     ac = 7
+    case(INV_GAMMA_COMP)
+     ac = 8
+    case(INDEX_COMP)
+     ac = 9
+    case default
+     ac = -1
+    end select
+   end select
+  end function
 
 !DIR$ ATTRIBUTES INLINE:: call_particle_single
   subroutine call_particle_single( this, particles, index_in, tracking )
@@ -984,6 +1052,25 @@ module base_species
    end if
 
   end subroutine
+
+  pure function return_gamma( this, lb, ub ) result(gam)
+   class(base_species_T), intent(in) :: this
+   integer, intent(in), optional :: lb, ub
+   real(dp), allocatable, dimension(:) :: gam
+   integer :: lowb, upb
+
+   lowb = 1
+   if ( present(lb) ) then
+    lowb = lb
+   end if
+   upb = this%how_many()
+   if ( present(ub) ) then
+    upb = ub
+   end if
+
+   gam = one_dp/this%gamma_inv(lowb:upb)
+
+  end function
 
   pure function pick_charge_scalars( this ) result(ch)
    class(scalars), intent(in) :: this
@@ -1560,6 +1647,7 @@ module base_species
   end if
   
  end subroutine
+
  pure function component_dictionary( component ) result(cdir)
  !! Dictionary wrapper for send_recieve routines in parallel.F90
  !! that need the cdir parameter

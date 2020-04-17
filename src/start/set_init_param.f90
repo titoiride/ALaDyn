@@ -85,10 +85,10 @@
     dt = cfl/sqrt(dx_inv*dx_inv)
     gvol_inv = dx_inv*dx_inv*dx_inv
    case (2)
-    dt = cfl*dx/sqrt(2)
+    dt = cfl*dx/sqrt(2.)
     gvol_inv = dx_inv*dy_inv*dy_inv
    case (3)
-    dt = cfl*dx/sqrt(3)
+    dt = cfl*dx/sqrt(3.)
     gvol_inv = dx_inv*dy_inv*dz_inv
    end select
    gvol = 1./gvol_inv

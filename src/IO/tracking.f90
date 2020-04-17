@@ -255,7 +255,7 @@ module tracking
   integer (dp) :: nptot_global_reduced
   integer :: npt, npt_loc(npe), cc
   integer :: ik, p, q, np, ip, ip_max, nptot, n_comp_out
-  integer :: lenp, ip_loc(npe), ndv, i_end
+  integer :: lenp, ip_loc(npe), ndv, i_end, gamma_comp
   integer (offset_kind) :: disp, disp_col
   type(index_array) :: out_parts
   type(track_data_t) :: track_data
@@ -300,6 +300,8 @@ module tracking
   call out_parts%find_index(track_mask(1:np))
   call spec_in%call_particle(track_aux, out_parts%indices(1:npt), tracking=.true.)
 
+  gamma_comp = spec_in%array_component( INV_GAMMA_COMP )
+  track_aux(1:npt, gamma_comp) = one_dp/track_aux(1:npt, gamma_comp)
   ip_loc(mype+1) = npt
   ip = ip_loc(mype+1)
 
