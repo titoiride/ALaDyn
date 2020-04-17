@@ -163,14 +163,11 @@
    !=============================================
    jc(:, :, :, :) = zero_dp
    !curr_clean
-   dt_step = dt_loc/real(n_substeps, dp)
    do ic = 1, nsp_run
-    do step = 1, n_substeps
-     np = loc_npart(imody, imodz, imodx, ic)
-     !============
-     call particle_motion( ebf, spec_in(ic), spec_aux_in, dt_step, &
-      np, nfield, ic, initial_time)
-    end do
+    np = loc_npart(imody, imodz, imodx, ic)
+    !============
+    call particle_motion( ebf, spec_in(ic), spec_aux_in, dt_step, &
+     np, nfield, ic, initial_time)
    !============
     np = loc_npart(imody, imodz, imodx, ic)
     call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)

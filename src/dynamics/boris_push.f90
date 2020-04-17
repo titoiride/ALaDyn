@@ -225,7 +225,7 @@
    integer :: p, nss, nstep
    real (dp) :: alp, dt_lp, dth_lp
    real (dp), dimension(:), allocatable :: gam, gam02, b2, bv, aux
-   real (dp), dimension(:), allocatable :: pyp, pxp, pypo, pxpo
+   real (dp), dimension(:), allocatable :: pyp, pxp, pzp, pypo, pxpo, pzpo
    real (dp), dimension(:, :), allocatable :: bb
    !========================================
    ! Boris push 
@@ -236,6 +236,8 @@
    dt_lp = dt_in
    dth_lp = 0.5*dt_lp
    alp = dth_lp*lorentz_fact(ic)
+   ! Substepping variable, 1 by default
+   nstep = n_substeps
    !=================================
    ! Do not execute without particles
    !=================================
@@ -249,47 +251,61 @@
     allocate( gam(np) )
     allocate( b2(np) )
     allocate( bb(np, 1) )
-    allocate( pxp(np) )
-    allocate( pyp(np) )
-    allocate( pxpo(np) )
-    allocate( pypo(np) )
 
-    nstep = 50
+
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
     bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp/nstep
-
-    !gam0 in Boris push gam0^2 = 1 + (u^-)^2
-    do p = 1, np
-     gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
-    end do
-
     b2(1:np) = bb(1:np, 1) * bb(1:np, 1)
 
-    gam(1:np) = sqrt(gam02(1:np))
+    if (nstep == 1) then
+     !gam0 in Boris push gam0^2 = 1 + (u^-)^2
+     do p = 1, np
+      gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
+     end do
 
-    pxpo(1:np) = bp_pp(1:np, 1)
-    pypo(1:np) = bp_pp(1:np, 2)
 
-    do nss = 1, nstep
-      !gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
-      !gam(1:np) = sqrt(gam02(1:np))
+     gam(1:np) = sqrt(gam02(1:np))
+
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 1) + &
+     gam(1:np)*bp_pp(1:np, 2) * bb(1:np, 1))/ &
+     (gam02(1:np) + b2(1:np)) - sp_loc%px(1:np), &
+     PX_COMP, lb=1, ub=np)
+
+     call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 2) - &
+     gam(1:np)*bp_pp(1:np, 1) * bb(1:np, 1))/ &
+     (gam02(1:np) + b2(1:np)) - sp_loc%py(1:np), &
+     PY_COMP, lb=1, ub=np)
+
+    else if (nstep > 1) then
+     allocate( pxp(np) )
+     allocate( pyp(np) )
+     allocate( pxpo(np) )
+     allocate( pypo(np) )
+     pxpo(1:np) = bp_pp(1:np, 1)
+     pypo(1:np) = bp_pp(1:np, 2)
+
+     do nss = 1, nstep
+      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
+      gam(1:np) = sqrt(gam02(1:np))
       pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*gam(1:np)*pypo(1:np)*bb(1:np, 1))/ &
         &(gam02(1:np) + b2(1:np))
       pyp(1:np) = ((gam02(1:np) - b2(1:np))*pypo(1:np) - 2*gam(1:np)*pxpo(1:np)*bb(1:np, 1))/ &
         &(gam02(1:np) + b2(1:np))
       pxpo(1:np) = pxp(1:np)
       pypo(1:np) = pyp(1:np)
-    end do
+     end do
 
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( (pxp(1:np) + bp_pp(1:np, 1)) - sp_loc%px(1:np), &
-     PX_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( (pxp(1:np) + bp_pp(1:np, 1)) - sp_loc%px(1:np), &
+      PX_COMP, lb=1, ub=np)
 
-    call sp_loc%set_component( (pyp(1:np) + bp_pp(1:np, 2)) - sp_loc%py(1:np), &
-     PY_COMP, lb=1, ub=np)
+     call sp_loc%set_component( (pyp(1:np) + bp_pp(1:np, 2)) - sp_loc%py(1:np), &
+      PY_COMP, lb=1, ub=np)
 
+    end if
     call sp_loc%compute_gamma()
 
     !Stores old positions
@@ -320,50 +336,88 @@
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 3) = sp_loc%pz(1:np) + pt%call_component( EZ_COMP, lb=1, ub=np )*alp
-
-    !gam0 in Boris push gam0^2 = 1 + (u^-)^2
-    do p = 1, np
-     gam02(p) = 1. + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3))
-    end do
-
-    bb(1:np, 1) = alp * pt%call_component( BX_COMP, lb=1, ub=np )
-    bb(1:np, 2) = alp * pt%call_component( BY_COMP, lb=1, ub=np )
-    bb(1:np, 3) = alp * pt%call_component( BZ_COMP, lb=1, ub=np )
+    
+    bb(1:np, 1) = alp * pt%call_component( BX_COMP, lb=1, ub=np )/nstep
+    bb(1:np, 2) = alp * pt%call_component( BY_COMP, lb=1, ub=np )/nstep
+    bb(1:np, 3) = alp * pt%call_component( BZ_COMP, lb=1, ub=np )/nstep
 
     do p = 1, np
      b2(p) = dot_product(bb(p, 1:3), bb(p, 1:3))
      bv(p) = dot_product(bb(p, 1:3), bp_pp(p, 1:3))
     end do
 
-    gam(1:np) = sqrt(gam02(1:np))
+    if ( nstep == 1 ) then
+     !gam0 in Boris push gam0^2 = 1 + (u^-)^2
+     do p = 1, np
+      gam02(p) = 1. + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3))
+     end do
 
-    ! New PX_COMP calculation
-    aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
-     bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
+     gam(1:np) = sqrt(gam02(1:np))
+
+     ! New PX_COMP calculation
+     aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
+     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
+      bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
     
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%px(1:np), &
-     PX_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%px(1:np), &
+      PX_COMP, lb=1, ub=np)
 
-    ! New PY_COMP calculation
-    aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
-     bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
+     ! New PY_COMP calculation
+     aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
+     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
+      bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
     
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%py(1:np), &
-     PY_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%py(1:np), &
+      PY_COMP, lb=1, ub=np)
 
-    ! New PZ_COMP calculation
-    aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
-     bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
+     ! New PZ_COMP calculation
+     aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
+     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
+      bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
     
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
-     PZ_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
+      PZ_COMP, lb=1, ub=np)
+    else if(nstep > 1) then
 
+     allocate( pxp(np) )
+     allocate( pyp(np) )
+     allocate( pzp(np) )
+     allocate( pxpo(np) )
+     allocate( pypo(np) )
+     allocate( pzpo(np) )
+
+     pxpo(1:np) = bp_pp(1:np, 1)
+     pypo(1:np) = bp_pp(1:np, 2)
+     pzpo(1:np) = bp_pp(1:np, 3)
+
+     do nss = 1, nstep
+      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np) + &
+      pzpo(1:np)*pzpo(1:np)
+      gam(1:np) = sqrt(gam02(1:np))
+      pxp(1:np) = ((gam02(1:np) + b2(1:np))*pxpo(1:np) + 2*(bv(1:np)*bb(1:np, 1) + &
+       gam(1:np)*(pypo(1:np)*bb(1:np, 3) - pzpo(1:np)*bb(1:np, 2))))/& 
+       (gam02(1:np) + b2(1:np))
+      pyp(1:np) = ((gam02(1:np) + b2(1:np))*pypo(1:np) + 2*(bv(1:np)*bb(1:np, 2) + &
+       gam(1:np)*(pzpo(1:np)*bb(1:np, 1) - pxpo(1:np)*bb(1:np, 3))))/& 
+       (gam02(1:np) + b2(1:np))
+      pzp(1:np) = ((gam02(1:np) + b2(1:np))*pzpo(1:np) + 2*(bv(1:np)*bb(1:np, 3) + &
+       gam(1:np)*(pxpo(1:np)*bb(1:np, 2) - pypo(1:np)*bb(1:np, 1))))/& 
+       (gam02(1:np) + b2(1:np))
+      pxpo(1:np) = pxp(1:np)
+      pypo(1:np) = pyp(1:np)
+      pzpo(1:np) = pzp(1:np)
+     end do
+
+     call sp_loc%set_component( (pxp(1:np) + bp_pp(1:np, 1)) - sp_loc%px(1:np), &
+      PX_COMP, lb=1, ub=np)
+     call sp_loc%set_component( (pyp(1:np) + bp_pp(1:np, 2)) - sp_loc%py(1:np), &
+      PY_COMP, lb=1, ub=np)
+     call sp_loc%set_component( (pzp(1:np) + bp_pp(1:np, 3)) - sp_loc%pz(1:np), &
+      PZ_COMP, lb=1, ub=np)
+    end if
     !Updated momenta
     call sp_loc%compute_gamma()
 
@@ -402,9 +456,10 @@
    real (dp), intent(in) :: dt_in
    integer, intent (in) :: np, ic
 
-   integer :: p
+   integer :: p, nss, nstep
    real (dp) :: alp, dt_lp, dth_lp
    real (dp), dimension(:), allocatable :: gam, gam02, b2, bv, aux
+   real (dp), dimension(:), allocatable :: pyp, pxp, pzp, pypo, pxpo, pzpo
    real (dp), dimension(:, :), allocatable :: bb
    !========================================
    ! Higuera push
@@ -417,6 +472,8 @@
    dt_lp = dt_in
    dth_lp = 0.5*dt_lp
    alp = dth_lp*lorentz_fact(ic)
+   ! Substepping variable, 1 by default
+   nstep = n_substeps
    !=================================
    ! Do not execute without particles
    !=================================
@@ -434,33 +491,63 @@
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Higuera push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
-    bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp
-    do p = 1, np
-     gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
-    end do
-
+    bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp/nstep
     b2(1:np) = bb(1:np, 1) * bb(1:np, 1)
 
-    !gam0 in Higuera push
-    gam02(1:np) = gam02(1:np) - b2(1:np)
+    if ( nstep == 1 ) then
+     do p = 1, np 
+      gam02(p) = 1. + dot_product(bp_pp(p, 1:2), bp_pp(p, 1:2))
+     end do
 
-    !exact gam^2 solution
-    gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
-     4.*b2(1:np)))
+     !gam0 in Higuera push
+     gam02(1:np) = gam02(1:np) - b2(1:np)
 
-    gam(1:np) = sqrt(gam02(1:np))
+     !exact gam^2 solution
+     gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+      4.*b2(1:np)))
 
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 1) + &
-     gam(1:np)*bp_pp(1:np, 2) * bb(1:np, 1))/ &
-     (gam02(1:np) + b2(1:np)) - sp_loc%px(1:np), &
-     PX_COMP, lb=1, ub=np)
+     gam(1:np) = sqrt(gam02(1:np))
 
-    call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 2) - &
-     gam(1:np)*bp_pp(1:np, 1) * bb(1:np, 1))/ &
-     (gam02(1:np) + b2(1:np)) - sp_loc%py(1:np), &
-     PY_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 1) + &
+      gam(1:np)*bp_pp(1:np, 2) * bb(1:np, 1))/ &
+      (gam02(1:np) + b2(1:np)) - sp_loc%px(1:np), &
+      PX_COMP, lb=1, ub=np)
 
+     call sp_loc%set_component( 2.*(gam02(1:np)*bp_pp(1:np, 2) - &
+      gam(1:np)*bp_pp(1:np, 1) * bb(1:np, 1))/ &
+      (gam02(1:np) + b2(1:np)) - sp_loc%py(1:np), &
+      PY_COMP, lb=1, ub=np)
+    else if ( nstep > 1 ) then
+     allocate( pxp(np) )
+     allocate( pyp(np) )
+     allocate( pxpo(np) )
+     allocate( pypo(np) )
+     pxpo(1:np) = bp_pp(1:np, 1)
+     pypo(1:np) = bp_pp(1:np, 2)
+
+     do nss = 1, nstep
+      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
+      gam02(1:np) = gam02(1:np) - b2(1:np)
+      gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+       4.*b2(1:np)))
+      gam(1:np) = sqrt(gam02(1:np))
+      pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*gam(1:np)*pypo(1:np)*bb(1:np, 1))/ &
+        &(gam02(1:np) + b2(1:np))
+      pyp(1:np) = ((gam02(1:np) - b2(1:np))*pypo(1:np) - 2*gam(1:np)*pxpo(1:np)*bb(1:np, 1))/ &
+        &(gam02(1:np) + b2(1:np))
+      pxpo(1:np) = pxp(1:np)
+      pypo(1:np) = pyp(1:np)
+     end do
+
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( (pxp(1:np) + bp_pp(1:np, 1)) - sp_loc%px(1:np), &
+      PX_COMP, lb=1, ub=np)
+
+     call sp_loc%set_component( (pyp(1:np) + bp_pp(1:np, 2)) - sp_loc%py(1:np), &
+      PY_COMP, lb=1, ub=np)
+
+    end if
     call sp_loc%compute_gamma()
 
     !Stores old positions
@@ -491,11 +578,7 @@
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 3) = sp_loc%pz(1:np) + pt%call_component( EZ_COMP, lb=1, ub=np )*alp
-
-    do p = 1, np
-     gam02(p) = 1. + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3))
-    end do
-
+    
     bb(1:np, 1) = alp * pt%call_component( BX_COMP, lb=1, ub=np )
     bb(1:np, 2) = alp * pt%call_component( BY_COMP, lb=1, ub=np )
     bb(1:np, 3) = alp * pt%call_component( BZ_COMP, lb=1, ub=np )
@@ -504,43 +587,88 @@
      b2(p) = dot_product(bb(p, 1:3), bb(p, 1:3))
      bv(p) = dot_product(bb(p, 1:3), bp_pp(p, 1:3))
     end do
+    if ( nstep == 1 ) then
 
-    !gam0 in Higuera push
-    gam02(1:np) = gam02(1:np) - b2(1:np)
+     do p = 1, np
+      gam02(p) = 1. + dot_product(bp_pp(p, 1:3), bp_pp(p, 1:3))
+     end do
 
-    !exact gam^2 solution
-    gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
-     4.*(b2(1:np) + bv(1:np) * bv(1:np))))
+     !gam0 in Higuera push
+     gam02(1:np) = gam02(1:np) - b2(1:np)
 
-    gam(1:np) = sqrt(gam02(1:np))
+     !exact gam^2 solution
+     gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+      4.*(b2(1:np) + bv(1:np) * bv(1:np))))
 
-    ! New PX_COMP calculation
-    aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
-     bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
+     gam(1:np) = sqrt(gam02(1:np))
+
+     ! New PX_COMP calculation
+     aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
+     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
+      bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
     
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%px(1:np), &
-     PX_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%px(1:np), &
+      PX_COMP, lb=1, ub=np)
 
-    ! New PY_COMP calculation
-    aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
-     bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
+     ! New PY_COMP calculation
+     aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
+     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
+      bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
     
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%py(1:np), &
-     PY_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%py(1:np), &
+      PY_COMP, lb=1, ub=np)
 
-    ! New PZ_COMP calculation
-    aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
-    aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
-     bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
+     ! New PZ_COMP calculation
+     aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
+     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
+      bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
     
-    !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
-    call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
-     PZ_COMP, lb=1, ub=np)
+     !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
+     call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
+      PZ_COMP, lb=1, ub=np)
+    else if ( nstep > 1 ) then
 
+     allocate( pxp(np) )
+     allocate( pyp(np) )
+     allocate( pzp(np) )
+     allocate( pxpo(np) )
+     allocate( pypo(np) )
+     allocate( pzpo(np) )
+
+     pxpo(1:np) = bp_pp(1:np, 1)
+     pypo(1:np) = bp_pp(1:np, 2)
+     pzpo(1:np) = bp_pp(1:np, 3)
+
+     do nss = 1, nstep
+      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np) + &
+      pzpo(1:np)*pzpo(1:np)
+      gam02(1:np) = gam02(1:np) - b2(1:np)
+      gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+       4.*b2(1:np)))
+      gam(1:np) = sqrt(gam02(1:np))
+      pxp(1:np) = ((gam02(1:np) + b2(1:np))*pxpo(1:np) + 2*(bv(1:np)*bb(1:np, 1) + &
+       gam(1:np)*(pypo(1:np)*bb(1:np, 3) - pzpo(1:np)*bb(1:np, 2))))/& 
+       (gam02(1:np) + b2(1:np))
+      pyp(1:np) = ((gam02(1:np) + b2(1:np))*pypo(1:np) + 2*(bv(1:np)*bb(1:np, 2) + &
+       gam(1:np)*(pzpo(1:np)*bb(1:np, 1) - pxpo(1:np)*bb(1:np, 3))))/& 
+       (gam02(1:np) + b2(1:np))
+      pzp(1:np) = ((gam02(1:np) + b2(1:np))*pzpo(1:np) + 2*(bv(1:np)*bb(1:np, 3) + &
+       gam(1:np)*(pxpo(1:np)*bb(1:np, 2) - pypo(1:np)*bb(1:np, 1))))/& 
+       (gam02(1:np) + b2(1:np))
+      pxpo(1:np) = pxp(1:np)
+      pypo(1:np) = pyp(1:np)
+      pzpo(1:np) = pzp(1:np)
+     end do
+
+     call sp_loc%set_component( (pxp(1:np) + bp_pp(1:np, 1)) - sp_loc%px(1:np), &
+      PX_COMP, lb=1, ub=np)
+     call sp_loc%set_component( (pyp(1:np) + bp_pp(1:np, 2)) - sp_loc%py(1:np), &
+      PY_COMP, lb=1, ub=np)
+     call sp_loc%set_component( (pzp(1:np) + bp_pp(1:np, 3)) - sp_loc%pz(1:np), &
+      PZ_COMP, lb=1, ub=np)
+    end if
     !Updated momenta
     call sp_loc%compute_gamma()
 
