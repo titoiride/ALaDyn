@@ -969,9 +969,9 @@
       shy = loc_yg(j1-2, 4, imody)
       smy = loc_yg(j1-1, 4, imody)
       alpha = shy/smy
-      ef(i1:i2, j, k1:k2, comp1:comp2) = alpha*(ef(i1:i2, j1+2, k1:k2, comp1:comp2) - &
-      ef(i1:i2, j1+1, k1:k2, comp1:comp2)) - 2*ef(i1:i2, j1+1, k1:k2, comp1:comp2) + &
-      3*ef(i1:i2, j1, k1:k2, comp1:comp2)
+      ef(i1:i2, j, k1:k2, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j1+2, k1:k2, comp1:comp2) - &
+      !ef(i1:i2, j1+1, k1:k2, comp1:comp2)) - 2*ef(i1:i2, j1+1, k1:k2, comp1:comp2) + &
+      !3*ef(i1:i2, j1, k1:k2, comp1:comp2)
      end do
     end if
     if (iby == 1) then
@@ -994,9 +994,9 @@
       shy = loc_yg(j2-1, 4, imody)
       smy = loc_yg(j2-2, 4, imody)
       alpha = shy/smy
-      ef(i1:i2, j, k1:k2, comp1:comp2) = alpha*(ef(i1:i2, j2-2, k1:k2, comp1:comp2) - &
-      ef(i1:i2, j2-1, k1:k2, comp1:comp2)) - 2*ef(i1:i2, j2-1, k1:k2, comp1:comp2) + &
-      3*ef(i1:i2, j2, k1:k2, comp1:comp2)
+      ef(i1:i2, j, k1:k2, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j2-2, k1:k2, comp1:comp2) - &
+      !ef(i1:i2, j2-1, k1:k2, comp1:comp2)) - 2*ef(i1:i2, j2-1, k1:k2, comp1:comp2) + &
+      !3*ef(i1:i2, j2, k1:k2, comp1:comp2)
      end do
     end if
     if (iby == 1) then
@@ -1021,9 +1021,9 @@
       shz = loc_zg(k1-2, 4, imodz)
       smz = loc_zg(k1-1, 4, imodz)
       alpha = shz/smz
-      ef(i1:i2, j1:j2, k, comp1:comp2) = alpha*(ef(i1:i2, j1:j2, k1+2, comp1:comp2) - &
-      ef(i1:i2, j1:j2, k1+1, comp1:comp2)) - 2*ef(i1:i2, j1:j2, k1+1, comp1:comp2) + &
-      3*ef(i1:i2, j1:j2, k1, comp1:comp2)
+      ef(i1:i2, j1:j2, k, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j1:j2, k1+2, comp1:comp2) - &
+      !ef(i1:i2, j1:j2, k1+1, comp1:comp2)) - 2*ef(i1:i2, j1:j2, k1+1, comp1:comp2) + &
+      !3*ef(i1:i2, j1:j2, k1, comp1:comp2)
      end do
     end if
     if (ibz == 1) then
@@ -1046,9 +1046,9 @@
       shz = loc_zg(k2-1, 4, imodz)
       smz = loc_zg(k2-2, 4, imodz)
       alpha = shz/smz
-      ef(i1:i2, j1:j2, k, comp1:comp2) = alpha*(ef(i1:i2, j1:j2, k2-2, comp1:comp2) - &
-      ef(i1:i2, j1:j2, k2-1, comp1:comp2)) - 2*ef(i1:i2, j1:j2, k2-1, comp1:comp2) + &
-      3*ef(i1:i2, j1:j2, k2, comp1:comp2)
+      ef(i1:i2, j1:j2, k, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j1:j2, k2-2, comp1:comp2) - &
+      !ef(i1:i2, j1:j2, k2-1, comp1:comp2)) - 2*ef(i1:i2, j1:j2, k2-1, comp1:comp2) + &
+      !3*ef(i1:i2, j1:j2, k2, comp1:comp2)
      end do
     end if
     if (ibz == 1) then
