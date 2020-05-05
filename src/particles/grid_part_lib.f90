@@ -859,9 +859,10 @@
   !====================================
 
   !DIR$ ATTRIBUTES INLINE :: set_local_positions_sn
-  function set_local_positions_sn( pt_array, component ) result(position)
+  function set_local_positions_sn( pt_array, component, mask_in  ) result(position)
    type (species_new), intent(in) :: pt_array
    integer, intent(in) :: component
+   logical, dimension(:), intent(in), optional :: mask_in
    integer :: np
    real(dp), allocatable, dimension(:) :: position
 
@@ -869,6 +870,11 @@
    allocate( position(np) )
    position(1:np) = pt_array%call_component( component, lb=1, ub=np )
 
+   if ( PRESENT( mask_in ) ) then
+    position = PACK( position, mask_in )
+    np = COUNT( mask_in )
+   end if
+   
    select case(component)
    case(X_COMP)
     call map2dx_part_sind( np, position )
@@ -881,15 +887,21 @@
   end function
 
   !DIR$ ATTRIBUTES INLINE :: set_local_positions_sa
-  function set_local_positions_sa( pt_array, component ) result(position)
+  function set_local_positions_sa( pt_array, component, mask_in ) result(position)
    type (species_aux), intent(in) :: pt_array
    integer, intent(in) :: component
+   logical, dimension(:), intent(in), optional :: mask_in
    integer :: np
    real(dp), allocatable, dimension(:) :: position
 
    np = pt_array%how_many()
    allocate( position(np) )
    position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+
+   if ( PRESENT( mask_in ) ) then
+    position = PACK( position, mask_in )
+    np = COUNT( mask_in )
+   end if
 
    select case(component)
    case(X_COMP)

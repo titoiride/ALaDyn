@@ -82,7 +82,7 @@
   end select
 
   !call timing
-  call MPI_BARRIER( comm, error )
+  call call_barrier()
   call Final_run_info
   call End_parallel
   !--------------------------
@@ -189,6 +189,15 @@
     ! Setting 0 on track_out iter so that it is
     ! always writing inside Data_out
 #if !defined(OLD_SPECIES)
+    if (Envelope) then
+     if ( Two_color ) then
+      !call interpolate_field_on_tracking( env + env1, spec, iter, A_PARTICLE )
+     else
+      call interpolate_field_on_tracking( env, spec, iter, A_PARTICLE )
+     end if
+    else
+     call interpolate_field_on_tracking( ebf, spec, iter, A_PARTICLE )
+    end if
     call track_out( spec, tnow, 0 )
 #endif
     tout = tout + dtout

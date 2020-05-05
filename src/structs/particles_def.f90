@@ -560,6 +560,11 @@ module particles_def
   case(W_COMP)
    call assign(this%weight, values, lowb, upb, np)
    this%allocated_weight = .true.
+  case(A_PARTICLE)
+   call assign(this%data_output, values, lowb, upb, np)
+   this%allocated_data_out = .true.
+  case default
+   call write_warning('Other components in set_component not allowed')
   end select
 
  end subroutine
@@ -613,6 +618,11 @@ module particles_def
   case(INDEX_COMP)
    call assign(this%part_index, values, lowb, upb, np)
    this%allocated_index = .true.
+  case(A_PARTICLE)
+   call assign(this%data_output, values, lowb, upb, np)
+   this%allocated_data_out = .true.
+  case default
+   call write_warning('Other components in set_component not allowed')
   end select
 
  end subroutine

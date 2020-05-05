@@ -63,8 +63,9 @@ list(APPEND ALaDyn_Fortran_sources
   src/IO/psolve.f90
   src/IO/tracking.f90
   src/particles/grid_part_lib.f90
-  src/particles/grid_part_connect.f90
+  src/particles/grid_part_connect.F90
   src/particles/grid_part_util.f90
+  src/particles/grid_tracking_part_connect.f90
   src/particles/interpolation_lib.f90
   src/parallel/mpi_var.f90
   src/parallel/mpi_part_interface.f90

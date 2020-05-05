@@ -42,6 +42,7 @@
   use fstruct_data
   use parallel
   use grid_param
+  use util
 
   implicit none
   integer, parameter, private :: x_parity(6) = [ -1, 1, 1, -1, 1, 1 ]
@@ -772,4 +773,67 @@
    !===========================
   end subroutine
   !=====================
+
+  subroutine longitudinal_integration(axis_in, field_in, result_in, lb_in, ub_in)
+   !! Subroutine that coordinates the longitudinal numerical integration between tasks
+   real(dp), allocatable, dimension(:), intent(in) :: axis_in
+   real(dp), allocatable, dimension(:, :, :), intent(in) :: field_in
+   real(dp), allocatable, dimension(:, :, :), intent(inout) :: result_in
+   integer, intent(in) :: lb_in, ub_in
+   integer :: npx, i, ix, iy, iz, jlb, jub, klb, kub, stl, str
+   integer :: kk, lenws(1), lenwr(1)
+   logical :: send
+
+   stl = 1
+   str = 1
+   jlb = LBOUND( field_in, DIM=2)
+   jub = UBOUND( field_in, DIM=2)
+   klb = LBOUND( field_in, DIM=3)
+   kub = UBOUND( field_in, DIM=3)
+
+   do npx = npe_xloc - 1, 1, -1
+    ! Cycle over longitudinal tasks
+    if ( imodx == npx ) then
+     send = .true.
+     call trapezoidal_integration(axis_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+     ! Performing the integral
+     kk = 0
+     ! Now task pass boundary values to next one
+     do iz = klb, kub
+      do iy = jlb, kub
+       do i = 0, stl - 1
+        ix = lb_in + i
+        kk = kk + 1
+        aux1(kk) = result_in(ix, iy, iz)
+       end do
+      end do
+     end do
+     lenws(1) = kk
+     call exchange_rdata_int(lenws, send, 1, npx - 1, 3, imodx + 99)
+     lenwr = lenws
+     call exchange_rdata(aux1, send, lenws(1), npx - 1, 3, imodx + 100)
+    else if (imodx == npx - 1) then
+     send = .false.
+     kk = 0
+     call exchange_rdata_int(lenwr, send, 1, npx - 1, 3, imodx + 99)
+     call exchange_rdata(aux2, send, lenwr(1), npx, 3, imodx + 1 + 100)
+     do iz = klb, kub
+      do iy = jlb, kub
+       do i = 1, stl
+        ix = ub_in + i
+        kk = kk + 1
+        result_in(ix, iy, iz) = aux2(kk)
+       end do
+      end do
+     end do
+    end if
+    ! Barrier is necessary to ensure causality in the chain integration
+    call call_barrier()
+   end do
+
+   if (imodx == 0) then
+    call trapezoidal_integration(axis_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+   end if
+
+  end subroutine
  end module

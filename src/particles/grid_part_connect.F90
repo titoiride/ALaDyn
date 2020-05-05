@@ -25,6 +25,10 @@
   use fstruct_data
   use grid_part_lib
   use particles_def
+#if !defined(OLD_SPECIES)
+  use grid_tracking_part_connect
+#endif
+
   implicit none
   interface set_part1d_acc
    module procedure :: set_part1d_acc_new

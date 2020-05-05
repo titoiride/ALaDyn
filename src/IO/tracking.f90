@@ -27,11 +27,14 @@ module tracking
  use pstruct_data
  use phys_param
  use system_utilities
+ use grid_tracking_part_connect
+ use mpi_field_interface, only: longitudinal_integration
 ! !#if defined(OPENPMD)
 !  use hdf5io_class
 ! !#endif
  use array_alloc, only: array_realloc_1d
  use grid_part_lib, only: xx_realloc
+ use grid_param, only: x
  use util, only: endian
  use warnings, only: write_warning
 
@@ -361,7 +364,7 @@ module tracking
  subroutine track_out( spec_in, timenow, iter)
   !! Wrapper for the tracking I/O routine
 
-  type(species_new), intent(in), dimension(:) :: spec_in
+  type(species_new), intent(inout), dimension(:) :: spec_in
   real(dp), intent(in) :: timenow
   integer, intent(in) :: iter
   integer :: ic
@@ -371,13 +374,55 @@ module tracking
     if ( MOD(iter, every_track(ic) ) == 0 ) then
      call tracking_write_output(spec_in(ic), timenow, ic)
      tracking_written = .true.
+     if ( spec_in(ic)%allocated_data_out ) then
+      call spec_in(ic)%deallocate_data_output()
+     end if
     end if
    end if
   end do
   ! Warning: both dictionary writing and tracking_written flag
   ! must be switched to array if employing multiple species tracking
  end subroutine
+ !================================
+ subroutine interpolate_field_on_tracking( field_in, spec_in, iter, field_type )
+  real(dp), dimension(:, :, :, :), allocatable, intent(in) :: field_in
+  type(species_new), intent(inout), dimension(:) :: spec_in
+  integer, intent(in) :: iter, field_type
+  real(dp), dimension(:, :, :), allocatable :: interpol_field
+  real(dp), dimension(:, :, :), allocatable :: field_aux
 
+  if ( MOD(iter, every_track(ic) ) == 0 ) then
+
+   allocate( interpol_field, MOLD=field_in(:, :, :, 1) )
+   interpol_field(:, :, :) = zero_dp
+   select case (field_type)
+   case(A_PARTICLE)
+    if (.not. envelope) then
+     if ( model_id == 1) then
+      field_aux(:, :, :) = field_in(:, :, :, 2)
+     else if ( model_id == 2) then
+      field_aux(:, :, :) = field_in(:, :, :, 3)
+     else if ( circ_lp ) then
+      call write_warning('Circular polarization not implemented')
+      return
+     end if
+     call longitudinal_integration( x, field_aux, interpol_field, ix1, ix2)
+    else if (envelope) then
+     ! Envelope real part
+     interpol_field(:, :, :) = field_in(:, :, :, 1)
+    end if
+   case default
+   end select
+
+   do ic = 1, nsp
+    if (spec_in(ic)%istracked()) then
+     np = spec_in(ic)%how_many()
+     call spec_in(ic)%allocate_data_output()
+     call a_on_tracking_particles( interpol_field, spec_in(ic), np )
+    end if
+   end do
+  end if
+ end subroutine
 ! !#if defined(OPENPMD)
 !  subroutine track_write_hdf5( spec_in, timenow, dt_loc_in, iter, ic )
 !   type( species_new), intent(in) :: spec_in

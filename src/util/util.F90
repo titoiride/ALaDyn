@@ -33,6 +33,7 @@
   implicit none
   private
   public :: gasdev, init_random_seed, bunch_gen, write_warning, endian
+  public :: trapezoidal_integration
 
  contains
 
@@ -351,4 +352,22 @@
     iend = 2
    end if
   end subroutine
+
+  subroutine trapezoidal_integration(axis_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+    real(dp), allocatable, dimension(:), intent(in) :: axis_in
+    real(dp), allocatable, dimension(:, :, :), intent(in) :: field_in
+    real(dp), allocatable, dimension(:, :, :), intent(inout) :: result_in
+    real(dp) :: dx
+    integer, intent(in) :: lb_in, ub_in, jlb, jub, klb, kub
+    integer :: i
+
+    do i = ub_in, lb_in, -1
+     dx = axis_in( i ) - axis_in( i - 1 )
+     result_in( i, jlb:jub, klb:kub) = dx * &
+      (field_in( i - 1, jlb:jub, klb:kub ) + field_in( i, jlb:jub, klb:kub)) + &
+      result_in( i + 1, jlb:jub, klb:kub )
+    end do
+ 
+   end subroutine
+
  end module

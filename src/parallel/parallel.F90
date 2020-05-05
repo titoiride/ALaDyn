@@ -270,7 +270,19 @@
    
   end subroutine
 
+  subroutine call_barrier( comm_in )
+   integer, intent(in), optional :: comm_in
+   integer :: comm_barr
 
+   if ( present(comm_in) ) then
+    comm_barr = comm_in
+   else
+    comm_barr = comm
+   end if
+
+   call MPI_BARRIER( comm_barr, error )
+
+  end subroutine
   subroutine mpi_write_dp(buf, bufsize, disp, nchar, fout)
 
    real (dp), intent (in) :: buf(:)

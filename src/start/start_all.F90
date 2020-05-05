@@ -235,7 +235,7 @@ call gdbattach
      ienout = 0
     end if
     call restart(last_iter, tstart, spec, ebfp)
-    call MPI_BARRIER(comm, error)
+    call call_barrier()
     call set_fxgrid(npe_xloc, sh_ix)
     if (tmax>0.0) then
      iter_max = int(tmax/dt)

@@ -38,6 +38,14 @@ module base_species
  integer, parameter :: W_COMP = 8
  integer, parameter :: INDEX_COMP = -1
 
+ integer, parameter :: A_PARTICLE = -2
+ integer, parameter :: E_X_PARTICLE = -3
+ integer, parameter :: E_Y_PARTICLE = -4
+ integer, parameter :: E_Z_PARTICLE = -5
+ integer, parameter :: B_X_PARTICLE = -6
+ integer, parameter :: B_Y_PARTICLE = -7
+ integer, parameter :: B_Z_PARTICLE = -8
+
  real(dp), allocatable, dimension(:), save :: bs_temp_1d
  real(dp), allocatable, dimension(:, :), save :: bs_temp_2d
 
@@ -61,6 +69,9 @@ module base_species
   integer, public :: jump
   !! Jump parameter in particles selection
   integer, public :: highest_index
+  !! Highest particle index available
+  integer, public :: extra_outputs
+  !! Number of extra outputs (*i.e.* not included in the particles dynamics)
  end type
 
  type scalars
@@ -146,9 +157,16 @@ module base_species
   !! Array containig the particle index
   logical :: allocated_index
   !! True if index array is allocated
+  
+  real(dp), allocatable :: data_output(:)
+  !! Array used to pass any information about particles
+  !! not relevant to the dynamics that has to be returned in the outputs
+  logical :: allocated_data_out
+  !! True if data_output is allocated
 
   contains
    procedure, public, pass :: add_data
+   procedure, public, pass :: allocate_data_output
    procedure, pass :: array_component
    procedure, pass :: array_size
    procedure, private, pass :: call_particle_bounds
@@ -159,6 +177,7 @@ module base_species
    procedure, pass, private :: copy_all
    procedure, pass, private :: copy_boundaries
    procedure, pass, public :: count_tracked_particles
+   procedure, public, pass :: deallocate_data_output
    procedure, public, pass :: flatten_into
    procedure, pass :: how_many
    procedure, pass :: initialize_data
@@ -512,6 +531,27 @@ module base_species
    end select
   end function
 
+  subroutine allocate_data_output( this )
+   class(base_species_T), intent(inout) :: this
+   integer :: np
+
+   np = this%how_many()
+
+   if (.not. this%allocated_data_out) then
+    allocate( this%data_output(np) )
+    this%allocated_data_out = .true.
+   end if
+   end subroutine
+
+  subroutine deallocate_data_output( this )
+   class(base_species_T), intent(inout) :: this
+
+   if (this%allocated_data_out) then
+    deallocate( this%data_output )
+    this%allocated_data_out = .false.
+   end if
+   end subroutine
+
 !DIR$ ATTRIBUTES INLINE:: call_particle_single
   subroutine call_particle_single( this, particles, index_in, tracking )
    class(base_species_T), intent(in) :: this
@@ -519,6 +559,7 @@ module base_species
    integer, intent(in) :: index_in
    logical, intent(in), optional :: tracking
    logical :: track_out
+   integer :: i
 
    track_out = .false.
    if ( present(tracking) ) then
@@ -526,37 +567,68 @@ module base_species
      track_out = .true.
     end if
    end if
+   i=1
 
    select case(this%pick_dimensions())
    case(1)
-    particles(1) = this%x(index_in)
-    particles(2) = this%px(index_in)
-    particles(3) = this%weight(index_in)
-    particles(4) = this%gamma_inv(index_in)
+    particles(i) = this%x(index_in)
+    i = i + 1
+    particles(i) = this%px(index_in)
+    i = i + 1
+    particles(i) = this%weight(index_in)
+    i = i + 1
+    particles(i) = this%gamma_inv(index_in)
+    i = i + 1
     if ( track_out ) then
-     particles(5) = this%part_index(index_in)
+     particles(i) = this%part_index(index_in)
+     i = i + 1
+    end if
+    if ( this%allocated_data_out ) then
+     particles(i) = this%data_output(index_in)
     end if
    case(2)
-    particles(1) = this%x(index_in)
-    particles(2) = this%y(index_in)
-    particles(3) = this%px(index_in)
-    particles(4) = this%py(index_in)
-    particles(5) = this%weight(index_in)
-    particles(6) = this%gamma_inv(index_in)
+    particles(i) = this%x(index_in)
+    i = i + 1
+    particles(i) = this%y(index_in)
+    i = i + 1
+    particles(i) = this%px(index_in)
+    i = i + 1
+    particles(i) = this%py(index_in)
+    i = i + 1
+    particles(i) = this%weight(index_in)
+    i = i + 1
+    particles(i) = this%gamma_inv(index_in)
+    i = i + 1
     if ( track_out ) then
-     particles(7) = this%part_index(index_in)
+     particles(i) = this%part_index(index_in)
+     i = i + 1
+    end if
+    if ( this%allocated_data_out ) then
+     particles(i) = this%data_output(index_in)
     end if
    case(3)
-    particles(1) = this%x(index_in)
-    particles(2) = this%y(index_in)
-    particles(3) = this%z(index_in)
-    particles(4) = this%px(index_in)
-    particles(5) = this%py(index_in)
-    particles(6) = this%pz(index_in)
-    particles(7) = this%weight(index_in)
-    particles(8) = this%gamma_inv(index_in)
+    particles(i) = this%x(index_in)
+    i = i + 1
+    particles(i) = this%y(index_in)
+    i = i + 1
+    particles(i) = this%z(index_in)
+    i = i + 1
+    particles(i) = this%px(index_in)
+    i = i + 1
+    particles(i) = this%py(index_in)
+    i = i + 1
+    particles(i) = this%pz(index_in)
+    i = i + 1
+    particles(i) = this%weight(index_in)
+    i = i + 1
+    particles(i) = this%gamma_inv(index_in)
+    i = i + 1
     if ( track_out ) then
-     particles(9) = this%part_index(index_in)
+     particles(i) = this%part_index(index_in)
+     i = i + 1
+    end if
+    if ( this%allocated_data_out ) then
+     particles(i) = this%data_output(index_in)
     end if
    end select
   end subroutine
@@ -1371,6 +1443,7 @@ module base_species
    end if
    track_out%jump = this%properties%track_data%jump
    track_out%highest_index = this%properties%track_data%highest_index
+   track_out%extra_outputs = this%properties%track_data%extra_outputs
 
   end function
 
@@ -1431,16 +1504,29 @@ module base_species
    integer :: size
 
    if (this%istracked()) then
-    select case(this%pick_dimensions())
-    case(1)
-     size = 5
-    case(2)
-     size = 7
-    case(3)
-     size = 9
-    case default
-     size = -1
-    end select
+    if ( .not. this%allocated_data_out ) then
+     select case(this%pick_dimensions())
+     case(1)
+      size = 5
+     case(2)
+      size = 7
+     case(3)
+      size = 9
+     case default
+      size = -1
+     end select
+    else
+     select case(this%pick_dimensions())
+     case(1)
+      size = 6
+     case(2)
+      size = 8
+     case(3)
+      size = 10
+     case default
+      size = -1
+     end select
+    end if
    else
     select case(this%pick_dimensions())
     case(1)
