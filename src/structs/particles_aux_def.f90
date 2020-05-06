@@ -151,6 +151,7 @@ module particles_aux_def
   this%allocated_gamma = .false.
   this%allocated_weight = .false.
   this%allocated_index = .false.
+  this%allocated_data_out = .false.
   
   this%allocated_aux1 = .false.
   this%allocated_aux2 = .false.

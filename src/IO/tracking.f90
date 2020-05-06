@@ -34,7 +34,7 @@ module tracking
 ! !#endif
  use array_alloc, only: array_realloc_1d
  use grid_part_lib, only: xx_realloc
- use grid_param, only: x
+ use grid_param, only: loc_xg, dx
  use util, only: endian
  use warnings, only: write_warning
 
@@ -201,6 +201,7 @@ module tracking
    do ic = 1, nsp
     call spec_in(ic)%track( p_tracking(ic), allocate_now=.true. )
     call spec_in(ic)%set_tot_tracked_parts( 0 )
+    call spec_in(ic)%set_highest_track_index( 0 )
     write(track_dic(ic), '(a20,i1.1,a4)') 'tracking_dictionary_',ic,'.dat'
     if (pe0) then
      open(unit=track_iounit(ic), file=tracking_folder//'/'//track_dic(ic), &
@@ -304,6 +305,7 @@ module tracking
   call spec_in%call_particle(track_aux, out_parts%indices(1:npt), tracking=.true.)
 
   gamma_comp = spec_in%array_component( INV_GAMMA_COMP )
+
   track_aux(1:npt, gamma_comp) = one_dp/track_aux(1:npt, gamma_comp)
   ip_loc(mype+1) = npt
   ip = ip_loc(mype+1)
@@ -337,7 +339,6 @@ module tracking
    lenp, ik
 
   call endian(i_end)
-
   disp = 0
   disp_col = 0
   if ( .not. pe0) then
@@ -391,22 +392,21 @@ module tracking
   real(dp), dimension(:, :, :), allocatable :: interpol_field
   real(dp), dimension(:, :, :), allocatable :: field_aux
 
-  if ( MOD(iter, every_track(ic) ) == 0 ) then
-
+  if ( ANY(MOD(SPREAD(iter, 1, nsp), every_track(1:nsp) ) == 0) ) then
    allocate( interpol_field, MOLD=field_in(:, :, :, 1) )
    interpol_field(:, :, :) = zero_dp
    select case (field_type)
    case(A_PARTICLE)
     if (.not. envelope) then
      if ( model_id == 1) then
-      field_aux(:, :, :) = field_in(:, :, :, 2)
+      field_aux = field_in(:, :, :, 2)
      else if ( model_id == 2) then
-      field_aux(:, :, :) = field_in(:, :, :, 3)
+      field_aux = field_in(:, :, :, 3)
      else if ( circ_lp ) then
       call write_warning('Circular polarization not implemented')
       return
      end if
-     call longitudinal_integration( x, field_aux, interpol_field, ix1, ix2)
+     call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2)
     else if (envelope) then
      ! Envelope real part
      interpol_field(:, :, :) = field_in(:, :, :, 1)

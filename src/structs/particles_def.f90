@@ -80,6 +80,7 @@ module particles_def
   this%allocated_gamma = .false.
   this%allocated_weight = .false.
   this%allocated_index = .false.
+  this%allocated_data_out = .false.
   if (n_particles == 0) then
    this%empty = .true.
    return

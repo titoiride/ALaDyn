@@ -353,17 +353,16 @@
    end if
   end subroutine
 
-  subroutine trapezoidal_integration(axis_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
-    real(dp), allocatable, dimension(:), intent(in) :: axis_in
+  subroutine trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+    real(dp), allocatable, dimension(:, :, :), intent(in) :: axis_in
+    real(dp), intent(in) :: dx
     real(dp), allocatable, dimension(:, :, :), intent(in) :: field_in
     real(dp), allocatable, dimension(:, :, :), intent(inout) :: result_in
-    real(dp) :: dx
     integer, intent(in) :: lb_in, ub_in, jlb, jub, klb, kub
     integer :: i
 
     do i = ub_in, lb_in, -1
-     dx = axis_in( i ) - axis_in( i - 1 )
-     result_in( i, jlb:jub, klb:kub) = dx * &
+     result_in( i, jlb:jub, klb:kub) = 0.5 * dx * &
       (field_in( i - 1, jlb:jub, klb:kub ) + field_in( i, jlb:jub, klb:kub)) + &
       result_in( i + 1, jlb:jub, klb:kub )
     end do

@@ -78,7 +78,7 @@
      dump, l_force_singlefile_output, time_interval_dumps, &
      l_print_j_on_grid, l_first_output_on_restart, l_env_modulus
    namelist /tracking/every_track, nkjump, txmin, txmax, tymin, tymax, tzmin, &
-     tzmax, t_in, t_out, p_tracking
+     tzmax, t_in, t_out, p_tracking, a_on_particles
    namelist /mpiparams/nprocx, nprocy, nprocz
 
    !--- reading grid parameters ---!
@@ -179,6 +179,7 @@
 
    !--- reading tracking parameters ---!
    p_tracking = .false.
+   a_on_particles = .false.
    every_track = 1
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, tracking, iostat=nml_ierr)
@@ -222,7 +223,7 @@
      dump, l_force_singlefile_output, time_interval_dumps, &
      l_print_j_on_grid, l_first_output_on_restart, l_env_modulus
    namelist /tracking/every_track, nkjump, txmin, txmax, tymin, tymax, tzmin, &
-     tzmax, t_in, t_out, p_tracking
+     tzmax, t_in, t_out, p_tracking, a_on_particles
    namelist /mpiparams/nprocx, nprocy, nprocz
    namelist /number_bunches/n_bunches, l_particles, &
      l_intdiagnostics_pwfa, l_intdiagnostics_classic, &

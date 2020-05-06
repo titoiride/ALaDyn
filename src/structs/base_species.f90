@@ -340,6 +340,7 @@ module base_species
    this%allocated_gamma = .false.
    this%allocated_weight = .false.
    this%allocated_index = .false.
+   this%allocated_data_out = .false.
    if (n_particles == 0) then
     this%empty = .true.
     return
@@ -483,6 +484,8 @@ module base_species
      ac = 4
     case(INDEX_COMP)
      ac = 5
+    case(A_PARTICLE)
+     ac = 6
     case default
      ac = -1
     end select
@@ -502,6 +505,8 @@ module base_species
      ac = 6
     case(INDEX_COMP)
      ac = 7
+    case(A_PARTICLE)
+      ac = 8
     case default
      ac = -1
     end select
@@ -525,6 +530,8 @@ module base_species
      ac = 8
     case(INDEX_COMP)
      ac = 9
+    case(A_PARTICLE)
+      ac = 10
     case default
      ac = -1
     end select
@@ -640,6 +647,7 @@ module base_species
    integer, intent(in) :: lb, ub
    logical, intent(in), optional :: tracking
    logical :: track_out
+   integer :: i
 
    track_out = .false.
    if ( present(tracking) ) then
@@ -647,37 +655,68 @@ module base_species
      track_out = .true.
     end if
    end if
+   i = 1
 
    select case(this%pick_dimensions())
    case(1)
-    particles(1:(ub-lb+1), 1) = this%x(lb:ub)
-    particles(1:(ub-lb+1), 2) = this%px(lb:ub)
-    particles(1:(ub-lb+1), 3) = this%weight(lb:ub)
-    particles(1:(ub-lb+1), 4) = this%gamma_inv(lb:ub)
+    particles(1:(ub-lb+1), i) = this%x(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%px(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%weight(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%gamma_inv(lb:ub)
+    i = i + 1
     if ( track_out ) then
-     particles(1:(ub-lb+1), 5) = this%part_index(lb:ub)
+     particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
+     i = i + 1
+    end if
+    if ( this%allocated_data_out ) then
+     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
     end if
    case(2)
-    particles(1:(ub-lb+1), 1) = this%x(lb:ub)
-    particles(1:(ub-lb+1), 2) = this%y(lb:ub)
-    particles(1:(ub-lb+1), 3) = this%px(lb:ub)
-    particles(1:(ub-lb+1), 4) = this%py(lb:ub)
-    particles(1:(ub-lb+1), 5) = this%weight(lb:ub)
-    particles(1:(ub-lb+1), 6) = this%gamma_inv(lb:ub)
+    particles(1:(ub-lb+1), i) = this%x(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%y(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%px(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%py(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%weight(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%gamma_inv(lb:ub)
+    i = i + 1
     if ( track_out ) then
-     particles(1:(ub-lb+1), 7) = this%part_index(lb:ub)
+     particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
+     i = i + 1
+    end if
+    if ( this%allocated_data_out ) then
+     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
     end if
    case(3)
-    particles(1:(ub-lb+1), 1) = this%x(lb:ub)
-    particles(1:(ub-lb+1), 2) = this%y(lb:ub)
-    particles(1:(ub-lb+1), 3) = this%z(lb:ub)
-    particles(1:(ub-lb+1), 4) = this%px(lb:ub)
-    particles(1:(ub-lb+1), 5) = this%py(lb:ub)
-    particles(1:(ub-lb+1), 6) = this%pz(lb:ub)
-    particles(1:(ub-lb+1), 7) = this%weight(lb:ub)
-    particles(1:(ub-lb+1), 8) = this%gamma_inv(lb:ub)
+    particles(1:(ub-lb+1), i) = this%x(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%y(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%z(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%px(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%py(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%pz(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%weight(lb:ub)
+    i = i + 1
+    particles(1:(ub-lb+1), i) = this%gamma_inv(lb:ub)
+    i = i + 1
     if ( track_out ) then
-     particles(1:(ub-lb+1), 9) = this%part_index(lb:ub)
+     particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
+     i = i + 1
+    end if
+    if ( this%allocated_data_out ) then
+     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
     end if
    end select
   end subroutine
@@ -701,44 +740,88 @@ module base_species
    size_ind = SIZE(index_in, DIM=1)
    k = 1
    if ( track_out ) then
-    select case(this%pick_dimensions())
-    case(1)
-     do n = 1, size_ind
-      idx = index_in(n)
-      particles(k, 1) = this%x(idx)
-      particles(k, 2) = this%px(idx)
-      particles(k, 3) = this%weight(idx)
-      particles(k, 4) = this%gamma_inv(idx)
-      particles(k, 5) = this%part_index(idx)
-      k = k + 1
-     end do
-    case(2)
-     do n = 1, size_ind
-      idx = index_in(n)
-      particles(k, 1) = this%x(idx)
-      particles(k, 2) = this%y(idx)
-      particles(k, 3) = this%px(idx)
-      particles(k, 4) = this%py(idx)
-      particles(k, 5) = this%weight(idx)
-      particles(k, 6) = this%gamma_inv(idx)
-      particles(k, 7) = this%part_index(idx)
-      k = k + 1 
-     end do
-    case(3)
-     do n = 1, size_ind
-      idx = index_in(n)
-      particles(k, 1) = this%x(idx)
-      particles(k, 2) = this%y(idx)
-      particles(k, 3) = this%z(idx)
-      particles(k, 4) = this%px(idx)
-      particles(k, 5) = this%py(idx)
-      particles(k, 6) = this%pz(idx)
-      particles(k, 7) = this%weight(idx)
-      particles(k, 8) = this%gamma_inv(idx)
-      particles(k, 9) = this%part_index(idx)
-      k = k + 1
-     end do
-    end select
+    if ( this%allocated_data_out ) then
+     select case(this%pick_dimensions())
+     case(1)
+      do n = 1, size_ind
+       idx = index_in(n)
+       particles(k, 1) = this%x(idx)
+       particles(k, 2) = this%px(idx)
+       particles(k, 3) = this%weight(idx)
+       particles(k, 4) = this%gamma_inv(idx)
+       particles(k, 5) = this%part_index(idx)
+       particles(k, 6) = this%data_output(idx)
+       k = k + 1
+      end do
+     case(2)
+      do n = 1, size_ind
+       idx = index_in(n)
+       particles(k, 1) = this%x(idx)
+       particles(k, 2) = this%y(idx)
+       particles(k, 3) = this%px(idx)
+       particles(k, 4) = this%py(idx)
+       particles(k, 5) = this%weight(idx)
+       particles(k, 6) = this%gamma_inv(idx)
+       particles(k, 7) = this%part_index(idx)
+       particles(k, 8) = this%data_output(idx)
+       k = k + 1 
+      end do
+     case(3)
+      do n = 1, size_ind
+       idx = index_in(n)
+       particles(k, 1) = this%x(idx)
+       particles(k, 2) = this%y(idx)
+       particles(k, 3) = this%z(idx)
+       particles(k, 4) = this%px(idx)
+       particles(k, 5) = this%py(idx)
+       particles(k, 6) = this%pz(idx)
+       particles(k, 7) = this%weight(idx)
+       particles(k, 8) = this%gamma_inv(idx)
+       particles(k, 9) = this%part_index(idx)
+       particles(k, 10) = this%data_output(idx)
+       k = k + 1
+      end do
+     end select
+    else
+     select case(this%pick_dimensions())
+     case(1)
+      do n = 1, size_ind
+       idx = index_in(n)
+       particles(k, 1) = this%x(idx)
+       particles(k, 2) = this%px(idx)
+       particles(k, 3) = this%weight(idx)
+       particles(k, 4) = this%gamma_inv(idx)
+       particles(k, 5) = this%part_index(idx)
+       k = k + 1
+      end do
+     case(2)
+      do n = 1, size_ind
+       idx = index_in(n)
+       particles(k, 1) = this%x(idx)
+       particles(k, 2) = this%y(idx)
+       particles(k, 3) = this%px(idx)
+       particles(k, 4) = this%py(idx)
+       particles(k, 5) = this%weight(idx)
+       particles(k, 6) = this%gamma_inv(idx)
+       particles(k, 7) = this%part_index(idx)
+       k = k + 1 
+      end do
+     case(3)
+      do n = 1, size_ind
+       idx = index_in(n)
+       particles(k, 1) = this%x(idx)
+       particles(k, 2) = this%y(idx)
+       particles(k, 3) = this%z(idx)
+       particles(k, 4) = this%px(idx)
+       particles(k, 5) = this%py(idx)
+       particles(k, 6) = this%pz(idx)
+       particles(k, 7) = this%weight(idx)
+       particles(k, 8) = this%gamma_inv(idx)
+       particles(k, 9) = this%part_index(idx)
+       k = k + 1
+      end do
+     end select
+    end if
    else
     select case(this%pick_dimensions())
     case(1)

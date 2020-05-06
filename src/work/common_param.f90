@@ -66,7 +66,7 @@
   real (dp) :: tymin(ref_nspec), tymax(ref_nspec)
   real (dp) :: tzmin(ref_nspec), tzmax(ref_nspec)
   real (dp) :: t_in(ref_nspec), t_out(ref_nspec)
-  logical ::  p_tracking(ref_nspec)
+  logical ::  p_tracking(ref_nspec), a_on_particles(ref_nspec)
   !====================
   ! END TRACKING
   !====================
