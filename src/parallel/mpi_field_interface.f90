@@ -1073,7 +1073,7 @@
       kk = 0
       ! Now task pass boundary values to next one
       do iz = klb, kub
-       do iy = jlb, kub
+       do iy = jlb, jub
         do i = 0, stl - 1
          ix = lb_in + i
          kk = kk + 1
@@ -1091,7 +1091,7 @@
       call exchange_rdata_int(lenwr, send, 1, npx, 3, imodx + 1 + 9999)
       call exchange_rdata(aux2, send, lenwr(1), npx, 3, imodx + 1 + 100)
       do iz = klb, kub
-       do iy = jlb, kub
+       do iy = jlb, jub
         do i = 1, stl
          ix = ub_in + i
          kk = kk + 1
