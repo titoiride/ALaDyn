@@ -63,11 +63,11 @@
    select case (ndim)
    case(2)
     k2 = 1
-    call xx_realloc(gtpc_xx, np, 2)
-    gtpc_xx(1:np, 1) = set_local_positions( spec_in, X_COMP, track_mask )
-    gtpc_xx(1:np, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
+    call xx_realloc(gtpc_xx, npt, 2)
+    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, track_mask )
+    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
 
-    call qden_2d_wgh( gtpc_xx(1:np, 1:2), interp )
+    call qden_2d_wgh( gtpc_xx(1:npt, 1:2), interp )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -92,12 +92,12 @@
     call spec_in%set_component( interpolated_field, A_PARTICLE, lb=1, ub=np)
 
    case(3)
-    call xx_realloc(gtpc_xx, np, 3)
-    gtpc_xx(1:np, 1) = set_local_positions( spec_in, X_COMP, track_mask )
-    gtpc_xx(1:np, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
-    gtpc_xx(1:np, 3) = set_local_positions( spec_in, Z_COMP, track_mask )
+    call xx_realloc(gtpc_xx, npt, 3)
+    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, track_mask )
+    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
+    gtpc_xx(1:npt, 3) = set_local_positions( spec_in, Z_COMP, track_mask )
 
-    call qden_3d_wgh( gtpc_xx(1:np, 1:3), interp )
+    call qden_3d_wgh( gtpc_xx(1:npt, 1:3), interp )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
