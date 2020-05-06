@@ -202,6 +202,7 @@ module tracking
     call spec_in(ic)%track( p_tracking(ic), allocate_now=.true. )
     call spec_in(ic)%set_tot_tracked_parts( 0 )
     call spec_in(ic)%set_highest_track_index( 0 )
+    call spec_in(ic)%compute_gamma()
     write(track_dic(ic), '(a20,i1.1,a4)') 'tracking_dictionary_',ic,'.dat'
     if (pe0) then
      open(unit=track_iounit(ic), file=tracking_folder//'/'//track_dic(ic), &
