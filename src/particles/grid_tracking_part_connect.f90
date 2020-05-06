@@ -28,14 +28,16 @@
   use mpi_var
 
   type(interp_coeff), private, allocatable, save :: interp
-  real(dp), dimension(:, :), allocatable, private :: gtpc_xx 
+  real(dp), dimension(:, :), allocatable, private :: gtpc_xx
+  integer, parameter :: Y_POLARIZATION = 1
+  integer, parameter :: Z_POLARIZATION = 2
 
   contains
 
-  subroutine a_on_tracking_particles( field, spec_in, np, order )
+  subroutine a_on_tracking_particles( field, spec_in, np, order, polarization )
    real (dp), intent (in) :: field(:, :, :)
    type (species_new), intent (inout) :: spec_in
-   integer, intent(in) :: np, order
+   integer, intent(in) :: np, order, polarization
    real(dp), allocatable, dimension(:) :: ap
    real(dp) :: dvol
    integer :: npt, i1, i2, j1, j2, k1, k2, n, cc
@@ -68,10 +70,10 @@
     gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, track_mask )
     gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
 
-    select case(order)
-     !Integration order used for computing a from Ey
-    case(1)
+    select case (order)
 
+    case(0)
+     ! Envelope case
      call qden_2d_wgh( gtpc_xx(1:npt, 1:2), interp )
 
      associate( ax1 => interp%coeff_x_rank2, &
@@ -79,53 +81,80 @@
                 i => interp%ix_rank2, &
                 j => interp%iy_rank2 )
 
-      do n = 1, npt
-       do j1 = 0, 2
-        j2 = j(n) + j1
-        dvol = ay1( n, j1 )
-        do i1 = 0, 2
-         i2 = i(n) + i1
-         ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
-        end do
-       end do
-      end do
+                do n = 1, npt
+                 do j1 = 0, 2
+                  j2 = j(n) + j1
+                  dvol = ay1( n, j1 )
+                  do i1 = 0, 2
+                   i2 = i(n) + i1
+                   ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+                  end do
+                 end do
+                end do
 
      end associate
 
-    case(2)
+    case(1:2)
+     ! Full Pic case
 
      call qqh_2d_spline( gtpc_xx(1:npt, 1:2), interp )
 
-     associate( axh1 => interp%h_coeff_x_rank2, &
-                ay1 => interp%coeff_y_rank2, &
-                ih => interp%ihx_rank2, &
-                j => interp%iy_rank2 )
+     select case(polarization)
+     !Integration order used for computing a from Ey
+     case(Y_POLARIZATION)
 
-      do n = 1, npt
-       do j1 = 0, 2
-        j2 = j(n) + j1
-        dvol = ay1( n, j1 )
-        do i1 = 0, 2
-         i2 = ih(n) + i1
-         ap(n) = ap(n) + axh1(n, i1)*dvol*field(i2, j2, k2)
+
+      associate( ax1 => interp%coeff_x_rank2, &
+                 ayh1 => interp%h_coeff_y_rank2, &
+                 i => interp%ix_rank2, &
+                 jh => interp%ihy_rank2 )
+
+       do n = 1, npt
+        do j1 = 0, 2
+         j2 = jh(n) + j1
+         dvol = ayh1( n, j1 )
+         do i1 = 0, 2
+          i2 = i(n) + i1
+          ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+         end do
         end do
        end do
-      end do
 
-     end associate
+      end associate
 
+     case(Z_POLARIZATION)
+
+      associate( ax1 => interp%coeff_x_rank2, &
+                 ay1 => interp%coeff_y_rank2, &
+                 i => interp%ix_rank2, &
+                 j => interp%iy_rank2 )
+
+       do n = 1, npt
+        do j1 = 0, 2
+         j2 = j(n) + j1
+         dvol = ay1( n, j1 )
+         do i1 = 0, 2
+          i2 = i(n) + i1
+          ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+         end do
+        end do
+       end do
+
+      end associate
+
+     end select
     end select
 
    case(3)
+
     call xx_realloc(gtpc_xx, npt, 3)
     gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, track_mask )
     gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
     gtpc_xx(1:npt, 3) = set_local_positions( spec_in, Z_COMP, track_mask )
 
     select case(order)
-     !Integration order used for computing a from Ey
-    case(1)
-
+    case(0)
+    ! Envelope case
      call qden_3d_wgh( gtpc_xx(1:npt, 1:3), interp )
 
      associate( ax1 => interp%coeff_x_rank2, &
@@ -152,33 +181,64 @@
 
      end associate
 
-    case(2)
-
+    case(1)
+     !Full Pic
      call qqh_3d_spline( gtpc_xx(1:npt, 1:3), interp )
+     select case(polarization)
+     !Integration order used for computing a from Ey
+     case(Y_POLARIZATION)
 
-     associate( axh1 => interp%h_coeff_x_rank2, &
-                ay1 => interp%coeff_y_rank2, &
-                az1 => interp%coeff_z_rank2, &
-                ih => interp%ihx_rank2, &
-                j => interp%iy_rank2, &
-                k => interp%iz_rank2 )
 
-                do n = 1, npt
-                 do k1 = 0, 2
-                  k2 = k(n) + k1
-                  dvol = az1( n, k1 )
-                  do j1 = 0, 2
-                   j2 = j(n) + j1
-                   dvol = dvol*ay1( n, j1 )
-                   do i1 = 0, 2
-                    i2 = ih(n) + i1
-                    ap(n) = ap(n) + axh1(n, i1)*dvol*field(i2, j2, k2)
+      associate( ax1 => interp%coeff_x_rank2, &
+                 ayh1 => interp%h_coeff_y_rank2, &
+                 az1 => interp%coeff_z_rank2, &
+                 i => interp%ix_rank2, &
+                 jh => interp%ihy_rank2, &
+                 k => interp%iz_rank2 )
+
+                 do n = 1, npt
+                  do k1 = 0, 2
+                   k2 = k(n) + k1
+                   dvol = az1( n, k1 )
+                   do j1 = 0, 2
+                    j2 = jh(n) + j1
+                    dvol = dvol*ayh1( n, j1 )
+                    do i1 = 0, 2
+                     i2 = i(n) + i1
+                     ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+                    end do
                    end do
                   end do
                  end do
-                end do
 
-     end associate
+      end associate
+
+     case(Z_POLARIZATION)
+
+      associate( ax1 => interp%h_coeff_x_rank2, &
+                 ay1 => interp%coeff_y_rank2, &
+                 azh1 => interp%h_coeff_z_rank2, &
+                 i => interp%ihx_rank2, &
+                 j => interp%iy_rank2, &
+                 kh => interp%ihz_rank2 )
+
+                 do n = 1, npt
+                  do k1 = 0, 2
+                   k2 = kh(n) + k1
+                   dvol = azh1( n, k1 )
+                   do j1 = 0, 2
+                    j2 = j(n) + j1
+                    dvol = dvol*ay1( n, j1 )
+                    do i1 = 0, 2
+                     i2 = i(n) + i1
+                     ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+                    end do
+                   end do
+                  end do
+                 end do
+
+      end associate
+     end select
     end select
    end select
    

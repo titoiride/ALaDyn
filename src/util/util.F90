@@ -366,7 +366,7 @@
     integer :: i
 
     do i = ub_in, lb_in, -1
-     result_in( i, jlb:jub, klb:kub) = 0.5 * dx * &
+     result_in( i, jlb:jub, klb:kub) = - 0.5 * dx * &
       (field_in( i + 1, jlb:jub, klb:kub ) + field_in( i, jlb:jub, klb:kub)) + &
       result_in( i + 1, jlb:jub, klb:kub )
     end do
@@ -383,7 +383,7 @@
     real(dp), parameter :: one_third = one_dp/3.
 
     do i = ub_in, lb_in, -1
-     result_in( i, jlb:jub, klb:kub) = one_third * dx * &
+     result_in( i, jlb:jub, klb:kub) = - one_third * dx * &
       (field_in( i, jlb:jub, klb:kub ) + 4*field_in( i + 1, jlb:jub, klb:kub) + field_in( i + 2, jlb:jub, klb:kub )) + &
       result_in( i + 2, jlb:jub, klb:kub )
     end do
