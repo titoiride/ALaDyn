@@ -25,6 +25,7 @@
   use fstruct_data
   use grid_part_lib
   use particles_def
+  use mpi_var
 
   type(interp_coeff), private, allocatable, save :: interp
   real(dp), dimension(:, :), allocatable, private :: gtpc_xx 
@@ -37,7 +38,7 @@
    integer, intent(in) :: np
    real(dp), allocatable, dimension(:) :: ap
    real(dp) :: dvol
-   integer :: npt, i1, i2, j1, j2, k1, k2, n
+   integer :: npt, i1, i2, j1, j2, k1, k2, n, cc
    logical, dimension(:), allocatable :: track_mask
    real(dp), dimension(:), allocatable :: interpolated_field
 

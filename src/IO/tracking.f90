@@ -391,6 +391,7 @@ module tracking
   integer, intent(in) :: iter, field_type
   real(dp), dimension(:, :, :), allocatable :: interpol_field
   real(dp), dimension(:, :, :), allocatable :: field_aux
+  integer :: ic, np
 
   if ( ANY(MOD(SPREAD(iter, 1, nsp), every_track(1:nsp) ) == 0) ) then
    allocate( interpol_field, MOLD=field_in(:, :, :, 1) )
