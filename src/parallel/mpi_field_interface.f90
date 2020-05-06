@@ -1045,19 +1045,19 @@
   end subroutine
   !=====================
 
-  subroutine longitudinal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in)
+  subroutine longitudinal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, integration_order)
    !! Subroutine that coordinates the longitudinal numerical integration between tasks
    real(dp), allocatable, dimension(:, :, :), intent(in) :: axis_in
    real(dp), intent(in) :: dx
    real(dp), allocatable, dimension(:, :, :), intent(in) :: field_in
    real(dp), allocatable, dimension(:, :, :), intent(inout) :: result_in
-   integer, intent(in) :: lb_in, ub_in
+   integer, intent(in) :: lb_in, ub_in, integration_order
    integer :: npx, i, ix, iy, iz, jlb, jub, klb, kub, stl, str
    integer :: kk, lenws(1), lenwr(1)
    logical :: send
 
-   stl = 1
-   str = 1
+   stl = integration_order
+   str = integration_order
    jlb = LBOUND( field_in, DIM=2)
    jub = UBOUND( field_in, DIM=2)
    klb = LBOUND( field_in, DIM=3)
@@ -1068,7 +1068,12 @@
      ! Cycle over longitudinal tasks
      if ( imodx == npx ) then
       send = .true.
-      call trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+      select case(integration_order)
+      case(1)
+       call trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+      case(2)
+       call simpson_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+      end select
       ! Performing the integral
       kk = 0
       ! Now task pass boundary values to next one
@@ -1106,7 +1111,12 @@
    end if
 
    if (pex0) then
-    call trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+    select case(integration_order)
+    case(1)
+     call trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+    case(2)
+     call simpson_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+    end select
    end if
 
    call fill_3d_ebfield_yzxbdsdata(result_in, 2, 2)

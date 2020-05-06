@@ -392,7 +392,18 @@ module tracking
   integer, intent(in) :: iter, field_type
   real(dp), dimension(:, :, :), allocatable :: interpol_field
   real(dp), dimension(:, :, :), allocatable :: field_aux
-  integer :: ic, np
+  integer :: ic, np, order
+
+  if (envelope) then
+   order = 1
+   ! Envelope does not need integration, so A field is always on
+   ! integer cells in 'a_on_tracking_particles'.
+  else
+   order = 1
+   ! order = 1 uses trapezoidal rule in longitudinal integration,
+   ! order = 2 uses Simpson's rule in longitudinal integration causing
+   ! A to be defined on the same grid points as E
+  end if
 
   if ( ANY(MOD(SPREAD(iter, 1, nsp), every_track(1:nsp) ) == 0) ) then
    allocate( interpol_field, MOLD=field_in(:, :, :, 1) )
@@ -408,7 +419,7 @@ module tracking
       call write_warning('Circular polarization not implemented')
       return
      end if
-     call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2)
+     call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2, order )
     else if (envelope) then
      ! Envelope real part
      interpol_field(:, :, :) = field_in(:, :, :, 1)
@@ -420,7 +431,7 @@ module tracking
     if (spec_in(ic)%istracked()) then
      np = spec_in(ic)%how_many()
      call spec_in(ic)%allocate_data_output()
-     call a_on_tracking_particles( interpol_field, spec_in(ic), np )
+     call a_on_tracking_particles( interpol_field, spec_in(ic), np, order )
     end if
    end do
   end if

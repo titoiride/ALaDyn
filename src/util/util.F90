@@ -33,7 +33,7 @@
   implicit none
   private
   public :: gasdev, init_random_seed, bunch_gen, write_warning, endian
-  public :: trapezoidal_integration
+  public :: trapezoidal_integration, simpson_integration
 
  contains
 
@@ -353,6 +353,10 @@
    end if
   end subroutine
 
+  !=========================================
+  ! Numerical integration methods
+  !=========================================
+
   subroutine trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
     real(dp), allocatable, dimension(:, :, :), intent(in) :: axis_in
     real(dp), intent(in) :: dx
@@ -363,8 +367,25 @@
 
     do i = ub_in, lb_in, -1
      result_in( i, jlb:jub, klb:kub) = 0.5 * dx * &
-      (field_in( i - 1, jlb:jub, klb:kub ) + field_in( i, jlb:jub, klb:kub)) + &
+      (field_in( i + 1, jlb:jub, klb:kub ) + field_in( i, jlb:jub, klb:kub)) + &
       result_in( i + 1, jlb:jub, klb:kub )
+    end do
+ 
+   end subroutine
+
+  subroutine simpson_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+    real(dp), allocatable, dimension(:, :, :), intent(in) :: axis_in
+    real(dp), intent(in) :: dx
+    real(dp), allocatable, dimension(:, :, :), intent(in) :: field_in
+    real(dp), allocatable, dimension(:, :, :), intent(inout) :: result_in
+    integer, intent(in) :: lb_in, ub_in, jlb, jub, klb, kub
+    integer :: i
+    real(dp), parameter :: one_third = one_dp/3.
+
+    do i = ub_in, lb_in, -1
+     result_in( i, jlb:jub, klb:kub) = one_third * dx * &
+      (field_in( i, jlb:jub, klb:kub ) + 4*field_in( i + 1, jlb:jub, klb:kub) + field_in( i + 2, jlb:jub, klb:kub )) + &
+      result_in( i + 2, jlb:jub, klb:kub )
     end do
  
    end subroutine
