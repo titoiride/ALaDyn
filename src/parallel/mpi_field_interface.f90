@@ -1049,7 +1049,7 @@
    !! Subroutine that coordinates the longitudinal numerical integration between tasks
    real(dp), allocatable, dimension(:, :, :), intent(in) :: axis_in
    real(dp), intent(in) :: dx
-   real(dp), allocatable, dimension(:, :, :), intent(in) :: field_in
+   real(dp), allocatable, dimension(:, :, :), intent(inout) :: field_in
    real(dp), allocatable, dimension(:, :, :), intent(inout) :: result_in
    integer, intent(in) :: lb_in, ub_in, integration_order
    integer :: npx, i, ix, iy, iz, jlb, jub, klb, kub, stl, str
@@ -1062,6 +1062,8 @@
    jub = UBOUND( field_in, DIM=2)
    klb = LBOUND( field_in, DIM=3)
    kub = UBOUND( field_in, DIM=3)
+
+   call fill_3d_ebfield_yzxbdsdata(field_in, stl, str)
 
    if (prlx) then
     do npx = npe_xloc - 1, 1, -1
