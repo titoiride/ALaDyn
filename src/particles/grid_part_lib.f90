@@ -859,16 +859,31 @@
   !====================================
 
   !DIR$ ATTRIBUTES INLINE :: set_local_positions_sn
-  function set_local_positions_sn( pt_array, component, mask_in  ) result(position)
+  function set_local_positions_sn( pt_array, component, mask_in, tracking ) result(position)
    type (species_new), intent(in) :: pt_array
    integer, intent(in) :: component
    logical, dimension(:), intent(in), optional :: mask_in
-   integer :: np
+   logical, intent(in), optional :: tracking
+   integer :: np, npt
    real(dp), allocatable, dimension(:) :: position
 
-   np = pt_array%how_many()
-   allocate( position(np) )
-   position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+   if ( PRESENT(tracking) ) then
+    if (tracking) then
+      np = pt_array%how_many()
+      npt = pt_array%pick_tot_tracked_parts()
+      allocate( position(npt) )
+      position(1:npt) = pt_array%call_tracked_component( component, lb=1, ub=np )
+      np = npt
+    else
+      np = pt_array%how_many()
+      allocate( position(np) )
+      position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+    end if
+   else
+    np = pt_array%how_many()
+    allocate( position(np) )
+    position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+   end if
 
    if ( PRESENT( mask_in ) ) then
     position = PACK( position, mask_in )
@@ -887,16 +902,29 @@
   end function
 
   !DIR$ ATTRIBUTES INLINE :: set_local_positions_sa
-  function set_local_positions_sa( pt_array, component, mask_in ) result(position)
+  function set_local_positions_sa( pt_array, component, mask_in, tracking ) result(position)
    type (species_aux), intent(in) :: pt_array
    integer, intent(in) :: component
    logical, dimension(:), intent(in), optional :: mask_in
+   logical, intent(in), optional :: tracking
    integer :: np
    real(dp), allocatable, dimension(:) :: position
 
-   np = pt_array%how_many()
-   allocate( position(np) )
-   position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+   if ( PRESENT(tracking) ) then
+    if (tracking) then
+      np = pt_array%pick_tot_tracked_parts()
+      allocate( position(np) )
+      position(1:np) = pt_array%call_tracked_component( component, lb=1, ub=np )
+    else
+      np = pt_array%how_many()
+      allocate( position(np) )
+      position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+    end if
+   else
+    np = pt_array%how_many()
+    allocate( position(np) )
+    position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+   end if
 
    if ( PRESENT( mask_in ) ) then
     position = PACK( position, mask_in )

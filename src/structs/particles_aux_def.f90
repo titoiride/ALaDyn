@@ -100,17 +100,38 @@ module particles_aux_def
   logical :: allocated_aux8
   !! True if aux8 array is allocated
 
+  real(dp), allocatable :: old_px(:)
+  logical :: allocated_old_px
+  !! True if aux8 array is allocated
+
+  real(dp), allocatable :: old_py(:)
+  logical :: allocated_old_py
+  !! True if aux8 array is allocated
+
+  real(dp), allocatable :: old_pz(:)
+  logical :: allocated_old_pz
+  !! True if aux8 array is allocated
+
+  logical :: save_old_p
+
   contains
    procedure, public :: append => append_aux
    procedure, public :: call_component => call_component_aux
    procedure, public :: call_tracked_component => call_tracked_component_aux
+   procedure, public :: copy_all => copy_all_aux
+   procedure, public :: copy_boundaries => copy_boundaries_aux
    procedure, public :: extend => extend_aux
+   procedure, public, pass :: flatten_into => flatten_into_aux
    procedure, pass :: new_species => new_species_aux
+   procedure, public, pass :: pack_into => pack_into_aux
+   procedure, public, pass :: redistribute => redistribute_aux
+   procedure, pass :: save_old_momentum
    procedure, pass :: sel_particles_bounds => sel_particles_bounds_aux
    procedure, pass :: sel_particles_index => sel_particles_index_aux
    procedure, public :: set_component_real => set_component_aux_real
    procedure, public :: set_component_integer => set_component_aux_integer
    procedure, pass :: sweep => sweep_aux
+   procedure, public, pass :: total_size => total_size_aux
 
  end type species_aux
 
@@ -121,11 +142,12 @@ module particles_aux_def
  !========================================
  ! CONSTRUCTOR
  !========================================
- subroutine new_species_aux( this, n_particles, curr_ndims, tracked )
+ subroutine new_species_aux( this, n_particles, curr_ndims, tracked, extra_outputs )
   !! Constructor for the `species_new` type
   class(species_aux), intent(inout) :: this
   integer, intent(in) :: n_particles, curr_ndims
   logical, intent(in), optional :: tracked
+  integer, intent(in), optional :: extra_outputs
   integer :: allocstatus
  
   if (n_particles < 0) then
@@ -142,6 +164,12 @@ module particles_aux_def
   else
    call this%track( .false. )
   end if
+  if ( PRESENT(extra_outputs) ) then
+   call this%set_extra_outputs( extra_outputs, .true. )
+  else
+   call this%set_extra_outputs( 0, .false. )
+  end if
+
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.
@@ -161,6 +189,10 @@ module particles_aux_def
   this%allocated_aux6 = .false.
   this%allocated_aux7 = .false.
   this%allocated_aux8 = .false.
+
+  this%allocated_old_px = .false.
+  this%allocated_old_py = .false.
+  this%allocated_old_pz = .false.
   
   if (n_particles == 0) then
    this%empty = .true.
@@ -228,6 +260,8 @@ module particles_aux_def
   case default
 
   end select
+
+  call this%save_old_momentum( this%istracked() ) 
  end subroutine
 
  !========================================
@@ -311,6 +345,19 @@ module particles_aux_def
    this%allocated_aux8 = .false.
    deallocate( this%aux8 )
   end if
+  if ( this%allocated_old_px ) then
+   this%allocated_old_px = .false.
+   deallocate( this%old_px )
+  end if
+  if ( this%allocated_old_py ) then
+   this%allocated_old_py = .false.
+   deallocate( this%old_py )
+  end if
+  if ( this%allocated_old_pz ) then
+   this%allocated_old_pz = .false.
+   deallocate( this%old_pz )
+  end if
+
 
  end subroutine
 
@@ -378,6 +425,21 @@ module particles_aux_def
    call assign(this%part_index, int(other%part_index(1:np2)), &
     np1 + 1, tot_size)
   end if
+  select type (other)
+  type is (species_aux)
+   if(other%allocated_old_px) then
+    call assign(this%old_px, other%old_px(1:np2), &
+     np1 + 1, tot_size)
+   end if
+   if(other%allocated_old_py) then
+    call assign(this%old_py, other%old_py(1:np2), &
+     np1 + 1, tot_size)
+   end if
+   if(other%allocated_old_pz) then
+    call assign(this%old_pz, other%old_pz(1:np2), &
+     np1 + 1, tot_size)
+   end if
+  end select
 
   call this%set_part_number(tot_size)
 
@@ -470,11 +532,11 @@ module particles_aux_def
   case(OLD_Z_COMP)
    comp = this%z(lowb:upb)
   case(OLD_PX_COMP)
-   comp = this%px(lowb:upb)
+   comp = this%old_px(lowb:upb)
   case(OLD_PY_COMP)
-   comp = this%py(lowb:upb)
+   comp = this%old_py(lowb:upb)
   case(OLD_PZ_COMP)
-   comp = this%pz(lowb:upb)
+   comp = this%old_pz(lowb:upb)
   case(OLD_GAMMA_COMP)
    comp = this%gamma_inv(lowb:upb)
 
@@ -508,7 +570,6 @@ module particles_aux_def
 
  end function
 
- 
  pure function call_tracked_component_aux( this, component, lb, ub ) result(comp)
  !! Function that hides the underlying array and calls the
  !! corresponding component from the particle structure.
@@ -576,6 +637,354 @@ module particles_aux_def
 
   end subroutine
 
+ subroutine save_old_momentum( this, flag )
+  class(species_aux), intent(inout) :: this
+  logical, intent(in) :: flag
+  integer :: np
+
+  np = this%how_many()
+  if ( .not. flag ) then
+   this%save_old_p = .false.
+   return
+  end if
+
+  this%save_old_p = .true.
+  if ( this%empty ) return
+  select case(this%pick_dimensions())
+  case(1)
+   if( .not. this%allocated_old_px ) then
+    allocate( this%old_px(np) )
+    this%allocated_old_px = .true.
+   end if
+  case(2)
+   if( .not. this%allocated_old_px ) then
+    allocate( this%old_px(np) )
+    this%allocated_old_px = .true.
+   end if
+   if( .not. this%allocated_old_py ) then
+    allocate( this%old_py(np) )
+    this%allocated_old_py = .true.
+   end if
+  case(3)
+   if( .not. this%allocated_old_px ) then
+    allocate( this%old_px(np) )
+    this%allocated_old_px = .true.
+   end if
+   if( .not. this%allocated_old_py ) then
+    allocate( this%old_py(np) )
+    this%allocated_old_py = .true.
+   end if
+   if( .not. this%allocated_old_pz ) then
+    allocate( this%old_pz(np) )
+    this%allocated_old_pz = .true.
+   end if
+  end select
+
+ end subroutine
+ 
+!DIR$ ATTRIBUTES INLINE:: copy_all_aux
+ subroutine copy_all_aux( this, other )
+  class(species_aux), intent(inout) :: this
+  class(base_species_T), intent(in) :: other
+  integer :: tot
+
+  tot = other%how_many()
+
+  call this%reallocate(tot, other%pick_properties())
+  call this%set_properties(other%pick_properties())
+  call this%set_part_number(tot)
+
+  if (other%allocated_x) then
+   call assign(this%x, other%x(1:tot), 1, tot)
+  end if
+  if (other%allocated_y) then
+   call assign(this%y, other%y(1:tot), 1, tot)
+  end if
+  if (other%allocated_z) then
+   call assign(this%z, other%z(1:tot), 1, tot)
+  end if
+  if (other%allocated_px) then
+   call assign(this%px, other%px(1:tot), 1, tot)
+  end if
+  if (other%allocated_py) then
+   call assign(this%py, other%py(1:tot), 1, tot)
+  end if
+  if (other%allocated_pz) then
+   call assign(this%pz, other%pz(1:tot), 1, tot)
+  end if
+  if (other%allocated_gamma) then
+   call assign(this%gamma_inv, other%gamma_inv(1:tot), 1, tot)
+  end if
+  if (other%allocated_weight) then
+   call assign(this%weight, other%weight(1:tot), 1, tot)
+  end if
+  if (other%allocated_index) then
+   call assign(this%part_index, other%part_index(1:tot), 1, tot)
+  end if
+  select type( other )
+  type is (species_aux)
+   if ( this%save_old_p ) then
+    if (other%allocated_old_px) then
+     call assign(this%old_px, other%old_px(1:tot), 1, tot)
+    end if
+    if (other%allocated_old_py) then
+     call assign(this%old_py, other%old_py(1:tot), 1, tot)
+    end if
+    if (other%allocated_old_pz) then
+     call assign(this%old_pz, other%old_pz(1:tot), 1, tot)
+    end if
+   end if
+  end select
+ end subroutine
+
+!DIR$ ATTRIBUTES INLINE:: copy_boundaries_aux
+ subroutine copy_boundaries_aux( this, other, lower_bound, upper_bound )
+  class(species_aux), intent(inout) :: this
+  class(base_species_T), intent(in) :: other
+  integer, intent(in) :: lower_bound, upper_bound
+  integer :: tot
+
+  tot = upper_bound - lower_bound + 1
+
+  call this%reallocate(tot, other%pick_properties())
+  call this%set_properties(other%pick_properties())
+  call this%set_part_number(tot)
+
+  if (other%allocated_x) then
+   call assign(this%x, other%x(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_y) then
+   call assign(this%y, other%y(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_z) then
+   call assign(this%z, other%z(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_px) then
+   call assign(this%px, other%px(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_py) then
+   call assign(this%py, other%py(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_pz) then
+   call assign(this%pz, other%pz(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_gamma) then
+   call assign(this%gamma_inv, other%gamma_inv(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_weight) then
+   call assign(this%weight, other%weight(lower_bound:upper_bound), 1, tot)
+  end if
+  select type( other )
+  type is (species_aux)
+   if ( this%save_old_p ) then
+    if (other%allocated_old_px) then
+     call assign(this%old_px, other%old_px(lower_bound:upper_bound), 1, tot)
+    end if
+    if (other%allocated_old_py) then
+     call assign(this%old_py, other%old_py(lower_bound:upper_bound), 1, tot)
+    end if
+    if (other%allocated_old_pz) then
+     call assign(this%old_pz, other%old_pz(lower_bound:upper_bound), 1, tot)
+    end if
+   end if
+  end select
+ end subroutine
+
+ 
+!DIR$ ATTRIBUTES INLINE:: flatten_into_aux
+ subroutine flatten_into_aux( this, flat_array)
+  class(species_aux), intent(in) :: this
+  real(dp), allocatable, dimension(:), intent(inout) :: flat_array
+  integer :: array_sz, num_comps, pack_size, lb
+
+  array_sz = this%how_many()
+  num_comps = this%total_size()
+  pack_size = array_sz*num_comps
+  call realloc_temp_1d( flat_array, pack_size)
+
+  lb = 1
+  if( this%allocated_x ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%x(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_y ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%y(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_z ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%z(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_px ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%px(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_py ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%py(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_pz ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%pz(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_gamma ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%gamma_inv(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_weight ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%weight(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if( this%allocated_index ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%part_index(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if ( this%allocated_old_px ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%old_px(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if ( this%allocated_old_py ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%old_py(1:array_sz)
+   lb = lb + array_sz
+  end if
+  if ( this%allocated_old_pz ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%old_pz(1:array_sz)
+   lb = lb + array_sz
+  end if
+
+ end subroutine
+ 
+!DIR$ ATTRIBUTES INLINE:: pack_into_aux
+ subroutine pack_into_aux( this, packed, mask, new_np )
+  class(species_aux), intent(in) :: this
+  class(base_species_T), intent(inout) :: packed
+  logical, intent(in) :: mask(:)
+  integer, intent(in) :: new_np
+  integer :: np
+
+  np = this%how_many()
+  call packed%reallocate(new_np, this%pick_properties())
+  call packed%set_properties(this%pick_properties())
+
+  if( this%allocated_x ) then
+   packed%x(1:new_np) = PACK( this%x(1:np), mask(1:np) )
+  end if
+  if( this%allocated_y ) then
+   packed%y(1:new_np) = PACK( this%y(1:np), mask(1:np) )
+  end if
+  if( this%allocated_z ) then
+   packed%z(1:new_np) = PACK( this%z(1:np), mask(1:np) )
+  end if
+  if( this%allocated_px ) then
+   packed%px(1:new_np) = PACK( this%px(1:np), mask(1:np) )
+  end if
+  if( this%allocated_py ) then
+   packed%py(1:new_np) = PACK( this%py(1:np), mask(1:np) )
+  end if
+  if( this%allocated_pz ) then
+   packed%pz(1:new_np) = PACK( this%pz(1:np), mask(1:np) )
+  end if
+  if( this%allocated_gamma ) then
+   packed%gamma_inv(1:new_np) = PACK( this%gamma_inv(1:np), mask(1:np) )
+  end if
+  if( this%allocated_weight ) then
+   packed%weight(1:new_np) = PACK( this%weight(1:np), mask(1:np) )
+  end if
+  if( this%allocated_index ) then
+   packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(1:np) )
+  end if
+  select type (packed)
+  type is (species_aux)
+   if( this%allocated_old_px ) then
+    packed%old_px(1:new_np) = PACK( this%old_px(1:np), mask(1:np) )
+   end if
+   if( this%allocated_old_py ) then
+    packed%old_py(1:new_np) = PACK( this%old_py(1:np), mask(1:np) )
+   end if
+   if( this%allocated_old_pz ) then
+    packed%old_pz(1:new_np) = PACK( this%old_pz(1:np), mask(1:np) )
+   end if
+  end select
+  call packed%set_part_number(new_np)
+
+ end subroutine
+
+ !DIR$ ATTRIBUTES INLINE:: redistribute_aux
+ subroutine redistribute_aux( this, flat_array, num_particles, properties_in, aux_in )
+  class(species_aux), intent(inout) :: this
+  real(dp), intent(in), dimension(:) :: flat_array
+  integer, intent(in) :: num_particles
+  type(scalars), intent(in) :: properties_in
+  logical, intent(in), optional :: aux_in
+  integer :: i
+  logical :: aux
+
+  i = 0
+  call this%reallocate(num_particles, properties_in%pick_properties())
+  call this%set_properties( properties_in )
+  call this%set_part_number( num_particles )
+  if ( num_particles == 0 ) then
+   return
+  end if
+
+  aux = .false.
+  if ( PRESENT(aux_in) ) then
+   aux = aux_in
+  end if
+
+  if( this%allocated_x ) then
+   this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_y ) then
+   this%y(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_z ) then
+   this%z(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_px ) then
+   this%px(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_py ) then
+   this%py(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_pz ) then
+   this%pz(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_gamma ) then
+   this%gamma_inv(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_weight ) then
+   this%weight(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
+  if( this%allocated_index ) then
+   this%part_index(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
+   i = i + num_particles
+  end if
+  if ( aux ) then
+   if( this%allocated_old_px ) then
+    this%old_px(1:num_particles) = flat_array((i + 1): (i + num_particles))
+    i = i + num_particles
+   end if
+   if( this%allocated_old_py ) then
+    this%old_py(1:num_particles) = flat_array((i + 1): (i + num_particles))
+    i = i + num_particles
+   end if
+   if( this%allocated_old_pz ) then
+    this%old_pz(1:num_particles) = flat_array((i + 1): (i + num_particles))
+    i = i + num_particles
+   end if
+  end if
+
+ end subroutine
+
  subroutine sel_particles_bounds_aux( this, out_sp, lower_bound, upper_bound )
   !! Function that selects particles with respect to the given array boundaries
   !! (Memory position, NOT a particle index)
@@ -620,7 +1029,18 @@ module particles_aux_def
    if( this%allocated_index ) then
     out_sp%part_index = this%part_index(lower_bound:upper_bound)
    end if
- 
+   select type( out_sp )
+   type is ( species_aux )
+    if( this%allocated_old_px ) then
+     out_sp%old_px = this%old_px(lower_bound:upper_bound)
+    end if
+    if( this%allocated_old_py ) then
+     out_sp%old_py = this%old_py(lower_bound:upper_bound)
+    end if
+    if( this%allocated_old_pz ) then
+     out_sp%old_pz = this%old_pz(lower_bound:upper_bound)
+    end if
+   end select
    call out_sp%set_part_number(out_sp%array_size())
  
   end subroutine
@@ -696,6 +1116,28 @@ module particles_aux_def
      out_sp%part_index(i) = this%part_index(n)
     end do
    end if
+
+   select type( out_sp )
+   type is (species_aux)
+    if( this%allocated_old_px ) then
+     do i = 1, tot_len
+      n = index_array(i)
+      out_sp%old_px(i) = this%old_px(n)
+     end do
+    end if
+    if( this%allocated_old_py ) then
+     do i = 1, tot_len
+      n = index_array(i)
+      out_sp%old_py(i) = this%old_py(n)
+     end do
+    end if
+    if( this%allocated_old_pz ) then
+     do i = 1, tot_len
+      n = index_array(i)
+      out_sp%old_pz(i) = this%old_pz(n)
+     end do
+    end if
+   end select
  
   end subroutine
 
@@ -814,13 +1256,13 @@ module particles_aux_def
    call assign(this%z, values, lowb, upb, np)
    this%allocated_z = .true.
   case(OLD_PX_COMP)
-   call assign(this%px, values, lowb, upb, np)
+   call assign(this%old_px, values, lowb, upb, np)
    this%allocated_px = .true.
   case(OLD_PY_COMP)
-   call assign(this%py, values, lowb, upb, np)
+   call assign(this%old_py, values, lowb, upb, np)
    this%allocated_py = .true.
   case(OLD_PZ_COMP)
-   call assign(this%pz, values, lowb, upb, np)
+   call assign(this%old_pz, values, lowb, upb, np)
    this%allocated_pz = .true.
   case(OLD_GAMMA_COMP)
    call assign(this%gamma_inv, values, lowb, upb, np)
@@ -992,13 +1434,13 @@ module particles_aux_def
    call assign(this%z, values, lowb, upb, np)
    this%allocated_z = .true.
   case(OLD_PX_COMP)
-   call assign(this%px, values, lowb, upb, np)
+   call assign(this%old_px, values, lowb, upb, np)
    this%allocated_px = .true.
   case(OLD_PY_COMP)
-   call assign(this%py, values, lowb, upb, np)
+   call assign(this%old_py, values, lowb, upb, np)
    this%allocated_py = .true.
   case(OLD_PZ_COMP)
-   call assign(this%pz, values, lowb, upb, np)
+   call assign(this%old_pz, values, lowb, upb, np)
    this%allocated_pz = .true.
   case(OLD_GAMMA_COMP)
    call assign(this%gamma_inv, values, lowb, upb, np)
@@ -1051,6 +1493,49 @@ module particles_aux_def
   end select
 
  end subroutine
+
+ pure function total_size_aux( this ) result(size)
+  class(species_aux), intent(in) :: this
+  integer :: size
+
+  if (this%istracked()) then
+   if ( .not. this%allocated_data_out ) then
+    select case(this%pick_dimensions())
+    case(1)
+     size = 6
+    case(2)
+     size = 9
+    case(3)
+     size = 12
+    case default
+     size = -1
+    end select
+   else
+    select case(this%pick_dimensions())
+    case(1)
+     size = 7
+    case(2)
+     size = 10
+    case(3)
+     size = 13
+    case default
+     size = -1
+    end select
+   end if
+  else
+   select case(this%pick_dimensions())
+   case(1)
+    size = 4
+   case(2)
+    size = 6
+   case(3)
+    size = 8
+   case default
+    size = -1
+   end select
+  end if
+
+ end function
 
  !========================================
  ! NOT TYPE BOUND PROCEDURES

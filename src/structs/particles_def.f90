@@ -50,11 +50,12 @@ module particles_def
  ! CONSTRUCTOR
  !========================================
  
- subroutine new_species_spec( this, n_particles, curr_ndims, tracked )
+ subroutine new_species_spec( this, n_particles, curr_ndims, tracked, extra_outputs )
   !! Constructor for the `species_new` type
   class(species_new), intent(inout) :: this
   integer, intent(in) :: n_particles, curr_ndims
   logical, intent(in), optional :: tracked
+  integer, intent(in), optional :: extra_outputs
   integer :: allocstatus
  
   if (n_particles < 0) then
@@ -71,6 +72,12 @@ module particles_def
   else
    call this%track( .false. )
   end if
+  if ( PRESENT(extra_outputs) ) then
+   call this%set_extra_outputs( extra_outputs, .true. )
+  else
+   call this%set_extra_outputs( 0, .false. )
+  end if
+
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.

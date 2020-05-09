@@ -54,21 +54,21 @@
    associate( inds => spec_in%call_component(INDEX_COMP, lb=1, ub=np) )
 
     track_mask(1:np) = (int(inds) > 0)
- 
+
    end associate
-   
+
    cc = COUNT(track_mask(1:np) )
    if (npt /= cc ) then
     call write_warning(text='Error in counting tracked particles', task=mype)
    end if
- 
+   
    select case (ndim)
    case(2)
 
     k2 = 1
     call xx_realloc(gtpc_xx, npt, 2)
-    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, track_mask )
-    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
+    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, tracking=.true. )
+    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, tracking=.true. )
 
     select case (order)
 
@@ -148,9 +148,9 @@
    case(3)
 
     call xx_realloc(gtpc_xx, npt, 3)
-    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, track_mask )
-    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, track_mask )
-    gtpc_xx(1:npt, 3) = set_local_positions( spec_in, Z_COMP, track_mask )
+    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, tracking=.true. )
+    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, tracking=.true. )
+    gtpc_xx(1:npt, 3) = set_local_positions( spec_in, Z_COMP, tracking=.true. )
 
     select case(order)
     case(0)

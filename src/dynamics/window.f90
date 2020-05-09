@@ -57,8 +57,9 @@
   end interface
  contains
 
-  subroutine add_particles_new(spec_in, np, i1, i2, ic)
+  subroutine add_particles_new(spec_in, spec_aux_in, np, i1, i2, ic)
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
+   type(species_aux), intent(inout) :: spec_aux_in
    integer, intent (in) :: np, i1, i2, ic
    integer :: n, j2, k2, n_parts
 
@@ -85,6 +86,25 @@
 
    call set_tracked_particle_index( spec_in, np + 1, np + n_parts, ic)
    call spec_in(ic)%check_tracking()
+   if( spec_in(ic)%istracked() ) then
+    select case (spec_in(ic)%pick_dimensions())
+    case(1)
+      call spec_aux_in%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
+        OLD_PX_COMP, lb=np + 1, ub=np + n_parts)
+    case(2)
+      call spec_aux_in%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
+        OLD_PX_COMP, lb=np + 1, ub=np + n_parts)
+      call spec_aux_in%set_component(spec_in(ic)%py(np + 1:np + n_parts), &
+        OLD_PY_COMP, lb=np + 1, ub=np + n_parts)
+    case(3)
+      call spec_aux_in%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
+        OLD_PX_COMP, lb=np + 1, ub=np + n_parts)
+      call spec_aux_in%set_component(spec_in(ic)%py(np + 1:np + n_parts), &
+        OLD_PY_COMP, lb=np + 1, ub=np + n_parts)
+      call spec_aux_in%set_component(spec_in(ic)%pz(np + 1:np + n_parts), &
+        OLD_PZ_COMP, lb=np + 1, ub=np + n_parts)
+    end select
+   end if
   end subroutine
   !---------------------------
   subroutine add_particles_old(spec_in, np, i1, i2, ic)
@@ -201,7 +221,7 @@
      loc_npart(imody, imodz, imodx, ic) = np_new
     end if
     q = np_old
-    call add_particles(spec_in, q, i1, i2, ic)
+    call add_particles(spec_in, spec_aux_in, q, i1, i2, ic)
    end do
    !=======================
   end subroutine

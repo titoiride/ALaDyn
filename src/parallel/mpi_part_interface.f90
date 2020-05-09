@@ -31,7 +31,8 @@
   real (dp) :: loc_pstore(7)
   real (dp), allocatable :: sp_aux(:, :), sp1_aux(:, :)
   real (dp), allocatable, dimension(:), private, save :: aux_array1, aux_array2
-  type(species_new), save :: sp_aux_new, sp1_aux_new
+  type(species_new), save :: sp_aux_new
+  type(species_aux), save :: sp1_aux_new
 
   interface traffic_size_eval
    module procedure :: traffic_size_eval_old
@@ -257,7 +258,7 @@
   ! sends ns data to the right
   if (nr>0) then !receives nr data from left
    n_tot = nl_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties, aux_in=.true.)
    call sp_aux_new%append(temp_spec)
    npt = npt + nl_recv
   end if
@@ -292,7 +293,7 @@
   ! sends ns data to the left recieves nr data from right
   if (nr>0) then
    n_tot = nr_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties, aux_in=.true.)
    call sp_aux_new%append(temp_spec)
    npt = npt + nr_recv
   end if
@@ -477,7 +478,8 @@
    type( species_aux ) :: temp_spec
    type( scalars ) :: part_properties
    real(dp), allocatable :: temp(:), xp(:)
-   integer :: kk, p, q, ns, nr, cdir, tot, tot_aux, tot_size, dump
+   integer :: kk, p, q, ns, nr, cdir, tot, tot_aux, dump
+   integer :: tot_size_spec, tot_size_aux
    integer :: nl_send, nr_send, nl_recv, nr_recv, vxdir, n_tot
    real (dp) :: sp_charge
    logical :: mask(old_np)
@@ -491,7 +493,8 @@
    cdir = component_dictionary( component )
    vxdir = link_position_momentum( component )
    !================== checks memory
-   tot_size = sp_loc%total_size()
+   tot_size_spec = sp_loc%total_size()
+   tot_size_aux = aux_sp%total_size()
    sp_charge = sp_loc%pick_charge()
    part_properties = sp_loc%pick_properties()
    
@@ -499,9 +502,9 @@
    ! Variables are only kept for compatibility with old routine
    dump = ndv
 
-   p = 2*tot_size*max(nl_send, nr_send)
+   p = (tot_size_spec + tot_size_aux)*MAX(nl_send, nr_send)
    call array_realloc_1d(aux_array1, p)
-   q = 2*tot_size*max(nl_recv, nr_recv)
+   q = (tot_size_spec + tot_size_aux)*MAX(nl_recv, nr_recv)
    call array_realloc_1d(aux_array2, q)
    !==================== copy remaining part => spec_aux_in
    !CHECK if index is the fastest way to select particles in species_new
@@ -538,8 +541,8 @@
    call sp_loc%pack_into(sp_aux_new, mask(:), npt)
    call aux_sp%pack_into(sp1_aux_new, mask(:), npt)
    !=======================
-   ns = 2*tot_size*nr_send
-   nr = 2*tot_size*nl_recv
+   ns = (tot_size_spec + tot_size_aux)*nr_send
+   nr = (tot_size_spec + tot_size_aux)*nl_recv
    if (ibd<2) then !NON PERIODIC CASE
     if (per) ns = 0
     if (pel) nr = 0
@@ -573,15 +576,13 @@
     !To be checked case ibd == 1
      
      call sp_loc%sel_particles( temp_spec, right_pind%indices(:) )
-     tot = temp_spec%how_many()*tot_size
+     tot = temp_spec%how_many()*tot_size_spec
      call temp_spec%flatten_into(aux_array1)
      call aux_sp%sel_particles( temp_spec, right_pind%indices(:) )
-     tot_aux = temp_spec%how_many()*tot_size
-     tot_aux = tot_aux + tot
+     tot_aux = temp_spec%how_many()*tot_size_aux
      ! Using temporary array bs_temp_1d to store data
      call temp_spec%flatten_into(bs_temp_1d)
-     aux_array1( (tot+1):tot_aux ) = bs_temp_1d(1:tot)
-
+     aux_array1( (tot+1):(tot + tot_aux) ) = bs_temp_1d(1:tot_aux)
     end if
    end if
   
@@ -592,16 +593,17 @@
    end if
    ! sends ns data to the right
    if (nr>0) then !receives nr data from left
-    n_tot = nl_recv*tot_size
-    call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties)
+    tot = nl_recv*tot_size_spec
+    tot_aux = nl_recv*tot_size_aux
+    call temp_spec%redistribute(aux_array2(1:tot), nl_recv, part_properties, aux_in=.false.)
     call sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nl_recv, part_properties)
+    call temp_spec%redistribute(aux_array2( tot + 1: tot + tot_aux), nl_recv, part_properties, aux_in=.true.)
     call sp1_aux_new%append(temp_spec)
     npt = npt + nl_recv
    end if
  ! !===================
-   ns = 2*tot_size*nl_send
-   nr = 2*tot_size*nr_recv
+   ns = (tot_size_spec + tot_size_aux)*nl_send
+   nr = (tot_size_spec + tot_size_aux)*nr_recv
    if (ibd < 2) then
     if (pel) ns = 0
     if (per) nr = 0
@@ -631,15 +633,14 @@
     else
     !============ NON PERIODIC EXCHANGE
      call sp_loc%sel_particles( temp_spec, left_pind%indices(:) )
-     tot = temp_spec%how_many()*tot_size
+     tot = temp_spec%how_many()*tot_size_spec
      call temp_spec%flatten_into(aux_array1)
 
      call aux_sp%sel_particles( temp_spec, left_pind%indices(:) )
-     tot_aux = temp_spec%how_many()*tot_size
-     tot_aux = tot_aux + tot
+     tot_aux = temp_spec%how_many()*tot_size_aux
      ! Using temporary array bs_temp_1d to store data
      call temp_spec%flatten_into(bs_temp_1d)
-     aux_array1( (tot+1):tot_aux ) = bs_temp_1d(1:tot)
+     aux_array1( (tot+1):(tot + tot_aux) ) = bs_temp_1d(1:tot_aux)
 
     end if
    end if   !END ns >0
@@ -650,10 +651,11 @@
     !  ns, nr, cdir, left)
    end if
    if (nr>0) then
-    n_tot = nr_recv*tot_size
-    call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties)
+    tot = nr_recv*tot_size_spec
+    tot_aux = nr_recv*tot_size_aux
+    call temp_spec%redistribute(aux_array2(1:tot), nr_recv, part_properties, aux_in=.false.)
     call sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( n_tot + 1: 2*n_tot), nr_recv, part_properties)
+    call temp_spec%redistribute(aux_array2( tot + 1: tot + tot_aux), nr_recv, part_properties, aux_in=.true.)
     call sp1_aux_new%append(temp_spec)
     npt = npt + nr_recv
    end if
@@ -1033,8 +1035,9 @@
    !x-boundary are removed
    !==========================================
    !=========== mowing window section
-   if(moving_wind)then
-   
+   if(moving_wind .and. (.not. spec_in%istracked()) )then
+    ! If the tracking is enabled, we also need to exchange
+    ! species_aux data
     xmm = loc_xgrid(imodx)%gmin
     xmx = loc_xgrid(imodx)%gmax
     ! Warning, loc_xgrid(0) may not be known from all tasks.
@@ -1123,6 +1126,7 @@
      end if
     end if
    end if
+   if (moving_wind) return
 !==========================
    ymm = loc_ygrid(imody)%gmin
    ymx = loc_ygrid(imody)%gmax

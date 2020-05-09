@@ -113,7 +113,7 @@
     if( ANY(a_on_particles) ) then
       call interpolate_field_on_tracking( ebf, spec, iter, A_PARTICLE )
     end if
-    call track_out( spec, tnow, iter )
+    call track_out( spec, ebfp, tnow, iter )
 #endif
     call timing
     call Data_out
@@ -160,7 +160,7 @@
        call interpolate_field_on_tracking( env, spec, iter, A_PARTICLE )
       end if
     end if
-    call track_out( spec, tnow, iter )
+    call track_out( spec, ebfp, tnow, iter )
 #endif
     call timing !iter=iter+1  tnow=tnow+dt_loc
     call Data_out
@@ -210,7 +210,7 @@
       call interpolate_field_on_tracking( ebf, spec, 0, A_PARTICLE )
      end if
     end if
-    call track_out( spec, tnow, 0 )
+    call track_out( spec, ebfp, tnow, 0 )
 #endif
     tout = tout + dtout
     if (diag) then

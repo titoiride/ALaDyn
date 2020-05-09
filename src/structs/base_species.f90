@@ -90,6 +90,7 @@ module base_species
  contains
   procedure, public, pass :: istracked => istracked_scalars
   procedure, public, pass :: how_many => how_many_scalars
+  procedure, public, pass :: pick_extra_outputs => pick_extra_outputs_scalars
   procedure, public, pass :: pick_charge => pick_charge_scalars
   procedure, public, pass :: pick_dimensions => pick_dimensions_scalars
   procedure, public, pass :: pick_name => pick_name_scalars
@@ -98,6 +99,7 @@ module base_species
   procedure, public, pass :: set_charge => set_charge_scalars
   procedure, public, pass :: set_dimensions => set_dimensions_scalars
   procedure, public, pass :: set_name => set_name_scalars
+  procedure, public, pass :: set_extra_outputs => set_extra_outputs_scalars
   procedure, public, pass :: set_part_number => set_part_number_scalars
   procedure, public, pass :: set_temperature => set_temperature_scalars
   procedure, public, pass :: track => track_scalars
@@ -183,9 +185,10 @@ module base_species
    procedure, pass :: initialize_data
    procedure, public, pass :: istracked
    procedure, pass :: new_species => new_species_abstract
-   procedure, private :: pack_into_array
+   procedure, public :: pack_into => pack_into_array
    procedure, public, pass :: pick_charge
    procedure, public, pass :: pick_dimensions
+   procedure, public, pass :: pick_extra_outputs
    procedure, public, pass :: pick_name
    procedure, public, pass :: pick_properties
    procedure, public, pass :: pick_temperature
@@ -197,6 +200,7 @@ module base_species
    procedure, pass :: set_charge_int
    procedure, pass :: set_charge_real
    procedure, pass :: set_dimensions
+   procedure, pass :: set_extra_outputs
    procedure, public, pass :: set_highest_track_index
    procedure, public, pass :: set_name
    procedure, pass :: set_part_number
@@ -216,7 +220,6 @@ module base_species
    procedure(sweep_abstract), deferred, pass :: sweep
    generic :: call_particle => call_particle_single, call_particle_bounds, call_particle_index_array
    generic :: copy => copy_all, copy_boundaries
-   generic :: pack_into => pack_into_array
    generic :: sel_particles => sel_particles_bounds, sel_particles_index
    generic :: set_component => set_component_real, set_component_integer
    generic :: set_charge => set_charge_int, set_charge_real
@@ -310,11 +313,12 @@ module base_species
   contains
   
   !==== Constructor ===
-  subroutine new_species_abstract( this, n_particles, curr_ndims, tracked )
+  subroutine new_species_abstract( this, n_particles, curr_ndims, tracked, extra_outputs )
    !! Constructor for the `species_new` type
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: n_particles, curr_ndims
    logical, intent(in), optional :: tracked
+   integer, intent(in), optional :: extra_outputs
    integer :: allocstatus
   
    if (n_particles < 0) then
@@ -331,6 +335,12 @@ module base_species
    else
     call this%track( .false. )
    end if
+   if ( PRESENT(extra_outputs) ) then
+    call this%set_extra_outputs( extra_outputs, .true. )
+   else
+    call this%set_extra_outputs( 0, .false. )
+   end if
+
    this%allocated_x = .false.
    this%allocated_y = .false.
    this%allocated_z = .false.
@@ -1131,12 +1141,14 @@ module base_species
   end subroutine
 
 !DIR$ ATTRIBUTES INLINE:: redistribute
-  subroutine redistribute( this, flat_array, num_particles, properties_in )
+  subroutine redistribute( this, flat_array, num_particles, properties_in, aux_in )
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in), dimension(:) :: flat_array
    integer, intent(in) :: num_particles
    type(scalars), intent(in) :: properties_in
+   logical, intent(in), optional :: aux_in
    integer :: i
+   logical :: aux
 
    i = 0
    call this%reallocate(num_particles, properties_in%pick_properties())
@@ -1146,6 +1158,10 @@ module base_species
     return
    end if
 
+   aux = .false.
+   if ( PRESENT(aux_in) ) then
+    aux = aux_in
+   end if
    if( this%allocated_x ) then
     this%x(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
@@ -1183,8 +1199,9 @@ module base_species
     i = i + num_particles
    end if
  
-   
-
+   if ( aux ) then
+    call write_warning("Called aux routine for non aux species")
+   end if
   end subroutine
 
   subroutine reallocate(this, n_parts, properties_in)
@@ -1198,12 +1215,12 @@ module base_species
      old_properties = this%pick_properties()
      call this%sweep()
      call this%new_species(n_parts, old_properties%pick_dimensions(), &
-      tracked=old_properties%istracked() )
+      tracked=old_properties%istracked(), extra_outputs=old_properties%pick_extra_outputs() )
      call this%set_properties(old_properties)
     end if
    else
     call this%new_species(n_parts, properties_in%pick_dimensions(), &
-     tracked=properties_in%istracked() )
+     tracked=properties_in%istracked(), extra_outputs=properties_in%pick_extra_outputs() )
    end if
 
   end subroutine
@@ -1242,7 +1259,23 @@ module base_species
    ch = this%properties%charge
 
   end function
-  
+
+  pure function pick_extra_outputs( this ) result(n_outputs)
+   class(base_species_T), intent(in) :: this
+   integer :: n_outputs
+
+   n_outputs = this%properties%track_data%extra_outputs
+
+  end function
+
+  pure function pick_extra_outputs_scalars( this ) result(n_outputs)
+   class(scalars), intent(in) :: this
+   integer :: n_outputs
+
+   n_outputs = this%track_data%extra_outputs
+
+  end function
+
   pure function pick_temperature_scalars( this ) result(tem)
    class(scalars), intent(in) :: this
    real(dp) :: tem
@@ -1300,6 +1333,7 @@ module base_species
    call properties%set_temperature(this%pick_temperature())
    call properties%set_dimensions(this%pick_dimensions())
    call properties%track(this%istracked())
+   call properties%set_extra_outputs(this%pick_extra_outputs(), .true.)
 
   end function
   
@@ -1311,6 +1345,7 @@ module base_species
    call properties%set_temperature(this%pick_temperature())
    call properties%set_dimensions(this%pick_dimensions())
    call properties%track(this%istracked())
+   call properties%set_extra_outputs(this%pick_extra_outputs(), .true.)
 
   end function
   
@@ -1332,6 +1367,7 @@ module base_species
    call this%set_temperature(properties_in%pick_temperature())
    call this%set_dimensions(properties_in%pick_dimensions())
    call this%track(properties_in%istracked())
+   call this%set_extra_outputs(properties_in%pick_extra_outputs(), .true.)
 
   end subroutine
 
@@ -1374,7 +1410,35 @@ module base_species
    this%properties%dimensions = dimens
 
   end subroutine
-  
+
+  subroutine set_extra_outputs( this, n_outputs, flag )
+   class(base_species_T), intent(inout) :: this
+   integer, intent(in) :: n_outputs
+   logical, intent(in) :: flag
+
+   if (.not. flag) then
+    this%properties%track_data%extra_outputs = 0
+    return
+   end if
+
+   this%properties%track_data%extra_outputs = n_outputs
+
+  end subroutine
+
+  subroutine set_extra_outputs_scalars( this, n_outputs, flag )
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: n_outputs
+   logical, intent(in) :: flag
+
+   if (.not. flag) then
+    this%track_data%extra_outputs = 0
+    return
+   end if
+
+   this%track_data%extra_outputs = n_outputs
+
+  end subroutine
+
   subroutine set_name( this, name)
    class(base_species_T), intent(inout) :: this
    character(len=*), intent(in) :: name

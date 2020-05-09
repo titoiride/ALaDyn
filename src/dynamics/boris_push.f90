@@ -252,6 +252,11 @@
     allocate( b2(np) )
     allocate( bb(np, 1) )
 
+    ! If tracked, store old momenta
+    if ( sp_loc%istracked() ) then
+     call pt%set_component( sp_loc%px(1:np), OLD_PX_COMP, lb=1, ub=np)
+     call pt%set_component( sp_loc%py(1:np), OLD_PY_COMP, lb=1, ub=np)
+    end if
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
@@ -332,6 +337,12 @@
     allocate( bb(np, 3) )
     allocate( bv(np) )
     allocate( aux(np) )
+
+    if ( sp_loc%istracked() ) then
+     call pt%set_component( sp_loc%px(1:np), OLD_PX_COMP, lb=1, ub=np)
+     call pt%set_component( sp_loc%py(1:np), OLD_PY_COMP, lb=1, ub=np)
+     call pt%set_component( sp_loc%pz(1:np), OLD_PZ_COMP, lb=1, ub=np)
+    end if
 
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Boris push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
@@ -491,6 +502,11 @@
     allocate( b2(np) )
     allocate( bb(np, 1) )
 
+    if ( sp_loc%istracked() ) then
+     call pt%set_component( sp_loc%px(1:np), OLD_PX_COMP, lb=1, ub=np)
+     call pt%set_component( sp_loc%py(1:np), OLD_PY_COMP, lb=1, ub=np)
+    end if
+
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Higuera push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
@@ -579,6 +595,12 @@
     allocate( bb(np, 3) )
     allocate( bv(np) )
     allocate( aux(np) )
+
+    if ( sp_loc%istracked() ) then
+     call pt%set_component( sp_loc%px(1:np), OLD_PX_COMP, lb=1, ub=np)
+     call pt%set_component( sp_loc%py(1:np), OLD_PY_COMP, lb=1, ub=np)
+     call pt%set_component( sp_loc%pz(1:np), OLD_PZ_COMP, lb=1, ub=np)
+    end if
 
     !u^{-} = p_{n-1/2} + q*Lfact*(Ex,Ey,Bz)*Dt/2 in Higuera push
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
@@ -949,6 +971,12 @@
     
     vp(1:np) = 2*(bp_pp(1:np, 1) + bp_pp(1:np, 2)*bb(1:np, 1))/b2(1:np) - &
      sp_loc%px(1:np)
+
+    if ( sp_loc%istracked() ) then
+     call f_pt%set_component( sp_loc%px(1:np), OLD_PX_COMP, lb=1, ub=np)
+     call f_pt%set_component( sp_loc%py(1:np), OLD_PY_COMP, lb=1, ub=np)
+    end if
+
     call sp_loc%set_component(vp(1:np), PX_COMP, lb=1, ub=np)
     vp(1:np) = 2*(bp_pp(1:np, 2) - bp_pp(1:np, 1)*bb(1:np, 1))/b2(1:np) - &
      sp_loc%py(1:np)
@@ -981,6 +1009,13 @@
     end do
     vp(1:np) = 2*(bp_pp(1:np, 1) + bp_pp(1:np, 2)*bb(1:np, 3) - bp_pp(1:np, 3)*bb(1:np, 2) +&
      bb(1:np, 1)*bv(1:np))/b2(1:np) - sp_loc%px(1:np)
+
+    if ( sp_loc%istracked() ) then
+     call f_pt%set_component( sp_loc%px(1:np), OLD_PX_COMP, lb=1, ub=np)
+     call f_pt%set_component( sp_loc%py(1:np), OLD_PY_COMP, lb=1, ub=np)
+     call f_pt%set_component( sp_loc%pz(1:np), OLD_PZ_COMP, lb=1, ub=np)
+    end if
+
     call sp_loc%set_component(vp(1:np), PX_COMP, lb=1, ub=np)
     vp(1:np) = 2*(bp_pp(1:np, 2) + bp_pp(1:np, 3)*bb(1:np, 1) - bp_pp(1:np, 1)*bb(1:np, 3) +&
      bb(1:np, 2)*bv(1:np))/b2(1:np) - sp_loc%py(1:np)

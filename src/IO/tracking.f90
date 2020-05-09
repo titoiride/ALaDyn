@@ -188,13 +188,19 @@ module tracking
 
    type(species_new), dimension(:), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   logical :: tracking
+   logical :: tracking, extra_outputs
    integer :: ic
 
    tracking_written = .true.
    tracking = ANY(p_tracking, DIM=1)
+   extra_outputs = ANY(a_on_particles, DIM=1)
+   
    if (.not. tracking) return
-
+   
+   do ic = 1, nsp
+    call spec_in(ic)%set_extra_outputs( 1, extra_outputs )
+   end do
+   call spec_aux_in%save_old_momentum( .true. )
    call create_tracking_folders(tracking_folder)
 
    iter_index = 0
@@ -203,6 +209,7 @@ module tracking
     call spec_in(ic)%set_tot_tracked_parts( 0 )
     call spec_in(ic)%set_highest_track_index( 0 )
     call spec_in(ic)%compute_gamma()
+    
     write(track_dic(ic), '(a20,i1.1,a4)') 'tracking_dictionary_',ic,'.dat'
     if (pe0) then
      open(unit=track_iounit(ic), file=tracking_folder//'/'//track_dic(ic), &
@@ -244,12 +251,13 @@ module tracking
 
  !====== PARTICLE TRACKING I/O ==========
 
-  subroutine tracking_write_output(  spec_in, timenow, pid )
+  subroutine tracking_write_output(  spec_in, spec_aux_in, timenow, pid )
    !! Tracking I/O with the same strategy as part_pdata_out_new.
    !! The printed file contains the particle phase space (2*n_dimension),
    !! the particle weight, Lorentz gamma and index
 
   type(species_new), intent(in) :: spec_in
+  type(species_aux), intent(in) :: spec_aux_in
   real (dp), intent (in) :: timenow
   integer, intent (in) :: pid
 
@@ -260,7 +268,8 @@ module tracking
   integer (dp) :: nptot_global_reduced
   integer :: npt, npt_loc(npe), cc
   integer :: ik, p, q, np, ip, ip_max, nptot, n_comp_out
-  integer :: lenp, ip_loc(npe), ndv, i_end, gamma_comp
+  integer :: lenp, ip_loc(npe), ndv, i_end
+  integer :: pxcomp, pycomp, pzcomp, gamma_comp
   integer (offset_kind) :: disp, disp_col
   type(index_array) :: out_parts
   type(track_data_t) :: track_data
@@ -305,7 +314,30 @@ module tracking
   call out_parts%find_index(track_mask(1:np))
   call spec_in%call_particle(track_aux, out_parts%indices(1:npt), tracking=.true.)
 
+  pxcomp = spec_in%array_component( PX_COMP )
+  pycomp = spec_in%array_component( PY_COMP )
+  pzcomp = spec_in%array_component( PZ_COMP )
   gamma_comp = spec_in%array_component( INV_GAMMA_COMP )
+
+  ! Shifting tracked particles momenta half timestep forward
+  ! to align them with field and positions
+  select case( spec_in%pick_dimensions() )
+  case(1)
+   track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+   PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
+  case(2)
+   track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+   PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
+   track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
+   PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
+  case(3)
+   track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+   PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
+   track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
+   PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
+   track_aux(1:npt, pzcomp) = 0.5*(3*track_aux(1:npt, pzcomp) - &
+   PACK(spec_aux_in%old_pz(1:np), track_mask(1:np)))
+  end select
 
   track_aux(1:npt, gamma_comp) = one_dp/track_aux(1:npt, gamma_comp)
   ip_loc(mype+1) = npt
@@ -363,10 +395,11 @@ module tracking
   end if
  end subroutine
  !================================
- subroutine track_out( spec_in, timenow, iter)
+ subroutine track_out( spec_in, spec_aux_in, timenow, iter)
   !! Wrapper for the tracking I/O routine
 
   type(species_new), intent(inout), dimension(:) :: spec_in
+  type(species_aux), intent(inout) :: spec_aux_in
   real(dp), intent(in) :: timenow
   integer, intent(in) :: iter
   integer :: ic
@@ -374,7 +407,7 @@ module tracking
   do ic = 1, nsp
    if (spec_in(ic)%istracked()) then
     if ( MOD(iter, every_track(ic) ) == 0 ) then
-     call tracking_write_output(spec_in(ic), timenow, ic)
+     call tracking_write_output(spec_in(ic), spec_aux_in, timenow, ic)
      tracking_written = .true.
      if ( spec_in(ic)%allocated_data_out ) then
       call spec_in(ic)%deallocate_data_output()
