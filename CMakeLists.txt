@@ -143,7 +143,7 @@ elseif(Fortran_COMPILER_NAME MATCHES "ifor*" OR Fortran_COMPILER_NAME MATCHES "f
   elseif(CORI_HASWELL)
     string(APPEND CMAKE_CXX_COMPILE_FLAGS " -xCORE-AVX2")
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -xCORE-AVX2 -O3")
-    string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -xCORE-AVX2 -check all -fpe0 -warn -traceback -debug extended -Og")
+    string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -xCORE-AVX2 -check all -init=snan,arrays -warn -traceback -debug extended -Og")
     string(APPEND CMAKE_Fortran_FLAGS_PROFILING " -xCORE-AVX2 -O2")
     string(APPEND CMAKE_Fortran_FLAGS_REPORTS " -xCORE-AVX2 -O2")
     string(APPEND CMAKE_Fortran_LINK_FLAGS " -lstdc++")
