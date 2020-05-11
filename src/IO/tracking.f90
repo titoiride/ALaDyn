@@ -321,23 +321,25 @@ module tracking
 
   ! Shifting tracked particles momenta half timestep forward
   ! to align them with field and positions
-  select case( spec_in%pick_dimensions() )
-  case(1)
-   track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
-   PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
-  case(2)
-   track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
-   PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
-   track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
-   PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
-  case(3)
-   track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
-   PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
-   track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
-   PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
-   track_aux(1:npt, pzcomp) = 0.5*(3*track_aux(1:npt, pzcomp) - &
-   PACK(spec_aux_in%old_pz(1:np), track_mask(1:np)))
-  end select
+  if ( .not. spec_in%empty ) then
+   select case( spec_in%pick_dimensions() )
+   case(1)
+    track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+    PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
+   case(2)
+    track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+    PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
+    track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
+    PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
+   case(3)
+    track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+    PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
+    track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
+    PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
+    track_aux(1:npt, pzcomp) = 0.5*(3*track_aux(1:npt, pzcomp) - &
+    PACK(spec_aux_in%old_pz(1:np), track_mask(1:np)))
+   end select
+  end if
 
   track_aux(1:npt, gamma_comp) = one_dp/track_aux(1:npt, gamma_comp)
   ip_loc(mype+1) = npt
