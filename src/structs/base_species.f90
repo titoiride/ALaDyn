@@ -50,7 +50,7 @@ module base_species
  real(dp), allocatable, dimension(:, :), save :: bs_temp_2d
 
  type track_data_t
-  logical, private :: tracked
+  logical, public :: tracked
   !! Flag to track the particles
   integer, public :: n_tracked
   !! Number of tracked particles
@@ -85,7 +85,7 @@ module base_species
   !! Number of dimensions in which particles live
   real, private :: temperature
   !! Initial temperature given to the species
-  type(track_data_t), private :: track_data
+  type(track_data_t), public :: track_data
   !! Type containing all the tracking datas 
  contains
   procedure, public, pass :: istracked => istracked_scalars

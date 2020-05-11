@@ -132,6 +132,7 @@ module particles_aux_def
    procedure, public :: set_component_integer => set_component_aux_integer
    procedure, pass :: sweep => sweep_aux
    procedure, public, pass :: total_size => total_size_aux
+   procedure, public, pass :: track => track_spec_aux
 
  end type species_aux
 
@@ -1536,6 +1537,58 @@ module particles_aux_def
   end if
 
  end function
+
+ subroutine track_spec_aux( this, track_flag, allocate_now )
+  class(species_aux), intent(inout) :: this
+  logical, intent(in) :: track_flag
+  logical, intent(in), optional :: allocate_now
+  logical :: alloc
+
+  alloc = .false.
+  if ( present(allocate_now) ) then
+   alloc = allocate_now
+  end if
+
+  this%properties%track_data%tracked = track_flag
+  if (track_flag .and. alloc ) then
+   if ( .not. this%allocated_index ) then
+    allocate( this%part_index(this%array_size()), source=0 )
+    this%allocated_index = .true.
+   end if
+  end if
+  if (track_flag .and. alloc ) then
+   select case( this%pick_dimensions() )
+   case(1)
+    if ( .not. this%allocated_old_px ) then
+     allocate( this%old_px(this%array_size()), source=this%px )
+     this%allocated_old_px = .true.
+    end if
+   case(2)
+    if ( .not. this%allocated_old_px ) then
+     allocate( this%old_px(this%array_size()), source=this%px )
+     this%allocated_old_px = .true.
+    end if
+    if ( .not. this%allocated_old_py ) then
+     allocate( this%old_py(this%array_size()), source=this%py )
+     this%allocated_old_py = .true.
+    end if
+   case(3)
+    if ( .not. this%allocated_old_px ) then
+     allocate( this%old_px(this%array_size()), source=this%px )
+     this%allocated_old_px = .true.
+    end if
+    if ( .not. this%allocated_old_py ) then
+     allocate( this%old_py(this%array_size()), source=this%py )
+     this%allocated_old_py = .true.
+    end if
+    if ( .not. this%allocated_old_pz ) then
+     allocate( this%old_pz(this%array_size()), source=this%pz )
+     this%allocated_old_pz = .true.
+    end if
+   end select
+  end if
+
+ end subroutine
 
  !========================================
  ! NOT TYPE BOUND PROCEDURES
