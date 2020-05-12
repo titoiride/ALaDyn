@@ -126,7 +126,7 @@ install:
   - if [%COMPILER%]==[pgi] echo PGI 19.10 Enabled
 
 build_script:
-  - if [%COMPILER%]==[pgi]    cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" "-DCMAKE_BUILD_TYPE=Release" ..
+  - if [%COMPILER%]==[pgi]    cmake -G "%GENERATOR%" "-DCMAKE_TOOLCHAIN_FILE=C:\Tools\vcpkg\scripts\buildsystems\vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET%" -DFORCE_OLD_MPI:BOOL=TRUE "-DCMAKE_BUILD_TYPE=Release" ..
   - if [%COMPILER%]==[pgi]    cmake --build . --target install
 
   - if [%COMPILER%]==[msys2]  %BASH% "cmake -G \"MSYS Makefiles\" -DFORCE_OLD_MPI:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release /c/projects/aladyn"
