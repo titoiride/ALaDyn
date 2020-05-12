@@ -654,29 +654,29 @@ module particles_aux_def
   select case(this%pick_dimensions())
   case(1)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np) )
+    allocate( this%old_px(np), source=this%px )
     this%allocated_old_px = .true.
    end if
   case(2)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np) )
+    allocate( this%old_px(np), source=this%px )
     this%allocated_old_px = .true.
    end if
    if( .not. this%allocated_old_py ) then
-    allocate( this%old_py(np) )
+    allocate( this%old_py(np), source=this%py )
     this%allocated_old_py = .true.
    end if
   case(3)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np) )
+    allocate( this%old_px(np), source=this%px )
     this%allocated_old_px = .true.
    end if
    if( .not. this%allocated_old_py ) then
-    allocate( this%old_py(np) )
+    allocate( this%old_py(np), source=this%py )
     this%allocated_old_py = .true.
    end if
    if( .not. this%allocated_old_pz ) then
-    allocate( this%old_pz(np) )
+    allocate( this%old_pz(np), source=this%pz )
     this%allocated_old_pz = .true.
    end if
   end select
@@ -1556,6 +1556,11 @@ module particles_aux_def
     this%allocated_index = .true.
    end if
   end if
+
+  if ( this%empty ) then
+    return
+  end if
+
   if (track_flag .and. alloc ) then
    select case( this%pick_dimensions() )
    case(1)
