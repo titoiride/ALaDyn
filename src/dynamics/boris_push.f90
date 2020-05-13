@@ -123,6 +123,8 @@
 
     call sp_loc%set_component(bp_pp(1:np, 1), PX_COMP, lb=1, ub=np)
     call sp_loc%set_component(bp_pp(1:np, 2), PY_COMP, lb=1, ub=np)
+    call pt%set_component(bp_pp(1:np, 1), OLD_PX_COMP, lb=1, ub=np)
+    call pt%set_component(bp_pp(1:np, 2), OLD_PY_COMP, lb=1, ub=np)
 
    case (3)
 
@@ -152,6 +154,9 @@
     call sp_loc%set_component(bp_pp(1:np, 1), PX_COMP, lb=1, ub=np)
     call sp_loc%set_component(bp_pp(1:np, 2), PY_COMP, lb=1, ub=np)
     call sp_loc%set_component(bp_pp(1:np, 3), PZ_COMP, lb=1, ub=np)
+    call pt%set_component(bp_pp(1:np, 1), OLD_PX_COMP, lb=1, ub=np)
+    call pt%set_component(bp_pp(1:np, 2), OLD_PY_COMP, lb=1, ub=np)
+    call pt%set_component(bp_pp(1:np, 3), OLD_PZ_COMP, lb=1, ub=np)
 
    end select
 

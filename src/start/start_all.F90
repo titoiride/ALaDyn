@@ -210,16 +210,19 @@ call gdbattach
    case (0)
     iout = id_new
     ienout = 0
-    call init
     tstart = 0.0
     last_iter = 0
     tdia = tstart
     tout = tstart
-
     dt_loc = dt
     iter_max = 1
     dtout = (tmax-tstart)/nouts
     dtdia = (tmax-tstart)/iene
+    tnow = tstart
+    if (tnow < dt_loc) initial_time = .true.
+
+    call init
+
     if (tmax>0.0) then
      iter_max = int(tmax/dt)
      dt_loc = tmax/float(iter_max)

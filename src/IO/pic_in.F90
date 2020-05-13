@@ -21,6 +21,8 @@
 
  module pic_in
 
+  use boris_push, only: init_lpf_momenta
+  use curr_and_fields_util, only: field_charge_multiply, set_lpf_acc
   use init_laser_field
   use init_part_distrib
   use tracking
@@ -32,6 +34,7 @@
 
  contains
   subroutine init
+   integer :: ic
    !======================================
    if (model_id<3) then
     call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2) 
@@ -47,9 +50,41 @@
    call part_distribute(spec, ebfp, dmodel_id, xf0)
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
+
 #if !defined(OLD_SPECIES)
    call initialize_tracking( spec, ebfp )
 #endif
+   !==========================================================
+   ! Initialize particles momentum
+   !==========================================================
+   do ic = 1, nsp
+      call initialize_momenta( ebf, spec(ic), ebfp, dt_loc, nfield, ic, initial_time)
+   end do
+
   end subroutine
 
+  subroutine initialize_momenta(ef, spec_in, spec_aux_in, dt_in, nfields, ic, initial_time_in)
+
+   real (dp), intent (in) :: ef(:, :, :, :)
+   type (species_new), intent (inout) :: spec_in
+   type (species_aux), intent (inout) :: spec_aux_in
+   real (dp), intent (in) :: dt_in
+   integer, intent (in) :: nfields, ic
+   logical, intent(inout) :: initial_time_in
+   integer :: np
+
+   np = spec_in%how_many()
+   !==========================================================
+   ! Fields interpolation on particles positions
+   call set_lpf_acc(ebf, spec_in, spec_aux_in, np, nfields)
+
+   !==========================================================
+   ! Fields are multiplied by the particles charge
+   call field_charge_multiply(spec_in, spec_aux_in)
+
+   !==========================================================
+   ! Initializes particles momenta on the initial time
+   call init_lpf_momenta(spec_in, spec_aux_in, dt_in, np, ic, initial_time_in)
+
+  end subroutine
  end module
