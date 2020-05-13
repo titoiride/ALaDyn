@@ -130,7 +130,7 @@ elseif(Fortran_COMPILER_NAME MATCHES "ifor*" OR Fortran_COMPILER_NAME MATCHES "f
   add_definitions(-DUSING_INTEL_COMPILER)
   string(APPEND CMAKE_CXX_COMPILE_FLAGS " -diag-enable warn")
   string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -real-size 64")
-  string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -real-size 64 -diag-enable warn")
+  string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -real-size 64 -diag-enable warn -g")
   string(APPEND CMAKE_Fortran_FLAGS_PROFILING "-g -qopt-report=5 -qopt-report-file=comp_report_out -qopt-report-per-object -real-size 64")
   string(APPEND CMAKE_Fortran_FLAGS_REPORTS "-qopt-report=2 -qopt-report-phase=vec,loop -real-size 64")
   if(MARCONI_KNL OR CORI_KNL)

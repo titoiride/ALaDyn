@@ -643,7 +643,7 @@ module particles_aux_def
   logical, intent(in) :: flag
   integer :: np
 
-  np = this%how_many()
+  np = this%array_size()
   if ( .not. flag ) then
    this%save_old_p = .false.
    return
