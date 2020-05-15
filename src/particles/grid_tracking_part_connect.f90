@@ -34,10 +34,12 @@
 
   contains
 
-  subroutine a_on_tracking_particles( field, spec_in, np, order, polarization )
+  subroutine a_on_tracking_particles( field, spec_in, spec_aux_in, np, order, polarization, mask_in )
    real (dp), intent (in) :: field(:, :, :)
    type (species_new), intent (inout) :: spec_in
+   type (species_aux), intent (in) :: spec_aux_in
    integer, intent(in) :: np, order, polarization
+   logical, dimension(:), intent(in), optional :: mask_in
    real(dp), allocatable, dimension(:) :: ap
    real(dp) :: dvol
    integer :: npt, i1, i2, j1, j2, k1, k2, n, cc
@@ -51,11 +53,15 @@
    allocate( interpolated_field(np), source=zero_dp )
    call interp_realloc(interp, np, spec_in%pick_dimensions())
    call array_realloc_1d( track_mask, np )
-   associate( inds => spec_in%call_component(INDEX_COMP, lb=1, ub=np) )
+   if ( PRESENT( mask_in ) ) then
+    track_mask(1:np) = mask_in(1:np)
+   else
+    associate( inds => spec_in%call_component(INDEX_COMP, lb=1, ub=np) )
 
-    track_mask(1:np) = (int(inds) > 0)
+     track_mask(1:np) = (int(inds) > 0)
 
-   end associate
+    end associate
+   end if
 
    cc = COUNT(track_mask(1:np) )
    if (npt /= cc ) then
@@ -67,8 +73,8 @@
 
     k2 = 1
     call xx_realloc(gtpc_xx, npt, 2)
-    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, tracking=.true. )
-    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, tracking=.true. )
+    gtpc_xx(1:npt, 1) = set_local_positions( spec_aux_in, X_COMP, mask_in=track_mask(1:np) )
+    gtpc_xx(1:npt, 2) = set_local_positions( spec_aux_in, Y_COMP, mask_in=track_mask(1:np) )
 
     select case (order)
 
@@ -148,9 +154,9 @@
    case(3)
 
     call xx_realloc(gtpc_xx, npt, 3)
-    gtpc_xx(1:npt, 1) = set_local_positions( spec_in, X_COMP, tracking=.true. )
-    gtpc_xx(1:npt, 2) = set_local_positions( spec_in, Y_COMP, tracking=.true. )
-    gtpc_xx(1:npt, 3) = set_local_positions( spec_in, Z_COMP, tracking=.true. )
+    gtpc_xx(1:npt, 1) = set_local_positions( spec_aux_in, X_COMP, mask_in=track_mask(1:np) )
+    gtpc_xx(1:npt, 2) = set_local_positions( spec_aux_in, Y_COMP, mask_in=track_mask(1:np) )
+    gtpc_xx(1:npt, 3) = set_local_positions( spec_aux_in, Z_COMP, mask_in=track_mask(1:np) )
 
     select case(order)
     case(0)

@@ -110,9 +110,6 @@
    !=======================
     call lp_run( tnow, iter )
 #if !defined(OLD_SPECIES)
-    if( ANY(a_on_particles) ) then
-      call interpolate_field_on_tracking( ebf, spec, iter, A_PARTICLE )
-    end if
     call track_out( spec, ebfp, tnow, iter )
 #endif
     call timing
@@ -153,13 +150,6 @@
    !=================================
     call env_run( tnow, iter )
 #if !defined(OLD_SPECIES)
-    if( ANY(a_on_particles) ) then
-      if ( Two_color ) then
-       !call interpolate_field_on_tracking( env + env1, spec, iter, A_PARTICLE )
-      else
-       call interpolate_field_on_tracking( env, spec, iter, A_PARTICLE )
-      end if
-    end if
     call track_out( spec, ebfp, tnow, iter )
 #endif
     call timing !iter=iter+1  tnow=tnow+dt_loc
@@ -196,22 +186,7 @@
 
    if (tnow >= tout) then
     call create_timestep_folder( iout )
-    ! Setting 0 on track_out iter so that it is
-    ! always writing inside Data_out
-#if !defined(OLD_SPECIES)
-    if( ANY(a_on_particles) ) then
-     if (Envelope) then
-      if ( Two_color ) then
-       !call interpolate_field_on_tracking( env + env1, spec, iter, A_PARTICLE )
-      else
-       call interpolate_field_on_tracking( env, spec, 0, A_PARTICLE )
-      end if
-     else
-      call interpolate_field_on_tracking( ebf, spec, 0, A_PARTICLE )
-     end if
-    end if
-    call track_out( spec, ebfp, tnow, 0 )
-#endif
+
     tout = tout + dtout
     if (diag) then
      if (pe0) call en_data( ienout, iter, idata )

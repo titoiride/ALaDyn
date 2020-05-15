@@ -319,24 +319,24 @@ module tracking
   pzcomp = spec_in%array_component( PZ_COMP )
   gamma_comp = spec_in%array_component( INV_GAMMA_COMP )
 
-  ! Shifting tracked particles momenta half timestep forward
-  ! to align them with field and positions
+  ! Shifting tracked particles momenta half timestep backward
+  ! to align them with field and positions (t^n)
   if ( .not. spec_in%empty ) then
    select case( spec_in%pick_dimensions() )
    case(1)
-    track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+    track_aux(1:npt, pxcomp) = 0.5*(track_aux(1:npt, pxcomp) + &
     PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
    case(2)
-    track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+    track_aux(1:npt, pxcomp) = 0.5*(track_aux(1:npt, pxcomp) + &
     PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
-    track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
+    track_aux(1:npt, pycomp) = 0.5*(track_aux(1:npt, pycomp) + &
     PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
    case(3)
-    track_aux(1:npt, pxcomp) = 0.5*(3*track_aux(1:npt, pxcomp) - &
+    track_aux(1:npt, pxcomp) = 0.5*(track_aux(1:npt, pxcomp) + &
     PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
-    track_aux(1:npt, pycomp) = 0.5*(3*track_aux(1:npt, pycomp) - &
+    track_aux(1:npt, pycomp) = 0.5*(track_aux(1:npt, pycomp) + &
     PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
-    track_aux(1:npt, pzcomp) = 0.5*(3*track_aux(1:npt, pzcomp) - &
+    track_aux(1:npt, pzcomp) = 0.5*(track_aux(1:npt, pzcomp) + &
     PACK(spec_aux_in%old_pz(1:np), track_mask(1:np)))
    end select
   end if
@@ -421,13 +421,17 @@ module tracking
   ! must be switched to array if employing multiple species tracking
  end subroutine
  !================================
- subroutine interpolate_field_on_tracking( field_in, spec_in, iter, field_type )
+ subroutine interpolate_field_on_tracking( field_in, spec_in, spec_aux_in, iter, field_type )
   real(dp), dimension(:, :, :, :), allocatable, intent(in) :: field_in
   type(species_new), intent(inout), dimension(:) :: spec_in
+  type(species_aux), intent(in) :: spec_aux_in
   integer, intent(in) :: iter, field_type
   real(dp), dimension(:, :, :), allocatable :: interpol_field
   real(dp), dimension(:, :, :), allocatable :: field_aux
   integer :: ic, np, order, polarization
+  logical :: track_flag
+  logical, dimension(:), allocatable :: track_mask
+ 
 
   if (envelope) then
    order = 0
@@ -439,39 +443,60 @@ module tracking
    ! order = 2 uses Simpson's rule in longitudinal integration
   end if
 
-  if ( ANY(MOD(SPREAD(iter, 1, nsp), every_track(1:nsp) ) == 0) ) then
-   allocate( interpol_field, MOLD=field_in(:, :, :, 1) )
-   interpol_field(:, :, :) = zero_dp
-   select case (field_type)
-   case(A_PARTICLE)
-    if (.not. envelope) then
-     if ( model_id == 1) then
-      polarization = Y_POLARIZATION
-      field_aux = field_in(:, :, :, 2)
-     else if ( model_id == 2) then
-      polarization = Z_POLARIZATION
-      field_aux = field_in(:, :, :, 3)
-     else if ( circ_lp ) then
-      call write_warning('Circular polarization not implemented')
-      return
-     end if
-     call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2, order )
-    else if (envelope) then
-     ! Envelope real part
-     interpol_field(:, :, :) = field_in(:, :, :, 1)
-    end if
-   case default
-   end select
+  ! Do not perform integration if no species is tracked
+  track_flag = .false.
+  do ic = 1, nsp
+   track_flag = track_flag .or. spec_in(ic)%istracked()
+  end do
+  if ( .not. track_flag ) return
 
-   do ic = 1, nsp
-    if (spec_in(ic)%istracked()) then
-     np = spec_in(ic)%how_many()
-     call spec_in(ic)%allocate_data_output()
-     call a_on_tracking_particles( interpol_field, spec_in(ic), np, order, polarization )
+  ! Do not perform is it is not the tracking output time
+  if ( .not. ANY(MOD(SPREAD(iter, 1, nsp), every_track(1:nsp) ) == 0) ) return
+
+  if( .not. ANY(a_on_particles) ) return
+
+   allocate( interpol_field, MOLD=field_in(:, :, :, 1) )
+  interpol_field(:, :, :) = zero_dp
+  select case (field_type)
+  case(A_PARTICLE)
+   if (.not. envelope) then
+    if ( model_id == 1) then
+     polarization = Y_POLARIZATION
+     field_aux = field_in(:, :, :, 2)
+    else if ( model_id == 2) then
+     polarization = Z_POLARIZATION
+     field_aux = field_in(:, :, :, 3)
+    else if ( circ_lp ) then
+     call write_warning('Circular polarization not implemented')
+     return
     end if
-   end do
-  end if
+    call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2, order )
+   else if (envelope) then
+    ! Envelope real part
+    interpol_field(:, :, :) = field_in(:, :, :, 1)
+   end if
+  case default
+  end select
+
+  do ic = 1, nsp
+   if (spec_in(ic)%istracked()) then
+
+    np = spec_in(ic)%how_many()
+    call array_realloc_1d( track_mask, np )
+
+    associate( inds => spec_in(ic)%call_component(INDEX_COMP, lb=1, ub=np) )
+
+     track_mask(1:np) = (int(inds) > 0)
+
+    end associate
+
+    call spec_in(ic)%allocate_data_output()
+    call a_on_tracking_particles( interpol_field, spec_in(ic), spec_aux_in, np, order, &
+     polarization, mask_in=track_mask )
+   end if
+  end do
  end subroutine
+
 ! !#if defined(OPENPMD)
 !  subroutine track_write_hdf5( spec_in, timenow, dt_loc_in, iter, ic )
 !   type( species_new), intent(in) :: spec_in

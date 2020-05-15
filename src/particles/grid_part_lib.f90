@@ -866,23 +866,24 @@
    logical, intent(in), optional :: tracking
    integer :: np, npt
    real(dp), allocatable, dimension(:) :: position
+   logical :: track_flag
+
+   track_flag = .false.
 
    if ( PRESENT(tracking) ) then
-    if (tracking) then
-      np = pt_array%how_many()
-      npt = pt_array%pick_tot_tracked_parts()
-      allocate( position(npt) )
-      position(1:npt) = pt_array%call_tracked_component( component, lb=1, ub=np )
-      np = npt
-    else
-      np = pt_array%how_many()
-      allocate( position(np) )
-      position(1:np) = pt_array%call_component( component, lb=1, ub=np )
-    end if
+    track_flag = tracking
+   end if
+
+   if (track_flag) then
+     np = pt_array%how_many()
+     npt = pt_array%pick_tot_tracked_parts()
+     allocate( position(npt) )
+     position(1:npt) = pt_array%call_tracked_component( component, lb=1, ub=np )
+     np = npt
    else
-    np = pt_array%how_many()
-    allocate( position(np) )
-    position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+     np = pt_array%how_many()
+     allocate( position(np) )
+     position(1:np) = pt_array%call_component( component, lb=1, ub=np )
    end if
 
    if ( PRESENT( mask_in ) ) then
@@ -909,21 +910,21 @@
    logical, intent(in), optional :: tracking
    integer :: np
    real(dp), allocatable, dimension(:) :: position
+   logical :: track_flag
+
+   track_flag = .false.
 
    if ( PRESENT(tracking) ) then
-    if (tracking) then
-      np = pt_array%pick_tot_tracked_parts()
-      allocate( position(np) )
-      position(1:np) = pt_array%call_tracked_component( component, lb=1, ub=np )
-    else
-      np = pt_array%how_many()
-      allocate( position(np) )
-      position(1:np) = pt_array%call_component( component, lb=1, ub=np )
-    end if
+    track_flag = tracking
+   end if
+   if (track_flag) then
+     np = pt_array%pick_tot_tracked_parts()
+     allocate( position(np) )
+     position(1:np) = pt_array%call_tracked_component( component, lb=1, ub=np )
    else
-    np = pt_array%how_many()
-    allocate( position(np) )
-    position(1:np) = pt_array%call_component( component, lb=1, ub=np )
+     np = pt_array%how_many()
+     allocate( position(np) )
+     position(1:np) = pt_array%call_component( component, lb=1, ub=np )
    end if
 
    if ( PRESENT( mask_in ) ) then
