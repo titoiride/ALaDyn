@@ -28,7 +28,7 @@
 #define ENABLE_MPI_LONG_INT
 #endif
 
-#if defined (FORCE_OLD_MPI) && !defined (USE_MPI_MODULE)
+#if defined (FORCE_OLD_MPI)
  implicit none
  include 'mpif.h'
 #else
@@ -229,14 +229,14 @@
      xp_prev(ipe) = pen
     end do
    end if
-  
+
    !==========================================
    ! INITIALIZE THE RANDOM SEED FOR EVERY MYPE
    !==========================================
 
    call init_random_seed(mype)
    !call processor_grid_diag
-   
+
   end subroutine
 
 
@@ -632,10 +632,10 @@
    select case (dir)
    case (1)
     if (side>0) then
-     pes = yp_prev(side) 
+     pes = yp_prev(side)
      per = yp_next(side) !=============
     else
-     pes = yp_next(-side) 
+     pes = yp_next(-side)
      per = yp_prev(-side) !sends to left ns data
     end if
    case (2)
@@ -874,11 +874,11 @@
 
      call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_min, pe_min, comm, &
        error)
-    case (0) 
+    case (0)
 
      call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_sum, pe_min, comm, &
        error)
-    case (1) 
+    case (1)
 
      call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_max, pe_min, comm, &
        error)
@@ -902,11 +902,11 @@
 
      call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_min, pe_min, comm, &
        error)
-    case (0) 
+    case (0)
      !==============================
      call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_sum, pe_min, comm, &
        error)
-    case (1) 
+    case (1)
 
      call MPI_REDUCE(dt0, dt_tot, nt, mpi_integer, mpi_max, pe_min, comm, &
        error)
@@ -1107,4 +1107,3 @@
   end subroutine
   !================== side <0 receives from left   side >0 receives from right
  end module
-

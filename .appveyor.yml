@@ -20,8 +20,6 @@ environment:
 matrix:
   allow_failures:
     - platform: PGI1910
-    - platform: Cygwin64
-    - platform: MSYS64
 
 init:
   #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
