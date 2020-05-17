@@ -33,6 +33,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Profiling")
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 list(APPEND ALaDyn_Fortran_sources
   src/ALaDyn.F90
   src/cpp_lib/cpp_folder_tree.cpp
