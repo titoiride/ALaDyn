@@ -20,25 +20,25 @@
 !*****************************************************************************************************!
 
  module system_utilities
-   use mpi_var
-   implicit none
+  use mpi_var
+  implicit none
  contains
 !--------------------------
 
-   subroutine create_timestep_folder(iout)
-     integer, intent(in) :: iout
-     character(4) :: foldername
+  subroutine create_timestep_folder(iout)
+   integer, intent(in) :: iout
+   character(4) :: foldername
 
-     write (foldername, '(i4.4)') iout
-     if (pe0) call create_folder(foldername)
+   write (foldername, '(i4.4)') iout
+   if (pe0) call create_folder(foldername)
 
-   end subroutine
+  end subroutine
 
-   subroutine create_initial_folders
+  subroutine create_initial_folders
 
-     if (pe0) call create_folder('dumpRestart')
-     if (pe0) call create_folder('diagnostics')
-   end subroutine
+   if (pe0) call create_folder('dumpRestart')
+   if (pe0) call create_folder('diagnostics')
+  end subroutine
 
 !---------------------------
  end module
