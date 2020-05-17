@@ -98,6 +98,8 @@ get_filename_component(Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 if(Fortran_COMPILER_NAME MATCHES "pgf*")
   message(STATUS "ALaDyn: Using PGI Compiler")
   set(USING_PGI_COMPILER TRUE)
+  string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS_RELEASE ${CMAKE_Fortran_FLAGS_RELEASE})
+  string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG})
   string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -r8 ")
   string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -r8 -g ")
 elseif(Fortran_COMPILER_NAME MATCHES "gfor*")
@@ -199,11 +201,6 @@ string(APPEND CMAKE_CXX_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS}")
 string(APPEND CMAKE_CXX_LINK_FLAGS " ${MPI_LINK_FLAGS}")
 string(APPEND CMAKE_Fortran_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
 string(APPEND CMAKE_Fortran_LINK_FLAGS " ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
-
-if(APPLE AND USING_PGI_COMPILER)
-  string(APPEND CMAKE_CXX_LINK_FLAGS " -read_only_relocs suppress")
-  #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
 
 include_directories(
   ${OTHER_INCLUDE_DIR}
