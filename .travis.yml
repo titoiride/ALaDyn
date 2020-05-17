@@ -62,110 +62,6 @@ matrix:
         - MATRIX_EVAL="FC=/usr/bin/gfortran"
 
     - os: linux
-      compiler: clang
-      name: ubuntu - clang@3.6 - openmpi
-      addons:
-        apt:
-          update: true
-          packages:
-            - clang-3.6
-            - gfortran
-            - libopenmpi-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@3.8 - openmpi
-      addons:
-        apt:
-          update: true
-          sources:
-            - llvm-toolchain-precise-3.8
-          packages:
-            - clang-3.8
-            - gfortran
-            - libopenmpi-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@3.9 - openmpi
-      addons:
-        apt:
-          update: true
-          sources:
-            - llvm-toolchain-trusty-3.9
-          packages:
-            - clang-3.9
-            - gfortran
-            - libopenmpi-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@4.0 - openmpi
-      addons:
-        apt:
-          update: true
-          sources:
-            - llvm-toolchain-trusty-4.0
-          packages:
-            - clang-4.0
-            - gfortran
-            - libopenmpi-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@5.0 - openmpi
-      addons:
-        apt:
-          update: true
-          packages:
-            - clang-5.0
-            - gfortran
-            - libopenmpi-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@6.0 - openmpi
-      addons:
-        apt:
-          update: true
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - clang-6.0
-            - gfortran
-            - libopenmpi-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && FC=/usr/bin/gfortran"
-
-    - os: linux
       compiler: gcc
       name: ubuntu - native gcc - openmpi
       addons:
@@ -296,6 +192,25 @@ matrix:
 
     - os: linux
       compiler: gcc
+      name: ubuntu - gcc@10.0 - openmpi
+      addons:
+        apt:
+          update: true
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-10
+            - gfortran-10
+            - gfortran
+            - libopenmpi-dev
+            - libboost-all-dev
+            - libfftw3-dev
+            - libfftw3-mpi-dev
+      env:
+        - MATRIX_EVAL="CC=gcc-10 && CXX=g++-10 && FC=/usr/bin/gfortran-10"
+
+    - os: linux
+      compiler: gcc
       name: ubuntu - PGI 19.10 - mpich
       addons:
         apt:
@@ -309,125 +224,6 @@ matrix:
             - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="curl --location --referer 'http://www.pgroup.com/products/community.htm' 'https://www.pgroup.com/support/downloader.php?file=pgi-community-linux-x64' -o pgilinux-x86-64.tar.gz && tar zxvf pgilinux-x86-64.tar.gz && export TEMPORARY_FILES=/tmp && export PGI_SILENT=true && export PGI_ACCEPT_EULA=accept && export PGI_INSTALL_DIR=/opt/pgi && export PGI_INSTALL_NVIDIA=false && export PGI_INSTALL_AMD=false && export PGI_INSTALL_JAVA=false && export PGI_INSTALL_MPI=false && export PGI_MPI_GPU_SUPPORT=false && export PGI_INSTALL_MANAGED=false && export VERBOSE=false && cd install_components && ./install && export PGI_VERSION=19.10 && export PGI=/opt/pgi && export PATH=/opt/pgi/linux86-64/19.10/bin:$PATH && export MANPATH=$MANPATH:/opt/pgi/linux86-64/19.10/man && export LM_LICENSE_FILE=$LM_LICENSE_FILE:/opt/pgi/license.dat && export FC=/opt/pgi/linux86-64/19.10/bin/pgfortran && cd .."
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - native clang - mpich
-      addons:
-        apt:
-          update: true
-          packages:
-            - gfortran
-            - libmpich-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@3.6 - mpich
-      addons:
-        apt:
-          update: true
-          packages:
-            - clang-3.6
-            - gfortran
-            - libmpich-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@3.8 - mpich
-      addons:
-        apt:
-          update: true
-          sources:
-            - llvm-toolchain-precise-3.8
-          packages:
-            - clang-3.8
-            - gfortran
-            - libmpich-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@3.9 - mpich
-      addons:
-        apt:
-          update: true
-          sources:
-            - llvm-toolchain-trusty-3.9
-          packages:
-            - clang-3.9
-            - gfortran
-            - libmpich-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@4.0 - mpich
-      addons:
-        apt:
-          update: true
-          sources:
-            - llvm-toolchain-trusty-4.0
-          packages:
-            - clang-4.0
-            - gfortran
-            - libmpich-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@5.0 - mpich
-      addons:
-        apt:
-          update: true
-          packages:
-            - clang-5.0
-            - gfortran
-            - libmpich-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0 && FC=/usr/bin/gfortran"
-
-    - os: linux
-      compiler: clang
-      name: ubuntu - clang@6.0 - mpich
-      addons:
-        apt:
-          update: true
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - clang-6.0
-            - gfortran
-            - libmpich-dev
-            - libboost-all-dev
-            - libfftw3-dev
-            - libfftw3-mpi-dev
-      env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0 && FC=/usr/bin/gfortran"
 
     - os: linux
       compiler: gcc
@@ -557,6 +353,25 @@ matrix:
             - libfftw3-mpi-dev
       env:
         - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9 && FC=/usr/bin/gfortran-9"
+
+    - os: linux
+      compiler: gcc
+      name: ubuntu - gcc@10.0 - mpich
+      addons:
+        apt:
+          update: true
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-10
+            - gfortran-10
+            - gfortran
+            - libmpich-dev
+            - libboost-all-dev
+            - libfftw3-dev
+            - libfftw3-mpi-dev
+      env:
+        - MATRIX_EVAL="CC=gcc-10 && CXX=g++-10 && FC=/usr/bin/gfortran-10"
 
   #do not consider known failing builds for the whole build status
   allow_failures:
