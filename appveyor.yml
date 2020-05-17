@@ -1,5 +1,6 @@
 image: Visual Studio 2017
 clone_folder: c:\projects\aladyn
+cache: C:\Tools\vcpkg\installed\
 
 environment:
   WORKSPACE: C:\projects
@@ -95,13 +96,15 @@ install:
   # Download a FindMPI module which should be compatible with mingw-w64-x86_64-msmpi
   - ps: if($env:COMPILER -eq "msys2") { Invoke-WebRequest https://raw.githubusercontent.com/ElmerCSC/elmerfem/devel/cmake/Modules/FindMPI.cmake -OutFile c:\projects\aladyn\cmake\Modules\FindMPI.cmake }
 
+  # Install libraries with vcpkg
   - if [%COMPILER%]==[pgi] cd C:\Tools\vcpkg
   - if [%COMPILER%]==[pgi] git pull
   - if [%COMPILER%]==[pgi] bootstrap-vcpkg.bat
-  - cd %WORKSPACE%\
-  - if [%COMPILER%]==[pgi] vcpkg integrate install
-  - if [%COMPILER%]==[pgi] vcpkg install fftw3
-  - if [%COMPILER%]==[pgi] vcpkg install msmpi
+  - if [%COMPILER%]==[pgi] echo set(VCPKG_BUILD_TYPE release) >> triplets\%VCPKG_DEFAULT_TRIPLET%.cmake
+  - if [%COMPILER%]==[pgi] vcpkg upgrade --no-dry-run
+  - if [%COMPILER%]==[pgi] vcpkg install fftw3 --recurse
+  - if [%COMPILER%]==[pgi] vcpkg install msmpi --recurse
+  - if [%COMPILER%]==[pgi] IF exist buildtrees ( rmdir "buildtrees" /S /Q )
 
   #download & install libs for cygwin
   - cd %WORKSPACE%
