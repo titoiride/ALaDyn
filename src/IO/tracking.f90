@@ -321,7 +321,7 @@ module tracking
 
   ! Shifting tracked particles momenta half timestep backward
   ! to align them with field and positions (t^n)
-  if ( .not. spec_in%empty ) then
+  if ( .not. spec_in%empty .and. a_on_particles(pid) ) then
    select case( spec_in%pick_dimensions() )
    case(1)
     track_aux(1:npt, pxcomp) = 0.5*(track_aux(1:npt, pxcomp) + &
@@ -411,9 +411,7 @@ module tracking
     if ( MOD(iter, every_track(ic) ) == 0 ) then
      call tracking_write_output(spec_in(ic), spec_aux_in, timenow, ic)
      tracking_written = .true.
-     if ( spec_in(ic)%allocated_data_out ) then
-      call spec_in(ic)%deallocate_data_output()
-     end if
+     call spec_in(ic)%deallocate_data_output()
     end if
    end if
   end do
@@ -453,7 +451,7 @@ module tracking
   ! Do not perform is it is not the tracking output time
   if ( .not. ANY(MOD(SPREAD(iter, 1, nsp), every_track(1:nsp) ) == 0) ) return
 
-  if( .not. ANY(a_on_particles) ) return
+  if( .not. ANY(a_on_particles(1:nsp)) ) return
 
    allocate( interpol_field, MOLD=field_in(:, :, :, 1) )
   interpol_field(:, :, :) = zero_dp
@@ -479,7 +477,8 @@ module tracking
   end select
 
   do ic = 1, nsp
-   if (spec_in(ic)%istracked()) then
+   if (spec_in(ic)%istracked() .and. a_on_particles(ic) .and. &
+        MOD(iter, every_track(ic)) == 0) then
 
     np = spec_in(ic)%how_many()
     call array_realloc_1d( track_mask, np )

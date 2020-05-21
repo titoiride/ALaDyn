@@ -358,6 +358,10 @@ module particles_aux_def
    this%allocated_old_pz = .false.
    deallocate( this%old_pz )
   end if
+  if ( this%allocated_data_out ) then
+   this%allocated_data_out = .false.
+   deallocate( this%data_output )
+  end if
 
 
  end subroutine

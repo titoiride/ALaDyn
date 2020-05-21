@@ -203,6 +203,10 @@ module particles_def
    this%allocated_index = .false.
    deallocate( this%part_index )
   end if
+  if ( this%allocated_data_out ) then
+   this%allocated_data_out = .false.
+   deallocate( this%data_output )
+  end if
 
  end subroutine
  !========================================

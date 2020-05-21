@@ -35,6 +35,8 @@
   contains
 
   subroutine a_on_tracking_particles( field, spec_in, spec_aux_in, np, order, polarization, mask_in )
+   !! Subroutine that interpolates vector potential A on the tracking particles.
+
    real (dp), intent (in) :: field(:, :, :)
    type (species_new), intent (inout) :: spec_in
    type (species_aux), intent (in) :: spec_aux_in
