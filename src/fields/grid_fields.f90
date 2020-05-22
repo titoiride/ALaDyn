@@ -1729,11 +1729,14 @@
     ub = np
     lb1 = i1 + 1
     ub1 = np - 2
-    allocate( thetam(lb:ub), thetap(lb:ub), source = one_dp )
-    allocate( flux(lb:ub), fluxlf(lb:ub), source = ww0_in(lb:ub, iic) )
+    allocate( thetam(lb:ub), source = one_dp )
+    allocate( thetap(lb:ub), source = one_dp )
+    allocate( flux(lb:ub), source = ww0_in(lb:ub, iic) )
+    allocate( fluxlf(lb:ub), source = ww0_in(lb:ub, iic) )
     allocate( uplus(lb1:ub1), uminus(lb1:ub1), ulfp(lb1:ub1), ulfm(lb1:ub1), &
      flux_tmp(lb:ub), var_in_tmp(lb:ub, iic:nc) )
-    allocate( dens_maskp(lb1:ub1), dens_maskm(lb1:ub1), source=.false.)
+    allocate( dens_maskp(lb1:ub1), source=.false.)
+    allocate( dens_maskm(lb1:ub1), source=.false.)
     !===================================
     ! Max on the velocity in the surrounding of the point.
     ! For a more robust (diffusive) LxF, use max on all the domain

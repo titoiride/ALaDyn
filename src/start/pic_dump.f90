@@ -32,8 +32,8 @@
   real (dp), allocatable, private :: send_buff(:), recv_buff(:)
 
   interface restart
-   module procedure :: restart_new
-   module procedure :: restart_old
+   module procedure restart_new
+   module procedure restart_old
   end interface
   contains
 

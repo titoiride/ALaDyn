@@ -36,35 +36,35 @@
 
   interface traffic_size_eval
   !! Computes the number of particles that must be either sent or received
-   module procedure :: traffic_size_eval_old
-   module procedure :: traffic_size_eval_new
+   module procedure traffic_size_eval_old
+   module procedure traffic_size_eval_new
   end interface
 
   interface part_prl_wexchange
   !! Exchanges particles right after the moving window has been advanced.
   !! Only the principal species object is exchanged while the auxiliary species
   !! object is left untouched.
-    module procedure :: part_prl_wexchange_old
-    module procedure :: part_prl_wexchange_new
+    module procedure part_prl_wexchange_old
+    module procedure part_prl_wexchange_new
   end interface
 
   interface part_prl_exchange
   !! Exchanges particles between two adjacent tasks.
-    module procedure :: part_prl_exchange_old
-    module procedure :: part_prl_exchange_new
+    module procedure part_prl_exchange_old
+    module procedure part_prl_exchange_new
   end interface
 
   interface cell_part_dist
   !! Coordinates the distribution of particles between tasks.
-    module procedure :: cell_part_dist_new
-    module procedure :: cell_part_dist_old
+    module procedure cell_part_dist_new
+    module procedure cell_part_dist_old
   end interface
 
   interface reset_all_part_dist
   !! Only active in the serial case, it counts and throws away particles
   !! that left the computational box
-    module procedure :: reset_all_part_dist_new
-    module procedure :: reset_all_part_dist_old
+    module procedure reset_all_part_dist_new
+    module procedure reset_all_part_dist_old
   end interface
 
  contains

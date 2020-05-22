@@ -53,8 +53,8 @@
 
 
   interface part_pdata_out
-   module procedure :: part_pdata_out_new
-   module procedure :: part_pdata_out_old
+   module procedure part_pdata_out_new
+   module procedure part_pdata_out_old
   end interface
  contains
 

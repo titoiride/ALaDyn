@@ -33,18 +33,18 @@
   
   implicit none
   interface set_lpf_acc
-   module procedure :: set_lpf_acc_new
-   module procedure :: set_lpf_acc_old
+   module procedure set_lpf_acc_new
+   module procedure set_lpf_acc_old
   end interface
 
   interface field_charge_multiply
-   module procedure :: field_charge_multiply_new
-   module procedure :: field_charge_multiply_old
+   module procedure field_charge_multiply_new
+   module procedure field_charge_multiply_old
   end interface
 
   interface curr_accumulate
-   module procedure :: curr_accumulate_new
-   module procedure :: curr_accumulate_old
+   module procedure curr_accumulate_new
+   module procedure curr_accumulate_old
   end interface
   !===============================
   ! MOVING WINDOW SECTION

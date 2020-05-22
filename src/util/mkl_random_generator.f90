@@ -33,8 +33,8 @@
   integer, private :: stat, errstat
 
   interface gasdev
-   module procedure :: gasdev_array 
-   module procedure :: gasdev_real 
+   module procedure gasdev_array 
+   module procedure gasdev_real 
   end interface
   contains
 

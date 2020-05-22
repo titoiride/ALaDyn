@@ -33,8 +33,8 @@
   implicit none
   !===============================
   interface env_lpf2_evolve
-   module procedure :: env_lpf2_evolve_new
-   module procedure :: env_lpf2_evolve_old
+   module procedure env_lpf2_evolve_new
+   module procedure env_lpf2_evolve_old
   end interface
  contains
   !============================

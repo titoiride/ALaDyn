@@ -31,63 +31,63 @@
 
   implicit none
   interface set_part1d_acc
-   module procedure :: set_part1d_acc_new
-   module procedure :: set_part1d_acc_old
+   module procedure set_part1d_acc_new
+   module procedure set_part1d_acc_old
   end interface
 
   interface set_part2d_hcell_acc
-   module procedure :: set_part2d_hcell_acc_new
-   module procedure :: set_part2d_hcell_acc_old
+   module procedure set_part2d_hcell_acc_new
+   module procedure set_part2d_hcell_acc_old
   end interface
 
   interface set_part3d_hcell_acc
-   module procedure :: set_part3d_hcell_acc_new
-   module procedure :: set_part3d_hcell_acc_old
+   module procedure set_part3d_hcell_acc_new
+   module procedure set_part3d_hcell_acc_old
   end interface
 
   interface set_ion_efield
-   module procedure :: set_ion_efield_new
-   module procedure :: set_ion_efield_old
+   module procedure set_ion_efield_new
+   module procedure set_ion_efield_old
   end interface
 
   interface set_env_acc
-   module procedure :: set_env_acc_new
-   module procedure :: set_env_acc_old
+   module procedure set_env_acc_new
+   module procedure set_env_acc_old
   end interface
 
   interface set_ion_env_field
-   module procedure :: set_ion_env_field_new
-   module procedure :: set_ion_env_field_old
+   module procedure set_ion_env_field_new
+   module procedure set_ion_env_field_old
   end interface
 
   interface set_env_grad_interp
-   module procedure :: set_env_grad_interp_new
-   module procedure :: set_env_grad_interp_old
+   module procedure set_env_grad_interp_new
+   module procedure set_env_grad_interp_old
   end interface
 
   interface set_env_density
-   module procedure :: set_env_density_new
-   module procedure :: set_env_density_old
+   module procedure set_env_density_new
+   module procedure set_env_density_old
   end interface
 
   interface esirkepov_2d_curr
-   module procedure :: esirkepov_2d_curr_new
-   module procedure :: esirkepov_2d_curr_old
+   module procedure esirkepov_2d_curr_new
+   module procedure esirkepov_2d_curr_old
   end interface
 
   interface esirkepov_3d_curr
-   module procedure :: esirkepov_3d_curr_new
-   module procedure :: esirkepov_3d_curr_old
+   module procedure esirkepov_3d_curr_new
+   module procedure esirkepov_3d_curr_old
   end interface
 
   interface ncdef_2d_curr
-   module procedure :: ncdef_2d_curr_new
-   module procedure :: ncdef_2d_curr_old
+   module procedure ncdef_2d_curr_new
+   module procedure ncdef_2d_curr_old
   end interface
 
   interface ncdef_3d_curr
-   module procedure :: ncdef_3d_curr_new
-   module procedure :: ncdef_3d_curr_old
+   module procedure ncdef_3d_curr_new
+   module procedure ncdef_3d_curr_old
   end interface
 
   type(interp_coeff), private, allocatable, save :: interp

@@ -42,16 +42,16 @@
    map3d_part_sind
   
   interface map2dx_part_sind
-   module procedure :: map2dx_part_sind_old
-   module procedure :: map2dx_part_sind_new
+   module procedure map2dx_part_sind_old
+   module procedure map2dx_part_sind_new
   end interface
   interface map2dy_part_sind
-   module procedure :: map2dy_part_sind_old
-   module procedure :: map2dy_part_sind_new
+   module procedure map2dy_part_sind_old
+   module procedure map2dy_part_sind_new
   end interface
   interface map2dz_part_sind
-   module procedure :: map2dz_part_sind_old
-   module procedure :: map2dz_part_sind_new
+   module procedure map2dz_part_sind_old
+   module procedure map2dz_part_sind_new
   end interface
 
  contains

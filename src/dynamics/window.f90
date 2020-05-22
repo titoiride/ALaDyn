@@ -37,23 +37,23 @@
   !=============================
 
   interface add_particles
-   module procedure :: add_particles_new
-   module procedure :: add_particles_old
+   module procedure add_particles_new
+   module procedure add_particles_old
   end interface
 
   interface particles_inject
-   module procedure :: particles_inject_new
-   module procedure :: particles_inject_old
+   module procedure particles_inject_new
+   module procedure particles_inject_old
   end interface
 
   interface lp_window_xshift
-   module procedure :: lp_window_xshift_new
-   module procedure :: lp_window_xshift_old
+   module procedure lp_window_xshift_new
+   module procedure lp_window_xshift_old
   end interface
 
   interface comoving_coordinate
-   module procedure :: comoving_coordinate_old
-   module procedure :: comoving_coordinate_new
+   module procedure comoving_coordinate_old
+   module procedure comoving_coordinate_new
   end interface
  contains
 

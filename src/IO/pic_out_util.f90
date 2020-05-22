@@ -31,8 +31,8 @@
   !=====Contains functions to prepare selected output variables=======
 
   interface prl_den_energy_interp
-   module procedure :: prl_den_energy_interp_new
-   module procedure :: prl_den_energy_interp_old
+   module procedure prl_den_energy_interp_new
+   module procedure prl_den_energy_interp_old
   end interface
    
  contains

@@ -39,14 +39,14 @@
   implicit none
 
   interface p_alloc
-   module procedure :: old_p_alloc
-   module procedure :: new_p_alloc
+   module procedure old_p_alloc
+   module procedure new_p_alloc
   end interface
 
   interface array_realloc_1d
-   module procedure :: array_realloc_1d_dp
-   module procedure :: array_realloc_1d_sp
-   module procedure :: array_realloc_1d_logical
+   module procedure array_realloc_1d_dp
+   module procedure array_realloc_1d_sp
+   module procedure array_realloc_1d_logical
   end interface
 
  contains

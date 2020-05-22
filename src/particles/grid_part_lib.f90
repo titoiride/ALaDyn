@@ -39,54 +39,54 @@
   integer, parameter, private :: max_h_order = 2
 
   interface qqh_1d_spline
-   module procedure :: qqh_1d_spline_real
-   module procedure :: qqh_1d_spline_vector
+   module procedure qqh_1d_spline_real
+   module procedure qqh_1d_spline_vector
   end interface
   
   interface qden_1d_wgh
-   module procedure :: qden_1d_wgh_real
-   module procedure :: qden_1d_wgh_vector
+   module procedure qden_1d_wgh_real
+   module procedure qden_1d_wgh_vector
   end interface
   
   interface qlh_2d_spline
-   module procedure :: qlh_2d_spline_real
-   module procedure :: qlh_2d_spline_vector
+   module procedure qlh_2d_spline_real
+   module procedure qlh_2d_spline_vector
   end interface
     
   interface qqh_2d_spline
-   module procedure :: qqh_2d_spline_real
-   module procedure :: qqh_2d_spline_vector
+   module procedure qqh_2d_spline_real
+   module procedure qqh_2d_spline_vector
   end interface
     
     
   interface qden_2d_wgh
-   module procedure :: qden_2d_wgh_real
-   module procedure :: qden_2d_wgh_vector
+   module procedure qden_2d_wgh_real
+   module procedure qden_2d_wgh_vector
   end interface
   
   interface cden_2d_wgh
-   module procedure :: cden_2d_wgh_real
-   module procedure :: cden_2d_wgh_vector
+   module procedure cden_2d_wgh_real
+   module procedure cden_2d_wgh_vector
   end interface
 
   interface qlh_3d_spline
-   module procedure :: qlh_3d_spline_real
-   module procedure :: qlh_3d_spline_vector
+   module procedure qlh_3d_spline_real
+   module procedure qlh_3d_spline_vector
   end interface
 
   interface qqh_3d_spline
-   module procedure :: qqh_3d_spline_real
-   module procedure :: qqh_3d_spline_vector
+   module procedure qqh_3d_spline_real
+   module procedure qqh_3d_spline_vector
   end interface
 
   interface qden_3d_wgh
-   module procedure :: qden_3d_wgh_real
-   module procedure :: qden_3d_wgh_vector
+   module procedure qden_3d_wgh_real
+   module procedure qden_3d_wgh_vector
   end interface
 
   interface cden_3d_wgh
-   module procedure :: cden_3d_wgh_real
-   module procedure :: cden_3d_wgh_vector
+   module procedure cden_3d_wgh_real
+   module procedure cden_3d_wgh_vector
   end interface
 
   interface set_local_positions

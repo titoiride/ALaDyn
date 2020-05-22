@@ -32,18 +32,18 @@
   real(dp), dimension(:, :), allocatable, private, save :: gpu_xx
 
   interface set_grid_charge
-   module procedure :: set_grid_charge_new
-   module procedure :: set_grid_charge_old
+   module procedure set_grid_charge_new
+   module procedure set_grid_charge_old
   end interface
 
   interface set_grid_env_den_energy
-   module procedure :: set_grid_env_den_energy_new
-   module procedure :: set_grid_env_den_energy_old
+   module procedure set_grid_env_den_energy_new
+   module procedure set_grid_env_den_energy_old
   end interface
 
   interface set_grid_den_energy
-   module procedure :: set_grid_den_energy_new
-   module procedure :: set_grid_den_energy_old
+   module procedure set_grid_den_energy_new
+   module procedure set_grid_den_energy_old
   end interface
  contains
 

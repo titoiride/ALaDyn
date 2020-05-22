@@ -47,13 +47,13 @@
   real (dp), allocatable, dimension(:, :), private :: diag_part_aux
 
   interface energy_momenta
-   module procedure :: energy_momenta_new
-   module procedure :: energy_momenta_old
+   module procedure energy_momenta_new
+   module procedure energy_momenta_old
   end interface
 
   interface Envar
-   module procedure :: Envar_new
-   module procedure :: Envar_old
+   module procedure Envar_new
+   module procedure Envar_old
   end interface
  contains
 

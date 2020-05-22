@@ -91,23 +91,23 @@
    end type
 
   interface zeroth_order
-   module procedure :: zeroth_order_real
-   module procedure :: zeroth_order_vector
+   module procedure zeroth_order_real
+   module procedure zeroth_order_vector
   end interface
 
   interface first_order
-   module procedure :: first_order_real
-   module procedure :: first_order_vector
+   module procedure first_order_real
+   module procedure first_order_vector
   end interface
 
   interface second_order
-   module procedure :: second_order_real
-   module procedure :: second_order_vector
+   module procedure second_order_real
+   module procedure second_order_vector
   end interface
 
   interface third_order
-   module procedure :: third_order_real
-   module procedure :: third_order_vector
+   module procedure third_order_real
+   module procedure third_order_vector
   end interface
 
   contains

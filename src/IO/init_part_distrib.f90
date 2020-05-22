@@ -36,43 +36,43 @@
   integer, allocatable :: loc_imax(:, :), loc_jmax(:, :), loc_kmax(:, :)
 
   interface pspecies_distribute
-   module procedure :: old_pspecies_distribute
-   module procedure :: new_pspecies_distribute
+   module procedure old_pspecies_distribute
+   module procedure new_pspecies_distribute
   end interface
 
   interface multi_layer_gas_target
-   module procedure :: multi_layer_gas_target_new
-   module procedure :: multi_layer_gas_target_old
+   module procedure multi_layer_gas_target_new
+   module procedure multi_layer_gas_target_old
   end interface
 
   interface preplasma_multisp
-   module procedure :: preplasma_multisp_new
-   module procedure :: preplasma_multisp_old
+   module procedure preplasma_multisp_new
+   module procedure preplasma_multisp_old
   end interface
 
   interface multi_layer_twosp_target
-   module procedure :: multi_layer_twosp_target_new
-   module procedure :: multi_layer_twosp_target_old
+   module procedure multi_layer_twosp_target_new
+   module procedure multi_layer_twosp_target_old
   end interface
 
   interface multi_layer_threesp_target
-   module procedure :: multi_layer_threesp_target_new
-   module procedure :: multi_layer_threesp_target_old
+   module procedure multi_layer_threesp_target_new
+   module procedure multi_layer_threesp_target_old
   end interface
 
   interface one_layer_nano_wires
-   module procedure :: one_layer_nano_wires_new
-   module procedure :: one_layer_nano_wires_old
+   module procedure one_layer_nano_wires_new
+   module procedure one_layer_nano_wires_old
   end interface
 
   interface one_layer_nano_tubes
-   module procedure :: one_layer_nano_tubes_new
-   module procedure :: one_layer_nano_tubes_old
+   module procedure one_layer_nano_tubes_new
+   module procedure one_layer_nano_tubes_old
   end interface
 
   interface part_distribute
-   module procedure :: part_distribute_new
-   module procedure :: part_distribute_old
+   module procedure part_distribute_new
+   module procedure part_distribute_old
   end interface
  contains
 

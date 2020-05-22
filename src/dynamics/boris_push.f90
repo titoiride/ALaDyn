@@ -33,33 +33,33 @@
   integer, parameter :: BORIS = 2
 
   interface boris_pusher
-   module procedure :: boris_pusher_new
-   module procedure :: boris_pusher_old
+   module procedure boris_pusher_new
+   module procedure boris_pusher_old
   end interface
 
   interface higuera_pusher
-   module procedure :: higuera_pusher_new
-   module procedure :: higuera_pusher_old
+   module procedure higuera_pusher_new
+   module procedure higuera_pusher_old
   end interface
 
   interface init_lpf_momenta
-   module procedure :: init_lpf_momenta_new
-   module procedure :: init_lpf_momenta_old
+   module procedure init_lpf_momenta_new
+   module procedure init_lpf_momenta_old
   end interface
 
   interface lpf_momenta_and_positions
-   module procedure :: lpf_momenta_and_positions_new
-   module procedure :: lpf_momenta_and_positions_old
+   module procedure lpf_momenta_and_positions_new
+   module procedure lpf_momenta_and_positions_old
   end interface
 
   interface lpf_env_momenta
-   module procedure :: lpf_env_momenta_new
-   module procedure :: lpf_env_momenta_old
+   module procedure lpf_env_momenta_new
+   module procedure lpf_env_momenta_old
   end interface
 
   interface lpf_env_positions
-   module procedure :: lpf_env_positions_new
-   module procedure :: lpf_env_positions_old
+   module procedure lpf_env_positions_new
+   module procedure lpf_env_positions_old
   end interface
  contains
 

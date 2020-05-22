@@ -302,13 +302,13 @@ module base_species
   end interface
 
   interface assign
-   module procedure :: assign_real_realdp
-   module procedure :: assign_real_realsp
-   module procedure :: assign_realsp_realsp
-   module procedure :: assign_real_integer
-   module procedure :: assign_integer_realdp
-   module procedure :: assign_integer_realsp
-   module procedure :: assign_integer_integer
+   module procedure assign_real_realdp
+   module procedure assign_real_realsp
+   module procedure assign_realsp_realsp
+   module procedure assign_real_integer
+   module procedure assign_integer_realdp
+   module procedure assign_integer_realsp
+   module procedure assign_integer_integer
   end interface
   contains
   

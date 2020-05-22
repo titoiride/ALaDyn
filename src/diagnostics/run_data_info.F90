@@ -35,8 +35,8 @@
   implicit none
 
   interface Max_pmemory_check
-   module procedure :: Max_pmemory_check_new
-   module procedure :: Max_pmemory_check_old
+   module procedure Max_pmemory_check_new
+   module procedure Max_pmemory_check_old
   end interface
 
  contains
