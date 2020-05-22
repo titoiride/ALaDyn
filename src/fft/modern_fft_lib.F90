@@ -497,7 +497,7 @@
         i2 = 2*ix
         i1 = 2*ix - 1
         w(i1, iy, iz) = sc*real(w1_cplx(ix))
-        w(i2, iy, iz) = sc*imag(w1_cplx(ix))
+        w(i2, iy, iz) = sc*aimag(w1_cplx(ix))
        end do
       end do
      end do
@@ -530,7 +530,7 @@
         j2 = 2*iy
         j1 = 2*iy - 1
         cw(i1, j1) = sc*real(w2_cplx(iy))
-        cw(i1, j2) = sc*imag(w2_cplx(iy))
+        cw(i1, j2) = sc*aimag(w2_cplx(iy))
        end do
        w2_re(1:n2) = w(i2, 1:n2, iz)
        call fftw_execute_dft_r2c(plan2, w2_re, w2_cplx)
