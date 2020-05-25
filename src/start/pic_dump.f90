@@ -37,8 +37,69 @@
   end interface
   contains
 
-  subroutine dump_data(it_loc, tloc, spec_in)
+  subroutine particles_dump_new( spec_in, spec_aux_in, lenw, max_npt_size_in )
+   type(species_new), intent(in), dimension(:) :: spec_in
+   type(species_aux), intent(in) :: spec_aux_in
+   integer, intent(inout), dimension(:) :: lenw
+   integer, intent(inout) :: max_npt_size_in
+   integer :: size_spec, size_spec_aux, tot, ic
+   real(dp), allocatable, dimension(:) :: temp_buff 
+
+   lenw(:) = 0
+   if(max_npt_size_in <= 0) return
+   size_spec = spec_in(ic)%total_size()
+   size_spec_aux = spec_aux_in%total_size()
+   do ic = 1, nsp
+    lenw(1:npe) = lenw(1:npe) + size_spec + size_spec_aux
+   end do
+   lenw(1:npe) = lenw(1:npe)*ip_loc(1:npe)
+   max_npt_size_in = maxval(lenw(1:npe))
+   kk = 0
+   call array_realloc_1d( send_buff, lenw(mype + 1) )
+   do ic = 1, nsp
+    np = spec_in(ic)%how_many()
+    if ( .not. spec_in(ic)%empty ) then
+     tot = np*spec_in(ic)%total_size()
+     call spec_in(ic)%flatten_into(temp_buff)
+     send_buff( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
+     kk = kk + tot
+     tot = np*spec_aux_in%total_size()
+     call spec_aux_in%flatten_into(temp_buff)
+     send_buff( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
+     kk = kk + tot
+    end if
+   end do
+
+  end subroutine
+
+  subroutine particles_dump_old( spec_in, lenw, max_npt_size_in )
+   type(species_new), intent(in), dimension(:) :: spec_in
+   integer, intent(inout), dimension(:) :: lenw
+   integer, intent(inout) :: max_npt_size_in
+   integer :: ic
+
+   if (max_npt_size <= 0) return
+   lenw(1:npe) = ndv*ip_loc(1:npe)
+   max_npt_size = maxval(lenw(1:npe))
+   kk = 0
+   call array_realloc_1d( send_buff, lenw(mype + 1) )
+   do ic = 1, nsp
+    np = loc_npart(imody, imodz, imodx, ic)
+    if (np>0) then
+     do j = 1, ndv
+      do i = 1, np
+       kk = kk + 1
+       send_buff(kk) = spec_in(ic)%part(i, j)
+      end do
+     end do
+    end if
+   end do
+
+  end subroutine
+
+  subroutine dump_data(it_loc, tloc, spec_in, spec_aux_in)
    type(species), dimension(:), intent(in) :: spec_in
+   type(species), dimension(:), intent(in) :: spec_aux_in
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
    character (9) :: fname = '         '
@@ -47,24 +108,19 @@
    character (9) :: fname_env = '         '
    character (9) :: fname_fl = '         '
    character (9) :: fname_part = '         '
-   character (9) :: fname_bunchpart = '         '
-   character (9) :: fname_bunch0 = '        '
-   character (9) :: fname_bunch1 = '        '
    !=== BE CAREFUL: FILE NAMES HAVE BEEN INITIALIZED TO ONLY ALLOW A MAXIMUM
    ! 99 CORES ALONG Z. IF MORE ARE NEEDED, IT IS NECESSARY TO CHANGE FROM
    ! CHARACTER(11) TO CHARACTER(12) (OR MORE) ===
-   character (11) :: fnamel_part = '           '
-   character (11) :: fnamel_bunchpart = '           '
-   character (11) :: fnamel_bunch0 = '           '
-   character (11) :: fnamel_bunch1 = '           '
-   character (11) :: fnamel_ebf = '           '
-   character (11) :: fnamel_env = '           '
-   character (11) :: fnamel_fl = '           '
+   character (11) :: part_file = '           '
+   character (27) :: fnamel_part = '                           '
+   character (11) :: ebf_file = '           '
+   character (27) :: fnamel_ebf = '                           '
+   character (11) :: env_file = '           '
+   character (27) :: fnamel_env = '                           '
+   character (11) :: fl_file = '           '
+   character (27) :: fnamel_fl = '                           '
+   character (27) :: fnamel_yz = '                           '
    character (11) :: foldername = '           '
-   character (25) :: fname_out = '                         '
-   character (27) :: fnamel_out = '                           '
-
-
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size
    integer :: np, ic, lun, i, j, k, kk, ipe, lenbuff
@@ -84,9 +140,6 @@
    write (fname_env, '(a9)') 'ENVfields'
    write (fname_fl, '(a9)') 'FL-fields'
    write (fname_part, '(a9)') 'Particles'
-   write (fname_bunchpart, '(a9)') 'BunchPart'
-   write (fname_bunch0, '(a9)') 'Bunch-EB0'
-   write (fname_bunch1, '(a9)') 'Bunch-EB1'
    write (foldername, '(a11)') 'dumpRestart'
    !================field array sizes
    nxf_loc = size(ebf, 1)
@@ -94,6 +147,17 @@
    nzf_loc = size(ebf, 3)
    ebf_cp = size(ebf, 4)
 
+   !======== Write files name ===========
+   write (part_file, '(a9,i2.2)') fname_part, imodz
+   fnamel_part = foldername //'/' // part_file // '.bin' 
+   write (ebf_file, '(a9,i2.2)') fname_ebf, imodz
+   fnamel_ebf = foldername //'/' // ebf_file // '.bin'
+   write (env_file, '(a9,i2.2)') fname_env, imodz
+   fnamel_env = foldername //'/' // env_file // '.bin'
+   write (fl_file, '(a9,i2.2)') fname_fl, imodz
+   fnamel_fl = foldername //'/' // fl_file // '.bin'
+   fnamel_yz = foldername //'/' // fname_yz // '.bin'
+   !======== End write files name ======
    loc_grid_size(mype+1) = nxf_loc*nyf_loc*nzf_loc !allowing for different grid sizes among mpi_tasks
    loc2d_grid_size(mype+1) = nyf_loc*nzf_loc
    lenbuff = ebf_cp
@@ -180,7 +244,7 @@
    !==============
    lun = 10
    if (pe0) then
-    open (lun, file='dumpRestart/'//fname//'.bin', form='unformatted', &
+    open (lun, file=foldername //'/'//fname//'.bin', form='unformatted', &
       status='unknown')
     write (lun) rdata(1:10)
     write (lun) ndata(1:10)
@@ -210,36 +274,21 @@
    allocate (send_buff(lenbuff)) !to be used for all mpi_write()
    !=====================
    !=== PARTICLES DUMP SECTION ====
-   if(max_npt_size >0)then
-    write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
-    lenw(1:npe) = ndv*ip_loc(1:npe)
-    max_npt_size = maxval(lenw(1:npe))
-    kk = 0
-    do ic = 1, nsp
-     np = loc_npart(imody, imodz, imodx, ic)
-     if (np>0) then
-      do j = 1, ndv
-       do i = 1, np
-        kk = kk + 1
-        send_buff(kk) = spec_in(ic)%part(i, j)
-       end do
-      end do
-     end if
-    end do
-    disp_col = 0
-    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype) &
-      )
+
+   call particles_dump( spec_in, spec_aux_in, lenw, max_npt_size )
+
+   if ( max_npt_size > 0 ) then
+    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype))
     disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
-      fnamel_out)
+    if ( disp_col > 0 ) then
+     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
+     fnamel_part)
+    end if
     if (pe0) write (6, *) 'Particles data dumped'
    end if
    !=== END PARTICLES DUMP SECTION ===
 
    !=== ELECTROMAGNETIC FIELD DUMP SECTION ===
-   write (fnamel_ebf, '(a9,i2.2)') 'EB-fields', imodz
-   fnamel_out = 'dumpRestart/' // fnamel_ebf // '.bin'
    lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
    kk = 0
    do ic = 1, ebf_cp
@@ -257,14 +306,12 @@
    disp_col = imody*disp
    disp_col = 8*disp_col
    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
-     fnamel_out)
+   fnamel_ebf)
    if (pe0) write (6, *) 'Electromagnetic fields data dumped'
    !=== END ELECTROMAGNETIC FIELD DUMP SECTION ===
 
    !=== ENVELOPE FIELD DUMP SECTION ===
    if (envelope) then
-    write (fnamel_env, '(a9,i2.2)') 'ENVfields', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_env // '.bin'
     lenw(1:npe) = (env_cp+env1_cp)*loc_grid_size(1:npe)
     kk = 0
     do ic = 1, env_cp
@@ -293,15 +340,13 @@
     disp_col = imody*disp
     disp_col = 8*disp_col
     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
-      fnamel_out)
+    fnamel_env)
     if (pe0) write (6, *) 'Envelope field data dumped'
    end if
    !=== END ENVELOPE FIELD DUMP SECTION ===
 
    !=== FLUID DUMP SECTION ===
    if (hybrid) then
-    write (fnamel_fl, '(a9,i2.2)') 'FL-fields', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_fl // '.bin'
     lenw(1:npe) = 2*fl_cp*loc_grid_size(1:npe) + loc2d_grid_size(1:npe)
     kk = 0
     do k = 1, nzf_loc
@@ -334,14 +379,13 @@
     disp_col = imody*disp
     disp_col = 8*disp_col
     call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
-      fnamel_out)
+    fnamel_fl)
     if (pe0) write (6, *) 'Fluid density and momentum data dumped'
    end if
 
    !=== END FLUID DUMP SECTION ===
-   !============== write (y,z,wghyz initial part distribution
+   !============== write (y,z,wghyz) initial part distribution
    if (part) then
-    fname_out = 'dumpRestart/' // fname_yz // '.bin'
     kk = 0
     do ic = 1, nsp
      if (loc_npty(ic)>0) then
@@ -376,7 +420,7 @@
     disp = 0
     if (mype>0) disp = sum(lenw(1:mype))
     disp = 8*disp
-    call mpi_write_dp(send_buff, lenw(mype+1), disp, 25, fname_out)
+    call mpi_write_dp(send_buff, lenw(mype+1), disp, 25, fnamel_yz)
     if (pe0) write (6, *) &
       'Incoming plasma target transverse distribution data dumped'
    end if
@@ -399,13 +443,7 @@
    character (9) :: fname_env = '         '
    character (9) :: fname_fl = '         '
    character (9) :: fname_part = '         '
-   character (9) :: fname_bunch0 = '        '
-   character (9) :: fname_bunch1 = '        '
-   character (9) :: fname_bunchpart = '         '
    character (11) :: fnamel_part = '           '
-   character (11) :: fnamel_bunch0 = '           '
-   character (11) :: fnamel_bunch1 = '           '
-   character (11) :: fnamel_bunchpart = '           '
    character (11) :: fnamel_ebf = '           '
    character (11) :: fnamel_env = '           '
    character (11) :: fnamel_fl = '           '
@@ -431,9 +469,6 @@
    write (fname_env, '(a9)') 'ENVfields'
    write (fname_fl, '(a9)') 'FL-fields'
    write (fname_part, '(a9)') 'Particles'
-   write (fname_bunch0, '(a9)') 'Bunch-EB0'
-   write (fname_bunch1, '(a9)') 'Bunch-EB1'
-   write (fname_bunchpart, '(a9)') 'BunchPart'
    write (foldername, '(a11)') 'dumpRestart'
    write (fname_yz, '(a9)') 'Dist-wgyz'
    !==============       Already defined data
@@ -836,13 +871,7 @@
    character (9) :: fname_env = '         '
    character (9) :: fname_fl = '         '
    character (9) :: fname_part = '         '
-   character (9) :: fname_bunch0 = '        '
-   character (9) :: fname_bunch1 = '        '
-   character (9) :: fname_bunchpart = '         '
    character (11) :: fnamel_part = '           '
-   character (11) :: fnamel_bunch0 = '           '
-   character (11) :: fnamel_bunch1 = '           '
-   character (11) :: fnamel_bunchpart = '           '
    character (11) :: fnamel_ebf = '           '
    character (11) :: fnamel_env = '           '
    character (11) :: fnamel_fl = '           '
@@ -868,9 +897,6 @@
    write (fname_env, '(a9)') 'ENVfields'
    write (fname_fl, '(a9)') 'FL-fields'
    write (fname_part, '(a9)') 'Particles'
-   write (fname_bunch0, '(a9)') 'Bunch-EB0'
-   write (fname_bunch1, '(a9)') 'Bunch-EB1'
-   write (fname_bunchpart, '(a9)') 'BunchPart'
    write (foldername, '(a11)') 'dumpRestart'
    write (fname_yz, '(a9)') 'Dist-wgyz'
    !==============       Already defined data
