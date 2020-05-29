@@ -554,10 +554,9 @@ module base_species
 
    np = this%how_many()
 
-   if (.not. this%allocated_data_out) then
-    allocate( this%data_output(np) )
-    this%allocated_data_out = .true.
-   end if
+   call realloc_temp_1d( this%data_output, np )
+   this%allocated_data_out = .true.
+
    end subroutine
 
   subroutine deallocate_data_output( this )
@@ -964,6 +963,9 @@ module base_species
    if (other%allocated_index) then
     call assign(this%part_index, other%part_index(1:tot), 1, tot)
    end if
+   if (other%allocated_data_out) then
+    call assign(this%data_output, other%data_output(1:tot), 1, tot)
+   end if
   end subroutine
 
 !DIR$ ATTRIBUTES INLINE:: copy_boundaries
@@ -1005,6 +1007,9 @@ module base_species
    end if
    if (other%allocated_index) then
     call assign(this%part_index, other%part_index(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_data_out) then
+    call assign(this%data_output, other%data_output(lower_bound:upper_bound), 1, tot)
    end if
   end subroutine
   
@@ -1074,6 +1079,10 @@ module base_species
     flat_array( lb:(lb + array_sz - 1) ) = this%part_index(1:array_sz)
     lb = lb + array_sz
    end if
+   if( this%allocated_data_out ) then
+    flat_array( lb:(lb + array_sz - 1) ) = this%data_output(1:array_sz)
+    lb = lb + array_sz
+   end if
 
   end subroutine
 
@@ -1128,6 +1137,9 @@ module base_species
    end if
    if( this%allocated_index ) then
     packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(1:np) )
+   end if
+   if( this%allocated_data_out ) then
+    packed%data_output(1:new_np) = PACK( this%data_output(1:np), mask(1:np) )
    end if
 
    call packed%set_part_number(new_np)
@@ -1190,6 +1202,10 @@ module base_species
    end if
    if( this%allocated_index ) then
     this%part_index(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
+    i = i + num_particles
+   end if
+   if( this%allocated_data_out ) then
+    this%data_output(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
     i = i + num_particles
    end if
  
@@ -1416,6 +1432,10 @@ module base_species
    end if
 
    this%properties%track_data%extra_outputs = n_outputs
+
+   if ( this%properties%track_data%extra_outputs > 0 ) then
+    call this%allocate_data_output()
+   end if
 
   end subroutine
 

@@ -130,6 +130,7 @@ module particles_aux_def
    procedure, pass :: sel_particles_index => sel_particles_index_aux
    procedure, public :: set_component_real => set_component_aux_real
    procedure, public :: set_component_integer => set_component_aux_integer
+   procedure, public :: set_properties => set_properties_aux
    procedure, pass :: sweep => sweep_aux
    procedure, public, pass :: total_size => total_size_aux
    procedure, public, pass :: track => track_spec_aux
@@ -150,7 +151,9 @@ module particles_aux_def
   logical, intent(in), optional :: tracked
   integer, intent(in), optional :: extra_outputs
   integer :: allocstatus
- 
+  logical :: extra = .false.
+  !! Setting the extra output always on false for aux species
+
   if (n_particles < 0) then
    return
   end if
@@ -166,7 +169,7 @@ module particles_aux_def
    call this%track( .false. )
   end if
   if ( PRESENT(extra_outputs) ) then
-   call this%set_extra_outputs( extra_outputs, .true. )
+   call this%set_extra_outputs( 0, .false. )
   else
    call this%set_extra_outputs( 0, .false. )
   end if
@@ -726,6 +729,9 @@ module particles_aux_def
   if (other%allocated_index) then
    call assign(this%part_index, other%part_index(1:tot), 1, tot)
   end if
+  if (other%allocated_data_out) then
+   call assign(this%data_output, other%data_output(1:tot), 1, tot)
+  end if
   select type( other )
   type is (species_aux)
    if ( this%save_old_p ) then
@@ -778,6 +784,9 @@ module particles_aux_def
   end if
   if (other%allocated_weight) then
    call assign(this%weight, other%weight(lower_bound:upper_bound), 1, tot)
+  end if
+  if (other%allocated_data_out) then
+   call assign(this%data_output, other%data_output(lower_bound:upper_bound), 1, tot)
   end if
   select type( other )
   type is (species_aux)
@@ -844,6 +853,10 @@ module particles_aux_def
    flat_array( lb:(lb + array_sz - 1) ) = this%part_index(1:array_sz)
    lb = lb + array_sz
   end if
+  if( this%allocated_data_out ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%data_output(1:array_sz)
+   lb = lb + array_sz
+  end if
   if ( this%allocated_old_px ) then
    flat_array( lb:(lb + array_sz - 1) ) = this%old_px(1:array_sz)
    lb = lb + array_sz
@@ -897,6 +910,9 @@ module particles_aux_def
   end if
   if( this%allocated_index ) then
    packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(1:np) )
+  end if
+  if( this%allocated_data_out ) then
+   packed%data_output(1:new_np) = PACK( this%data_output(1:np), mask(1:np) )
   end if
   select type (packed)
   type is (species_aux)
@@ -971,6 +987,10 @@ module particles_aux_def
   end if
   if( this%allocated_index ) then
    this%part_index(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
+   i = i + num_particles
+  end if
+  if( this%allocated_data_out ) then
+   this%data_output(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
    i = i + num_particles
   end if
   if ( aux ) then
@@ -1497,6 +1517,22 @@ module particles_aux_def
    this%allocated_aux3 = .true.
   end select
 
+ end subroutine
+
+ subroutine set_properties_aux( this, properties_in )
+  class(species_aux), intent(inout) :: this
+  type(scalars), intent(in) :: properties_in
+
+  call this%set_charge(properties_in%pick_charge())
+  call this%set_temperature(properties_in%pick_temperature())
+  call this%set_dimensions(properties_in%pick_dimensions())
+  call this%track(properties_in%istracked())
+  select type (this)
+  type is (species_aux)
+   call this%set_extra_outputs(0, .false.)
+  class default
+   call this%set_extra_outputs(properties_in%pick_extra_outputs(), .true.)
+ end select
  end subroutine
 
  pure function total_size_aux( this ) result(size)

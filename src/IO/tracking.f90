@@ -411,7 +411,6 @@ module tracking
     if ( MOD(iter, every_track(ic) ) == 0 ) then
      call tracking_write_output(spec_in(ic), spec_aux_in, timenow, ic)
      tracking_written = .true.
-     call spec_in(ic)%deallocate_data_output()
     end if
    end if
   end do
@@ -489,7 +488,6 @@ module tracking
 
     end associate
 
-    call spec_in(ic)%allocate_data_output()
     call a_on_tracking_particles( interpol_field, spec_in(ic), spec_aux_in, np, order, &
      polarization, mask_in=track_mask )
    end if
