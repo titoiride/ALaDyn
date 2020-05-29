@@ -580,9 +580,7 @@ module base_species
 
    track_out = .false.
    if ( present(tracking) ) then
-    if (tracking) then
-     track_out = .true.
-    end if
+    track_out = tracking
    end if
    i=1
 
@@ -599,9 +597,9 @@ module base_species
     if ( track_out ) then
      particles(i) = this%part_index(index_in)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(i) = this%data_output(index_in)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(i) = this%data_output(index_in)
+     end if
     end if
    case(2)
     particles(i) = this%x(index_in)
@@ -619,9 +617,9 @@ module base_species
     if ( track_out ) then
      particles(i) = this%part_index(index_in)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(i) = this%data_output(index_in)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(i) = this%data_output(index_in)
+     end if
     end if
    case(3)
     particles(i) = this%x(index_in)
@@ -643,9 +641,9 @@ module base_species
     if ( track_out ) then
      particles(i) = this%part_index(index_in)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(i) = this%data_output(index_in)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(i) = this%data_output(index_in)
+     end if
     end if
    end select
   end subroutine
@@ -661,9 +659,7 @@ module base_species
 
    track_out = .false.
    if ( present(tracking) ) then
-    if (tracking) then
-     track_out = .true.
-    end if
+    track_out = tracking
    end if
    i = 1
 
@@ -680,9 +676,9 @@ module base_species
     if ( track_out ) then
      particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     end if
     end if
    case(2)
     particles(1:(ub-lb+1), i) = this%x(lb:ub)
@@ -700,9 +696,9 @@ module base_species
     if ( track_out ) then
      particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     end if
     end if
    case(3)
     particles(1:(ub-lb+1), i) = this%x(lb:ub)
@@ -724,9 +720,9 @@ module base_species
     if ( track_out ) then
      particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     end if
     end if
    end select
   end subroutine
@@ -742,15 +738,13 @@ module base_species
 
    track_out = .false.
    if ( present(tracking) ) then
-    if (tracking) then
-     track_out = .true.
-    end if
+    track_out = tracking
    end if
 
    size_ind = SIZE(index_in, DIM=1)
    k = 1
    if ( track_out ) then
-    if ( this%allocated_data_out ) then
+    if ( this%pick_extra_outputs() > 0 ) then
      select case(this%pick_dimensions())
      case(1)
       do n = 1, size_ind
@@ -1651,7 +1645,7 @@ module base_species
    integer :: size
 
    if (this%istracked()) then
-    if ( .not. this%allocated_data_out ) then
+    if ( .not. this%pick_extra_outputs() > 0 ) then
      select case(this%pick_dimensions())
      case(1)
       size = 5

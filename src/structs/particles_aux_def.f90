@@ -1504,7 +1504,7 @@ module particles_aux_def
   integer :: size
 
   if (this%istracked()) then
-   if ( .not. this%allocated_data_out ) then
+   if ( .not. this%pick_extra_outputs() > 0 ) then
     select case(this%pick_dimensions())
     case(1)
      size = 6
