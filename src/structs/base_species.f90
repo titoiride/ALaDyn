@@ -552,7 +552,7 @@ module base_species
    class(base_species_T), intent(inout) :: this
    integer :: np
 
-   np = this%how_many()
+   np = this%array_size()
 
    call realloc_temp_1d( this%data_output, np )
    this%allocated_data_out = .true.
