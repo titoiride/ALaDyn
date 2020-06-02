@@ -38,16 +38,18 @@ module tracking
  use util, only: endian
  use warnings, only: write_warning
 
+ implicit none
  real(dp), allocatable, dimension(:, :), private, save :: track_aux
  real(sp), allocatable, dimension(:), private, save :: track_pdata
  integer, private, save, dimension(ref_nspec) :: iter_index
+ integer :: iounit_index
  logical, allocatable, dimension(:), private, save :: track_mask
  logical, save :: tracking_written
  character(len=8), public, parameter :: tracking_folder = 'tracking'
  character(len=25), private,&
   dimension(ref_nspec) :: track_dic
  integer, private, parameter, &
-  dimension(ref_nspec) :: track_iounit = [(50 + i - 1, i = 1, ref_nspec)]
+  dimension(ref_nspec) :: track_iounit = [(50 + iounit_index - 1, iounit_index = 1, ref_nspec)]
 
  contains
 

@@ -27,6 +27,7 @@
   use particles_def
   use mpi_var
 
+  implicit none
   type(interp_coeff), private, allocatable, save :: interp
   real(dp), dimension(:, :), allocatable, private :: gtpc_xx
   integer, parameter :: Y_POLARIZATION = 1

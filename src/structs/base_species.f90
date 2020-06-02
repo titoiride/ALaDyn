@@ -278,6 +278,7 @@ module base_species
   abstract interface
    subroutine sel_particles_index_abstract( this, out_sp, index_array )
     import base_species_T, dp
+    implicit none
     class(base_species_T), intent(in) :: this
     class(base_species_T), intent(inout) :: out_sp
     integer, dimension(:), intent(in) :: index_array
@@ -285,6 +286,7 @@ module base_species
    
    subroutine sel_particles_bounds_abstract( this, out_sp, lower_bound, upper_bound )
     import base_species_T, dp
+    implicit none
     class(base_species_T), intent(in) :: this
     class(base_species_T), intent(inout) :: out_sp
     integer, intent(in) :: lower_bound, upper_bound
@@ -296,6 +298,7 @@ module base_species
 
    subroutine sweep_abstract( this )
     import base_species_T, dp
+    implicit none
     class(base_species_T), intent(inout) :: this
    end subroutine
 
