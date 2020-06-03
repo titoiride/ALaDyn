@@ -417,7 +417,8 @@ module particles_def
    call out_sp%sweep()
   end if
 
-  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked() )
+  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+  extra_outputs=this%pick_extra_outputs() )
   call out_sp%set_charge(this%pick_charge())
 
   if( this%allocated_x ) then
@@ -464,7 +465,8 @@ module particles_def
    call out_sp%sweep()
   end if
 
-  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked() )
+  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+  extra_outputs=this%pick_extra_outputs() )
   call out_sp%set_charge(this%pick_charge())
 
   if( this%allocated_x ) then

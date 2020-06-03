@@ -990,7 +990,7 @@ module particles_aux_def
    i = i + num_particles
   end if
   if( this%allocated_data_out ) then
-   this%data_output(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
+   this%data_output(1:num_particles) = flat_array((i + 1): (i + num_particles))
    i = i + num_particles
   end if
   if ( aux ) then
@@ -1024,7 +1024,8 @@ module particles_aux_def
     call out_sp%sweep()
    end if
 
-   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked())
+   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+    extra_outputs=this%pick_extra_outputs())
    call out_sp%set_charge(this%pick_charge())
  
    if( this%allocated_x ) then
@@ -1082,7 +1083,8 @@ module particles_aux_def
     call out_sp%sweep()
    end if
 
-   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked())
+   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+     extra_outputs=this%pick_extra_outputs())
    call out_sp%set_charge(this%pick_charge())
  
    if( this%allocated_x ) then
