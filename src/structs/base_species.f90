@@ -558,6 +558,7 @@ module base_species
    np = this%array_size()
 
    call realloc_temp_1d( this%data_output, np )
+   this%data_output = zero_dp
    this%allocated_data_out = .true.
 
    end subroutine
