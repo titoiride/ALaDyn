@@ -338,11 +338,6 @@ module base_species
    else
     call this%track( .false. )
    end if
-   if ( PRESENT(extra_outputs) ) then
-    call this%set_extra_outputs( extra_outputs, .true. )
-   else
-    call this%set_extra_outputs( 0, .false. )
-   end if
 
    this%allocated_x = .false.
    this%allocated_y = .false.
@@ -418,6 +413,12 @@ module base_species
      this%allocated_index = .true.
     end if
    end select
+
+   if ( PRESENT(extra_outputs) ) then
+    call this%set_extra_outputs( extra_outputs, .true. )
+   else
+    call this%set_extra_outputs( 0, .false. )
+   end if
   end subroutine
 
 !=== Type bound procedures
