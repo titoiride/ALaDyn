@@ -448,6 +448,9 @@ module particles_def
   if( this%allocated_index ) then
    out_sp%part_index = this%part_index(lower_bound:upper_bound)
   end if
+  if( this%allocated_data_out ) then
+   out_sp%data_output = this%data_output(lower_bound:upper_bound)
+  end if
 
   call out_sp%set_part_number(out_sp%array_size())
 
@@ -523,6 +526,12 @@ module particles_def
    do i = 1, tot_len
     n = index_array(i)
     out_sp%part_index(i) = this%part_index(n)
+   end do
+  end if
+  if( this%allocated_data_out ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    out_sp%data_output(i) = this%data_output(n)
    end do
   end if
 
