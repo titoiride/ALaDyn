@@ -69,50 +69,50 @@ module particles_aux_def
   !! Auxiliary species for operations on species type
 
   real(dp), allocatable :: aux1(:)
-  logical :: allocated_aux1
+  logical :: allocated_aux1 = .false.
   !! True if aux1 array is allocated
 
   real(dp), allocatable :: aux2(:)
-  logical :: allocated_aux2
+  logical :: allocated_aux2 = .false.
   !! True if aux2 array is allocated
 
   real(dp), allocatable :: aux3(:)
-  logical :: allocated_aux3
+  logical :: allocated_aux3 = .false.
   !! True if aux3 array is allocated
 
   real(dp), allocatable :: aux4(:)
-  logical :: allocated_aux4
+  logical :: allocated_aux4 = .false.
   !! True if aux4 array is allocated
 
   real(dp), allocatable :: aux5(:)
-  logical :: allocated_aux5
+  logical :: allocated_aux5 = .false.
   !! True if aux5 array is allocated
 
   real(dp), allocatable :: aux6(:)
-  logical :: allocated_aux6
+  logical :: allocated_aux6 = .false.
   !! True if aux6 array is allocated
 
   real(dp), allocatable :: aux7(:)
-  logical :: allocated_aux7
+  logical :: allocated_aux7 = .false.
   !! True if aux7 array is allocated
 
   real(dp), allocatable :: aux8(:)
-  logical :: allocated_aux8
+  logical :: allocated_aux8 = .false.
   !! True if aux8 array is allocated
 
   real(dp), allocatable :: old_px(:)
-  logical :: allocated_old_px
+  logical :: allocated_old_px = .false.
   !! True if aux8 array is allocated
 
   real(dp), allocatable :: old_py(:)
-  logical :: allocated_old_py
+  logical :: allocated_old_py = .false.
   !! True if aux8 array is allocated
 
   real(dp), allocatable :: old_pz(:)
-  logical :: allocated_old_pz
+  logical :: allocated_old_pz = .false.
   !! True if aux8 array is allocated
 
-  logical :: save_old_p
+  logical :: save_old_p = .false.
 
   contains
    procedure, public :: append => append_aux
@@ -157,8 +157,8 @@ module particles_aux_def
   if (n_particles < 0) then
    return
   end if
-  if ( .not. allocated(this%initialized)) then
-   allocate(this%initialized)
+  if ( this%initialized ) then
+    call write_warning('WARNING: Trying to allocate an already initialized spec_aux object')
   end if
   this%initialized = .true.
   call this%set_part_number(n_particles)
@@ -275,10 +275,10 @@ module particles_aux_def
  subroutine sweep_aux( this )
   class(species_aux), intent(inout) :: this
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    return
   else
-   deallocate( this%initialized )
+   this%initialized = .false.
   end if
 
   if ( this%allocated_x ) then
@@ -379,7 +379,7 @@ module particles_aux_def
   integer :: tot_size, np1, np2
 
   ! Other is always already initialized (check in any case)
-  if ( (.not. allocated(this%initialized)) .or. this%empty ) then
+  if ( (.not. this%initialized) .or. this%empty ) then
    call this%copy(other, 1, other%how_many())
    return
   end if
@@ -627,7 +627,7 @@ module particles_aux_def
   integer, intent(in) :: new_number
   integer :: n_size
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    write (6, *) 'Warning, cannot extend uninitialized species'
    return
   end if
@@ -1020,7 +1020,7 @@ module particles_aux_def
  
    tot_len = upper_bound - lower_bound
 
-   if ( allocated(out_sp%initialized) ) then
+   if ( out_sp%initialized ) then
     call out_sp%sweep()
    end if
 
@@ -1078,7 +1078,7 @@ module particles_aux_def
  
    tot_len = SIZE(index_array, DIM=1)
 
-   if ( allocated(out_sp%initialized) ) then
+   if ( out_sp%initialized ) then
     call out_sp%sweep()
    end if
 
@@ -1644,7 +1644,7 @@ module particles_aux_def
   real(dp), intent(in) :: number
   integer :: np
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    write(6, *) 'Error, particle aux vector not initialized'
   end if
 

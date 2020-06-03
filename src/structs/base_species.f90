@@ -107,7 +107,7 @@ module base_species
 
  type, abstract :: base_species_T
 
-  logical, allocatable :: initialized
+  logical :: initialized = .false.
   !! Flag that states if the species has been initialized
   logical :: empty
   !! Flag that states if there are particles
@@ -117,53 +117,53 @@ module base_species
 
   real(dp), allocatable :: x(:)
   !! Array containig the x particle positions
-  logical :: allocated_x
+  logical :: allocated_x = .false.
   !! True if x array is allocated
 
   real(dp), allocatable :: y(:)
   !! Array containig the y particle positions
-  logical :: allocated_y
+  logical :: allocated_y = .false.
   !! True if y array is allocated
 
   real(dp), allocatable :: z(:)
   !! Array containig the z particle positions
-  logical :: allocated_z
+  logical :: allocated_z = .false.
   !! True if z array is allocated
 
   real(dp), allocatable :: px(:)
   !! Array containig the x particle momenta
-  logical :: allocated_px
+  logical :: allocated_px = .false.
   !! True if px array is allocated
 
   real(dp), allocatable :: py(:)
   !! Array containig the y particle momenta
-  logical :: allocated_py
+  logical :: allocated_py = .false.
   !! True if py array is allocated
 
   real(dp), allocatable :: pz(:)
   !! Array containig the z particle momenta
-  logical :: allocated_pz
+  logical :: allocated_pz = .false.
   !! True if pz array is allocated
   
   real(dp), allocatable :: gamma_inv(:)
   !! Array containig the inverse of Lorentz gamma factor
-  logical :: allocated_gamma
+  logical :: allocated_gamma = .false.
   !! True if gamma array is allocated
   
   real (dp), allocatable :: weight(:)
   !! Array containig the particle weights
-  logical :: allocated_weight
+  logical :: allocated_weight = .false.
   !! True if weight array is allocated
   
   integer, allocatable :: part_index(:)
   !! Array containig the particle index
-  logical :: allocated_index
+  logical :: allocated_index = .false.
   !! True if index array is allocated
   
   real(dp), allocatable :: data_output(:)
   !! Array used to pass any information about particles
   !! not relevant to the dynamics that has to be returned in the outputs
-  logical :: allocated_data_out
+  logical :: allocated_data_out = .false.
   !! True if data_output is allocated
 
   contains
@@ -327,8 +327,8 @@ module base_species
    if (n_particles < 0) then
     return
    end if
-   if ( .not. allocated(this%initialized)) then
-    allocate(this%initialized)
+   if ( this%initialized ) then
+    call write_warning('WARNING: Trying to allocate an already initialized spec object')
    end if
    this%initialized = .true.
    call this%set_part_number(n_particles)
@@ -1223,7 +1223,7 @@ module base_species
    type (scalars), intent(in) :: properties_in
    type (scalars) :: old_properties
 
-   if ( allocated(this%initialized) ) then
+   if ( this%initialized ) then
     if (this%array_size() < n_parts ) then
      old_properties = this%pick_properties()
      call this%sweep()

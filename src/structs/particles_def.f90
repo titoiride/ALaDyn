@@ -61,8 +61,8 @@ module particles_def
   if (n_particles < 0) then
    return
   end if
-  if ( .not. allocated(this%initialized)) then
-   allocate(this%initialized)
+  if ( this%initialized) then
+    call write_warning('WARNING: Trying to allocate an already initialized spec_new object')
   end if
   this%initialized = .true.
   call this%set_part_number(n_particles)
@@ -161,10 +161,10 @@ module particles_def
  subroutine sweep_spec( this )
   class(species_new), intent(inout) :: this
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    return
   else
-   deallocate( this%initialized )
+   this%initialized = .false.
   end if
 
   if ( this%allocated_x ) then
@@ -219,7 +219,7 @@ module particles_def
   integer :: tot_size, np1, np2
 
   ! Other is always already initialized (check in any case)
-  if ( (.not. allocated(this%initialized)) .or. this%empty ) then
+  if ( (.not. this%initialized) .or. this%empty ) then
     call this%copy(other, 1, other%how_many())
     return
   end if
@@ -386,7 +386,7 @@ module particles_def
   integer :: n_size
 
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    write (6, *) 'Warning, cannot extend uninitialized species'
    return
   end if
@@ -413,7 +413,7 @@ module particles_def
 
   tot_len = upper_bound - lower_bound
 
-  if ( allocated(out_sp%initialized) ) then
+  if ( out_sp%initialized ) then
    call out_sp%sweep()
   end if
 
@@ -460,7 +460,7 @@ module particles_def
 
   tot_len = SIZE(index_array, DIM=1)
 
-  if ( allocated(out_sp%initialized) ) then
+  if ( out_sp%initialized ) then
    call out_sp%sweep()
   end if
 
