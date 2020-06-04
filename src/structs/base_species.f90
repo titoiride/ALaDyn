@@ -327,6 +327,17 @@ module base_species
    integer, intent(in), optional :: extra_outputs
    integer :: allocstatus
   
+   this%allocated_x = .false.
+   this%allocated_y = .false.
+   this%allocated_z = .false.
+   this%allocated_px = .false.
+   this%allocated_py = .false.
+   this%allocated_pz = .false.
+   this%allocated_gamma = .false.
+   this%allocated_weight = .false.
+   this%allocated_index = .false.
+   this%allocated_data_out = .false.
+
    if (n_particles < 0) then
     return
    end if
@@ -348,16 +359,6 @@ module base_species
     call this%set_extra_outputs( 0, n_particles )
    end if
 
-   this%allocated_x = .false.
-   this%allocated_y = .false.
-   this%allocated_z = .false.
-   this%allocated_px = .false.
-   this%allocated_py = .false.
-   this%allocated_pz = .false.
-   this%allocated_gamma = .false.
-   this%allocated_weight = .false.
-   this%allocated_index = .false.
-   this%allocated_data_out = .false.
    if (n_particles == 0) then
     this%empty = .true.
     return

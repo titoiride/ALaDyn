@@ -154,29 +154,6 @@ module particles_aux_def
   logical :: extra = .false.
   !! Setting the extra output always on false for aux species
 
-  if (n_particles < 0) then
-   return
-  end if
-  if ( this%initialized ) then
-    call write_warning('WARNING: Trying to allocate an already initialized spec_aux object')
-  end if
-  this%initialized = .true.
-  call this%set_part_number(n_particles)
-  call this%set_dimensions(curr_ndims)
-  if ( present(tracked) ) then
-   call this%track( tracked , allocate_now=.false.)
-  else
-   call this%track( .false. )
-  end if
-
-  if ( PRESENT(extra_outputs) ) then
-   call this%set_extra_outputs( 0, n_particles )
-  else
-   call this%set_extra_outputs( 0, n_particles )
-  end if
-
-  call this%save_old_momentum( this%istracked(), n_particles )
-
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.
@@ -200,6 +177,29 @@ module particles_aux_def
   this%allocated_old_px = .false.
   this%allocated_old_py = .false.
   this%allocated_old_pz = .false.
+
+  if (n_particles < 0) then
+   return
+  end if
+  if ( this%initialized ) then
+    call write_warning('WARNING: Trying to allocate an already initialized spec_aux object')
+  end if
+  this%initialized = .true.
+  call this%set_part_number(n_particles)
+  call this%set_dimensions(curr_ndims)
+  if ( present(tracked) ) then
+   call this%track( tracked , allocate_now=.false.)
+  else
+   call this%track( .false. )
+  end if
+
+  if ( PRESENT(extra_outputs) ) then
+   call this%set_extra_outputs( 0, n_particles )
+  else
+   call this%set_extra_outputs( 0, n_particles )
+  end if
+
+  call this%save_old_momentum( this%istracked(), n_particles )
   
   if (n_particles == 0) then
    this%empty = .true.
