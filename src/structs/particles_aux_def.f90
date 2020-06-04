@@ -169,6 +169,14 @@ module particles_aux_def
    call this%track( .false. )
   end if
 
+  if ( PRESENT(extra_outputs) ) then
+   call this%set_extra_outputs( 0, n_particles )
+  else
+   call this%set_extra_outputs( 0, n_particles )
+  end if
+
+  call this%save_old_momentum( this%istracked(), n_particles )
+
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.
@@ -260,12 +268,6 @@ module particles_aux_def
 
   end select
 
-  call this%save_old_momentum( this%istracked() )
-  if ( PRESENT(extra_outputs) ) then
-   call this%set_extra_outputs( 0, .false. )
-  else
-   call this%set_extra_outputs( 0, .false. )
-  end if 
  end subroutine
 
  !========================================
@@ -649,12 +651,11 @@ module particles_aux_def
 
   end subroutine
 
- subroutine save_old_momentum( this, flag )
+ subroutine save_old_momentum( this, flag, size_array )
   class(species_aux), intent(inout) :: this
   logical, intent(in) :: flag
-  integer :: np
+  integer, intent(in) :: size_array
 
-  np = this%array_size()
   if ( .not. flag ) then
    this%save_old_p = .false.
    return
@@ -665,29 +666,29 @@ module particles_aux_def
   select case(this%pick_dimensions())
   case(1)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np))!, source=zero_dp )
+    allocate( this%old_px(size_array))
     this%allocated_old_px = .true.
    end if
   case(2)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np))!, source=zero_dp )
+    allocate( this%old_px(size_array))
     this%allocated_old_px = .true.
    end if
    if( .not. this%allocated_old_py ) then
-    allocate( this%old_py(np))!, source=zero_dp )
+    allocate( this%old_py(size_array))
     this%allocated_old_py = .true.
    end if
   case(3)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np))!, source=zero_dp )
+    allocate( this%old_px(size_array))
     this%allocated_old_px = .true.
    end if
    if( .not. this%allocated_old_py ) then
-    allocate( this%old_py(np))!, source=zero_dp )
+    allocate( this%old_py(size_array))
     this%allocated_old_py = .true.
    end if
    if( .not. this%allocated_old_pz ) then
-    allocate( this%old_pz(np))!, source=zero_dp )
+    allocate( this%old_pz(size_array))
     this%allocated_old_pz = .true.
    end if
   end select
@@ -1537,16 +1538,18 @@ module particles_aux_def
  subroutine set_properties_aux( this, properties_in )
   class(species_aux), intent(inout) :: this
   type(scalars), intent(in) :: properties_in
+  integer :: size_array
 
   call this%set_charge(properties_in%pick_charge())
   call this%set_temperature(properties_in%pick_temperature())
   call this%set_dimensions(properties_in%pick_dimensions())
   call this%track(properties_in%istracked())
+  size_array = this%array_size()
   select type (this)
   type is (species_aux)
-   call this%set_extra_outputs(0, .false.)
+   call this%set_extra_outputs(0, size_array)
   class default
-   call this%set_extra_outputs(properties_in%pick_extra_outputs(), .true.)
+   call this%set_extra_outputs(properties_in%pick_extra_outputs(), size_array)
  end select
  end subroutine
 

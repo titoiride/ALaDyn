@@ -73,6 +73,12 @@ module particles_def
    call this%track( .false. )
   end if
 
+  if ( PRESENT(extra_outputs) ) then
+   call this%set_extra_outputs( extra_outputs, n_particles )
+  else
+   call this%set_extra_outputs( 0, n_particles )
+  end if
+
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.
@@ -148,11 +154,6 @@ module particles_def
    end if
   end select
 
-  if ( PRESENT(extra_outputs) ) then
-   call this%set_extra_outputs( extra_outputs, .true. )
-  else
-   call this%set_extra_outputs( 0, .false. )
-  end if
  end subroutine
 
  !========================================

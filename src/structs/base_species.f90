@@ -339,6 +339,12 @@ module base_species
     call this%track( .false. )
    end if
 
+   if ( PRESENT(extra_outputs) ) then
+    call this%set_extra_outputs( extra_outputs, n_particles )
+   else
+    call this%set_extra_outputs( 0, n_particles )
+   end if
+
    this%allocated_x = .false.
    this%allocated_y = .false.
    this%allocated_z = .false.
@@ -414,11 +420,6 @@ module base_species
     end if
    end select
 
-   if ( PRESENT(extra_outputs) ) then
-    call this%set_extra_outputs( extra_outputs, .true. )
-   else
-    call this%set_extra_outputs( 0, .false. )
-   end if
   end subroutine
 
 !=== Type bound procedures
@@ -552,12 +553,11 @@ module base_species
    end select
   end function
 
-  subroutine allocate_data_output( this )
+  subroutine allocate_data_output( this, size_array )
    class(base_species_T), intent(inout) :: this
-   integer :: np
+   integer :: size_array
 
-   np = this%array_size()
-   call realloc_temp_1d( this%data_output, np )
+   call realloc_temp_1d( this%data_output, size_array )
    this%data_output = zero_dp
    this%allocated_data_out = .true.
 
@@ -1209,7 +1209,7 @@ module base_species
     i = i + num_particles
    end if
    if( this%allocated_data_out ) then
-    this%data_output(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
+    this%data_output(1:num_particles) = flat_array((i + 1): (i + num_particles))
     i = i + num_particles
    end if
  
@@ -1347,7 +1347,7 @@ module base_species
    call properties%set_temperature(this%pick_temperature())
    call properties%set_dimensions(this%pick_dimensions())
    call properties%track(this%istracked())
-   call properties%set_extra_outputs(this%pick_extra_outputs(), .true.)
+   call properties%set_extra_outputs(this%pick_extra_outputs())
 
   end function
   
@@ -1359,7 +1359,7 @@ module base_species
    call properties%set_temperature(this%pick_temperature())
    call properties%set_dimensions(this%pick_dimensions())
    call properties%track(this%istracked())
-   call properties%set_extra_outputs(this%pick_extra_outputs(), .true.)
+   call properties%set_extra_outputs(this%pick_extra_outputs())
 
   end function
   
@@ -1376,12 +1376,14 @@ module base_species
   subroutine set_properties( this, properties_in )
    class(base_species_T), intent(inout) :: this
    type(scalars), intent(in) :: properties_in
+   integer :: size_array
 
    call this%set_charge(properties_in%pick_charge())
    call this%set_temperature(properties_in%pick_temperature())
    call this%set_dimensions(properties_in%pick_dimensions())
    call this%track(properties_in%istracked())
-   call this%set_extra_outputs(properties_in%pick_extra_outputs(), .true.)
+   size_array = this%array_size()
+   call this%set_extra_outputs(properties_in%pick_extra_outputs(), size_array)
 
   end subroutine
 
@@ -1425,35 +1427,25 @@ module base_species
 
   end subroutine
 
-  subroutine set_extra_outputs( this, n_outputs, flag )
+  subroutine set_extra_outputs( this, n_outputs, size_array )
    class(base_species_T), intent(inout) :: this
-   integer, intent(in) :: n_outputs
-   logical, intent(in) :: flag
+   integer, intent(in) :: n_outputs, size_array
    integer :: n_outputs_old
 
    n_outputs_old = this%properties%track_data%extra_outputs
-   if (.not. flag) then
-    this%properties%track_data%extra_outputs = 0
-    return
-   end if
 
    this%properties%track_data%extra_outputs = n_outputs
 
-   if ( this%properties%track_data%extra_outputs /= n_outputs_old ) then
-    call this%allocate_data_output()
+   if ( (this%properties%track_data%extra_outputs /= n_outputs_old) .and. &
+        (size_array > 0) ) then
+    call this%allocate_data_output( size_array )
    end if
 
   end subroutine
 
-  subroutine set_extra_outputs_scalars( this, n_outputs, flag )
+  subroutine set_extra_outputs_scalars( this, n_outputs )
    class(scalars), intent(inout) :: this
    integer, intent(in) :: n_outputs
-   logical, intent(in) :: flag
-
-   if (.not. flag) then
-    this%track_data%extra_outputs = 0
-    return
-   end if
 
    this%track_data%extra_outputs = n_outputs
 

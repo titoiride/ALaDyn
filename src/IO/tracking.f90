@@ -190,19 +190,23 @@ module tracking
 
    type(species_new), dimension(:), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   logical :: tracking, extra_outputs
-   integer :: ic
+   logical :: tracking
+   integer :: ic, n_extra_output = 0, size_array
 
    tracking_written = .true.
    tracking = ANY(p_tracking, DIM=1)
-   extra_outputs = ANY(a_on_particles, DIM=1)
+   if( ANY(a_on_particles, DIM=1) ) then
+    n_extra_output = n_extra_output + 1
+   end if
    
    if (.not. tracking) return
    
    do ic = 1, nsp
-    call spec_in(ic)%set_extra_outputs( 1, extra_outputs )
+    size_array = spec_in(ic)%array_size()
+    call spec_in(ic)%set_extra_outputs( n_extra_output, size_array )
    end do
-   call spec_aux_in%save_old_momentum( .true. )
+   size_array = spec_aux_in%array_size()
+   call spec_aux_in%save_old_momentum( .true., size_array )
    call create_tracking_folders(tracking_folder)
 
    iter_index = 0
