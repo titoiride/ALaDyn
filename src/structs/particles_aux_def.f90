@@ -433,6 +433,10 @@ module particles_aux_def
    call assign(this%part_index, int(other%part_index(1:np2)), &
     np1 + 1, tot_size)
   end if
+  if(other%allocated_data_out) then
+    call assign(this%data_output, other%part_index(1:np2), &
+     np1 + 1, tot_size)
+   end if
   select type (other)
   type is (species_aux)
    if(other%allocated_old_px) then
