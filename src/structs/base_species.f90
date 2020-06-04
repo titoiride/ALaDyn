@@ -50,9 +50,9 @@ module base_species
  real(dp), allocatable, dimension(:, :), save :: bs_temp_2d
 
  type track_data_t
-  logical, public :: tracked
+  logical, public :: tracked = .false.
   !! Flag to track the particles
-  integer, public :: n_tracked
+  integer, public :: n_tracked = 0
   !! Number of tracked particles
   real(dp), allocatable, public :: xmin
   !! Minimum x position of the tracked particles
@@ -66,24 +66,24 @@ module base_species
   !! Minimum z position of the tracked particles
   real(dp), allocatable, public :: zmax
   !! Maximum z position of the tracked particles
-  integer, public :: jump
+  integer, public :: jump = 1
   !! Jump parameter in particles selection
-  integer, public :: highest_index
+  integer, public :: highest_index = 1
   !! Highest particle index available
-  integer, public :: extra_outputs
+  integer, public :: extra_outputs = 0
   !! Number of extra outputs (*i.e.* not included in the particles dynamics)
  end type
 
  type scalars
   character(len=100), private :: name = 'electron'
   !! Species name
-  real(dp), private :: charge
+  real(dp), private :: charge = -1
   !! Particle charge
-  integer, private :: n_part
+  integer, private :: n_part = 0
   !! Number of particles
-  integer, private :: dimensions
+  integer, private :: dimensions = 2
   !! Number of dimensions in which particles live
-  real, private :: temperature
+  real, private :: temperature = 0
   !! Initial temperature given to the species
   type(track_data_t), public :: track_data
   !! Type containing all the tracking datas 
@@ -109,7 +109,7 @@ module base_species
 
   logical :: initialized = .false.
   !! Flag that states if the species has been initialized
-  logical :: empty
+  logical :: empty = .true.
   !! Flag that states if there are particles
 
   type(scalars) :: properties
@@ -557,7 +557,6 @@ module base_species
    integer :: np
 
    np = this%array_size()
-
    call realloc_temp_1d( this%data_output, np )
    this%data_output = zero_dp
    this%allocated_data_out = .true.
@@ -1430,7 +1429,9 @@ module base_species
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: n_outputs
    logical, intent(in) :: flag
+   integer :: n_outputs_old
 
+   n_outputs_old = this%properties%track_data%extra_outputs
    if (.not. flag) then
     this%properties%track_data%extra_outputs = 0
     return
@@ -1438,7 +1439,7 @@ module base_species
 
    this%properties%track_data%extra_outputs = n_outputs
 
-   if ( this%properties%track_data%extra_outputs > 0 ) then
+   if ( this%properties%track_data%extra_outputs /= n_outputs_old ) then
     call this%allocate_data_output()
    end if
 
