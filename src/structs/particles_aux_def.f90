@@ -283,6 +283,10 @@ module particles_aux_def
    this%initialized = .false.
   end if
 
+  call this%properties%sweep()
+
+  this%save_old_p = .false.
+
   if ( this%allocated_x ) then
    this%allocated_x = .false.
    deallocate( this%x )

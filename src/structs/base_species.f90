@@ -72,6 +72,8 @@ module base_species
   !! Highest particle index available
   integer, public :: extra_outputs = 0
   !! Number of extra outputs (*i.e.* not included in the particles dynamics)
+  contains
+   procedure, public, pass :: sweep => sweep_track_data
  end type
 
  type scalars
@@ -102,6 +104,7 @@ module base_species
   procedure, public, pass :: set_extra_outputs => set_extra_outputs_scalars
   procedure, public, pass :: set_part_number => set_part_number_scalars
   procedure, public, pass :: set_temperature => set_temperature_scalars
+  procedure, public, pass :: sweep => sweep_scalars
   procedure, public, pass :: track => track_scalars
  end type scalars
 
@@ -1258,14 +1261,6 @@ module base_species
 
   end function
 
-  pure function pick_charge_scalars( this ) result(ch)
-   class(scalars), intent(in) :: this
-   real(dp) :: ch
-
-   ch = this%charge
-
-  end function
-
   pure function pick_charge( this ) result(ch)
    class(base_species_T), intent(in) :: this
    real(dp) :: ch
@@ -1281,36 +1276,12 @@ module base_species
    n_outputs = this%properties%track_data%extra_outputs
 
   end function
-
-  pure function pick_extra_outputs_scalars( this ) result(n_outputs)
-   class(scalars), intent(in) :: this
-   integer :: n_outputs
-
-   n_outputs = this%track_data%extra_outputs
-
-  end function
-
-  pure function pick_temperature_scalars( this ) result(tem)
-   class(scalars), intent(in) :: this
-   real(dp) :: tem
-
-   tem = this%temperature
-
-  end function
   
   pure function pick_temperature( this ) result(tem)
    class(base_species_T), intent(in) :: this
    real(dp) :: tem
 
    tem = this%properties%temperature
-
-  end function
-
-  pure function pick_dimensions_scalars( this ) result(dims)
-   class(scalars), intent(in) :: this
-   integer :: dims
-
-   dims = this%dimensions
 
   end function
 
@@ -1321,33 +1292,12 @@ module base_species
    dims = this%properties%dimensions
 
   end function
-  
 
   pure function pick_name( this ) result(name)
    class(base_species_T), intent(in) :: this
    character(len=100) :: name
 
    name = trim(this%properties%name)
-
-  end function
-
-  pure function pick_name_scalars( this ) result(name)
-   class(scalars), intent(in) :: this
-   character(len=100) :: name
-
-   name = trim(this%name)
-
-  end function
-  
-  function pick_properties_scalars( this ) result(properties)
-   class(scalars), intent(in) :: this
-   type(scalars) :: properties
-
-   call properties%set_charge(this%pick_charge())
-   call properties%set_temperature(this%pick_temperature())
-   call properties%set_dimensions(this%pick_dimensions())
-   call properties%track(this%istracked())
-   call properties%set_extra_outputs(this%pick_extra_outputs())
 
   end function
   
@@ -1403,22 +1353,6 @@ module base_species
 
   end subroutine
   
-  subroutine set_charge_scalars( this, ch)
-   class(scalars), intent(inout) :: this
-   real(dp), intent(in) :: ch
-   
-   this%charge = ch
-
-  end subroutine
-  
-  subroutine set_dimensions_scalars( this, dimens)
-   class(scalars), intent(inout) :: this
-   integer, intent(in) :: dimens
-   
-   this%dimensions = dimens
-
-  end subroutine
-  
   subroutine set_dimensions( this, dimens)
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: dimens
@@ -1443,27 +1377,11 @@ module base_species
 
   end subroutine
 
-  subroutine set_extra_outputs_scalars( this, n_outputs )
-   class(scalars), intent(inout) :: this
-   integer, intent(in) :: n_outputs
-
-   this%track_data%extra_outputs = n_outputs
-
-  end subroutine
-
   subroutine set_name( this, name)
    class(base_species_T), intent(inout) :: this
    character(len=*), intent(in) :: name
    
    this%properties%name = trim(name)
-
-  end subroutine
-  
-  subroutine set_name_scalars( this, name)
-   class(scalars), intent(inout) :: this
-   character(len=*), intent(in) :: name
-   
-   this%name = trim(name)
 
   end subroutine
 
@@ -1481,26 +1399,11 @@ module base_species
    end if
   end subroutine
 
-  subroutine set_part_number_scalars( this, n_parts)
-   class(scalars), intent(inout) :: this
-   integer, intent(in) :: n_parts
-
-   this%n_part = n_parts
-
-  end subroutine
-
   subroutine set_temperature( this, temperature)
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in) :: temperature
 
    this%properties%temperature = temperature
-  end subroutine
-
-  subroutine set_temperature_scalars( this, temperature)
-   class(scalars), intent(inout) :: this
-   real(dp), intent(in) :: temperature
-
-   this%temperature = temperature
   end subroutine
 
   subroutine track( this, track_flag, allocate_now )
@@ -1522,27 +1425,11 @@ module base_species
 
   end subroutine
 
-  subroutine track_scalars( this, track_flag )
-   class(scalars), intent(inout) :: this
-   logical, intent(in) :: track_flag
-
-   this%track_data%tracked = track_flag
-
-  end subroutine
-
   pure function istracked( this ) result(tracked)
    class(base_species_T), intent(in) :: this
    logical :: tracked
 
    tracked = this%properties%track_data%tracked
-
-  end function
-
-  pure function istracked_scalars( this ) result(tracked)
-   class(scalars), intent(in) :: this
-   logical :: tracked
-
-   tracked = this%track_data%tracked
 
   end function
 
@@ -1701,6 +1588,144 @@ module base_species
 
   end function
 
+!==== Procedures for the track_data type ====
+  !===== Sweep track_data type =======
+
+  subroutine sweep_track_data( this )
+   class(track_data_t), intent(inout) :: this
+
+   this%tracked = .false.
+
+  end subroutine
+!==== Procedures for the scalar type ====
+
+  !===== Sweep scalar type =======
+  subroutine sweep_scalars( this )
+   class(scalars), intent(inout) :: this
+
+   this%charge = -1
+   this%dimensions = 2
+   this%n_part = 0
+   this%temperature = 0
+   call this%track_data%sweep()
+
+  end subroutine
+
+  !==== Type bound procedures ====
+  pure function istracked_scalars( this ) result(tracked)
+   class(scalars), intent(in) :: this
+   logical :: tracked
+
+   tracked = this%track_data%tracked
+
+  end function
+
+  pure function pick_charge_scalars( this ) result(ch)
+   class(scalars), intent(in) :: this
+   real(dp) :: ch
+
+   ch = this%charge
+
+  end function
+
+  pure function pick_dimensions_scalars( this ) result(dims)
+   class(scalars), intent(in) :: this
+   integer :: dims
+
+   dims = this%dimensions
+
+  end function
+
+  pure function pick_extra_outputs_scalars( this ) result(n_outputs)
+   class(scalars), intent(in) :: this
+   integer :: n_outputs
+
+   n_outputs = this%track_data%extra_outputs
+
+  end function
+
+  pure function pick_name_scalars( this ) result(name)
+   class(scalars), intent(in) :: this
+   character(len=100) :: name
+
+   name = trim(this%name)
+
+  end function
+  
+  function pick_properties_scalars( this ) result(properties)
+   class(scalars), intent(in) :: this
+   type(scalars) :: properties
+
+   call properties%set_charge(this%pick_charge())
+   call properties%set_temperature(this%pick_temperature())
+   call properties%set_dimensions(this%pick_dimensions())
+   call properties%track(this%istracked())
+   call properties%set_extra_outputs(this%pick_extra_outputs())
+
+  end function
+
+  pure function pick_temperature_scalars( this ) result(tem)
+   class(scalars), intent(in) :: this
+   real(dp) :: tem
+
+   tem = this%temperature
+
+  end function
+
+  subroutine set_charge_scalars( this, ch)
+   class(scalars), intent(inout) :: this
+   real(dp), intent(in) :: ch
+   
+   this%charge = ch
+
+  end subroutine
+  
+  subroutine set_dimensions_scalars( this, dimens)
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: dimens
+   
+   this%dimensions = dimens
+
+  end subroutine
+
+  subroutine set_extra_outputs_scalars( this, n_outputs )
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: n_outputs
+
+   this%track_data%extra_outputs = n_outputs
+
+  end subroutine
+
+  subroutine set_name_scalars( this, name)
+   class(scalars), intent(inout) :: this
+   character(len=*), intent(in) :: name
+   
+   this%name = trim(name)
+
+  end subroutine
+
+  subroutine set_part_number_scalars( this, n_parts)
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: n_parts
+
+   this%n_part = n_parts
+
+  end subroutine
+
+  subroutine set_temperature_scalars( this, temperature)
+   class(scalars), intent(inout) :: this
+   real(dp), intent(in) :: temperature
+   
+   this%temperature = temperature
+  end subroutine
+  
+  subroutine track_scalars( this, track_flag )
+   class(scalars), intent(inout) :: this
+   logical, intent(in) :: track_flag
+
+   this%track_data%tracked = track_flag
+
+  end subroutine
 !==== Procedures not bound to type ======
 
  subroutine assign_real_realdp( array, values, lb, ub, n_parts)
@@ -1720,9 +1745,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = values(:)
 
@@ -1745,9 +1770,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = real(values(:), dp)
 
@@ -1770,9 +1795,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = real(values(:), sp)
 
@@ -1795,9 +1820,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = values(:)
 
@@ -1820,9 +1845,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = real(values(:), sp)
 
@@ -1845,9 +1870,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = int(values(:))
 
@@ -1870,9 +1895,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = values(:)
 

@@ -169,6 +169,8 @@ module particles_def
    this%initialized = .false.
   end if
 
+  call this%properties%sweep()
+
   if ( this%allocated_x ) then
    this%allocated_x = .false.
    deallocate( this%x )
