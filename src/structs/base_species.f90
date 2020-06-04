@@ -1596,6 +1596,7 @@ module base_species
    class(track_data_t), intent(inout) :: this
 
    this%tracked = .false.
+   this%extra_outputs = 0
 
   end subroutine
 !==== Procedures for the scalar type ====
