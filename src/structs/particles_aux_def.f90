@@ -743,6 +743,7 @@ module particles_aux_def
   end if
   select type( other )
   type is (species_aux)
+  this%save_old_p = other%save_old_p
    if ( this%save_old_p ) then
     if (other%allocated_old_px) then
      call assign(this%old_px, other%old_px(1:tot), 1, tot)
@@ -799,6 +800,7 @@ module particles_aux_def
   end if
   select type( other )
   type is (species_aux)
+   this%save_old_p = other%save_old_p
    if ( this%save_old_p ) then
     if (other%allocated_old_px) then
      call assign(this%old_px, other%old_px(lower_bound:upper_bound), 1, tot)
