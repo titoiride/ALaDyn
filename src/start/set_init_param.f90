@@ -346,6 +346,9 @@
    lpvol = el_lp*el_lp*el_lp
    if (nsb>0) inject_beam = .true.
    !=====================
+   nb_over_np = zero_dp
+   gam0 = one_dp
+   b_charge = zero_dp
    if (inject_beam) then
      !ON input phase space coordinates, beam size, 
      !         total macro-particle number nb_tot(1), total charge (pC)
