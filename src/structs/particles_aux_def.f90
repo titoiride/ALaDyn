@@ -440,7 +440,7 @@ module particles_aux_def
     np1 + 1, tot_size)
   end if
   if(other%allocated_data_out) then
-    call assign(this%data_output, other%part_index(1:np2), &
+    call assign(this%data_output, other%data_output(1:np2), &
      np1 + 1, tot_size)
    end if
   select type (other)
