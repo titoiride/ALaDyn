@@ -1551,12 +1551,7 @@ module particles_aux_def
   call this%set_dimensions(properties_in%pick_dimensions())
   call this%track(properties_in%istracked())
   size_array = this%array_size()
-  select type (this)
-  type is (species_aux)
-   call this%set_extra_outputs(0, size_array)
-  class default
-   call this%set_extra_outputs(properties_in%pick_extra_outputs(), size_array)
- end select
+  call this%set_extra_outputs(0, size_array)
  end subroutine
 
  pure function total_size_aux( this ) result(size)

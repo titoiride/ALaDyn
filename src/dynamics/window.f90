@@ -86,7 +86,7 @@
 
    call set_tracked_particle_index( spec_in, np + 1, np + n_parts, ic)
    call spec_in(ic)%check_tracking()
-   if( spec_in(ic)%istracked() ) then
+   if( spec_in(ic)%istracked() .and. (.not. spec_in(ic)%empty) ) then
     select case (spec_in(ic)%pick_dimensions())
     case(1)
       call spec_aux_in%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
