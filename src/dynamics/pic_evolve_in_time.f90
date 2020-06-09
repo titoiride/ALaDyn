@@ -188,8 +188,8 @@
     ! In jc(1:3) exit total current density array Dt*(Jx,Jy,Jz)^{n+1/2}
    end if
    !================================================
-   ! Field is interpolated on tracked particles, if requested from output
-   call interpolate_field_on_tracking( ebf, spec_in, spec_aux_in, iter, A_PARTICLE )
+   ! Laser field is interpolated on tracked particles, if requested from output
+   call interpolate_field_on_tracking( ebf, spec_in, spec_aux_in, iter_loc, A_PARTICLE )
    !=======================
    ! Inject fields at i=i1-1  for inflow Lp_inject=T
    !call wave_field_left_inject(ebf, xmn)  !(Bz=Ey By=Ez are injected at i1-1 point

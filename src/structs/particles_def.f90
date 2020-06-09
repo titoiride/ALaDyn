@@ -69,6 +69,7 @@ module particles_def
   this%allocated_index = .false.
   this%allocated_data_out = .false.
 
+  call this%set_name( 'electron' )
   if (n_particles < 0) then
    return
   end if
@@ -162,6 +163,8 @@ module particles_def
  !========================================
  
  subroutine sweep_spec( this )
+  !! Method that resets all the species elements to default and deallocates
+  !! the arrays
   class(species_new), intent(inout) :: this
 
   if ( .not. this%initialized ) then

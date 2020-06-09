@@ -178,6 +178,7 @@ module particles_aux_def
   this%allocated_old_py = .false.
   this%allocated_old_pz = .false.
 
+  call this%set_name( 'electron' )
   if (n_particles < 0) then
    return
   end if
@@ -275,6 +276,8 @@ module particles_aux_def
  !========================================
  
  subroutine sweep_aux( this )
+  !! Method that resets all the species elements to default and deallocates
+  !! the arrays
   class(species_aux), intent(inout) :: this
 
   if ( .not. this%initialized ) then

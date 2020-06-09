@@ -77,7 +77,7 @@ module base_species
  end type
 
  type scalars
-  character(len=100), private :: name = 'electron'
+  character(:), allocatable :: name
   !! Species name
   real(dp), private :: charge = -1
   !! Particle charge
@@ -338,6 +338,7 @@ module base_species
    this%allocated_index = .false.
    this%allocated_data_out = .false.
 
+   call this%set_name( 'electron' )
    if (n_particles < 0) then
     return
    end if
@@ -440,7 +441,8 @@ module base_species
    real(dp) :: u, t_x
    real(dp) :: whz
    integer :: dim, i, j, k
-
+  ! When this function is called in the window.f90 add_particles routine, species has already
+  ! been extended
    t_x = this%pick_temperature()
    dim = this%pick_dimensions()
    p = np_old
@@ -1298,7 +1300,7 @@ module base_species
    class(base_species_T), intent(in) :: this
    character(len=100) :: name
 
-   name = trim(this%properties%name)
+   name = this%properties%name
 
   end function
   
@@ -1382,7 +1384,7 @@ module base_species
    class(base_species_T), intent(inout) :: this
    character(len=*), intent(in) :: name
    
-   this%properties%name = trim(name)
+   this%properties%name = name
 
   end subroutine
 
@@ -1650,7 +1652,7 @@ module base_species
    class(scalars), intent(in) :: this
    character(len=100) :: name
 
-   name = trim(this%name)
+   name = this%name
 
   end function
   
@@ -1702,7 +1704,7 @@ module base_species
    class(scalars), intent(inout) :: this
    character(len=*), intent(in) :: name
    
-   this%name = trim(name)
+   this%name = name
 
   end subroutine
 

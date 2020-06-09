@@ -402,6 +402,7 @@ module tracking
    close(track_iounit(pid))
   end if
  end subroutine
+
  !================================
  subroutine track_out( spec_in, spec_aux_in, timenow, iter)
   !! Wrapper for the tracking I/O routine
@@ -423,6 +424,7 @@ module tracking
   ! Warning: both dictionary writing and tracking_written flag
   ! must be switched to array if employing multiple species tracking
  end subroutine
+
  !================================
  subroutine interpolate_field_on_tracking( field_in, spec_in, spec_aux_in, iter, field_type )
   real(dp), dimension(:, :, :, :), allocatable, intent(in) :: field_in
@@ -475,8 +477,9 @@ module tracking
     end if
     call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2, order )
    else if (envelope) then
-    ! Envelope real part
-    interpol_field(:, :, :) = field_in(:, :, :, 1)
+    ! Envelope  sqrt( A_R^2 + A_I^2)
+    interpol_field(:, :, :) = &
+     sqrt( field_in(:, :, :, 1)*field_in(:, :, :, 1) + field_in(:, :, :, 2)*field_in(:, :, :, 2) )
    end if
   case default
   end select
