@@ -38,16 +38,18 @@ module tracking
  use util, only: endian
  use warnings, only: write_warning
 
+ implicit none
  real(dp), allocatable, dimension(:, :), private, save :: track_aux
  real(sp), allocatable, dimension(:), private, save :: track_pdata
  integer, private, save, dimension(ref_nspec) :: iter_index
+ integer :: iounit_index
  logical, allocatable, dimension(:), private, save :: track_mask
  logical, save :: tracking_written
  character(len=8), public, parameter :: tracking_folder = 'tracking'
  character(len=25), private,&
   dimension(ref_nspec) :: track_dic
  integer, private, parameter, &
-  dimension(ref_nspec) :: track_iounit = [(50 + i - 1, i = 1, ref_nspec)]
+  dimension(ref_nspec) :: track_iounit = [(50 + iounit_index - 1, iounit_index = 1, ref_nspec)]
 
  contains
 
@@ -188,19 +190,23 @@ module tracking
 
    type(species_new), dimension(:), intent(inout) :: spec_in
    type(species_aux), intent(inout) :: spec_aux_in
-   logical :: tracking, extra_outputs
-   integer :: ic
+   logical :: tracking
+   integer :: ic, n_extra_output = 0, size_array
 
    tracking_written = .true.
    tracking = ANY(p_tracking, DIM=1)
-   extra_outputs = ANY(a_on_particles, DIM=1)
+   if( ANY(a_on_particles, DIM=1) ) then
+    n_extra_output = n_extra_output + 1
+   end if
    
    if (.not. tracking) return
    
    do ic = 1, nsp
-    call spec_in(ic)%set_extra_outputs( 1, extra_outputs )
+    size_array = spec_in(ic)%array_size()
+    call spec_in(ic)%set_extra_outputs( n_extra_output, size_array )
    end do
-   call spec_aux_in%save_old_momentum( .true. )
+   size_array = spec_aux_in%array_size()
+   call spec_aux_in%save_old_momentum( .true., size_array )
    call create_tracking_folders(tracking_folder)
 
    iter_index = 0
@@ -396,6 +402,7 @@ module tracking
    close(track_iounit(pid))
   end if
  end subroutine
+
  !================================
  subroutine track_out( spec_in, spec_aux_in, timenow, iter)
   !! Wrapper for the tracking I/O routine
@@ -411,13 +418,13 @@ module tracking
     if ( MOD(iter, every_track(ic) ) == 0 ) then
      call tracking_write_output(spec_in(ic), spec_aux_in, timenow, ic)
      tracking_written = .true.
-     call spec_in(ic)%deallocate_data_output()
     end if
    end if
   end do
   ! Warning: both dictionary writing and tracking_written flag
   ! must be switched to array if employing multiple species tracking
  end subroutine
+
  !================================
  subroutine interpolate_field_on_tracking( field_in, spec_in, spec_aux_in, iter, field_type )
   real(dp), dimension(:, :, :, :), allocatable, intent(in) :: field_in
@@ -470,8 +477,9 @@ module tracking
     end if
     call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2, order )
    else if (envelope) then
-    ! Envelope real part
-    interpol_field(:, :, :) = field_in(:, :, :, 1)
+    ! Envelope  sqrt( A_R^2 + A_I^2)
+    interpol_field(:, :, :) = &
+     sqrt( field_in(:, :, :, 1)*field_in(:, :, :, 1) + field_in(:, :, :, 2)*field_in(:, :, :, 2) )
    end if
   case default
   end select
@@ -489,7 +497,6 @@ module tracking
 
     end associate
 
-    call spec_in(ic)%allocate_data_output()
     call a_on_tracking_particles( interpol_field, spec_in(ic), spec_aux_in, np, order, &
      polarization, mask_in=track_mask )
    end if

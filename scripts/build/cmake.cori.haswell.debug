@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load PrgEnv-intel
+module swap PrgEnv-${PE_ENV,,} PrgEnv-intel
 module swap craype-${CRAY_CPU_TARGET} craype-haswell
 module load boost
 module load cmake

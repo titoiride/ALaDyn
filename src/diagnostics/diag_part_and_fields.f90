@@ -33,16 +33,16 @@
 
   implicit none
 
-  real (dp) :: tloc(10000), tsp(1:1001), eavg(10, 1001), &
-    eavg1(10, 1001), pavg(15, 1001, 4), favg(30, 1001)
+  real (dp) :: tloc(10000) = zero_dp, tsp(1:1001) = zero_dp, eavg(10, 1001) = zero_dp, &
+    eavg1(10, 1001) = zero_dp, pavg(15, 1001, 4) = zero_dp, favg(30, 1001) = zero_dp
   integer, parameter :: ne = 100
-  real (dp) :: nde0(ne), nde1(ne), nde2(ne)
-  real (dp) :: nde(ne, 500, 4), eksp_max(500, 4), nde_sm(ne, 500, 4), &
-    nde_sp(ne, 500, 4)
-  integer :: ionz_number(500), hgam_number(500),bunch_number(500,5)
-  real (dp) :: ionz_bavg(500, 18), bunch_bavg(500, 18,5), tbunch(1000), &
-    tionz(500), hgam_charge(500), ionz_charge(500),bcharge(500,5)
-  real (dp) :: hgam_bavg(500, 18), tgam(500)
+  real (dp) :: nde0(ne) = zero_dp, nde1(ne) = zero_dp, nde2(ne) = zero_dp
+  real (dp) :: nde(ne, 500, 4) = zero_dp, eksp_max(500, 4) = zero_dp, nde_sm(ne, 500, 4) = zero_dp, &
+    nde_sp(ne, 500, 4) = zero_dp
+  integer :: ionz_number(500) = 0, hgam_number(500) = 0, bunch_number(500,5) = 0
+  real (dp) :: ionz_bavg(500, 18) = zero_dp, bunch_bavg(500, 18,5) = zero_dp, tbunch(1000) = zero_dp, &
+    tionz(500) = zero_dp, hgam_charge(500) = zero_dp, ionz_charge(500) = zero_dp,bcharge(500,5) = zero_dp
+  real (dp) :: hgam_bavg(500, 18) = zero_dp, tgam(500) = zero_dp
 
   real (dp), allocatable, dimension(:, :), private :: diag_part_aux
 

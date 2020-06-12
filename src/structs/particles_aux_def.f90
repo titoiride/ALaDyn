@@ -69,50 +69,50 @@ module particles_aux_def
   !! Auxiliary species for operations on species type
 
   real(dp), allocatable :: aux1(:)
-  logical :: allocated_aux1
+  logical :: allocated_aux1 = .false.
   !! True if aux1 array is allocated
 
   real(dp), allocatable :: aux2(:)
-  logical :: allocated_aux2
+  logical :: allocated_aux2 = .false.
   !! True if aux2 array is allocated
 
   real(dp), allocatable :: aux3(:)
-  logical :: allocated_aux3
+  logical :: allocated_aux3 = .false.
   !! True if aux3 array is allocated
 
   real(dp), allocatable :: aux4(:)
-  logical :: allocated_aux4
+  logical :: allocated_aux4 = .false.
   !! True if aux4 array is allocated
 
   real(dp), allocatable :: aux5(:)
-  logical :: allocated_aux5
+  logical :: allocated_aux5 = .false.
   !! True if aux5 array is allocated
 
   real(dp), allocatable :: aux6(:)
-  logical :: allocated_aux6
+  logical :: allocated_aux6 = .false.
   !! True if aux6 array is allocated
 
   real(dp), allocatable :: aux7(:)
-  logical :: allocated_aux7
+  logical :: allocated_aux7 = .false.
   !! True if aux7 array is allocated
 
   real(dp), allocatable :: aux8(:)
-  logical :: allocated_aux8
+  logical :: allocated_aux8 = .false.
   !! True if aux8 array is allocated
 
   real(dp), allocatable :: old_px(:)
-  logical :: allocated_old_px
+  logical :: allocated_old_px = .false.
   !! True if aux8 array is allocated
 
   real(dp), allocatable :: old_py(:)
-  logical :: allocated_old_py
+  logical :: allocated_old_py = .false.
   !! True if aux8 array is allocated
 
   real(dp), allocatable :: old_pz(:)
-  logical :: allocated_old_pz
+  logical :: allocated_old_pz = .false.
   !! True if aux8 array is allocated
 
-  logical :: save_old_p
+  logical :: save_old_p = .false.
 
   contains
    procedure, public :: append => append_aux
@@ -130,6 +130,7 @@ module particles_aux_def
    procedure, pass :: sel_particles_index => sel_particles_index_aux
    procedure, public :: set_component_real => set_component_aux_real
    procedure, public :: set_component_integer => set_component_aux_integer
+   procedure, public :: set_properties => set_properties_aux
    procedure, pass :: sweep => sweep_aux
    procedure, public, pass :: total_size => total_size_aux
    procedure, public, pass :: track => track_spec_aux
@@ -150,26 +151,8 @@ module particles_aux_def
   logical, intent(in), optional :: tracked
   integer, intent(in), optional :: extra_outputs
   integer :: allocstatus
- 
-  if (n_particles < 0) then
-   return
-  end if
-  if ( .not. allocated(this%initialized)) then
-   allocate(this%initialized)
-  end if
-  this%initialized = .true.
-  call this%set_part_number(n_particles)
-  call this%set_dimensions(curr_ndims)
-  if ( present(tracked) ) then
-   call this%track( tracked , allocate_now=.false.)
-  else
-   call this%track( .false. )
-  end if
-  if ( PRESENT(extra_outputs) ) then
-   call this%set_extra_outputs( extra_outputs, .true. )
-  else
-   call this%set_extra_outputs( 0, .false. )
-  end if
+  logical :: extra = .false.
+  !! Setting the extra output always on false for aux species
 
   this%allocated_x = .false.
   this%allocated_y = .false.
@@ -194,6 +177,30 @@ module particles_aux_def
   this%allocated_old_px = .false.
   this%allocated_old_py = .false.
   this%allocated_old_pz = .false.
+
+  call this%set_name( 'electron' )
+  if (n_particles < 0) then
+   return
+  end if
+  if ( this%initialized ) then
+    call write_warning('WARNING: Trying to allocate an already initialized spec_aux object')
+  end if
+  this%initialized = .true.
+  call this%set_part_number(n_particles)
+  call this%set_dimensions(curr_ndims)
+  if ( present(tracked) ) then
+   call this%track( tracked , allocate_now=.false.)
+  else
+   call this%track( .false. )
+  end if
+
+  if ( PRESENT(extra_outputs) ) then
+   call this%set_extra_outputs( 0, n_particles )
+  else
+   call this%set_extra_outputs( 0, n_particles )
+  end if
+
+  call this%save_old_momentum( this%istracked(), n_particles )
   
   if (n_particles == 0) then
    this%empty = .true.
@@ -262,7 +269,6 @@ module particles_aux_def
 
   end select
 
-  call this%save_old_momentum( this%istracked() ) 
  end subroutine
 
  !========================================
@@ -270,13 +276,19 @@ module particles_aux_def
  !========================================
  
  subroutine sweep_aux( this )
+  !! Method that resets all the species elements to default and deallocates
+  !! the arrays
   class(species_aux), intent(inout) :: this
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    return
   else
-   deallocate( this%initialized )
+   this%initialized = .false.
   end if
+
+  call this%properties%sweep()
+
+  this%save_old_p = .false.
 
   if ( this%allocated_x ) then
    this%allocated_x = .false.
@@ -376,7 +388,7 @@ module particles_aux_def
   integer :: tot_size, np1, np2
 
   ! Other is always already initialized (check in any case)
-  if ( (.not. allocated(this%initialized)) .or. this%empty ) then
+  if ( (.not. this%initialized) .or. this%empty ) then
    call this%copy(other, 1, other%how_many())
    return
   end if
@@ -430,6 +442,10 @@ module particles_aux_def
    call assign(this%part_index, int(other%part_index(1:np2)), &
     np1 + 1, tot_size)
   end if
+  if(other%allocated_data_out) then
+    call assign(this%data_output, other%data_output(1:np2), &
+     np1 + 1, tot_size)
+   end if
   select type (other)
   type is (species_aux)
    if(other%allocated_old_px) then
@@ -624,7 +640,7 @@ module particles_aux_def
   integer, intent(in) :: new_number
   integer :: n_size
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    write (6, *) 'Warning, cannot extend uninitialized species'
    return
   end if
@@ -642,12 +658,11 @@ module particles_aux_def
 
   end subroutine
 
- subroutine save_old_momentum( this, flag )
+ subroutine save_old_momentum( this, flag, size_array )
   class(species_aux), intent(inout) :: this
   logical, intent(in) :: flag
-  integer :: np
+  integer, intent(in) :: size_array
 
-  np = this%array_size()
   if ( .not. flag ) then
    this%save_old_p = .false.
    return
@@ -658,29 +673,29 @@ module particles_aux_def
   select case(this%pick_dimensions())
   case(1)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np))!, source=zero_dp )
+    allocate( this%old_px(size_array))
     this%allocated_old_px = .true.
    end if
   case(2)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np))!, source=zero_dp )
+    allocate( this%old_px(size_array))
     this%allocated_old_px = .true.
    end if
    if( .not. this%allocated_old_py ) then
-    allocate( this%old_py(np))!, source=zero_dp )
+    allocate( this%old_py(size_array))
     this%allocated_old_py = .true.
    end if
   case(3)
    if( .not. this%allocated_old_px ) then
-    allocate( this%old_px(np))!, source=zero_dp )
+    allocate( this%old_px(size_array))
     this%allocated_old_px = .true.
    end if
    if( .not. this%allocated_old_py ) then
-    allocate( this%old_py(np))!, source=zero_dp )
+    allocate( this%old_py(size_array))
     this%allocated_old_py = .true.
    end if
    if( .not. this%allocated_old_pz ) then
-    allocate( this%old_pz(np))!, source=zero_dp )
+    allocate( this%old_pz(size_array))
     this%allocated_old_pz = .true.
    end if
   end select
@@ -726,8 +741,12 @@ module particles_aux_def
   if (other%allocated_index) then
    call assign(this%part_index, other%part_index(1:tot), 1, tot)
   end if
+  if (other%allocated_data_out) then
+   call assign(this%data_output, other%data_output(1:tot), 1, tot)
+  end if
   select type( other )
   type is (species_aux)
+  this%save_old_p = other%save_old_p
    if ( this%save_old_p ) then
     if (other%allocated_old_px) then
      call assign(this%old_px, other%old_px(1:tot), 1, tot)
@@ -779,8 +798,12 @@ module particles_aux_def
   if (other%allocated_weight) then
    call assign(this%weight, other%weight(lower_bound:upper_bound), 1, tot)
   end if
+  if (other%allocated_data_out) then
+   call assign(this%data_output, other%data_output(lower_bound:upper_bound), 1, tot)
+  end if
   select type( other )
   type is (species_aux)
+   this%save_old_p = other%save_old_p
    if ( this%save_old_p ) then
     if (other%allocated_old_px) then
      call assign(this%old_px, other%old_px(lower_bound:upper_bound), 1, tot)
@@ -844,6 +867,10 @@ module particles_aux_def
    flat_array( lb:(lb + array_sz - 1) ) = this%part_index(1:array_sz)
    lb = lb + array_sz
   end if
+  if( this%allocated_data_out ) then
+   flat_array( lb:(lb + array_sz - 1) ) = this%data_output(1:array_sz)
+   lb = lb + array_sz
+  end if
   if ( this%allocated_old_px ) then
    flat_array( lb:(lb + array_sz - 1) ) = this%old_px(1:array_sz)
    lb = lb + array_sz
@@ -897,6 +924,9 @@ module particles_aux_def
   end if
   if( this%allocated_index ) then
    packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(1:np) )
+  end if
+  if( this%allocated_data_out ) then
+   packed%data_output(1:new_np) = PACK( this%data_output(1:np), mask(1:np) )
   end if
   select type (packed)
   type is (species_aux)
@@ -973,6 +1003,10 @@ module particles_aux_def
    this%part_index(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
    i = i + num_particles
   end if
+  if( this%allocated_data_out ) then
+   this%data_output(1:num_particles) = flat_array((i + 1): (i + num_particles))
+   i = i + num_particles
+  end if
   if ( aux ) then
    if( this%allocated_old_px ) then
     this%old_px(1:num_particles) = flat_array((i + 1): (i + num_particles))
@@ -1000,11 +1034,12 @@ module particles_aux_def
  
    tot_len = upper_bound - lower_bound
 
-   if ( allocated(out_sp%initialized) ) then
+   if ( out_sp%initialized ) then
     call out_sp%sweep()
    end if
 
-   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked())
+   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+    extra_outputs=this%pick_extra_outputs())
    call out_sp%set_charge(this%pick_charge())
  
    if( this%allocated_x ) then
@@ -1034,6 +1069,9 @@ module particles_aux_def
    if( this%allocated_index ) then
     out_sp%part_index = this%part_index(lower_bound:upper_bound)
    end if
+   if( this%allocated_data_out ) then
+    out_sp%data_output = this%data_output(lower_bound:upper_bound)
+   end if
    select type( out_sp )
    type is ( species_aux )
     if( this%allocated_old_px ) then
@@ -1058,11 +1096,12 @@ module particles_aux_def
  
    tot_len = SIZE(index_array, DIM=1)
 
-   if ( allocated(out_sp%initialized) ) then
+   if ( out_sp%initialized ) then
     call out_sp%sweep()
    end if
 
-   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked())
+   call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+     extra_outputs=this%pick_extra_outputs())
    call out_sp%set_charge(this%pick_charge())
  
    if( this%allocated_x ) then
@@ -1119,6 +1158,12 @@ module particles_aux_def
     do i = 1, tot_len
      n = index_array(i)
      out_sp%part_index(i) = this%part_index(n)
+    end do
+   end if
+   if( this%allocated_data_out ) then
+    do i = 1, tot_len
+     n = index_array(i)
+     out_sp%data_output(i) = this%data_output(n)
     end do
    end if
 
@@ -1499,12 +1544,25 @@ module particles_aux_def
 
  end subroutine
 
+ subroutine set_properties_aux( this, properties_in )
+  class(species_aux), intent(inout) :: this
+  type(scalars), intent(in) :: properties_in
+  integer :: size_array
+
+  call this%set_charge(properties_in%pick_charge())
+  call this%set_temperature(properties_in%pick_temperature())
+  call this%set_dimensions(properties_in%pick_dimensions())
+  call this%track(properties_in%istracked())
+  size_array = this%array_size()
+  call this%set_extra_outputs(0, size_array)
+ end subroutine
+
  pure function total_size_aux( this ) result(size)
   class(species_aux), intent(in) :: this
   integer :: size
 
   if (this%istracked()) then
-   if ( .not. this%allocated_data_out ) then
+   if ( .not. this%pick_extra_outputs() > 0 ) then
     select case(this%pick_dimensions())
     case(1)
      size = 6
@@ -1608,7 +1666,7 @@ module particles_aux_def
   real(dp), intent(in) :: number
   integer :: np
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    write(6, *) 'Error, particle aux vector not initialized'
   end if
 

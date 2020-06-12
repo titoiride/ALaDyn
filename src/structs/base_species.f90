@@ -50,9 +50,9 @@ module base_species
  real(dp), allocatable, dimension(:, :), save :: bs_temp_2d
 
  type track_data_t
-  logical, public :: tracked
+  logical, public :: tracked = .false.
   !! Flag to track the particles
-  integer, public :: n_tracked
+  integer, public :: n_tracked = 0
   !! Number of tracked particles
   real(dp), allocatable, public :: xmin
   !! Minimum x position of the tracked particles
@@ -66,24 +66,26 @@ module base_species
   !! Minimum z position of the tracked particles
   real(dp), allocatable, public :: zmax
   !! Maximum z position of the tracked particles
-  integer, public :: jump
+  integer, public :: jump = 1
   !! Jump parameter in particles selection
-  integer, public :: highest_index
+  integer, public :: highest_index = 1
   !! Highest particle index available
-  integer, public :: extra_outputs
+  integer, public :: extra_outputs = 0
   !! Number of extra outputs (*i.e.* not included in the particles dynamics)
+  contains
+   procedure, public, pass :: sweep => sweep_track_data
  end type
 
  type scalars
-  character(len=100), private :: name = 'electron'
+  character(:), allocatable :: name
   !! Species name
-  real(dp), private :: charge
+  real(dp), private :: charge = -1
   !! Particle charge
-  integer, private :: n_part
+  integer, private :: n_part = 0
   !! Number of particles
-  integer, private :: dimensions
+  integer, private :: dimensions = 2
   !! Number of dimensions in which particles live
-  real, private :: temperature
+  real, private :: temperature = 0
   !! Initial temperature given to the species
   type(track_data_t), public :: track_data
   !! Type containing all the tracking datas 
@@ -102,14 +104,15 @@ module base_species
   procedure, public, pass :: set_extra_outputs => set_extra_outputs_scalars
   procedure, public, pass :: set_part_number => set_part_number_scalars
   procedure, public, pass :: set_temperature => set_temperature_scalars
+  procedure, public, pass :: sweep => sweep_scalars
   procedure, public, pass :: track => track_scalars
  end type scalars
 
  type, abstract :: base_species_T
 
-  logical, allocatable :: initialized
+  logical :: initialized = .false.
   !! Flag that states if the species has been initialized
-  logical :: empty
+  logical :: empty = .true.
   !! Flag that states if there are particles
 
   type(scalars) :: properties
@@ -117,53 +120,53 @@ module base_species
 
   real(dp), allocatable :: x(:)
   !! Array containig the x particle positions
-  logical :: allocated_x
+  logical :: allocated_x = .false.
   !! True if x array is allocated
 
   real(dp), allocatable :: y(:)
   !! Array containig the y particle positions
-  logical :: allocated_y
+  logical :: allocated_y = .false.
   !! True if y array is allocated
 
   real(dp), allocatable :: z(:)
   !! Array containig the z particle positions
-  logical :: allocated_z
+  logical :: allocated_z = .false.
   !! True if z array is allocated
 
   real(dp), allocatable :: px(:)
   !! Array containig the x particle momenta
-  logical :: allocated_px
+  logical :: allocated_px = .false.
   !! True if px array is allocated
 
   real(dp), allocatable :: py(:)
   !! Array containig the y particle momenta
-  logical :: allocated_py
+  logical :: allocated_py = .false.
   !! True if py array is allocated
 
   real(dp), allocatable :: pz(:)
   !! Array containig the z particle momenta
-  logical :: allocated_pz
+  logical :: allocated_pz = .false.
   !! True if pz array is allocated
   
   real(dp), allocatable :: gamma_inv(:)
   !! Array containig the inverse of Lorentz gamma factor
-  logical :: allocated_gamma
+  logical :: allocated_gamma = .false.
   !! True if gamma array is allocated
   
   real (dp), allocatable :: weight(:)
   !! Array containig the particle weights
-  logical :: allocated_weight
+  logical :: allocated_weight = .false.
   !! True if weight array is allocated
   
   integer, allocatable :: part_index(:)
   !! Array containig the particle index
-  logical :: allocated_index
+  logical :: allocated_index = .false.
   !! True if index array is allocated
   
   real(dp), allocatable :: data_output(:)
   !! Array used to pass any information about particles
   !! not relevant to the dynamics that has to be returned in the outputs
-  logical :: allocated_data_out
+  logical :: allocated_data_out = .false.
   !! True if data_output is allocated
 
   contains
@@ -278,6 +281,7 @@ module base_species
   abstract interface
    subroutine sel_particles_index_abstract( this, out_sp, index_array )
     import base_species_T, dp
+    implicit none
     class(base_species_T), intent(in) :: this
     class(base_species_T), intent(inout) :: out_sp
     integer, dimension(:), intent(in) :: index_array
@@ -285,6 +289,7 @@ module base_species
    
    subroutine sel_particles_bounds_abstract( this, out_sp, lower_bound, upper_bound )
     import base_species_T, dp
+    implicit none
     class(base_species_T), intent(in) :: this
     class(base_species_T), intent(inout) :: out_sp
     integer, intent(in) :: lower_bound, upper_bound
@@ -296,6 +301,7 @@ module base_species
 
    subroutine sweep_abstract( this )
     import base_species_T, dp
+    implicit none
     class(base_species_T), intent(inout) :: this
    end subroutine
 
@@ -321,26 +327,6 @@ module base_species
    integer, intent(in), optional :: extra_outputs
    integer :: allocstatus
   
-   if (n_particles < 0) then
-    return
-   end if
-   if ( .not. allocated(this%initialized)) then
-    allocate(this%initialized)
-   end if
-   this%initialized = .true.
-   call this%set_part_number(n_particles)
-   call this%set_dimensions(curr_ndims)
-   if ( present(tracked) ) then
-    call this%track( tracked , allocate_now=.false. )
-   else
-    call this%track( .false. )
-   end if
-   if ( PRESENT(extra_outputs) ) then
-    call this%set_extra_outputs( extra_outputs, .true. )
-   else
-    call this%set_extra_outputs( 0, .false. )
-   end if
-
    this%allocated_x = .false.
    this%allocated_y = .false.
    this%allocated_z = .false.
@@ -351,6 +337,29 @@ module base_species
    this%allocated_weight = .false.
    this%allocated_index = .false.
    this%allocated_data_out = .false.
+
+   call this%set_name( 'electron' )
+   if (n_particles < 0) then
+    return
+   end if
+   if ( this%initialized ) then
+    call write_warning('WARNING: Trying to allocate an already initialized spec object')
+   end if
+   this%initialized = .true.
+   call this%set_part_number(n_particles)
+   call this%set_dimensions(curr_ndims)
+   if ( present(tracked) ) then
+    call this%track( tracked , allocate_now=.false. )
+   else
+    call this%track( .false. )
+   end if
+
+   if ( PRESENT(extra_outputs) ) then
+    call this%set_extra_outputs( extra_outputs, n_particles )
+   else
+    call this%set_extra_outputs( 0, n_particles )
+   end if
+
    if (n_particles == 0) then
     this%empty = .true.
     return
@@ -415,6 +424,7 @@ module base_species
      this%allocated_index = .true.
     end if
    end select
+
   end subroutine
 
 !=== Type bound procedures
@@ -431,7 +441,8 @@ module base_species
    real(dp) :: u, t_x
    real(dp) :: whz
    integer :: dim, i, j, k
-
+  ! When this function is called in the window.f90 add_particles routine, species has already
+  ! been extended
    t_x = this%pick_temperature()
    dim = this%pick_dimensions()
    p = np_old
@@ -548,16 +559,14 @@ module base_species
    end select
   end function
 
-  subroutine allocate_data_output( this )
+  subroutine allocate_data_output( this, size_array )
    class(base_species_T), intent(inout) :: this
-   integer :: np
+   integer :: size_array
 
-   np = this%how_many()
+   call realloc_temp_1d( this%data_output, size_array )
+   this%data_output = zero_dp
+   this%allocated_data_out = .true.
 
-   if (.not. this%allocated_data_out) then
-    allocate( this%data_output(np) )
-    this%allocated_data_out = .true.
-   end if
    end subroutine
 
   subroutine deallocate_data_output( this )
@@ -580,9 +589,7 @@ module base_species
 
    track_out = .false.
    if ( present(tracking) ) then
-    if (tracking) then
-     track_out = .true.
-    end if
+    track_out = tracking
    end if
    i=1
 
@@ -599,9 +606,9 @@ module base_species
     if ( track_out ) then
      particles(i) = this%part_index(index_in)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(i) = this%data_output(index_in)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(i) = this%data_output(index_in)
+     end if
     end if
    case(2)
     particles(i) = this%x(index_in)
@@ -619,9 +626,9 @@ module base_species
     if ( track_out ) then
      particles(i) = this%part_index(index_in)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(i) = this%data_output(index_in)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(i) = this%data_output(index_in)
+     end if
     end if
    case(3)
     particles(i) = this%x(index_in)
@@ -643,9 +650,9 @@ module base_species
     if ( track_out ) then
      particles(i) = this%part_index(index_in)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(i) = this%data_output(index_in)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(i) = this%data_output(index_in)
+     end if
     end if
    end select
   end subroutine
@@ -661,9 +668,7 @@ module base_species
 
    track_out = .false.
    if ( present(tracking) ) then
-    if (tracking) then
-     track_out = .true.
-    end if
+    track_out = tracking
    end if
    i = 1
 
@@ -680,9 +685,9 @@ module base_species
     if ( track_out ) then
      particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     end if
     end if
    case(2)
     particles(1:(ub-lb+1), i) = this%x(lb:ub)
@@ -700,9 +705,9 @@ module base_species
     if ( track_out ) then
      particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     end if
     end if
    case(3)
     particles(1:(ub-lb+1), i) = this%x(lb:ub)
@@ -724,9 +729,9 @@ module base_species
     if ( track_out ) then
      particles(1:(ub-lb+1), i) = this%part_index(lb:ub)
      i = i + 1
-    end if
-    if ( this%allocated_data_out ) then
-     particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     if ( this%pick_extra_outputs() > 0 ) then
+      particles(1:(ub-lb+1), i) = this%data_output(lb:ub)
+     end if
     end if
    end select
   end subroutine
@@ -742,15 +747,13 @@ module base_species
 
    track_out = .false.
    if ( present(tracking) ) then
-    if (tracking) then
-     track_out = .true.
-    end if
+    track_out = tracking
    end if
 
    size_ind = SIZE(index_in, DIM=1)
    k = 1
    if ( track_out ) then
-    if ( this%allocated_data_out ) then
+    if ( this%pick_extra_outputs() > 0 ) then
      select case(this%pick_dimensions())
      case(1)
       do n = 1, size_ind
@@ -970,6 +973,9 @@ module base_species
    if (other%allocated_index) then
     call assign(this%part_index, other%part_index(1:tot), 1, tot)
    end if
+   if (other%allocated_data_out) then
+    call assign(this%data_output, other%data_output(1:tot), 1, tot)
+   end if
   end subroutine
 
 !DIR$ ATTRIBUTES INLINE:: copy_boundaries
@@ -1011,6 +1017,9 @@ module base_species
    end if
    if (other%allocated_index) then
     call assign(this%part_index, other%part_index(lower_bound:upper_bound), 1, tot)
+   end if
+   if (other%allocated_data_out) then
+    call assign(this%data_output, other%data_output(lower_bound:upper_bound), 1, tot)
    end if
   end subroutine
   
@@ -1219,6 +1228,10 @@ module base_species
     flat_array( lb:(lb + array_sz - 1) ) = this%part_index(1:array_sz)
     lb = lb + array_sz
    end if
+   if( this%allocated_data_out ) then
+    flat_array( lb:(lb + array_sz - 1) ) = this%data_output(1:array_sz)
+    lb = lb + array_sz
+   end if
 
   end subroutine
 
@@ -1273,6 +1286,9 @@ module base_species
    end if
    if( this%allocated_index ) then
     packed%part_index(1:new_np) = PACK( this%part_index(1:np), mask(1:np) )
+   end if
+   if( this%allocated_data_out ) then
+    packed%data_output(1:new_np) = PACK( this%data_output(1:np), mask(1:np) )
    end if
 
    call packed%set_part_number(new_np)
@@ -1337,6 +1353,10 @@ module base_species
     this%part_index(1:num_particles) = int(flat_array((i + 1): (i + num_particles)))
     i = i + num_particles
    end if
+   if( this%allocated_data_out ) then
+    this%data_output(1:num_particles) = flat_array((i + 1): (i + num_particles))
+    i = i + num_particles
+   end if
  
    if ( aux ) then
     call write_warning("Called aux routine for non aux species")
@@ -1349,7 +1369,7 @@ module base_species
    type (scalars), intent(in) :: properties_in
    type (scalars) :: old_properties
 
-   if ( allocated(this%initialized) ) then
+   if ( this%initialized ) then
     if (this%array_size() < n_parts ) then
      old_properties = this%pick_properties()
      call this%sweep()
@@ -1383,14 +1403,6 @@ module base_species
 
   end function
 
-  pure function pick_charge_scalars( this ) result(ch)
-   class(scalars), intent(in) :: this
-   real(dp) :: ch
-
-   ch = this%charge
-
-  end function
-
   pure function pick_charge( this ) result(ch)
    class(base_species_T), intent(in) :: this
    real(dp) :: ch
@@ -1406,36 +1418,12 @@ module base_species
    n_outputs = this%properties%track_data%extra_outputs
 
   end function
-
-  pure function pick_extra_outputs_scalars( this ) result(n_outputs)
-   class(scalars), intent(in) :: this
-   integer :: n_outputs
-
-   n_outputs = this%track_data%extra_outputs
-
-  end function
-
-  pure function pick_temperature_scalars( this ) result(tem)
-   class(scalars), intent(in) :: this
-   real(dp) :: tem
-
-   tem = this%temperature
-
-  end function
   
   pure function pick_temperature( this ) result(tem)
    class(base_species_T), intent(in) :: this
    real(dp) :: tem
 
    tem = this%properties%temperature
-
-  end function
-
-  pure function pick_dimensions_scalars( this ) result(dims)
-   class(scalars), intent(in) :: this
-   integer :: dims
-
-   dims = this%dimensions
 
   end function
 
@@ -1446,33 +1434,12 @@ module base_species
    dims = this%properties%dimensions
 
   end function
-  
 
   pure function pick_name( this ) result(name)
    class(base_species_T), intent(in) :: this
    character(len=100) :: name
 
-   name = trim(this%properties%name)
-
-  end function
-
-  pure function pick_name_scalars( this ) result(name)
-   class(scalars), intent(in) :: this
-   character(len=100) :: name
-
-   name = trim(this%name)
-
-  end function
-  
-  function pick_properties_scalars( this ) result(properties)
-   class(scalars), intent(in) :: this
-   type(scalars) :: properties
-
-   call properties%set_charge(this%pick_charge())
-   call properties%set_temperature(this%pick_temperature())
-   call properties%set_dimensions(this%pick_dimensions())
-   call properties%track(this%istracked())
-   call properties%set_extra_outputs(this%pick_extra_outputs(), .true.)
+   name = this%properties%name
 
   end function
   
@@ -1484,7 +1451,7 @@ module base_species
    call properties%set_temperature(this%pick_temperature())
    call properties%set_dimensions(this%pick_dimensions())
    call properties%track(this%istracked())
-   call properties%set_extra_outputs(this%pick_extra_outputs(), .true.)
+   call properties%set_extra_outputs(this%pick_extra_outputs())
 
   end function
   
@@ -1501,12 +1468,14 @@ module base_species
   subroutine set_properties( this, properties_in )
    class(base_species_T), intent(inout) :: this
    type(scalars), intent(in) :: properties_in
+   integer :: size_array
 
    call this%set_charge(properties_in%pick_charge())
    call this%set_temperature(properties_in%pick_temperature())
    call this%set_dimensions(properties_in%pick_dimensions())
    call this%track(properties_in%istracked())
-   call this%set_extra_outputs(properties_in%pick_extra_outputs(), .true.)
+   size_array = this%array_size()
+   call this%set_extra_outputs(properties_in%pick_extra_outputs(), size_array)
 
   end subroutine
 
@@ -1526,22 +1495,6 @@ module base_species
 
   end subroutine
   
-  subroutine set_charge_scalars( this, ch)
-   class(scalars), intent(inout) :: this
-   real(dp), intent(in) :: ch
-   
-   this%charge = ch
-
-  end subroutine
-  
-  subroutine set_dimensions_scalars( this, dimens)
-   class(scalars), intent(inout) :: this
-   integer, intent(in) :: dimens
-   
-   this%dimensions = dimens
-
-  end subroutine
-  
   subroutine set_dimensions( this, dimens)
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: dimens
@@ -1550,31 +1503,19 @@ module base_species
 
   end subroutine
 
-  subroutine set_extra_outputs( this, n_outputs, flag )
+  subroutine set_extra_outputs( this, n_outputs, size_array )
    class(base_species_T), intent(inout) :: this
-   integer, intent(in) :: n_outputs
-   logical, intent(in) :: flag
+   integer, intent(in) :: n_outputs, size_array
+   integer :: n_outputs_old
 
-   if (.not. flag) then
-    this%properties%track_data%extra_outputs = 0
-    return
-   end if
+   n_outputs_old = this%properties%track_data%extra_outputs
 
    this%properties%track_data%extra_outputs = n_outputs
 
-  end subroutine
-
-  subroutine set_extra_outputs_scalars( this, n_outputs, flag )
-   class(scalars), intent(inout) :: this
-   integer, intent(in) :: n_outputs
-   logical, intent(in) :: flag
-
-   if (.not. flag) then
-    this%track_data%extra_outputs = 0
-    return
+   if ( (this%properties%track_data%extra_outputs /= n_outputs_old) .and. &
+        (size_array > 0) ) then
+    call this%allocate_data_output( size_array )
    end if
-
-   this%track_data%extra_outputs = n_outputs
 
   end subroutine
 
@@ -1582,15 +1523,7 @@ module base_species
    class(base_species_T), intent(inout) :: this
    character(len=*), intent(in) :: name
    
-   this%properties%name = trim(name)
-
-  end subroutine
-  
-  subroutine set_name_scalars( this, name)
-   class(scalars), intent(inout) :: this
-   character(len=*), intent(in) :: name
-   
-   this%name = trim(name)
+   this%properties%name = name
 
   end subroutine
 
@@ -1608,26 +1541,11 @@ module base_species
    end if
   end subroutine
 
-  subroutine set_part_number_scalars( this, n_parts)
-   class(scalars), intent(inout) :: this
-   integer, intent(in) :: n_parts
-
-   this%n_part = n_parts
-
-  end subroutine
-
   subroutine set_temperature( this, temperature)
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in) :: temperature
 
    this%properties%temperature = temperature
-  end subroutine
-
-  subroutine set_temperature_scalars( this, temperature)
-   class(scalars), intent(inout) :: this
-   real(dp), intent(in) :: temperature
-
-   this%temperature = temperature
   end subroutine
 
   subroutine track( this, track_flag, allocate_now )
@@ -1649,27 +1567,11 @@ module base_species
 
   end subroutine
 
-  subroutine track_scalars( this, track_flag )
-   class(scalars), intent(inout) :: this
-   logical, intent(in) :: track_flag
-
-   this%track_data%tracked = track_flag
-
-  end subroutine
-
   pure function istracked( this ) result(tracked)
    class(base_species_T), intent(in) :: this
    logical :: tracked
 
    tracked = this%properties%track_data%tracked
-
-  end function
-
-  pure function istracked_scalars( this ) result(tracked)
-   class(scalars), intent(in) :: this
-   logical :: tracked
-
-   tracked = this%track_data%tracked
 
   end function
 
@@ -1790,7 +1692,7 @@ module base_species
    integer :: size
 
    if (this%istracked()) then
-    if ( .not. this%allocated_data_out ) then
+    if ( .not. this%pick_extra_outputs() > 0 ) then
      select case(this%pick_dimensions())
      case(1)
       size = 5
@@ -1828,6 +1730,145 @@ module base_species
 
   end function
 
+!==== Procedures for the track_data type ====
+  !===== Sweep track_data type =======
+
+  subroutine sweep_track_data( this )
+   class(track_data_t), intent(inout) :: this
+
+   this%tracked = .false.
+   this%extra_outputs = 0
+
+  end subroutine
+!==== Procedures for the scalar type ====
+
+  !===== Sweep scalar type =======
+  subroutine sweep_scalars( this )
+   class(scalars), intent(inout) :: this
+
+   this%charge = -1
+   this%dimensions = 2
+   this%n_part = 0
+   this%temperature = 0
+   call this%track_data%sweep()
+
+  end subroutine
+
+  !==== Type bound procedures ====
+  pure function istracked_scalars( this ) result(tracked)
+   class(scalars), intent(in) :: this
+   logical :: tracked
+
+   tracked = this%track_data%tracked
+
+  end function
+
+  pure function pick_charge_scalars( this ) result(ch)
+   class(scalars), intent(in) :: this
+   real(dp) :: ch
+
+   ch = this%charge
+
+  end function
+
+  pure function pick_dimensions_scalars( this ) result(dims)
+   class(scalars), intent(in) :: this
+   integer :: dims
+
+   dims = this%dimensions
+
+  end function
+
+  pure function pick_extra_outputs_scalars( this ) result(n_outputs)
+   class(scalars), intent(in) :: this
+   integer :: n_outputs
+
+   n_outputs = this%track_data%extra_outputs
+
+  end function
+
+  pure function pick_name_scalars( this ) result(name)
+   class(scalars), intent(in) :: this
+   character(len=100) :: name
+
+   name = this%name
+
+  end function
+  
+  function pick_properties_scalars( this ) result(properties)
+   class(scalars), intent(in) :: this
+   type(scalars) :: properties
+
+   call properties%set_charge(this%pick_charge())
+   call properties%set_temperature(this%pick_temperature())
+   call properties%set_dimensions(this%pick_dimensions())
+   call properties%track(this%istracked())
+   call properties%set_extra_outputs(this%pick_extra_outputs())
+
+  end function
+
+  pure function pick_temperature_scalars( this ) result(tem)
+   class(scalars), intent(in) :: this
+   real(dp) :: tem
+
+   tem = this%temperature
+
+  end function
+
+  subroutine set_charge_scalars( this, ch)
+   class(scalars), intent(inout) :: this
+   real(dp), intent(in) :: ch
+   
+   this%charge = ch
+
+  end subroutine
+  
+  subroutine set_dimensions_scalars( this, dimens)
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: dimens
+   
+   this%dimensions = dimens
+
+  end subroutine
+
+  subroutine set_extra_outputs_scalars( this, n_outputs )
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: n_outputs
+
+   this%track_data%extra_outputs = n_outputs
+
+  end subroutine
+
+  subroutine set_name_scalars( this, name)
+   class(scalars), intent(inout) :: this
+   character(len=*), intent(in) :: name
+   
+   this%name = name
+
+  end subroutine
+
+  subroutine set_part_number_scalars( this, n_parts)
+   class(scalars), intent(inout) :: this
+   integer, intent(in) :: n_parts
+
+   this%n_part = n_parts
+
+  end subroutine
+
+  subroutine set_temperature_scalars( this, temperature)
+   class(scalars), intent(inout) :: this
+   real(dp), intent(in) :: temperature
+   
+   this%temperature = temperature
+  end subroutine
+  
+  subroutine track_scalars( this, track_flag )
+   class(scalars), intent(inout) :: this
+   logical, intent(in) :: track_flag
+
+   this%track_data%tracked = track_flag
+
+  end subroutine
 !==== Procedures not bound to type ======
 
  subroutine assign_real_realdp( array, values, lb, ub, n_parts)
@@ -1847,9 +1888,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = values(:)
 
@@ -1872,9 +1913,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = real(values(:), dp)
 
@@ -1897,9 +1938,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = real(values(:), sp)
 
@@ -1922,9 +1963,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = values(:)
 
@@ -1947,9 +1988,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = real(values(:), sp)
 
@@ -1972,9 +2013,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = int(values(:))
 
@@ -1997,9 +2038,9 @@ module base_species
    write( 6, *) 'Assigning wrong value size'
   end if
 
-  if ( .not. allocated(array) ) then
-   allocate( array(np) )
-  end if
+  ! if ( .not. allocated(array) ) then
+  !  allocate( array(np) )
+  ! end if
 
   array(lb:ub) = values(:)
 

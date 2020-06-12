@@ -1,8 +1,9 @@
 #!/bin/bash
 
-module swap PrgEnv-${PE_ENV,,} PrgEnv-intel
+module swap PrgEnv-${PE_ENV,,} PrgEnv-gnu
 module swap craype-${CRAY_CPU_TARGET} craype-haswell
 module load boost
+module load cray-fftw
 module load cmake
 
 export FC=ftn

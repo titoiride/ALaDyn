@@ -266,7 +266,7 @@
   ! sends ns data to the right
   if (nr>0) then !receives nr data from left
    n_tot = nl_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties, aux_in=.true.)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nl_recv, part_properties, aux_in=.false.)
    call sp_aux_new%append(temp_spec)
    npt = npt + nl_recv
   end if
@@ -301,7 +301,7 @@
   ! sends ns data to the left recieves nr data from right
   if (nr>0) then
    n_tot = nr_recv*tot_size
-   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties, aux_in=.true.)
+   call temp_spec%redistribute(aux_array2(1:n_tot), nr_recv, part_properties, aux_in=.false.)
    call sp_aux_new%append(temp_spec)
    npt = npt + nr_recv
   end if
@@ -483,7 +483,8 @@
    integer, intent (in) :: ibd, component, ndv, old_np, n_sr(4)
    integer, intent (out) :: npt
    type(index_array) :: left_pind, right_pind
-   type( species_aux ) :: temp_spec
+   type( species_new ) :: temp_spec_new
+   type( species_aux ) :: temp_spec_aux
    type( scalars ) :: part_properties
    real(dp), allocatable :: temp(:), xp(:)
    integer :: kk, p, q, ns, nr, cdir, tot, tot_aux, dump
@@ -583,13 +584,13 @@
     else
     !To be checked case ibd == 1
      
-     call sp_loc%sel_particles( temp_spec, right_pind%indices(:) )
-     tot = temp_spec%how_many()*tot_size_spec
-     call temp_spec%flatten_into(aux_array1)
-     call aux_sp%sel_particles( temp_spec, right_pind%indices(:) )
-     tot_aux = temp_spec%how_many()*tot_size_aux
+     call sp_loc%sel_particles( temp_spec_new, right_pind%indices(:) )
+     tot = temp_spec_new%how_many()*tot_size_spec
+     call temp_spec_new%flatten_into(aux_array1)
+     call aux_sp%sel_particles( temp_spec_aux, right_pind%indices(:) )
+     tot_aux = temp_spec_aux%how_many()*tot_size_aux
      ! Using temporary array bs_temp_1d to store data
-     call temp_spec%flatten_into(bs_temp_1d)
+     call temp_spec_aux%flatten_into(bs_temp_1d)
      aux_array1( (tot+1):(tot + tot_aux) ) = bs_temp_1d(1:tot_aux)
     end if
    end if
@@ -603,10 +604,10 @@
    if (nr>0) then !receives nr data from left
     tot = nl_recv*tot_size_spec
     tot_aux = nl_recv*tot_size_aux
-    call temp_spec%redistribute(aux_array2(1:tot), nl_recv, part_properties, aux_in=.false.)
-    call sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( tot + 1: tot + tot_aux), nl_recv, part_properties, aux_in=.true.)
-    call sp1_aux_new%append(temp_spec)
+    call temp_spec_new%redistribute(aux_array2(1:tot), nl_recv, part_properties, aux_in=.false.)
+    call sp_aux_new%append(temp_spec_new)
+    call temp_spec_aux%redistribute(aux_array2( tot + 1: tot + tot_aux), nl_recv, part_properties, aux_in=.true.)
+    call sp1_aux_new%append(temp_spec_aux)
     npt = npt + nl_recv
    end if
  ! !===================
@@ -640,14 +641,14 @@
  !     end do
     else
     !============ NON PERIODIC EXCHANGE
-     call sp_loc%sel_particles( temp_spec, left_pind%indices(:) )
-     tot = temp_spec%how_many()*tot_size_spec
-     call temp_spec%flatten_into(aux_array1)
+     call sp_loc%sel_particles( temp_spec_new, left_pind%indices(:) )
+     tot = temp_spec_new%how_many()*tot_size_spec
+     call temp_spec_new%flatten_into(aux_array1)
 
-     call aux_sp%sel_particles( temp_spec, left_pind%indices(:) )
-     tot_aux = temp_spec%how_many()*tot_size_aux
+     call aux_sp%sel_particles( temp_spec_aux, left_pind%indices(:) )
+     tot_aux = temp_spec_aux%how_many()*tot_size_aux
      ! Using temporary array bs_temp_1d to store data
-     call temp_spec%flatten_into(bs_temp_1d)
+     call temp_spec_aux%flatten_into(bs_temp_1d)
      aux_array1( (tot+1):(tot + tot_aux) ) = bs_temp_1d(1:tot_aux)
 
     end if
@@ -661,10 +662,10 @@
    if (nr>0) then
     tot = nr_recv*tot_size_spec
     tot_aux = nr_recv*tot_size_aux
-    call temp_spec%redistribute(aux_array2(1:tot), nr_recv, part_properties, aux_in=.false.)
-    call sp_aux_new%append(temp_spec)
-    call temp_spec%redistribute(aux_array2( tot + 1: tot + tot_aux), nr_recv, part_properties, aux_in=.true.)
-    call sp1_aux_new%append(temp_spec)
+    call temp_spec_new%redistribute(aux_array2(1:tot), nr_recv, part_properties, aux_in=.false.)
+    call sp_aux_new%append(temp_spec_new)
+    call temp_spec_aux%redistribute(aux_array2( tot + 1: tot + tot_aux), nr_recv, part_properties, aux_in=.true.)
+    call sp1_aux_new%append(temp_spec_aux)
     npt = npt + nr_recv
    end if
    call sp_aux_new%set_properties(part_properties)

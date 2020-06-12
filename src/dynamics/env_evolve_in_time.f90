@@ -28,6 +28,7 @@
   use ionize, only: set_field_ioniz_wfunction, ionization_cycle, de_inv
   use fluid_density_momenta, only: fluid_curr_accumulate,&
    set_env_momentum_density_flux, update_adam_bash_fluid_variables
+  use tracking
   use util, only: init_random_seed
 
   implicit none
@@ -311,6 +312,10 @@
    if (hybrid) then
     jc(:, :, :, 3) = jc(:, :, :, 3) + flux(:, :, :, curr_ndim+2)
    end if
+   !================================================
+   ! Laser field is interpolated on tracked particles, if requested from output
+   call interpolate_field_on_tracking( env, spec_in, spec_aux_in, it_loc, A_PARTICLE )
+   !=======================
    !===================
    ! in the envelope equation (A^{n-1},A^n)==> (A^n,A^{n+1})
    ! jc(3) = <q^2n/gam>

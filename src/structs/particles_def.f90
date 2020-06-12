@@ -58,26 +58,6 @@ module particles_def
   integer, intent(in), optional :: extra_outputs
   integer :: allocstatus
  
-  if (n_particles < 0) then
-   return
-  end if
-  if ( .not. allocated(this%initialized)) then
-   allocate(this%initialized)
-  end if
-  this%initialized = .true.
-  call this%set_part_number(n_particles)
-  call this%set_dimensions(curr_ndims)
-  if ( present(tracked) ) then
-   call this%track( tracked , allocate_now=.false.)
-  else
-   call this%track( .false. )
-  end if
-  if ( PRESENT(extra_outputs) ) then
-   call this%set_extra_outputs( extra_outputs, .true. )
-  else
-   call this%set_extra_outputs( 0, .false. )
-  end if
-
   this%allocated_x = .false.
   this%allocated_y = .false.
   this%allocated_z = .false.
@@ -88,6 +68,29 @@ module particles_def
   this%allocated_weight = .false.
   this%allocated_index = .false.
   this%allocated_data_out = .false.
+
+  call this%set_name( 'electron' )
+  if (n_particles < 0) then
+   return
+  end if
+  if ( this%initialized) then
+    call write_warning('WARNING: Trying to allocate an already initialized spec_new object')
+  end if
+  this%initialized = .true.
+  call this%set_part_number(n_particles)
+  call this%set_dimensions(curr_ndims)
+  if ( present(tracked) ) then
+   call this%track( tracked , allocate_now=.false.)
+  else
+   call this%track( .false. )
+  end if
+
+  if ( PRESENT(extra_outputs) ) then
+   call this%set_extra_outputs( extra_outputs, n_particles )
+  else
+   call this%set_extra_outputs( 0, n_particles )
+  end if
+
   if (n_particles == 0) then
    this%empty = .true.
    return
@@ -152,6 +155,7 @@ module particles_def
     this%allocated_index = .true.
    end if
   end select
+
  end subroutine
 
  !========================================
@@ -159,13 +163,17 @@ module particles_def
  !========================================
  
  subroutine sweep_spec( this )
+  !! Method that resets all the species elements to default and deallocates
+  !! the arrays
   class(species_new), intent(inout) :: this
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    return
   else
-   deallocate( this%initialized )
+   this%initialized = .false.
   end if
+
+  call this%properties%sweep()
 
   if ( this%allocated_x ) then
    this%allocated_x = .false.
@@ -219,7 +227,7 @@ module particles_def
   integer :: tot_size, np1, np2
 
   ! Other is always already initialized (check in any case)
-  if ( (.not. allocated(this%initialized)) .or. this%empty ) then
+  if ( (.not. this%initialized) .or. this%empty ) then
     call this%copy(other, 1, other%how_many())
     return
   end if
@@ -271,6 +279,10 @@ module particles_def
   end if
   if(other%allocated_index) then
    call assign(this%part_index, int(other%part_index(1:np2)), &
+    np1 + 1, tot_size)
+  end if
+  if(other%allocated_data_out) then
+   call assign(this%data_output, other%data_output(1:np2), &
     np1 + 1, tot_size)
   end if
 
@@ -386,7 +398,7 @@ module particles_def
   integer :: n_size
 
 
-  if ( .not. allocated(this%initialized) ) then
+  if ( .not. this%initialized ) then
    write (6, *) 'Warning, cannot extend uninitialized species'
    return
   end if
@@ -413,11 +425,12 @@ module particles_def
 
   tot_len = upper_bound - lower_bound
 
-  if ( allocated(out_sp%initialized) ) then
+  if ( out_sp%initialized ) then
    call out_sp%sweep()
   end if
 
-  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked() )
+  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+  extra_outputs=this%pick_extra_outputs() )
   call out_sp%set_charge(this%pick_charge())
 
   if( this%allocated_x ) then
@@ -447,6 +460,9 @@ module particles_def
   if( this%allocated_index ) then
    out_sp%part_index = this%part_index(lower_bound:upper_bound)
   end if
+  if( this%allocated_data_out ) then
+   out_sp%data_output = this%data_output(lower_bound:upper_bound)
+  end if
 
   call out_sp%set_part_number(out_sp%array_size())
 
@@ -460,11 +476,12 @@ module particles_def
 
   tot_len = SIZE(index_array, DIM=1)
 
-  if ( allocated(out_sp%initialized) ) then
+  if ( out_sp%initialized ) then
    call out_sp%sweep()
   end if
 
-  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked() )
+  call out_sp%new_species( tot_len, this%pick_dimensions(), tracked=this%istracked(), &
+  extra_outputs=this%pick_extra_outputs() )
   call out_sp%set_charge(this%pick_charge())
 
   if( this%allocated_x ) then
@@ -521,6 +538,12 @@ module particles_def
    do i = 1, tot_len
     n = index_array(i)
     out_sp%part_index(i) = this%part_index(n)
+   end do
+  end if
+  if( this%allocated_data_out ) then
+   do i = 1, tot_len
+    n = index_array(i)
+    out_sp%data_output(i) = this%data_output(n)
    end do
   end if
 
