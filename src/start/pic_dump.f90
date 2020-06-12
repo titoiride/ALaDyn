@@ -35,15 +35,33 @@
    module procedure restart_new
    module procedure restart_old
   end interface
+  
+  interface particles_dump
+   module procedure particles_dump_new
+   module procedure particles_dump_old
+  end interface
+    
+  interface dump_data
+   module procedure dump_data_new
+   module procedure dump_data_old
+  end interface
+
   contains
 
-  subroutine particles_dump_new( spec_in, spec_aux_in, lenw, max_npt_size_in )
+  subroutine dump_properties( spec_in )
+   type(species_new), intent(in), dimension(:) :: spec_in
+   integer :: ic
+
+   
+  end subroutine
+   subroutine particles_dump_new( spec_in, spec_aux_in, lenw, ip_loc_in, max_npt_size_in )
    type(species_new), intent(in), dimension(:) :: spec_in
    type(species_aux), intent(in) :: spec_aux_in
    integer, intent(inout), dimension(:) :: lenw
+   integer, intent(in), dimension(:) :: ip_loc_in
    integer, intent(inout) :: max_npt_size_in
-   integer :: size_spec, size_spec_aux, tot, ic
    real(dp), allocatable, dimension(:) :: temp_buff 
+   integer :: size_spec, size_spec_aux, tot, ic, np, kk
 
    lenw(:) = 0
    if(max_npt_size_in <= 0) return
@@ -52,7 +70,7 @@
    do ic = 1, nsp
     lenw(1:npe) = lenw(1:npe) + size_spec + size_spec_aux
    end do
-   lenw(1:npe) = lenw(1:npe)*ip_loc(1:npe)
+   lenw(1:npe) = lenw(1:npe)*ip_loc_in(1:npe)
    max_npt_size_in = maxval(lenw(1:npe))
    kk = 0
    call array_realloc_1d( send_buff, lenw(mype + 1) )
@@ -66,21 +84,22 @@
      tot = np*spec_aux_in%total_size()
      call spec_aux_in%flatten_into(temp_buff)
      send_buff( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
-     kk = kk + tot
     end if
    end do
 
   end subroutine
 
-  subroutine particles_dump_old( spec_in, lenw, max_npt_size_in )
-   type(species_new), intent(in), dimension(:) :: spec_in
+  subroutine particles_dump_old( spec_in, lenw, ip_loc_in, max_npt_size_in )
+   type(species), intent(in), dimension(:) :: spec_in
    integer, intent(inout), dimension(:) :: lenw
+   integer, intent(in), dimension(:) :: ip_loc_in
    integer, intent(inout) :: max_npt_size_in
-   integer :: ic
+   integer :: ic, np, i, j, kk, ndv
 
-   if (max_npt_size <= 0) return
-   lenw(1:npe) = ndv*ip_loc(1:npe)
-   max_npt_size = maxval(lenw(1:npe))
+   ndv = nd2 + 1
+   if (max_npt_size_in <= 0) return
+   lenw(1:npe) = ndv*ip_loc_in(1:npe)
+   max_npt_size_in = maxval(lenw(1:npe))
    kk = 0
    call array_realloc_1d( send_buff, lenw(mype + 1) )
    do ic = 1, nsp
@@ -97,9 +116,14 @@
 
   end subroutine
 
-  subroutine dump_data(it_loc, tloc, spec_in, spec_aux_in)
-   type(species), dimension(:), intent(in) :: spec_in
-   type(species), dimension(:), intent(in) :: spec_aux_in
+  subroutine particles_restart_new( spec_in, spec_aux_in )
+   type(species_new), intent(in), dimension(:) :: spec_in
+   type(species_aux), intent(in) :: spec_aux_in
+  end subroutine
+
+  subroutine dump_data_new(it_loc, tloc, spec_in, spec_aux_in)
+   type(species_new), dimension(:), intent(in) :: spec_in
+   type(species_aux), intent(in) :: spec_aux_in
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
    character (9) :: fname = '         '
@@ -125,7 +149,7 @@
    integer :: max_npt_size
    integer :: np, ic, lun, i, j, k, kk, ipe, lenbuff
    integer :: nxf_loc, nyf_loc, nzf_loc, ndv, ndvb
-   integer :: npt_arr(npe, nsp), ip_loc(npe), ip_loc_bunch(npe)
+   integer :: npt_arr(npe, nsp), ip_loc(npe)
    integer :: loc_grid_size(npe), loc2d_grid_size(npe), lenw(npe)
    integer :: grid_size_max, grid2d_size_max
    integer :: env_cp, env1_cp, fl_cp, ebf_cp
@@ -275,7 +299,339 @@
    !=====================
    !=== PARTICLES DUMP SECTION ====
 
-   call particles_dump( spec_in, spec_aux_in, lenw, max_npt_size )
+   call particles_dump( spec_in, spec_aux_in, lenw, ip_loc, max_npt_size )
+
+   if ( max_npt_size > 0 ) then
+    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype))
+    disp_col = 8*disp_col
+    if ( disp_col > 0 ) then
+     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
+     fnamel_part)
+    end if
+    if (pe0) write (6, *) 'Particles data dumped'
+   end if
+   !=== END PARTICLES DUMP SECTION ===
+
+   !=== ELECTROMAGNETIC FIELD DUMP SECTION ===
+   lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
+   kk = 0
+   do ic = 1, ebf_cp
+    do k = 1, nzf_loc
+     do j = 1, nyf_loc
+      do i = 1, nxf_loc
+       kk = kk + 1
+       send_buff(kk) = ebf(i, j, k, ic)
+      end do
+     end do
+    end do
+   end do
+
+   disp = lenw(1+mype)
+   disp_col = imody*disp
+   disp_col = 8*disp_col
+   call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
+   fnamel_ebf)
+   if (pe0) write (6, *) 'Electromagnetic fields data dumped'
+   !=== END ELECTROMAGNETIC FIELD DUMP SECTION ===
+
+   !=== ENVELOPE FIELD DUMP SECTION ===
+   if (envelope) then
+    lenw(1:npe) = (env_cp+env1_cp)*loc_grid_size(1:npe)
+    kk = 0
+    do ic = 1, env_cp
+     do k = 1, nzf_loc
+      do j = 1, nyf_loc
+       do i = 1, nxf_loc
+        kk = kk + 1
+        send_buff(kk) = env(i, j, k, ic)
+       end do
+      end do
+     end do
+    end do
+    if (Two_color) then
+     do ic = 1, env1_cp
+      do k = 1, nzf_loc
+       do j = 1, nyf_loc
+        do i = 1, nxf_loc
+         kk = kk + 1
+         send_buff(kk) = env1(i, j, k, ic)
+        end do
+       end do
+      end do
+     end do
+    end if
+    disp = lenw(1+mype)
+    disp_col = imody*disp
+    disp_col = 8*disp_col
+    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
+    fnamel_env)
+    if (pe0) write (6, *) 'Envelope field data dumped'
+   end if
+   !=== END ENVELOPE FIELD DUMP SECTION ===
+
+   !=== FLUID DUMP SECTION ===
+   if (hybrid) then
+    lenw(1:npe) = 2*fl_cp*loc_grid_size(1:npe) + loc2d_grid_size(1:npe)
+    kk = 0
+    do k = 1, nzf_loc
+     do j = 1, nyf_loc
+      kk = kk + 1
+      send_buff(kk) = fluid_yz_profile(j, k)
+     end do
+    end do
+    do ic = 1, fl_cp
+     do k = 1, nzf_loc
+      do j = 1, nyf_loc
+       do i = 1, nxf_loc
+        kk = kk + 1
+        send_buff(kk) = up(i, j, k, ic)
+       end do
+      end do
+     end do
+    end do
+    do ic = 1, fl_cp
+     do k = 1, nzf_loc
+      do j = 1, nyf_loc
+       do i = 1, nxf_loc
+        kk = kk + 1
+        send_buff(kk) = up0(i, j, k, ic)
+       end do
+      end do
+     end do
+    end do
+    disp = lenw(1+mype)
+    disp_col = imody*disp
+    disp_col = 8*disp_col
+    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
+    fnamel_fl)
+    if (pe0) write (6, *) 'Fluid density and momentum data dumped'
+   end if
+
+   !=== END FLUID DUMP SECTION ===
+   !============== write (y,z,wghyz) initial part distribution
+   if (part) then
+    kk = 0
+    do ic = 1, nsp
+     if (loc_npty(ic)>0) then
+      do i = 1, loc_npty(ic)
+       kk = kk + 1
+       send_buff(kk) = loc_ypt(i, ic)
+      end do
+     end if
+    end do
+    do ic = 1, nsp
+     if (loc_nptz(ic)>0) then
+      do j = 1, loc_nptz(ic)
+       kk = kk + 1
+       send_buff(kk) = loc_zpt(j, ic)
+      end do
+     end if
+    end do
+    !===============================
+    do ic = 1, nsp
+     if (loc_nptz(ic)>0) then
+      do j = 1, loc_nptz(ic)
+       if (loc_npty(ic)>0) then
+        do i = 1, loc_npty(ic)
+         kk = kk + 1
+         send_buff(kk) = loc_wghyz(i, j, ic)
+        end do
+       end if
+      end do
+     end if
+    end do
+    call intvec_distribute(kk, lenw, npe)
+    disp = 0
+    if (mype>0) disp = sum(lenw(1:mype))
+    disp = 8*disp
+    call mpi_write_dp(send_buff, lenw(mype+1), disp, 25, fnamel_yz)
+    if (pe0) write (6, *) &
+      'Incoming plasma target transverse distribution data dumped'
+   end if
+   deallocate (send_buff)
+   !====================
+   unix_time_last_dump = unix_time_now
+   if (pe0) write (6, *) 'END TOTAL DUMP WRITE'
+  end subroutine
+
+  subroutine dump_data_old(it_loc, tloc, spec_in)
+   type(species), dimension(:), intent(in) :: spec_in
+   integer, intent (in) :: it_loc
+   real (dp), intent (in) :: tloc
+   character (9) :: fname = '         '
+   character (9) :: fname_yz = '         '
+   character (9) :: fname_ebf = '         '
+   character (9) :: fname_env = '         '
+   character (9) :: fname_fl = '         '
+   character (9) :: fname_part = '         '
+   !=== BE CAREFUL: FILE NAMES HAVE BEEN INITIALIZED TO ONLY ALLOW A MAXIMUM
+   ! 99 CORES ALONG Z. IF MORE ARE NEEDED, IT IS NECESSARY TO CHANGE FROM
+   ! CHARACTER(11) TO CHARACTER(12) (OR MORE) ===
+   character (11) :: part_file = '           '
+   character (27) :: fnamel_part = '                           '
+   character (11) :: ebf_file = '           '
+   character (27) :: fnamel_ebf = '                           '
+   character (11) :: env_file = '           '
+   character (27) :: fnamel_env = '                           '
+   character (11) :: fl_file = '           '
+   character (27) :: fnamel_fl = '                           '
+   character (27) :: fnamel_yz = '                           '
+   character (11) :: foldername = '           '
+   integer (offset_kind) :: disp_col, disp
+   integer :: max_npt_size
+   integer :: np, ic, lun, i, j, k, kk, ipe, lenbuff
+   integer :: nxf_loc, nyf_loc, nzf_loc, ndv, ndvb
+   integer :: npt_arr(npe, nsp), ip_loc(npe)
+   integer :: loc_grid_size(npe), loc2d_grid_size(npe), lenw(npe)
+   integer :: grid_size_max, grid2d_size_max
+   integer :: env_cp, env1_cp, fl_cp, ebf_cp
+   real (dp) :: rdata(10)
+   integer :: ndata(10)
+   integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
+   logical :: sd
+   !==============
+   write (fname, '(a9)') 'Comm-data'
+   write (fname_yz, '(a9)') 'Dist-wgyz'
+   write (fname_ebf, '(a9)') 'EB-fields'
+   write (fname_env, '(a9)') 'ENVfields'
+   write (fname_fl, '(a9)') 'FL-fields'
+   write (fname_part, '(a9)') 'Particles'
+   write (foldername, '(a11)') 'dumpRestart'
+   !================field array sizes
+   nxf_loc = size(ebf, 1)
+   nyf_loc = size(ebf, 2)
+   nzf_loc = size(ebf, 3)
+   ebf_cp = size(ebf, 4)
+
+   !======== Write files name ===========
+   write (part_file, '(a9,i2.2)') fname_part, imodz
+   fnamel_part = foldername //'/' // part_file // '.bin' 
+   write (ebf_file, '(a9,i2.2)') fname_ebf, imodz
+   fnamel_ebf = foldername //'/' // ebf_file // '.bin'
+   write (env_file, '(a9,i2.2)') fname_env, imodz
+   fnamel_env = foldername //'/' // env_file // '.bin'
+   write (fl_file, '(a9,i2.2)') fname_fl, imodz
+   fnamel_fl = foldername //'/' // fl_file // '.bin'
+   fnamel_yz = foldername //'/' // fname_yz // '.bin'
+   !======== End write files name ======
+   loc_grid_size(mype+1) = nxf_loc*nyf_loc*nzf_loc !allowing for different grid sizes among mpi_tasks
+   loc2d_grid_size(mype+1) = nyf_loc*nzf_loc
+   lenbuff = ebf_cp
+   if (envelope) then
+    env1_cp = 0
+    env_cp = size(env, 4)
+    if (Two_color) env1_cp = env_cp
+    lenbuff = max(lenbuff, env_cp+env1_cp)
+   end if
+   grid2d_size_max = 0
+   if (hybrid) then
+    fl_cp = size(up, 4)
+    lenbuff = max(lenbuff, 2*fl_cp)
+    kk = loc2d_grid_size(mype+1)
+    call intvec_distribute(kk, loc2d_grid_size, npe)
+    grid2d_size_max = maxval(loc2d_grid_size(1:npe))
+   end if
+   !===============================
+   kk = loc_grid_size(mype+1)
+   call intvec_distribute(kk, loc_grid_size, npe)
+   grid_size_max = maxval(loc_grid_size(1:npe))
+   lenbuff = lenbuff*grid_size_max + grid2d_size_max
+   !===============================
+   ndv = nd2+1
+    do i = 1, nsp
+     kk = loc_npart(imody, imodz, imodx, i)
+     call intvec_distribute(kk, ip_loc, npe)
+     npt_arr(1:npe, i) = ip_loc(1:npe)
+    end do
+    do i = 1, npe
+     ip_loc(i) = sum(npt_arr(i,1:nsp))
+    end do
+    max_npt_size = ndv*maxval(ip_loc(1:npe))
+    lenbuff = max(lenbuff, max_npt_size)
+   !===============================
+    dist_npy(:, :) = 0
+    dist_npz(:, :) = 0
+    dist_npy(imody+1, 1:nsp) = loc_npty(1:nsp)
+    dist_npz(imodz+1, 1:nsp) = loc_nptz(1:nsp)
+   !===============================
+    if (.not. pe0y) then
+     sd = .true.
+     call exchange_rdata_int(loc_npty, sd, nsp, pe_min_y, 1, 100 + imody)
+    else
+     sd = .false.
+     do ipe = 1, npe_yloc - 1
+      call exchange_rdata_int(loc_npty, sd, nsp, ipe, 1, 100 + ipe)
+      dist_npy(ipe+1, 1:nsp) = loc_npty(1:nsp)
+     end do
+    end if
+    if (.not. pe0z) then
+     sd = .true.
+     call exchange_rdata_int(loc_nptz, sd, nsp, pe_min_z, 2, 100 + imodz)
+    else
+     sd = .false.
+     do ipe = 1, npe_zloc - 1
+      call exchange_rdata_int(loc_nptz, sd, nsp, ipe, 2, 100 + ipe)
+      dist_npz(ipe+1, 1:nsp) = loc_nptz(1:nsp)
+     end do
+    end if
+   !=========================
+   ndata = 0
+   rdata = 0.0
+   !====================
+   rdata(1) = tloc
+   rdata(2) = j0_norm
+   rdata(3) = ompe
+   rdata(4) = targ_in
+   rdata(5) = targ_end
+   rdata(6) = lp_in(1)
+   rdata(7) = xp0_out
+   rdata(8) = xp1_out
+   rdata(9) = x(1)
+
+   ndata(1) = it_loc
+   ndata(2) = nxf_loc
+   ndata(3) = nyf_loc
+   ndata(4) = nzf_loc
+   ndata(5) = nptx_max
+   ndata(6) = size(x)
+   ndata(7) = nxf
+   ndata(8) = nd2
+   !==========================
+   !==============
+   lun = 10
+   if (pe0) then
+    open (lun, file=foldername //'/'//fname//'.bin', form='unformatted', &
+      status='unknown')
+    write (lun) rdata(1:10)
+    write (lun) ndata(1:10)
+    write (lun) nptx(1:nsp) !the index of particles inside the box
+    write (lun) sptx_max(1:nsp) !the max index inside the target
+    !=====================
+    if (targ_end>xmax) then
+     do i = 1, nsp
+      do j = 1, nptx_max
+       write (lun) xpt(j, i), wghpt(j, i)
+      end do
+     end do
+     if (hybrid) then
+      if (nxf>0) then
+       write (lun) fluid_x_profile(1:nxf)
+      end if
+     end if
+    end if
+    write (lun) npt_arr(1:npe, 1:nsp)
+    write (lun) dist_npy(1:npe_yloc, 1:nsp)
+    write (lun) dist_npz(1:npe_zloc, 1:nsp)
+    !==================
+    close (lun)
+   end if !end pe0 write on fname
+   if (pe0) write (6, *) 'End write Common data'
+   !===========================
+   allocate (send_buff(lenbuff)) !to be used for all mpi_write()
+   !=====================
+   !=== PARTICLES DUMP SECTION ====
+
+   call particles_dump( spec_in, lenw, ip_loc, max_npt_size )
 
    if ( max_npt_size > 0 ) then
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype))

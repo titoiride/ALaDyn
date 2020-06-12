@@ -1014,6 +1014,145 @@ module base_species
    end if
   end subroutine
   
+  pure function dump_tracking_to_array(this) result(array_out)
+   class(base_species_T), intent(in) :: this
+   real(dp), dimension(:), allocatable :: array_out
+   integer :: i
+   integer, parameter :: len_max = 30
+   real(dp) :: temp_array(len_max)
+   ! We store the bool true components as real one_dp
+   ! and false as zero_dp
+
+   i = 1
+   if (this%properties%track_data%tracked) then
+    temp_array(i) = one_dp
+    i = i + 1
+   else
+    temp_array(i) = zero_dp
+    i = i + 1
+   end if
+   
+   temp_array(2) = real(this%properties%track_data%n_tracked, dp)
+   i = i + 1
+   
+   if ( allocated(this%properties%track_data%xmin) ) then
+    temp_array(i) = one_dp
+    i = i + 1
+    temp_array(i) = this%properties%track_data%xmin
+    i = i + 1
+   else
+    temp_array(i) = zero_dp
+    i = i + 1
+    temp_array(i) = zero_dp
+    i = i + 1
+   end if
+   
+   if ( allocated(this%properties%track_data%xmax) ) then
+    temp_array(i) = one_dp
+    i = i + 1
+    temp_array(i) = this%properties%track_data%xmax
+    i = i + 1
+   else
+    temp_array(i) = zero_dp
+    i = i + 1
+    temp_array(i) = zero_dp
+    i = i + 1
+   end if
+   
+   if ( allocated(this%properties%track_data%ymin) ) then
+    temp_array(i) = one_dp
+    i = i + 1
+    temp_array(i) = this%properties%track_data%ymin
+    i = i + 1
+   else
+    temp_array(i) = zero_dp
+    i = i + 1
+    temp_array(i) = zero_dp
+    i = i + 1
+   end if
+   
+   if ( allocated(this%properties%track_data%ymax) ) then
+    temp_array(i) = one_dp
+    i = i + 1
+    temp_array(i) = this%properties%track_data%ymax
+    i = i + 1
+   else
+    temp_array(i) = zero_dp
+    i = i + 1
+    temp_array(i) = zero_dp
+    i = i + 1
+   end if
+   
+   if ( allocated(this%properties%track_data%zmin) ) then
+    temp_array(i) = one_dp
+    i = i + 1
+    temp_array(i) = this%properties%track_data%zmin
+    i = i + 1
+   else
+    temp_array(i) = zero_dp
+    i = i + 1
+    temp_array(i) = zero_dp
+    i = i + 1
+   end if
+   
+   if ( allocated(this%properties%track_data%zmax) ) then
+    temp_array(i) = one_dp
+    i = i + 1
+    temp_array(i) = this%properties%track_data%zmax
+    i = i + 1
+   else
+    temp_array(i) = zero_dp
+    i = i + 1
+    temp_array(i) = zero_dp
+    i = i + 1
+   end if
+
+   temp_array(i) = real(this%properties%track_data%jump, dp)
+   i = i + 1
+
+   temp_array(i) = real(this%properties%track_data%highest_index, dp)
+   i = i + 1
+
+   temp_array(i) = real(this%properties%track_data%extra_outputs, dp)
+   
+   len_array = i
+
+   allocate( array_out(len_array) )
+   array_out(1:len_array) = temp_array(1:len_array)
+
+  end function
+  
+  pure function dump_properties_to_array(this) result(array_out)
+   class(base_species_T), intent(in) :: this
+   real(dp), allocatable dimension(:) :: array_out
+   integer :: i, size_track
+   integer, parameter :: len_max = 30
+   real(dp) :: temp_array(len_max)
+   real(dp), allocatable, dimension(:) :: track_data_array
+
+   i = 1
+
+   temp_array(i) = this%properties%charge
+   i = i + 1
+
+   temp_array(i) = real(this%properties%n_part, dp)
+   i = i + 1
+
+   temp_array(i) = real(this%properties%dimensions, dp)
+   i = i + 1
+
+   temp_array(i) = real(this%properties%temperature, dp)
+ 
+   track_data_array = this%dump_tracking_to_array()
+
+   size_track = SIZE(track_data_array)
+
+   allocate(array_out(i + size_track))
+   array_out(1:i) = temp_array(1:i)
+   array_out(i+1:i+size_track) = track_data_array(1:size_track)
+
+  end function
+
   pure function how_many_scalars( this ) result(n_parts)
    class(scalars), intent(in) :: this
    integer :: n_parts
