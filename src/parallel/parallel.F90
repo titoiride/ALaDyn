@@ -314,15 +314,11 @@
    call mpi_file_open(comm_col(2), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
 
-
-
-   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_write_at(thefile, disp, buf, bufsize, mpi_sd, &
      mpi_status_ignore, ierr)
-   ! mpi_sd, 'native', &
    call mpi_file_close(thefile, ierr)
   end subroutine
-  !mpi_info_null, ierr)
+
   subroutine mpi_write_col_dp(buf, bufsize, disp, nchar, fout)
 
    real (dp), intent (in) :: buf(:)
@@ -335,15 +331,27 @@
    call mpi_file_open(comm_col(1), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
 
-
-
-
-   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_write_at(thefile, disp, buf, bufsize, &
      mpi_double_precision, mpi_status_ignore, ierr)
-   ! mpi_sd, 'native', &
    call mpi_file_close(thefile, ierr)
-   ! mpi_info_null, ierr)
+  end subroutine
+
+  subroutine mpi_write_col_str(buf, bufsize, disp, nchar, fout)
+
+   character(LEN=*), intent (in), dimension(:) :: buf
+   integer, intent (in) :: bufsize, nchar
+   integer (offset_kind), intent (in) :: disp
+   character (nchar), intent (in) :: fout
+
+   integer :: ierr, thefile
+   !===================
+   call mpi_file_open(comm_col(1), fout, mpi_mode_wronly+mpi_mode_create &
+     , mpi_info_null, thefile, ierr)
+
+   call mpi_file_write_at(thefile, disp, buf, bufsize, &
+    mpi_character, mpi_status_ignore, ierr)
+   call mpi_file_close(thefile, ierr)
+
   end subroutine
 
   subroutine mpi_read_col_dp(buf, bufsize, disp, nchar, fout)

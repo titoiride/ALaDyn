@@ -40,6 +40,11 @@
    module procedure particles_dump_new
    module procedure particles_dump_old
   end interface
+  
+  interface particles_restart
+   module procedure particles_restart_new
+   module procedure particles_restart_old
+  end interface
     
   interface dump_data
    module procedure dump_data_new
@@ -48,45 +53,57 @@
 
   contains
 
-  subroutine dump_properties( spec_in )
-   type(species_new), intent(in), dimension(:) :: spec_in
-   integer :: ic
-
-   
-  end subroutine
    subroutine particles_dump_new( spec_in, spec_aux_in, lenw, ip_loc_in, max_npt_size_in )
    type(species_new), intent(in), dimension(:) :: spec_in
    type(species_aux), intent(in) :: spec_aux_in
    integer, intent(inout), dimension(:) :: lenw
    integer, intent(in), dimension(:) :: ip_loc_in
    integer, intent(inout) :: max_npt_size_in
-   real(dp), allocatable, dimension(:) :: temp_buff 
-   integer :: size_spec, size_spec_aux, tot, ic, np, kk
+   real(dp), allocatable, dimension(:) :: temp_buff, properties_spec, properties_spec_aux
+   integer :: size_spec, size_spec_aux, tot, ic, np, kk, size_prop, size_prop_aux
 
    lenw(:) = 0
    if(max_npt_size_in <= 0) return
+   
+   ! Here we assume that for every species properties_size and spec%total_size
+   ! are the same
+   ic = 1
    size_spec = spec_in(ic)%total_size()
    size_spec_aux = spec_aux_in%total_size()
-   do ic = 1, nsp
-    lenw(1:npe) = lenw(1:npe) + size_spec + size_spec_aux
-   end do
-   lenw(1:npe) = lenw(1:npe)*ip_loc_in(1:npe)
-   max_npt_size_in = maxval(lenw(1:npe))
-   kk = 0
+   size_prop = spec_in(ic)%properties_array_size()
+   size_prop_aux = spec_aux_in%properties_array_size()
+   lenw(1:npe) = lenw(1:npe) + (size_spec + size_spec_aux)* ip_loc_in(1:npe) + &
+   (size_prop + size_prop_aux)*nsp
+   
    call array_realloc_1d( send_buff, lenw(mype + 1) )
+
+   kk = 0
    do ic = 1, nsp
-    np = spec_in(ic)%how_many()
+    
+    properties_spec = spec_in(ic)%dump_properties_to_array()
+    send_buff((kk + 1):(kk + size_prop)) = properties_spec
+    kk = kk + size_prop
+    
+    properties_spec_aux = spec_aux_in%dump_properties_to_array()
+    send_buff((kk + 1):(kk + size_prop_aux)) = properties_spec_aux
+    kk = kk + size_prop_aux
+    
     if ( .not. spec_in(ic)%empty ) then
+     np = spec_in(ic)%how_many()
      tot = np*spec_in(ic)%total_size()
      call spec_in(ic)%flatten_into(temp_buff)
      send_buff( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
      kk = kk + tot
+
      tot = np*spec_aux_in%total_size()
      call spec_aux_in%flatten_into(temp_buff)
      send_buff( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
+
     end if
    end do
 
+   max_npt_size_in = maxval(lenw(1:npe))
+   
   end subroutine
 
   subroutine particles_dump_old( spec_in, lenw, ip_loc_in, max_npt_size_in )
@@ -116,9 +133,45 @@
 
   end subroutine
 
-  subroutine particles_restart_new( spec_in, spec_aux_in )
-   type(species_new), intent(in), dimension(:) :: spec_in
-   type(species_aux), intent(in) :: spec_aux_in
+  subroutine particles_restart_new( spec_in, spec_aux_in, local_particles, array_in )
+   type(species_new), intent(inout), dimension(:) :: spec_in
+   type(species_aux), intent(inout) :: spec_aux_in
+   integer, dimension(:, :, :, :), intent(in) :: local_particles
+   real(dp), dimension(:), intent(in) :: array_in
+   real(dp), allocatable, dimension(:) :: temp_buff
+   integer :: ic, np, size_prop, size_prop_aux, kk, spec_size, aux_size
+   integer :: tot, tot_aux
+   ic = 1
+   size_prop = spec_in(ic)%properties_array_size()
+   size_prop_aux = spec_aux_in%properties_array_size()
+
+   spec_size = spec_in(ic)%total_size()
+   aux_size = spec_aux_in%total_size()
+   kk = 0
+
+   do ic = 1, nsp
+    np = local_particles( imody, imodz, imodx, ic )
+    tot = np*spec_size
+    tot_aux = np*aux_size
+
+    call spec_in(ic)%read_properties_from_array(array_in(kk+1:kk+size_prop))
+    kk = kk + size_prop
+
+    call spec_aux_in%read_properties_from_array(array_in(kk+1:kk+size_prop_aux))
+    kk = kk + size_prop_aux
+    if ( .not. spec_in(ic)%empty ) then
+
+     call spec_in(ic)%redistribute(array_in(kk+1:kk+tot), np, spec_in(ic)%pick_properties(), aux_in=.false.)
+     kk = kk + tot
+
+     call spec_aux_in%redistribute(array_in(kk+1:kk+tot_aux), np, spec_in(ic)%pick_properties(), aux_in=.true.)
+     kk = kk + tot_aux
+
+    end if
+   end do
+  end subroutine
+
+  subroutine particles_restart_old()
   end subroutine
 
   subroutine dump_data_new(it_loc, tloc, spec_in, spec_aux_in)
@@ -132,9 +185,12 @@
    character (9) :: fname_env = '         '
    character (9) :: fname_fl = '         '
    character (9) :: fname_part = '         '
+   character (9) :: fname_names = '         '
    !=== BE CAREFUL: FILE NAMES HAVE BEEN INITIALIZED TO ONLY ALLOW A MAXIMUM
    ! 99 CORES ALONG Z. IF MORE ARE NEEDED, IT IS NECESSARY TO CHANGE FROM
    ! CHARACTER(11) TO CHARACTER(12) (OR MORE) ===
+   character (11) :: name_file = '           '
+   character (27) :: fnamel_name = '                           '
    character (11) :: part_file = '           '
    character (27) :: fnamel_part = '                           '
    character (11) :: ebf_file = '           '
@@ -164,6 +220,7 @@
    write (fname_env, '(a9)') 'ENVfields'
    write (fname_fl, '(a9)') 'FL-fields'
    write (fname_part, '(a9)') 'Particles'
+   write (fname_names, '(a9)') 'Specnames'
    write (foldername, '(a11)') 'dumpRestart'
    !================field array sizes
    nxf_loc = size(ebf, 1)
@@ -172,6 +229,8 @@
    ebf_cp = size(ebf, 4)
 
    !======== Write files name ===========
+   write (name_file, '(a9,i2.2)') fname_names, imodz
+   fnamel_name = foldername //'/' // name_file // '.bin' 
    write (part_file, '(a9,i2.2)') fname_part, imodz
    fnamel_part = foldername //'/' // part_file // '.bin' 
    write (ebf_file, '(a9,i2.2)') fname_ebf, imodz
@@ -302,6 +361,13 @@
    call particles_dump( spec_in, spec_aux_in, lenw, ip_loc, max_npt_size )
 
    if ( max_npt_size > 0 ) then
+    if (pe0) then
+     open( unit = lun, file=fnamel_name, status='unknown', form='unformatted')
+     do ic = 1, nsp
+      write (lun) spec_in(ic)%pick_name()
+     end do
+     close(lun)
+    end if
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype))
     disp_col = 8*disp_col
     if ( disp_col > 0 ) then
@@ -799,13 +865,20 @@
    character (9) :: fname_env = '         '
    character (9) :: fname_fl = '         '
    character (9) :: fname_part = '         '
-   character (11) :: fnamel_part = '           '
-   character (11) :: fnamel_ebf = '           '
-   character (11) :: fnamel_env = '           '
-   character (11) :: fnamel_fl = '           '
+   character (9) :: fname_names = '         '
+   character (11) :: name_file = '           '
+   character (27) :: fnamel_name = '                           '
+   character (11) :: part_file = '           '
+   character (27) :: fnamel_part = '                           '
+   character (11) :: ebf_file = '           '
+   character (27) :: fnamel_ebf = '                           '
+   character (11) :: env_file = '           '
+   character (27) :: fnamel_env = '                           '
+   character (11) :: fl_file = '           '
+   character (27) :: fnamel_fl = '                           '
+   character (27) :: fnamel_yz = '                           '
    character (11) :: foldername = '           '
-   character (25) :: fname_out = '                         '
-   character (27) :: fnamel_out = '                           '
+   character (100) :: name_buff
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, ipe, npt_arr(npe, nsp)
    integer :: k1, ndv, np, ic, lun, i, j, k, kk, lenw(npe), lenbuff, &
@@ -816,6 +889,7 @@
    integer :: ndata(10), nps_loc(4), n1_old
    integer :: n1_loc, n2_loc, n3_loc, nypt_max, nzpt_max
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
+   integer :: size_spec, size_spec_aux, size_prop, size_prop_aux
    real (dp) :: rdata(10), x0_new
    logical :: sd
 
@@ -832,7 +906,20 @@
    n2_loc = size(ebf, 2)
    n3_loc = size(ebf, 3)
    ebf_cp = size(ebf, 4)
-   !===================
+   !======== Write files name ===========
+   write (name_file, '(a9,i2.2)') fname_names, imodz
+   fnamel_name = foldername //'/' // name_file // '.bin' 
+   write (part_file, '(a9,i2.2)') fname_part, imodz
+   fnamel_part = foldername //'/' // part_file // '.bin' 
+   write (ebf_file, '(a9,i2.2)') fname_ebf, imodz
+   fnamel_ebf = foldername //'/' // ebf_file // '.bin'
+   write (env_file, '(a9,i2.2)') fname_env, imodz
+   fnamel_env = foldername //'/' // env_file // '.bin'
+   write (fl_file, '(a9,i2.2)') fname_fl, imodz
+   fnamel_fl = foldername //'/' // fl_file // '.bin'
+   fnamel_yz = foldername //'/' // fname_yz // '.bin'
+   !======== End write files name ======
+
    loc_grid_size(mype+1) = n1_loc*n2_loc*n3_loc
    loc2d_grid_size(mype+1) = n2_loc*n3_loc
    lenbuff = ebf_cp
@@ -996,15 +1083,13 @@
    recv_buff(:) = 0.0
    !=== FLUID RESTART SECTION ===
    if (hybrid) then
-    write (fnamel_fl, '(a9,i2.2)') 'FL-fields', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_fl // '.bin'
     lenw(1:npe) = 2*fl_cp*loc_grid_size(1:npe) + loc2d_grid_size(1:npe)
     !==========================
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
-      fnamel_out)
+    fnamel_fl)
     kk = 0
     do k = 1, n3_loc
      do j = 1, n2_loc
@@ -1038,15 +1123,13 @@
 
    !=== ENVELOPE RESTART SECTION ===
    if (envelope) then
-    write (fnamel_env, '(a9,i2.2)') 'ENVfields', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_env // '.bin'
     lenw(1:npe) = (env_cp+env1_cp)*loc_grid_size(1:npe)
     !==================
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
-      fnamel_out)
+    fnamel_env)
     !======================
     kk = 0
     do ic = 1, env_cp
@@ -1076,8 +1159,6 @@
    !=== END ENVELOPE RESTART SECTION ===
 
    !=== FIELD RESTART SECTION ===
-   write (fnamel_ebf, '(a9,i2.2)') 'EB-fields', imodz
-   fnamel_out = 'dumpRestart/' // fnamel_ebf // '.bin'
    lenw(1:npe) = ebf_cp*loc_grid_size(1:npe)
    !=========================
    disp = lenw(1+mype)
@@ -1085,7 +1166,7 @@
    disp_col = 8*disp_col
 
    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
-     fnamel_out)
+   fnamel_ebf)
    !===========================
    kk = 0
    do ic = 1, ebf_cp
@@ -1106,53 +1187,33 @@
     end do
     np_max = maxval(nps_loc(1:nsp))
    if(np_max >0)then                    !READS particles (if any)
-    write (fnamel_part, '(a9,i2.2)') 'Particles', imodz
-    fnamel_out = 'dumpRestart/' // fnamel_part // '.bin'
     call p_alloc(spec_in, spec_aux_in, np_max, ndv, nps_loc, nsp, lpf_ord, 1, mem_psize)
-    lenw(1:npe) = ndv*ip_loc(1:npe)
     !=======================
+    ic = 1
+    size_spec = spec_in(ic)%total_size()
+    size_spec_aux = spec_aux_in%total_size()
+    size_prop = spec_in(ic)%properties_array_size()
+    size_prop_aux = spec_aux_in%properties_array_size()
+    lenw(1:npe) = lenw(1:npe) + (size_spec + size_spec_aux)* ip_loc(1:npe) + &
+    (size_prop + size_prop_aux)*nsp
     disp_col = 0
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype) &
       )
     disp_col = 8*disp_col
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
-      fnamel_out)
+    fnamel_part)
     !==============================
+    call particles_restart(spec_in, spec_aux_in, loc_npart, recv_buff)
     kk = 1
     do ic = 1, nsp
+     open (lun, file=fnamel_name, form='unformatted', status='unknown')
+     read(lun) name_buff
      np = loc_npart(imody, imodz, imodx, ic)
-     if (np>0) then
-      select case( spec_in(ic)%pick_dimensions())
-      case(2)
-       call spec_in(ic)%set_component(recv_buff(kk:np + kk - 1), X_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), Y_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), PX_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), PY_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), W_COMP, lb=1, ub=np)
-      case(3)
-       call spec_in(ic)%set_component(recv_buff(kk:np + kk - 1), X_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), Y_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), Z_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), PX_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), PY_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), PZ_COMP, lb=1, ub=np)
-       kk = np + kk
-       call spec_in(ic)%set_component(recv_buff(kk:kk + np - 1), W_COMP, lb=1, ub=np)
-      end select
-     end if
+     call spec_in(ic)%set_name(name_buff)
     end do
+    close(lun)
    end if
    !=================================
-    fname_out = 'dumpRestart/' // fname_yz // '.bin'
     kk = 0
     do ic = 1, nsp
      if (loc_npty(ic)>0) then
@@ -1186,7 +1247,7 @@
      disp = 0
      if (mype>0) disp = sum(lenw(1:mype))
      disp = 8*disp
-     call mpi_read_dp(recv_buff, lenw(mype+1), disp, 25, fname_out)
+     call mpi_read_dp(recv_buff, lenw(mype+1), disp, 25, fnamel_yz)
      kk = 0
      do ic = 1, nsp
       do i = 1, loc_npty(ic)
@@ -1624,4 +1685,5 @@
    if (pe0) write (6, *) 'END TOTAL DUMP READ'
   end subroutine
   !===========================
+
  end module

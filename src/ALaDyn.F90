@@ -124,7 +124,7 @@
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
    end do
-   !if (dump > 0) call dump_data(iter, tnow, spec)
+   if (dump > 0) call dump_data(iter, tnow, spec, ebfp)
   end subroutine
 
   !--------------------------
@@ -164,7 +164,7 @@
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
    end do
-   !if (dump > 0) call dump_data(iter, tnow, spec)
+   if (dump > 0) call dump_data(iter, tnow, spec, ebfp)
   end subroutine
   !======================
   subroutine data_out
@@ -260,7 +260,7 @@
        unix_time_now - unix_time_begin
     end if
     if (dump>0 .and. time_interval_dumps < 0.0) then
-     !if (iter>0) call dump_data(iter,tnow, spec)
+     if (iter>0) call dump_data(iter,tnow, spec, ebfp)
     end if
     iout = iout + 1
    end if
