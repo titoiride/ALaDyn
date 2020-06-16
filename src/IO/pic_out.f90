@@ -1031,7 +1031,7 @@
    disp = 4*mype*(num_header_int+lenw) ! da usare con mpi_write !assuming that all procs have the same grid size
    disp_col = 4*imody*(num_header_int+lenw) ! con mpi_write_col !assuming that all procs have the same grid size
 
-   call mpi_write_field(wdata, lenw, header, num_header_int, disp, 17, &
+   call mpi_write_field(wdata, lenw, header, num_header_int, disp, &
      fname_out)
 
    if (pe0) then
@@ -1615,7 +1615,7 @@
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
    disp_col = disp_col*4
 
-   call mpi_write_part(pdata, lenp, ip, disp, 17, fname_out)
+   call mpi_write_part(pdata, lenp, ip, disp, fname_out)
 
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
@@ -1762,7 +1762,7 @@
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
    disp_col = disp_col*4
 
-   call mpi_write_part(pdata, lenp, ip, disp, 17, fname_out)
+   call mpi_write_part(pdata, lenp, ip, disp, fname_out)
 
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
@@ -1896,7 +1896,7 @@
    end if
 
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
-   call mpi_write_part(pdata, lenp, ip, disp, 19, fname_out)
+   call mpi_write_part(pdata, lenp, ip, disp, fname_out)
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
     write (6, *) 'Particles data written on file: ' // foldername // &
@@ -2009,7 +2009,7 @@
    end if
 
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
-   call mpi_write_part(pdata, lenp, ip, disp, 22, fname_out)
+   call mpi_write_part(pdata, lenp, ip, disp, fname_out)
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
     write (6, *) 'Particles data written on file: ' // foldername // &
@@ -2124,7 +2124,7 @@
    end if
 
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
-   call mpi_write_part(pdata, lenp, ip, disp, 19, fname_out)
+   call mpi_write_part(pdata, lenp, ip, disp, fname_out)
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
     write (6, *) 'Particles data written on file: ' // foldername // &

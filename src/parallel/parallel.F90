@@ -283,12 +283,13 @@
    call MPI_BARRIER( comm_barr, error )
 
   end subroutine
-  subroutine mpi_write_dp(buf, bufsize, disp, nchar, fout)
+
+  subroutine mpi_write_dp(buf, bufsize, disp, fout)
 
    real (dp), intent (in) :: buf(:)
-   integer, intent (in) :: bufsize, nchar
+   integer, intent (in) :: bufsize
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
    !===========================
    integer :: ierr, thefile
    !========================
@@ -302,12 +303,12 @@
 
   end subroutine
   !======== each process acces thefile and writes at disp(byte) coordinate
-  subroutine mpi_write_row_dp(buf, bufsize, disp, nchar, fout)
+  subroutine mpi_write_row_dp(buf, bufsize, disp, fout)
 
    real (dp), intent (in) :: buf(:)
-   integer, intent (in) :: bufsize, nchar
+   integer, intent (in) :: bufsize
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
 
    integer :: ierr, thefile
    !=======================================
@@ -319,12 +320,12 @@
    call mpi_file_close(thefile, ierr)
   end subroutine
 
-  subroutine mpi_write_col_dp(buf, bufsize, disp, nchar, fout)
+  subroutine mpi_write_col_dp(buf, bufsize, disp, fout)
 
    real (dp), intent (in) :: buf(:)
-   integer, intent (in) :: bufsize, nchar
+   integer, intent (in) :: bufsize
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
 
    integer :: ierr, thefile
    !===================
@@ -336,12 +337,12 @@
    call mpi_file_close(thefile, ierr)
   end subroutine
 
-  subroutine mpi_write_col_str(buf, bufsize, disp, nchar, fout)
+  subroutine mpi_write_col_str(buf, bufsize, disp, fout)
 
    character(LEN=*), intent (in), dimension(:) :: buf
-   integer, intent (in) :: bufsize, nchar
+   integer, intent (in) :: bufsize
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
 
    integer :: ierr, thefile
    !===================
@@ -354,63 +355,52 @@
 
   end subroutine
 
-  subroutine mpi_read_col_dp(buf, bufsize, disp, nchar, fout)
+  subroutine mpi_read_col_dp(buf, bufsize, disp, fout)
 
    real (dp), intent (inout) :: buf(:)
-   integer, intent (in) :: bufsize, nchar
+   integer, intent (in) :: bufsize
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
 
    integer :: ierr, thefile
    !========================
    call mpi_file_open(comm_col(1), fout, mpi_mode_rdonly, mpi_info_null, &
      thefile, ierr)
 
-
-
-
-   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_read_at(thefile, disp, buf, bufsize, mpi_sd, &
      mpi_status_ignore, ierr)
-   !mpi_sd, 'native', &
    call mpi_file_close(thefile, ierr)
-   !mpi_info_null, ierr)
+
   end subroutine
 
-  subroutine mpi_read_dp(buf, bufsize, disp, nchar, fout)
+  subroutine mpi_read_dp(buf, bufsize, disp, fout)
 
    real (dp), intent (inout) :: buf(:)
-   integer, intent (in) :: bufsize, nchar
+   integer, intent (in) :: bufsize
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
 
    integer :: ierr, thefile
    !=======================================
    call mpi_file_open(comm, fout, mpi_mode_rdonly, mpi_info_null, &
      thefile, ierr)
 
-
-
    call mpi_file_read_at(thefile, disp, buf, bufsize, mpi_sd, &
      mpi_status_ignore, ierr)
-   !call mpi_file_set_view(thefile, disp, mpi_sd, &
    call mpi_file_close(thefile, ierr)
-   ! mpi_sd, 'native', mpi_info_null, ierr)
   end subroutine
-  !call mpi_file_seek(thefile,disp,whence,ierr)
-  subroutine mpi_write_part(buf, bufsize, loc_np, disp, nchar, fout)
+
+  subroutine mpi_write_part(buf, bufsize, loc_np, disp, fout)
 
    real (sp), intent (in) :: buf(:)
-   integer, intent (in) :: bufsize, loc_np, nchar
+   integer, intent (in) :: bufsize, loc_np
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
 
    integer :: ierr, thefile
    !===============================
    call mpi_file_open(comm, fout, mpi_mode_wronly+mpi_mode_create, &
      mpi_info_null, thefile, ierr)
-
-
 
    call mpi_file_set_view(thefile, disp, mpi_real, mpi_real, 'native', &
      mpi_info_null, ierr)
@@ -420,23 +410,19 @@
    call mpi_file_write(thefile, buf, bufsize, mpi_real, &
      mpi_status_ignore, ierr)
    call mpi_file_close(thefile, ierr)
-   !mpi_file_set_view is broken on Windows 10 with Intel MPI 5 (don't have money to upgrade MPI-Lib and check)
   end subroutine
-  !please disable any binary output in Windows/IFORT if it doesn't work for you
 
-  subroutine mpi_write_part_col(buf, bufsize, disp, nchar, fout)
+  subroutine mpi_write_part_col(buf, bufsize, disp, fout)
 
    real (sp), intent (in) :: buf(:)
-   integer, intent (in) :: bufsize, nchar
+   integer, intent (in) :: bufsize
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
    !========================
    integer :: ierr, thefile
    !========================
    call mpi_file_open(comm_col(1), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
-
-
 
    call mpi_file_set_view(thefile, disp, mpi_real, mpi_real, 'native', &
      mpi_info_null, ierr)
@@ -449,19 +435,17 @@
   end subroutine
 
   subroutine mpi_write_field(buf, bufsize, header, header_size, disp, &
-    nchar, fout)
+    fout)
 
    real (sp), intent (in) :: buf(:)
-   integer, intent (in) :: bufsize, nchar, header_size, header(:)
+   integer, intent (in) :: bufsize, header_size, header(:)
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
 
    integer :: ierr, thefile
    !========================
    call mpi_file_open(comm, fout, mpi_mode_wronly+mpi_mode_create, &
      mpi_info_null, thefile, ierr)
-
-
 
    call mpi_file_set_view(thefile, disp, mpi_real, mpi_real, 'native', &
      mpi_info_null, ierr)
@@ -476,19 +460,17 @@
   end subroutine
 
   subroutine mpi_write_field_col(buf, bufsize, header, header_size, &
-    disp, nchar, fout)
+    disp, fout)
    !========================
    real (sp), intent (in) :: buf(:)
-   integer, intent (in) :: bufsize, nchar, header_size, header(:)
+   integer, intent (in) :: bufsize, header_size, header(:)
    integer (offset_kind), intent (in) :: disp
-   character (nchar), intent (in) :: fout
+   character (LEN=*), intent (in) :: fout
    !different from mpi_write_field because of the different communicator in
    integer :: ierr, thefile
    !mpi_file_open
    call mpi_file_open(comm_col(1), fout, mpi_mode_wronly+mpi_mode_create &
      , mpi_info_null, thefile, ierr)
-
-
 
    call mpi_file_set_view(thefile, disp, mpi_real, mpi_real, 'native', &
      mpi_info_null, ierr)

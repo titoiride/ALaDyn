@@ -222,31 +222,31 @@
    type(species_aux), intent(in) :: spec_aux_in
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
-   character (9) :: fname = '         '
-   character (9) :: fname_yz = '         '
-   character (9) :: fname_ebf = '         '
-   character (9) :: fname_env = '         '
-   character (9) :: fname_fl = '         '
-   character (9) :: fname_part = '         '
-   character (9) :: fname_names = '         '
-   character (8) :: fname_prop = '         '
+   character (9) :: fname
+   character (9) :: fname_yz
+   character (9) :: fname_ebf
+   character (9) :: fname_env
+   character (9) :: fname_fl
+   character (9) :: fname_part
+   character (9) :: fname_names
+   character (8) :: fname_prop
    !=== BE CAREFUL: FILE NAMES HAVE BEEN INITIALIZED TO ONLY ALLOW A MAXIMUM
    ! 99 CORES ALONG Z. IF MORE ARE NEEDED, IT IS NECESSARY TO CHANGE FROM
    ! CHARACTER(11) TO CHARACTER(12) (OR MORE) ===
-   character (14) :: name_prop = '          '
-   character (30) :: fnamel_prop = '                          '
-   character (9) :: name_file = '           '
-   character (25) :: fnamel_name = '                           '
-   character (15) :: part_file = '           '
-   character (31) :: fnamel_part = '                           '
-   character (15) :: ebf_file = '           '
-   character (31) :: fnamel_ebf = '                           '
-   character (15) :: env_file = '           '
-   character (31) :: fnamel_env = '                           '
-   character (15) :: fl_file = '           '
-   character (31) :: fnamel_fl = '                           '
-   character (31) :: fnamel_yz = '                           '
-   character (11) :: foldername = '           '
+   character (14) :: name_prop
+   character (30) :: fnamel_prop
+   character (9) :: name_file
+   character (25) :: fnamel_name
+   character (15) :: part_file
+   character (31) :: fnamel_part
+   character (15) :: ebf_file
+   character (31) :: fnamel_ebf
+   character (15) :: env_file
+   character (31) :: fnamel_env
+   character (15) :: fl_file
+   character (31) :: fnamel_fl
+   character (31) :: fnamel_yz
+   character (11) :: foldername
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, disp_coord
    integer :: np, ic, lun, i, j, k, kk, ipe, lenbuff
@@ -414,7 +414,7 @@
     disp_coord = imodz*npe_yloc + npe_zloc*npe_yloc*imodx
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 26, &
+    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, &
     fnamel_prop)
 
     call particles_dump( spec_in, spec_aux_in, lenw, ip_loc, max_npt_size, send_buff )
@@ -429,7 +429,7 @@
     disp_coord = imodz*npe_yloc + npe_zloc*npe_yloc*imodx
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
+    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, &
     fnamel_part)
 
     if (pe0) write (6, *) 'Particles data dumped'
@@ -453,7 +453,7 @@
    disp = lenw(1 + mype)
    disp_col = imody*disp
    disp_col = 8*disp_col
-   call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
+   call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, &
    fnamel_ebf)
    if (pe0) write (6, *) 'Electromagnetic fields data dumped'
    !=== END ELECTROMAGNETIC FIELD DUMP SECTION ===
@@ -487,7 +487,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
+    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, &
     fnamel_env)
     if (pe0) write (6, *) 'Envelope field data dumped'
    end if
@@ -526,7 +526,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, &
     fnamel_fl)
     if (pe0) write (6, *) 'Fluid density and momentum data dumped'
    end if
@@ -568,7 +568,7 @@
     disp = 0
     if (mype>0) disp = sum(lenw(1:mype))
     disp = 8*disp
-    call mpi_write_dp(send_buff, lenw(mype+1), disp, 25, fnamel_yz)
+    call mpi_write_dp(send_buff, lenw(mype+1), disp, fnamel_yz)
     if (pe0) write (6, *) &
       'Incoming plasma target transverse distribution data dumped'
    end if
@@ -761,7 +761,7 @@
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype))
     disp_col = 8*disp_col
     if ( disp_col > 0 ) then
-     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
+     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, &
      fnamel_part)
     end if
     if (pe0) write (6, *) 'Particles data dumped'
@@ -785,7 +785,7 @@
    disp = lenw(1+mype)
    disp_col = imody*disp
    disp_col = 8*disp_col
-   call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
+   call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, &
    fnamel_ebf)
    if (pe0) write (6, *) 'Electromagnetic fields data dumped'
    !=== END ELECTROMAGNETIC FIELD DUMP SECTION ===
@@ -819,7 +819,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, 27, &
+    call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, &
     fnamel_env)
     if (pe0) write (6, *) 'Envelope field data dumped'
    end if
@@ -858,7 +858,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_write_col_dp(send_buff, lenw(1+mype), disp_col, &
     fnamel_fl)
     if (pe0) write (6, *) 'Fluid density and momentum data dumped'
    end if
@@ -900,7 +900,7 @@
     disp = 0
     if (mype>0) disp = sum(lenw(1:mype))
     disp = 8*disp
-    call mpi_write_dp(send_buff, lenw(mype+1), disp, 25, fnamel_yz)
+    call mpi_write_dp(send_buff, lenw(mype+1), disp, fnamel_yz)
     if (pe0) write (6, *) &
       'Incoming plasma target transverse distribution data dumped'
    end if
@@ -917,28 +917,28 @@
    type(species_aux), intent(inout) :: spec_aux_in
    integer, intent (out) :: it_loc
    real (dp), intent (out) :: tloc
-   character (9) :: fname = '         '
-   character (9) :: fname_yz = '         '
-   character (9) :: fname_ebf = '         '
-   character (9) :: fname_env = '         '
-   character (9) :: fname_fl = '         '
-   character (9) :: fname_part = '         '
-   character (9) :: fname_names = '         '
-   character (8) :: fname_prop = '         '
-   character (14) :: name_prop = '          '
-   character (30) :: fnamel_prop = '                          '
-   character (9) :: name_file = '           '
-   character (25) :: fnamel_name = '                           '
-   character (15) :: part_file = '           '
-   character (31) :: fnamel_part = '                           '
-   character (15) :: ebf_file = '           '
-   character (31) :: fnamel_ebf = '                           '
-   character (15) :: env_file = '           '
-   character (31) :: fnamel_env = '                           '
-   character (15) :: fl_file = '           '
-   character (31) :: fnamel_fl = '                           '
-   character (31) :: fnamel_yz = '                           '
-   character (11) :: foldername = '           '
+   character (9) :: fname
+   character (9) :: fname_yz
+   character (9) :: fname_ebf
+   character (9) :: fname_env
+   character (9) :: fname_fl
+   character (9) :: fname_part
+   character (9) :: fname_names
+   character (8) :: fname_prop
+   character (14) :: name_prop
+   character (30) :: fnamel_prop
+   character (9) :: name_file
+   character (25) :: fnamel_name
+   character (15) :: part_file
+   character (31) :: fnamel_part
+   character (15) :: ebf_file
+   character (31) :: fnamel_ebf
+   character (15) :: env_file
+   character (31) :: fnamel_env
+   character (15) :: fl_file
+   character (31) :: fnamel_fl
+   character (31) :: fnamel_yz
+   character (11) :: foldername
    character (100) :: name_buff
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, ipe, npt_arr(npe, nsp), disp_coord
@@ -1163,7 +1163,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
     fnamel_fl)
     kk = 0
     do k = 1, n3_loc
@@ -1203,7 +1203,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
     fnamel_env)
     !======================
     kk = 0
@@ -1240,7 +1240,7 @@
    disp_col = imody*disp
    disp_col = 8*disp_col
 
-   call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+   call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
    fnamel_ebf)
    !===========================
    kk = 0
@@ -1274,7 +1274,7 @@
     disp_coord = imodz*npe_yloc + npe_yloc*npe_zloc*imodx
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 26, &
+    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
     fnamel_prop)
     call particles_restart_properties(spec_in, spec_aux_in, recv_buff)
     kk = 1
@@ -1296,7 +1296,7 @@
     max_npt_size = (size_spec + size_spec_aux)*maxval(ip_loc(1:npe))
     lenbuff = max(lenbuff, max_npt_size)
     call array_realloc_1d(recv_buff, lenbuff)
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
     fnamel_part)
 
     !==============================
@@ -1336,7 +1336,7 @@
      disp = 0
      if (mype>0) disp = sum(lenw(1:mype))
      disp = 8*disp
-     call mpi_read_dp(recv_buff, lenw(mype+1), disp, 25, fnamel_yz)
+     call mpi_read_dp(recv_buff, lenw(mype+1), disp, fnamel_yz)
      kk = 0
      do ic = 1, nsp
       do i = 1, loc_npty(ic)
@@ -1581,7 +1581,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
       fnamel_out)
     kk = 0
     do k = 1, n3_loc
@@ -1623,7 +1623,7 @@
     disp = lenw(1+mype)
     disp_col = imody*disp
     disp_col = 8*disp_col
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
       fnamel_out)
     !======================
     kk = 0
@@ -1662,7 +1662,7 @@
    disp_col = imody*disp
    disp_col = 8*disp_col
 
-   call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+   call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
      fnamel_out)
    !===========================
    kk = 0
@@ -1693,7 +1693,7 @@
     if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype) &
       )
     disp_col = 8*disp_col
-    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, 27, &
+    call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
       fnamel_out)
     !==============================
     kk = 0
@@ -1744,7 +1744,7 @@
      disp = 0
      if (mype>0) disp = sum(lenw(1:mype))
      disp = 8*disp
-     call mpi_read_dp(recv_buff, lenw(mype+1), disp, 25, fname_out)
+     call mpi_read_dp(recv_buff, lenw(mype+1), disp, fname_out)
      kk = 0
      do ic = 1, nsp
       do i = 1, loc_npty(ic)

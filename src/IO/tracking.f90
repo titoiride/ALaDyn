@@ -401,7 +401,7 @@ module tracking
 
   disp = disp*4 ! sia gli int che i float sono di 4 bytes
 
-  call mpi_write_part(track_pdata, lenp, ip, disp, 25, fname_out)
+  call mpi_write_part(track_pdata, lenp, ip, disp, fname_out)
   ! if (pe0) then
   !  write(6, *)            '==========================================='
   !  write(6, '(a35,i2.2)') ' Tracking data written for species ', pid
