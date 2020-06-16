@@ -1382,6 +1382,10 @@ module base_species
         (size_array > 0) ) then
     call this%allocate_data_output( size_array )
    end if
+   if ( (this%properties%track_data%extra_outputs > 0) .and. &
+    (.not. this%allocated_data_out) .and. (size_array > 0) ) then
+    call this%allocate_data_output( size_array )
+   end if
 
   end subroutine
 
@@ -1727,17 +1731,18 @@ module base_species
 
   end function
 
-  subroutine read_tracking_from_array(this, array_in)
+  subroutine read_tracking_from_array(this, array_in, np)
    class(base_species_T), intent(inout) :: this
    real(dp), dimension(:), intent(in) :: array_in
+   integer, intent(in) :: np
    integer :: i
 
    i = 1
 
    if ( int(array_in(i)) == 0 ) then
-    this%properties%track_data%tracked = .false.
+    call this%track(.false., allocate_now=.false.)
    else
-    this%properties%track_data%tracked = .true.
+    call this%track(.true., allocate_now=.true.)
    end if
    i = i + 1
 
@@ -1837,7 +1842,7 @@ module base_species
    this%properties%track_data%highest_index = int(array_in(i))
    i = i + 1
 
-   this%properties%track_data%extra_outputs = int(array_in(i))
+   call this%set_extra_outputs( int(array_in(i)), np)
 
   end subroutine
 !==== Procedures for the scalar type ====
@@ -1907,7 +1912,7 @@ module base_species
    call this%set_temperature(real(array_in(i)))
    i = i + 1
 
-   call this%read_tracking_from_array( array_in( i:ub ) )
+   call this%read_tracking_from_array( array_in( i:ub ), this%how_many() )
 
   end subroutine
 

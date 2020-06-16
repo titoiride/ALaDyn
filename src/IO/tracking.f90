@@ -219,7 +219,7 @@ module tracking
     write(track_dic(ic), '(a20,i1.1,a4)') 'tracking_dictionary_',ic,'.dat'
     if (pe0) then
      open(unit=track_iounit(ic), file=tracking_folder//'/'//track_dic(ic), &
-      form='formatted', status='new')
+      form='formatted', status='unknown')
      write(track_iounit(ic), '(a9,a4,a4)') 'Iteration', '    ', 'Time'
      close(track_iounit(ic))
     end if
@@ -270,18 +270,31 @@ module tracking
   character (12) :: fname
   character (8) :: foldername
   character (25) :: fname_out
+  character(17) :: title_string
 
   integer (dp) :: nptot_global_reduced
   integer :: npt, npt_loc(npe), cc
   integer :: ik, p, q, np, ip, ip_max, nptot, n_comp_out
-  integer :: lenp, ip_loc(npe), ndv, i_end
+  integer :: lenp, ip_loc(npe), ndv, i_end, iostat
   integer :: pxcomp, pycomp, pzcomp, gamma_comp
   integer (offset_kind) :: disp, disp_col
   type(index_array) :: out_parts
   type(track_data_t) :: track_data
-  real(dp) :: ch
+  real(dp) :: ch, time
 
+  write(track_dic(pid), '(a20,i1.1,a4)') 'tracking_dictionary_',pid,'.dat'
   write (foldername, '(a8)') 'tracking'
+
+  iostat = 0
+  open(unit=track_iounit(pid), file=foldername//'/'//track_dic(pid), &
+  form='formatted', status='old', action="read")
+  read(unit=track_iounit(pid), fmt='(a17)', iostat=iostat) title_string
+  do while(iostat == 0)
+   read(unit=track_iounit(pid), fmt='(i6.6, e12.5)', iostat=iostat) iter_index(pid), time
+  end do
+  close(unit=track_iounit(pid))
+  
+  iter_index(pid) = iter_index(pid) + 1
   write( fname, '(a6, i1.1, a1, i4.4)') 'Track_', pid, '_', iter_index(pid)
 
   fname_out = foldername // '/' // fname // '.bin'
@@ -307,7 +320,7 @@ module tracking
 
 
   associate( inds => spec_in%call_component(INDEX_COMP, lb=1, ub=np) )
-
+   
    track_mask(1:np) = (int(inds) > 0)
 
   end associate
@@ -389,7 +402,6 @@ module tracking
   disp = disp*4 ! sia gli int che i float sono di 4 bytes
 
   call mpi_write_part(track_pdata, lenp, ip, disp, 25, fname_out)
-  iter_index(pid) = iter_index(pid) + 1
   ! if (pe0) then
   !  write(6, *)            '==========================================='
   !  write(6, '(a35,i2.2)') ' Tracking data written for species ', pid
@@ -398,7 +410,7 @@ module tracking
   if (pe0) then
    open(unit=track_iounit(pid), file=tracking_folder//'/'//track_dic(pid), &
     form='formatted', status='old', position="append", action="write")
-   write(track_iounit(pid), '(i6.6, e12.5)') iter_index(pid) - 1, timenow
+   write(track_iounit(pid), '(i6.6, e12.5)') iter_index(pid), timenow
    close(track_iounit(pid))
   end if
  end subroutine

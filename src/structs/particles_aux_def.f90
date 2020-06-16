@@ -669,7 +669,7 @@ module particles_aux_def
   end if
 
   this%save_old_p = .true.
-  if ( this%empty ) return
+  if ( this%empty .and. (size_array == 0) ) return
   select case(this%pick_dimensions())
   case(1)
    if( .not. this%allocated_old_px ) then
@@ -1605,21 +1605,23 @@ module particles_aux_def
   logical, intent(in) :: track_flag
   logical, intent(in), optional :: allocate_now
   logical :: alloc
+  integer :: a_size
 
   alloc = .false.
   if ( present(allocate_now) ) then
    alloc = allocate_now
   end if
 
+  a_size = this%array_size()
   this%properties%track_data%tracked = track_flag
   if (track_flag .and. alloc ) then
    if ( .not. this%allocated_index ) then
-    allocate( this%part_index(this%array_size()), source=0 )
+    allocate( this%part_index(a_size), source=0 )
     this%allocated_index = .true.
    end if
   end if
 
-  if ( this%empty ) then
+  if ( this%empty .and. ( a_size == 0) ) then
     return
   end if
 
@@ -1627,29 +1629,29 @@ module particles_aux_def
    select case( this%pick_dimensions() )
    case(1)
     if ( .not. this%allocated_old_px ) then
-     allocate( this%old_px(this%array_size()), source=zero_dp )
+     allocate( this%old_px(a_size), source=zero_dp )
      this%allocated_old_px = .true.
     end if
    case(2)
     if ( .not. this%allocated_old_px ) then
-     allocate( this%old_px(this%array_size()), source=zero_dp )
+     allocate( this%old_px(a_size), source=zero_dp )
      this%allocated_old_px = .true.
     end if
     if ( .not. this%allocated_old_py ) then
-     allocate( this%old_py(this%array_size()), source=zero_dp )
+     allocate( this%old_py(a_size), source=zero_dp )
      this%allocated_old_py = .true.
     end if
    case(3)
     if ( .not. this%allocated_old_px ) then
-     allocate( this%old_px(this%array_size()), source=zero_dp )
+     allocate( this%old_px(a_size), source=zero_dp )
      this%allocated_old_px = .true.
     end if
     if ( .not. this%allocated_old_py ) then
-     allocate( this%old_py(this%array_size()), source=zero_dp )
+     allocate( this%old_py(a_size), source=zero_dp )
      this%allocated_old_py = .true.
     end if
     if ( .not. this%allocated_old_pz ) then
-     allocate( this%old_pz(this%array_size()), source=zero_dp )
+     allocate( this%old_pz(a_size), source=zero_dp )
      this%allocated_old_pz = .true.
     end if
    end select
