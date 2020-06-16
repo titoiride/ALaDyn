@@ -29,7 +29,22 @@ void create_folder_(char* folderName, size_t len)
   std::string fname(folderName, 0, len);
   boost::filesystem::create_directories(fname);
 }
+
+int check_folder_empty_(char* folderName, size_t len)
+{
+  std::string fname(folderName, 0, len);
+  boost::filesystem::path folderPath(fname);
+  bool pathIsempty = true;
+  bool pathExists = boost::filesystem::exists(folderPath);
+
+  if (pathExists){
+    pathIsempty = boost::filesystem::is_empty(folderPath);
+  }
+
+  return (int) pathIsempty;
 }
+}
+
 #elif defined(USE_FILESYSTEM)
 #include <filesystem>
 
@@ -50,6 +65,11 @@ void create_folder_(char* folderName, size_t len) {
     printf("Problem creating directory %s!\n", folderName);
   }
 }
+
+int check_folder_empty_(char* folderName, size_t len){
+  return 0;
+}
+
 }
 #else
 
