@@ -408,7 +408,6 @@
    !=== PARTICLES DUMP SECTION ====
 
    if ( max_npt_size > 0 ) then
-
     call particles_dump_properties( spec_in, spec_aux_in, lenw, max_npt_size, send_buff)
     disp_col = 0
     disp_coord = imodz*npe_yloc + npe_zloc*npe_yloc*imodx
@@ -941,7 +940,7 @@
    character (11) :: foldername
    character (100) :: name_buff
    integer (offset_kind) :: disp_col, disp
-   integer :: max_npt_size, ipe, npt_arr(npe, nsp), disp_coord
+   integer :: max_npt_size, ipe, npt_arr(npe, nsp), disp_coord, init_part(nsp)
    integer :: k1, ndv, np, ic, lun, i, j, k, kk, lenw(npe), lenbuff, &
     k2, k3
    integer :: ip_loc(npe), loc_grid_size(npe), loc2d_grid_size(npe)
@@ -988,6 +987,7 @@
 
    !======== Check if dumpRestart folder contains files =====
    isempty = check_folder_empty(foldername)
+   isempty = .false.
    if( isempty ) then
     if (pe0) then
      write(6, *) 'dumpRestart folder does not contain any file. Exiting.'
@@ -1262,8 +1262,9 @@
     nps_loc(i) = maxval(npt_arr(1:npe,i))
    end do
    np_max = maxval(nps_loc(1:nsp))
+   init_part(1:nsp) = 0
    if(np_max >0)then                    !READS particles (if any)
-    call p_alloc(spec_in, spec_aux_in, np_max, ndv, nps_loc, nsp, lpf_ord, 1, mem_psize)
+    call p_alloc(spec_in, spec_aux_in, 0, ndv, init_part(1:nsp), nsp, lpf_ord, 1, mem_psize)
     !=======================
     ic = 1
     lenw(1:npe) = 0
@@ -1291,7 +1292,8 @@
     size_spec_aux = spec_aux_in%total_size()
     lenw(1:npe) = lenw(1:npe) + (size_spec + size_spec_aux)* ip_loc(1:npe)
     disp_col = 0
-    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(imodz*npe_yloc+1:mype))
+    disp_coord = imodz*npe_yloc + npe_yloc*npe_zloc*imodx
+    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
     max_npt_size = (size_spec + size_spec_aux)*maxval(ip_loc(1:npe))
     lenbuff = max(lenbuff, max_npt_size)
