@@ -76,11 +76,11 @@
     kk = 0
     do ic = 1, nsp
     
-     properties_spec = spec_in(ic)%dump_properties_to_array()
+     call spec_in(ic)%dump_properties_to_array(properties_spec)
      array_in((kk + 1):(kk + size_prop)) = properties_spec
      kk = kk + size_prop
      
-     properties_spec_aux = spec_aux_in%dump_properties_to_array()
+     call spec_aux_in%dump_properties_to_array(properties_spec_aux)
      array_in((kk + 1):(kk + size_prop_aux)) = properties_spec_aux
      kk = kk + size_prop_aux
 

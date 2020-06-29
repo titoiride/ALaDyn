@@ -225,7 +225,11 @@
     end if
     if (nden>0) then
      do i = 1, nsp
+#if !defined(OLD_SPECIES)
+      call prl_den_energy_interp(spec(i), i, nden)
+#elif
       call prl_den_energy_interp(spec(i), ebfp, i, nden)
+#endif
       do iic = 1, min(2, nden)
        call den_energy_out( i, iic, iic )
       end do

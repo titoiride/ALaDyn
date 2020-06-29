@@ -199,7 +199,7 @@ module base_species
    procedure, public, pass :: pick_temperature
    procedure, public, pass :: pick_tot_tracked_parts
    procedure, public, pass :: pick_track_params
-   procedure, public, pass :: properties_array_size
+   procedure, public, nopass :: properties_array_size
    procedure, public, pass :: read_properties_from_array
    procedure, public, pass :: read_tracking_from_array
    procedure, public, pass :: reallocate
@@ -1505,10 +1505,9 @@ module base_species
 
   end function
 
-  pure function properties_array_size( this ) result(psize)
+  pure function properties_array_size( ) result(psize)
   !! This function returns the size of the array (number of doubles) generated when calling the
   !! properties dump to array. It MUST be updated if properties are changed
-   class(base_species_T), intent(in) ::this
    integer :: psize
 
    psize = 21
@@ -1623,9 +1622,9 @@ module base_species
     
   !==== Type bound procedures ====
 
-  pure function dump_tracking_to_array(this) result(array_out)
+  subroutine dump_tracking_to_array(this, array_out)
    class(base_species_T), intent(in) :: this
-   real(dp), dimension(:), allocatable :: array_out
+   real(dp), dimension(:), allocatable, intent(inout) :: array_out
    integer :: i, len_array
    integer, parameter :: len_max = 30
    real(dp) :: temp_array(len_max)
@@ -1729,7 +1728,7 @@ module base_species
    allocate( array_out(len_array) )
    array_out(1:len_array) = temp_array(1:len_array)
 
-  end function
+  end subroutine
 
   subroutine read_tracking_from_array(this, array_in, np)
    class(base_species_T), intent(inout) :: this
@@ -1861,9 +1860,9 @@ module base_species
 
   !==== Type bound procedures ====
     
-  pure function dump_properties_to_array(this) result(array_out)
+  subroutine dump_properties_to_array(this, array_out)
    class(base_species_T), intent(in) :: this
-   real(dp), allocatable, dimension(:) :: array_out
+   real(dp), allocatable, dimension(:), intent(inout) :: array_out
    integer :: i, size_track
    integer, parameter :: len_max = 30
    real(dp) :: temp_array(len_max)
@@ -1882,7 +1881,7 @@ module base_species
 
    temp_array(i) = real(this%properties%temperature, dp)
  
-   track_data_array = this%dump_tracking_to_array()
+   call this%dump_tracking_to_array(track_data_array)
 
    size_track = SIZE(track_data_array)
 
@@ -1890,7 +1889,7 @@ module base_species
    array_out(1:i) = temp_array(1:i)
    array_out(i+1:i+size_track) = track_data_array(1:size_track)
 
-  end function
+  end subroutine
 
   subroutine read_properties_from_array( this, array_in )
    class(base_species_T), intent(inout) :: this

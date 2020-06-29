@@ -64,10 +64,10 @@
 
   end subroutine
 
-  subroutine v_alloc(n1, n2, n3, ncomp, njc, ndm, ifluid, lp, oder, &
+  subroutine v_alloc(n1, n2, n3, ncomp, njc, ndm, ifluid, lp, &
     envlp, color, comv, fsize)
 
-   integer, intent (in) :: n1, n2, n3, ncomp, njc, ndm, ifluid, lp, oder
+   integer, intent (in) :: n1, n2, n3, ncomp, njc, ndm, ifluid, lp
    logical, intent (in) :: envlp, color, comv
    integer, intent (inout) :: fsize
    integer :: njdim, ng, ng0, n1p, n2p, n3p, allocstatus, fsize_loc

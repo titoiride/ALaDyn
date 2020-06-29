@@ -179,7 +179,7 @@ call gdbattach
    ncmp = nfield
    ! Allocates basic arrays, defines grid parameters, boundary index etc
    call v_alloc(nxp, nyp, nzp, nfield, nj_dim, ndim, ibeam, lpf_ord, &
-     der_ord, envelope, Two_color, comoving, mem_size)
+     envelope, Two_color, comoving, mem_size)
    if (hybrid) then
     call fluid_alloc(nxp, nyp, nzp, nfcomp, ndim, lpf_ord, mem_size)
     ncmp = max(ncmp, nfcomp)

@@ -285,10 +285,9 @@
    end select
   end subroutine
 !=================================
-  subroutine set_grid_charge_new(sp_loc, pt, den, np, ic)
+  subroutine set_grid_charge_new(sp_loc, den, np, ic)
 
    type(species_new), intent (in) :: sp_loc
-   type(species_aux), intent (inout) :: pt
    real (dp), intent (inout) :: den(:, :, :, :)
    integer, intent (in) :: np, ic
    real (dp) :: dvol
@@ -494,14 +493,13 @@
   end subroutine
   !==========================
   !==========================
-  subroutine set_grid_env_den_energy_new(sp_loc, pt, eden, np, icp)
+  subroutine set_grid_env_den_energy_new(sp_loc, eden, np, icp)
 
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (inout) :: pt
    real (dp), intent (inout) :: eden(:, :, :, :)
    integer, intent (in) :: np, icp
    real (dp), allocatable, dimension(:) :: gam
-   real (dp) :: dvol, gam_p
+   real (dp) :: dvol
    integer :: i1, j1, k1, i2, j2, k2, n, spline
    !======================
    !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
@@ -881,10 +879,9 @@
    !===========================
   end subroutine
   !=================================================
-  subroutine set_grid_den_energy_new(sp_loc, pt, eden, np)
+  subroutine set_grid_den_energy_new(sp_loc, eden, np)
 
    type (species_new), intent (in) :: sp_loc
-   type (species_aux), intent (in) :: pt
    real (dp), intent (inout) :: eden(:, :, :, :)
    integer, intent (in) :: np
    real (dp), allocatable, dimension(:) :: gam

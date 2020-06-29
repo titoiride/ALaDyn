@@ -1045,10 +1045,9 @@
   end subroutine
   !=====================
 
-  subroutine longitudinal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, integration_order)
+  subroutine longitudinal_integration(dx_in, field_in, result_in, lb_in, ub_in, integration_order)
    !! Subroutine that coordinates the longitudinal numerical integration between tasks
-   real(dp), allocatable, dimension(:, :, :), intent(in) :: axis_in
-   real(dp), intent(in) :: dx
+   real(dp), intent(in) :: dx_in
    real(dp), allocatable, dimension(:, :, :), intent(inout) :: field_in
    real(dp), allocatable, dimension(:, :, :), intent(inout) :: result_in
    integer, intent(in) :: lb_in, ub_in, integration_order
@@ -1072,9 +1071,9 @@
       send = .true.
       select case(integration_order)
       case(1)
-       call trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+       call trapezoidal_integration(dx_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
       case(2)
-       call simpson_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+       call simpson_integration(dx_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
       end select
       ! Performing the integral
       kk = 0
@@ -1115,9 +1114,9 @@
    if (pex0) then
     select case(integration_order)
     case(1)
-     call trapezoidal_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+     call trapezoidal_integration(dx_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
     case(2)
-     call simpson_integration(axis_in, dx, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
+     call simpson_integration(dx_in, field_in, result_in, lb_in, ub_in, jlb, jub, klb, kub)
     end select
    end if
 

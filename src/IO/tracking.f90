@@ -34,7 +34,7 @@ module tracking
 ! !#endif
  use array_alloc, only: array_realloc_1d
  use grid_part_lib, only: xx_realloc
- use grid_param, only: loc_xg, dx
+ use grid_param, only: dx
  use util, only: endian
  use warnings, only: write_warning
 
@@ -487,7 +487,7 @@ module tracking
      call write_warning('Circular polarization not implemented')
      return
     end if
-    call longitudinal_integration( loc_xg, dx, field_aux, interpol_field, ix1, ix2, order )
+    call longitudinal_integration( dx, field_aux, interpol_field, ix1, ix2, order )
    else if (envelope) then
     ! Envelope  sqrt( A_R^2 + A_I^2)
     interpol_field(:, :, :) = &

@@ -151,8 +151,6 @@ module particles_aux_def
   logical, intent(in), optional :: tracked
   integer, intent(in), optional :: extra_outputs
   integer :: allocstatus
-  logical :: extra = .false.
-  !! Setting the extra output always on false for aux species
 
   this%allocated_x = .false.
   this%allocated_y = .false.
