@@ -82,7 +82,7 @@
   end select
 
   !call timing
-  call call_barrier()
+  call call_barrier
   call Final_run_info
   call End_parallel
   !--------------------------

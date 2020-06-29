@@ -984,8 +984,9 @@
     if (pe0) then
      write(6, *) 'dumpRestart folder does not contain any file. Exiting.'
     end if
-    call call_barrier()
+    call call_barrier
     call End_parallel
+    call exit(0)
    end if
    !=========================================================
 
