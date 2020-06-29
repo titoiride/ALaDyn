@@ -1088,13 +1088,13 @@ module particles_aux_def
  
   end subroutine
  
-  subroutine sel_particles_index_aux( this, out_sp, index_array )
+  subroutine sel_particles_index_aux( this, out_sp, index_array_in )
    class(species_aux), intent(in) :: this
    class(base_species_T), intent(inout) :: out_sp
-   integer, dimension(:), intent(in) :: index_array
+   integer, dimension(:), intent(in) :: index_array_in
    integer :: i, tot_len, n
  
-   tot_len = SIZE(index_array, DIM=1)
+   tot_len = SIZE(index_array_in, DIM=1)
 
    if ( out_sp%initialized ) then
     call out_sp%sweep()
@@ -1106,63 +1106,63 @@ module particles_aux_def
  
    if( this%allocated_x ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%x(i) = this%x(n)
     end do
    end if
    if( this%allocated_y ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%y(i) = this%y(n)
     end do
    end if
    if( this%allocated_z ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%z(i) = this%z(n)
     end do
    end if
  
    if( this%allocated_px ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%px(i) = this%px(n)
     end do
    end if
    if( this%allocated_py ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%py(i) = this%py(n)
     end do
    end if
    if( this%allocated_pz ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%pz(i) = this%pz(n)
     end do
    end if
    if( this%allocated_gamma ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%gamma_inv(i) = this%gamma_inv(n)
     end do
    end if
  
    if( this%allocated_weight ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%weight(i) = this%weight(n)
     end do
    end if
    if( this%allocated_index ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%part_index(i) = this%part_index(n)
     end do
    end if
    if( this%allocated_data_out ) then
     do i = 1, tot_len
-     n = index_array(i)
+     n = index_array_in(i)
      out_sp%data_output(i) = this%data_output(n)
     end do
    end if
@@ -1171,19 +1171,19 @@ module particles_aux_def
    type is (species_aux)
     if( this%allocated_old_px ) then
      do i = 1, tot_len
-      n = index_array(i)
+      n = index_array_in(i)
       out_sp%old_px(i) = this%old_px(n)
      end do
     end if
     if( this%allocated_old_py ) then
      do i = 1, tot_len
-      n = index_array(i)
+      n = index_array_in(i)
       out_sp%old_py(i) = this%old_py(n)
      end do
     end if
     if( this%allocated_old_pz ) then
      do i = 1, tot_len
-      n = index_array(i)
+      n = index_array_in(i)
       out_sp%old_pz(i) = this%old_pz(n)
      end do
     end if

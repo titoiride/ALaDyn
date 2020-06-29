@@ -30,18 +30,17 @@ void create_folder_(char* folderName, size_t len)
   boost::filesystem::create_directories(fname);
 }
 
-int check_folder_empty_(char* folderName, size_t len)
+void check_folder_empty_(bool* pathIsempty, char* folderName, size_t len)
 {
   std::string fname(folderName, 0, len);
   boost::filesystem::path folderPath(fname);
-  bool pathIsempty = true;
+  *pathIsempty = true;
   bool pathExists = boost::filesystem::exists(folderPath);
 
   if (pathExists){
-    pathIsempty = boost::filesystem::is_empty(folderPath);
+    *pathIsempty = boost::filesystem::is_empty(folderPath);
   }
 
-  return (int) pathIsempty;
 }
 }
 
@@ -66,8 +65,8 @@ void create_folder_(char* folderName, size_t len) {
   }
 }
 
-int check_folder_empty_(char* folderName, size_t len){
-  return 0;
+void check_folder_empty_(bool* pathIsempty, char* folderName, size_t len){
+  *pathIsempty = false;
 }
 
 }

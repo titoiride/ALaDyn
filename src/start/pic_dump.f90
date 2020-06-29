@@ -26,18 +26,11 @@
   use common_param
   use grid_param
   use parallel
+  use, intrinsic :: iso_c_binding
 
   implicit none
 
   real (dp), allocatable, private :: send_buff(:), recv_buff(:)
-
-  interface
-   function check_folder_empty(fname) bind(C, name="check_folder_empty_") result(flagEmpty)
-    use iso_c_binding
-    character(kind=c_char) :: fname(*)
-    logical :: flagEmpty
-   end function check_folder_empty
-  end interface
 
   interface restart
    module procedure restart_new
@@ -102,7 +95,7 @@
    integer, intent(in), dimension(:) :: ip_loc_in
    integer, intent(inout) :: max_npt_size_in
    real(dp), allocatable, dimension(:), intent(inout) :: array_in
-   real(dp), allocatable, dimension(:) :: temp_buff, properties_spec, properties_spec_aux
+   real(dp), allocatable, dimension(:) :: temp_buff
    integer :: size_spec, size_spec_aux, tot, ic, np, kk
 
    lenw(:) = 0
@@ -192,7 +185,6 @@
    type(species_aux), intent(inout) :: spec_aux_in
    integer, allocatable, dimension(:, :, :, :), intent(in) :: local_particles
    real(dp), dimension(:), intent(in) :: array_in
-   real(dp), allocatable, dimension(:) :: temp_buff
    integer :: ic, np, kk, spec_size, aux_size
    integer :: tot, tot_aux
 
@@ -249,8 +241,8 @@
    character (11) :: foldername
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, disp_coord
-   integer :: np, ic, lun, i, j, k, kk, ipe, lenbuff
-   integer :: nxf_loc, nyf_loc, nzf_loc, ndv, ndvb
+   integer :: ic, lun, i, j, k, kk, ipe, lenbuff
+   integer :: nxf_loc, nyf_loc, nzf_loc, ndv
    integer :: npt_arr(npe, nsp), ip_loc(npe)
    integer :: loc_grid_size(npe), loc2d_grid_size(npe), lenw(npe)
    integer :: grid_size_max, grid2d_size_max
@@ -602,8 +594,8 @@
    character (11) :: foldername = '           '
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size
-   integer :: np, ic, lun, i, j, k, kk, ipe, lenbuff
-   integer :: nxf_loc, nyf_loc, nzf_loc, ndv, ndvb
+   integer :: ic, lun, i, j, k, kk, ipe, lenbuff
+   integer :: nxf_loc, nyf_loc, nzf_loc, ndv
    integer :: npt_arr(npe, nsp), ip_loc(npe)
    integer :: loc_grid_size(npe), loc2d_grid_size(npe), lenw(npe)
    integer :: grid_size_max, grid2d_size_max
@@ -941,7 +933,7 @@
    character (100) :: name_buff
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, ipe, npt_arr(npe, nsp), disp_coord, init_part(nsp)
-   integer :: k1, ndv, np, ic, lun, i, j, k, kk, lenw(npe), lenbuff, &
+   integer :: k1, ndv, ic, lun, i, j, k, kk, lenw(npe), lenbuff, &
     k2, k3
    integer :: ip_loc(npe), loc_grid_size(npe), loc2d_grid_size(npe)
    integer :: grid_size_max, grid2d_size_max
@@ -951,7 +943,8 @@
    integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
    integer :: size_spec, size_spec_aux, size_prop, size_prop_aux
    real (dp) :: rdata(10), x0_new
-   logical :: sd, isempty
+   logical :: sd
+   logical(c_bool) :: isempty
 
    !==============
    write (fname, '(a9)') 'Comm-data'
@@ -986,8 +979,7 @@
 
 
    !======== Check if dumpRestart folder contains files =====
-   isempty = check_folder_empty(foldername)
-   isempty = .false.
+   call check_folder_empty(isempty, foldername)
    if( isempty ) then
     if (pe0) then
      write(6, *) 'dumpRestart folder does not contain any file. Exiting.'

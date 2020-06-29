@@ -284,12 +284,12 @@ module base_species
   end interface
 
   abstract interface
-   subroutine sel_particles_index_abstract( this, out_sp, index_array )
+   subroutine sel_particles_index_abstract( this, out_sp, index_array_in )
     import base_species_T, dp
     implicit none
     class(base_species_T), intent(in) :: this
     class(base_species_T), intent(inout) :: out_sp
-    integer, dimension(:), intent(in) :: index_array
+    integer, dimension(:), intent(in) :: index_array_in
    end subroutine
    
    subroutine sel_particles_bounds_abstract( this, out_sp, lower_bound, upper_bound )
@@ -1415,7 +1415,7 @@ module base_species
    class(base_species_T), intent(inout) :: this
    real(dp), intent(in) :: temperature
 
-   this%properties%temperature = temperature
+   this%properties%temperature = real(temperature, sp)
   end subroutine
 
   subroutine track( this, track_flag, allocate_now )
@@ -1909,7 +1909,7 @@ module base_species
    call this%set_dimensions(int(array_in(i)))
    i = i + 1
 
-   call this%set_temperature(real(array_in(i)))
+   call this%set_temperature(array_in(i))
    i = i + 1
 
    call this%read_tracking_from_array( array_in( i:ub ), this%how_many() )
@@ -2020,7 +2020,7 @@ module base_species
    class(scalars), intent(inout) :: this
    real(dp), intent(in) :: temperature
    
-   this%temperature = temperature
+   this%temperature = real(temperature, sp)
   end subroutine
   
   subroutine track_scalars( this, track_flag )
