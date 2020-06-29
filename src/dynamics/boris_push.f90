@@ -758,7 +758,7 @@
    integer, intent (in) :: np, ic
    integer :: p, ch
    real (dp) :: alp, dt_lp, dth_lp, bb(3), pp(3), vp(3), vph(3), efp(6), &
-     b2, bv, gam02, gam2, gam
+     b2, bv, gam2, gam
    !========================================
    ! uses exact explicit solution for
    ! p^{n}=(p^{n+1/2}+p^{n-1/2})/2 and gamma^n=sqrt( 1+p^n*p^n)
@@ -777,7 +777,7 @@
      efp(1:3) = alp*pt(p, 1:3) !q*Lfact*(Ex,Ey,Bz)*Dt/2
      vp(1:2) = pp(1:2) + efp(1:2) !u^{-} in Boris push
      vp(3) = efp(3) !b_z
-     gam02 = 1. + dot_product(vp(1:2), vp(1:2)) !gam0 in Boris push
+     gam2 = 1. + dot_product(vp(1:2), vp(1:2)) !gam0 in Boris push
      b2 = vp(3)*vp(3) !b_z*b_z
      gam = sqrt(gam2)
      !==============================
@@ -803,7 +803,7 @@
      efp(1:6) = alp*pt(p, 1:6) !q*Lfact*(E,B) on p-th-particle
      vp(1:3) = pp(1:3) + efp(1:3) !p^{-} in Boris push
      bb(1:3) = efp(4:6)
-     gam02 = 1. + dot_product(vp(1:3), vp(1:3)) !the lower order gamma in Boris scheme
+     gam2 = 1. + dot_product(vp(1:3), vp(1:3)) !the lower order gamma in Boris scheme
      !=============================
      b2 = dot_product(bb(1:3), bb(1:3))
      bv = dot_product(bb(1:3), vp(1:3))
