@@ -31,7 +31,7 @@
   implicit none
 
   real (dp), parameter :: half = 0.5
-  real (sp), parameter :: shx = 3., shy = 3., shz = 3.
+  real (sp) :: shx, shy, shz
   integer (kind=2) :: err_ind
   real(dp), allocatable, dimension(:), private, save :: gpl_xx
   real(dp), allocatable, dimension(:), private, save :: gpl_sx
@@ -153,6 +153,7 @@
    !======================
    ord = 2
    h_ord = 2
+   shx = gcx
 
    xx = shx + xp(1)
    interp_in%ix = int(xx+half)
@@ -181,6 +182,7 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d(gpl_xx, length)
    call array_realloc_1d(gpl_sx, length)
+   shx = gcx
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half)
@@ -211,6 +213,7 @@
    integer :: ord
    !======================
    ord = 2
+   shx = gcx
 
    xx = shx + xp(1)
    ix = int(xx+half)
@@ -232,6 +235,7 @@
 
    call array_realloc_1d( gpl_xx, length)
    call array_realloc_1d( gpl_sx, length)
+   shx = gcx
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half )
@@ -259,6 +263,8 @@
    !======================
    ord = 2
    h_ord = 2
+   shx = gcx
+   shy = gcy
 
    xx = shx + xp(1)
    ix = int(xx+half)
@@ -294,6 +300,8 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d(gpl_xx, length)
    call array_realloc_1d(gpl_sx, length)
+   shx = gcx
+   shy = gcy
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int(gpl_xx(1:length) + half)
@@ -328,6 +336,8 @@
    integer :: ix, ihx, iy, ihy
    real (dp) :: xx, sx
    !======================
+   shx = gcx
+   shy = gcy
 
    xx = shx + xp(1)
    ix = int(xx+half)
@@ -366,6 +376,8 @@
    type(interp_coeff), intent(inout) :: interp_in
    integer :: length
    !======================
+   shx = gcx
+   shy = gcy
 
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d(gpl_xx, length)
@@ -413,6 +425,9 @@
    integer :: ix, iy
    real (dp) :: xx, sx
    !======================
+   shx = gcx
+   shy = gcy
+
    xx = shx + xp(1)
    ix = int(xx+half)
    sx = xx - real(ix, dp)
@@ -440,6 +455,8 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d( gpl_xx, length )
    call array_realloc_1d( gpl_sx, length )
+   shx = gcx
+   shy = gcy
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half )
@@ -468,7 +485,10 @@
    integer :: ix, iy
    real (dp) :: xx, sx
    !======================
-   xx = shy + xp(1)
+   shx = gcx
+   shy = gcy
+
+   xx = shx + xp(1)
    ix = int(xx)
    sx = xx - real(ix, dp)
 
@@ -495,6 +515,8 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d( gpl_xx, length )
    call array_realloc_1d( gpl_sx, length )
+   shx = gcx
+   shy = gcy
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) )
@@ -527,6 +549,9 @@
    integer :: ix, iy, iz
    real (dp) :: xx, sx
    !======================
+   shx = gcx
+   shy = gcy
+   shz = gcz
 
    xx = shx + xp(1)
    ix = int(xx+half)
@@ -569,6 +594,9 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d( gpl_xx, length)
    call array_realloc_1d( gpl_sx, length)
+   shx = gcx
+   shy = gcy
+   shz = gcz
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int(gpl_xx(1:length) + half)
@@ -612,6 +640,9 @@
    integer :: ix, ihx, iy, ihy, iz, ihz
    real (dp) :: xx, sx
    !=====================
+   shx = gcx
+   shy = gcy
+   shz = gcz
 
    xx = shx + xp(1)
    ix = int(xx+half)
@@ -666,6 +697,9 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d( gpl_xx, length)
    call array_realloc_1d( gpl_sx, length)
+   shx = gcx
+   shy = gcy
+   shz = gcz
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int(gpl_xx(1:length) + half)
@@ -724,6 +758,10 @@
    integer :: ix, iy, iz
    real (dp) :: xx, sx
    !======================
+   shx = gcx
+   shy = gcy
+   shz = gcz
+
    xx = shx + xp(1)
    ix = int(xx+half)
    sx = xx - real(ix, dp)
@@ -758,6 +796,9 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d(gpl_xx, length)
    call array_realloc_1d(gpl_sx, length)
+   shx = gcx
+   shy = gcy
+   shz = gcz
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half )
@@ -795,6 +836,10 @@
    real (dp) :: xx, sx
    !======================
    !cubic spline to integer index
+   shx = gcx
+   shy = gcy
+   shz = gcz
+
    xx = shx + xp(1)
    ix = int(xx)
    sx = xx - real(ix, dp)
@@ -829,6 +874,9 @@
    length = SIZE( xp, DIM=1 )
    call array_realloc_1d(gpl_xx, length)
    call array_realloc_1d(gpl_sx, length)
+   shx = gcx
+   shy = gcy
+   shz = gcz
 
    gpl_xx(1:length) = shx + xp(1:length, 1)
    interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) )

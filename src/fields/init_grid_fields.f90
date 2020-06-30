@@ -73,7 +73,7 @@
    end do
    do k = kz1, kz2
     do j = jy1, jy2
-     jj = j - 2
+     jj = j - gcy + 1
      sdhy = loc_yg(jj, 3, imody)*dy_inv
      do i = ix1, ix2 + 1
       efb(i, j, k, 2) = -sdhy*(poten(i,j+1,k,1)-poten(i,j,k,1))
@@ -111,7 +111,7 @@
     end do
    end do
    do k = kz1, kz2
-    kk = k - 2
+    kk = k - gcz + 1
     sdhz = loc_zg(kk, 3, imodz)*dz_inv
     do j = jy1, jy2
      do i = ix1, ix2
@@ -172,7 +172,7 @@
     do k = k1, k2
      do j = j1, j2
       do i = i1, i2
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xx = xx - xf0
        phi1 = pi*(xx-t)/wx
@@ -201,12 +201,12 @@
     j2 = loc_ygrid(imody)%p_ind(2)
     k = 1
     do j = j1, j2
-     jj = j - 2
+     jj = j - gcy + 1
      yy = loc_yg(jj, 1, imody)
      yy = (yy-ycent)/wy
      r2 = yy*yy
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = loc_xg(ii, 1, imodx)
       xx = xx - xf0
       phi1 = pi*(xx-t)/wx
@@ -238,16 +238,16 @@
    k1 = loc_zgrid(imodz)%p_ind(1)
    k2 = loc_zgrid(imodz)%p_ind(2)
    do k = k1, k2
-    kk = k - 2
+    kk = k - gcz + 1
     zz = loc_zg(kk, 1, imodz)
     zz = (zz-zcent)/wy
     do j = j1, j2
-     jj = j - 2
+     jj = j - gcy + 1
      yy = loc_yg(jj, 1, imody)
      yy = (yy-ycent)/wy
      r2 = (yy*yy+zz*zz)
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = loc_xg(ii, 1, imodx)
       xx = xx - xf0
       phi1 = pi*(t-xx)/wx
@@ -308,7 +308,7 @@
     do k = k1, k2
      do j = j1, j2
       do i = i1, i2
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xx = xx - xf0
        phi1 = (xx-t)/wx !phi1=(x-xf+tf)/wx=(x-xc)/wx > longitudinal shape 
@@ -335,12 +335,12 @@
     j2 = loc_ygrid(imody)%p_ind(2)
     k = 1
     do j = j1, j2
-     jj = j - 2
+     jj = j - gcy + 1
      yy = loc_yg(jj, 1, imody)
      yy = (yy-ycent)/wy
      r2 = yy*yy
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = loc_xg(ii, 1, imodx)
       xx = xx - xf0
       phi1 = (xx-t)/wx !phi1=(x-xf+tf)/wx=(x-xc)/wx > longitudinal shape 
@@ -368,16 +368,16 @@
    k1 = loc_zgrid(imodz)%p_ind(1)
    k2 = loc_zgrid(imodz)%p_ind(2)
    do k = k1, k2
-    kk = k - 2
+    kk = k - gcz + 1
     zz = loc_zg(kk, 1, imodz)
     zz = (zz-zcent)/wy
     do j = j1, j2
-     jj = j - 2
+     jj = j - gcy + 1
      yy = loc_yg(jj, 1, imody)
      yy = (yy-ycent)/wy
      r2 = (yy*yy+zz*zz)
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = loc_xg(ii, 1, imodx)
       xx = xx - xf0
       phi1 = (xx-t)/wx
@@ -795,7 +795,7 @@
      k = 1
      coords(3) = 0.0
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       !===ora Ex(xxh,yy)=========
@@ -840,11 +840,11 @@
     end if
     !====3D ========================
     do k = k1, k2
-     kk = k - 2
+     kk = k - gcz + 1
      zz = loc_zg(kk, 1, imodz)
      zzh = loc_zg(kk, 2, imodz)
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       xp = xxh
@@ -906,7 +906,7 @@
      k = 1
      coords(3) = 0
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       !===ora Ez(xx,yy)=========
@@ -930,11 +930,11 @@
     end if
     !====3D ========================
     do k = k1, k2
-     kk = k - 2
+     kk = k - gcz + 1
      zz = loc_zg(kk, 1, imodz)
      zzh = loc_zg(kk, 2, imodz)
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       !==== Ex(xxh,yy,zz)=========
@@ -1040,7 +1040,7 @@
      k = 1
      do j = j1, j2
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !===ora Ex(xxh,yy)=========
@@ -1065,7 +1065,7 @@
     do k = k1, k2
      do j = j1, j2
       do i = i1, i2
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !==== Ex(xxh,yy,zz)=========
@@ -1094,7 +1094,7 @@
      j = 1
      coords(2:3) = 0.0
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = loc_xg(ii, 1, imodx)
       xxh = loc_xg(ii, 2, imodx)
       !===ora Ex(xxh,yy)=========
@@ -1132,11 +1132,11 @@
      k = 1
      coords(3) = 0.0
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       do i = i1, i2
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !===ora Ex(xxh,yy)=========
@@ -1176,15 +1176,15 @@
     end if
     !====3D ========================
     do k = k1, k2
-     kk = k - 2
+     kk = k - gcz + 1
      zz = loc_zg(kk, 1, imodz)
      zzh = loc_zg(kk, 2, imodz)
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !==== Ex(xxh,yy,zz)=========
@@ -1261,11 +1261,11 @@
      k = 1
      coords(3) = 0
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !===ora Ez(xx,yy)=========
@@ -1304,15 +1304,15 @@
     end if
     !====3D ========================
     do k = k1, k2
-     kk = k - 2
+     kk = k - gcz + 1
      zz = loc_zg(kk, 1, imodz)
      zzh = loc_zg(kk, 2, imodz)
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !==== Ex(xxh,yy,zz)=========
@@ -1447,7 +1447,7 @@
      k = 1
      do j = j1, j2
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !===ora Ex(xxh,yy)=========
@@ -1472,7 +1472,7 @@
     do k = k1, k2
      do j = j1, j2
       do i = i1, i2
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !==== Ex(xxh,yy,zz)=========
@@ -1505,7 +1505,7 @@
      j = 1
      coords(2:3) = 0.0
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = loc_xg(ii, 1, imodx)
       xxh = loc_xg(ii, 2, imodx)
       !===ora Ex(xxh,yy)=========
@@ -1536,13 +1536,13 @@
      k = 1
      coords(3) = 0.0
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       yy = yy - yc
       yyh = yyh - yc
       do i = i1, i2
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !===ora Ex(xxh,yy)=========
@@ -1581,19 +1581,19 @@
     end if
     !====3D ========================
     do k = k1, k2
-     kk = k - 2
+     kk = k - gcz + 1
      zz = loc_zg(kk, 1, imodz)
      zzh = loc_zg(kk, 2, imodz)
      zz = zz - zc
      zzh = zzh - zc
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       yy = yy - yc
       yyh = yyh - yc
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !==== Ex(xxh,yy,zz)=========
@@ -1681,13 +1681,13 @@
      k = 1
      coords(3) = 0
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       yy = yy - yc
       yyh = yyh - yc
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !===ora Ez(xx,yy)=========
@@ -1725,19 +1725,19 @@
     end if
     !====3D ========================
     do k = k1, k2
-     kk = k - 2
+     kk = k - gcz + 1
      zz = loc_zg(kk, 1, imodz)
      zzh = loc_zg(kk, 2, imodz)
      zz = zz - zc
      zzh = zzh - zc
      do j = j1, j2
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       yyh = loc_yg(jj, 2, imody)
       yy = yy - yc
       yyh = yyh - yc
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !==== Ex(xxh,yy,zz)=========
@@ -1886,16 +1886,16 @@
     return
    end if
    !============================= CP with gaussian envelope
-   kk = 1
    do k = k1, k2
+    kk = k - gcz + 1
     zz = loc_zg(kk, 1, imodz)
     zzh = loc_zg(kk, 2, imodz)
     if (ndim<3) then
      zz = 0.0
      zzh = 0.0
     end if
-    jj = 1
     do j = j1, j2
+     jj = j - gcy + 1
      yy = loc_yg(jj, 1, imody)
      yyh = loc_yg(jj, 2, imody)
      !==================
@@ -1993,7 +1993,7 @@
      k = 1
      do j = j1, j2
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx  +1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !=== Ex(xxh,yy)=========
@@ -2018,7 +2018,7 @@
     do k = k1, k2
      do j = j1, j2
       do i = i1, i2 !xp=x*cos+y*sin  yp=y*cos-x*sin
-       ii = i - 2
+       ii = i - gcx + 1
        xx = loc_xg(ii, 1, imodx)
        xxh = loc_xg(ii, 2, imodx)
        !==== Ex(xxh,yy,zz)=========
@@ -2044,20 +2044,20 @@
     return
    end if
    !============================= CP with gaussian envelope
-   kk = 1
    do k = k1, k2
+    kk = k - gcz + 1
     zz = loc_zg(kk, 1, imodz)
     zzh = loc_zg(kk, 2, imodz)
     if (ndim<3) then
      zz = 0.0
      zzh = 0.0
     end if
-    jj = 1
     do j = j1, j2
+     jj = j - gcy + 1
      yy = loc_yg(jj, 1, imody)
      yyh = loc_yg(jj, 2, imody)
-     ii = 1
      do i = i1, i2
+      ii = i - gcx + 1
       xx = loc_xg(ii, 1, imodx)
       xxh = loc_xg(ii, 2, imodx)
       !==================
@@ -2202,17 +2202,17 @@
      k = k01
      zz = 0.0
      do j = j01, j02
-      jj = j - 2
+      jj = j - gcy + 1
       yy = loc_yg(jj, 1, imody)
       r2 = (yy*yy+zz*zz)/(w0_y*w0_y)
       fluid_yz_profile(j, k) = 1.0 + chann_fact*r2
      end do
     else
      do k = k01, k02
-      kk = k - 2
+      kk = k - gcz + 1
       zz = loc_zg(kk, 1, imodz)
       do j = j01, j02
-       jj = j - 2
+       jj = j - gcy + 1
        yy = loc_yg(jj, 1, imody)
        r2 = (yy*yy+zz*zz)/(w0_y*w0_y)
        fluid_yz_profile(j, k) = 1.0 + chann_fact*r2
@@ -2391,9 +2391,9 @@
    do k = k1, k2
     do j = j1, j2
      do i = i1, i2
-      zz = loc_zg(k-2, 1, imodz)
-      yy = loc_yg(j-2, 1, imody)
-      xx = loc_xg(i-2, 1, imodx)
+      zz = loc_zg(k - gcz + 1, 1, imodz)
+      yy = loc_yg(j - gcy + 1, 1, imody)
+      xx = loc_xg(i - gcx + 1, 1, imodx)
 
       ef1(i, j, k, 1) = 0.0 !B_x(i,j+1/2,k+1/2)
       ef1(i, j, k, 2) = -bpoloidal*zz/rpoloidal !B_y(i+1/2,j,k+1/2)
@@ -2423,13 +2423,13 @@
    l = l_sol(2, 1)
    ff = l_sol(3, 1)
    do k = k1, k2
-    kk = k - 2
+    kk = k - gcz + 1
     zz = b0*loc_zg(kk, 1, imodz)
     do j = j1, j2
-     jj = j - 2
+     jj = j - gcy + 1
      yy = b0*loc_yg(jj, 1, imody)
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = (loc_xg(ii,1,imodx)-d)/ff
       f1 = 1./(1.+exp(-xx))
       f2 = 1./(1.+exp(l/ff-xx))
@@ -2449,13 +2449,13 @@
    l = l_sol(2, 2)
    ff = l_sol(3, 2)
    do k = k1, k2
-    kk = k - 2
+    kk = k - gcz + 1
     zz = b0*loc_zg(kk, 1, imodz)
     do j = j1, j2
-     jj = j - 2
+     jj = j - gcy + 1
      yy = b0*loc_yg(jj, 1, imody)
      do i = i1, i2
-      ii = i - 2
+      ii = i - gcx + 1
       xx = (loc_xg(ii,1,imodx)-d)/ff
       f1 = 1./(1.+exp(-xx))
       f2 = 1./(1.+exp(l/ff-xx))

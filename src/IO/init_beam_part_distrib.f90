@@ -452,10 +452,10 @@
    pot0 = log(r2max/brad2)
    sx2_inv = 1./(2.*sx*sx)
    do k = k1, k2
-    kk = k - 2
+    kk = k - gcz + 1
     zz = loc_zg(kk, 1, imodz)
     do j = j1, j2
-     jj = j - 2
+     jj = j - gcy + 1
      yy = loc_yg(jj, 1, imody)
      r2 = zz*zz + yy*yy
      if (r2>brad2) then

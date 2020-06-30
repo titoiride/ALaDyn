@@ -46,6 +46,7 @@
 
   implicit none
 
+  integer, private :: shift_x, shift_y, shift_z
  contains
 
   !===========================================================
@@ -53,9 +54,10 @@
   ! configurations
   !===========================================================
   subroutine set_grid(n1, n2, n3, ib, x_stretch, y_stretch, xres, yxres, &
-    zxres)
+    zxres, sh_x, sh_y, sh_z)
    integer, intent (in) :: n1, n2, n3, ib, x_stretch, y_stretch
    real (dp), intent (in) :: xres, yxres, zxres
+   integer, intent(in) :: sh_x, sh_y, sh_z
    integer :: i, ns1
    real (dp) :: yy, yyh, smin, smax
 
@@ -64,6 +66,17 @@
    allocate (dx1h(0:n1+1), dy1h(0:n2+1), dz1h(0:n3+1))
    allocate (xh(0:n1+1), yh(0:n2+1), zh(0:n3+1))
    !-----------------------------------
+   ! Reducing guard cells to 1 if there's no dimension in that direction
+   shift_x = sh_x
+   shift_y = sh_y
+   shift_z = sh_z
+   if (ndim < 3) then
+    shift_z = 1
+   end if
+   if (ndim < 2) then
+    shift_y = 1
+   end if
+
    aph = acos(-1.0)*0.4
    dxi = 1.
    dyi = 1.
@@ -307,8 +320,8 @@
 
   end subroutine
 !============================
-  subroutine set_ftyzgrid(npey, npez, sh)
-   integer, intent (in) :: npey, npez, sh
+  subroutine set_ftyzgrid(npey, npez)
+   integer, intent (in) :: npey, npez
    integer :: i, ii, p, ip, n_loc,last_ind
 
    ! defines local yftgrid and zftgrid
@@ -316,10 +329,11 @@
    ip = loc_yftgrid(0)%ng
    n_loc = ip
    loc_yftgrid(0)%gmax = yft(ip+1)
-   loc_yftgrid(0)%p_ind(1) = min(sh, n_loc)
+   loc_yftgrid(0)%p_ind(1) = min(shift_y, n_loc)
    loc_yftgrid(0)%p_ind(2) = n_loc + loc_yftgrid(0)%p_ind(1) - 1
    loc_yftgrid(0)%min_cell = 0
    loc_yftgrid(0)%max_cell = loc_yftgrid(0)%min_cell + n_loc - 1
+   loc_yftgrid(0)%shift = shift_y
 
    p = 0
    do i = 1, n_loc + 1
@@ -341,10 +355,11 @@
       ip = ip + n_loc
       loc_yftgrid(p)%gmax = yft(ip+1)
 
-      loc_yftgrid(p)%p_ind(1) = sh
+      loc_yftgrid(p)%p_ind(1) = shift_y
       loc_yftgrid(p)%p_ind(2) = n_loc + loc_yftgrid(p)%p_ind(1) - 1
       loc_yftgrid(p)%min_cell = loc_yftgrid(p-1)%min_cell + n_loc
       loc_yftgrid(p)%max_cell = loc_yftgrid(p-1)%max_cell + n_loc
+      loc_yftgrid(p)%shift = shift_y
 
      end do
     end if
@@ -357,10 +372,11 @@
     loc_yftgrid(p)%gmin = loc_yftgrid(p-1)%gmax
     ip = ip + n_loc
     loc_yftgrid(p)%gmax = yft(ip+1)
-    loc_yftgrid(p)%p_ind(1) = sh
+    loc_yftgrid(p)%p_ind(1) = shift_y
     loc_yftgrid(p)%p_ind(2) = n_loc + loc_yftgrid(p)%p_ind(1) - 1
     loc_yftgrid(p)%min_cell = loc_yftgrid(p-1)%min_cell + n_loc
     loc_yftgrid(p)%max_cell = loc_yftgrid(p-1)%max_cell + n_loc
+    loc_yftgrid(p)%shift = shift_y
 
    end if
 !      Now redefine loc_yft coordinate on an extended grid to be overset the
@@ -397,10 +413,11 @@
    ip = loc_zftgrid(0)%ng
    n_loc = ip
    loc_zftgrid(0)%gmax = zft(ip+1)
-   loc_zftgrid(0)%p_ind(1) = min(sh, n_loc)
+   loc_zftgrid(0)%p_ind(1) = min(shift_z, n_loc)
    loc_zftgrid(0)%p_ind(2) = n_loc + loc_zftgrid(0)%p_ind(1) - 1
    loc_zftgrid(0)%min_cell = 0
    loc_zftgrid(0)%max_cell = loc_zftgrid(0)%min_cell + n_loc - 1
+   loc_zftgrid(0)%shift = shift_z
 
    p = 0
    do i = 1, n_loc + 1
@@ -422,10 +439,11 @@
       ip = ip + n_loc
       loc_zftgrid(p)%gmax = zft(ip+1)
 
-      loc_zftgrid(p)%p_ind(1) = sh
+      loc_zftgrid(p)%p_ind(1) = shift_z
       loc_zftgrid(p)%p_ind(2) = n_loc + loc_zftgrid(p)%p_ind(1) - 1
       loc_zftgrid(p)%min_cell = loc_zftgrid(p-1)%min_cell + n_loc
       loc_zftgrid(p)%max_cell = loc_zftgrid(p-1)%max_cell + n_loc
+      loc_zftgrid(p)%shift = shift_z
 
      end do
     end if
@@ -438,10 +456,11 @@
     loc_zftgrid(p)%gmin = loc_zftgrid(p-1)%gmax
     ip = ip + n_loc
     loc_zftgrid(p)%gmax = zft(ip+1)
-    loc_zftgrid(p)%p_ind(1) = sh
+    loc_zftgrid(p)%p_ind(1) = shift_z
     loc_zftgrid(p)%p_ind(2) = n_loc + loc_zftgrid(p)%p_ind(1) - 1
     loc_zftgrid(p)%min_cell = loc_zftgrid(p-1)%min_cell + n_loc
     loc_zftgrid(p)%max_cell = loc_zftgrid(p-1)%max_cell + n_loc
+    loc_zftgrid(p)%shift = shift_z
 
    end if
    if(npez >3)then
@@ -473,8 +492,8 @@
 
    end subroutine
 
-  subroutine set_fyzxgrid(npey, npez, npex, sh)
-   integer, intent (in) :: npey, npez, npex, sh
+  subroutine set_fyzxgrid(npey, npez, npex)
+   integer, intent (in) :: npey, npez, npex
    integer :: i, ii, p, ip, n_loc
 
    ! Defines initial local p-grid coordinate and loc n_cell
@@ -483,10 +502,11 @@
    ip = loc_ygrid(0)%ng
    n_loc = ip
    loc_ygrid(0)%gmax = y(ip+1)
-   loc_ygrid(0)%p_ind(1) = min(sh, n_loc)
+   loc_ygrid(0)%p_ind(1) = min(shift_y, n_loc)
    loc_ygrid(0)%p_ind(2) = n_loc + loc_ygrid(0)%p_ind(1) - 1
    loc_ygrid(0)%min_cell = 0
    loc_ygrid(0)%max_cell = loc_ygrid(0)%min_cell + n_loc - 1
+   loc_ygrid(0)%shift = shift_y
 
    p = 0
    do i = 0, n_loc + 1
@@ -515,10 +535,11 @@
       ip = ip + n_loc
       loc_ygrid(p)%gmax = y(ip+1)
 
-      loc_ygrid(p)%p_ind(1) = sh
+      loc_ygrid(p)%p_ind(1) = shift_y
       loc_ygrid(p)%p_ind(2) = n_loc + loc_ygrid(p)%p_ind(1) - 1
       loc_ygrid(p)%min_cell = loc_ygrid(p-1)%min_cell + n_loc
       loc_ygrid(p)%max_cell = loc_ygrid(p-1)%max_cell + n_loc
+      loc_ygrid(p)%shift = shift_y
 
      end do
     end if
@@ -537,10 +558,11 @@
     loc_ygrid(p)%gmin = loc_ygrid(p-1)%gmax
     ip = ip + n_loc
     loc_ygrid(p)%gmax = y(ip+1)
-    loc_ygrid(p)%p_ind(1) = sh
+    loc_ygrid(p)%p_ind(1) = shift_y
     loc_ygrid(p)%p_ind(2) = n_loc + loc_ygrid(p)%p_ind(1) - 1
     loc_ygrid(p)%min_cell = loc_ygrid(p-1)%min_cell + n_loc
     loc_ygrid(p)%max_cell = loc_ygrid(p-1)%max_cell + n_loc
+    loc_ygrid(p)%shift = shift_y
 
    end if
    !=========================
@@ -548,10 +570,11 @@
    ip = loc_zgrid(0)%ng
    n_loc = ip
    loc_zgrid(0)%gmax = z(ip+1)
-   loc_zgrid(0)%p_ind(1) = min(sh, n_loc)
+   loc_zgrid(0)%p_ind(1) = min(shift_z, n_loc)
    loc_zgrid(0)%p_ind(2) = n_loc + loc_zgrid(0)%p_ind(1) - 1
    loc_zgrid(0)%min_cell = 0
    loc_zgrid(0)%max_cell = loc_zgrid(0)%min_cell + n_loc - 1
+   loc_zgrid(0)%shift = shift_z
 
    p = 0
    do i = 0, n_loc + 1
@@ -578,10 +601,11 @@
       loc_zgrid(p)%gmin = loc_zgrid(p-1)%gmax
       ip = ip + n_loc
       loc_zgrid(p)%gmax = z(ip+1)
-      loc_zgrid(p)%p_ind(1) = sh
+      loc_zgrid(p)%p_ind(1) = shift_z
       loc_zgrid(p)%p_ind(2) = n_loc + loc_zgrid(p)%p_ind(1) - 1
       loc_zgrid(p)%min_cell = loc_zgrid(p-1)%min_cell + n_loc
       loc_zgrid(p)%max_cell = loc_zgrid(p-1)%max_cell + n_loc
+      loc_zgrid(p)%shift = shift_z
      end do
     end if
     p = npez - 1
@@ -598,20 +622,22 @@
     loc_zgrid(p)%gmin = loc_zgrid(p-1)%gmax
     ip = ip + n_loc
     loc_zgrid(p)%gmax = z(ip+1)
-    loc_zgrid(p)%p_ind(1) = sh
+    loc_zgrid(p)%p_ind(1) = shift_z
     loc_zgrid(p)%p_ind(2) = n_loc + loc_zgrid(p)%p_ind(1) - 1
     loc_zgrid(p)%min_cell = loc_zgrid(p-1)%min_cell + n_loc
     loc_zgrid(p)%max_cell = loc_zgrid(p-1)%max_cell + n_loc
+    loc_zgrid(p)%shift = shift_z
    end if
    !======================
    loc_xgrid(0)%gmin = x(1)
    ip = loc_xgrid(0)%ng
    n_loc = ip
    loc_xgrid(0)%gmax = x(ip+1)
-   loc_xgrid(0)%p_ind(1) = min(sh, n_loc)
+   loc_xgrid(0)%p_ind(1) = min(shift_x, n_loc)
    loc_xgrid(0)%p_ind(2) = n_loc + loc_xgrid(0)%p_ind(1) - 1
    loc_xgrid(0)%min_cell = 0
    loc_xgrid(0)%max_cell = loc_xgrid(0)%min_cell + n_loc - 1
+   loc_xgrid(0)%shift = shift_x
    p = 0
    do i = 0, n_loc + 1
     loc_xg(i, 1, p) = x(i)
@@ -637,10 +663,11 @@
       loc_xgrid(p)%gmin = loc_xgrid(p-1)%gmax
       ip = ip + n_loc
       loc_xgrid(p)%gmax = x(ip+1)
-      loc_xgrid(p)%p_ind(1) = sh
+      loc_xgrid(p)%p_ind(1) = shift_x
       loc_xgrid(p)%p_ind(2) = n_loc + loc_xgrid(p)%p_ind(1) - 1
       loc_xgrid(p)%min_cell = loc_xgrid(p-1)%min_cell + n_loc
       loc_xgrid(p)%max_cell = loc_xgrid(p-1)%max_cell + n_loc
+      loc_xgrid(p)%shift = shift_x
      end do
     end if
     p = npex - 1
@@ -657,10 +684,11 @@
     loc_xgrid(p)%gmin = loc_xgrid(p-1)%gmax
     ip = ip + n_loc
     loc_xgrid(p)%gmax = x(ip+1)
-    loc_xgrid(p)%p_ind(1) = sh
+    loc_xgrid(p)%p_ind(1) = shift_x
     loc_xgrid(p)%p_ind(2) = n_loc + loc_xgrid(p)%p_ind(1) - 1
     loc_xgrid(p)%min_cell = loc_xgrid(p-1)%min_cell + n_loc
     loc_xgrid(p)%max_cell = loc_xgrid(p-1)%max_cell + n_loc
+    loc_xgrid(p)%shift = shift_x
    end if
   end subroutine
   !======================
@@ -674,6 +702,7 @@
    loc_xgrid(0)%gmax = x(ip+1)
    loc_xgrid(0)%p_ind(1) = min(sh, n_loc)
    loc_xgrid(0)%p_ind(2) = n_loc + loc_xgrid(0)%p_ind(1) - 1
+   loc_xgrid(0)%shift = sh
 
    p = 0
    do i = 0, n_loc + 1
@@ -702,6 +731,7 @@
       loc_xgrid(p)%gmax = x(ip+1)
       loc_xgrid(p)%p_ind(1) = sh
       loc_xgrid(p)%p_ind(2) = n_loc + loc_xgrid(p)%p_ind(1) - 1
+      loc_xgrid(0)%shift = sh
      end do
     end if
     p = npex - 1
@@ -720,6 +750,7 @@
     loc_xgrid(p)%gmax = x(ip+1)
     loc_xgrid(p)%p_ind(1) = sh
     loc_xgrid(p)%p_ind(2) = n_loc + loc_xgrid(p)%p_ind(1) - 1
+    loc_xgrid(0)%shift = sh
    end if
   end subroutine
 
@@ -822,6 +853,9 @@
    jy2 = loc_ygrid(imody)%p_ind(2)
    kz1 = loc_zgrid(imodz)%p_ind(1)
    kz2 = loc_zgrid(imodz)%p_ind(2)
+   gcx = loc_xgrid(imodx)%shift
+   gcy = loc_ygrid(imody)%shift
+   gcz = loc_zgrid(imodz)%shift
    n_str = 0
    if (stretch) n_str = str_indx(imody, imodz)
 
@@ -876,7 +910,7 @@
     loc_zftgrid(ip)%ng=n3ft_loc
    end do
 !===================
-   call set_ftyzgrid(npe2, npe3, sh)
+   call set_ftyzgrid(npe2, npe3)
 !===================
 
    yft_min = loc_yftgrid(imody)%gmin

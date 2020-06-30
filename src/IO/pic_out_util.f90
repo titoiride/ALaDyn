@@ -124,7 +124,7 @@
      case (2)
      k = 1
      do j = jy1, jy2
-      jj = j - 2
+      jj = j - gcy + 1
       dery = loc_yg(jj, 3, imody)
       do i = ix1, ix2
        jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
@@ -132,10 +132,10 @@
      end do
      case (3)
      do k = kz1, kz2
-      kk = k - 2
+      kk = k - gcz + 1
       derz = loc_zg(kk, 3, imodz)
       do j = jy1, jy2
-       jj = j - 2
+       jj = j - gcy + 1
        dery = loc_yg(jj, 3, imody)*derz
        do i = ix1, ix2
         jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
@@ -207,7 +207,7 @@
      case (2)
      k = 1
      do j = jy1, jy2
-      jj = j - 2
+      jj = j - gcy + 1
       dery = loc_yg(jj, 3, imody)
       do i = ix1, ix2
        jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
@@ -215,10 +215,10 @@
      end do
      case (3)
      do k = kz1, kz2
-      kk = k - 2
+      kk = k - gcz + 1
       derz = loc_zg(kk, 3, imodz)
       do j = jy1, jy2
-       jj = j - 2
+       jj = j - gcy + 1
        dery = loc_yg(jj, 3, imody)*derz
        do i = ix1, ix2
         jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)

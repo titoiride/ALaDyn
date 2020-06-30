@@ -33,7 +33,7 @@
   integer, parameter :: maxv = 1, sumv = 0, minv = -1
   integer, parameter :: left = -1, right = 1
   integer, parameter :: field = 0, curr = 1
-  integer, parameter :: sh_ix = 3
+  integer, parameter :: sh_ix = 3, sh_iy = 3, sh_iz = 3
   integer :: time2dump(1) = 0
   integer :: mem_size, mem_psize
   integer :: last_iter, iter_max,write_every

@@ -108,7 +108,7 @@ call gdbattach
    !call set_grid() to define global grid and grid
    !parameters
    call mpi_loc_grid(nx_loc, ny_loc, nz_loc, nprocx, nprocy, nprocz)
-   call set_fyzxgrid(npe_yloc, npe_zloc, npe_xloc, sh_ix)
+   call set_fyzxgrid(npe_yloc, npe_zloc, npe_xloc)
    if (stretch) call set_str_ind(npe_yloc, npe_zloc, ndim)
    call set_loc_grid_param
    call set_output_grid(jump, nprocx, nprocy, nprocz)
