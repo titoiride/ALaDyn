@@ -117,10 +117,11 @@
      call spec_in(ic)%flatten_into(temp_buff)
      array_in( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
      kk = kk + tot
-
+     
      tot = np*spec_aux_in%total_size()
      call spec_aux_in%flatten_into(temp_buff)
      array_in( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
+     kk = kk + tot
     end if
    end do
 
