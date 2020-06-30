@@ -124,7 +124,7 @@
   subroutine lpf2_evolve_new(iter_loc, spec_in, spec_aux_in)
    integer, intent (in) :: iter_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, intent(inout), dimension(:) :: spec_aux_in
    integer :: ic, np, step
    real(dp) :: dt_step
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
@@ -168,11 +168,11 @@
    do ic = 1, nsp_run
     np = loc_npart(imody, imodz, imodx, ic)
     !============
-    call particle_motion( ebf, spec_in(ic), spec_aux_in, dt_step, &
+    call particle_motion( ebf, spec_in(ic), spec_aux_in(ic), dt_step, &
      np, nfield, ic, initial_time)
    !============
     np = loc_npart(imody, imodz, imodx, ic)
-    call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)
+    call curr_accumulate(spec_in(ic), spec_aux_in(ic), jc, np)
     !================= only old ion charge saved
    end do
    !==========================================

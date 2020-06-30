@@ -723,7 +723,7 @@
   subroutine Max_pmemory_check_new(spec_in, spec_aux_1_in)
 
    type(species_new), dimension(:), allocatable, intent(in) :: spec_in
-   type(species_aux), intent(in) :: spec_aux_1_in
+   type(species_aux), dimension(:), allocatable, intent(in) :: spec_aux_1_in
    integer :: ndv1, ndv2
    integer :: ic
    real (dp) :: mem_loc(1), max_mem(1)
@@ -736,11 +736,11 @@
      ndv1 = spec_in(ic)%how_many()
      ndv2 = spec_in(ic)%total_size()
      mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
+     ndv1 = spec_aux_1_in(ic)%how_many()
+     ndv2 = spec_aux_1_in(ic)%total_size()
+     mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
     end do
    end if
-   ndv1 = spec_aux_1_in%how_many()
-   ndv2 = spec_aux_1_in%total_size()
-   mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
    ! if (present(bunch_in) ) then
    !  if (beam) then
    !   if (allocated(bunch_in)) then

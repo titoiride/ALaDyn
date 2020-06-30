@@ -56,7 +56,7 @@
 
    subroutine particles_dump_properties( spec_in, spec_aux_in, lenw, max_npt_size_in, array_in)
     type(species_new), intent(in), dimension(:) :: spec_in
-    type(species_aux), intent(in) :: spec_aux_in
+    type(species_aux), intent(in), dimension(:) :: spec_aux_in
     integer, intent(inout), dimension(:) :: lenw
     integer, intent(in) :: max_npt_size_in
     real(dp), allocatable, dimension(:), intent(inout) :: array_in
@@ -69,7 +69,7 @@
     ! Here we assume that for every species properties_size is the same
     ic = 1
     size_prop = spec_in(ic)%properties_array_size()
-    size_prop_aux = spec_aux_in%properties_array_size()
+    size_prop_aux = spec_aux_in(ic)%properties_array_size()
     lenw(1:npe) = lenw(1:npe) + (size_prop + size_prop_aux)*nsp
 
     call array_realloc_1d( array_in, lenw(mype + 1) )
@@ -80,7 +80,7 @@
      array_in((kk + 1):(kk + size_prop)) = properties_spec
      kk = kk + size_prop
      
-     call spec_aux_in%dump_properties_to_array(properties_spec_aux)
+     call spec_aux_in(ic)%dump_properties_to_array(properties_spec_aux)
      array_in((kk + 1):(kk + size_prop_aux)) = properties_spec_aux
      kk = kk + size_prop_aux
 
@@ -90,7 +90,7 @@
 
    subroutine particles_dump_new( spec_in, spec_aux_in, lenw, ip_loc_in, max_npt_size_in, array_in)
    type(species_new), intent(in), dimension(:) :: spec_in
-   type(species_aux), intent(in) :: spec_aux_in
+   type(species_aux), intent(in), dimension(:) :: spec_aux_in
    integer, intent(inout), dimension(:) :: lenw
    integer, intent(in), dimension(:) :: ip_loc_in
    integer, intent(inout) :: max_npt_size_in
@@ -104,7 +104,7 @@
    ! Here we assume that for every species spec%total_size is the same
    ic = 1
    size_spec = spec_in(ic)%total_size()
-   size_spec_aux = spec_aux_in%total_size()
+   size_spec_aux = spec_aux_in(ic)%total_size()
    lenw(1:npe) = lenw(1:npe) + (size_spec + size_spec_aux)* ip_loc_in(1:npe)
    
    call array_realloc_1d( array_in, lenw(mype + 1) )
@@ -117,10 +117,11 @@
      call spec_in(ic)%flatten_into(temp_buff)
      array_in( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
      kk = kk + tot
-
-     tot = np*spec_aux_in%total_size()
-     call spec_aux_in%flatten_into(temp_buff)
+     
+     tot = np*spec_aux_in(ic)%total_size()
+     call spec_aux_in(ic)%flatten_into(temp_buff)
      array_in( (kk + 1): (kk + tot) ) = temp_buff(1:tot)
+     kk = kk + tot
     end if
    end do
 
@@ -158,13 +159,13 @@
 
   subroutine particles_restart_properties( spec_in, spec_aux_in, array_in )
    type(species_new), intent(inout), dimension(:) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), intent(inout), dimension(:) :: spec_aux_in
    real(dp), dimension(:), intent(in) :: array_in
    integer :: ic, kk, size_prop, size_prop_aux
 
    ic = 1
    size_prop = spec_in(ic)%properties_array_size()
-   size_prop_aux = spec_aux_in%properties_array_size()
+   size_prop_aux = spec_aux_in(ic)%properties_array_size()
 
    kk = 0
 
@@ -173,7 +174,7 @@
     call spec_in(ic)%read_properties_from_array(array_in(kk+1:kk+size_prop))
     kk = kk + size_prop
 
-    call spec_aux_in%read_properties_from_array(array_in(kk+1:kk+size_prop_aux))
+    call spec_aux_in(ic)%read_properties_from_array(array_in(kk+1:kk+size_prop_aux))
     kk = kk + size_prop_aux
 
    end do
@@ -182,7 +183,7 @@
 
   subroutine particles_restart_new( spec_in, spec_aux_in, local_particles, array_in )
    type(species_new), intent(inout), dimension(:) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), intent(inout), dimension(:) :: spec_aux_in
    integer, allocatable, dimension(:, :, :, :), intent(in) :: local_particles
    real(dp), dimension(:), intent(in) :: array_in
    integer :: ic, np, kk, spec_size, aux_size
@@ -190,7 +191,7 @@
 
    ic = 1
    spec_size = spec_in(ic)%total_size()
-   aux_size = spec_aux_in%total_size()
+   aux_size = spec_aux_in(ic)%total_size()
    kk = 0
 
    do ic = 1, nsp
@@ -200,7 +201,7 @@
 
     call spec_in(ic)%redistribute(array_in(kk+1:kk+tot), np, spec_in(ic)%pick_properties(), aux_in=.false.)
     kk = kk + tot
-    call spec_aux_in%redistribute(array_in(kk+1:kk+tot_aux), np, spec_in(ic)%pick_properties(), aux_in=.true.)
+    call spec_aux_in(ic)%redistribute(array_in(kk+1:kk+tot_aux), np, spec_in(ic)%pick_properties(), aux_in=.true.)
     kk = kk + tot_aux
 
    end do
@@ -211,7 +212,7 @@
 
   subroutine dump_data_new(it_loc, tloc, spec_in, spec_aux_in)
    type(species_new), dimension(:), intent(in) :: spec_in
-   type(species_aux), intent(in) :: spec_aux_in
+   type(species_aux), dimension(:), intent(in) :: spec_aux_in
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
    character (9) :: fname
@@ -905,7 +906,7 @@
   !==============================================================
   subroutine restart_new(it_loc, tloc, spec_in, spec_aux_in)
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (out) :: it_loc
    real (dp), intent (out) :: tloc
    character (9) :: fname
@@ -1262,7 +1263,7 @@
     ic = 1
     lenw(1:npe) = 0
     size_prop = spec_in(ic)%properties_array_size()
-    size_prop_aux = spec_aux_in%properties_array_size()
+    size_prop_aux = spec_aux_in(ic)%properties_array_size()
     lenw(1:npe) = (size_prop + size_prop_aux)*nsp
     disp_col = 0
     disp_coord = imodz*npe_yloc + npe_yloc*npe_zloc*imodx
@@ -1282,7 +1283,7 @@
     ic = 1
     lenw(1:npe) = 0
     size_spec = spec_in(ic)%total_size()
-    size_spec_aux = spec_aux_in%total_size()
+    size_spec_aux = spec_aux_in(ic)%total_size()
     lenw(1:npe) = lenw(1:npe) + (size_spec + size_spec_aux)* ip_loc(1:npe)
     disp_col = 0
     disp_coord = imodz*npe_yloc + npe_yloc*npe_zloc*imodx

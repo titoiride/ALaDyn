@@ -189,7 +189,7 @@ module tracking
    !! the simulation
 
    type(species_new), dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), dimension(:), intent(inout) :: spec_aux_in
    logical :: tracking
    integer :: ic, n_extra_output = 0, size_array
 
@@ -204,9 +204,9 @@ module tracking
    do ic = 1, nsp
     size_array = spec_in(ic)%array_size()
     call spec_in(ic)%set_extra_outputs( n_extra_output, size_array )
+    size_array = spec_aux_in(ic)%array_size()
+    call spec_aux_in(ic)%save_old_momentum( .true., size_array )
    end do
-   size_array = spec_aux_in%array_size()
-   call spec_aux_in%save_old_momentum( .true., size_array )
    call create_tracking_folders(tracking_folder)
 
    iter_index = 0
@@ -223,9 +223,10 @@ module tracking
      write(track_iounit(ic), '(a9,a4,a4)') 'Iteration', '    ', 'Time'
      close(track_iounit(ic))
     end if
+
+    call spec_aux_in(ic)%track( p_tracking(1), allocate_now=.true. )
    end do
 
-   call spec_aux_in%track( p_tracking(1), allocate_now=.true. )
    do ic = 1, nsp
     if ( spec_in(ic)%istracked() ) then
      call spec_in(ic)%set_track_params( txmin(ic), txmax(ic), &
@@ -420,7 +421,7 @@ module tracking
   !! Wrapper for the tracking I/O routine
 
   type(species_new), intent(inout), dimension(:) :: spec_in
-  type(species_aux), intent(inout) :: spec_aux_in
+  type(species_aux), intent(inout), dimension(:) :: spec_aux_in
   real(dp), intent(in) :: timenow
   integer, intent(in) :: iter
   integer :: ic
@@ -428,7 +429,7 @@ module tracking
   do ic = 1, nsp
    if (spec_in(ic)%istracked()) then
     if ( MOD(iter, every_track(ic) ) == 0 ) then
-     call tracking_write_output(spec_in(ic), spec_aux_in, timenow, ic)
+     call tracking_write_output(spec_in(ic), spec_aux_in(ic), timenow, ic)
      tracking_written = .true.
     end if
    end if
@@ -440,8 +441,8 @@ module tracking
  !================================
  subroutine interpolate_field_on_tracking( field_in, spec_in, spec_aux_in, iter, field_type )
   real(dp), dimension(:, :, :, :), allocatable, intent(in) :: field_in
-  type(species_new), intent(inout), dimension(:) :: spec_in
-  type(species_aux), intent(in) :: spec_aux_in
+  type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
+  type(species_aux), allocatable, intent(inout), dimension(:) :: spec_aux_in
   integer, intent(in) :: iter, field_type
   real(dp), dimension(:, :, :), allocatable :: interpol_field
   real(dp), dimension(:, :, :), allocatable :: field_aux
@@ -509,7 +510,7 @@ module tracking
 
     end associate
 
-    call a_on_tracking_particles( interpol_field, spec_in(ic), spec_aux_in, np, order, &
+    call a_on_tracking_particles( interpol_field, spec_in(ic), spec_aux_in(ic), np, order, &
      polarization, mask_in=track_mask )
    end if
   end do

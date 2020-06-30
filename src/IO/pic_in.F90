@@ -58,7 +58,7 @@
    ! Initialize particles momentum
    !==========================================================
    do ic = 1, nsp
-      call initialize_momenta( ebf, spec(ic), ebfp, dt_loc, nfield, ic, initial_time)
+      call initialize_momenta( ebf, spec(ic), ebfp(ic), dt_loc, nfield, ic, initial_time)
    end do
 
   end subroutine

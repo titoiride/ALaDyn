@@ -59,7 +59,7 @@
 
   subroutine add_particles_new(spec_in, spec_aux_in, np, i1, i2, ic)
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: np, i1, i2, ic
    integer :: n, j2, k2, n_parts
 
@@ -89,19 +89,19 @@
    if( spec_in(ic)%istracked() .and. (.not. spec_in(ic)%empty) ) then
     select case (spec_in(ic)%pick_dimensions())
     case(1)
-      call spec_aux_in%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
+      call spec_aux_in(ic)%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
         OLD_PX_COMP, lb=np + 1, ub=np + n_parts)
     case(2)
-      call spec_aux_in%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
+      call spec_aux_in(ic)%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
         OLD_PX_COMP, lb=np + 1, ub=np + n_parts)
-      call spec_aux_in%set_component(spec_in(ic)%py(np + 1:np + n_parts), &
+      call spec_aux_in(ic)%set_component(spec_in(ic)%py(np + 1:np + n_parts), &
         OLD_PY_COMP, lb=np + 1, ub=np + n_parts)
     case(3)
-      call spec_aux_in%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
+      call spec_aux_in(ic)%set_component(spec_in(ic)%px(np + 1:np + n_parts), &
         OLD_PX_COMP, lb=np + 1, ub=np + n_parts)
-      call spec_aux_in%set_component(spec_in(ic)%py(np + 1:np + n_parts), &
+      call spec_aux_in(ic)%set_component(spec_in(ic)%py(np + 1:np + n_parts), &
         OLD_PY_COMP, lb=np + 1, ub=np + n_parts)
-      call spec_aux_in%set_component(spec_in(ic)%pz(np + 1:np + n_parts), &
+      call spec_aux_in(ic)%set_component(spec_in(ic)%pz(np + 1:np + n_parts), &
         OLD_PZ_COMP, lb=np + 1, ub=np + n_parts)
     end select
    end if
@@ -161,7 +161,7 @@
 
   subroutine particles_inject_new(xmx, spec_in, spec_aux_in)
    type(species_new), dimension(:), allocatable, intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), dimension(:), allocatable, intent(inout) :: spec_aux_in
    real (dp), intent (in) :: xmx
    integer :: ic, ix, npt_inj(4), np_old, np_new
    integer :: i1, i2, q
@@ -217,7 +217,7 @@
     !=========================
     if ( pex1 ) then
      call spec_in(ic)%extend(np_new)
-     call spec_aux_in%extend(np_new)
+     call spec_aux_in(ic)%extend(np_new)
      loc_npart(imody, imodz, imodx, ic) = np_new
     end if
     q = np_old
@@ -353,7 +353,7 @@
    real (dp), intent (in) :: vb
    integer, intent (in) :: w_nst, loc_it
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer :: i, ic, nshx
    real (dp) :: dt_tot, dt_step
    logical, parameter :: mw = .true.
@@ -393,7 +393,7 @@
    end do
    !======================
    do ic = 1, nsp
-    call cell_part_dist(mw, spec_in(ic), spec_aux_in, ic) !particles are redistributes along the
+    call cell_part_dist(mw, spec_in(ic), spec_aux_in(ic), ic) !particles are redistributes along the
    end do
    if (pex1) then
     if (targ_in<=xmax .and. targ_end>xmax) then
@@ -457,7 +457,7 @@
   subroutine lp_window_xshift_new(witr, init_iter, spec_in, spec_aux_in)
    integer, intent (in) :: witr, init_iter
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer :: i1, n1p, nc_env
    integer :: ix, nshx, wi2, ic
    real (dp), save :: xlapse, dt_step
@@ -517,7 +517,7 @@
    !===========================
    if (part) then
     do ic = 1, nsp
-     call cell_part_dist(mw, spec_in(ic), spec_aux_in, ic) !particles are redistributes along the
+     call cell_part_dist(mw, spec_in(ic), spec_aux_in(ic), ic) !particles are redistributes along the
     end do
     ! right-shifted x-coordinate in MPI domains
     if (targ_in<=xmax) then

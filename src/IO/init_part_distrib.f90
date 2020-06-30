@@ -488,7 +488,7 @@
   subroutine multi_layer_gas_target_new(spec_in, spec_aux_in, layer_mod, nyh_in, xf0)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: layer_mod, nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, i, j, i1, i2, ic
@@ -1781,7 +1781,7 @@
   subroutine preplasma_multisp_new(spec_in, spec_aux_in, nyh_in, xf0)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
@@ -2047,7 +2047,7 @@
   subroutine multi_layer_twosp_target_new(spec_in, spec_aux_in, nyh_in, xf0)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip, l, i, i1, i2, ic, n_peak, nptx_loc(6)
@@ -2555,7 +2555,7 @@
   subroutine multi_layer_threesp_target_new(spec_in, spec_aux_in, nyh_in, xf0)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout)  :: spec_aux_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
@@ -3057,7 +3057,7 @@
   subroutine one_layer_nano_wires_new(spec_in, spec_aux_in, nyh_in, xf0)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    integer :: p, ip
@@ -3985,7 +3985,7 @@
   subroutine one_layer_nano_tubes_new(spec_in, spec_aux_in, nyh_in, xf0)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
    write(6, *) 'Warning: one_layer_nano_tubes still not adapted to new species'
@@ -4600,7 +4600,7 @@
   !====================================
   subroutine part_distribute_new(spec_in, spec_aux_in, id, xf0)
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: id
    real (dp), intent (in) :: xf0
    integer :: ip, pp, l, p

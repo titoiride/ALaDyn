@@ -201,7 +201,7 @@
 
    integer, intent (in) :: it_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
-   type(species_aux), intent(inout) :: spec_aux_in
+   type(species_aux), allocatable, intent(inout), dimension(:) :: spec_aux_in
    integer :: np, ic
    real (dp) :: ef2_ion, loc_ef2_ion(2)
    logical, parameter :: mw = .false.
@@ -278,13 +278,13 @@
    !      jc(2:4)=grad|a|^2/2 at t^n
    ! For two-color |A|= |A_0|+|A_1|
    !======================================
-   call set_env_acc(ebf, jc, spec_in(ic), spec_aux_in, np, dt_loc)
+   call set_env_acc(ebf, jc, spec_in(ic), spec_aux_in(ic), np, dt_loc)
    !=====================================
    !exit spec_aux_in(1:3)=q*[E+F] spec_aux_in(4:6)=q*B/gamp, spec_aux_in(7)=wgh/gamp at t^n
    !Lorentz force already multiplied by particle charge
    !jc(1:4) not modified
    !====================
-   call lpf_env_momenta(spec_in(ic), spec_aux_in, np, ic)
+   call lpf_env_momenta(spec_in(ic), spec_aux_in(ic), np, ic)
    ! Updates particle momenta P^{n-1/2} => P^{n+1/2}
    ! stores in spec_aux_in(1:3)=old (x,y,z)^n spec_aux_in(7)=wgh/gamp >0
    !======================
@@ -304,7 +304,7 @@
    ! for the envelope field solver
    end if
    jc(:, :, :, 1) = 0.0
-   call set_env_density(spec_aux_in, jc, np, 1)
+   call set_env_density(spec_aux_in(ic), jc, np, 1)
    call env_den_collect(jc)
    ! in jc(1)the particle contribution of the source term <q^2*n/gamp>
    ! to be added to the fluid contribution if (Hybrid)
@@ -338,23 +338,23 @@
     flux(:, :, :, curr_ndim+2) = jc(:, :, :, 1)
     !stores in flux()
    end if
-   call set_env_grad_interp(jc, spec_in(ic), spec_aux_in, np, curr_ndim)
+   call set_env_grad_interp(jc, spec_in(ic), spec_aux_in(ic), np, curr_ndim)
    !=============================
    ! Exit p-interpolated |A| field variables
    ! at time level t^{n+1/2} and positions at time t^n
    ! in spec_aux_in(1:3)=grad|A|^2/2 spec_aux_in(4)=|A|^2/2 in 3D
    ! in spec_aux_in(1:2)=grad|A|^2/2 spec_aux_in(3)=|A|^2/2 in 2D
    !=====================================
-   call lpf_env_positions(spec_in(ic), spec_aux_in, np)
+   call lpf_env_positions(spec_in(ic), spec_aux_in(ic), np)
    !===========================
    ! spec_aux_in(1:3) dt*V^{n+1/2}  spec_aux_in(4:6) old positions for curr J^{n+1/2}
    ! spec_aux_in(7)=dt*gam_inv
-   if (part) call cell_part_dist(mw, spec_in(ic), spec_aux_in, ic)
+   if (part) call cell_part_dist(mw, spec_in(ic), spec_aux_in(ic), ic)
 !  particle number has changed
    np = loc_npart(imody, imodz, imodx, ic)
    !=======collects in jc(1:curr_ndim) currents due to electrons
    jc(:, :, :, :) = 0.0
-   call curr_accumulate(spec_in(ic), spec_aux_in, jc, np)
+   call curr_accumulate(spec_in(ic), spec_aux_in(ic), jc, np)
    !===========================
    call curr_mpi_collect(jc)
    if (hybrid) then

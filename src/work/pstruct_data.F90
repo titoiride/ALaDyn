@@ -40,7 +40,7 @@
   real (dp), allocatable :: ebfp(:, :)
 #else
   type (species_new), allocatable, dimension(:) :: spec
-  type (species_aux) :: ebfp
+  type (species_aux), allocatable, dimension(:) :: ebfp
 #endif
   type (species_aux) :: spec_aux_0, spec_aux_1
   integer (hp_int), parameter :: ihx = 3
