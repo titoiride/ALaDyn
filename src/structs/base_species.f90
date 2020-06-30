@@ -1725,6 +1725,9 @@ module base_species
    
    len_array = i
 
+   if ( allocated(array_out) ) then
+    deallocate(array_out)
+   end if
    allocate( array_out(len_array) )
    array_out(1:len_array) = temp_array(1:len_array)
 
@@ -1884,7 +1887,9 @@ module base_species
    call this%dump_tracking_to_array(track_data_array)
 
    size_track = SIZE(track_data_array)
-
+   if ( allocated(array_out) ) then
+    deallocate(array_out)
+   end if
    allocate(array_out(i + size_track))
    array_out(1:i) = temp_array(1:i)
    array_out(i+1:i+size_track) = track_data_array(1:size_track)
