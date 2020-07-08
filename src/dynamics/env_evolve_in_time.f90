@@ -59,7 +59,7 @@
     if (ndim==2) then
      k = 1
      do j = jy1, jy2
-      jj = j - 2
+      jj = j - gcy + 1
       dery = loc_yg(jj, 3, imody)
       do i = ix1, ix2
        source_in(i, j, k, ic) = dery*source_in(i, j, k, ic)
@@ -68,10 +68,10 @@
      return
     end if
     do k = kz1, kz2
-     kk = k - 2
+     kk = k - gcz + 1
      derz = loc_zg(kk, 3, imodz)
      do j = jy1, jy2
-      jj = j - 2
+      jj = j - gcy + 1
       dery = derz*loc_yg(jj, 3, imody)
       do i = ix1, ix2
        source_in(i, j, k, ic) = dery*source_in(i, j, k, ic)

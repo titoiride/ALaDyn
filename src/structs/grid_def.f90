@@ -38,6 +38,8 @@
    !!Initial cell of the grid in absolute units (i.e. respect to the total grid)
    integer :: max_cell
    !!Final cell of the grid in absolute units (i.e. respect to the total grid)
+   integer :: shift
+   !!Number of guard cells for a given grid
   end type
 
   type sgrid

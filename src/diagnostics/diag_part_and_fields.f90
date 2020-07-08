@@ -337,11 +337,11 @@
    do iz = k1, nzp
     zz = 0.0
     if (k1>2) then
-     k = iz - 2
+     k = iz - gcz + 1
      zz = loc_zg(k, 2, imodz)
     end if
     do iy = j1, nyp
-     j = iy - 2
+     j = iy - gcy + 1
      yy = loc_yg(j, 2, imody)
      rr = sqrt(zz*zz+yy*yy)
      do ix = i01, i02
@@ -403,11 +403,11 @@
     do iz = k1, nzp
      zz = 0.0
      if (k1>2) then
-      k = iz - 2
+      k = iz - gcz + 1
       zz = loc_zg(k, 2, imodz)
      end if
      do iy = j1, nyp
-      j = iy - 2
+      j = iy - gcy + 1
       yy = loc_yg(j, 2, imody)
       rr = sqrt(zz*zz+yy*yy)
       do ix = i01, i02
@@ -610,13 +610,13 @@
    !    j = yg_ind(ik)
    !    l = xg_ind(ik)
    !    do iz = k1, nzp
-   !     kk = iz - 2
+   !     kk = iz - gcz + 1
    !     sgz = 1./loc_zg(kk, k, imodz)
    !     do iy = j1, nyp
-   !      jj = iy - 2
+   !      jj = iy - gcy + 1
    !      sg = sgz/loc_yg(jj, j, imody)
    !      do ix = i1, i2
-   !       ii = ix - 2
+   !       ii = ix - gcx + 1
    !       dvol = sg/loc_xg(ii, l, imodx)
    !       ekt(ik) = ekt(ik) + dvol*ebf(ix, iy, iz, ik)*ebf(ix, iy, iz, ik &
    !         )
@@ -631,10 +631,10 @@
    !    do iz = k1, nzp
    !     sgz = 1.
    !     do iy = j1, nyp
-   !      jj = iy - 2
+   !      jj = iy - gcy + 1
    !      sg = sgz/loc_yg(jj, j, imody)
    !      do ix = i1, i2
-   !       ii = ix - 2
+   !       ii = ix - gcx + 1
    !       dvol = sg/loc_xg(ii, l, imodx)
    !       ekt(ik) = ekt(ik) + dvol*ebf(ix, iy, iz, ik)*ebf(ix, iy, iz, ik &
    !         )
@@ -850,13 +850,13 @@
       j = yg_ind(ik)
       l = xg_ind(ik)
       do iz = k1, nzp
-       kk = iz - 2
+       kk = iz - gcz + 1
        sgz = 1./loc_zg(kk, k, imodz)
        do iy = j1, nyp
-        jj = iy - 2
+        jj = iy - gcy + 1
         sg = sgz/loc_yg(jj, j, imody)
         do ix = i1, i2
-         ii = ix - 2
+         ii = ix - gcx + 1
          dvol = sg/loc_xg(ii, l, imodx)
          ekt(ik) = ekt(ik) + dvol*ebf(ix, iy, iz, ik)*ebf(ix, iy, iz, ik &
            )
@@ -871,10 +871,10 @@
       do iz = k1, nzp
        sgz = 1.
        do iy = j1, nyp
-        jj = iy - 2
+        jj = iy - gcy + 1
         sg = sgz/loc_yg(jj, j, imody)
         do ix = i1, i2
-         ii = ix - 2
+         ii = ix - gcx + 1
          dvol = sg/loc_xg(ii, l, imodx)
          ekt(ik) = ekt(ik) + dvol*ebf(ix, iy, iz, ik)*ebf(ix, iy, iz, ik &
            )

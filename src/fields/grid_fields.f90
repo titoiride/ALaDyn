@@ -89,48 +89,51 @@
    real (dp), intent (inout) :: str_field(:, :, :,:)
    integer,intent(in) :: ic
    real (dp) :: shy, shz,shy2,shz2
-   integer :: i, ii, j, jj,k, kk
+   integer :: i, ii, j, jj,k, kk, jindex, kindex
    integer :: jsize,ksize
    !=======================================
-   jsize=size(unif_field,2)
-   ksize=size(unif_field,3)
+   jsize = size(unif_field,2)
+   ksize = size(unif_field,3)
 !=====================
    select case(ndim)
    case(2)
-    k=kz1
-    kk=1
-    do j=jy1,jy2
-     jj=yft_ind(j-2,imody)
-     shy = dy_inv*(loc_yg(j-2, 1, imody)-loc_yft(jj,imody))
-     shy2=0.5*shy*shy
-     shy=0.5*shy
-     do i=ix1,ix2
-      ii=i-2
-      str_field(i,j,k,ic)=unif_field(ii,jj,kk)+&
-                        shy*(unif_field(ii,jj+1,kk)-unif_field(ii,jj-1,kk))+&
-                        shy2*(unif_field(ii,jj+1,kk)+unif_field(ii,jj-1,kk)-2*unif_field(ii,jj,kk))
+    k = kz1
+    kk = 1
+    do j = jy1, jy2
+     jindex = j - gcy + 1
+     jj = yft_ind(jindex, imody)
+     shy = dy_inv*(loc_yg(jindex, 1, imody) - loc_yft(jj, imody))
+     shy2 = 0.5*shy*shy
+     shy = 0.5*shy
+     do i= ix1, ix2
+      ii = i - gcx + 1
+      str_field(i, j, k, ic) = unif_field(ii, jj, kk) + &
+      shy*(unif_field(ii, jj + 1, kk) - unif_field(ii, jj - 1, kk)) + &
+      shy2*(unif_field(ii, jj + 1, kk) + unif_field(ii, jj - 1, kk) - 2*unif_field(ii, jj, kk))
       end do
      end do
     case(3)
-    do k=kz1,kz2
-     kk=zft_ind(k-2,imodz)
-     shz = dz_inv*(loc_zg(k-2, 1, imodz)-loc_zft(kk,imodz))
+    do k = kz1, kz2
+     kindex = k - gcz + 1
+     kk = zft_ind(kindex, imodz)
+     shz = dz_inv*(loc_zg(kindex, 1, imodz) - loc_zft(kk, imodz))
      shz2=0.5*shz*shz
      shz=0.5*shz
-     do j=jy1,jy2
-      jj=yft_ind(j-2,imody)
-      shy = dy_inv*(loc_yg(j-2, 1, imody)-loc_yft(jj,imody))
+     do j = jy1, jy2
+      jindex = j - gcy + 1
+      jj = yft_ind(jindex, imody)
+      shy = dy_inv*(loc_yg(jindex, 1, imody) - loc_yft(jj, imody))
       shy2=0.5*shy*shy
       shy=0.5*shy
-      do i=ix1,ix2
-       ii=i-2
-       str_field(i,j,k,ic)=unif_field(ii,jj,kk)+&
-                          shy*(unif_field(ii,jj+1,kk)-unif_field(ii,jj-1,kk))+&
-                          shz*(unif_field(ii,jj,kk+1)-unif_field(ii,jj,kk-1))
-       str_field(i,j,k,ic)=str_field(i,j,k,ic)+&
-                          shy2*(unif_field(ii,jj+1,kk)+unif_field(ii,jj-1,kk)-2*unif_field(ii,jj,kk))
-       str_field(i,j,k,ic)=str_field(i,j,k,ic)+&
-                          shz2*(unif_field(ii,jj,kk+1)+unif_field(ii,jj,kk-1)-2*unif_field(ii,jj,kk))
+      do i = ix1, ix2
+       ii = i - gcx + 1
+       str_field(i, j, k, ic) = unif_field(ii, jj, kk) + &
+        shy*(unif_field(ii, jj + 1, kk) - unif_field(ii, jj - 1, kk)) + &
+        shz*(unif_field(ii, jj, kk + 1) - unif_field(ii, jj, kk - 1))
+       str_field(i, j, k, ic) = str_field(i, j, k, ic) + &
+        shy2*(unif_field(ii, jj + 1, kk) + unif_field(ii, jj - 1, kk) - 2*unif_field(ii, jj, kk))
+       str_field(i, j, k, ic) = str_field(i, j, k, ic) + &
+        shz2*(unif_field(ii, jj, kk + 1) + unif_field(ii, jj, kk - 1) - 2*unif_field(ii, jj, kk))
       end do
      end do
     end do
@@ -152,47 +155,51 @@
    j01 = jy1
    k01 = kz1
    !shy(3)=Dxi/Dy centered on node y_j
-   if (ndim==1) return
+   if (ndim == 1) return
    if (pe0y) then
     j = jy1
-    shy = loc_yg(j-1, 3, imody)*aphy
+    !========
+    ! Check index of loc_yg
+    !========
+    shy = loc_yg(j - 1, 3, imody)*aphy
     do k = kz1, kz2
      do i = ix1, ix2
-      curr(i, j, k, 1) = curr(i, j, k, 1) + shy*(curr(i,j+1,k,2)-curr(i, &
-        j,k,2))
+      curr(i, j, k, 1) = curr(i, j, k, 1) + shy*(curr(i, j + 1, k, 2)-curr(i, &
+        j, k, 2))
      end do
     end do
     j01 = jy1 + 1
    end if
    do k = kz1, kz2
     do j = j01, jy2
-     jj = j - 2
+     jj = j - gcy + 1
      shy = loc_yg(jj, 3, imody)*aphy
      do i = ix1, ix2
-      curr(i, j, k, 1) = curr(i, j, k, 1) + shy*(curr(i,j,k,2)-curr(i,j- &
-        1,k,2))
+      curr(i, j, k, 1) = curr(i, j, k, 1) + shy*(curr(i, j, k, 2) - curr(i, j - &
+        1, k, 2))
      end do
     end do
    end do
    !================ ndim >2
-   if (ndim==3) then
+   if (ndim == 3) then
     if (pe0z) then
      k = kz1
-     shz = loc_zg(k-1, 3, imodz)*aphz
+     shz = loc_zg(k - gcz + 1, 3, imodz)*aphz
      do j = jy1, jy2
       do i = ix1, ix2
-       curr(i, j, k, 1) = curr(i, j, k, 1) + shz*(curr(i,j,k+1,3)-curr(i &
-         ,j,k,3))
+       curr(i, j, k, 1) = curr(i, j, k, 1) + shz*(curr(i, j, k + 1, 3)-curr(i &
+         , j, k, 3))
       end do
      end do
      k01 = kz1 + 1
     end if
     do k = k01, kz2
-     shz = loc_zg(k-2, 3, imodz)*aphz
+     jj = k - gcz + 1
+     shz = loc_zg(jj, 3, imodz)*aphz
      do j = jy1, jy2
       do i = ix1, ix2
-       curr(i, j, k, 1) = curr(i, j, k, 1) + shz*(curr(i,j,k,3)-curr(i,j &
-         ,k-1,3))
+       curr(i, j, k, 1) = curr(i, j, k, 1) + shz*(curr(i, j, k, 3) - curr(i, j &
+         , k - 1, 3))
       end do
      end do
     end do
@@ -202,11 +209,11 @@
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix2, ix1, -1
-      ii = i - 2
+      ii = i - gcx + 1
       ww0(ii, 1) = ww0(ii+1, 1) + dx*curr(i+1, j, k, 1)
      end do
      do i = ix1, ix2
-      ii = i - 2
+      ii = i - gcx + 1
       curr(i, j, k, 1) = ww0(ii, 1)
      end do
     end do
@@ -367,61 +374,61 @@
    do ic = ic1, ic2
     do k = k01, k02
      do j = j01, j02
-      jj = j - 2
+      jj = j - gcy + 1
       shy = dy4_inv(1)*loc_yg(jj, 3, imody)
       sphy = loc_yg(jj, 4, imody)
-      smhy = loc_yg(jj-1, 4, imody)
+      smhy = loc_yg(jj - 1, 4, imody)
       do i = i01, i02
-       source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j+1, &
-         k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-1,k,ic)))
+       source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, j + 1, &
+         k, ic) - av(i, j, k, ic)) - smhy*(av(i, j, k, ic) - av(i, j - 1, k, ic)))
       end do
      end do
     end do
    end do
-   if (der_ord==4) then
+   if (der_ord == 4) then
     do ic = ic1, ic2
      do k = k01, k02
       do j = j01, j02
-       jj = j - 2
+       jj = j - gcy + 1
        shy = dy4_inv(2)*loc_yg(jj, 3, imody)
-       sphy = loc_yg(jj+1, 3, imody)
-       smhy = loc_yg(jj-1, 3, imody)
+       sphy = loc_yg(jj + 1, 3, imody)
+       smhy = loc_yg(jj - 1, 3, imody)
        do i = i01, i02
-        source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i,j+2, &
-          k,ic)-av(i,j,k,ic))-smhy*(av(i,j,k,ic)-av(i,j-2,k,ic)))
+        source(i, j, k, ic) = source(i, j, k, ic) + shy*(sphy*(av(i, j + 2, &
+          k, ic) - av(i, j, k, ic)) - smhy*(av(i, j, k, ic) - av(i, j - 2, k, ic)))
        end do
       end do
      end do
     end do
    end if
-   if (ndim<3) return
+   if (ndim < 3) return
    !====================
 
    do ic = ic1, ic2
     do k = k01, k02
-     jj = k - 2
+     jj = k - gcz + 1
      shz = dz4_inv(1)*loc_zg(jj, 3, imodz)
      sphz = loc_zg(jj, 4, imodz)
-     smhz = loc_zg(jj-1, 4, imodz)
+     smhz = loc_zg(jj - 1, 4, imodz)
      do j = j01, j02
       do i = i01, i02
-       source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-         k+1,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-1,ic)))
+       source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i, j, &
+         k + 1, ic) - av(i, j, k, ic)) - smhz*(av(i, j, k, ic) - av(i, j, k - 1, ic)))
       end do
      end do
     end do
    end do
-   if (der_ord==4) then
+   if (der_ord == 4) then
     do ic = ic1, ic2
      do k = k01, k02
-      jj = k - 2
+      jj = k - gcz + 1
       shz = dz4_inv(2)*loc_zg(jj, 3, imodz)
-      sphz = loc_zg(jj+1, 3, imodz)
-      smhz = loc_zg(jj-1, 3, imodz)
+      sphz = loc_zg(jj + 1, 3, imodz)
+      smhz = loc_zg(jj - 1, 3, imodz)
       do j = j01, j02
        do i = i01, i02
-        source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i,j, &
-          k+2,ic)-av(i,j,k,ic))-smhz*(av(i,j,k,ic)-av(i,j,k-2,ic)))
+        source(i, j, k, ic) = source(i, j, k, ic) + shz*(sphz*(av(i, j, &
+          k + 2, ic) - av(i, j, k, ic)) - smhz*(av(i, j, k, ic) - av(i, j, k - 2, ic)))
        end do
       end do
      end do
@@ -466,35 +473,35 @@
     i = ix1
     do k = kz1, kz2
      do j = jy1, jy2
-      envg(i, j, k, 2) = dx_inv*(envg(i+1,j,k,1)-envg(i,j,k,1)) !at i+1/2
+      envg(i, j, k, 2) = dx_inv*(envg(i + 1, j, k, 1) - envg(i, j, k, 1)) !at i+1/2
      end do
     end do
-    i01=ix1+1
+    i01 = ix1 + 1
    end if
    if(xr_bd)then
     do k = kz1, kz2
      do j = jy1, jy2
       i = ix2 - 1
-      envg(i, j, k, 2) = dx_inv*(envg(i+1,j,k,1)-envg(i,j,k,1))
-      envg(i+1, j, k, 2) = dx_inv*(2.*envg(i,j,k,1)-3.*envg(i-1,j,k,1)+ &
-       envg(i-2,j,k,1))
+      envg(i, j, k, 2) = dx_inv*(envg(i + 1, j, k, 1) - envg(i, j, k, 1))
+      envg(i + 1, j, k, 2) = dx_inv*(2.*envg(i, j, k, 1) - 3.*envg(i - 1, j, k, 1)+ &
+       envg(i - 2, j, k, 1))
      end do
     end do
-    i02=ix2-2
+    i02 = ix2 - 2
    end if
    do k = kz1, kz2
     do j = jy1, jy2
      do i = i01, i02 
-       envg(i, j, k, 2) = ax1*(envg(i+1,j,k,1)-envg(i,j,k,1)) !at i+1/2
+       envg(i, j, k, 2) = ax1*(envg(i + 1, j, k, 1) - envg(i, j, k, 1)) !at i+1/2
      end do
     end do
    end do
-   if (der_ord==4) then
+   if (der_ord == 4) then
     do k = kz1, kz2
      do j = jy1, jy2
       do i = i01, i02
-       envg(i, j, k, 2) = envg(i, j, k, 2) + ax2*(envg(i+2,j,k,1)-envg(i &
-         +1,j,k,1)+envg(i,j,k,1)-envg(i-1,j,k,1))
+       envg(i, j, k, 2) = envg(i, j, k, 2) + ax2*(envg(i + 2, j, k, 1) - envg(i &
+         + 1, j, k, 1) + envg(i, j, k, 1) - envg(i - 1, j, k, 1))
       end do
      end do
     end do
@@ -502,15 +509,15 @@
    if (yr_bd) then
     do k = kz1, kz2
      j = jy2
-     shy = loc_yg(j-2, 4, imody)*dy_inv
+     shy = loc_yg(j - gcy + 1, 4, imody)*dy_inv
      do i = ix1, ix2
-      envg(i, j, k, 3) = shy*(2.*envg(i,j,k,1)-3.*envg(i,j-1,k,1)+envg(i &
-        ,j-2,k,1))
+      envg(i, j, k, 3) = shy*(2.*envg(i, j, k, 1) - 3.*envg(i, j - 1, k, 1)+envg(i &
+        , j - 2, k, 1))
      end do
      j = jy2 - 1
-     shy = loc_yg(j-2, 4, imody)*dy_inv
+     shy = loc_yg(j - gcy + 1, 4, imody)*dy_inv
      do i = ix1, ix2
-      envg(i, j, k, 3) = shy*(envg(i,j+1,k,1)-envg(i,j,k,1))
+      envg(i, j, k, 3) = shy*(envg(i, j + 1, k, 1) - envg(i, j, k, 1))
      end do
     end do
     j02 = jy2 - 2
@@ -518,74 +525,74 @@
    !===================
    if (yl_bd) then
     j = jy1
-    shy = loc_yg(j-2, 4, imody)*dy_inv
+    shy = loc_yg(j - gcy + 1, 4, imody)*dy_inv
     do k = kz1, kz2
      do i = ix1, ix2
-      envg(i, j, k, 3) = shy*(envg(i,j+1,k,1)-envg(i,j,k,1))
+      envg(i, j, k, 3) = shy*(envg(i, j + 1, k, 1) - envg(i, j, k, 1))
      end do
     end do
     j01 = jy1 + 1
    end if
    do k = kz1, kz2
     do j = j01, j02
-     shy = loc_yg(j-2, 4, imody)*ay1
+     shy = loc_yg(j - gcy + 1, 4, imody)*ay1
      do i = ix1, ix2
-      envg(i, j, k, 3) = shy*(envg(i,j+1,k,1)-envg(i,j,k,1))
+      envg(i, j, k, 3) = shy*(envg(i, j + 1, k, 1) - envg(i, j, k, 1))
      end do
     end do
    end do
-   if (der_ord==4) then
+   if (der_ord == 4) then
     do k = kz1, kz2
      do j = j01, j02
-      shp = loc_yg(j-1, 4, imody)*ay2
-      shm = loc_yg(j-3, 4, imody)*ay2
+      shp = loc_yg(j - gcy + 2, 4, imody)*ay2
+      shm = loc_yg(j - gcy, 4, imody)*ay2
       do i = ix1, ix2
-       envg(i, j, k, 3) = envg(i, j, k, 3) + shp*(envg(i,j+2,k,1)-envg(i &
-         ,j+1,k,1)) + shm*(envg(i,j,k,1)-envg(i,j-1,k,1))
+       envg(i, j, k, 3) = envg(i, j, k, 3) + shp*(envg(i, j + 2, k, 1) - envg(i &
+         , j + 1, k, 1)) + shm*(envg(i, j, k, 1) - envg(i, j - 1, k, 1))
       end do
      end do
     end do
    end if
-   if (ndim==2) return
+   if (ndim == 2) return
    if (zr_bd) then
     k = kz2
-    shz = loc_zg(k-2, 4, imodz)*dz_inv
+    shz = loc_zg(k - gcz + 1, 4, imodz)*dz_inv
     do j = jy1, jy2
      do i = ix1, ix2
-      envg(i, j, k+1, 1) = 2.*envg(i, j, k, 1) - envg(i, j, k-1, 1)
-      envg(i, j, k, 4) = shz*(envg(i,j,k+1,1)-envg(i,j,k,1))
+      envg(i, j, k + 1, 1) = 2.*envg(i, j, k, 1) - envg(i, j, k-1, 1)
+      envg(i, j, k, 4) = shz*(envg(i, j, k + 1,1) - envg(i, j, k, 1))
      end do
     end do
     k02 = kz2 - 1
    end if
    if (zl_bd) then
     k = kz1
-    shz = loc_zg(k-2, 4, imodz)*dz_inv
+    shz = loc_zg(k - gcz + 1, 4, imodz)*dz_inv
     do j = jy1, jy2
      do i = ix1, ix2
-      envg(i, j, k-1, 1) = 2.*envg(i, j, k, 1) - envg(i, j, k+1, 1)
-      envg(i, j, k, 4) = shz*(envg(i,j,k+1,1)-envg(i,j,k,1))
+      envg(i, j, k-1, 1) = 2.*envg(i, j, k, 1) - envg(i, j, k + 1, 1)
+      envg(i, j, k, 4) = shz*(envg(i, j, k + 1, 1) - envg(i, j, k, 1))
      end do
     end do
     k01 = kz1 + 1
    end if
    !==================
    do k = k01, k02
-    shz = loc_zg(k-2, 4, imodz)*az1
+    shz = loc_zg(k - gcz + 1, 4, imodz)*az1
     do j = jy1, jy2
      do i = ix1, ix2
-      envg(i, j, k, 4) = shz*(envg(i,j,k+1,1)-envg(i,j,k,1))
+      envg(i, j, k, 4) = shz*(envg(i, j, k + 1, 1) - envg(i, j, k, 1))
      end do
     end do
    end do
-   if (der_ord==4) then
+   if (der_ord == 4) then
     do k = k01, k02
-     shp = loc_zg(k-1, 4, imodz)*az2
-     shm = loc_zg(k-3, 4, imodz)*az2
+     shp = loc_zg(k - gcz + 2, 4, imodz)*az2
+     shm = loc_zg(k - gcz, 4, imodz)*az2
      do j = jy1, jy2
       do i = ix1, ix2
-       envg(i, j, k, 4) = envg(i, j, k, 4) + shp*(envg(i,j,k+2,1)-envg(i &
-         ,j,k+1,1)) + shm*(envg(i,j,k,1)-envg(i,j,k-1,1))
+       envg(i, j, k, 4) = envg(i, j, k, 4) + shp*(envg(i, j, k + 2, 1) - envg(i &
+         , j, k + 1, 1)) + shm*(envg(i, j, k, 1) - envg(i, j, k - 1, 1))
       end do
      end do
     end do
@@ -765,7 +772,7 @@
        do j = jy1, jy2
         do i = ix1, ix2
          curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
-           adv*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic))
+           adv*(evf(i + 1, j, k, ic) - evf(i - 1, j, k, ic))
         end do
         do i = ix1, ix2
          evf(i, j, k, ic1) = evf(i, j, k, ic)
@@ -789,8 +796,8 @@
        do j = jy1, jy2
         do i = ix1, ix2
          curr(i, j, k, ic) = curr(i, j, k, ic) + evf(i, j, k, ic1) - &
-           an*(evf(i+1,j,k,ic)-evf(i-1,j,k,ic)) - &
-           bn*(evf(i+2,j,k,ic)-evf(i-2,j,k,ic))
+           an*(evf(i + 1, j, k, ic) - evf(i - 1, j, k, ic)) - &
+           bn*(evf(i + 2, j, k, ic) - evf(i - 2, j, k, ic))
         end do
         do i = ix1, ix2
          evf(i, j, k, ic1) = evf(i, j, k, ic)
@@ -966,8 +973,8 @@
    if (yl_bd) then
     if (iby == 0) then
      do j = j1 - ptlft, j1 - 1
-      shy = loc_yg(j1-2, 4, imody)
-      smy = loc_yg(j1-1, 4, imody)
+      shy = loc_yg(j1 - gcy + 1, 4, imody)
+      smy = loc_yg(j1 - gcy + 2, 4, imody)
       alpha = shy/smy
       ef(i1:i2, j, k1:k2, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j1+2, k1:k2, comp1:comp2) - &
       !ef(i1:i2, j1+1, k1:k2, comp1:comp2)) - 2*ef(i1:i2, j1+1, k1:k2, comp1:comp2) + &
@@ -991,8 +998,8 @@
    if (yr_bd) then
     if (iby == 0) then
      do j = j2 +1, j2 + ptrght
-      shy = loc_yg(j2-1, 4, imody)
-      smy = loc_yg(j2-2, 4, imody)
+      shy = loc_yg(j2 - gcy + 2, 4, imody)
+      smy = loc_yg(j2 - gcy + 1, 4, imody)
       alpha = shy/smy
       ef(i1:i2, j, k1:k2, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j2-2, k1:k2, comp1:comp2) - &
       !ef(i1:i2, j2-1, k1:k2, comp1:comp2)) - 2*ef(i1:i2, j2-1, k1:k2, comp1:comp2) + &
@@ -1018,8 +1025,8 @@
    if (zl_bd) then
     if (ibz == 0) then
      do k = k1 - ptlft, k1 - 1
-      shz = loc_zg(k1-2, 4, imodz)
-      smz = loc_zg(k1-1, 4, imodz)
+      shz = loc_zg(k1 - gcz + 1, 4, imodz)
+      smz = loc_zg(k1 - gcz + 2, 4, imodz)
       alpha = shz/smz
       ef(i1:i2, j1:j2, k, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j1:j2, k1+2, comp1:comp2) - &
       !ef(i1:i2, j1:j2, k1+1, comp1:comp2)) - 2*ef(i1:i2, j1:j2, k1+1, comp1:comp2) + &
@@ -1042,9 +1049,9 @@
 
    if (zr_bd) then
     if (ibz == 0) then
-     do k = k2 +1, k2 + ptrght
-      shz = loc_zg(k2-1, 4, imodz)
-      smz = loc_zg(k2-2, 4, imodz)
+     do k = k2 + 1, k2 + ptrght
+      shz = loc_zg(k2 - gcz + 2, 4, imodz)
+      smz = loc_zg(k2 - gcz + 1, 4, imodz)
       alpha = shz/smz
       ef(i1:i2, j1:j2, k, comp1:comp2) = zero_dp !alpha*(ef(i1:i2, j1:j2, k2-2, comp1:comp2) - &
       !ef(i1:i2, j1:j2, k2-1, comp1:comp2)) - 2*ef(i1:i2, j1:j2, k2-1, comp1:comp2) + &
@@ -1092,10 +1099,10 @@
    ! boundaries for E_t=rotB
    !========================
    ! aphx centered as Ey at ii=1
-   ii = 1
+   ii = ix1 - gcx + 1
    if (xl_bd) then
     if (ibx<2) then
-     aphx = loc_xg(1, 3, imodx)*dx_inv*dtl
+     aphx = loc_xg(ii, 3, imodx)*dx_inv*dtl
      do k = kz1, kz2
       do j = jy1, jy2
        ef(ix1-1, j, k, nfield) = -(2.*ef(ix1,j,k,2)+(1.-aphx)*ef(ix1,j,k &
@@ -1124,7 +1131,7 @@
    !========================
    !==============================
    ! aphy centered as Ex j=1 (the Bz derivative)
-   ii = 1
+   ii = jy1 - gcy + 1
    if (iby<2) then
     if (yl_bd) then
      select case (imbd)
@@ -1174,7 +1181,7 @@
    !at z=-Lz minim. reflection (d/dt-d/dz)^{p-1}(By+Ex)=0
    ! first order p=1 By=-Ex at z=-Lz and equal time
    !==============================
-   ii = 1
+   ii = kz1 - gcz + 1
    if (ibz<2) then
     if (zl_bd) then
      select case (imbd)
@@ -1228,7 +1235,7 @@
    ! aphx centered as Bz nx+1/2
    if (ibx<2) then
     if (xr_bd) then
-     ii = ix2 - 2
+     ii = ix2 - gcx + 1
      select case (ibx)
      case (0)
       aphx = loc_xg(ii, 4, imodx)*dx_inv*dtl
@@ -1279,7 +1286,7 @@
     if (yr_bd) then
      select case (imbd)
      case (0)
-      ii = jy2 - 2
+      ii = jy2 - gcy + 1
       aphy = loc_yg(ii, 4, imody)*dy_inv*dtl
       do k = kz1, kz2
        do i = ix1, ix2
@@ -1332,7 +1339,7 @@
     if (zr_bd) then
      select case (imbd)
      case (0)
-      ii = loc_zgrid(imodz)%ng != kz2-2
+      ii = kz2 - gcz + 1
       aphz = loc_zg(ii, 4, imodz)*dz_inv*dtl
       do j = jy1, jy2
        do i = ix1, ix2
@@ -1435,7 +1442,7 @@
    !=================================
    do k = kz1, kz2
     do j = jy1, jy2
-     jj = j - 2
+     jj = j - gcy + 1
      sdhy = loc_yg(jj, 4, imody)*aphy
      do i = ix1, ix2
       ef(i, j, k, nfield) = ef(i, j, k, nfield) - &
@@ -1448,10 +1455,10 @@
    if (nfield<6) return
    if (ndim==3) then
     do k = kz1, kz2
-     kk = k - 2
+     kk = k - gcz + 1
      sdhz = loc_zg(kk, 4, imodz)*aphz
      do j = jy1, jy2
-      jj = j - 2
+      jj = j - gcy + 1
       sdhy = loc_yg(jj, 4, imody)*aphy
       do i = ix1, ix2
        ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3) &
@@ -1466,7 +1473,7 @@
    else
     k = 1
     do j = jy1, jy2
-     jj = j - 2
+     jj = j - gcy + 1
      sdhy = loc_yg(jj, 4, imody)*aphy
      do i = ix1, ix2
       ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3))
@@ -1505,7 +1512,7 @@
    !=========================== NDIM > 1
    do k = kz1, kz2
     do j = jy1, jy2
-     jj = j - 2
+     jj = j - gcy + 1
      sdy = loc_yg(jj, 3, imody)*aphy
      do i = ix1, ix2
       ii = i - 2
@@ -1520,10 +1527,10 @@
    if (nfield<6) return
    if (ndim==3) then
     do k = kz1, kz2
-     kk = k - 2
+     kk = k - gcz + 1
      sdz = aphz*loc_zg(kk, 3, imodz)
      do j = jy1, jy2
-      jj = j - 2
+      jj = j - gcy + 1
       sdy = aphy*loc_yg(jj, 3, imody)
       do i = ix1, ix2
        ii = i - 2
@@ -1539,7 +1546,7 @@
    else
     k = 1
     do j = jy1, jy2
-     jj = j - 2
+     jj = j - gcy + 1
      sdy = aphy*loc_yg(jj, 3, imody)
      do i = ix1, ix2
       ii = i - 2
@@ -1624,7 +1631,7 @@
      call momentum_flux(var, ww0, fcomp, yl_bd, yr_bd, j01 - 2, j02 + 2)
      do ic = 1, fcomp
       do j = j01, j02
-       shy = aphy*loc_yg(j-2, 3, imody)
+       shy = aphy*loc_yg(j - gcy + 1, 3, imody)
        ef(i, j, k, ic) = ef(i, j, k, ic) - shy*ww0(j, ic)
       end do
      end do
@@ -1646,7 +1653,7 @@
      call momentum_flux(var, ww0, fcomp, zl_bd, zr_bd, k01 - 2, k02 + 2)
      do ic = 1, fcomp
       do k = k01, k02
-       shz = aphz*loc_zg(k-2, 3, imodz)
+       shz = aphz*loc_zg(k - gcz + 1, 3, imodz)
        ef(i, j, k, ic) = ef(i, j, k, ic) - shz*ww0(k, ic)
       end do
      end do

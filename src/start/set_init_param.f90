@@ -67,7 +67,9 @@
     stretch = .true.
     ny_stretch = nint(real(ny,dp)*1.5*size_of_stretch_along_y) !set to ny/4
    end if
-   nz_stretch = ny_stretch
+   if (ndim == 3) then
+    nz_stretch = ny_stretch
+   end if
    loc_nyc_max = loc_ygr_max
    loc_nzc_max = loc_zgr_max
    loc_nxc_max = loc_xgr_max
@@ -76,7 +78,7 @@
    gvol = 1.
    dx = 1./k0
    call set_grid(nx, ny, nz, ibx, nx_stretch, ny_stretch, k0, yx_rat, &
-     zx_rat)
+     zx_rat, sh_ix, sh_iy, sh_iz)
    dt = cfl*dx
    ! dt always assumes cubic cells so that doesn't depend on transverse
    ! resolution
@@ -131,6 +133,8 @@
    relativistic = .false.
    ions = .false.
    envelope = .false.
+   p_polar = .false.
+   s_polar = .false.
    circ_lp = .false.
    plane_wave = .false.
    Two_color = .false.
@@ -144,9 +148,11 @@
 !============================================
    if (iby==2) plane_wave = .true.
    mod_ord = 1
-   if (model_id<3) lin_lp = .true.
-   if (model_id==3) circ_lp = .true.
-   if (model_id==4) then
+   if (model_id < 3) lin_lp = .true.
+   if (model_id == 1) p_polar = .true.
+   if (model_id == 2) s_polar = .true.
+   if (model_id == 3) circ_lp = .true.
+   if (model_id == 4) then
     mod_ord = 2
     envelope = .true.
    end if
@@ -154,12 +160,12 @@
    nfield = 3
    curr_ndim = 2
    nbfield = 4
-   if (ndim>2) then
+   if (ndim > 2) then
     nfield = 6
     curr_ndim = ndim
     nbfield = 6
    end if
-   if (circ_lp) then
+   if ( s_polar .or. circ_lp ) then
     nfield = 6
     curr_ndim = 3
    end if

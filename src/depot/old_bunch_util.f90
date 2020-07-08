@@ -469,10 +469,10 @@
      jc(ix1:ix2, jy1:jy2, kz1:kz2, 2)
    !============ on jc(1) bunch+ particles
    if (stretch) then
-    kk = 1
+    kk = kz1 - gcz + 1
     do k = kz1, kz2
      derz = loc_zg(kk, 3, imodz)
-     jj = 1
+     jj = jy1 - gcy + 1
      do j = jy1, jy2
       dery = loc_yg(jj, 3, imody)*derz
       do i = ix1, ix2
@@ -521,10 +521,10 @@
    jc(:, :, :, 1) = -jc(:, :, :, 1) !positive for electrons
 
    if (stretch) then
-    kk = 1
+    kk = kz1 - gcz + 1
     do k = kz1, kz2
      derz = loc_zg(kk, 3, imodz)
-     jj = 1
+     jj = jy1 - gcy + 1
      do j = jy1, jy2
       dery = loc_yg(jj, 3, imody)*derz
       do i = ix1, ix2

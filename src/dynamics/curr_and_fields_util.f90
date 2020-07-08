@@ -200,7 +200,7 @@
     case (2)
      do k = kz1, kz2
       do j = jy1, jy2
-       jj = j - 2
+       jj = j - gcy + 1
        dery = loc_yg(jj, 3, imody)
        derhy = loc_yg(jj, 4, imody)
        do i = ix1, ix2
@@ -211,11 +211,11 @@
      end do
     case (3)
      do k = kz1, kz2
-      kk = k - 2
+      kk = k - gcz + 1
       derz = loc_zg(kk, 3, imodz)
       derhz = loc_zg(kk, 4, imodz)
       do j = jy1, jy2
-       jj = j - 2
+       jj = j - gcy + 1
        dery = loc_yg(jj, 3, imody)
        derhy = loc_yg(jj, 4, imody)
        do i = ix1, ix2
