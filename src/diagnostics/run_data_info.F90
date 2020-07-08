@@ -191,7 +191,7 @@
 
    write (60, *) '*************IMPLEMENTATION TOOLS********************'
    write (60, *) '  Field collocation on the Yee-module staggered grid'
-   write (60, *) '  B-spline shapes of alternating first-second order '
+   write (60, *) '  Second order B-spline shapes '
    if (lpf_ord>0) then
     if (lpf_ord==2) write (60, *) &
       '  One-step leap-frog time integration '
