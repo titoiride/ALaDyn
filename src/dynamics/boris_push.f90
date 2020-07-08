@@ -357,7 +357,7 @@
     bp_pp(1:np, 1) = sp_loc%px(1:np) + pt%call_component( EX_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 2) = sp_loc%py(1:np) + pt%call_component( EY_COMP, lb=1, ub=np )*alp
     bp_pp(1:np, 3) = sp_loc%pz(1:np) + pt%call_component( EZ_COMP, lb=1, ub=np )*alp
-    
+
     bb(1:np, 1) = alp * pt%call_component( BX_COMP, lb=1, ub=np )/nstep
     bb(1:np, 2) = alp * pt%call_component( BY_COMP, lb=1, ub=np )/nstep
     bb(1:np, 3) = alp * pt%call_component( BZ_COMP, lb=1, ub=np )/nstep
@@ -378,17 +378,17 @@
 
      ! New PX_COMP calculation
      aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
-     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
-      bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
-    
+     aux(1:np) = (aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
+      bp_pp(1:np, 3)*bb(1:np, 2)))/(b2(1:np) + gam02(1:np))
+
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%px(1:np), &
       PX_COMP, lb=1, ub=np)
 
      ! New PY_COMP calculation
      aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
-     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
-      bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
+     aux(1:np) = (aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
+      bp_pp(1:np, 1)*bb(1:np, 3)))/(b2(1:np) + gam02(1:np))
     
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%py(1:np), &
@@ -396,8 +396,8 @@
 
      ! New PZ_COMP calculation
      aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
-     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
-      bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
+     aux(1:np) = (aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
+      bp_pp(1:np, 2)*bb(1:np, 1)))/(b2(1:np) + gam02(1:np))
     
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
@@ -457,11 +457,11 @@
 
     bp_pp(1:np, 1) = sp_loc%x(1:np) + pt%call_component(VX_COMP, lb=1, ub=np)
     bp_pp(1:np, 2) = sp_loc%y(1:np) + pt%call_component(VY_COMP, lb=1, ub=np)
-    bp_pp(1:np, 2) = sp_loc%z(1:np) + pt%call_component(VZ_COMP, lb=1, ub=np)
-
+    bp_pp(1:np, 3) = sp_loc%z(1:np) + pt%call_component(VZ_COMP, lb=1, ub=np)
+    
     call sp_loc%set_component(bp_pp(1:np, 1), X_COMP, lb=1, ub=np)
     call sp_loc%set_component(bp_pp(1:np, 2), Y_COMP, lb=1, ub=np)
-    call sp_loc%set_component(bp_pp(1:np, 2), Z_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 3), Z_COMP, lb=1, ub=np)
 
    end select
 
@@ -641,8 +641,8 @@
 
      ! New PX_COMP calculation
      aux(1:np) = gam02(1:np)*bp_pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
-     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
-      bp_pp(1:np, 3)*bb(1:np, 2))/(b2(1:np) + gam02(1:np))
+     aux(1:np) = (aux(1:np) + gam(1:np)*(bp_pp(1:np, 2)*bb(1:np, 3) - &
+      bp_pp(1:np, 3)*bb(1:np, 2)))/(b2(1:np) + gam02(1:np))
     
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%px(1:np), &
@@ -650,8 +650,8 @@
 
      ! New PY_COMP calculation
      aux(1:np) = gam02(1:np)*bp_pp(1:np, 2) + bb(1:np, 2)*bv(1:np)
-     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
-      bp_pp(1:np, 1)*bb(1:np, 3))/(b2(1:np) + gam02(1:np))
+     aux(1:np) = (aux(1:np) + gam(1:np)*(bp_pp(1:np, 3)*bb(1:np, 1) - &
+      bp_pp(1:np, 1)*bb(1:np, 3)))/(b2(1:np) + gam02(1:np))
     
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%py(1:np), &
@@ -659,8 +659,8 @@
 
      ! New PZ_COMP calculation
      aux(1:np) = gam02(1:np)*bp_pp(1:np, 3) + bb(1:np, 3)*bv(1:np)
-     aux(1:np) = aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
-      bp_pp(1:np, 2)*bb(1:np, 1))/(b2(1:np) + gam02(1:np))
+     aux(1:np) = (aux(1:np) + gam(1:np)*(bp_pp(1:np, 1)*bb(1:np, 2) - &
+      bp_pp(1:np, 2)*bb(1:np, 1)))/(b2(1:np) + gam02(1:np))
     
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
@@ -722,11 +722,11 @@
 
     bp_pp(1:np, 1) = sp_loc%x(1:np) + pt%call_component(VX_COMP, lb=1, ub=np)
     bp_pp(1:np, 2) = sp_loc%y(1:np) + pt%call_component(VY_COMP, lb=1, ub=np)
-    bp_pp(1:np, 2) = sp_loc%z(1:np) + pt%call_component(VZ_COMP, lb=1, ub=np)
+    bp_pp(1:np, 3) = sp_loc%z(1:np) + pt%call_component(VZ_COMP, lb=1, ub=np)
 
     call sp_loc%set_component(bp_pp(1:np, 1), X_COMP, lb=1, ub=np)
     call sp_loc%set_component(bp_pp(1:np, 2), Y_COMP, lb=1, ub=np)
-    call sp_loc%set_component(bp_pp(1:np, 2), Z_COMP, lb=1, ub=np)
+    call sp_loc%set_component(bp_pp(1:np, 3), Z_COMP, lb=1, ub=np)
 
    end select
 

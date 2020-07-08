@@ -2387,248 +2387,245 @@
    allocate( curry(np, 0:4) )
    allocate( weight(np) )
    !======================
-   select case (ndim)
-   case (2)
-    if (curr_ndim==2) then !Two current components
-     call xx_realloc(gpc_xx, np, 2)
-     allocate( x0(np) )
-     allocate( x1(np) )
-     allocate( y0(np) )
-     allocate( y1(np) )
-     allocate( ih(np) )
-     allocate( jh(np) )
+   if (curr_ndim==2) then !Two current components
+    call xx_realloc(gpc_xx, np, 2)
+    allocate( x0(np) )
+    allocate( x1(np) )
+    allocate( y0(np) )
+    allocate( y1(np) )
+    allocate( ih(np) )
+    allocate( jh(np) )
 
-     weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
-     ! Interpolation on new positions
-     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
+    ! Interpolation on new positions
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
+    
+    ! Interpolation on old positions
+    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
      
-     ! Interpolation on old positions
-     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
-     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-     
-     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
 
-     associate( ax1 => interp%coeff_x_rank2, &
-                ay1 => interp%coeff_y_rank2, &
-                i => interp%ix_rank2, &
-                j => interp%iy_rank2, &
-                ax0 => interp_old%coeff_x_rank2, &
-                ay0 => interp_old%coeff_y_rank2, &
-                ii0 => interp_old%ix_rank2, &
-                jj0 => interp_old%iy_rank2 )
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2, &
+               ax0 => interp_old%coeff_x_rank2, &
+               ay0 => interp_old%coeff_y_rank2, &
+               ii0 => interp_old%ix_rank2, &
+               jj0 => interp_old%iy_rank2 )
 
-     ih(1:np) = i(1:np) - ii0(1:np) + 1
+    ih(1:np) = i(1:np) - ii0(1:np) + 1
      
-     !========================================
-     do n = 1, np
-      do i1 = 0, 2
-       axh(n, ih(n) + i1) = ax1(n, i1)
-      end do
+    !========================================
+    do n = 1, np
+     do i1 = 0, 2
+      axh(n, ih(n) + i1) = ax1(n, i1)
      end do
+    end do
 
-     currx(1:np, 0) = -axh(1:np, 0)
-      do i1 = 1, 3
-       currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
-      end do
-     currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
-
+    currx(1:np, 0) = -axh(1:np, 0)
      do i1 = 1, 3
-      axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
+      currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
      end do
+    currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
+
+    do i1 = 1, 3
+     axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
+    end do
      
-     do i1 = 0, 4
-      currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
+    do i1 = 0, 4
+     currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
+    end do
+
+    x0(1:np) = min(ih(1:np), 1)
+    x1(1:np) = max(ih(1:np) + 2, 3)
+
+    !========================================
+    jh(1:np) = j(1:np) - jj0(1:np) + 1
+    do n = 1, np
+     do i1 = 0, 2
+      ayh(n, jh(n) + i1) = ay1(n, i1)
      end do
+    end do
+    curry(1:np, 0) = -ayh(1:np, 0)
+    do i1 = 1, 3
+     curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
+    end do
+    curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
+    do i1 = 0, 4
+     curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+    end do
+    do i1 = 1, 3
+     ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
+    end do
+    y0(1:np) = min(jh(1:np), 1)
+    y1(1:np) = max(jh(1:np) + 2, 3)
 
-     x0(1:np) = min(ih(1:np), 1)
-     x1(1:np) = max(ih(1:np) + 2, 3)
+    !================dt*J_x
 
-     !========================================
-     jh(1:np) = j(1:np) - jj0(1:np) + 1
-     do n = 1, np
-      do i1 = 0, 2
-       ayh(n, jh(n) + i1) = ay1(n, i1)
+    jh(1:np) = jj0(1:np) - 1
+    ih(1:np) = ii0(1:np) - 1
+
+    do n = 1, np
+     do j1 = y0(n), y1(n)
+      j2 = jh(n) + j1
+      do i1 = x0(n), x1(n)
+       i2 = ih(n) + i1
+       jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
       end do
      end do
-     curry(1:np, 0) = -ayh(1:np, 0)
+     !================dt*J_y
+     do j1 = y0(n), y1(n)
+      j2 = jh(n) + j1
+      do i1 = x0(n), x1(n)
+       i2 = ih(n) + i1
+       jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
+      end do
+     end do
+    end do
+   end associate
+   end if
+    !========================================
+   if (curr_ndim==3) then !Three currents conditions in 2D grid
+
+    !============== ********************** =================
+    call xx_realloc(gpc_xx, np, 2)
+    allocate( x0(np) )
+    allocate( x1(np) )
+    allocate( y0(np) )
+    allocate( y1(np) )
+    allocate( ih(np) )
+    allocate( jh(np) )
+    allocate( axh0(np, 0:4))
+    allocate( axh1(np, 0:4))
+
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+
+    ! Interpolation on new positions
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+     
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
+     
+    ! Interpolation on old positions
+    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
+    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+     
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
+
+    !========================================
+    ! Computing velocity along z
+    gpc_xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
+    gpc_xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
+
+    ! Storing z_new - z_old in xx(1:np, 1)
+    gpc_xx(1:np, 1) = weight(1:np)*(gpc_xx(1:np, 1) - gpc_xx(1:np, 2))/3.
+     
+    associate( ax1 => interp%coeff_x_rank2, &
+               ay1 => interp%coeff_y_rank2, &
+               i => interp%ix_rank2, &
+               j => interp%iy_rank2, &
+               ax0 => interp_old%coeff_x_rank2, &
+               ay0 => interp_old%coeff_y_rank2, &
+               ii0 => interp_old%ix_rank2, &
+               jj0 => interp_old%iy_rank2 )
+
+    ih(1:np) = i(1:np) - ii0(1:np) + 1
+
+    do n = 1, np
+     do i1 = 0, 2
+      axh(n, ih(n) + i1) = ax1(n, i1)
+     end do
+    end do
+
+    currx(1:np, 0) = -axh(1:np, 0)
      do i1 = 1, 3
-      curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
+      currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
      end do
-     curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
-     do i1 = 0, 4
-      curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+    currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
+
+    do i1 = 1, 3
+     axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
+    end do
+     
+    do i1 = 0, 4
+     currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
+    end do
+
+    axh0(1:np, 0:4) = 0.5*axh(1:np, 0:4)
+    axh1(1:np, 0:4) = axh(1:np, 0:4)
+    do i1 = 1, 3
+     axh0(1:np, i1) = axh0(1:np, i1) + ax0(1:np, i1-1)
+     axh1(1:np, i1) = axh1(1:np, i1) + 0.5*ax0(1:np, i1-1)
+    end do
+
+    x0(1:np) = min(ih(1:np), 1)
+    x1(1:np) = max(ih(1:np) + 2, 3)
+
+    !========================================
+    jh(1:np) = j(1:np) - jj0(1:np) + 1
+    do n = 1, np
+     do i1 = 0, 2
+      ayh(n, jh(n) + i1) = ay1(n, i1)
      end do
-     do i1 = 1, 3
-      ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
-     end do
-     y0(1:np) = min(jh(1:np), 1)
-     y1(1:np) = max(jh(1:np) + 2, 3)
+    end do
+    curry(1:np, 0) = -ayh(1:np, 0)
+    do i1 = 1, 3
+     curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
+    end do
+    curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
+    do i1 = 0, 4
+     curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+    end do
+    do i1 = 1, 3
+     ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
+    end do
+    y0(1:np) = min(jh(1:np), 1)
+    y1(1:np) = max(jh(1:np) + 2, 3)
 
-     !================dt*J_x
+    !================dt*J_x= currx*(Wy^0+Wy^1) to be multiplied by dx/2
 
-     jh(1:np) = jj0(1:np) - 1
-     ih(1:np) = ii0(1:np) - 1
+    jh(1:np) = jj0(1:np) - 1
+    ih(1:np) = ii0(1:np) - 1
 
-     do n = 1, np
-      do j1 = y0(n), y1(n)
-       j2 = jh(n) + j1
-       do i1 = x0(n), x1(n)
-        i2 = ih(n) + i1
-        jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
-       end do
+    do n = 1, np
+     do j1 = y0(n), y1(n)
+      j2 = jh(n) + j1
+      do i1 = x0(n), x1(n)
+       i2 = ih(n) + i1
+       jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
       end do
-      !================dt*J_y
-      do j1 = y0(n), y1(n)
-       j2 = jh(n) + j1
-       do i1 = x0(n), x1(n)
-        i2 = ih(n) + i1
-        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
-       end do
+     end do
+     !================dt*J_y= curry*(Wx^0+Wx^1)
+     do j1 = y0(n), y1(n)
+      j2 = jh(n) + j1
+      do i1 = x0(n), x1(n)
+       i2 = ih(n) + i1
+       jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
       end do
      end do
+     !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
+     do j1 = 0, 2
+      j2 = jj0(n) + j1
+      dvol = ay0(n, j1)*gpc_xx(n, 1)
+      do i1 = x0(n), x1(n)
+       i2 = i1 + ih(n)
+       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh0(n, i1)*dvol
+      end do
+      j2 = j(n) + j1
+      dvol = ay1(n, j1)*gpc_xx(n, 1)
+      do i1 = x0(n), x1(n)
+       i2 = i1 + ih(n)
+       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh1(n, i1)*dvol
+      end do
+     end do
+    end do 
     end associate
-    end if
-     !========================================
-    if (curr_ndim==3) then !Three currents conditions in 2D grid
-
-     !============== ********************** =================
-     call xx_realloc(gpc_xx, np, 2)
-     allocate( x0(np) )
-     allocate( x1(np) )
-     allocate( y0(np) )
-     allocate( y1(np) )
-     allocate( ih(np) )
-     allocate( jh(np) )
-     allocate( axh0(np, 0:4))
-     allocate( axh1(np, 0:4))
-
-     weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
-
-     ! Interpolation on new positions
-     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-     
-     call qden_2d_wgh( xx, interp )
-     
-     ! Interpolation on old positions
-     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
-     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-     
-     call qden_2d_wgh( xx, interp_old )
-
-     !========================================
-     ! Computing velocity along z
-     gpc_xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
-     gpc_xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
-
-     ! Storing z_new - z_old in xx(1:np, 1)
-     gpc_xx(1:np, 1) = weight(1:np)*(xx(1:np, 1) - xx(1:np, 2))/3.
-     
-     associate( ax1 => interp%coeff_x_rank2, &
-                ay1 => interp%coeff_y_rank2, &
-                i => interp%ix_rank2, &
-                j => interp%iy_rank2, &
-                ax0 => interp_old%coeff_x_rank2, &
-                ay0 => interp_old%coeff_y_rank2, &
-                ii0 => interp_old%ix_rank2, &
-                jj0 => interp_old%iy_rank2 )
-
-     ih(1:np) = i(1:np) - ii0(1:np) + 1
-
-     do n = 1, np
-      do i1 = 0, 2
-       axh(n, ih(n) + i1) = ax1(n, i1)
-      end do
-     end do
-
-     currx(1:np, 0) = -axh(1:np, 0)
-      do i1 = 1, 3
-       currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
-      end do
-     currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
-
-     do i1 = 1, 3
-      axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
-     end do
-     
-     do i1 = 0, 4
-      currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
-     end do
-
-     axh0(1:np, 0:4) = 0.5*axh(1:np, 0:4)
-     axh1(1:np, 0:4) = axh(1:np, 0:4)
-     do i1 = 1, 3
-      axh0(1:np, i1) = axh0(1:np, i1) + ax0(1:np, i1-1)
-      axh1(1:np, i1) = axh1(1:np, i1) + 0.5*ax0(1:np, i1-1)
-     end do
-
-     x0(1:np) = min(ih(1:np), 1)
-     x1(1:np) = max(ih(1:np) + 2, 3)
-
-     !========================================
-     jh(1:np) = j(1:np) - jj0(1:np) + 1
-     do n = 1, np
-      do i1 = 0, 2
-       ayh(n, jh(n) + i1) = ay1(n, i1)
-      end do
-     end do
-     curry(1:np, 0) = -ayh(1:np, 0)
-     do i1 = 1, 3
-      curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
-     end do
-     curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
-     do i1 = 0, 4
-      curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
-     end do
-     do i1 = 1, 3
-      ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
-     end do
-     y0(1:np) = min(jh(1:np), 1)
-     y1(1:np) = max(jh(1:np) + 2, 3)
-
-     !================dt*J_x= currx*(Wy^0+Wy^1) to be multiplied by dx/2
-
-     jh(1:np) = jj0(1:np) - 1
-     ih(1:np) = ii0(1:np) - 1
-
-     do n = 1, np
-      do j1 = y0(n), y1(n)
-       j2 = jh(n) + j1
-       do i1 = x0(n), x1(n)
-        i2 = ih(n) + i1
-        jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
-       end do
-      end do
-      !================dt*J_y= curry*(Wx^0+Wx^1)
-      do j1 = y0(n), y1(n)
-       j2 = jh(n) + j1
-       do i1 = x0(n), x1(n)
-        i2 = ih(n) + i1
-        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
-       end do
-      end do
-      !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
-      do j1 = 0, 2
-       j2 = jj0(n) + j1
-       dvol = ay0(n, j1)*xx(n, 1)
-       do i1 = x0(n), x1(n)
-        i2 = i1 + ih(n)
-        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh0(n, i1)*dvol
-       end do
-       j2 = j(n) + j1
-       dvol = ay1(n, j1)*xx(n, 1)
-       do i1 = x0(n), x1(n)
-        i2 = i1 + ih(n)
-        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh1(n, i1)*dvol
-       end do
-      end do
-     end do 
-     end associate
-    end if
-   end select
+   end if
    !===================================
   end subroutine
   subroutine esirkepov_2d_curr_old(sp_loc, pt, jcurr, np)
