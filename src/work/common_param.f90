@@ -75,8 +75,8 @@
   logical :: beam, hybrid, wake, envelope, solid_target
   logical :: ionization, ions
   logical :: part, stretch, channel, inject_beam
-  logical :: lp_active, lp_inject, plane_wave, lin_lp, circ_lp, &
-    relativistic, Two_color
+  logical :: lp_active, lp_inject, plane_wave, p_polar, s_polar, &
+    lin_lp, circ_lp, relativistic, Two_color
   logical :: enable_ionization(2), symmetrization_pulse
   logical :: charge_cons, high_gamma, test
   logical :: density_limiter
