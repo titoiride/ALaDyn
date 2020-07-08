@@ -1289,14 +1289,14 @@
        bx = ee0*fields(1) !  Bx(s-pol)= Ex(p-pol)
        ef(i, j, k, 4) = ef(i, j, k, 4) + bx
        !==== By(xx,yyh) =======
-       coords(1) = xx - xf0
-       coords(2) = yyh - yc
+       coords(1) = xxh - xf0
+       coords(2) = yy - yc
        if (g_prof) then
         call get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
        else
         call get_2dlaser_fields_lp(coords, par_lp, fields)
        end if
-       by = -ee0*fields(2) !  By(s-pol)=-Bz(p-pol)
+       by = -ee0*fields(6) !  By(s-pol)=-Bz(p-pol)
        ef(i, j, k, 5) = ef(i, j, k, 5) + by
       end do
      end do
