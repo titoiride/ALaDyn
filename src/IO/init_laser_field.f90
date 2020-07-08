@@ -130,8 +130,6 @@
     !=======================
     call init_cp_fields(ebf, lp_amp, tt, t0_lp, w0_x, w0_y, xf, angle, &
       shx_cp, cp_ind, i1, i2)
-    !=================def part distr points
-    lp_end = xm
    end if
    !======================
    part_in = lp_end(1) + lpx(7)

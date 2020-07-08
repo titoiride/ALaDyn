@@ -76,7 +76,7 @@
    np = spec_in%how_many()
    !==========================================================
    ! Fields interpolation on particles positions
-   call set_lpf_acc(ebf, spec_in, spec_aux_in, np, nfields)
+   call set_lpf_acc(ef, spec_in, spec_aux_in, np, nfields)
 
    !==========================================================
    ! Fields are multiplied by the particles charge
