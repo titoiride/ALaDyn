@@ -2361,18 +2361,16 @@
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
 
-   real (dp), allocatable, dimension(:, :) :: xx
-   real (dp), allocatable, dimension(:, :) :: axh0, axh1
    real (dp), allocatable, dimension(:, :) :: axh, ayh
    real (dp), allocatable, dimension(:, :) :: currx, curry
-   real (dp), allocatable, dimension(:) :: weight
    integer, allocatable, dimension(:) :: ih, jh
    integer, allocatable, dimension(:) :: x0, x1, y0, y1
    real (dp) :: dvol
    integer :: i1, j1, i2, j2, n
    !==========================
-   !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
-   ! ==============================Only new and old positions needed
+   ! Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
+   !==============================
+   ! Only new and old positions needed
    !=================================
    ! Do not execute without particles
    !=================================
@@ -2385,7 +2383,6 @@
    allocate( ayh(np, 0:4), source=zero_dp )
    allocate( currx(np, 0:4) )
    allocate( curry(np, 0:4) )
-   allocate( weight(np) )
    !======================
    if (curr_ndim==2) then !Two current components
     call xx_realloc(gpc_xx, np, 2)
@@ -2395,9 +2392,7 @@
     allocate( y1(np) )
     allocate( ih(np) )
     allocate( jh(np) )
-
-    weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
-
+    
     ! Interpolation on new positions
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -2406,8 +2401,11 @@
     ! Interpolation on old positions
     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-     
+    
     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
+    
+    ! Recycling gpc_xx since it's not needed anymore
+    gpc_xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -2438,7 +2436,7 @@
     end do
      
     do i1 = 0, 4
-     currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
+     currx(1:np, i1) = gpc_xx(1:np, 2)*currx(1:np, i1)
     end do
 
     x0(1:np) = min(ih(1:np), 1)
@@ -2457,7 +2455,7 @@
     end do
     curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
     do i1 = 0, 4
-     curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+     curry(1:np, i1) = gpc_xx(1:np, 2)*curry(1:np, i1)
     end do
     do i1 = 1, 3
      ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
@@ -2500,31 +2498,33 @@
     allocate( y1(np) )
     allocate( ih(np) )
     allocate( jh(np) )
-    allocate( axh0(np, 0:4))
-    allocate( axh1(np, 0:4))
-
-    weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
-
+    
     ! Interpolation on new positions
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-     
+    
     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
-     
+    
     ! Interpolation on old positions
     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-     
+    
     call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
-
+    
     !========================================
     ! Computing velocity along z
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
     gpc_xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
-
+    
     ! Storing z_new - z_old in xx(1:np, 1)
-    gpc_xx(1:np, 1) = weight(1:np)*(gpc_xx(1:np, 1) - gpc_xx(1:np, 2))/3.
-     
+    gpc_xx(1:np, 1) = (gpc_xx(1:np, 1) - gpc_xx(1:np, 2))/3.
+    
+    ! Recycling gpc_xx since it's not needed anymore
+    gpc_xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+
+    ! Multiplying by the particle weight
+    gpc_xx(1:np, 1) = gpc_xx(1:np, 2)*gpc_xx(1:np, 1)
+    
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
                i => interp%ix_rank2, &
@@ -2553,14 +2553,7 @@
     end do
      
     do i1 = 0, 4
-     currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
-    end do
-
-    axh0(1:np, 0:4) = 0.5*axh(1:np, 0:4)
-    axh1(1:np, 0:4) = axh(1:np, 0:4)
-    do i1 = 1, 3
-     axh0(1:np, i1) = axh0(1:np, i1) + ax0(1:np, i1-1)
-     axh1(1:np, i1) = axh1(1:np, i1) + 0.5*ax0(1:np, i1-1)
+     currx(1:np, i1) = gpc_xx(1:np, 2)*currx(1:np, i1)
     end do
 
     x0(1:np) = min(ih(1:np), 1)
@@ -2579,7 +2572,7 @@
     end do
     curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
     do i1 = 0, 4
-     curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
+     curry(1:np, i1) = gpc_xx(1:np, 2)*curry(1:np, i1)
     end do
     do i1 = 1, 3
      ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
@@ -2608,19 +2601,29 @@
        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
       end do
      end do
+    end do
+
+    ! Here we recycle the currx and curry arrays that are not needed anymore
+    currx(1:np, 0:4) = 0.5*axh(1:np, 0:4)
+    curry(1:np, 0:4) = axh(1:np, 0:4)
+    do i1 = 1, 3
+     currx(1:np, i1) = currx(1:np, i1) + ax0(1:np, i1-1)
+     curry(1:np, i1) = curry(1:np, i1) + 0.5*ax0(1:np, i1-1)
+    end do
+    do n = 1, np
      !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
      do j1 = 0, 2
       j2 = jj0(n) + j1
       dvol = ay0(n, j1)*gpc_xx(n, 1)
       do i1 = x0(n), x1(n)
        i2 = i1 + ih(n)
-       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh0(n, i1)*dvol
+       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + currx(n, i1)*dvol
       end do
       j2 = j(n) + j1
       dvol = ay1(n, j1)*gpc_xx(n, 1)
       do i1 = x0(n), x1(n)
        i2 = i1 + ih(n)
-       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + axh1(n, i1)*dvol
+       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + curry(n, i1)*dvol
       end do
      end do
     end do 
