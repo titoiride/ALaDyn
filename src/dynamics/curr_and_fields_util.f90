@@ -352,11 +352,8 @@
    ib = 2 !ib=1 implicit ib=2 optimazid explicit
    !optimized advection scheme
    if (comoving) ib = 0
-   if (prl) then
-    call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
-   end if
    call env_bds( evf, str, stl )
-
+   ! In env_bds, envelope boundary points are set to zero
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix1, ix2
@@ -374,6 +371,9 @@
     call env_maxw_solve(jc, evf, omg, dt_loc)
    end if
    ! =================================
+   if (prl) then
+    call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
+   end if
   end subroutine
   !========================================================
 
