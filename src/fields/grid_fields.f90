@@ -641,7 +641,7 @@
    real (dp), intent (inout) :: av(:, :, :)
    real (dp) :: ay1, ay2, shy, shp, shm
    real (dp) :: AA, const1, const2
-   integer :: i, j, k, i01, i02, j01, j02, k01, k02, ic
+   integer :: i, j, k, i01, i02, j01, j02, k01, k02, ic, jj
    real (dp), parameter :: a_hcd = 13./12., b_hcd = -1./24.
    !========================================
    ! Receive in input av(:, :, : 1) = |a|^2/2,
@@ -675,10 +675,11 @@
    case(2:3)
    do k = k01, k02
     do j = j01, j02
-     shy = loc_yg(j - gcy + 1, 4, imody)*ay1
+     jj = j - gcy + 1
+     shy = loc_yg(jj, 3, imody)*0.5
      do i = i01, i02
       do ic = 1, 2
-       AA = shy*(env_in(i, j + 1, k, ic) - env_in(i, j, k, ic))
+       AA = shy*(env_in(i, j + 1, k, ic) - env_in(i, j - 1, k, ic))
        av(i, j, k) = av(i, j, k) + AA*AA*0.5
       end do
      end do
@@ -688,9 +689,10 @@
    if (der_ord == 4) then
     do k = k01, k02
      do j = j01, j02
-      shy = loc_yg(j - gcy + 1, 4, imody)*ay1
-      shp = loc_yg(j - gcy + 2, 4, imody)*ay2
-      shm = loc_yg(j - gcy, 4, imody)*ay2
+      jj = j - gcy + 1
+      shy = loc_yg(jj, 4, imody)*ay1
+      shp = loc_yg(jj + 1, 4, imody)*ay2
+      shm = loc_yg(jj - 1, 4, imody)*ay2
       const1 = shy - shp
       const2 = shm - shy
       do i = i01, i02
