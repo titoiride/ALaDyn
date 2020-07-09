@@ -463,6 +463,7 @@
    real (dp), save :: xlapse, dt_step
    integer, save :: wi1
    logical, parameter :: mw = .true.
+   integer, parameter :: spl = 2, spr = 2
 
    if (init_iter==0) then
     xlapse = 0.0
@@ -510,8 +511,15 @@
    if (envelope) then
     nc_env = size(env, 4)
     call fields_left_xshift(env, i1, wi2, 1, nc_env, nshx)
-    if (Two_color) call fields_left_xshift(env1, i1, wi2, 1, nc_env, &
-      nshx)
+    if (prl) then
+     call fill_ebfield_yzxbdsdata(env, 1, nc_env, spr, spl)
+    end if
+    if (Two_color) then
+     call fields_left_xshift(env1, i1, wi2, 1, nc_env, nshx)
+     if (prl) then
+      call fill_ebfield_yzxbdsdata(env1, 1, nc_env, spr, spl)
+     end if
+    end if
    end if
    !shifts fields data and inject right ebf(wi2+1:n1p) x-grid nshx new data
    !===========================
