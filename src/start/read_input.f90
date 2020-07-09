@@ -69,7 +69,7 @@
    namelist /laser/g_prof, nb_laser, t0_lp, xc_lp, tau_fwhm, w0_y, a0, &
      lam0, lp_delay, lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, &
      symmetrization_pulse, a_symm_rat, enable_ionization, y0_cent, &
-     z0_cent, y1_cent, z1_cent, incid_angle
+     z0_cent, y1_cent, z1_cent, incid_angle, improved_envelope
    namelist /beam_inject/nb_1, xc_1, gam_1, sxb_1, syb_1, epsy_1, &
      epsz_1, dg_1, charge_1, ap1_twiss,bt1_twiss,t_inject
    namelist /moving_window/w_sh, wi_time, wf_time, w_speed
@@ -124,6 +124,7 @@
    symmetrization_pulse = .false.
    a_symm_rat = 0.
    enable_ionization(:) = .true.
+   improved_envelope = .false.
    y0_cent(:) = zero_dp
    z0_cent(:) = zero_dp
    y1_cent = zero_dp
@@ -216,7 +217,7 @@
    namelist /laser/g_prof, nb_laser, t0_lp, xc_lp, tau_fwhm, w0_y, a0, &
      lam0, lp_delay, lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, &
      symmetrization_pulse, a_symm_rat, enable_ionization, y0_cent, &
-     z0_cent, y1_cent, z1_cent, incid_angle
+     z0_cent, y1_cent, z1_cent, incid_angle, improved_envelope
    namelist /moving_window/w_sh, wi_time, wf_time, w_speed
    namelist /output/nouts, iene, nvout, nden, ncurr, npout, nbout, jump, pjump, &
      gam_min, xp0_out, xp1_out, yp_out, tmax, cfl, new_sim, id_new, &

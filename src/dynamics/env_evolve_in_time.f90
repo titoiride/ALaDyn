@@ -83,132 +83,20 @@
    !exit in source_in(ic)  the source terms chi() >0 of the envelope equation
    !-----------------------------------------------
   end subroutine
-  !=========================
-  subroutine env_two_fields_average(evf, ev1f, av, spl_in, spr_in)
-   real (dp), intent (in) :: evf(:, :, :, :), ev1f(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: spl_in, spr_in
-   integer :: ix, iy, iz
-   real (dp) :: ar, ai
-   !===================
-   do iz = kz1, kz2
-    do iy = jy1, jy2
-     do ix = ix1, ix2
-      ar = 0.5*(evf(ix,iy,iz,1)+evf(ix,iy,iz,3)) !A^{n+1/2}=(A^n+1+A^n)/2
-      ai = 0.5*(evf(ix,iy,iz,2)+evf(ix,iy,iz,4))
-      av(ix, iy, iz, 1) = 0.5*(ar*ar+ai*ai)
-      ar = 0.5*(ev1f(ix,iy,iz,1)+ev1f(ix,iy,iz,3)) !A^{n+1/2}=(A^n+1+A^n)/2
-      ai = 0.5*(ev1f(ix,iy,iz,2)+ev1f(ix,iy,iz,4))
-      av(ix, iy, iz, 1) = av(ix, iy, iz, 1) + 0.5*(ar*ar+ai*ai)
-      ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
-      !  NO overlap assumed
-     end do
-    end do
-   end do
-   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr_in, spl_in)
-   !call field_xyzbd(av,i1,i2,j1,j2,k1,k2,1,spr_in,spl_in)
-   !=====================
-  end subroutine
-  !===========================
-  subroutine env_fields_average(evf, av, spl_in, spr_in)
-   real (dp), intent (in) :: evf(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: spl_in, spr_in
-   integer :: ord
-   real (dp), parameter :: frac = one_dp/8.
-   !===================
-   ord = 2
-   ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
-   av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = &
-    frac*( &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 3)) * &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 3)) + &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 4)) * &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 4)) )
 
-   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr_in, spl_in)
-   call env_grad(av)
-   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
-
-   if (prl) call fill_ebfield_yzxbdsdata(av, 2, curr_ndim+1, spr_in, &
-     spl_in)
-   !=====================
-  end subroutine
-  !===========================
-  subroutine env_amp_prepare(envf, av, spl_in, spr_in)
-   real (dp), intent (in) :: envf(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: spl_in, spr_in
-   integer :: spl, spr
-   !real(dp) :: ar,ai
-   !===================
-   !|A|^2/2 at current t^n time level
-   av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = 0.5 * &
-    (envf(ix1:ix2, jy1:jy2, kz1:kz2, 1)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+&
-    envf(ix1:ix2, jy1:jy2, kz1:kz2, 2)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 2))
-   spl = spl_in
-   spr = spr_in
-   if (spl>2) spl = 2
-   if (spr>2) spr = 2
-
-   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr, spl)
-
-   call env_grad(av)
-   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
-
-   if (prl) call fill_ebfield_yzxbdsdata(av, 1, curr_ndim+1, spr, spl)
-
-   !call field_xyzbd(av,i1,i2,j1,j2,k1,k2,nj_dim,spr,spl)
-   !=====================
-  end subroutine
-  !=============================
-  subroutine env_amp_two_fields_prepare(envf, env1f, av, ord, spl_in, &
-    spr_in)
-   real (dp), intent (in) :: envf(:, :, :, :), env1f(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: ord, spl_in, spr_in
-   integer :: ix, iy, iz, spl, spr
-   !real(dp) :: ar,ai
-   !===================
-   do iz = kz1, kz2
-    do iy = jy1, jy2
-     do ix = ix1, ix2
-      av(ix, iy, iz, 1) = 0.5*(envf(ix,iy,iz,1)*envf(ix,iy,iz,1)+envf(ix &
-        ,iy,iz,2)*envf(ix,iy,iz,2))
-      av(ix, iy, iz, 1) = av(ix, iy, iz, 1) + 0.5*(env1f(ix,iy,iz,1)* &
-        env1f(ix,iy,iz,1)+env1f(ix,iy,iz,2)*env1f(ix,iy,iz,2))
-      !|A|^2/2 at current t^n time level
-     end do
-    end do
-   end do
-   spl = spl_in
-   spr = spr_in
-   if (spl>2) spl = 2
-   if (spr>2) spr = 2
-
-   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr, spl)
-
-   call env_grad(av)
-   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3)
-
-   if (prl) call fill_ebfield_yzxbdsdata(av, 2, curr_ndim+1, spr, spl)
-
-   !call field_xyzbd(av,nj_dim,spr,spl)
-   !=====================
-  end subroutine
   !=======================================
   subroutine env_lpf2_evolve_new(it_loc, spec_in, spec_aux_in)
-
    integer, intent (in) :: it_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
    type(species_aux), allocatable, intent(inout), dimension(:) :: spec_aux_in
    integer :: np, ic
+   integer, parameter :: sp_left = 2, sp_right = 2
    real (dp) :: ef2_ion, loc_ef2_ion(2)
    logical, parameter :: mw = .false.
    !============================
    ef2_ion = zero_dp
    !====================
-   if (prl) call fill_ebfield_yzxbdsdata(ebf, 1, nfield, 2, 2)
+   if (prl) call fill_ebfield_yzxbdsdata(ebf, 1, nfield, sp_right, sp_left)
    !======================================
    ! =================================
    ! Ionization is deactivated for now with new species
@@ -269,12 +157,13 @@
    jc(:, :, :, :) = 0.0
    np = loc_npart(imody, imodz, imodx, ic)
    if (Two_color) then
-    call env_amp_two_fields_prepare(env, env1, jc, 2, 2, 2)
+    call compute_ponderomotive_term(env, jc, oml, sp_left, sp_right, env1_in=env1, omega_1=om1)
    else
-    call env_amp_prepare(env, jc, 2, 2)
+    call compute_ponderomotive_term(env, jc, oml, sp_left, sp_right)
    end if
+   call envelope_gradient(jc, sp_left, sp_right)
+   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
    !======================================
-   ! exit jc(1)=|a|^2/2 at t^n
    !      jc(2:4)=grad|a|^2/2 at t^n
    ! For two-color |A|= |A_0|+|A_1|
    !======================================
@@ -310,7 +199,7 @@
    ! to be added to the fluid contribution if (Hybrid)
    jc(:, :, :, 3) = jc(:, :, :, 1)
    if (hybrid) then
-    jc(:, :, :, 3) = jc(:, :, :, 3) + flux(:, :, :, curr_ndim+2)
+    jc(:, :, :, 3) = jc(:, :, :, 3) + flux(:, :, :, curr_ndim + 2)
    end if
    !================================================
    ! Laser field is interpolated on tracked particles, if requested from output
@@ -325,19 +214,26 @@
    call advance_lpf_envelope(jc, env, oml)
    !advance (A^n, J^n) => A^{n+1}, A^{n-1}=> A^n
    ! jc(3) not modified
+   !Boundary points of A are set to be 0 in env_bds
    if (Two_color) call advance_lpf_envelope(jc, env1, om1)
    !advance (A_1^n, J^n) => A_1^{n+1}, A_1^{n-1}=> A_1^n
    !=======================
    if (Two_color) then
-    call env_two_fields_average(env, env1, jc, 2, 2)
+    call compute_ponderomotive_term_midtime(env, jc, oml, sp_left, sp_right, env1_in=env1, omega_1=om1)
    else
-    call env_fields_average(env, jc, 2, 2)
+    call compute_ponderomotive_term_midtime(env, jc, oml, sp_left, sp_right)
    end if
-   ! In jc(1)= Phi= |A|^2/2 +|A_1|/2 at t^{n+1/2} 
+   ! In jc(1) stores the ponderomotive correction to the standard Lorentz gamma.
+   ! The standard correction is jc(1)= Phi= |A|^2/2 +|A_1|/2 at t^{n+1/2}
+   ! If the improved_ponderomotive flag is true, the correction is
+   ! jc(1)= Phi= |A|^2/2 + |dy A|^2/2k0^2 at t^{n+1/2}
+   ! To take into account the correct divergence
    if (hybrid) then
-    flux(:, :, :, curr_ndim+2) = jc(:, :, :, 1)
+    flux(:, :, :, curr_ndim + 2) = jc(:, :, :, 1)
     !stores in flux()
    end if
+   call envelope_gradient(jc, sp_left, sp_right)
+   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
    call set_env_grad_interp(jc, spec_in(ic), spec_aux_in(ic), np, curr_ndim)
    !=============================
    ! Exit p-interpolated |A| field variables
@@ -378,12 +274,13 @@
    type(species), allocatable, intent(inout), dimension(:) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
    integer :: np, ic, id_ch
+   integer, parameter :: sp_left = 2, sp_right = 2
    real (dp) :: ef2_ion, loc_ef2_ion(2)
    logical, parameter :: mw = .false.
    !============================
    ef2_ion = zero_dp
    !====================
-   if (prl) call fill_ebfield_yzxbdsdata(ebf, 1, nfield, 2, 2)
+   if (prl) call fill_ebfield_yzxbdsdata(ebf, 1, nfield, sp_right, sp_left)
    !======================================
    ! =================================
    ! Ionization is deactivated for now with new species
@@ -444,10 +341,12 @@
    jc(:, :, :, :) = 0.0
    np = loc_npart(imody, imodz, imodx, ic)
    if (Two_color) then
-    call env_amp_two_fields_prepare(env, env1, jc, 2, 2, 2)
+    call compute_ponderomotive_term(env, jc, oml, sp_left, sp_right, env1_in=env1, omega_1=om1)
    else
-    call env_amp_prepare(env, jc, 2, 2)
+    call compute_ponderomotive_term(env, jc, oml, sp_left, sp_right)
    end if
+   call envelope_gradient(jc, sp_left, sp_right)
+   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
    !======================================
    ! exit jc(1)=|a|^2/2 at t^n
    !      jc(2:4)=grad|a|^2/2 at t^n
@@ -501,15 +400,17 @@
    !advance (A_1^n, J^n) => A_1^{n+1}, A_1^{n-1}=> A_1^n
    !=======================
    if (Two_color) then
-    call env_two_fields_average(env, env1, jc, 2, 2)
+    call compute_ponderomotive_term_midtime(env, jc, oml, sp_left, sp_right, env1_in=env1, omega_1=om1)
    else
-    call env_fields_average(env, jc, 2, 2)
+    call compute_ponderomotive_term_midtime(env, jc, oml, sp_left, sp_right)
    end if
    ! In jc(1)= Phi= |A|^2/2 +|A_1|/2 at t^{n+1/2} 
    if (hybrid) then
     flux(:, :, :, curr_ndim+2) = jc(:, :, :, 1)
     !stores in flux()
    end if
+   call envelope_gradient(jc, sp_left, sp_right)
+   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
    call set_env_grad_interp(jc, spec_in(ic), spec_aux_in, np, curr_ndim)
    !=============================
    ! Exit p-interpolated |A| field variables
