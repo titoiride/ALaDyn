@@ -871,7 +871,6 @@
    integer :: n1, n2, n3
    integer :: i, ip
    real (dp) :: wkx, wky, wkz
-   integer,parameter :: sh=3
 
    n1=nx
    n2=ny

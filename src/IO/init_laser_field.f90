@@ -24,6 +24,8 @@
   use pstruct_data
   use fstruct_data
   use init_grid_field
+  use code_util
+  use mpi_field_interface, only: fill_ebfield_yzxbdsdata
   use grid_fields, only : env_bds
 
   implicit none
@@ -140,6 +142,7 @@
    real (dp), intent (out) :: part_in
    integer :: ic, pw_ind, i1, i2, j1, k1
    real (dp) :: eps, sigm, xm, tt, tau, tau1, loc_delay(3)
+   integer :: shift
 
    lp_amp = a0
    lp1_amp = a1
@@ -220,6 +223,17 @@
     end if
    end if
 
+   ! Start the simulation filling the ghost cells
+   shift = max(sh_ix, sh_iy)
+   shift = max(shift, sh_iz)
+   shift = shift - 1
+
+   if (prl) then
+    call fill_ebfield_yzxbdsdata(env, 1, 4, shift, shift)
+    if (Two_color) then
+     call fill_ebfield_yzxbdsdata(env1, 1, 4, shift, shift)
+    end if
+   end if
    !=======================
    ebf = 0.0
    !=====================
