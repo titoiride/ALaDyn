@@ -206,10 +206,10 @@
      write (60, *) '  Explicit fourth order Space Derivative'
     end if
     write(60, *) '      === Particle push ===      '
-    if (pusher == HIGUERA) then
+    if (pusher == HIGUERA .or. model_id == 4) then
      write(60, *) '  Particles are pushed according to the Higuera push'
     end if
-    if (pusher == BORIS) then
+    if (pusher == BORIS .and. model_id /= 4) then
      write(60, *) '  Particles are pushed according to the Boris push'
     end if
     if ( n_substeps > 1 ) then
@@ -229,7 +229,7 @@
    write (60, '(a18,3i8)') '  total grid size ', nx, ny, nz
    write (60, '(a18,3i8)') '  local grid size ', nx_loc, ny_loc, nz_loc
    write (60, '(a27,i3)') '  Cartesian grid dimension ', ndim
-   if (curr_ndim==2) then
+   if (curr_ndim == 2) then
     write (60, *) ' Current components: [Jx,Jy] '
     write (60, *) ' Field components: [Ex,Ey,Bz] '
    else
@@ -291,6 +291,10 @@
     case (4)
      write (60, *) '  LP(P-pol) laser field injected using &
        &ENVELOPE integration model'
+     if (improved_envelope) then
+      write (60, *) '  An additional term in the Hamiltonian corrects the &
+       &pulse divergence'
+     end if
     case (5)
      write (60, *) '  Electron bunch injected'
     end select

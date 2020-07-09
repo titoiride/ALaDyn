@@ -22,6 +22,7 @@
  module grid_fields
 
   use grid_field_param
+  use mpi_field_interface
   use parallel
 
   implicit none
@@ -436,9 +437,311 @@
    end if
    !======================================
   end subroutine
-  !========================
-  subroutine env_grad(envg)
 
+  !===========================
+  subroutine env_amp_prepare(envf, av, spl_in, spr_in)
+   real (dp), intent (in) :: envf(:, :, :, :)
+   real (dp), intent (out) :: av(:, :, :, :)
+   integer, intent (in) :: spl_in, spr_in
+   integer :: spl, spr
+   !real(dp) :: ar,ai
+   !===================
+   !|A|^2/2 at current t^n time level
+   av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = av(ix1:ix2, jy1:jy2, kz1:kz2, 1) + &
+   0.5 * (envf(ix1:ix2, jy1:jy2, kz1:kz2, 1)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+&
+    envf(ix1:ix2, jy1:jy2, kz1:kz2, 2)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 2))
+   spl = spl_in
+   spr = spr_in
+   if (spl>2) spl = 2
+   if (spr>2) spr = 2
+   !=====================
+  end subroutine
+
+  !===========================
+  subroutine env_fields_average(evf, av, omega_0, spl_in, spr_in)
+   !! Subroutines that computes the vector potential A at half integer
+   !! time step.
+   real (dp), intent (in) :: evf(:, :, :, :)
+   real (dp), intent (out) :: av(:, :, :, :)
+   real (dp), intent(in) :: omega_0
+   integer, intent (in) :: spl_in, spr_in
+   real (dp), parameter :: frac = 0.5
+
+   !========================
+   ! In av(:, :, :, 2:3) the real and imaginary part of A^{n+1/2}
+   av(ix1:ix2, jy1:jy2, kz1:kz2, 2) = &
+    frac*(evf(ix1:ix2, jy1:jy2, kz1:kz2, 1) + evf(ix1:ix2, jy1:jy2, kz1:kz2, 3))
+   av(ix1:ix2, jy1:jy2, kz1:kz2, 3) = &
+    frac*(evf(ix1:ix2, jy1:jy2, kz1:kz2, 2) + evf(ix1:ix2, jy1:jy2, kz1:kz2, 4))
+
+   ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
+   av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = av(ix1:ix2, jy1:jy2, kz1:kz2, 1) + &
+    frac*( av(ix1:ix2, jy1:jy2, kz1:kz2, 2)*av(ix1:ix2, jy1:jy2, kz1:kz2, 2) + & 
+    av(ix1:ix2, jy1:jy2, kz1:kz2, 3)*av(ix1:ix2, jy1:jy2, kz1:kz2, 3))
+
+   !=====================
+    av(ix1:ix2, jy1:jy2, kz1:kz2, 2:3) = av(ix1:ix2, jy1:jy2, kz1:kz2, 2:3)/omega_0
+   ! Real and imaginary parts are already divided by k0 
+
+   if (prl) call fill_ebfield_yzxbdsdata(av, 2, 3, spr_in, spl_in)
+  end subroutine
+
+  !========================
+  subroutine compute_ponderomotive_term(env_in, av, omega_0, spl_in, spr_in, env1_in, omega_1)
+   !! Subroutine that computes the additional term in the ponderomotive gamma using
+   !! vector potential at time t
+   real (dp), intent (in) :: env_in(:, :, :, :)
+   real (dp), intent (inout) :: av(:, :, :, :)
+   real (dp), intent(in) :: omega_0
+   real (dp), intent (in), optional :: env1_in(:, :, :, :)
+   real (dp), intent(in), optional :: omega_1
+   integer, intent(in) :: spl_in, spr_in
+   integer :: shift, n_envs
+
+   n_envs = 1
+   if ( PRESENT(env1_in) ) then
+    n_envs = 2
+    if ( .not. PRESENT(omega_1) ) then
+     call write_warning(text='Warning, omega_1 not given in compute_ponderomotive')
+    end if
+   end if
+   !===================
+   ! Need to put zero current on boundary cells as a boundary condition
+   if(xl_bd) then
+    shift = gcx - 1
+    av(ix1 - shift:ix1, jy1:jy2, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(xr_bd) then
+    shift = gcx - 1
+    av(ix2:ix2 + shift, jy1:jy2, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(yl_bd) then
+    shift = gcy - 1
+    av(ix1:ix2, jy1 - shift:jy1, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(yr_bd) then
+    shift = gcy - 1
+    av(ix1:ix2, jy2:jy2 + shift, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(zl_bd) then
+    shift = gcz - 1
+    av(ix1:ix2, jy1:jy2, kz1 - shift:kz1, 2:3) = zero_dp
+   end if
+   if(zr_bd) then
+    shift = gcz - 1
+    av(ix1:ix2, jy2:jy2, kz2:kz2 + shift, 2:3) = zero_dp
+   end if
+
+   av(:, :, :, 1) = zero_dp
+
+   ! Enters the envelope field
+   call env_amp_prepare(env_in, av, spl_in, spr_in)
+   ! Computes av(:, :, :, 1) = |A|^2/2 at t^{n+1/2}
+   if (improved_envelope) then
+    call env_divergence_correction(env_in(:, :, :, 1:2)/omega_0, av(:, :, :, 1))
+   end if
+
+   if (n_envs == 2) then
+    ! ================================================================
+    ! When summing more than one envelope field NO OVERLAP is assumed
+    ! Between the pulses, otherwise interference terms are neglected.
+    ! There are no problems if they share the same frequency
+    ! ================================================================
+    ! Enters the envelope field
+    call env_amp_prepare(env1_in, av, spl_in, spr_in)
+    ! Computes av(:, :, :, 1) = |A|^2/2 at t^{n+1/2}
+    if (improved_envelope) then
+     call env_divergence_correction(env1_in(:, :, :, 1:2)/omega_1, av(:, :, :, 1))
+    end if
+   end if
+
+   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr_in, spl_in)
+  end subroutine
+  !========================
+
+  subroutine compute_ponderomotive_term_midtime(env_in, av, omega_0, spl_in, spr_in, env1_in, omega_1)
+   !! Subroutine that computes the additional term in the ponderomotive gamma using
+   !! vector potential at time t + 1/2
+   real (dp), intent (in) :: env_in(:, :, :, :)
+   real (dp), intent (inout) :: av(:, :, :, :)
+   real (dp), intent(in) :: omega_0
+   real (dp), intent (in), optional :: env1_in(:, :, :, :)
+   real (dp), intent(in), optional :: omega_1
+   integer, intent(in) :: spl_in, spr_in
+   integer :: shift, n_envs
+
+   n_envs = 1
+   if ( PRESENT(env1_in) ) then
+    n_envs = 2
+    if ( .not. PRESENT(omega_1) ) then
+     call write_warning(text='Warning, omega_1 not given in compute_ponderomotive')
+    end if
+   end if
+   !===================
+   ! Need to put zero current on boundary cells as a boundary condition
+   if(xl_bd) then
+    shift = gcx - 1
+    av(ix1 - shift:ix1, jy1:jy2, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(xr_bd) then
+    shift = gcx - 1
+    av(ix2:ix2 + shift, jy1:jy2, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(yl_bd) then
+    shift = gcy - 1
+    av(ix1:ix2, jy1 - shift:jy1, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(yr_bd) then
+    shift = gcy - 1
+    av(ix1:ix2, jy2:jy2 + shift, kz1:kz2, 2:3) = zero_dp
+   end if
+   if(zl_bd) then
+    shift = gcz - 1
+    av(ix1:ix2, jy1:jy2, kz1 - shift:kz1, 2:3) = zero_dp
+   end if
+   if(zr_bd) then
+    shift = gcz - 1
+    av(ix1:ix2, jy2:jy2, kz2:kz2 + shift, 2:3) = zero_dp
+   end if
+
+   av(:, :, :, 1) = zero_dp
+
+   ! Enters the envelope field
+   call env_fields_average(env_in, av, omega_0, spl_in, spr_in)
+   ! Computes av(:, :, :, 1) = |A|^2/2 at t^{n+1/2}
+   ! av(:, :, :, 2:3) the real and imaginary part of A^{n+1/2}
+   if (improved_envelope) then
+    call env_divergence_correction(av(:, :, :, 2:3), av(:, :, :, 1))
+   end if
+
+   if (n_envs == 2) then
+    ! ================================================================
+    ! When summing more than one envelope field NO OVERLAP is assumed
+    ! Between the pulses, otherwise interference terms are neglected.
+    ! There are no problems if they share the same frequency
+    ! ================================================================
+    ! Enters the envelope field
+    call env_fields_average(env1_in, av, omega_1, spl_in, spr_in)
+    ! Computes av(:, :, :, 1) = |A|^2/2 at t^{n+1/2}
+    ! av(:, :, :, 2:3) the real and imaginary part of A^{n+1/2}
+    if (improved_envelope) then
+     call env_divergence_correction(av(:, :, :, 2:3), av(:, :, :, 1))
+    end if
+   end if
+
+   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr_in, spl_in)
+  end subroutine
+
+  !========================
+  subroutine env_divergence_correction(env_in, av)
+   !! Adds a correction to take into account the O(\eps)
+   !! component to the divergence of A according to the 
+   !! Coulomb gauge div(A) = 0
+   real (dp), intent (in) :: env_in(:, :, :, :)
+   real (dp), intent (inout) :: av(:, :, :)
+   real (dp) :: ay1, ay2, shy, shp, shm
+   real (dp) :: AA, const1, const2
+   integer :: i, j, k, i01, i02, j01, j02, k01, k02, ic
+   real (dp), parameter :: a_hcd = 13./12., b_hcd = -1./24.
+   !========================================
+   ! Receive in input av(:, :, : 1) = |a|^2/2,
+   ! adds to that the term
+   ! |dy a|^2/(2 k0^2) where y is the polarization direction.
+   ! In ALaDyn's units, omega_0 = k0
+   !========================================
+   ! In env_in(:, :, :, 1:2) it receives the real and imaginary part of the envelope
+   ! already divided by k0
+   !========================================
+
+   if (der_ord<4) then
+    ay1 = dy_inv
+    ay2 = 0.
+   else
+    ay1 = dy_inv*a_hcd
+    ay2 = dy_inv*b_hcd
+   end if
+   i01 = ix1
+   i02 = ix2
+   j01 = jy1
+   j02 = jy2
+   k01 = kz1
+   k02 = kz2
+
+   !=========================================================
+   ! Compute the derivative along y (polarization direction)
+   ! and adds it to the av(:, :, :, 1) component
+   !=========================================================
+   select case(der_ord)
+   case(2:3)
+   do k = k01, k02
+    do j = j01, j02
+     shy = loc_yg(j - gcy + 1, 4, imody)*ay1
+     do i = i01, i02
+      do ic = 1, 2
+       AA = shy*(env_in(i, j + 1, k, ic) - env_in(i, j, k, ic))
+       av(i, j, k) = av(i, j, k) + AA*AA*0.5
+      end do
+     end do
+    end do
+   end do
+   case(4)
+   if (der_ord == 4) then
+    do k = k01, k02
+     do j = j01, j02
+      shy = loc_yg(j - gcy + 1, 4, imody)*ay1
+      shp = loc_yg(j - gcy + 2, 4, imody)*ay2
+      shm = loc_yg(j - gcy, 4, imody)*ay2
+      const1 = shy - shp
+      const2 = shm - shy
+      do i = i01, i02
+       do ic = 1, 2
+        AA = shp*env_in(i, j + 2, k, ic) + const1*env_in(i, j + 1, k, ic) + const2*env_in(i, j, k, ic) - &
+        shm*env_in(i, j - 1, k, ic)
+        av(i, j, k) = av(i, j, k) + AA*AA*0.5
+       end do
+      end do
+     end do
+    end do
+   end if
+   case default
+    call write_warning(text='Warning, wrong der_ord in env_divergence_correction')
+   end select
+
+  end subroutine
+
+  !========================
+  subroutine envelope_gradient(av, spl_in, spr_in)
+   !! Performes the input field gradient and then
+   !! applies the boundary conditions
+   real (dp), intent (inout) :: av(:, :, :, :)
+   integer, intent (in) :: spl_in, spr_in
+
+   !========================================
+   ! INPUT
+   ! In av(:, :, :, 1) enters the field.
+   ! OUTPUT
+   ! In av(:, :, :, 2:4) computes the gradient of the
+   ! input field along the x, y and z directions.
+   ! Input field is untouched.
+   !========================================
+   ! Field can either be
+   ! 1) |a|^2/2 for the standard envelope approximation
+   ! 2) |a|^2/2 + |dy a|^2/(2 k0^2) for the improved envelope approximation
+   ! When more than one laser pulse is present, previous terms are summed
+   ! over all the fields
+   !========================================
+   call gradient(av)
+   
+   !========================================
+   ! Fills ghost cells with the computed gradient
+   !========================================
+   if (prl) call fill_ebfield_yzxbdsdata(av, 2, curr_ndim + 1, spr_in, &
+     spl_in)
+
+  end subroutine
+
+  !========================
+  subroutine gradient(envg)
    real (dp), intent (inout) :: envg(:, :, :, :)
    integer :: i, j, k, i01, i02, j01, j02, k01, k02
    real (dp) :: ax1, ax2, ay1, ay2, az1, az2, shz, shy, shp, shm
@@ -446,7 +749,7 @@
    !=== second or fourth order central flux derivatives
    !==========================
    ! Enters envg(1)= |A|^2/2 exit grad|A|^2/2
-
+   ! Boundary conditions have already been applied in env_bds
    if (der_ord<4) then
     ax1 = dx_inv
     ay1 = dy_inv
@@ -469,36 +772,16 @@
    k01 = kz1
    k02 = kz2
    !================
-   if(xl_bd)then
-    i = ix1
-    do k = kz1, kz2
-     do j = jy1, jy2
-      envg(i, j, k, 2) = dx_inv*(envg(i + 1, j, k, 1) - envg(i, j, k, 1)) !at i+1/2
-     end do
-    end do
-    i01 = ix1 + 1
-   end if
-   if(xr_bd)then
-    do k = kz1, kz2
-     do j = jy1, jy2
-      i = ix2 - 1
-      envg(i, j, k, 2) = dx_inv*(envg(i + 1, j, k, 1) - envg(i, j, k, 1))
-      envg(i + 1, j, k, 2) = dx_inv*(2.*envg(i, j, k, 1) - 3.*envg(i - 1, j, k, 1)+ &
-       envg(i - 2, j, k, 1))
-     end do
-    end do
-    i02 = ix2 - 2
-   end if
-   do k = kz1, kz2
-    do j = jy1, jy2
+   do k = k01, k02
+    do j = j01, j02
      do i = i01, i02 
        envg(i, j, k, 2) = ax1*(envg(i + 1, j, k, 1) - envg(i, j, k, 1)) !at i+1/2
      end do
     end do
    end do
    if (der_ord == 4) then
-    do k = kz1, kz2
-     do j = jy1, jy2
+    do k = k01, k02
+     do j = j01, j02
       do i = i01, i02
        envg(i, j, k, 2) = envg(i, j, k, 2) + ax2*(envg(i + 2, j, k, 1) - envg(i &
          + 1, j, k, 1) + envg(i, j, k, 1) - envg(i - 1, j, k, 1))
@@ -506,47 +789,20 @@
      end do
     end do
    end if
-   if (yr_bd) then
-    do k = kz1, kz2
-     j = jy2
-     shy = loc_yg(j - gcy + 1, 4, imody)*dy_inv
-     do i = ix1, ix2
-      envg(i, j, k, 3) = shy*(2.*envg(i, j, k, 1) - 3.*envg(i, j - 1, k, 1)+envg(i &
-        , j - 2, k, 1))
-     end do
-     j = jy2 - 1
-     shy = loc_yg(j - gcy + 1, 4, imody)*dy_inv
-     do i = ix1, ix2
-      envg(i, j, k, 3) = shy*(envg(i, j + 1, k, 1) - envg(i, j, k, 1))
-     end do
-    end do
-    j02 = jy2 - 2
-   end if
-   !===================
-   if (yl_bd) then
-    j = jy1
-    shy = loc_yg(j - gcy + 1, 4, imody)*dy_inv
-    do k = kz1, kz2
-     do i = ix1, ix2
-      envg(i, j, k, 3) = shy*(envg(i, j + 1, k, 1) - envg(i, j, k, 1))
-     end do
-    end do
-    j01 = jy1 + 1
-   end if
-   do k = kz1, kz2
+   do k = k01, k02
     do j = j01, j02
      shy = loc_yg(j - gcy + 1, 4, imody)*ay1
-     do i = ix1, ix2
+     do i = i01, i02
       envg(i, j, k, 3) = shy*(envg(i, j + 1, k, 1) - envg(i, j, k, 1))
      end do
     end do
    end do
    if (der_ord == 4) then
-    do k = kz1, kz2
+    do k = k01, k02
      do j = j01, j02
       shp = loc_yg(j - gcy + 2, 4, imody)*ay2
       shm = loc_yg(j - gcy, 4, imody)*ay2
-      do i = ix1, ix2
+      do i = i01, i02
        envg(i, j, k, 3) = envg(i, j, k, 3) + shp*(envg(i, j + 2, k, 1) - envg(i &
          , j + 1, k, 1)) + shm*(envg(i, j, k, 1) - envg(i, j - 1, k, 1))
       end do
@@ -554,33 +810,11 @@
     end do
    end if
    if (ndim == 2) return
-   if (zr_bd) then
-    k = kz2
-    shz = loc_zg(k - gcz + 1, 4, imodz)*dz_inv
-    do j = jy1, jy2
-     do i = ix1, ix2
-      envg(i, j, k + 1, 1) = 2.*envg(i, j, k, 1) - envg(i, j, k-1, 1)
-      envg(i, j, k, 4) = shz*(envg(i, j, k + 1,1) - envg(i, j, k, 1))
-     end do
-    end do
-    k02 = kz2 - 1
-   end if
-   if (zl_bd) then
-    k = kz1
-    shz = loc_zg(k - gcz + 1, 4, imodz)*dz_inv
-    do j = jy1, jy2
-     do i = ix1, ix2
-      envg(i, j, k-1, 1) = 2.*envg(i, j, k, 1) - envg(i, j, k + 1, 1)
-      envg(i, j, k, 4) = shz*(envg(i, j, k + 1, 1) - envg(i, j, k, 1))
-     end do
-    end do
-    k01 = kz1 + 1
-   end if
    !==================
    do k = k01, k02
     shz = loc_zg(k - gcz + 1, 4, imodz)*az1
-    do j = jy1, jy2
-     do i = ix1, ix2
+    do j = j01, j02
+     do i = i01, i02
       envg(i, j, k, 4) = shz*(envg(i, j, k + 1, 1) - envg(i, j, k, 1))
      end do
     end do
@@ -589,8 +823,8 @@
     do k = k01, k02
      shp = loc_zg(k - gcz + 2, 4, imodz)*az2
      shm = loc_zg(k - gcz, 4, imodz)*az2
-     do j = jy1, jy2
-      do i = ix1, ix2
+     do j = j01, j02
+      do i = i01, i02
        envg(i, j, k, 4) = envg(i, j, k, 4) + shp*(envg(i, j, k + 2, 1) - envg(i &
          , j, k + 1, 1)) + shm*(envg(i, j, k, 1) - envg(i, j, k - 1, 1))
       end do
@@ -598,6 +832,7 @@
     end do
    end if
   end subroutine
+
   !====================================
   subroutine env_maxw_solve(curr, evf, om0, dtl)
    real (dp), intent (inout) :: curr(:, :, :, :), evf(:, :, :, :)
@@ -656,14 +891,22 @@
     end do
    end do
 
+   !Also keeping the ghost cells
+   do k = kz1 - gcz + 1, kz2 + gcz - 1
+    do j = jy1 - gcy + 1, jy2 + gcy - 1
+     do i = ix1 - gcx + 1, ix2 + gcx - 1
+      evf(i, j, k, 3) = evf(i, j, k, 1) !A^{n}=> A^{n-1}
+      evf(i, j, k, 4) = evf(i, j, k, 2)
+     end do
+    end do
+   end do
+   
    !====================
    !curr(1)=F_R=dt2*S_R+2*A_R^n-A_R^{n-1}-kfact*A_I^{n-1} 
    !curr(2)=F_I=dt2*S_I+2*A_I^n-A_I^{n-1}+kfact*A_R^{n-1} 
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix1, ix2
-      evf(i, j, k, 3) = evf(i, j, k, 1) !A^{n}=> A^{n-1}
-      evf(i, j, k, 4) = evf(i, j, k, 2)
       evf(i, j, k, 1) = k2_fact*(curr(i,j,k,1)-kfact*curr(i,j,k,2))
       evf(i, j, k, 2) = k2_fact*(curr(i,j,k,2)+kfact*curr(i,j,k,1))
      end do
@@ -873,7 +1116,7 @@
   !==========================================
   subroutine env_bds(ef, ptrght, ptlft, init_ic, end_ic)
    !! Boundary conditions for the envelope field.
-   !! Empirically set to be continuous with continuous first derivative.
+   !! Empirically set to be zero.
 
    real(dp), intent(inout) :: ef(:, :, :, :)
    integer, intent(in) :: ptlft, ptrght
