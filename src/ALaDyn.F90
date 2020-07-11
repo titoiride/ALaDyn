@@ -82,6 +82,7 @@
   end select
 
   !call timing
+  call destroy_memory_pool(mp)
   call call_barrier
   call Final_run_info
   call End_parallel

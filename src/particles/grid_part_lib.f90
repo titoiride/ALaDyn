@@ -26,7 +26,7 @@
   use stretched_grid
   use particles_def
   use interpolation_lib
-  use array_alloc, only: array_realloc_1d
+  use memory_pool
 
   implicit none
 
@@ -120,24 +120,6 @@
    end if
 
   end subroutine
-  !==========================================
-  !DIR$ ATTRIBUTES INLINE :: xx_realloc
-  subroutine xx_realloc( xx_in, npart_new, dimensions )
-   real(dp), allocatable, dimension(:, :), intent(inout) :: xx_in
-   integer, intent(in) :: npart_new, dimensions
-   integer :: allocstatus, deallocstatus
-
-   if ( allocated(xx_in) ) then   
-    if (SIZE(xx_in, DIM=1) < npart_new .or. &
-     SIZE(xx_in, DIM=2) < dimensions ) then
-     deallocate(xx_in, stat=deallocstatus)
-     allocate(xx_in(npart_new, dimensions), stat=allocstatus)
-    end if
-   else
-    allocate(xx_in(npart_new, dimensions), stat=allocstatus)
-   end if
-  end subroutine
-  !==========================================
 
    !=======================
    !  1D
@@ -171,31 +153,33 @@
   !=======================
 
   !DIR$ ATTRIBUTES INLINE :: qqh_1d_spline_vector
-  subroutine qqh_1d_spline_vector( xp, interp_in )
+  subroutine qqh_1d_spline_vector( xp, interp_in, mempool )
     !! Quadratic interpolation at both integer and half-integer
     !! cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, dimension(:, :) :: xx
    integer :: length
    !======================
 
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d(gpl_xx, length)
-   call array_realloc_1d(gpl_sx, length)
+   call xx_realloc(mempool%mp_xx_2d, length, 2)
+   xx => mempool%mp_xx_2d
    shx = gcx
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length, 1) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length, 1) + half)
+   xx(1:length, 2) = xx(1:length, 1) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call second_order( xx(1:length, 2), interp_in%coeff_x_rank2 )
 
-   interp_in%ihx_rank2(1:length) = int(gpl_xx(1:length))
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   interp_in%ihx_rank2(1:length) = int(xx(1:length, 1))
+   xx(1:length, 2) = xx(1:length, 1) - &
    real(interp_in%ihx_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 )
+   call second_order( xx(1:length, 2), interp_in%h_coeff_x_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ihx_rank2(1:length) - 1
@@ -225,24 +209,26 @@
   end subroutine
 
   !DIR$ ATTRIBUTES INLINE :: qden_1d_wgh_vector
-  subroutine qden_1d_wgh_vector( xp, interp_in )
+  subroutine qden_1d_wgh_vector( xp, interp_in, mempool )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, dimension(:, :) :: xx
    integer :: length
    !======================
    length = SIZE( xp, DIM=1 )
 
-   call array_realloc_1d( gpl_xx, length)
-   call array_realloc_1d( gpl_sx, length)
+   call xx_realloc(mempool%mp_xx_2d, length, 2)
+   xx => mempool%mp_xx_2d
    shx = gcx
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length, 1) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length, 1) + half )
+   xx(1:length, 2) = xx(1:length, 1) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call second_order( xx(1:length, 2), interp_in%coeff_x_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
   end subroutine

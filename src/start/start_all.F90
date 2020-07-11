@@ -186,7 +186,14 @@ call gdbattach
    end if
    call mpi_buffer_alloc(nx_loc, ny_loc, nz_loc, ncmp)
    !local arrays and coefficients for space derivatives
-   diag = .true.
+   !===================================================
+   ! Constructs the memory pool instance
+   !===================================================
+   call create_memory_pool(mp)
+   !===================================================
+   call allocate_1d(mp)
+   call point_to_mp(mp)
+
    if (iene==0) then
     diag = .false.
     iene = 1

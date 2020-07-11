@@ -124,7 +124,7 @@
     j2 = 1
     gpc_xx(1:np, 1) = sp_loc%x(1:np)
     
-    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
+    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp, mp )
 
     associate( ax1 => interp%coeff_x_rank2, &
                axh => interp%h_coeff_x_rank2, &
@@ -152,7 +152,7 @@
     gpc_ap(1:np, 1:6) = zero_dp
     gpc_xx(1:np, 1) = sp_loc%x(1:np) !the current particle positions
     
-    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp )
+    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp, mp )
 
     associate( ax1 => interp%coeff_x_rank2, &
                axh => interp%h_coeff_x_rank2, &

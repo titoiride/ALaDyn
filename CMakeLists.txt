@@ -92,6 +92,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/work/common_param.f90
   src/work/control_bunch_input.f90
   src/work/fstruct_data.f90
+  src/work/memory_pool.f90
   src/work/phys_param.f90
   src/work/precision_def.F90
   src/work/pstruct_data.F90

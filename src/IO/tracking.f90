@@ -32,8 +32,7 @@ module tracking
 ! !#if defined(OPENPMD)
 !  use hdf5io_class
 ! !#endif
- use array_alloc, only: array_realloc_1d
- use grid_part_lib, only: xx_realloc
+ use memory_pool
  use grid_param, only: dx
  use util, only: endian
  use warnings, only: write_warning

@@ -522,7 +522,7 @@
 
     gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     
-    call qden_1d_wgh( gpu_xx(1:np, 1:1), interp )
+    call qden_1d_wgh( gpu_xx(1:np, 1:1), interp, mp )
     
     j2 = 1
 
@@ -910,7 +910,7 @@
 
     gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
 
-    call qden_1d_wgh( gpu_xx(1:np, 1:1), interp )
+    call qden_1d_wgh( gpu_xx(1:np, 1:1), interp, mp )
 
     associate( ax0 => interp%coeff_x_rank2, &
                i => interp%ix_rank2, &
