@@ -36,7 +36,7 @@
 
   implicit none
 
-  call Start
+  call Start(mp)
 
   !============= info related to initial data
   if (pe0) then
@@ -76,12 +76,13 @@
 
   select case (mod_ord)
   case (1)
-   call Lp_cycle
+   call Lp_cycle(mp)
   case (2)
-   call Env_cycle
+   call Env_cycle(mp)
   end select
 
   !call timing
+  call destroy_memory_pool(mp)
   call call_barrier
   call Final_run_info
   call End_parallel
@@ -91,7 +92,8 @@
 
   !--------------------------
   
-  subroutine Lp_cycle
+  subroutine Lp_cycle(mempool)
+   type(memory_pool_t), pointer, intent(in) :: mempool
    !! Collects the Laser-plasma dynamics evolved as a standard PIC.
 
    ! ==============================================
@@ -105,15 +107,15 @@
    !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
    !  end if
    ! end if
-   call Data_out
+   call Data_out(mempool)
    do while (tnow<tmax)
    !=======================
-    call lp_run( tnow, iter )
+    call lp_run( tnow, iter, mempool )
 #if !defined(OLD_SPECIES)
-    call track_out( spec, ebfp, tnow, iter )
+    call track_out( spec, ebfp, tnow, iter, mempool )
 #endif
     call timing
-    call Data_out
+    call Data_out(mempool)
 #if !defined(OLD_SPECIES)
     tracking_written = .false.
 #endif
@@ -129,7 +131,8 @@
 
   !--------------------------
 
-  subroutine Env_cycle
+  subroutine Env_cycle(mempool)
+   type(memory_pool_t), pointer, intent(in) :: mempool
    !! Collects the Laser-plasma dynamics evolved as a PIC in ponderomotive
    !! approximation.
 
@@ -144,16 +147,16 @@
    !   !call den_energy_out( 0, nden, 1 ) !data on jc(1) for beam potential at injection
    !  end if
    ! end if
-   call Data_out
+   call Data_out(mempool)
    !================
    do while (tnow < tmax)
    !=================================
-    call env_run( tnow, iter )
+    call env_run( tnow, iter, mempool )
 #if !defined(OLD_SPECIES)
-    call track_out( spec, ebfp, tnow, iter )
+    call track_out( spec, ebfp, tnow, iter, mempool )
 #endif
     call timing !iter=iter+1  tnow=tnow+dt_loc
-    call Data_out
+    call Data_out(mempool)
 #if !defined(OLD_SPECIES)
     tracking_written = .false.
 #endif
@@ -167,8 +170,9 @@
    if (dump > 0) call dump_data(iter, tnow, spec, ebfp)
   end subroutine
   !======================
-  subroutine data_out
+  subroutine data_out(mempool)
    integer :: i, iic, idata
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    idata = iout
    if (diag) then
@@ -226,7 +230,7 @@
     if (nden>0) then
      do i = 1, nsp
 #if !defined(OLD_SPECIES)
-      call prl_den_energy_interp(spec(i), i, nden)
+      call prl_den_energy_interp(spec(i), i, nden, mempool)
 #elif
       call prl_den_energy_interp(spec(i), ebfp, i, nden)
 #endif
@@ -245,10 +249,10 @@
     if (npout > 0) then
      iic = npout
      if (iic <= nsp) then
-      call part_pdata_out(spec, tnow, xp0_out, xp1_out, yp_out, iic, pjump)
+      call part_pdata_out(spec, tnow, xp0_out, xp1_out, yp_out, iic, pjump, mempool)
      else
       do i = 1, nsp
-       call part_pdata_out(spec, tnow, xp0_out, xp1_out, yp_out, i, pjump)
+       call part_pdata_out(spec, tnow, xp0_out, xp1_out, yp_out, i, pjump, mempool)
       end do
      end if
     end if

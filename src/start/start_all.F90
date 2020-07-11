@@ -38,7 +38,8 @@
   !> Start subroutine. It reads the input file, initializes
   !> the variables and allocates the needed arrays before to start the
   !> simulation.
-  subroutine Start
+  subroutine Start(mempool)
+   type(memory_pool_t), pointer, intent(inout) :: mempool
 
    integer :: iic, ncmp, n, i
 
@@ -186,7 +187,12 @@ call gdbattach
    end if
    call mpi_buffer_alloc(nx_loc, ny_loc, nz_loc, ncmp)
    !local arrays and coefficients for space derivatives
-   diag = .true.
+   !===================================================
+   ! Constructs the memory pool instance
+   !===================================================
+   call create_memory_pool(mempool)
+   !===================================================
+
    if (iene==0) then
     diag = .false.
     iene = 1
@@ -221,7 +227,7 @@ call gdbattach
     tnow = tstart
     if (tnow < dt_loc) initial_time = .true.
 
-    call init
+    call init(mempool)
 
     if (tmax>0.0) then
      iter_max = int(tmax/dt)

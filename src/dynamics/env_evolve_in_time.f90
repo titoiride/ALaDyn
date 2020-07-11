@@ -85,10 +85,11 @@
   end subroutine
 
   !=======================================
-  subroutine env_lpf2_evolve_new(it_loc, spec_in, spec_aux_in)
+  subroutine env_lpf2_evolve_new(it_loc, spec_in, spec_aux_in, mempool)
    integer, intent (in) :: it_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
    type(species_aux), allocatable, intent(inout), dimension(:) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: np, ic
    integer, parameter :: sp_left = 2, sp_right = 2
    real (dp) :: ef2_ion, loc_ef2_ion(2)
@@ -111,7 +112,7 @@
    !   do ic = 2, nsp_ionz
    !    np = loc_npart(imody, imodz, imodx, ic)
    !    if (np>0) then
-   !     call set_ion_env_field(env, spec(ic), ebfp, np, oml)
+   !     call set_ion_env_field(env, spec(ic), ebfp, np, oml, mempool)
    !     if (mod(it_loc,100)==0) then
    !      loc_ef2_ion(1) = maxval(ebfp(1:np,id_ch))
    !      loc_ef2_ion(1) = sqrt(loc_ef2_ion(1))
@@ -132,7 +133,7 @@
    !    do ic = 2, nsp_ionz
    !     np = loc_npart(imody, imodz, imodx, ic)
    !     if (np>0) then
-   !      call set_ion_env_field(env1, spec(ic), ebfp, np, om1)
+   !      call set_ion_env_field(env1, spec(ic), ebfp, np, om1, mempool)
    !      if (mod(it_loc,100)==0) then
    !       loc_ef2_ion(1) = maxval(ebfp(1:np,id_ch))
    !       loc_ef2_ion(1) = sqrt(loc_ef2_ion(1))
@@ -167,13 +168,13 @@
    !      jc(2:4)=grad|a|^2/2 at t^n
    ! For two-color |A|= |A_0|+|A_1|
    !======================================
-   call set_env_acc(ebf, jc, spec_in(ic), spec_aux_in(ic), np, dt_loc)
+   call set_env_acc(ebf, jc, spec_in(ic), spec_aux_in(ic), np, dt_loc, mempool)
    !=====================================
    !exit spec_aux_in(1:3)=q*[E+F] spec_aux_in(4:6)=q*B/gamp, spec_aux_in(7)=wgh/gamp at t^n
    !Lorentz force already multiplied by particle charge
    !jc(1:4) not modified
    !====================
-   call lpf_env_momenta(spec_in(ic), spec_aux_in(ic), np, ic)
+   call lpf_env_momenta(spec_in(ic), spec_aux_in(ic), np, ic, mempool)
    ! Updates particle momenta P^{n-1/2} => P^{n+1/2}
    ! stores in spec_aux_in(1:3)=old (x,y,z)^n spec_aux_in(7)=wgh/gamp >0
    !======================
@@ -193,7 +194,7 @@
    ! for the envelope field solver
    end if
    jc(:, :, :, 1) = 0.0
-   call set_env_density(spec_aux_in(ic), jc, np, 1)
+   call set_env_density(spec_aux_in(ic), jc, np, 1, mempool)
    call env_den_collect(jc)
    ! in jc(1)the particle contribution of the source term <q^2*n/gamp>
    ! to be added to the fluid contribution if (Hybrid)
@@ -203,7 +204,7 @@
    end if
    !================================================
    ! Laser field is interpolated on tracked particles, if requested from output
-   call interpolate_field_on_tracking( env, spec_in, spec_aux_in, it_loc, A_PARTICLE )
+   call interpolate_field_on_tracking( env, spec_in, spec_aux_in, it_loc, A_PARTICLE, mempool )
    !=======================
    !===================
    ! in the envelope equation (A^{n-1},A^n)==> (A^n,A^{n+1})
@@ -234,14 +235,14 @@
    end if
    call envelope_gradient(jc, sp_left, sp_right)
    !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
-   call set_env_grad_interp(jc, spec_in(ic), spec_aux_in(ic), np, curr_ndim)
+   call set_env_grad_interp(jc, spec_in(ic), spec_aux_in(ic), np, curr_ndim, mempool)
    !=============================
    ! Exit p-interpolated |A| field variables
    ! at time level t^{n+1/2} and positions at time t^n
    ! in spec_aux_in(1:3)=grad|A|^2/2 spec_aux_in(4)=|A|^2/2 in 3D
    ! in spec_aux_in(1:2)=grad|A|^2/2 spec_aux_in(3)=|A|^2/2 in 2D
    !=====================================
-   call lpf_env_positions(spec_in(ic), spec_aux_in(ic), np)
+   call lpf_env_positions(spec_in(ic), spec_aux_in(ic), np, mempool)
    !===========================
    ! spec_aux_in(1:3) dt*V^{n+1/2}  spec_aux_in(4:6) old positions for curr J^{n+1/2}
    ! spec_aux_in(7)=dt*gam_inv
@@ -250,7 +251,7 @@
    np = loc_npart(imody, imodz, imodx, ic)
    !=======collects in jc(1:curr_ndim) currents due to electrons
    jc(:, :, :, :) = 0.0
-   call curr_accumulate(spec_in(ic), spec_aux_in(ic), jc, np)
+   call curr_accumulate(spec_in(ic), spec_aux_in(ic), jc, np, mempool)
    !===========================
    call curr_mpi_collect(jc)
    if (hybrid) then
@@ -445,13 +446,14 @@
    !-----------------------------
   end subroutine
   !=============== END ENV PIC SECTION
-  subroutine env_run(t_loc, iter_loc)
+  subroutine env_run(t_loc, iter_loc, mempool)
 
    real (dp), intent (in) :: t_loc
    integer, intent (in) :: iter_loc
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    !=========================
-   call env_lpf2_evolve(iter_loc, spec, ebfp)
+   call env_lpf2_evolve(iter_loc, spec, ebfp, mempool)
    !================================
    !+++++++++++++++++++++++++++++++++
    !for vbeam >0 uses the xw=(x+vbeam*t)
@@ -461,7 +463,7 @@
     if (t_loc >= wi_time) then
      if (t_loc < wf_time) then
       if (mod(iter_loc,w_sh) == 0) then
-       call lp_window_xshift(w_sh, iter_loc, spec, ebfp)
+       call lp_window_xshift(w_sh, iter_loc, spec, ebfp, mempool)
       end if
      end if
     end if
@@ -470,7 +472,7 @@
     if (t_loc >= wi_time) then
      if (t_loc < wf_time) then
       if (mod(iter_loc,w_sh)==0) then
-       call comoving_coordinate(vbeam, w_sh, iter_loc, spec, ebfp)
+       call comoving_coordinate(vbeam, w_sh, iter_loc, spec, ebfp, mempool)
       end if
      end if
     end if

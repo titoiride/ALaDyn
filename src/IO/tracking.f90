@@ -32,18 +32,15 @@ module tracking
 ! !#if defined(OPENPMD)
 !  use hdf5io_class
 ! !#endif
- use array_alloc, only: array_realloc_1d
- use grid_part_lib, only: xx_realloc
+ use memory_pool
  use grid_param, only: dx
  use util, only: endian
  use warnings, only: write_warning
 
  implicit none
- real(dp), allocatable, dimension(:, :), private, save :: track_aux
  real(sp), allocatable, dimension(:), private, save :: track_pdata
  integer, private, save, dimension(ref_nspec) :: iter_index
  integer :: iounit_index
- logical, allocatable, dimension(:), private, save :: track_mask
  logical, save :: tracking_written
  character(len=8), public, parameter :: tracking_folder = 'tracking'
  character(len=25), private,&
@@ -93,20 +90,24 @@ module tracking
 
   end subroutine
   
-  subroutine set_tracked_particle_index( spec_in, lowb, upb, ic)
+  subroutine set_tracked_particle_index( spec_in, lowb, upb, ic, mempool)
    !! Assigns to every new tracked particle a unique index for identification
 
    type(species_new), dimension(:), intent(inout) :: spec_in
    integer, intent(in) :: lowb, upb, ic
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer, allocatable, dimension(:) :: parts, track_index, temp_track_index
    integer :: npt, np, part_jump, npt_jump, i
    type(track_data_t) :: track_data
+   logical, pointer, contiguous, dimension(:) :: track_mask => null()
 
    if ( .not. spec_in(ic)%istracked() ) return
 
    np = upb - lowb + 1
 
-   call array_realloc_1d( track_mask, np )
+   call array_realloc_1d( mempool%mp_log_1d, np )
+   track_mask => mempool%mp_log_1d
+
    track_mask(1:np) = .true.
 
    allocate ( parts(np), source=0 )
@@ -184,12 +185,13 @@ module tracking
 
  !====== PARTICLE TRACKING INITIALIZATION ==========
 
-  subroutine initialize_tracking( spec_in, spec_aux_in )
+  subroutine initialize_tracking( spec_in, spec_aux_in, mempool )
    !! Initializes the particle tracking at the beginning of
    !! the simulation
 
    type(species_new), dimension(:), intent(inout) :: spec_in
    type(species_aux), dimension(:), intent(inout) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    logical :: tracking
    integer :: ic, n_extra_output = 0, size_array
 
@@ -237,28 +239,29 @@ module tracking
    end do
 
    do ic = 1, nsp
-    call initialize_particle_index( spec_in, ic)
+    call initialize_particle_index( spec_in, ic, mempool)
    end do
 
   end subroutine
 
-  subroutine initialize_particle_index( spec_in, ic )
+  subroutine initialize_particle_index( spec_in, ic, mempool )
    !! Initializes particle indexes at the beginning of the simulation
 
    type(species_new), dimension(:), intent(inout) :: spec_in
    integer, intent(in) :: ic
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: np
 
    if ( .not. spec_in(ic)%istracked() ) return
    
    np = spec_in(ic)%how_many()
-   call set_tracked_particle_index( spec_in, 1, np, ic)
+   call set_tracked_particle_index( spec_in, 1, np, ic, mempool)
 
   end subroutine
 
  !====== PARTICLE TRACKING I/O ==========
 
-  subroutine tracking_write_output(  spec_in, spec_aux_in, timenow, pid )
+  subroutine tracking_write_output(  spec_in, spec_aux_in, timenow, pid, mempool )
    !! Tracking I/O with the same strategy as part_pdata_out_new.
    !! The printed file contains the particle phase space (2*n_dimension),
    !! the particle weight, Lorentz gamma and index
@@ -267,6 +270,9 @@ module tracking
   type(species_aux), intent(in) :: spec_aux_in
   real (dp), intent (in) :: timenow
   integer, intent (in) :: pid
+  type(memory_pool_t), pointer, intent(in) :: mempool
+  real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
+  logical, pointer, contiguous, dimension(:) :: track_mask => null()
 
   character (12) :: fname
   character (8) :: foldername
@@ -316,8 +322,10 @@ module tracking
   ch = spec_in%pick_charge()
   out_parts = index_array(np)
 
-  call xx_realloc(track_aux, npt, spec_in%total_size())
-  call array_realloc_1d( track_mask, np )
+  call xx_realloc(mempool%mp_xx_2d_B, npt, spec_in%total_size())
+  xx => mempool%mp_xx_2d_B
+  call array_realloc_1d( mempool%mp_log_1d, np )
+   track_mask => mempool%mp_log_1d
 
 
   associate( inds => spec_in%call_component(INDEX_COMP, lb=1, ub=np) )
@@ -332,7 +340,7 @@ module tracking
   end if
 
   call out_parts%find_index(track_mask(1:np))
-  call spec_in%call_particle(track_aux, out_parts%indices(1:npt), tracking=.true.)
+  call spec_in%call_particle(xx, out_parts%indices(1:npt), tracking=.true.)
 
   pxcomp = spec_in%array_component( PX_COMP )
   pycomp = spec_in%array_component( PY_COMP )
@@ -344,24 +352,24 @@ module tracking
   if ( .not. spec_in%empty .and. a_on_particles(pid) ) then
    select case( spec_in%pick_dimensions() )
    case(1)
-    track_aux(1:npt, pxcomp) = 0.5*(track_aux(1:npt, pxcomp) + &
+    xx(1:npt, pxcomp) = 0.5*(xx(1:npt, pxcomp) + &
     PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
    case(2)
-    track_aux(1:npt, pxcomp) = 0.5*(track_aux(1:npt, pxcomp) + &
+    xx(1:npt, pxcomp) = 0.5*(xx(1:npt, pxcomp) + &
     PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
-    track_aux(1:npt, pycomp) = 0.5*(track_aux(1:npt, pycomp) + &
+    xx(1:npt, pycomp) = 0.5*(xx(1:npt, pycomp) + &
     PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
    case(3)
-    track_aux(1:npt, pxcomp) = 0.5*(track_aux(1:npt, pxcomp) + &
+    xx(1:npt, pxcomp) = 0.5*(xx(1:npt, pxcomp) + &
     PACK(spec_aux_in%old_px(1:np), track_mask(1:np)))
-    track_aux(1:npt, pycomp) = 0.5*(track_aux(1:npt, pycomp) + &
+    xx(1:npt, pycomp) = 0.5*(xx(1:npt, pycomp) + &
     PACK(spec_aux_in%old_py(1:np), track_mask(1:np)))
-    track_aux(1:npt, pzcomp) = 0.5*(track_aux(1:npt, pzcomp) + &
+    xx(1:npt, pzcomp) = 0.5*(xx(1:npt, pzcomp) + &
     PACK(spec_aux_in%old_pz(1:np), track_mask(1:np)))
    end select
   end if
 
-  track_aux(1:npt, gamma_comp) = one_dp/track_aux(1:npt, gamma_comp)
+  xx(1:npt, gamma_comp) = one_dp/xx(1:npt, gamma_comp)
   ip_loc(mype+1) = npt
   ip = ip_loc(mype+1)
 
@@ -373,7 +381,7 @@ module tracking
   do ik = 1, npe
    nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
   end do
-  if (nptot_global_reduced < 1e9) then
+  if (nptot_global_reduced < int(1e9)) then
    nptot = int(nptot_global_reduced)
   else
    nptot = -1
@@ -387,7 +395,7 @@ module tracking
   do p = 1, ip_loc(mype+1)
    do q = 1, n_comp_out
     ik = ik + 1
-    track_pdata(ik) = real(track_aux(p,q), sp)
+    track_pdata(ik) = real(xx(p,q), sp)
    end do
   end do
   if (ik /= lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, &
@@ -417,19 +425,20 @@ module tracking
  end subroutine
 
  !================================
- subroutine track_out( spec_in, spec_aux_in, timenow, iter)
+ subroutine track_out( spec_in, spec_aux_in, timenow, iter, mempool)
   !! Wrapper for the tracking I/O routine
 
   type(species_new), intent(inout), dimension(:) :: spec_in
   type(species_aux), intent(inout), dimension(:) :: spec_aux_in
   real(dp), intent(in) :: timenow
   integer, intent(in) :: iter
+  type(memory_pool_t), pointer, intent(in) :: mempool
   integer :: ic
 
   do ic = 1, nsp
    if (spec_in(ic)%istracked()) then
     if ( MOD(iter, every_track(ic) ) == 0 ) then
-     call tracking_write_output(spec_in(ic), spec_aux_in(ic), timenow, ic)
+     call tracking_write_output(spec_in(ic), spec_aux_in(ic), timenow, ic, mempool)
      tracking_written = .true.
     end if
    end if
@@ -439,16 +448,18 @@ module tracking
  end subroutine
 
  !================================
- subroutine interpolate_field_on_tracking( field_in, spec_in, spec_aux_in, iter, field_type )
+ subroutine interpolate_field_on_tracking( field_in, spec_in, spec_aux_in, iter, &
+  field_type, mempool )
   real(dp), dimension(:, :, :, :), allocatable, intent(in) :: field_in
   type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
   type(species_aux), allocatable, intent(inout), dimension(:) :: spec_aux_in
   integer, intent(in) :: iter, field_type
+  type(memory_pool_t), pointer, intent(in) :: mempool
   real(dp), dimension(:, :, :), allocatable :: interpol_field
   real(dp), dimension(:, :, :), allocatable :: field_aux
   integer :: ic, np, order, polarization
   logical :: track_flag
-  logical, dimension(:), allocatable :: track_mask
+  logical, pointer, contiguous, dimension(:) :: track_mask
  
 
   if (envelope) then
@@ -502,7 +513,8 @@ module tracking
         MOD(iter, every_track(ic)) == 0) then
 
     np = spec_in(ic)%how_many()
-    call array_realloc_1d( track_mask, np )
+    call array_realloc_1d( mempool%mp_log_1d, np )
+    track_mask => mempool%mp_log_1d
 
     associate( inds => spec_in(ic)%call_component(INDEX_COMP, lb=1, ub=np) )
 
@@ -511,7 +523,7 @@ module tracking
     end associate
 
     call a_on_tracking_particles( interpol_field, spec_in(ic), spec_aux_in(ic), np, order, &
-     polarization, mask_in=track_mask )
+     polarization, mempool, mask_in=track_mask )
    end if
   end do
  end subroutine
