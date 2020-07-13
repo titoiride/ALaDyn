@@ -89,6 +89,10 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !======================================
+   ! Do not execute for immobile particles
+   !======================================
+   if ( .not. sp_loc%ismobile() ) return
    !=============================================
    call xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions())
    xx => mempool%mp_xx_2d_A
@@ -203,6 +207,10 @@
    integer, intent (in) :: np, ic
    type(memory_pool_t), pointer, intent(in) :: mempool
 
+   !======================================
+   ! Do not execute for immobile particles
+   !======================================
+   if ( .not. sp_loc%ismobile() ) return
    select case(pusher)
    case(HIGUERA)
     call higuera_pusher(sp_loc, pt, dt_in, np, ic, mempool)
@@ -1045,6 +1053,10 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !======================================
+   ! Do not execute for immobile particles
+   !======================================
+   if ( .not. sp_loc%ismobile() ) return
    !=============================================
    ! Nullify all pointers
    NULLIFY(bb)
@@ -1215,6 +1227,10 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !======================================
+   ! Do not execute for immobile particles
+   !======================================
+   if ( .not. sp_loc%ismobile() ) return
    !=============================================
    ! Nullify all pointers
    NULLIFY(vp)

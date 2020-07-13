@@ -21,11 +21,12 @@
 
  module grid_tracking_part_connect
 
-  use pstruct_data
   use fstruct_data
   use grid_part_lib
-  use particles_def
+  use memory_pool
   use mpi_var
+  use particles_def
+  use pstruct_data
 
   implicit none
   type(interp_coeff), private, allocatable, save :: interp
@@ -43,11 +44,11 @@
    type (species_aux), intent (in) :: spec_aux_in
    integer, intent(in) :: np, order, polarization
    type(memory_pool_t), pointer, intent(in) :: mempool
-   logical, dimension(:), intent(in), optional :: mask_in
+   logical, dimension(:), intent(in), target, optional :: mask_in
    real(dp), allocatable, dimension(:) :: ap
    real(dp) :: dvol
    integer :: npt, i1, i2, j1, j2, k1, k2, n, cc
-   logical, dimension(:), allocatable :: track_mask
+   logical, pointer, contiguous, dimension(:) :: track_mask => null()
    real(dp), dimension(:), allocatable :: interpolated_field
 
    npt = spec_in%pick_tot_tracked_parts()
@@ -56,12 +57,13 @@
    allocate( ap(npt), source=zero_dp )
    allocate( interpolated_field(np), source=zero_dp )
    call interp_realloc(interp, np, spec_in%pick_dimensions())
-   call array_realloc_1d( track_mask, np )
+
    if ( PRESENT( mask_in ) ) then
-    track_mask(1:np) = mask_in(1:np)
+    track_mask => mask_in(1:np)
    else
     associate( inds => spec_in%call_component(INDEX_COMP, lb=1, ub=np) )
-
+     call array_realloc_1d( mempool%mp_log_1d, np )
+     track_mask => mempool%mp_log_1d
      track_mask(1:np) = (int(inds) > 0)
 
     end associate
