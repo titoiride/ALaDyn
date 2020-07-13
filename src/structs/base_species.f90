@@ -191,6 +191,8 @@ module base_species
    procedure, public, pass :: flatten_into
    procedure, pass :: how_many
    procedure, pass :: initialize_data
+   procedure, public, pass :: ismobile
+   procedure, public, pass :: istest
    procedure, public, pass :: istracked
    procedure, pass :: new_species => new_species_abstract
    procedure, public :: pack_into => pack_into_array
@@ -1440,7 +1442,26 @@ module base_species
 
   end subroutine
 
+  pure function ismobile( this ) result(mobile)
+   !! True if particles move
+   class(base_species_T), intent(in) :: this
+   logical :: mobile
+
+   mobile = this%properties%mobile
+
+  end function
+
+  pure function istest( this ) result(test)
+   !! True if particles are test particles
+   class(base_species_T), intent(in) :: this
+   logical :: test
+  
+   test = this%properties%test
+  
+  end function
+ 
   pure function istracked( this ) result(tracked)
+   !! True if particles are tracked
    class(base_species_T), intent(in) :: this
    logical :: tracked
 

@@ -21,10 +21,11 @@
 
  module grid_part_connect
 
-  use pstruct_data
   use fstruct_data
   use grid_part_lib
+  use memory_pool
   use particles_def
+  use pstruct_data
 #if !defined(OLD_SPECIES)
   use grid_tracking_part_connect
 #endif
@@ -92,7 +93,6 @@
 
   type(interp_coeff), private, allocatable, save :: interp
   type(interp_coeff), private, allocatable, save :: interp_old
-  real(dp), dimension(:, :), allocatable, private, save :: gpc_xx, gpc_ap
   !! Useful variable to store interpolation results
 
   !========= SECTION FOR FIELDS ASSIGNEMENT
@@ -2283,7 +2283,7 @@
     ! in that routine the 1d arrays are used
     call array_realloc_1d(mempool%mp_xx_1d_A, np)
     weight => mempool%mp_xx_1d_A
-    weight = sp_loc%weight(1:np)
+    weight(1:np) = sp_loc%weight(1:np)
      !==========================
     do n = 1, np
      do j1 = 0, 2
@@ -2318,7 +2318,7 @@
     ! in that routine the 1d arrays are used
     call array_realloc_1d(mempool%mp_xx_1d_A, np)
     weight => mempool%mp_xx_1d_A
-    weight = sp_loc%weight(1:np)
+    weight(1:np) = sp_loc%weight(1:np)
     do n = 1, np
      do k1 = 0, 2
       k2 = k(n) + k1
@@ -2433,13 +2433,12 @@
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
    type(memory_pool_t), pointer, intent(in) :: mempool
-
-   real (dp), allocatable, dimension(:, :) :: axh, ayh
-   real (dp), allocatable, dimension(:, :) :: currx, curry
-   integer, allocatable, dimension(:) :: ih, jh
-   integer, allocatable, dimension(:) :: x0, x1, y0, y1
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
+   real (dp), allocatable, dimension(:) :: axh, ayh
+   real (dp), allocatable, dimension(:) :: currx, curry
    real (dp) :: dvol
-   integer :: i1, j1, i2, j2, n
+   integer :: i1, j1, i2, j2, n, ih, jh
+   integer :: x0, x1, y0, y1
    !==========================
    ! Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
    !==============================
@@ -2448,37 +2447,36 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !=================================
+   ! Do not execute for test particles
+   !=================================
+   if ( sp_loc%istest() ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
    !=============================================================
-   allocate( axh(np, 0:4), source=zero_dp )
-   allocate( ayh(np, 0:4), source=zero_dp )
-   allocate( currx(np, 0:4) )
-   allocate( curry(np, 0:4) )
+   allocate( axh(0:4) )
+   allocate( ayh(0:4) )
+   allocate( currx(0:4) )
+   allocate( curry(0:4) )
    !======================
    if (curr_ndim==2) then !Two current components
-    call xx_realloc(gpc_xx, np, 2)
-    allocate( x0(np) )
-    allocate( x1(np) )
-    allocate( y0(np) )
-    allocate( y1(np) )
-    allocate( ih(np) )
-    allocate( jh(np) )
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    xx => mempool%mp_xx_2d_A
     
     ! Interpolation on new positions
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp, mempool )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
     
     ! Interpolation on old positions
-    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+    xx(1:np, 1) = set_local_positions( pt, X_COMP )
+    xx(1:np, 2) = set_local_positions( pt, Y_COMP )
     
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old, mempool )
+    call qden_2d_wgh( xx(1:np, 1:2), interp_old, mempool )
     
-    ! Recycling gpc_xx since it's not needed anymore
-    gpc_xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+    ! Recycling xx since it's not needed anymore
+    xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -2489,114 +2487,113 @@
                ii0 => interp_old%ix_rank2, &
                jj0 => interp_old%iy_rank2 )
 
-    ih(1:np) = i(1:np) - ii0(1:np) + 1
+     do n = 1, np
+
+      axh(0:4) = zero_dp
+      ayh(0:4) = zero_dp
+
+      ih = i(n) - ii0(n) + 1
+      !========================================
+      do i1 = 0, 2
+       axh(ih + i1) = ax1(n, i1)
+      end do
+
+      currx(0) = -axh(0)
+      do i1 = 1, 3
+       currx(i1) = currx(i1-1) + ax0(n, i1-1) - axh(i1)
+      end do
+      currx(4) = currx(3) - axh(4)
+
+      do i1 = 1, 3
+       axh(i1) = axh(i1) + ax0(n, i1-1)
+      end do
      
-    !========================================
-    do n = 1, np
-     do i1 = 0, 2
-      axh(n, ih(n) + i1) = ax1(n, i1)
-     end do
-    end do
+      ! Current times weight
+      do i1 = 0, 4
+       currx(i1) = xx(n, 2)*currx(i1)
+      end do
 
-    currx(1:np, 0) = -axh(1:np, 0)
-     do i1 = 1, 3
-      currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
-     end do
-    currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
+      x0 = min(ih, 1)
+      x1 = max(ih + 2, 3)
 
-    do i1 = 1, 3
-     axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
-    end do
-     
-    do i1 = 0, 4
-     currx(1:np, i1) = gpc_xx(1:np, 2)*currx(1:np, i1)
-    end do
+      !========================================
+      jh = j(n) - jj0(n) + 1
 
-    x0(1:np) = min(ih(1:np), 1)
-    x1(1:np) = max(ih(1:np) + 2, 3)
+      do i1 = 0, 2
+       ayh(jh + i1) = ay1(n, i1)
+      end do
 
-    !========================================
-    jh(1:np) = j(1:np) - jj0(1:np) + 1
-    do n = 1, np
-     do i1 = 0, 2
-      ayh(n, jh(n) + i1) = ay1(n, i1)
-     end do
-    end do
-    curry(1:np, 0) = -ayh(1:np, 0)
-    do i1 = 1, 3
-     curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
-    end do
-    curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
-    do i1 = 0, 4
-     curry(1:np, i1) = gpc_xx(1:np, 2)*curry(1:np, i1)
-    end do
-    do i1 = 1, 3
-     ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
-    end do
-    y0(1:np) = min(jh(1:np), 1)
-    y1(1:np) = max(jh(1:np) + 2, 3)
+      curry(0) = -ayh(0)
+      do i1 = 1, 3
+       curry(i1) = curry(i1-1) + ay0(n, i1-1) - ayh(i1)
+      end do
+      curry(4) = curry(3) - ayh(4)
+      ! Current times weight
+      do i1 = 0, 4
+       curry(i1) = xx(n, 2)*curry(i1)
+      end do
 
-    !================dt*J_x
+      do i1 = 1, 3
+       ayh(i1) = ayh(i1) + ay0(n, i1-1)
+      end do
+      y0 = min(jh, 1)
+      y1 = max(jh + 2, 3)
 
-    jh(1:np) = jj0(1:np) - 1
-    ih(1:np) = ii0(1:np) - 1
+      !================dt*J_x
 
-    do n = 1, np
-     do j1 = y0(n), y1(n)
-      j2 = jh(n) + j1
-      do i1 = x0(n), x1(n)
-       i2 = ih(n) + i1
-       jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
+      jh = jj0(n) - 1
+      ih = ii0(n) - 1
+
+      do j1 = y0, y1
+       j2 = jh + j1
+       do i1 = x0, x1
+        i2 = ih + i1
+        jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(j1)*currx(i1)
+       end do
+      end do
+      !================dt*J_y
+      do j1 = y0, y1
+       j2 = jh + j1
+       do i1 = x0, x1
+        i2 = ih + i1
+        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(i1)*curry(j1)
+       end do
       end do
      end do
-     !================dt*J_y
-     do j1 = y0(n), y1(n)
-      j2 = jh(n) + j1
-      do i1 = x0(n), x1(n)
-       i2 = ih(n) + i1
-       jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
-      end do
-     end do
-    end do
-   end associate
+    end associate
    end if
     !========================================
    if (curr_ndim==3) then !Three currents conditions in 2D grid
 
     !============== ********************** =================
-    call xx_realloc(gpc_xx, np, 2)
-    allocate( x0(np) )
-    allocate( x1(np) )
-    allocate( y0(np) )
-    allocate( y1(np) )
-    allocate( ih(np) )
-    allocate( jh(np) )
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    xx => mempool%mp_xx_2d_A
     
     ! Interpolation on new positions
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp, mempool )
+    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
     
     ! Interpolation on old positions
-    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+    xx(1:np, 1) = set_local_positions( pt, X_COMP )
+    xx(1:np, 2) = set_local_positions( pt, Y_COMP )
     
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old, mempool )
+    call qden_2d_wgh( xx(1:np, 1:2), interp_old, mempool )
     
     !========================================
     ! Computing velocity along z
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
-    gpc_xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
+    xx(1:np, 1) = set_local_positions( sp_loc, Z_COMP ) ! z new
+    xx(1:np, 2) = set_local_positions( pt, Z_COMP ) ! z old
     
     ! Storing z_new - z_old in xx(1:np, 1)
-    gpc_xx(1:np, 1) = (gpc_xx(1:np, 1) - gpc_xx(1:np, 2))/3.
+    xx(1:np, 1) = (xx(1:np, 1) - xx(1:np, 2))/3.
     
-    ! Recycling gpc_xx since it's not needed anymore
-    gpc_xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+    ! Recycling xx since it's not needed anymore
+    xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
     ! Multiplying by the particle weight
-    gpc_xx(1:np, 1) = gpc_xx(1:np, 2)*gpc_xx(1:np, 1)
+    xx(1:np, 1) = xx(1:np, 2)*xx(1:np, 1)
     
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -2607,99 +2604,97 @@
                ii0 => interp_old%ix_rank2, &
                jj0 => interp_old%iy_rank2 )
 
-    ih(1:np) = i(1:np) - ii0(1:np) + 1
+     do n = 1, np
 
-    do n = 1, np
-     do i1 = 0, 2
-      axh(n, ih(n) + i1) = ax1(n, i1)
-     end do
-    end do
+      axh(0:4) = zero_dp
+      ayh(0:4) = zero_dp
 
-    currx(1:np, 0) = -axh(1:np, 0)
-     do i1 = 1, 3
-      currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
-     end do
-    currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
+      ih = i(n) - ii0(n) + 1
 
-    do i1 = 1, 3
-     axh(1:np, i1) = axh(1:np, i1) + ax0(1:np, i1-1)
-    end do
+      do i1 = 0, 2
+       axh(ih + i1) = ax1(n, i1)
+      end do
+
+      currx(0) = -axh(0)
+      do i1 = 1, 3
+       currx(i1) = currx(i1-1) + ax0(n, i1-1) - axh(i1)
+      end do
+      currx(4) = currx(3) - axh(4)
+
+      do i1 = 1, 3
+       axh(i1) = axh(i1) + ax0(n, i1-1)
+      end do
      
-    do i1 = 0, 4
-     currx(1:np, i1) = gpc_xx(1:np, 2)*currx(1:np, i1)
-    end do
-
-    x0(1:np) = min(ih(1:np), 1)
-    x1(1:np) = max(ih(1:np) + 2, 3)
-
-    !========================================
-    jh(1:np) = j(1:np) - jj0(1:np) + 1
-    do n = 1, np
-     do i1 = 0, 2
-      ayh(n, jh(n) + i1) = ay1(n, i1)
-     end do
-    end do
-    curry(1:np, 0) = -ayh(1:np, 0)
-    do i1 = 1, 3
-     curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
-    end do
-    curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
-    do i1 = 0, 4
-     curry(1:np, i1) = gpc_xx(1:np, 2)*curry(1:np, i1)
-    end do
-    do i1 = 1, 3
-     ayh(1:np, i1) = ayh(1:np, i1) + ay0(1:np, i1-1)
-    end do
-    y0(1:np) = min(jh(1:np), 1)
-    y1(1:np) = max(jh(1:np) + 2, 3)
-
-    !================dt*J_x= currx*(Wy^0+Wy^1) to be multiplied by dx/2
-
-    jh(1:np) = jj0(1:np) - 1
-    ih(1:np) = ii0(1:np) - 1
-
-    do n = 1, np
-     do j1 = y0(n), y1(n)
-      j2 = jh(n) + j1
-      do i1 = x0(n), x1(n)
-       i2 = ih(n) + i1
-       jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(n, j1)*currx(n, i1)
+      do i1 = 0, 4
+       currx(i1) = xx(n, 2)*currx(i1)
       end do
-     end do
-     !================dt*J_y= curry*(Wx^0+Wx^1)
-     do j1 = y0(n), y1(n)
-      j2 = jh(n) + j1
-      do i1 = x0(n), x1(n)
-       i2 = ih(n) + i1
-       jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(n, i1)*curry(n, j1)
-      end do
-     end do
-    end do
 
-    ! Here we recycle the currx and curry arrays that are not needed anymore
-    currx(1:np, 0:4) = 0.5*axh(1:np, 0:4)
-    curry(1:np, 0:4) = axh(1:np, 0:4)
-    do i1 = 1, 3
-     currx(1:np, i1) = currx(1:np, i1) + ax0(1:np, i1-1)
-     curry(1:np, i1) = curry(1:np, i1) + 0.5*ax0(1:np, i1-1)
-    end do
-    do n = 1, np
-     !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
-     do j1 = 0, 2
-      j2 = jj0(n) + j1
-      dvol = ay0(n, j1)*gpc_xx(n, 1)
-      do i1 = x0(n), x1(n)
-       i2 = i1 + ih(n)
-       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + currx(n, i1)*dvol
+      x0 = min(ih, 1)
+      x1 = max(ih + 2, 3)
+
+      !========================================
+      jh = j(n) - jj0(n) + 1
+      do i1 = 0, 2
+       ayh(jh + i1) = ay1(n, i1)
       end do
-      j2 = j(n) + j1
-      dvol = ay1(n, j1)*gpc_xx(n, 1)
-      do i1 = x0(n), x1(n)
-       i2 = i1 + ih(n)
-       jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + curry(n, i1)*dvol
+      curry(0) = -ayh(0)
+      do i1 = 1, 3
+       curry(i1) = curry(i1-1) + ay0(n, i1-1) - ayh(i1)
       end do
-     end do
-    end do 
+      curry(4) = curry(3) - ayh(4)
+      do i1 = 0, 4
+       curry(i1) = xx(n, 2)*curry(i1)
+      end do
+      do i1 = 1, 3
+       ayh(i1) = ayh(i1) + ay0(n, i1-1)
+      end do
+      y0 = min(jh, 1)
+      y1 = max(jh + 2, 3)
+
+      !================dt*J_x= currx*(Wy^0+Wy^1) to be multiplied by dx/2
+
+      jh = jj0(n) - 1
+      ih = ii0(n) - 1
+
+      do j1 = y0, y1
+       j2 = jh + j1
+       do i1 = x0, x1
+        i2 = ih + i1
+        jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + ayh(j1)*currx(i1)
+       end do
+      end do
+      !================dt*J_y= curry*(Wx^0+Wx^1)
+      do j1 = y0, y1
+       j2 = jh + j1
+       do i1 = x0, x1
+        i2 = ih + i1
+        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(i1)*curry(j1)
+       end do
+      end do
+
+      ! Here we recycle the currx and curry arrays that are not needed anymore
+      currx(0:4) = 0.5*axh(0:4)
+      curry(0:4) = axh(0:4)
+      do i1 = 1, 3
+       currx(i1) = currx(i1) + ax0(n, i1-1)
+       curry(i1) = curry(i1) + 0.5*ax0(n, i1-1)
+      end do
+      !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
+      do j1 = 0, 2
+       j2 = jj0(n) + j1
+       dvol = ay0(n, j1)*xx(n, 1)
+       do i1 = x0, x1
+        i2 = i1 + ih
+        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + currx(i1)*dvol
+       end do
+       j2 = j(n) + j1
+       dvol = ay1(n, j1)*xx(n, 1)
+       do i1 = x0, x1
+        i2 = i1 + ih
+        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + curry(i1)*dvol
+       end do
+      end do
+     end do 
     end associate
    end if
    !===================================
@@ -2946,15 +2941,14 @@
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
    type(memory_pool_t), pointer, intent(in) :: mempool
-
-   real (dp), allocatable, dimension(:, :) :: axh0, axh1, ayh0, ayh1
-   real (dp), allocatable, dimension(:, :) :: axh, ayh, azh
-   real (dp), allocatable, dimension(:, :) :: currx, curry, currz
-   real (dp), allocatable, dimension(:) :: weight
-   integer, allocatable, dimension(:) :: ih, jh, kh
-   integer, allocatable, dimension(:) :: x0, x1, y0, y1, z0, z1
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null()
+   real (dp), allocatable, dimension(:) :: axh0, axh1, ayh0, ayh1
+   real (dp), allocatable, dimension(:) :: axh, ayh, azh
+   real (dp), allocatable, dimension(:) :: currx, curry, currz
    real (dp) :: dvol, dvolh
-   integer :: i1, j1, i2, j2, k1, k2, n
+   integer :: ih, jh, kh
+   integer :: x0, x1, y0, y1, z0, z1
+   integer :: i1, j1, i2, j2, k1, k2, i20, j20, k20, n
    !==========================
    !Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
    ! ==============================Only new and old positions needed
@@ -2962,47 +2956,43 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !=================================
+   ! Do not execute for test particles
+   !=================================
+   if ( sp_loc%istest() ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(gpc_xx, np, 3)
+   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    xx => mempool%mp_xx_2d_A
    !=============================================================
-   allocate( axh(np, 0:4), source=zero_dp )
-   allocate( ayh(np, 0:4), source=zero_dp )
-   allocate( azh(np, 0:4), source=zero_dp )
-   allocate( currx(np, 0:4) )
-   allocate( curry(np, 0:4) )
-   allocate( currz(np, 0:4) )
-   allocate( weight(np) )
-   allocate( x0(np) )
-   allocate( x1(np) )
-   allocate( y0(np) )
-   allocate( y1(np) )
-   allocate( z0(np) )
-   allocate( z1(np) )
-   allocate( ih(np) )
-   allocate( jh(np) )
-   allocate( kh(np) )
-   allocate( axh0(np, 0:4))
-   allocate( axh1(np, 0:4))
-   allocate( ayh0(np, 0:4))
-   allocate( ayh1(np, 0:4))
-
-   weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+   allocate( axh(0:4) )
+   allocate( ayh(0:4) )
+   allocate( azh(0:4) )
+   allocate( currx(0:4) )
+   allocate( curry(0:4) )
+   allocate( currz(0:4) )
+   allocate( axh0(0:4))
+   allocate( axh1(0:4))
+   allocate( ayh0(0:4))
+   allocate( ayh1(0:4))
 
    ! Interpolation on new positions
-   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-   gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
    
-   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp, mempool )
+   call qden_3d_wgh( xx(1:np, 1:3), interp, mempool )
    
    ! Interpolation on old positions
-   gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
-   gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-   gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
+   xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   xx(1:np, 3) = set_local_positions( pt, Z_COMP )
    
-   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp_old, mempool )
+   call qden_3d_wgh( xx(1:np, 1:3), interp_old, mempool )
+
+   ! Recycling xx since it's not needed anymore
+   xx(1:np, 1) = sp_loc%pick_charge()*sp_loc%weight(1:np)
 
    associate( ax1 => interp%coeff_x_rank2, &
               ay1 => interp%coeff_y_rank2, &
@@ -3017,130 +3007,134 @@
               jj0 => interp_old%iy_rank2, &
               kk0 => interp_old%iz_rank2 )
 
-   ih(1:np) = i(1:np) - ii0(1:np) + 1
+    do n = 1, np
 
-   !========== direct Jx-inversion
-   do n = 1, np
-    do i1 = 0, 2
-     axh(n, ih(n) + i1) = ax1(n, i1)
-    end do
-   end do
-   currx(1:np, 0) = -axh(1:np, 0)
-   do i1 = 1, 3
-    currx(1:np, i1) = currx(1:np, i1-1) + ax0(1:np, i1-1) - axh(1:np, i1)
-   end do
-   currx(1:np, 4) = currx(1:np, 3) - axh(1:np, 4)
-   do i1 = 0, 4
-    currx(1:np, i1) = weight(1:np)*currx(1:np, i1)
-   end do
-   !=======================
-   axh0(1:np, 0:4) = 0.5*axh(1:np, 0:4)
-   axh1(1:np, 0:4) = axh(1:np, 0:4)
-   do i1 = 1, 3
-    axh0(1:np, i1) = axh0(1:np, i1) + ax0(1:np, i1-1)
-    axh1(1:np, i1) = axh1(1:np, i1) + 0.5*ax0(1:np, i1-1)
-   end do
+     axh(0:4) = zero_dp
+     ayh(0:4) = zero_dp
+     azh(0:4) = zero_dp
 
-   x0(1:np) = min(ih(1:np), 1)
-   x1(1:np) = max(ih(1:np) + 2, 3)
+     ih = i(n) - ii0(n) + 1
+     !========== direct Jx-inversion
+     do i1 = 0, 2
+      axh(ih + i1) = ax1(n, i1)
+     end do
+     currx(0) = -axh(0)
+     do i1 = 1, 3
+      currx(i1) = currx(i1-1) + ax0(n, i1-1) - axh(i1)
+     end do
+     currx(4) = currx(3) - axh(4)
+     do i1 = 0, 4
+      currx(i1) = xx(n, 1)*currx(i1)
+     end do
+     !=======================
+     axh0(0:4) = 0.5*axh(0:4)
+     axh1(0:4) = axh(0:4)
+     do i1 = 1, 3
+      axh0(i1) = axh0(i1) + ax0(n, i1-1)
+      axh1(i1) = axh1(i1) + 0.5*ax0(n, i1-1)
+     end do
 
-   !========== direct Jy-inversion
-   jh(1:np) = j(1:np) - jj0(1:np) + 1 !=[0,1,2]
-   do n = 1, np
-    do i1 = 0, 2
-     ayh(n, jh(n) + i1) = ay1(n, i1)
-    end do
-   end do
-   curry(1:np, 0) = -ayh(1:np, 0)
-   do i1 = 1, 3
-    curry(1:np, i1) = curry(1:np, i1-1) + ay0(1:np, i1-1) - ayh(1:np, i1)
-   end do
-   curry(1:np, 4) = curry(1:np, 3) - ayh(1:np, 4)
-   do i1 = 0, 4
-    curry(1:np, i1) = weight(1:np)*curry(1:np, i1)
-   end do
-   !=====================================
-   !                                 Jx =>    Wz^0(0.5*wy^1+Wy^0)=Wz^0*ayh0
-   !                                          Wz^1(wy^1+0.5*Wy^0)=Wz^1*ayh1
-   !==============================
-   ayh0(1:np, 0:4) = 0.5*ayh(1:np, 0:4)
-   ayh1(1:np, 0:4) = ayh(1:np, 0:4)
-   do i1 = 1, 3
-    ayh0(1:np, i1) = ayh0(1:np, i1) + ay0(1:np, i1-1)
-    ayh1(1:np, i1) = ayh1(1:np, i1) + 0.5*ay0(1:np, i1-1)
-   end do
-   y0(1:np) = min(jh(1:np), 1) ![0,1]
-   y1(1:np) = max(jh(1:np) + 2, 3) ![3,4]
+     x0 = min(ih, 1)
+     x1 = max(ih + 2, 3)
 
-   !============= Direct Jz inversion
-   kh(1:np) = k(1:np) - kk0(1:np) + 1
-   do n = 1, np
-    do i1 = 0, 2
-     azh(n, kh(n) + i1) = az1(n, i1)
-    end do
-   end do
-   currz(1:np, 0) = -azh(1:np, 0)
-   do i1 = 1, 3
-    currz(1:np, i1) = currz(1:np, i1-1) + az0(1:np, i1-1) - azh(1:np, i1)
-   end do
-   currz(1:np, 4) = currz(1:np, 3) - azh(1:np, 4)
-   do i1 = 0, 4
-    currz(1:np, i1) = weight(1:np)*currz(1:np, i1)
-   end do
-   z0(1:np) = min(kh(1:np), 1)
-   z1(1:np) = max(kh(1:np) + 2, 3)
-   !================Jx=DT*drho_x to be inverted==================
-   jh(1:np) = jj0(1:np) - 1
-   !====================
-   ih(1:np) = ii0(1:np) - 1
-   !========================================
-   do n = 1, np
-    do k1 = 0, 2
-     do j1 = y0(n), y1(n)
-      j2 = jh(n) + j1
-      dvol = ayh0(n, j1)*az0(n, k1)
-      dvolh = ayh1(n, j1)*az1(n, k1)
-      do i1 = x0(n), x1(n)
-       i2 = ih(n) + i1
-       jcurr(i2, j2, kk0(n) + k1, 1) = jcurr(i2, j2, kk0(n) + k1, 1) + &
-         dvol*currx(n, i1)
-       jcurr(i2, j2, k(n) + k1, 1) = jcurr(i2, j2, k(n) + k1, 1) + &
-        dvolh*currx(n, i1)
+     !========== direct Jy-inversion
+     jh = j(n) - jj0(n) + 1 !=[0,1,2]
+     do i1 = 0, 2
+      ayh(jh + i1) = ay1(n, i1)
+     end do
+     curry(0) = -ayh(0)
+     do i1 = 1, 3
+      curry(i1) = curry(i1-1) + ay0(n, i1-1) - ayh(i1)
+     end do
+     curry(4) = curry(3) - ayh(4)
+     do i1 = 0, 4
+      curry(i1) = xx(n, 1)*curry(i1)
+     end do
+     !=====================================
+     !                                 Jx =>    Wz^0(0.5*wy^1+Wy^0)=Wz^0*ayh0
+     !                                          Wz^1(wy^1+0.5*Wy^0)=Wz^1*ayh1
+     !==============================
+     ayh0(0:4) = 0.5*ayh(0:4)
+     ayh1(0:4) = ayh(0:4)
+     do i1 = 1, 3
+      ayh0(i1) = ayh0(i1) + ay0(n, i1-1)
+      ayh1(i1) = ayh1(i1) + 0.5*ay0 (n, i1-1)
+     end do 
+     y0 = min(jh, 1) ![0,1]
+     y1 = max(jh + 2, 3) ![3,4]
+
+     !============= Direct Jz inversion
+     kh = k(n) - kk0(n) + 1
+     do i1 = 0, 2
+      azh(kh + i1) = az1(n, i1)
+     end do
+     currz(0) = -azh(0)
+     do i1 = 1, 3
+      currz(i1) = currz(i1-1) + az0(n, i1-1) - azh(i1)
+     end do
+     currz(4) = currz(3) - azh(4)
+     do i1 = 0, 4
+      currz(i1) = xx(n, 1)*currz(i1)
+     end do
+     z0 = min(kh, 1)
+     z1 = max(kh + 2, 3)
+     !================Jx=DT*drho_x to be inverted==================
+     jh = jj0(n) - 1
+     !====================
+     ih = ii0(n) - 1
+     !========================================
+     do k1 = 0, 2
+      k20 = kk0(n) + k1
+      k2 = k(n) + k1
+      do j1 = y0, y1
+       j2 = jh + j1
+       dvol = ayh0(j1)*az0(n, k1)
+       dvolh = ayh1(j1)*az1(n, k1)
+       do i1 = x0, x1
+        i2 = ih + i1
+        jcurr(i2, j2, k20, 1) = jcurr(i2, j2, k20, 1) + &
+          dvol*currx(i1)
+        jcurr(i2, j2, k2, 1) = jcurr(i2, j2, k2, 1) + &
+         dvolh*currx(i1)
+       end do
+      end do
+     end do
+     !================Jy
+     do k1 = 0, 2
+      k20 = kk0(n) + k1
+      k2 = k(n) + k1
+      do j1 = y0, y1
+       j2 = jh + j1
+       dvol = curry(j1)*az0(n, k1)
+       dvolh = curry(j1)*az1(n, k1)
+       do i1 = x0, x1
+        i2 = ih + i1
+        jcurr(i2, j2, k20, 2) = jcurr(i2, j2, k20, 2) + &
+         axh0(i1)*dvol
+        jcurr(i2, j2, k2, 2) = jcurr(i2, j2, k2, 2) + &
+         axh1(i1)*dvolh
+       end do
+      end do
+     end do
+     !================Jz
+     kh = kk0(n) - 1
+     do k1 = z0, z1
+      k2 = kh + k1
+      do j1 = 0, 2
+       j20 = jj0(n) + j1
+       j2 = j(n) + j1
+       dvol = ay0(n, j1)*currz(k1)
+       dvolh = ay1(n, j1)*currz(k1)
+       do i1 = x0, x1
+        i2 = ih + i1
+        jcurr(i2, j20, k2, 3) = jcurr(i2, j20, k2, 3) + &
+         axh0(i1)*dvol
+        jcurr(i2, j2, k2, 3) = jcurr(i2, j2, k2, 3) + &
+         axh1(i1)*dvolh
+       end do
       end do
      end do
     end do
-    !================Jy
-    do k1 = 0, 2
-     do j1 = y0(n), y1(n)
-      j2 = jh(n) + j1
-      dvol = curry(n, j1)*az0(n, k1)
-      dvolh = curry(n, j1)*az1(n, k1)
-      do i1 = x0(n), x1(n)
-       i2 = ih(n) + i1
-       jcurr(i2, j2, kk0(n) + k1, 2) = jcurr(i2, j2, kk0(n) + k1, 2) + &
-        axh0(n, i1)*dvol
-       jcurr(i2, j2, k(n) + k1, 2) = jcurr(i2, j2, k(n) + k1, 2) + &
-        axh1(n, i1)*dvolh
-      end do
-     end do
-    end do
-    !================Jz
-    kh(n) = kk0(n) - 1
-    do k1 = z0(n), z1(n)
-     k2 = kh(n) + k1
-     do j1 = 0, 2
-      dvol = ay0(n, j1)*currz(n, k1)
-      dvolh = ay1(n, j1)*currz(n, k1)
-      do i1 = x0(n), x1(n)
-       i2 = ih(n) + i1
-       jcurr(i2, jj0(n) + j1, k2, 3) = jcurr(i2, jj0(n) + j1, k2, 3) + &
-        axh0(n, i1)*dvol
-       jcurr(i2, j(n) + j1, k2, 3) = jcurr(i2, j(n) + j1, k2, 3) + &
-        axh1(n, i1)*dvolh
-      end do
-     end do
-    end do
-   end do
    !============= Curr data on [1:n+4] extended range
    end associate
 
@@ -3336,8 +3330,8 @@
    integer, intent (in) :: np
    type(memory_pool_t), pointer, intent(in) :: mempool
 
-   real (dp), allocatable, dimension(:, :) :: vp
-   real (dp), allocatable, dimension(:) :: weight
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null(), vp => null()
+   real (dp), pointer, contiguous, dimension(:) :: weight => null()
    real (dp) ::dvol(3)
    integer :: i1, j1, i2, j2, n
    !=======================
@@ -3347,33 +3341,31 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !=================================
+   ! Do not execute for test particles
+   !=================================
+   if ( sp_loc%istest() ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(gpc_xx, np, 2)
+   call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+   call xx_realloc(mempool%mp_xx_2d_B, np, 2)
+
+   xx => mempool%mp_xx_2d_A
+   vp => mempool%mp_xx_2d_B
+
    !=============================================================
-   allocate( vp(np, 2) )
-   allocate( weight(np) )
-
-   weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
-
-   !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
-   ! is dt/gam and not just 1/gam ===
-
-   vp(1:np, 1) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%px(1:np)
-   vp(1:np, 2) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%py(1:np)
-
    ! Interpolation on new positions
-   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp, mempool )
+   call qlh_2d_spline( xx(1:np, 1:2), interp, mempool )
 
    ! Interpolation on old positions
-   gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
-   gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
 
-   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp_old, mempool )
+   call qlh_2d_spline( xx(1:np, 1:2), interp_old, mempool )
    
    associate( ax1 => interp%coeff_x_rank2, &
               ay1 => interp%coeff_y_rank2, &
@@ -3391,38 +3383,53 @@
               ih0 => interp_old%ihx_rank2, &
               jj0 => interp_old%iy_rank2, &
               jh0 => interp_old%ihy_rank2 )
-   do n = 1, np
-    !===============Jx ========
-    do j1 = 0, 2
-     j2 = j(n) + j1
-     dvol(1) = vp(n, 1)*ay1(n, j1)
-     do i1 = 0, 1
-      i2 = ih(n) + i1
-      jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + dvol(1)*axh1(n, i1)
+
+    !==========================
+    ! Warning: this call must be after qqh_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    weight => mempool%mp_xx_1d_A
+
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+
+    !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
+    ! is dt/gam and not just 1/gam ===
+
+    vp(1:np, 1) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%px(1:np)
+    vp(1:np, 2) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%py(1:np)
+
+    do n = 1, np
+     !===============Jx ========
+     do j1 = 0, 2
+      j2 = j(n) + j1
+      dvol(1) = vp(n, 1)*ay1(n, j1)
+      do i1 = 0, 1
+       i2 = ih(n) + i1
+       jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + dvol(1)*axh1(n, i1)
+      end do
+      j2 = jj0(n) + j1
+      dvol(1) = vp(n, 1)*ay0(n, j1)
+      do i1 = 0, 1
+       i2 = ih0(n) + i1
+       jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + dvol(1)*axh0(n, i1)
+      end do
      end do
-     j2 = jj0(n) + j1
-     dvol(1) = vp(n, 1)*ay0(n, j1)
-     do i1 = 0, 1
-      i2 = ih0(n) + i1
-      jcurr(i2, j2, 1, 1) = jcurr(i2, j2, 1, 1) + dvol(1)*axh0(n, i1)
+     !=========== Jy             
+     do j1 = 0, 1
+      j2 = jh0(n) + j1
+      dvol(2) = vp(n, 2)*ayh0(n, j1)
+      do i1 = 0, 2
+       i2 = ii0(n) + i1
+       jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + dvol(2)*ax0(n, i1)
+      end do
+      j2 = jh(n) + j1
+      dvol(2) = vp(n, 2)*ayh1(n, j1)
+      do i1 = 0, 2
+       i2 = i(n) + i1
+       jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + dvol(2)*ax1(n, i1)
+      end do
      end do
     end do
-    !=========== Jy             
-    do j1 = 0, 1
-     j2 = jh0(n) + j1
-     dvol(2) = vp(n, 2)*ayh0(n, j1)
-     do i1 = 0, 2
-      i2 = ii0(n) + i1
-      jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + dvol(2)*ax0(n, i1)
-     end do
-     j2 = jh(n) + j1
-     dvol(2) = vp(n, 2)*ayh1(n, j1)
-     do i1 = 0, 2
-      i2 = i(n) + i1
-      jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + dvol(2)*ax1(n, i1)
-     end do
-    end do
-   end do
    end associate
   end subroutine
   !========================
@@ -3526,8 +3533,8 @@
    integer, intent (in) :: np
    type(memory_pool_t), pointer, intent(in) :: mempool
 
-   real (dp), allocatable, dimension(:, :) :: vp
-   real (dp), allocatable, dimension(:) :: weight
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null(), vp => null()
+   real (dp), pointer, contiguous, dimension(:) :: weight => null()
    real (dp) ::dvol(3)
    integer :: i1, j1, k1, i2, j2, k2, n
    !=======================
@@ -3542,36 +3549,33 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !=================================
+   ! Do not execute for test particles
+   !=================================
+   if ( sp_loc%istest() ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(gpc_xx, np, 3)
+   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+   call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+
+   xx => mempool%mp_xx_2d_A
+   vp => mempool%mp_xx_2d_B
+
    !=============================================================
-   allocate( vp(np, 3) )
-   allocate( weight(np) )
-
-   weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
-
-   !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
-   ! is dt/gam and not just 1/gam ===
-
-   vp(1:np, 1) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%px(1:np)
-   vp(1:np, 2) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%py(1:np)
-   vp(1:np, 3) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%pz(1:np)
-
    ! Interpolation on new positions
-   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-   gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
  
-   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp, mempool )
+   call qlh_3d_spline( xx(1:np, 1:3), interp, mempool )
  
     ! Interpolation on old positions
-   gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
-   gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-   gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
+   xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   xx(1:np, 3) = set_local_positions( pt, Z_COMP )
  
-   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp_old, mempool )
+   call qlh_3d_spline( xx(1:np, 1:3), interp_old, mempool )
 
    associate( ax1 => interp%coeff_x_rank2, &
               ay1 => interp%coeff_y_rank2, &
@@ -3598,70 +3602,87 @@
               kk0 => interp_old%iz_rank2, &
               kh0 => interp_old%ihz_rank2 )
 
-   do n = 1, np
-    !======================   Jx
-    do k1 = 0, 2
-     k2 = k(n) + k1
-     do j1 = 0, 2
-      j2 = j(n) + j1
-      dvol(1) = vp(n, 1)*ay1(n, j1)*az1(n, k1)
-      do i1 = 0, 1
-       i2 = ih(n) + i1
-       jcurr(i2, j2, k2, 1) = jcurr(i2, j2, k2, 1) + dvol(1)*axh1(n, i1)
+              
+    !==========================
+    ! Warning: this call must be after qqh_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    weight => mempool%mp_xx_1d_A
+
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%weight(1:np)
+
+    !=== Make sure on pt%call_comp( INV_GAMMA ) the actual stored factor
+    ! is dt/gam and not just 1/gam ===
+
+    vp(1:np, 1) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%px(1:np)
+    vp(1:np, 2) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%py(1:np)
+    vp(1:np, 3) = 0.5*weight(1:np) * pt%gamma_inv(1:np) * sp_loc%pz(1:np)
+
+
+    do n = 1, np
+     !======================   Jx
+     do k1 = 0, 2
+      k2 = k(n) + k1
+      do j1 = 0, 2
+       j2 = j(n) + j1
+       dvol(1) = vp(n, 1)*ay1(n, j1)*az1(n, k1)
+       do i1 = 0, 1
+        i2 = ih(n) + i1
+        jcurr(i2, j2, k2, 1) = jcurr(i2, j2, k2, 1) + dvol(1)*axh1(n, i1)
+       end do
+      end do
+      k2 = kk0(n) + k1
+      do j1 = 0, 2
+       j2 = jj0(n) + j1
+       dvol(1) = vp(n, 1)*ay0(n, j1)*az0(n, k1)
+       do i1 = 0, 1
+        i2 = ih0(n) + i1
+        jcurr(i2, j2, k2, 1) = jcurr(i2, j2, k2, 1) + dvol(1)*axh0(n, i1)
+       end do
       end do
      end do
-     k2 = kk0(n) + k1
-     do j1 = 0, 2
-      j2 = jj0(n) + j1
-      dvol(1) = vp(n, 1)*ay0(n, j1)*az0(n, k1)
-      do i1 = 0, 1
-       i2 = ih0(n) + i1
-       jcurr(i2, j2, k2, 1) = jcurr(i2, j2, k2, 1) + dvol(1)*axh0(n, i1)
+     !================Jy-Jz=============
+     do k1 = 0, 2
+      k2 = kk0(n) + k1
+      do j1 = 0, 1
+       j2 = jh0(n) + j1
+       dvol(2) = vp(n, 2)*ayh0(n, j1)*az0(n, k1)
+       do i1 = 0, 2
+        i2 = ii0(n) + i1
+        jcurr(i2, j2, k2, 2) = jcurr(i2, j2, k2, 2) + dvol(2)*ax0(n, i1)
+       end do
+      end do
+      k2 = k(n) + k1
+      do j1 = 0, 1
+       j2 = jh(n) + j1
+       dvol(2) = vp(n, 2)*ayh1(n, j1)*az1(n, k1)
+       do i1 = 0, 2
+        i2 = i(n) + i1
+        jcurr(i2, j2, k2, 2) = jcurr(i2, j2, k2, 2) + dvol(2)*ax1(n, i1)
+       end do
+      end do
+     end do
+     do k1 = 0, 1
+      k2 = kh0(n) + k1
+      do j1 = 0, 2
+       j2 = jj0(n) + j1
+       dvol(3) = vp(n, 3)*ay0(n, j1)*azh0(n, k1)
+       do i1 = 0, 2
+        i2 = ii0(n) + i1
+        jcurr(i2, j2, k2, 3) = jcurr(i2, j2, k2, 3) + dvol(3)*ax0(n, i1)
+       end do
+      end do
+      k2 = kh(n) + k1
+      do j1 = 0, 2
+       j2 = j(n) + j1
+       dvol(3) = vp(n, 3)*ay1(n, j1)*azh1(n, k1)
+       do i1 = 0, 2
+        i2 = i(n) + i1
+        jcurr(i2, j2, k2, 3) = jcurr(i2, j2, k2, 3) + dvol(3)*ax1(n, i1)
+       end do
       end do
      end do
     end do
-    !================Jy-Jz=============
-    do k1 = 0, 2
-     k2 = kk0(n) + k1
-     do j1 = 0, 1
-      j2 = jh0(n) + j1
-      dvol(2) = vp(n, 2)*ayh0(n, j1)*az0(n, k1)
-      do i1 = 0, 2
-       i2 = ii0(n) + i1
-       jcurr(i2, j2, k2, 2) = jcurr(i2, j2, k2, 2) + dvol(2)*ax0(n, i1)
-      end do
-     end do
-     k2 = k(n) + k1
-     do j1 = 0, 1
-      j2 = jh(n) + j1
-      dvol(2) = vp(n, 2)*ayh1(n, j1)*az1(n, k1)
-      do i1 = 0, 2
-       i2 = i(n) + i1
-       jcurr(i2, j2, k2, 2) = jcurr(i2, j2, k2, 2) + dvol(2)*ax1(n, i1)
-      end do
-     end do
-    end do
-    do k1 = 0, 1
-     k2 = kh0(n) + k1
-     do j1 = 0, 2
-      j2 = jj0(n) + j1
-      dvol(3) = vp(n, 3)*ay0(n, j1)*azh0(n, k1)
-      do i1 = 0, 2
-       i2 = ii0(n) + i1
-       jcurr(i2, j2, k2, 3) = jcurr(i2, j2, k2, 3) + dvol(3)*ax0(n, i1)
-      end do
-     end do
-     k2 = kh(n) + k1
-     do j1 = 0, 2
-      j2 = j(n) + j1
-      dvol(3) = vp(n, 3)*ay1(n, j1)*azh1(n, k1)
-      do i1 = 0, 2
-       i2 = i(n) + i1
-       jcurr(i2, j2, k2, 3) = jcurr(i2, j2, k2, 3) + dvol(3)*ax1(n, i1)
-      end do
-     end do
-    end do
-   end do
    end associate
    !============= Curr and density data on [0:n+3] extended range
   end subroutine

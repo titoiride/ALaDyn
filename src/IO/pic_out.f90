@@ -1524,19 +1524,19 @@
      associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np), &
                 yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np), &
                 zz => spec_in(pid)%call_component(Z_COMP, lb=1, ub=np))
-        mask(:) = ( xx>=xmin_out .and. xx<=xmax_out .and. &
+        mask(1:np) = ( xx>=xmin_out .and. xx<=xmax_out .and. &
          abs(yy)<=ymax_out .and. abs(zz)<=ymax_out )
      end associate
-     npt = COUNT(mask(:))
-     call out_parts%find_index(mask(:))
+     npt = COUNT(mask(1:np))
+     call out_parts%find_index(mask(1:np))
 
     else
      associate( xx => spec_in(pid)%call_component(X_COMP, lb=1, ub=np), &
                 yy => spec_in(pid)%call_component(Y_COMP, lb=1, ub=np))
-        mask(:) = ( xx>=xmin_out .and. xx<=xmax_out .and. abs(yy)<=ymax_out)
+        mask(1:np) = ( xx>=xmin_out .and. xx<=xmax_out .and. abs(yy)<=ymax_out)
      end associate
-     npt = COUNT(mask(:))
-     call out_parts%find_index(mask(:))
+     npt = COUNT(mask(1:np))
+     call out_parts%find_index(mask(1:np))
 
     end if
     
