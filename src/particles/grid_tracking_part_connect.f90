@@ -35,13 +35,14 @@
 
   contains
 
-  subroutine a_on_tracking_particles( field, spec_in, spec_aux_in, np, order, polarization, mask_in )
+  subroutine a_on_tracking_particles( field, spec_in, spec_aux_in, np, order, polarization, mempool, mask_in )
    !! Subroutine that interpolates vector potential A on the tracking particles.
 
    real (dp), intent (in) :: field(:, :, :)
    type (species_new), intent (inout) :: spec_in
    type (species_aux), intent (in) :: spec_aux_in
    integer, intent(in) :: np, order, polarization
+   type(memory_pool_t), pointer, intent(in) :: mempool
    logical, dimension(:), intent(in), optional :: mask_in
    real(dp), allocatable, dimension(:) :: ap
    real(dp) :: dvol
@@ -83,7 +84,7 @@
 
     case(0)
      ! Envelope case
-     call qden_2d_wgh( gtpc_xx(1:npt, 1:2), interp )
+     call qden_2d_wgh( gtpc_xx(1:npt, 1:2), interp, mempool )
 
      associate( ax1 => interp%coeff_x_rank2, &
                 ay1 => interp%coeff_y_rank2, &
@@ -106,7 +107,7 @@
     case(1:2)
      ! Full Pic case
 
-     call qqh_2d_spline( gtpc_xx(1:npt, 1:2), interp )
+     call qqh_2d_spline( gtpc_xx(1:npt, 1:2), interp, mempool )
 
      select case(polarization)
      !Integration order used for computing a from Ey
@@ -164,7 +165,7 @@
     select case(order)
     case(0)
     ! Envelope case
-     call qden_3d_wgh( gtpc_xx(1:npt, 1:3), interp )
+     call qden_3d_wgh( gtpc_xx(1:npt, 1:3), interp, mempool )
 
      associate( ax1 => interp%coeff_x_rank2, &
                 ay1 => interp%coeff_y_rank2, &
@@ -192,7 +193,7 @@
 
     case(1)
      !Full Pic
-     call qqh_3d_spline( gtpc_xx(1:npt, 1:3), interp )
+     call qqh_3d_spline( gtpc_xx(1:npt, 1:3), interp, mempool )
      select case(polarization)
      !Integration order used for computing a from Ey
      case(Y_POLARIZATION)

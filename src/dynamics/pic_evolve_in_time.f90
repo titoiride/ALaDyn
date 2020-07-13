@@ -121,10 +121,11 @@
    !============================
   end subroutine
   !===============
-  subroutine lpf2_evolve_new(iter_loc, spec_in, spec_aux_in)
+  subroutine lpf2_evolve_new(iter_loc, spec_in, spec_aux_in, mempool)
    integer, intent (in) :: iter_loc
    type(species_new), allocatable, intent(inout), dimension(:) :: spec_in
    type(species_aux), allocatable, intent(inout), dimension(:) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic, np, step
    real(dp) :: dt_step
    real (dp) :: ef2_ion(1), loc_ef2_ion(1)
@@ -141,7 +142,7 @@
    !  do ic = 2, nsp_ionz
    !   np = loc_npart(imody, imodz, imodx, ic)
    !   if (np>0) then
-   !    call set_ion_efield(ebf, spec(ic), ebfp, np)
+   !    call set_ion_efield(ebf, spec(ic), ebfp, np, mempool)
    !    if (mod(iter_loc,100)==0) then !refresh ionization tables, if needed
    !     loc_ef2_ion(1) = maxval(ebfp(1:np,id_ch))
    !     loc_ef2_ion(1) = sqrt(loc_ef2_ion(1))
@@ -169,10 +170,10 @@
     np = loc_npart(imody, imodz, imodx, ic)
     !============
     call particle_motion( ebf, spec_in(ic), spec_aux_in(ic), dt_step, &
-     np, nfield, ic, initial_time)
+     np, nfield, ic, initial_time, mempool)
    !============
     np = loc_npart(imody, imodz, imodx, ic)
-    call curr_accumulate(spec_in(ic), spec_aux_in(ic), jc, np)
+    call curr_accumulate(spec_in(ic), spec_aux_in(ic), jc, np, mempool)
     !================= only old ion charge saved
    end do
    !==========================================
@@ -189,7 +190,7 @@
    end if
    !================================================
    ! Laser field is interpolated on tracked particles, if requested from output
-   call interpolate_field_on_tracking( ebf, spec_in, spec_aux_in, iter_loc, A_PARTICLE )
+   call interpolate_field_on_tracking( ebf, spec_in, spec_aux_in, iter_loc, A_PARTICLE, mempool )
    !=======================
    ! Inject fields at i=i1-1  for inflow Lp_inject=T
    !call wave_field_left_inject(ebf, xmn)  !(Bz=Ey By=Ez are injected at i1-1 point
@@ -199,28 +200,29 @@
   !===============
   ! END SECTION for Leap-frog one-cycle integrator in LP regime
   !===============
-  subroutine lp_run(t_loc, iter_loc)
+  subroutine lp_run(t_loc, iter_loc, mempool)
 
    real (dp), intent (in) :: t_loc
    integer, intent (in) :: iter_loc
+   type(memory_pool_t), pointer, intent(in) :: mempool
    real (dp) :: ts
    !================================
 
    !=========================
-   call lpf2_evolve(iter_loc, spec, ebfp)
+   call lpf2_evolve(iter_loc, spec, ebfp, mempool)
    !===================================
    ts = t_loc
    if (w_speed>0.0) then ! moves the computational box with w_speed>0.
     if (ts>=wi_time .and. ts<wf_time) then
      if (mod(iter_loc,w_sh)==0) then
-      call lp_window_xshift(w_sh, iter_loc, spec, ebfp)
+      call lp_window_xshift(w_sh, iter_loc, spec, ebfp, mempool)
      end if
     end if
    end if
    if (comoving) then
     if (ts>=wi_time .and. ts<wf_time) then
      if (mod(iter_loc,w_sh)==0) then
-      call comoving_coordinate(vbeam, w_sh, iter_loc, spec, ebfp)
+      call comoving_coordinate(vbeam, w_sh, iter_loc, spec, ebfp, mempool)
      end if
     end if
    end if
@@ -232,7 +234,7 @@
   end subroutine
 
   subroutine particle_motion(ef, spec_in, spec_aux_in, dt_in, np, nfields, &
-    ic, initial_time_in)
+    ic, initial_time_in, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (inout) :: spec_in
@@ -240,12 +242,13 @@
    real (dp), intent (in) :: dt_in
    integer, intent (in) :: np, nfields, ic
    logical, intent (inout) :: initial_time_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    logical, parameter :: mw = .false.
 
 
    !==========================================================
    ! Fields interpolation on particles positions
-   call set_lpf_acc(ef, spec_in, spec_aux_in, np, nfields)
+   call set_lpf_acc(ef, spec_in, spec_aux_in, np, nfields, mempool)
 
    !==========================================================
    ! Fields are multiplied by the particles charge
@@ -253,11 +256,11 @@
 
    !==========================================================
    ! Initializes particles momenta on the initial time
-   call init_lpf_momenta(spec_in, spec_aux_in, dt_in, np, ic, initial_time_in)
+   call init_lpf_momenta(spec_in, spec_aux_in, dt_in, np, ic, initial_time_in, mempool)
 
    !==========================================================
    ! Particles are pushed via the chosen pusher
-   call lpf_momenta_and_positions(spec_in, spec_aux_in, dt_in, np, ic)
+   call lpf_momenta_and_positions(spec_in, spec_aux_in, dt_in, np, ic, mempool)
     ! For each species :
     ! spec_aux_in%V_COMP stores (X^{n+1}-X_n)=V^{n+1/2}*dt
     ! spec_aux_in%OLD_COMP stores old x^n positions

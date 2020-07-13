@@ -41,9 +41,14 @@
 
   integer :: iter_count = 0
   integer :: used_memory = 0
-  real(dp), allocatable, dimension(:) :: mp_xx_1d
-  real(dp), allocatable, dimension(:, :) :: mp_xx_2d
+  real(dp), allocatable, dimension(:) :: mp_xx_1d_A
+  real(dp), allocatable, dimension(:) :: mp_xx_1d_B
+  real(dp), allocatable, dimension(:) :: mp_xx_1d_C
+  real(dp), allocatable, dimension(:) :: mp_xx_1d_D
+  real(dp), allocatable, dimension(:, :) :: mp_xx_2d_A
+  real(dp), allocatable, dimension(:, :) :: mp_xx_2d_B
   real(dp), allocatable, dimension(:, :, :) :: mp_xx_3d
+  logical, allocatable, dimension(:) :: mp_log_1d
   type(species_new), allocatable :: mp_species_new
 
   contains
@@ -58,11 +63,11 @@
    type(memory_pool_t), intent(inout) :: this
 
    write(6, *) 'Called memory pool destructor'
-   if ( ALLOCATED(this%mp_xx_1d) ) then
-    deallocate( this%mp_xx_1d )
+   if ( ALLOCATED(this%mp_xx_1d_A) ) then
+    deallocate( this%mp_xx_1d_A )
    end if
-   if ( ALLOCATED(this%mp_xx_2d) ) then
-    deallocate( this%mp_xx_2d )
+   if ( ALLOCATED(this%mp_xx_2d_A) ) then
+    deallocate( this%mp_xx_2d_A )
    end if
    if ( ALLOCATED(this%mp_xx_3d) ) then
     deallocate( this%mp_xx_3d )
@@ -95,7 +100,7 @@
   subroutine allocate_1d( this )
    type(memory_pool_t), pointer, intent(in) :: this
 
-   allocate(this%mp_xx_1d(-5:5), source = 10.)
+   allocate(this%mp_xx_1d_A(-5:5), source = 10.)
 
   end subroutine
 
@@ -103,7 +108,7 @@
    type(memory_pool_t), pointer, intent(in) :: this
    real(dp), pointer, dimension(:) :: point_1d
 
-   point_1d => this%mp_xx_1d
+   point_1d => this%mp_xx_1d_A
 
    write(6, *) "I'm pointing to ", point_1d(:)
    write(6, *) "My size", SIZE( point_1d, DIM=1)
@@ -112,7 +117,7 @@
    write(6, *) "I'm associated", ASSOCIATED(point_1d)
    write(6, *) "Now I'm ", point_1d(:)
    write(6, *) "My address", LOC(point_1d)
-   write(6, *) "My address", LOC(this%mp_xx_1d)
+   write(6, *) "My address", LOC(this%mp_xx_1d_A)
    
   end subroutine
   !==============================================

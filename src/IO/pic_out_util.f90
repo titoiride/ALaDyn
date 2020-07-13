@@ -66,9 +66,10 @@
    end do
   end subroutine
   !============================
-  subroutine prl_den_energy_interp_new(spec_in, ic,cmp_out)
+  subroutine prl_den_energy_interp_new(spec_in, ic, cmp_out, mempool)
    type(species_new), intent(in) :: spec_in
    integer, intent (in) :: ic, cmp_out
+   type(memory_pool_t), pointer, intent(in) :: mempool
    real (dp) :: dery, derz, ar, ai
    integer :: np, i, j, k, jj, kk
 
@@ -84,7 +85,7 @@
    if(part)then
     select case (cmp_out)
     case (1)
-     call set_grid_charge(spec_in, jc, np, 1)
+     call set_grid_charge(spec_in, jc, np, 1, mempool)
      !nden=1 exit density for each ic species
     case (2)
      !nden=2 exit density and energy density for each species
@@ -100,12 +101,12 @@
         end do
        end do
        if (prl) call fill_ebfield_yzxbdsdata(jc, 3, 3, 2, 2)
-       call set_grid_env_den_energy(spec_in, jc, np, 3)
+       call set_grid_env_den_energy(spec_in, jc, np, 3, mempool)
       else
-       call set_grid_den_energy(spec_in, jc, np) !ic >1 in envelope scheme
+       call set_grid_den_energy(spec_in, jc, np, mempool) !ic >1 in envelope scheme
       end if
      else
-      call set_grid_den_energy(spec_in, jc, np)
+      call set_grid_den_energy(spec_in, jc, np, mempool)
      ! in jc(1) is plasma norm density in jc(2) <(gam-1)density> using kinetic
      ! gamma  for each species
      end if

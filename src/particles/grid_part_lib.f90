@@ -33,8 +33,6 @@
   real (dp), parameter :: half = 0.5
   real (sp) :: shx, shy, shz
   integer (kind=2) :: err_ind
-  real(dp), allocatable, dimension(:), private, save :: gpl_xx
-  real(dp), allocatable, dimension(:), private, save :: gpl_sx
   integer, parameter, private :: max_order = 2
   integer, parameter, private :: max_h_order = 2
 
@@ -159,27 +157,29 @@
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
    type(memory_pool_t), pointer, intent(in) :: mempool
-   real(dp), pointer, dimension(:, :) :: xx
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
 
    length = SIZE( xp, DIM=1 )
-   call xx_realloc(mempool%mp_xx_2d, length, 2)
-   xx => mempool%mp_xx_2d
+   call array_realloc_1d(mempool%mp_xx_1d_A, length)
+   call array_realloc_1d(mempool%mp_xx_1d_B, length)
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
 
-   xx(1:length, 1) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( xx(1:length, 1) + half)
-   xx(1:length, 2) = xx(1:length, 1) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( xx(1:length, 2), interp_in%coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
 
-   interp_in%ihx_rank2(1:length) = int(xx(1:length, 1))
-   xx(1:length, 2) = xx(1:length, 1) - &
+   interp_in%ihx_rank2(1:length) = int(xx(1:length))
+   sx(1:length) = xx(1:length) - &
    real(interp_in%ihx_rank2(1:length), dp)
 
-   call second_order( xx(1:length, 2), interp_in%h_coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%h_coeff_x_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ihx_rank2(1:length) - 1
@@ -214,21 +214,23 @@
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
    type(memory_pool_t), pointer, intent(in) :: mempool
-   real(dp), pointer, dimension(:, :) :: xx
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
    length = SIZE( xp, DIM=1 )
 
-   call xx_realloc(mempool%mp_xx_2d, length, 2)
-   xx => mempool%mp_xx_2d
+   call array_realloc_1d(mempool%mp_xx_1d_A, length)
+   call array_realloc_1d(mempool%mp_xx_1d_B, length)
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
 
-   xx(1:length, 1) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( xx(1:length, 1) + half )
-   xx(1:length, 2) = xx(1:length, 1) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length) + half )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( xx(1:length, 2), interp_in%coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
   end subroutine
@@ -275,35 +277,39 @@
   end subroutine
 
   !DIR$ ATTRIBUTES INLINE :: qlh_2d_spline_vector
-  subroutine qlh_2d_spline_vector( xp, interp_in )
+  subroutine qlh_2d_spline_vector( xp, interp_in, mempool )
   !! Quadratic interpolation at integer cells, linear at
   !! half-integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
 
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d(gpl_xx, length)
-   call array_realloc_1d(gpl_sx, length)
+   call array_realloc_1d(mempool%mp_xx_1d_A, length)
+   call array_realloc_1d(mempool%mp_xx_1d_B, length)
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
    shy = gcy
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
-   call first_order( gpl_sx(1:length) + half, interp_in%h_coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
+   call first_order( sx(1:length) + half, interp_in%h_coeff_x_rank2 )
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
-   call first_order( gpl_sx(1:length) + half, interp_in%h_coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_y_rank2 )
+   call first_order( sx(1:length) + half, interp_in%h_coeff_y_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
@@ -355,45 +361,49 @@
   !=======================================
 
   !DIR$ ATTRIBUTES INLINE :: qqh_2d_spline_vector
-  subroutine qqh_2d_spline_vector( xp, interp_in )
+  subroutine qqh_2d_spline_vector( xp, interp_in, mempool )
   !! Quadratic interpolation at integer cells, linear at
   !! half-integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
    shx = gcx
    shy = gcy
 
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d(gpl_xx, length)
-   call array_realloc_1d(gpl_sx, length)
+   call array_realloc_1d(mempool%mp_xx_1d_A, length)
+   call array_realloc_1d(mempool%mp_xx_1d_B, length)
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
 
-   interp_in%ihx_rank2(1:length) = int(gpl_xx(1:length))
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   interp_in%ihx_rank2(1:length) = int(xx(1:length))
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ihx_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%h_coeff_x_rank2 )
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_y_rank2 )
 
-   interp_in%ihy_rank2(1:length) = int(gpl_xx(1:length))
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   interp_in%ihy_rank2(1:length) = int(xx(1:length))
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ihy_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx(1:length), interp_in%h_coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%h_coeff_y_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ihx_rank2(1:length) - 1
@@ -432,31 +442,35 @@
   !======================
 
   !DIR$ ATTRIBUTES INLINE :: qden_2d_wgh_vector
-  subroutine qden_2d_wgh_vector( xp, interp_in )
+  subroutine qden_2d_wgh_vector( xp, interp_in, mempool )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d( gpl_xx, length )
-   call array_realloc_1d( gpl_sx, length )
+   call array_realloc_1d( mempool%mp_xx_1d_A, length )
+   call array_realloc_1d( mempool%mp_xx_1d_B, length )
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
    shy = gcy
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length) + half )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) + half )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int( xx(1:length) + half )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_y_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
@@ -492,31 +506,35 @@
   !==========================
 
   !DIR$ ATTRIBUTES INLINE :: cden_2d_wgh_vector
-  subroutine cden_2d_wgh_vector( xp, interp_in )
+  subroutine cden_2d_wgh_vector( xp, interp_in, mempool )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d( gpl_xx, length )
-   call array_realloc_1d( gpl_sx, length )
+   call array_realloc_1d( mempool%mp_xx_1d_A, length )
+   call array_realloc_1d( mempool%mp_xx_1d_B, length )
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
    shy = gcy
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length) )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call third_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call third_order( sx(1:length), interp_in%coeff_x_rank2 )
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int( xx(1:length) )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call third_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
+   call third_order( sx(1:length), interp_in%coeff_y_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
@@ -570,43 +588,47 @@
   !=================================
 
   !DIR$ ATTRIBUTES INLINE :: qlh_3d_spline_vector
-  subroutine qlh_3d_spline_vector( xp, interp_in )
+  subroutine qlh_3d_spline_vector( xp, interp_in, mempool )
    !! Quadratic interpolation at integer cells, linear at
    !! half-integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d( gpl_xx, length)
-   call array_realloc_1d( gpl_sx, length)
+   call array_realloc_1d( mempool%mp_xx_1d_A, length )
+   call array_realloc_1d( mempool%mp_xx_1d_B, length )
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
    shy = gcy
    shz = gcz
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
-   call first_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
+   call first_order( sx(1:length), interp_in%h_coeff_x_rank2 )
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
-   call first_order( gpl_sx(1:length), interp_in%h_coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_y_rank2 )
+   call first_order( sx(1:length), interp_in%h_coeff_y_rank2 )
 
-   gpl_xx(1:length) = shz + xp(1:length, 3)
-   interp_in%iz_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shz + xp(1:length, 3)
+   interp_in%iz_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_z_rank2 )
-   call first_order( gpl_sx(1:length), interp_in%h_coeff_z_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_z_rank2 )
+   call first_order( sx(1:length), interp_in%h_coeff_z_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ix_rank2(1:length)
@@ -672,59 +694,63 @@
   end subroutine
 
   !DIR$ ATTRIBUTES INLINE :: qqh_3d_spline_vector
-  subroutine qqh_3d_spline_vector( xp, interp_in )
+  subroutine qqh_3d_spline_vector( xp, interp_in, mempool )
   !! Quadratic interpolation at integer cells, linear at
   !! half-integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
 
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d( gpl_xx, length)
-   call array_realloc_1d( gpl_sx, length)
+   call array_realloc_1d( mempool%mp_xx_1d_A, length )
+   call array_realloc_1d( mempool%mp_xx_1d_B, length )
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
    shy = gcy
    shz = gcz
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
 
-   interp_in%ihx_rank2(1:length) = int(gpl_xx(1:length))
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   interp_in%ihx_rank2(1:length) = int(xx(1:length))
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ihx_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx(1:length), interp_in%h_coeff_x_rank2 ) 
+   call second_order( sx(1:length), interp_in%h_coeff_x_rank2 ) 
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_y_rank2 )
 
-   interp_in%ihy_rank2(1:length) = int(gpl_xx(1:length))
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   interp_in%ihy_rank2(1:length) = int(xx(1:length))
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ihy_rank2(1:length), dp) - half
 
-   call second_order( gpl_sx(1:length), interp_in%h_coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%h_coeff_y_rank2 )
 
-   gpl_xx(1:length) = shz + xp(1:length, 3)
-   interp_in%iz_rank2(1:length) = int(gpl_xx(1:length) + half)
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shz + xp(1:length, 3)
+   interp_in%iz_rank2(1:length) = int(xx(1:length) + half)
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_z_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_z_rank2 )
 
-   interp_in%ihz_rank2(1:length) = int(gpl_xx(1:length))
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   interp_in%ihz_rank2(1:length) = int(xx(1:length))
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ihz_rank2(1:length), dp) - half
 
-    call second_order( gpl_sx(1:length), interp_in%h_coeff_z_rank2 )
+    call second_order( sx(1:length), interp_in%h_coeff_z_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%ihx_rank2(1:length) = interp_in%ihx_rank2(1:length) - 1
@@ -773,39 +799,43 @@
   !================================
 
   !DIR$ ATTRIBUTES INLINE :: qden_3d_wgh_vector
-  subroutine qden_3d_wgh_vector( xp, interp_in )
+  subroutine qden_3d_wgh_vector( xp, interp_in, mempool )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d(gpl_xx, length)
-   call array_realloc_1d(gpl_sx, length)
+   call array_realloc_1d( mempool%mp_xx_1d_A, length )
+   call array_realloc_1d( mempool%mp_xx_1d_B, length )
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
    shy = gcy
    shz = gcz
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) + half )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length) + half )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_x_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_x_rank2 )
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) + half )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int( xx(1:length) + half )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call second_order( gpl_sx(1:length), interp_in%coeff_y_rank2 )
+   call second_order( sx(1:length), interp_in%coeff_y_rank2 )
 
-   gpl_xx(1:length) = shz + xp(1:length, 3)
-   interp_in%iz_rank2(1:length) = int( gpl_xx(1:length) + half )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shz + xp(1:length, 3)
+   interp_in%iz_rank2(1:length) = int( xx(1:length) + half )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-    call second_order( gpl_sx(1:length), interp_in%coeff_z_rank2 )
+    call second_order( sx(1:length), interp_in%coeff_z_rank2 )
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1
@@ -851,39 +881,43 @@
   end subroutine
 
   !DIR$ ATTRIBUTES INLINE :: cden_3d_wgh_vector
-  subroutine cden_3d_wgh_vector( xp, interp_in )
+  subroutine cden_3d_wgh_vector( xp, interp_in, mempool )
    !! Quadratic interpolation at integer cells
    real (dp), intent (in), dimension(:, :) :: xp
    type(interp_coeff), intent(inout) :: interp_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:) :: xx => null(), sx => null()
    integer :: length
    !======================
    length = SIZE( xp, DIM=1 )
-   call array_realloc_1d(gpl_xx, length)
-   call array_realloc_1d(gpl_sx, length)
+   call array_realloc_1d( mempool%mp_xx_1d_A, length )
+   call array_realloc_1d( mempool%mp_xx_1d_B, length )
+   xx => mempool%mp_xx_1d_A
+   sx => mempool%mp_xx_1d_B
    shx = gcx
    shy = gcy
    shz = gcz
 
-   gpl_xx(1:length) = shx + xp(1:length, 1)
-   interp_in%ix_rank2(1:length) = int( gpl_xx(1:length) )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shx + xp(1:length, 1)
+   interp_in%ix_rank2(1:length) = int( xx(1:length) )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%ix_rank2(1:length), dp)
 
-   call third_order( gpl_sx(1:length), interp_in%coeff_x_rank2)
+   call third_order( sx(1:length), interp_in%coeff_x_rank2)
 
-   gpl_xx(1:length) = shy + xp(1:length, 2)
-   interp_in%iy_rank2(1:length) = int( gpl_xx(1:length) )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shy + xp(1:length, 2)
+   interp_in%iy_rank2(1:length) = int( xx(1:length) )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iy_rank2(1:length), dp)
 
-   call third_order( gpl_sx(1:length), interp_in%coeff_y_rank2)
+   call third_order( sx(1:length), interp_in%coeff_y_rank2)
 
-   gpl_xx(1:length) = shz + xp(1:length, 3)
-   interp_in%iz_rank2(1:length) = int( gpl_xx(1:length) )
-   gpl_sx(1:length) = gpl_xx(1:length) - &
+   xx(1:length) = shz + xp(1:length, 3)
+   interp_in%iz_rank2(1:length) = int( xx(1:length) )
+   sx(1:length) = xx(1:length) - &
     real(interp_in%iz_rank2(1:length), dp)
 
-   call third_order( gpl_sx(1:length), interp_in%coeff_y_rank2)
+   call third_order( sx(1:length), interp_in%coeff_y_rank2)
 
    interp_in%ix_rank2(1:length) = interp_in%ix_rank2(1:length) - 1
    interp_in%iy_rank2(1:length) = interp_in%iy_rank2(1:length) - 1

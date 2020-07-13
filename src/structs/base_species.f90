@@ -47,7 +47,6 @@ module base_species
  integer, parameter :: B_Z_PARTICLE = -8
 
  real(dp), allocatable, dimension(:), save :: bs_temp_1d
- real(dp), allocatable, dimension(:, :), save :: bs_temp_2d
 
  type track_data_t
   logical, public :: tracked = .false.
@@ -88,7 +87,11 @@ module base_species
   real, private :: temperature = 0
   !! Initial temperature given to the species
   type(track_data_t), public :: track_data
-  !! Type containing all the tracking datas 
+  !! Type containing all the tracking datas
+  logical :: test = .false.
+  !! Indicates if the species is test (generates current)
+  logical :: mobile = .true.
+  !! Indicates either if the species moves or it's frozen
  contains
   procedure, public, pass :: istracked => istracked_scalars
   procedure, public, pass :: how_many => how_many_scalars

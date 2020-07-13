@@ -21,15 +21,16 @@
 !*****************************************************************************************************!
 
  module window
-  use util, only: init_random_seed, gasdev
-  use pstruct_data
-  use fstruct_data
   use common_param
+  use fstruct_data
   use grid_param
+  use memory_pool
   use mpi_field_interface
   use mpi_part_interface
+  use pstruct_data
   use run_data_info, only: part_numbers
   use tracking, only: set_tracked_particle_index
+  use util, only: init_random_seed, gasdev
 
   implicit none
   !===============================
@@ -57,10 +58,11 @@
   end interface
  contains
 
-  subroutine add_particles_new(spec_in, spec_aux_in, np, i1, i2, ic)
+  subroutine add_particles_new(spec_in, spec_aux_in, np, i1, i2, ic, mempool)
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: np, i1, i2, ic
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: n, j2, k2, n_parts
 
    n = np
@@ -84,7 +86,7 @@
     wghpt(:, ic), loc_wghyz(:, :, ic), i1, i2, j2, k2, np)
    end if
 
-   call set_tracked_particle_index( spec_in, np + 1, np + n_parts, ic)
+   call set_tracked_particle_index( spec_in, np + 1, np + n_parts, ic, mempool)
    call spec_in(ic)%check_tracking()
    if( spec_in(ic)%istracked() .and. (.not. spec_in(ic)%empty) ) then
     select case (spec_in(ic)%pick_dimensions())
@@ -159,10 +161,11 @@
   end subroutine
   !---------------------------
 
-  subroutine particles_inject_new(xmx, spec_in, spec_aux_in)
+  subroutine particles_inject_new(xmx, spec_in, spec_aux_in, mempool)
    type(species_new), dimension(:), allocatable, intent(inout) :: spec_in
    type(species_aux), dimension(:), allocatable, intent(inout) :: spec_aux_in
    real (dp), intent (in) :: xmx
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic, ix, npt_inj(4), np_old, np_new
    integer :: i1, i2, q
    integer :: j2, k2, ndv
@@ -221,7 +224,7 @@
      loc_npart(imody, imodz, imodx, ic) = np_new
     end if
     q = np_old
-    call add_particles(spec_in, spec_aux_in, q, i1, i2, ic)
+    call add_particles(spec_in, spec_aux_in, q, i1, i2, ic, mempool)
    end do
    !=======================
   end subroutine
@@ -349,11 +352,12 @@
    loc_xgrid(p)%gmax = x(ip+1)
   end subroutine
   !========================================
-  subroutine comoving_coordinate_new(vb, w_nst, loc_it, spec_in, spec_aux_in)
+  subroutine comoving_coordinate_new(vb, w_nst, loc_it, spec_in, spec_aux_in, mempool)
    real (dp), intent (in) :: vb
    integer, intent (in) :: w_nst, loc_it
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: i, ic, nshx
    real (dp) :: dt_tot, dt_step
    logical, parameter :: mw = .true.
@@ -397,7 +401,7 @@
    end do
    if (pex1) then
     if (targ_in<=xmax .and. targ_end>xmax) then
-     call particles_inject(xmax, spec_in, spec_aux_in)
+     call particles_inject(xmax, spec_in, spec_aux_in, mempool)
     end if
    end if
   end subroutine
@@ -454,10 +458,11 @@
    end if
   end subroutine
   !====================================
-  subroutine lp_window_xshift_new(witr, init_iter, spec_in, spec_aux_in)
+  subroutine lp_window_xshift_new(witr, init_iter, spec_in, spec_aux_in, mempool)
    integer, intent (in) :: witr, init_iter
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: i1, n1p, nc_env
    integer :: ix, nshx, wi2, ic
    real (dp), save :: xlapse, dt_step
@@ -530,7 +535,7 @@
     ! right-shifted x-coordinate in MPI domains
     if (targ_in<=xmax) then
      if (targ_end>xmax) then
-      call particles_inject(loc_xgrid(imodx)%gmax, spec_in, spec_aux_in)
+      call particles_inject(loc_xgrid(imodx)%gmax, spec_in, spec_aux_in, mempool)
      end if
     end if
     call part_numbers

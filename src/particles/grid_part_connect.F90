@@ -98,12 +98,14 @@
   !========= SECTION FOR FIELDS ASSIGNEMENT
  contains
 
-  subroutine set_part1d_acc_new(ef, sp_loc, pt, np, ndf)
+  subroutine set_part1d_acc_new(ef, sp_loc, pt, np, ndf, mempool)
    !To be checked, actually never used
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
    integer :: spl_cell, spl_h_cell
    integer :: i1, i2, j2, n
    !=================================
@@ -112,19 +114,21 @@
    if ( sp_loc%empty ) return
    !================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(gpc_xx, np, 1)
+   call xx_realloc(mempool%mp_xx_2d_A, np, 1)
+   xx => mempool%mp_xx_2d_A
    !================================
    spl_cell = 2
    spl_h_cell = 2
    select case (ndf)
    case (3)
 
-    call xx_realloc(gpc_ap, np, 3)
-    gpc_ap(1:np, 1:3) = zero_dp
+    call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+    ap => mempool%mp_xx_2d_B
+    ap(1:np, 1:3) = zero_dp
     j2 = 1
-    gpc_xx(1:np, 1) = sp_loc%x(1:np)
+    xx(1:np, 1) = sp_loc%x(1:np)
     
-    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp, mp )
+    call qqh_1d_spline( xx(1:np, 1:1), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                axh => interp%h_coeff_x_rank2, &
@@ -134,25 +138,26 @@
     do i1 = 0, spl_cell
      do n = 1, np
       i2 = i1 + ih(n)
-      gpc_ap(n, 1) = gpc_ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
-      gpc_ap(n, 3) = gpc_ap(n, 3) + axh(n, i1)*ef(i2, j2, 1, 3) !Bz(i+1/2)
+      ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
+      ap(n, 3) = ap(n, 3) + axh(n, i1)*ef(i2, j2, 1, 3) !Bz(i+1/2)
       i2 = i1 + i(n)
-      gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
+      ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
      end do
     end do
 
     end associate
-    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
    !========================
    case (6)
     j2 = 1
-    call xx_realloc(gpc_ap, np, 6)
-    gpc_ap(1:np, 1:6) = zero_dp
-    gpc_xx(1:np, 1) = sp_loc%x(1:np) !the current particle positions
+    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    ap => mempool%mp_xx_2d_B
+    ap(1:np, 1:6) = zero_dp
+    xx(1:np, 1) = sp_loc%x(1:np) !the current particle positions
     
-    call qqh_1d_spline( gpc_xx(1:np, 1:1), interp, mp )
+    call qqh_1d_spline( xx(1:np, 1:1), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                axh => interp%h_coeff_x_rank2, &
@@ -162,24 +167,24 @@
     do i1 = 0, spl_cell
      do n = 1, np
       i2 = i1 + ih(n)
-      gpc_ap(n, 1) = gpc_ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
-      gpc_ap(n, 5) = gpc_ap(n, 5) + axh(n, i1)*ef(i2, j2, 1, 5) !By(i+1/2)
-      gpc_ap(n, 6) = gpc_ap(n, 6) + axh(n, i1)*ef(i2, j2, 1, 6) !Bz(i+1/2)
+      ap(n, 1) = ap(n, 1) + axh(n, i1)*ef(i2, j2, 1, 1) !Ex(i+1/2)
+      ap(n, 5) = ap(n, 5) + axh(n, i1)*ef(i2, j2, 1, 5) !By(i+1/2)
+      ap(n, 6) = ap(n, 6) + axh(n, i1)*ef(i2, j2, 1, 6) !Bz(i+1/2)
       i2 = i1 + i(n)
-      gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
-      gpc_ap(n, 3) = gpc_ap(n, 3) + ax1(n, i1)*ef(i2, j2, 1, 3) !Ez(i)
-      gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*ef(i2, j2, 1, 4) !Bx(i)
+      ap(n, 2) = ap(n, 2) + ax1(n, i1)*ef(i2, j2, 1, 2) !Ey(i)
+      ap(n, 3) = ap(n, 3) + ax1(n, i1)*ef(i2, j2, 1, 3) !Ez(i)
+      ap(n, 4) = ap(n, 4) + ax1(n, i1)*ef(i2, j2, 1, 4) !Bx(i)
      end do
     end do
 
     end associate
 
-    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
   end subroutine
 
@@ -253,12 +258,14 @@
    end select
   end subroutine
   !===========================
-  subroutine set_part2d_hcell_acc_new(ef, sp_loc, pt, np, ndf)
+  subroutine set_part2d_hcell_acc_new(ef, sp_loc, pt, np, ndf, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndf
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
    real (dp) :: dvol, dvol1
    integer :: i1, j1, i2, j2, n, spl_cell, spl_h_cell
    !================================
@@ -271,18 +278,20 @@
    if ( sp_loc%empty ) return
    !=====================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(gpc_xx, np, 2)
+   call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+   xx => mempool%mp_xx_2d_A
    !================================
    spl_cell = 2
    spl_h_cell = 2
    select case (ndf) !Field components
    case (3)
-    call xx_realloc( gpc_ap, np, 3)
-    gpc_ap(1:np, 1:3) = zero_dp
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call xx_realloc( mempool%mp_xx_2d_B, np, 3)
+    ap => mempool%mp_xx_2d_B
+    ap(1:np, 1:3) = zero_dp
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
+    call qqh_2d_spline( xx(1:np, 1:2), interp, mempool )
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
                axh => interp%h_coeff_x_rank2, &
@@ -299,7 +308,7 @@
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
       end do
      end do
      do j1 = 0, spl_h_cell
@@ -308,30 +317,31 @@
       do i1 = 0, spl_cell
        i2 = i(n) + i1
        dvol1 = ax1(n, i1)*dvol
-       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
+       ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
       end do
      end do
     end do
 
     end associate
 
-    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), BZ_COMP, lb=1, ub=np)
     !==============
    case (6)
     !=====================
-    call xx_realloc( gpc_ap, np, 6)
-    gpc_ap(1:np, 1:6) = zero_dp
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call xx_realloc( mempool%mp_xx_2d_B, np, 6)
+    ap => mempool%mp_xx_2d_B
+    ap(1:np, 1:6) = zero_dp
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
+    call qqh_2d_spline( xx(1:np, 1:2), interp, mempool )
     
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -349,13 +359,13 @@
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
-       gpc_ap(n, 5) = gpc_ap(n, 5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
+       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
+       ap(n, 5) = ap(n, 5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
       end do
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
        dvol1 = ax1(n, i1)*dvol
-       gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
+       ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
       end do
      end do
      do j1 = 0, spl_h_cell
@@ -364,25 +374,25 @@
       do i1 = 0, spl_cell
        i2 = i(n) + i1
        dvol1 = ax1(n, i1)*dvol
-       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
-       gpc_ap(n, 4) = gpc_ap(n, 4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
+       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
+       ap(n, 4) = ap(n, 4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
        dvol1 = axh(n, i1)*dvol
-       gpc_ap(n, 6) = gpc_ap(n, 6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
+       ap(n, 6) = ap(n, 6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
       end do
      end do
     end do
 
     end associate
 
-    call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
    end select
    !=====================
   end subroutine
@@ -510,11 +520,13 @@
    !=====================
   end subroutine
   !====================================
-  subroutine set_part3d_hcell_acc_new(ef, sp_loc, pt, np)
+  subroutine set_part3d_hcell_acc_new(ef, sp_loc, pt, np, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
    integer, intent (in) :: np
    real (dp) :: dvol
    integer :: i1, j1, i2, j2, k1, k2, n, spl_cell, spl_h_cell
@@ -530,17 +542,19 @@
    if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(gpc_xx, np, 3)
+   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
    !================================
-   call xx_realloc(gpc_ap, np, 6)
-   gpc_ap(1:np, 1:6) = zero_dp
-   gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-   gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-   gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+   call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+   xx => mempool%mp_xx_2d_A
+   ap => mempool%mp_xx_2d_B
+   ap(1:np, 1:6) = zero_dp
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
 
    spl_cell = 2
    spl_h_cell = 2
-   call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
+   call qqh_3d_spline( xx(1:np, 1:3), interp, mempool )
    !==========================
 
    associate( ax1 => interp%coeff_x_rank2, &
@@ -572,7 +586,7 @@
       dvol = ay1(n, j1)*az1(n, k1)
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       gpc_ap(n, 1) = gpc_ap(n, 1) + axh(n, i1)*dvol*ef(i2, j2, k2, 1)
+       ap(n, 1) = ap(n, 1) + axh(n, i1)*dvol*ef(i2, j2, k2, 1)
       end do
      end do
      do j1 = 0, spl_h_cell
@@ -580,11 +594,11 @@
       dvol = ayh(n, j1)*az1(n, k1)
       do i1 = 0, spl_cell
        i2 = i(n) + i1
-       gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2)
+       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       gpc_ap(n, 6) = gpc_ap(n, 6) + axh(n, i1)*dvol*ef(i2, j2, k2, 6)
+       ap(n, 6) = ap(n, 6) + axh(n, i1)*dvol*ef(i2, j2, k2, 6)
       end do
      end do
     end do
@@ -605,7 +619,7 @@
       dvol = ayh(n, j1)*azh(n, k1)
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
-       gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4)
+       ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4)
       end do
      end do
      do j1 = 0, spl_cell
@@ -613,23 +627,23 @@
       dvol = ay1(n, j1)*azh(n, k1)
       do i1 = 0, spl_h_cell
        i2 = ih(n) + i1
-       gpc_ap(n, 5) = gpc_ap(n, 5) + axh(n, i1)*dvol*ef(i2, j2, k2, 5)
+       ap(n, 5) = ap(n, 5) + axh(n, i1)*dvol*ef(i2, j2, k2, 5)
       end do
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
-       gpc_ap(n, 3) = gpc_ap(n, 3) + ax1(n, i1)*dvol*ef(i2, j2, k2, 3)
+       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*ef(i2, j2, k2, 3)
       end do
      end do
     end do
    end do
 
    end associate
-   call pt%set_component( gpc_ap(1:np, 1), EX_COMP, lb=1, ub=np)
-   call pt%set_component( gpc_ap(1:np, 2), EY_COMP, lb=1, ub=np)
-   call pt%set_component( gpc_ap(1:np, 3), EZ_COMP, lb=1, ub=np)
-   call pt%set_component( gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
-   call pt%set_component( gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
-   call pt%set_component( gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 1), EX_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 2), EY_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 3), EZ_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 4), BX_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 5), BY_COMP, lb=1, ub=np)
+   call pt%set_component( ap(1:np, 6), BZ_COMP, lb=1, ub=np)
 
   end subroutine
   !======================================
@@ -749,14 +763,16 @@
   end subroutine
   !======================================
 
-  subroutine set_ion_efield_new(ef, sp_loc, pt, np)
+  subroutine set_ion_efield_new(ef, sp_loc, pt, np, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null()
+   real(dp), pointer, contiguous, dimension(:) :: ef_sqr => null()
 
-   real (dp), allocatable, dimension(:) :: ef_sqr
    real (dp) :: dvol, ex, ey, ez
    integer :: n, ip1, jp1, kp1, ip2, jp2, kp2
 
@@ -774,16 +790,16 @@
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !================================
-   allocate( ef_sqr(np), source=zero_dp )
    
    select case (ndim)
    case (2)
-    call xx_realloc(gpc_xx, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    xx => mempool%mp_xx_2d_A
     kp2 = 1
     !==========================
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( xx(1:np, 1:2), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -794,6 +810,11 @@
                j => interp%iy_rank2, &
                jh => interp%ihy_rank2 )
     !==========================
+    ! Warning: this call must be after qqh_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    ef_sqr => mempool%mp_xx_1d_A
+    ef_sqr(1:np) = zero_dp
     do n = 1, np
      ! Ex(i+1/2,j,k)
      !==============
@@ -828,12 +849,13 @@
 
    case (3)
     !==========================
-    call xx_realloc(gpc_xx, np, 3)
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    xx => mempool%mp_xx_2d_A
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
 
-    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
+    call qqh_3d_spline( xx(1:np, 1:3), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -847,6 +869,12 @@
                jh => interp%ihy_rank2, &
                k => interp%iz_rank2, &
                kh => interp%ihz_rank2 )
+    !==========================
+    ! Warning: this call must be after qqh_3d_spline since
+    ! in that routine the 1d arrays are used
+     call array_realloc_1d(mempool%mp_xx_1d_A, np)
+     ef_sqr => mempool%mp_xx_1d_A
+     ef_sqr(1:np) = zero_dp
     !==========================
     ! Here Quadratic shapes are used
     do n = 1, np
@@ -1055,14 +1083,17 @@
   ! ENV field assignement section
   !===========================
   
-  subroutine set_env_acc_new(ef, av, sp_loc, pt, np, dt_step)
+  subroutine set_env_acc_new(ef, av, sp_loc, pt, np, dt_step, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :), av(:, :, :, :)
    type (species_new), intent (inout) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
    real (dp), intent (in) :: dt_step
-   real (dp), allocatable, dimension(:) :: inv_gam, gam, aa1, b1, dgam
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
+   real (dp), pointer, contiguous, dimension(:) :: inv_gam => null(), aa1 => null()
+   real (dp), pointer, contiguous, dimension(:) :: b1 => null(), dgam => null()
    real (dp) :: dvol, dvol1
    real (dp) :: dth, ch
    integer :: i1, j1, k1, i2, j2, k2
@@ -1093,25 +1124,22 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
-   allocate( gam(np) )
-   allocate( dgam(np) )
-   allocate( inv_gam(np) )
-   allocate( aa1(np), source=zero_dp )
-   allocate( b1(np), source=zero_dp )
    !========================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !========================================
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(gpc_xx, np, 2)
-    call xx_realloc(gpc_ap, np, 6)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    xx => mempool%mp_xx_2d_A
+    ap => mempool%mp_xx_2d_B
     !==========================
-    gpc_ap(1:np, 1:6) = zero_dp
+    ap(1:np, 1:6) = zero_dp
     k2 = 1
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( xx(1:np, 1:2), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -1125,19 +1153,32 @@
     !     upart(1:2) = sp_loc%part(n, 3:4) !the current particle  momenta
     !     wgh_cmp = sp_loc%part(n, 5) !the current particle (weight,charge)
     !==========================
+    ! Warning: this call must be after qqh_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    call array_realloc_1d(mempool%mp_xx_1d_B, np)
+    call array_realloc_1d(mempool%mp_xx_1d_C, np)
+    call array_realloc_1d(mempool%mp_xx_1d_D, np)
+    dgam => mempool%mp_xx_1d_A
+    inv_gam => mempool%mp_xx_1d_B
+    aa1 => mempool%mp_xx_1d_C
+    b1 => mempool%mp_xx_1d_D
+    aa1(1:np) = zero_dp
+    b1(1:np) = zero_dp
+    !==========================
     do n = 1, np
      do j1 = 0, stl
       j2 = j(n) + j1
       dvol = ay1(n, j1)
       do i1 = 0, stl
        i2 = i(n) + i1
-       gpc_ap(n, 6) = gpc_ap(n, 6) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned F=a^2/2 field
+       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned F=a^2/2 field
       end do
       do i1 = 0, stl
        i2 = ih(n) + i1
        dvol1 = dvol*axh1(n, i1)
-       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
-       gpc_ap(n, 4) = gpc_ap(n, 4) + dvol1*av(i2, j2, k2, 2)
+       ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
+       ap(n, 4) = ap(n, 4) + dvol1*av(i2, j2, k2, 2)
        !ap(4)=ap(4)+dvol1*dx_inv*(av(i2+1,j2,k2,1)-av(i2,j2,k2,1))
       end do
      end do
@@ -1147,56 +1188,57 @@
       do i1 = 0, stl
        i2 = i(n) + i1
        dvol1 = dvol*ax1(n, i1)
-       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
-       gpc_ap(n, 5) = gpc_ap(n, 5) + dvol1*av(i2, j2, k2, 3)
+       ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
+       ap(n, 5) = ap(n, 5) + dvol1*av(i2, j2, k2, 3)
        !ap(5)=ap(5)+dvol1*dy_inv*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))
       end do
       do i1 = 0, stl
        i2 = ih(n) + i1
-       gpc_ap(n, 3) = gpc_ap(n, 3) + axh1(n, i1)*dvol*ef(i2, j2, k2, 3) !Bz(i+1/2,j+1/2,k)
+       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*ef(i2, j2, k2, 3) !Bz(i+1/2,j+1/2,k)
       end do
      end do
     end do
 
     end associate
     !=========================
-    call sp_loc%compute_gamma(pond_pot=gpc_ap(1:np, 6))
+    call sp_loc%compute_gamma(pond_pot=ap(1:np, 6))
     inv_gam(1:np) = sp_loc%gamma_inv(1:np) !1/gamma^{n-1/2}
-    gpc_ap(1:np, 1:3) = ch*gpc_ap(1:np, 1:3)
-    gpc_ap(1:np, 4:5) = 0.5*ch*ch*gpc_ap(1:np, 4:5)
-    gpc_xx(1:np, 1) = sp_loc%px(1:np)
-    gpc_xx(1:np, 2) = sp_loc%py(1:np)
+    ap(1:np, 1:3) = ch*ap(1:np, 1:3)
+    ap(1:np, 4:5) = 0.5*ch*ch*ap(1:np, 4:5)
+    xx(1:np, 1) = sp_loc%px(1:np)
+    xx(1:np, 2) = sp_loc%py(1:np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 2
-     aa1(1:np) = aa1(1:np) + gpc_ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
-     b1(1:np) = b1(1:np) + gpc_ap(1:np, n + 3)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+     aa1(1:np) = aa1(1:np) + ap(1:np, n)*xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + ap(1:np, n + 3)*xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
     end do
-    gam(1:np) = one_dp/inv_gam(1:np)
-    dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
-    inv_gam(1:np) = (gam(1:np)-dgam(1:np))*inv_gam(1:np)*inv_gam(1:np)
+    dgam(1:np) = dth*inv_gam(1:np)*(aa1(1:np)-b1(1:np)*inv_gam(1:np))
+    inv_gam(1:np) = (one_dp - dgam(1:np)*inv_gam(1:np))*inv_gam(1:np)
     !ap(3)=q*B/gamp, ap(4:5)= q*Grad[F]/2*gamp
     do n = 3, 5
-     gpc_ap(1:np, n) = gpc_ap(1:np, n)*inv_gam(1:np)
+     ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
     end do
-    call pt%set_component(gpc_ap(1:np, 1) - gpc_ap(1:np, 4), FX_COMP, lb=1, ub=np)
-    call pt%set_component(gpc_ap(1:np, 2) - gpc_ap(1:np, 5), FY_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 1) - ap(1:np, 4), FX_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 2) - ap(1:np, 5), FY_COMP, lb=1, ub=np)
     ! Lorentz force already multiplied by q    
-    call pt%set_component(gpc_ap(1:np, 3), BZ_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 3), BZ_COMP, lb=1, ub=np)
     call pt%set_component(inv_gam(1:np)*sp_loc%weight(1:np), &
      W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
 
    case (3)
     !==========================
-    call xx_realloc(gpc_xx, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call xx_realloc(mempool%mp_xx_2d_B, np, 10)
+    xx => mempool%mp_xx_2d_A
+    ap => mempool%mp_xx_2d_B
     !==========================
-    call xx_realloc(gpc_ap, np, 10)
-    gpc_ap(1:np, 1:10) = zero_dp
+    ap(1:np, 1:10) = zero_dp
 
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qqh_3d_spline( xx(1:np, 1:3), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -1210,7 +1252,19 @@
                jh => interp%ihy_rank2, &
                k => interp%iz_rank2, &
                kh => interp%ihz_rank2 )
-
+    !=====================================================
+    ! Warning: this call must be after qqh_3d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    call array_realloc_1d(mempool%mp_xx_1d_B, np)
+    call array_realloc_1d(mempool%mp_xx_1d_C, np)
+    call array_realloc_1d(mempool%mp_xx_1d_D, np)
+    dgam => mempool%mp_xx_1d_A
+    inv_gam => mempool%mp_xx_1d_B
+    aa1 => mempool%mp_xx_1d_C
+    b1 => mempool%mp_xx_1d_D
+    aa1(1:np) = zero_dp
+    b1(1:np) = zero_dp
     do n = 1, np
      do k1 = 0, stl
       k2 = k(n) + k1
@@ -1219,13 +1273,13 @@
        dvol = ay1(n, j1)*az1(n, k1)
        do i1 = 0, stl
         i2 = i1 + i(n)
-        gpc_ap(n, 10) = gpc_ap(n, 10) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned Phi=a^2/2 field
+        ap(n, 10) = ap(n, 10) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned Phi=a^2/2 field
        end do
        do i1 = 0, stl
         i2 = i1 + ih(n)
         dvol1 = dvol*axh1(n, i1)
-        gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
-        gpc_ap(n, 7) = gpc_ap(n, 7) + dvol1*av(i2, j2, k2, 2)
+        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
+        ap(n, 7) = ap(n, 7) + dvol1*av(i2, j2, k2, 2)
        end do
       end do
       do j1 = 0, stl
@@ -1234,12 +1288,12 @@
        do i1 = 0, 2
         i2 = i(n) + i1
         dvol1 = dvol*ax1(n, i1)
-        gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
-        gpc_ap(n, 8) = gpc_ap(n, 8) + dvol1*av(i2, j2, k2, 3)
+        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
+        ap(n, 8) = ap(n, 8) + dvol1*av(i2, j2, k2, 3)
        end do
        do i1 = 0, stl
         i2 = i1 + ih(n)
-        gpc_ap(n, 6) = gpc_ap(n, 6) + axh1(n, i1)*dvol*ef(i2, j2, k2, 6) !Bz(i+1/2,j+1/2,k)
+        ap(n, 6) = ap(n, 6) + axh1(n, i1)*dvol*ef(i2, j2, k2, 6) !Bz(i+1/2,j+1/2,k)
        end do
       end do
      end do
@@ -1251,7 +1305,7 @@
        dvol = ayh1(n, j1)*azh1(n, k1)
        do i1 = 0, stl
         i2 = i1 + i(n)
-        gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4) !Bx(i,j+1/2,k+1/2)
+        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4) !Bx(i,j+1/2,k+1/2)
        end do
       end do
       do j1 = 0, stl
@@ -1259,13 +1313,13 @@
        dvol = ay1(n, j1)*azh1(n, k1)
        do i1 = 0, stl
         i2 = ih(n) + i1
-        gpc_ap(n, 5) = gpc_ap(n, 5) + axh1(n, i1)*dvol*ef(i2, j2, k2, 5) !By(i+1/2,j,k+1/2)
+        ap(n, 5) = ap(n, 5) + axh1(n, i1)*dvol*ef(i2, j2, k2, 5) !By(i+1/2,j,k+1/2)
        end do
        do i1 = 0, stl
         i2 = i1 + i(n)
         dvol1 = dvol*ax1(n, i1)
-        gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*ef(i2, j2, k2, 3) !Ez and Dz[F] (i,j,k+1/2)
-        gpc_ap(n, 9) = gpc_ap(n, 9) + dvol1*av(i2, j2, k2, 4)
+        ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, k2, 3) !Ez and Dz[F] (i,j,k+1/2)
+        ap(n, 9) = ap(n, 9) + dvol1*av(i2, j2, k2, 4)
        end do
       end do
      end do
@@ -1273,32 +1327,31 @@
 
     end associate
     !=========================
-    call sp_loc%compute_gamma(pond_pot=gpc_ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
+    call sp_loc%compute_gamma(pond_pot=ap(1:np, 10)) ! Check if needed, probably can be computed in lpf_env_positions
     inv_gam(1:np) = sp_loc%gamma_inv(1:np) !1/gamma^{n-1/2}
-    gpc_ap(1:np, 1:6) = ch*gpc_ap(1:np, 1:6)
-    gpc_ap(1:np, 7:9) = 0.5*ch*ch*gpc_ap(1:np, 7:9)
-    gpc_xx(1:np, 1) = sp_loc%px(1:np)
-    gpc_xx(1:np, 2) = sp_loc%py(1:np)
-    gpc_xx(1:np, 3) = sp_loc%pz(1:np)
+    ap(1:np, 1:6) = ch*ap(1:np, 1:6)
+    ap(1:np, 7:9) = 0.5*ch*ch*ap(1:np, 7:9)
+    xx(1:np, 1) = sp_loc%px(1:np)
+    xx(1:np, 2) = sp_loc%py(1:np)
+    xx(1:np, 3) = sp_loc%pz(1:np)
     !  ap(1:2)=q(Ex,Ey)   ap(3)=q*Bz,ap(4:5)=q*q*[Dx,Dy]F/2
     do n = 1, 3
-     aa1(1:np) = aa1(1:np) + gpc_ap(1:np, n)*gpc_xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
-     b1(1:np) = b1(1:np) + gpc_ap(1:np, n + 6)*gpc_xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
+     aa1(1:np) = aa1(1:np) + ap(1:np, n)*xx(1:np, n) !Dt*(qE_ip_i)/2 ==> a
+     b1(1:np) = b1(1:np) + ap(1:np, n + 6)*xx(1:np, n) !Dt*(qD_iFp_i)/4 ===> c
     end do
-    gam(1:np) = one_dp/inv_gam(1:np)
-    dgam(1:np) = dth*inv_gam(1:np)*inv_gam(1:np)*(aa1(1:np)*gam(1:np)-b1(1:np))
-    inv_gam(1:np) = (gam(1:np)-dgam(1:np))*inv_gam(1:np)*inv_gam(1:np)
+    dgam(1:np) = dth*inv_gam(1:np)*(aa1(1:np)-b1(1:np)*inv_gam(1:np))
+    inv_gam(1:np) = (one_dp-dgam(1:np)*inv_gam(1:np))*inv_gam(1:np)
     !  ap(1:3)=q(Ex,Ey,Ez)   ap(4:6)=q(Bx,By,Bz),ap(7:9)=q[Dx,Dy,Dz]F/2
     do n = 4, 9
-     gpc_ap(1:np, n) = gpc_ap(1:np, n)*inv_gam(1:np)
+     ap(1:np, n) = ap(1:np, n)*inv_gam(1:np)
     end do
     ! Lorentz force already multiplied by q    
-    call pt%set_component(gpc_ap(1:np, 1) - gpc_ap(1:np, 7), FX_COMP, lb=1, ub=np)
-    call pt%set_component(gpc_ap(1:np, 2) - gpc_ap(1:np, 8), FY_COMP, lb=1, ub=np)
-    call pt%set_component(gpc_ap(1:np, 3) - gpc_ap(1:np, 9), FZ_COMP, lb=1, ub=np)
-    call pt%set_component(gpc_ap(1:np, 4), BX_COMP, lb=1, ub=np)
-    call pt%set_component(gpc_ap(1:np, 5), BY_COMP, lb=1, ub=np)
-    call pt%set_component(gpc_ap(1:np, 6), BZ_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 1) - ap(1:np, 7), FX_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 2) - ap(1:np, 8), FY_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 3) - ap(1:np, 9), FZ_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 4), BX_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 5), BY_COMP, lb=1, ub=np)
+    call pt%set_component(ap(1:np, 6), BZ_COMP, lb=1, ub=np)
     call pt%set_component(inv_gam(1:np)*sp_loc%weight(1:np), &
      W_COMP, lb=1, ub=np) !weight/gamp
     !=============================
@@ -1537,15 +1590,15 @@
   end subroutine
   !=======================================
 
-  subroutine set_ion_env_field_new(ef, sp_loc, pt, np, om0)
+  subroutine set_ion_env_field_new(ef, sp_loc, pt, np, om0, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
    real (dp), intent (in) :: om0
-
-   real (dp), allocatable, dimension(:, :) :: ap
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
    real (dp) :: dvol, ddx, ddy
    integer :: i1, j1, i2, j2, k1, k2, n
    !==============================
@@ -1573,15 +1626,17 @@
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(gpc_xx, np, 2)
-    call xx_realloc(gpc_ap, np, 6)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    xx => mempool%mp_xx_2d_A
+    ap => mempool%mp_xx_2d_B
     !==========================
-    gpc_ap(1:np, 1:6) = zero_dp
+    ap(1:np, 1:6) = zero_dp
     k2 = 1
 
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qqh_2d_spline( gpc_xx, interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( xx(1:np, 1:2), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -1598,13 +1653,13 @@
       dvol = ay1(n, j1)
       do i1 = 0, 2
        i2 = i1 + i(n)
-       gpc_ap(n, 1) = gpc_ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
-       gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+       ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
+       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
       end do
       do i1 = 0, 2
        i2 = i1 + ih(n)
-       gpc_ap(n, 3) = gpc_ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
-       gpc_ap(n, 4) = gpc_ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+       ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
       end do
      end do
      do j1 = 0, 2
@@ -1612,41 +1667,43 @@
       dvol = ayh1(n, j1)
       do i1 = 0, 2
        i2 = i(n) + i1
-       gpc_ap(n, 5) = gpc_ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
-       gpc_ap(n, 6) = gpc_ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+       ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
       end do
      end do
     end do
     !==================
     end associate
-    call pt%set_component( sqrt(gpc_ap(1:np, 1)*gpc_ap(1:np, 1)+gpc_ap(1:np, 2)*gpc_ap(1:np, 2)), &
+    call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
      POND_COMP, lb=1, ub=np) !The interpolated |A| potential
-    gpc_ap(1:np, 1) = om0*gpc_ap(1:np, 1) 
-    gpc_ap(1:np, 2) = om0*gpc_ap(1:np, 2)
-    gpc_ap(1:np, 3) = ddx*gpc_ap(1:np, 3)
-    gpc_ap(1:np, 4) = ddx*gpc_ap(1:np, 4)
-    gpc_ap(1:np, 5) = ddy*gpc_ap(1:np, 5)
-    gpc_ap(1:np, 6) = ddy*gpc_ap(1:np, 6)
+    ap(1:np, 1) = om0*ap(1:np, 1) 
+    ap(1:np, 2) = om0*ap(1:np, 2)
+    ap(1:np, 3) = ddx*ap(1:np, 3)
+    ap(1:np, 4) = ddx*ap(1:np, 4)
+    ap(1:np, 5) = ddy*ap(1:np, 5)
+    ap(1:np, 6) = ddy*ap(1:np, 6)
 
-    associate( aux => gpc_ap(1:np, 1)*gpc_ap(1:np, 1) + gpc_ap(1:np, 2)*gpc_ap(1:np, 2) + &
-               gpc_ap(1:np, 3)*gpc_ap(1:np, 3) + gpc_ap(1:np, 4)*gpc_ap(1:np, 4) + &
-               gpc_ap(1:np, 5)*gpc_ap(1:np, 5) + gpc_ap(1:np, 6)*gpc_ap(1:np, 6) + &
-               2*one_dp*(gpc_ap(1:np, 1)*gpc_ap(1:np, 4) - gpc_ap(1:np, 2)*gpc_ap(1:np, 3)))
+    associate( aux => ap(1:np, 1)*ap(1:np, 1) + ap(1:np, 2)*ap(1:np, 2) + &
+               ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
+               ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
+               2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
      call pt%set_component( aux, E_SQUARED, lb=1, ub=np )
     end associate
 
     !==========================
    case (3)
     !==========================
-    call xx_realloc(gpc_xx, np, 3)
-    call xx_realloc(gpc_ap, np, 6)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    xx => mempool%mp_xx_2d_A
+    ap => mempool%mp_xx_2d_B
     !==========================
-    gpc_ap(1:np, 1:6) = zero_dp
+    ap(1:np, 1:6) = zero_dp
 
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qqh_3d_spline( xx(1:np, 1:3), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -1669,13 +1726,13 @@
        dvol = ay1(n, j1)*az1(n, k1)
        do i1 = 0, 2
         i2 = i1 + i(n)
-        gpc_ap(n, 1) = gpc_ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
-        gpc_ap(n, 2) = gpc_ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+        ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
+        ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
        end do
        do i1 = 0, 2
         i2 = i1 + ih(n)
-        gpc_ap(n, 3) = gpc_ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
-        gpc_ap(n, 4) = gpc_ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+        ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+        ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
        end do
       end do
       do j1 = 0, 2
@@ -1683,26 +1740,26 @@
        dvol = ayh1(n, j1)*az1(n, k1)
        do i1 = 0, 2
         i2 = i(n) + i1
-        gpc_ap(n, 5) = gpc_ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
-        gpc_ap(n, 6) = gpc_ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+        ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+        ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
        end do
       end do
      end do
     end do
     end associate
-    call pt%set_component( sqrt(gpc_ap(1:np, 1)*gpc_ap(1:np, 1)+gpc_ap(1:np, 2)*gpc_ap(1:np, 2)), &
+    call pt%set_component( sqrt(ap(1:np, 1)*ap(1:np, 1)+ap(1:np, 2)*ap(1:np, 2)), &
     POND_COMP, lb=1, ub=np) !The interpolated |A| potential
-    gpc_ap(1:np, 1) = om0*gpc_ap(1:np, 1) 
-    gpc_ap(1:np, 2) = om0*gpc_ap(1:np, 2)
-    gpc_ap(1:np, 3) = ddx*gpc_ap(1:np, 3)
-    gpc_ap(1:np, 4) = ddx*gpc_ap(1:np, 4)
-    gpc_ap(1:np, 5) = ddy*gpc_ap(1:np, 5)
-    gpc_ap(1:np, 6) = ddy*gpc_ap(1:np, 6)
+    ap(1:np, 1) = om0*ap(1:np, 1) 
+    ap(1:np, 2) = om0*ap(1:np, 2)
+    ap(1:np, 3) = ddx*ap(1:np, 3)
+    ap(1:np, 4) = ddx*ap(1:np, 4)
+    ap(1:np, 5) = ddy*ap(1:np, 5)
+    ap(1:np, 6) = ddy*ap(1:np, 6)
     
-    associate( aux => gpc_ap(1:np, 1)*gpc_ap(1:np, 1) + gpc_ap(1:np, 2)*gpc_ap(1:np, 2) + &
-     gpc_ap(1:np, 3)*gpc_ap(1:np, 3) + gpc_ap(1:np, 4)*gpc_ap(1:np, 4) + &
-     gpc_ap(1:np, 5)*gpc_ap(1:np, 5) + gpc_ap(1:np, 6)*gpc_ap(1:np, 6) + &
-     2*one_dp*(gpc_ap(1:np, 1)*gpc_ap(1:np, 4) - gpc_ap(1:np, 2)*gpc_ap(1:np, 3)))
+    associate( aux => ap(1:np, 1)*ap(1:np, 1) + ap(1:np, 2)*ap(1:np, 2) + &
+     ap(1:np, 3)*ap(1:np, 3) + ap(1:np, 4)*ap(1:np, 4) + &
+     ap(1:np, 5)*ap(1:np, 5) + ap(1:np, 6)*ap(1:np, 6) + &
+     2*one_dp*(ap(1:np, 1)*ap(1:np, 4) - ap(1:np, 2)*ap(1:np, 3)))
      call pt%set_component( aux, E_SQUARED, lb=1, ub=np )
     end associate
 
@@ -1879,12 +1936,14 @@
    !================================
   end subroutine
   !================================
-  subroutine set_env_grad_interp_new(av, sp_loc, pt, np, ndm)
+  subroutine set_env_grad_interp_new(av, sp_loc, pt, np, ndm, mempool)
 
    real (dp), intent (in) :: av(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np, ndm
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
    real (dp) :: dvol, dvol1
    integer ::i1, j1, i2, j2, k1, k2, n
 
@@ -1911,15 +1970,17 @@
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(gpc_xx, np, 2)
-    call xx_realloc(gpc_ap, np, 3)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+    xx => mempool%mp_xx_2d_A
+    ap => mempool%mp_xx_2d_B
     !==========================
-    gpc_ap(1:np, 1:3) = zero_dp
+    ap(1:np, 1:3) = zero_dp
     k2 = 1
 
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qqh_2d_spline( gpc_xx(1:np, 1:2), interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    call qqh_2d_spline( xx(1:np, 1:2), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -1937,9 +1998,9 @@
       do i1 = 0, 2
        i2 = i1 + ih(n)
        dvol1 = dvol*axh1(n, i1)
-       gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[Phi]
+       ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[Phi]
        i2 = i1 + i(n)
-       gpc_ap(n, 3) = gpc_ap(n, 3) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) ![Phi]
+       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) ![Phi]
       end do
      end do
      do j1 = 0, 2
@@ -1948,28 +2009,30 @@
       do i1 = 0, 2
        i2 = i(n) + i1
        dvol1 = dvol*ax1(n, i1)
-       gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[Phi]
+       ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[Phi]
       end do
      end do
     end do
 
     end associate
     !assigned grad[Phi] and Phi
-    call pt%set_component( gpc_ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 3), POND_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), POND_COMP, lb=1, ub=np)
     !=================================
    case (3)
     !==========================
-    call xx_realloc(gpc_xx, np, 3)
-    call xx_realloc(gpc_ap, np, 4)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call xx_realloc(mempool%mp_xx_2d_B, np, 4)
+    xx => mempool%mp_xx_2d_A
+    ap => mempool%mp_xx_2d_B
     !==========================
-    gpc_ap(1:np, 1:4) = zero_dp
+    ap(1:np, 1:4) = zero_dp
 
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qqh_3d_spline( gpc_xx(1:np, 1:3), interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qqh_3d_spline( xx(1:np, 1:3), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -1993,9 +2056,9 @@
        do i1 = 0, 2
         i2 = i1 + ih(n)
         dvol1 = dvol*axh1(n, i1)
-        gpc_ap(n, 1) = gpc_ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[F]
+        ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[F]
         i2 = i1 + i(n)
-        gpc_ap(n, 4) = gpc_ap(n, 4) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !Phi
+        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !Phi
        end do
       end do
       do j1 = 0, 2
@@ -2004,7 +2067,7 @@
        do i1 = 0, 2
         i2 = i(n) + i1
         dvol1 = dvol*ax1(n, i1)
-        gpc_ap(n, 2) = gpc_ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[F]
+        ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[F]
        end do
       end do
       k2 = kh(n) + k1
@@ -2014,17 +2077,17 @@
        do i1 = 0, 2
         i2 = i(n) + i1
         dvol1 = dvol*ax1(n, i1)
-        gpc_ap(n, 3) = gpc_ap(n, 3) + dvol1*av(i2, j2, k2, 4) !Dz[F]
+        ap(n, 3) = ap(n, 3) + dvol1*av(i2, j2, k2, 4) !Dz[F]
        end do
       end do
      end do
     end do
     end associate
     !assigned grad[Phi] and Phi
-    call pt%set_component( gpc_ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
-    call pt%set_component( gpc_ap(1:np, 4), POND_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 1), GRADF_X_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 2), GRADF_Y_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 3), GRADF_Z_COMP, lb=1, ub=np)
+    call pt%set_component( ap(1:np, 4), POND_COMP, lb=1, ub=np)
     !=================================
    end select
   end subroutine
@@ -2178,13 +2241,14 @@
    end select
   end subroutine
   !===========================
-  subroutine set_env_density_new(sp_loc, av, np, ic)
+  subroutine set_env_density_new(sp_loc, av, np, ic, mempool)
 
    type (species_aux), intent (inout) :: sp_loc
    real (dp), intent (inout) :: av(:, :, :, :)
    integer, intent (in) :: np, ic
-
-   real (dp), allocatable, dimension(:) :: weight
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
+   real (dp), pointer, contiguous, dimension(:) :: weight => null()
    real (dp) :: dvol, dvol1
    integer :: i1, j1, i2, j2, k1, k2, n
    !===============================================
@@ -2202,19 +2266,23 @@
    select case (ndim)
    case (2)
     k2 = 1
-    call xx_realloc(gpc_xx, np, 2)
-    allocate( weight(np) )
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    xx => mempool%mp_xx_2d_A
 
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
+    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
                i => interp%ix_rank2, &
                j => interp%iy_rank2 )
-
+    !==========================
+    ! Warning: this call must be after qqh_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    weight => mempool%mp_xx_1d_A
     weight = sp_loc%weight(1:np)
      !==========================
     do n = 1, np
@@ -2231,13 +2299,13 @@
     !========================
     end associate
    case (3)
-    call xx_realloc(gpc_xx, np, 3)
-    allocate( weight(np) )
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    xx => mempool%mp_xx_2d_A
 
-    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
-    call qden_3d_wgh( gpc_xx(1:np, 1:3), interp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    call qden_3d_wgh( xx(1:np, 1:3), interp, mempool )
 
     associate( ax1 => interp%coeff_x_rank2, &
                ay1 => interp%coeff_y_rank2, &
@@ -2245,7 +2313,11 @@
                i => interp%ix_rank2, &
                j => interp%iy_rank2, &
                k => interp%iz_rank2 )
-
+    !==========================
+    ! Warning: this call must be after qqh_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    weight => mempool%mp_xx_1d_A
     weight = sp_loc%weight(1:np)
     do n = 1, np
      do k1 = 0, 2
@@ -2354,12 +2426,13 @@
   !====================================================
   !========= PARTICLE ASSIGNEMENT TO GRID FOR CURRENT DENSITY
   !=============================
-  subroutine esirkepov_2d_curr_new(sp_loc, pt, jcurr, np)
+  subroutine esirkepov_2d_curr_new(sp_loc, pt, jcurr, np, mempool)
 
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (in) :: pt
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    real (dp), allocatable, dimension(:, :) :: axh, ayh
    real (dp), allocatable, dimension(:, :) :: currx, curry
@@ -2396,13 +2469,13 @@
     ! Interpolation on new positions
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp, mempool )
     
     ! Interpolation on old positions
     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
     
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old, mempool )
     
     ! Recycling gpc_xx since it's not needed anymore
     gpc_xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
@@ -2503,13 +2576,13 @@
     gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp )
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp, mempool )
     
     ! Interpolation on old positions
     gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
     gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
     
-    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old )
+    call qden_2d_wgh( gpc_xx(1:np, 1:2), interp_old, mempool )
     
     !========================================
     ! Computing velocity along z
@@ -2866,12 +2939,13 @@
   end subroutine
   !==========================================
   !=============3D=================
-  subroutine esirkepov_3d_curr_new(sp_loc, pt, jcurr, np)
+  subroutine esirkepov_3d_curr_new(sp_loc, pt, jcurr, np, mempool)
 
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (in) :: pt
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    real (dp), allocatable, dimension(:, :) :: axh0, axh1, ayh0, ayh1
    real (dp), allocatable, dimension(:, :) :: axh, ayh, azh
@@ -2921,14 +2995,14 @@
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
    
-   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp )
+   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp, mempool )
    
    ! Interpolation on old positions
    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
    
-   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp_old )
+   call qden_3d_wgh( gpc_xx(1:np, 1:3), interp_old, mempool )
 
    associate( ax1 => interp%coeff_x_rank2, &
               ay1 => interp%coeff_y_rank2, &
@@ -3254,12 +3328,13 @@
   !===============================
   ! NO CHARGE PRESERVING CURRENT DENSITY
   !=========================
-  subroutine ncdef_2d_curr_new(sp_loc, pt, jcurr, np)
+  subroutine ncdef_2d_curr_new(sp_loc, pt, jcurr, np, mempool)
 
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (in) :: pt
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    real (dp), allocatable, dimension(:, :) :: vp
    real (dp), allocatable, dimension(:) :: weight
@@ -3292,13 +3367,13 @@
    gpc_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
 
-   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp )
+   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp, mempool )
 
    ! Interpolation on old positions
    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
 
-   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp_old )
+   call qlh_2d_spline( gpc_xx(1:np, 1:2), interp_old, mempool )
    
    associate( ax1 => interp%coeff_x_rank2, &
               ay1 => interp%coeff_y_rank2, &
@@ -3443,12 +3518,13 @@
    end do
   end subroutine
   !========================
-  subroutine ncdef_3d_curr_new(sp_loc, pt, jcurr, np)
+  subroutine ncdef_3d_curr_new(sp_loc, pt, jcurr, np, mempool)
 
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (in) :: pt
    real (dp), intent (inout) :: jcurr(:, :, :, :)
    integer, intent (in) :: np
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    real (dp), allocatable, dimension(:, :) :: vp
    real (dp), allocatable, dimension(:) :: weight
@@ -3488,14 +3564,14 @@
    gpc_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
  
-   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp )
+   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp, mempool )
  
     ! Interpolation on old positions
    gpc_xx(1:np, 1) = set_local_positions( pt, X_COMP )
    gpc_xx(1:np, 2) = set_local_positions( pt, Y_COMP )
    gpc_xx(1:np, 3) = set_local_positions( pt, Z_COMP )
  
-   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp_old )
+   call qlh_3d_spline( gpc_xx(1:np, 1:3), interp_old, mempool )
 
    associate( ax1 => interp%coeff_x_rank2, &
               ay1 => interp%coeff_y_rank2, &

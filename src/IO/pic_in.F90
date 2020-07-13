@@ -33,7 +33,8 @@
   real (dp) :: xf0
 
  contains
-  subroutine init
+  subroutine init(mempool)
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic
    !======================================
    if (model_id<3) then
@@ -52,18 +53,18 @@
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
 
 #if !defined(OLD_SPECIES)
-   call initialize_tracking( spec, ebfp )
+   call initialize_tracking( spec, ebfp, mempool )
 #endif
    !==========================================================
    ! Initialize particles momentum
    !==========================================================
    do ic = 1, nsp
-      call initialize_momenta( ebf, spec(ic), ebfp(ic), dt_loc, nfield, ic, initial_time)
+      call initialize_momenta( ebf, spec(ic), ebfp(ic), dt_loc, nfield, ic, initial_time, mempool)
    end do
 
   end subroutine
 
-  subroutine initialize_momenta(ef, spec_in, spec_aux_in, dt_in, nfields, ic, initial_time_in)
+  subroutine initialize_momenta(ef, spec_in, spec_aux_in, dt_in, nfields, ic, initial_time_in, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (inout) :: spec_in
@@ -71,12 +72,13 @@
    real (dp), intent (in) :: dt_in
    integer, intent (in) :: nfields, ic
    logical, intent(inout) :: initial_time_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: np
 
    np = spec_in%how_many()
    !==========================================================
    ! Fields interpolation on particles positions
-   call set_lpf_acc(ef, spec_in, spec_aux_in, np, nfields)
+   call set_lpf_acc(ef, spec_in, spec_aux_in, np, nfields, mempool)
 
    !==========================================================
    ! Fields are multiplied by the particles charge
@@ -84,7 +86,7 @@
 
    !==========================================================
    ! Initializes particles momenta on the initial time
-   call init_lpf_momenta(spec_in, spec_aux_in, dt_in, np, ic, initial_time_in)
+   call init_lpf_momenta(spec_in, spec_aux_in, dt_in, np, ic, initial_time_in, mempool)
 
   end subroutine
  end module

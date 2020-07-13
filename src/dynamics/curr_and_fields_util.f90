@@ -51,22 +51,23 @@
   !=============================
  contains
   !============================
-  subroutine set_lpf_acc_new(ef, sp_loc, apt, np, nf)
+  subroutine set_lpf_acc_new(ef, sp_loc, apt, np, nf, mempool)
 
    real (dp), intent (in) :: ef(:, :, :, :)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent (inout) :: apt
    integer, intent (in) :: np, nf
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    ! Uses alternating order quadratic or linear shapes
 
    select case (ndim)
    case (1)
-    call set_part1d_acc(ef, sp_loc, apt, np, nf)
+    call set_part1d_acc(ef, sp_loc, apt, np, nf, mempool)
    case (2)
-    call set_part2d_hcell_acc(ef, sp_loc, apt, np, nf)
+    call set_part2d_hcell_acc(ef, sp_loc, apt, np, nf, mempool)
    case (3)
-    call set_part3d_hcell_acc(ef, sp_loc, apt, np)
+    call set_part3d_hcell_acc(ef, sp_loc, apt, np, mempool)
    end select
   end subroutine
 
@@ -148,11 +149,12 @@
   end subroutine
 
   !==============================
-  subroutine curr_accumulate_new(sp_loc, pdata, curr, npt)
+  subroutine curr_accumulate_new(sp_loc, pdata, curr, npt, mempool)
    type (species_new), intent (in) :: sp_loc
    type (species_aux), intent(inout) :: pdata
    real (dp), intent (inout) :: curr(:, :, :, :)
    integer, intent (in) :: npt
+   type(memory_pool_t), pointer, intent(in) :: mempool
    ! real(dp),intent(in) :: dtloc
    !=========================
    ! charge preserving for iform=0, 1
@@ -163,16 +165,16 @@
    if (npt==0) return
    if (ndim<3) then
     if (iform<2) then
-     call esirkepov_2d_curr(sp_loc, pdata, curr, npt)
+     call esirkepov_2d_curr(sp_loc, pdata, curr, npt, mempool)
     else
-     call ncdef_2d_curr(sp_loc, pdata, curr, npt)
+     call ncdef_2d_curr(sp_loc, pdata, curr, npt, mempool)
     end if
     return
    end if
    if (iform<2) then
-    call esirkepov_3d_curr(sp_loc, pdata, curr, npt)
+    call esirkepov_3d_curr(sp_loc, pdata, curr, npt, mempool)
    else
-    call ncdef_3d_curr(sp_loc, pdata, curr, npt)
+    call ncdef_3d_curr(sp_loc, pdata, curr, npt, mempool)
    end if
    !========================
    ! accumulates for each species currents on curr(i1:n1p,j1:n2p,k1:n3p,1:compnent)

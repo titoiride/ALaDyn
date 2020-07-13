@@ -24,13 +24,12 @@
   use pstruct_data
   use fstruct_data
   use grid_part_lib
+  use memory_pool
 
   implicit none
 
   type(interp_coeff), allocatable, private :: interp
   !! Useful variable to store interpolation results
-  real(dp), dimension(:, :), allocatable, private, save :: gpu_xx
-
   interface set_grid_charge
    module procedure set_grid_charge_new
    module procedure set_grid_charge_old
@@ -285,13 +284,15 @@
    end select
   end subroutine
 !=================================
-  subroutine set_grid_charge_new(sp_loc, den, np, ic)
+  subroutine set_grid_charge_new(sp_loc, den, np, ic, mempool)
 
    type(species_new), intent (in) :: sp_loc
    real (dp), intent (inout) :: den(:, :, :, :)
    integer, intent (in) :: np, ic
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
+   real(dp), pointer, contiguous, dimension(:) :: weight => null()
    real (dp) :: dvol
-   real (dp), allocatable, dimension(:) :: weight
    integer :: i1, j1, k1, i2, j2, k2, n, spline
    !======================
    ! Computes charge density of species ic on a grid
@@ -307,20 +308,28 @@
    spline = 2
    select case (ndim)
    case (2)
-    call xx_realloc(gpu_xx, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    xx => mempool%mp_xx_2d_A
 
     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     !==========================
 
-    call qden_2d_wgh( gpu_xx(1:np, 1:2), interp )
+    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
 
     associate( ax0 => interp%coeff_x_rank2, &
                ay0 => interp%coeff_y_rank2, &
                i => interp%ix_rank2, &
                j => interp%iy_rank2 )
+
+    !==========================
+    ! Warning: this call must be after qden_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    weight => mempool%mp_xx_1d_A
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
     do n = 0, 2
      ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
@@ -340,15 +349,16 @@
     end associate
 
    case (3)
-    call xx_realloc(gpu_xx, np, 3)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    xx => mempool%mp_xx_2d_A
     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpu_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     !==========================
 
-    call qden_3d_wgh( gpu_xx(1:np, 1:3), interp )
+    call qden_3d_wgh( xx(1:np, 1:3), interp, mempool )
 
     associate( ax0 => interp%coeff_x_rank2, &
                ay0 => interp%coeff_y_rank2, &
@@ -356,6 +366,13 @@
                i => interp%ix_rank2, &
                j => interp%iy_rank2, &
                k => interp%iz_rank2 )
+
+    !==========================
+    ! Warning: this call must be after qden_2d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    weight => mempool%mp_xx_1d_A
+    weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
     do n = 0, 2
      ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
@@ -493,12 +510,14 @@
   end subroutine
   !==========================
   !==========================
-  subroutine set_grid_env_den_energy_new(sp_loc, eden, np, icp)
+  subroutine set_grid_env_den_energy_new(sp_loc, eden, np, icp, mempool)
 
    type (species_new), intent (in) :: sp_loc
    real (dp), intent (inout) :: eden(:, :, :, :)
    integer, intent (in) :: np, icp
-   real (dp), allocatable, dimension(:) :: gam
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
+   real (dp), pointer, contiguous, dimension(:) :: gam => null()
    real (dp) :: dvol
    integer :: i1, j1, k1, i2, j2, k2, n, spline
    !======================
@@ -511,18 +530,23 @@
    !================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    !================================
-   allocate( gam(np) )
 
    spline = 2
    select case (ndim)
    case (1)
-    call xx_realloc(gpu_xx, np, 1)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 1)
+    xx => mempool%mp_xx_2d_A
 
+    call qden_1d_wgh( xx(1:np, 1:1), interp, mempool )
+
+    !==========================
+    ! Warning: this call must be after qden_1d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    gam => mempool%mp_xx_1d_A
     gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np)
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    
-    call qden_1d_wgh( gpu_xx(1:np, 1:1), interp, mp )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     
     j2 = 1
 
@@ -554,18 +578,26 @@
 
    case (2)
 
-    call xx_realloc(gpu_xx, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    xx => mempool%mp_xx_2d_A
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     
-    call qden_2d_wgh( gpu_xx(1:np, 1:2), interp )
+    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
 
     associate( ax0 => interp%coeff_x_rank2, &
                ay0 => interp%coeff_y_rank2, &
                i => interp%ix_rank2, &
                j => interp%iy_rank2, &
                weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+
+    !==========================
+    ! Warning: this call must be after qden_1d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    gam => mempool%mp_xx_1d_A
 
     if (curr_ndim==2) then
 
@@ -636,13 +668,14 @@
 
    case (3)
 
-    call xx_realloc(gpu_xx, np, 3)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    xx => mempool%mp_xx_2d_A
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpu_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     
-    call qden_3d_wgh( gpu_xx(1:np, 1:3), interp )
+    call qden_3d_wgh( xx(1:np, 1:3), interp, mempool )
 
     associate( ax0 => interp%coeff_x_rank2, &
                ay0 => interp%coeff_y_rank2, &
@@ -652,6 +685,12 @@
                k => interp%iz_rank2, &
                weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
 
+    !==========================
+    ! Warning: this call must be after qden_1d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    gam => mempool%mp_xx_1d_A
+           
     gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
      sp_loc%call_component( PY_COMP, lb=1, ub=np)*sp_loc%call_component( PY_COMP, lb=1, ub=np) + &
      sp_loc%call_component( PZ_COMP, lb=1, ub=np)*sp_loc%call_component( PZ_COMP, lb=1, ub=np)
@@ -879,12 +918,14 @@
    !===========================
   end subroutine
   !=================================================
-  subroutine set_grid_den_energy_new(sp_loc, eden, np)
+  subroutine set_grid_den_energy_new(sp_loc, eden, np, mempool)
 
    type (species_new), intent (in) :: sp_loc
    real (dp), intent (inout) :: eden(:, :, :, :)
    integer, intent (in) :: np
-   real (dp), allocatable, dimension(:) :: gam
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
+   real (dp), pointer, contiguous, dimension(:) :: gam => null()
    real (dp) :: dvol
    integer :: i1, j1, k1, i2, j2, k2, n, spline
    !================================================
@@ -904,46 +945,59 @@
    case (1)
     j2 = 1
 
-    call xx_realloc(gpu_xx, np, 1)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 1)
+    xx => mempool%mp_xx_2d_A
 
-    gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np)
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-
-    call qden_1d_wgh( gpu_xx(1:np, 1:1), interp, mp )
+    call qden_1d_wgh( xx(1:np, 1:1), interp, mempool )
 
     associate( ax0 => interp%coeff_x_rank2, &
                i => interp%ix_rank2, &
                weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
 
-      gam(1:np) = sqrt( one_dp + gam(1:np))
+     !==========================
+     ! Warning: this call must be after qden_1d_spline since
+     ! in that routine the 1d arrays are used
+     call array_realloc_1d(mempool%mp_xx_1d_A, np)
+     gam => mempool%mp_xx_1d_A
+
+     gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np)
+     gam(1:np) = sqrt( one_dp + gam(1:np))
+     do i1 = 0, spline
+      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+     end do
+     do n = 1, np
       do i1 = 0, spline
-       ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+       i2 = i(n) + i1
+       dvol = ax0(n, i1)
+       eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
+       eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1)*dvol
       end do
-      do n = 1, np
-       do i1 = 0, spline
-        i2 = i(n) + i1
-        dvol = ax0(n, i1)
-        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
-        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1)*dvol
-       end do
-      end do
+     end do
            
     end associate
    case (2)
 
-    call xx_realloc(gpu_xx, np, 2)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    xx => mempool%mp_xx_2d_A
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     
-    call qden_2d_wgh( gpu_xx(1:np, 1:2), interp )
+    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
 
     associate( ax0 => interp%coeff_x_rank2, &
                ay0 => interp%coeff_y_rank2, &
                i => interp%ix_rank2, &
                j => interp%iy_rank2, &
                weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+
+     !==========================
+     ! Warning: this call must be after qden_1d_spline since
+     ! in that routine the 1d arrays are used
+     call array_realloc_1d(mempool%mp_xx_1d_A, np)
+     gam => mempool%mp_xx_1d_A
 
     if (curr_ndim==2) then
 
@@ -993,13 +1047,14 @@
 
    case (3)
 
-    call xx_realloc(gpu_xx, np, 3)
+    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    xx => mempool%mp_xx_2d_A
 
-    gpu_xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    gpu_xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    gpu_xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
+    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+    xx(1:np, 3) = set_local_positions( sp_loc, Z_COMP )
     
-    call qden_3d_wgh( gpu_xx(1:np, 1:3), interp )
+    call qden_3d_wgh( xx(1:np, 1:3), interp, mempool )
 
     associate( ax0 => interp%coeff_x_rank2, &
                ay0 => interp%coeff_y_rank2, &
@@ -1008,6 +1063,12 @@
                j => interp%iy_rank2, &
                k => interp%iz_rank2, &
                weight => sp_loc%call_component( W_COMP, lb=1, ub=np) )
+
+    !==========================
+    ! Warning: this call must be after qden_1d_spline since
+    ! in that routine the 1d arrays are used
+    call array_realloc_1d(mempool%mp_xx_1d_A, np)
+    gam => mempool%mp_xx_1d_A
 
     gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np) + &
      sp_loc%call_component( PY_COMP, lb=1, ub=np)*sp_loc%call_component( PY_COMP, lb=1, ub=np) + &

@@ -21,13 +21,14 @@
 
  module pic_out
 
-  use pstruct_data
-  use fstruct_data
+  use array_alloc, only: v_realloc
   use code_util
   use common_param
+  use fstruct_data
   use grid_param
+  use memory_pool
   use parallel
-  use array_alloc, only: v_realloc
+  use pstruct_data  
   use util, only: endian
   implicit none
 
@@ -1477,7 +1478,7 @@
   end subroutine
   !================================
   subroutine part_pdata_out_new(spec_in, timenow, xmin_out, xmax_out, ymax_out, pid, &
-    jmp)
+    jmp, mempool)
 
    type(species_new), dimension(:), intent(in) :: spec_in
    character (6), dimension (4), parameter :: part_files = [ 'Elpout', &
@@ -1488,6 +1489,7 @@
    character (21) :: fname_outl
    real (dp), intent (in) :: timenow, xmin_out, xmax_out, ymax_out
    integer, intent (in) :: pid, jmp
+   type(memory_pool_t), pointer, intent(in) :: mempool
    real(sp) :: ch
    real (sp), allocatable :: pdata(:)
    integer (dp) :: nptot_global_reduced
@@ -1495,7 +1497,7 @@
    integer :: lenp, ip_loc(npe), ndv, i_end
    integer (offset_kind) :: disp, disp_col
    type(index_array) :: out_parts
-   logical, allocatable, dimension(:) :: mask
+   logical, pointer, contiguous, dimension(:) :: mask => null()
    character (4) :: foldername
    integer, parameter :: file_version = 4
 
@@ -1513,7 +1515,8 @@
    np = loc_npart(imody, imodz, imodx, pid)
    npt = 0
    ch = real(spec_in(pid)%pick_charge(), sp)
-   allocate(mask(np))
+   call array_realloc_1d(mempool%mp_log_1d, np)
+   mask => mempool%mp_log_1d
    out_parts = index_array(np)
    call v_realloc( pic_out_aux, np, ndv )
    if (np>0) then
