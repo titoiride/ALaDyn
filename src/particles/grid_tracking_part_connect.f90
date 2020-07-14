@@ -45,17 +45,16 @@
    integer, intent(in) :: np, order, polarization
    type(memory_pool_t), pointer, intent(in) :: mempool
    logical, dimension(:), intent(in), target, optional :: mask_in
-   real(dp), allocatable, dimension(:) :: ap
    real(dp) :: dvol
    integer :: npt, i1, i2, j1, j2, k1, k2, n, cc
+   real(dp), pointer, contiguous, dimension(:, :) :: xx => null()
    logical, pointer, contiguous, dimension(:) :: track_mask => null()
-   real(dp), dimension(:), allocatable :: interpolated_field
+   real(dp), pointer, contiguous, dimension(:) :: interpolated_field => null()
+   real(dp), pointer, contiguous, dimension(:) :: ap => null()
 
    npt = spec_in%pick_tot_tracked_parts()
 
    if (npt == 0) return
-   allocate( ap(npt), source=zero_dp )
-   allocate( interpolated_field(np), source=zero_dp )
    call interp_realloc(interp, np, spec_in%pick_dimensions())
 
    if ( PRESENT( mask_in ) ) then
@@ -78,15 +77,20 @@
    case(2)
 
     k2 = 1
-    call xx_realloc(gtpc_xx, npt, 2)
-    gtpc_xx(1:npt, 1) = set_local_positions( spec_aux_in, X_COMP, mask_in=track_mask(1:np) )
-    gtpc_xx(1:npt, 2) = set_local_positions( spec_aux_in, Y_COMP, mask_in=track_mask(1:np) )
+    call mp_xx_realloc(mempool%mp_xx_2d_A, npt, 2, mempool)
+    xx => mempool%mp_xx_2d_A
+
+    xx(1:npt, 1) = set_local_positions( spec_aux_in, X_COMP, mask_in=track_mask(1:np) )
+    xx(1:npt, 2) = set_local_positions( spec_aux_in, Y_COMP, mask_in=track_mask(1:np) )
 
     select case (order)
 
     case(0)
      ! Envelope case
-     call qden_2d_wgh( gtpc_xx(1:npt, 1:2), interp, mempool )
+     call qden_2d_wgh( xx(1:npt, 1:2), interp, mempool )
+
+     call array_realloc_1d( mempool%mp_xx_1d_A, npt )
+     ap => mempool%mp_xx_1d_A
 
      associate( ax1 => interp%coeff_x_rank2, &
                 ay1 => interp%coeff_y_rank2, &
@@ -109,7 +113,10 @@
     case(1:2)
      ! Full Pic case
 
-     call qqh_2d_spline( gtpc_xx(1:npt, 1:2), interp, mempool )
+     call qqh_2d_spline( xx(1:npt, 1:2), interp, mempool )
+
+     call array_realloc_1d( mempool%mp_xx_1d_A, npt )
+     ap => mempool%mp_xx_1d_A
 
      select case(polarization)
      !Integration order used for computing a from Ey
@@ -159,15 +166,20 @@
 
    case(3)
 
-    call xx_realloc(gtpc_xx, npt, 3)
-    gtpc_xx(1:npt, 1) = set_local_positions( spec_aux_in, X_COMP, mask_in=track_mask(1:np) )
-    gtpc_xx(1:npt, 2) = set_local_positions( spec_aux_in, Y_COMP, mask_in=track_mask(1:np) )
-    gtpc_xx(1:npt, 3) = set_local_positions( spec_aux_in, Z_COMP, mask_in=track_mask(1:np) )
+    call mp_xx_realloc(mempool%mp_xx_2d_A, npt, 3, mempool)
+    xx => mempool%mp_xx_2d_A
+
+    xx(1:npt, 1) = set_local_positions( spec_aux_in, X_COMP, mask_in=track_mask(1:np) )
+    xx(1:npt, 2) = set_local_positions( spec_aux_in, Y_COMP, mask_in=track_mask(1:np) )
+    xx(1:npt, 3) = set_local_positions( spec_aux_in, Z_COMP, mask_in=track_mask(1:np) )
 
     select case(order)
     case(0)
     ! Envelope case
-     call qden_3d_wgh( gtpc_xx(1:npt, 1:3), interp, mempool )
+     call qden_3d_wgh( xx(1:npt, 1:3), interp, mempool )
+
+     call array_realloc_1d( mempool%mp_xx_1d_A, npt )
+     ap => mempool%mp_xx_1d_A
 
      associate( ax1 => interp%coeff_x_rank2, &
                 ay1 => interp%coeff_y_rank2, &
@@ -195,7 +207,11 @@
 
     case(1)
      !Full Pic
-     call qqh_3d_spline( gtpc_xx(1:npt, 1:3), interp, mempool )
+     call qqh_3d_spline( xx(1:npt, 1:3), interp, mempool )
+
+     call array_realloc_1d( mempool%mp_xx_1d_A, npt )
+     ap => mempool%mp_xx_1d_A
+
      select case(polarization)
      !Integration order used for computing a from Ey
      case(Y_POLARIZATION)
@@ -254,9 +270,12 @@
     end select
    end select
    
+   call array_realloc_1d( mempool%mp_xx_1d_B, np )
+   interpolated_field => mempool%mp_xx_1d_B
+
    ! Field assignment on tracked particles
-   interpolated_field = UNPACK( ap(1:npt), track_mask(1:np), interpolated_field(1:np) )
-   call spec_in%set_component( interpolated_field, A_PARTICLE, lb=1, ub=np)
+   interpolated_field(1:np) = UNPACK( ap(1:npt), track_mask(1:np), interpolated_field(1:np) )
+   call spec_in%set_component( interpolated_field(1:np), A_PARTICLE, lb=1, ub=np)
 
   end subroutine
 

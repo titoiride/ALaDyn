@@ -160,17 +160,14 @@
    end select
   end subroutine
   !---------------------------
-
-  subroutine particles_inject_new(xmx, spec_in, spec_aux_in, mempool)
-   type(species_new), dimension(:), allocatable, intent(inout) :: spec_in
-   type(species_aux), dimension(:), allocatable, intent(inout) :: spec_aux_in
+  subroutine count_inject_particles( xmx, np_old, np_new, initial_index, final_index )
    real (dp), intent (in) :: xmx
-   type(memory_pool_t), pointer, intent(in) :: mempool
-   integer :: ic, ix, npt_inj(4), np_old, np_new
-   integer :: i1, i2, q
+   integer, intent(inout) :: np_old, np_new, initial_index, final_index
+   integer :: ic, ix, npt_inj(4)
+   integer :: i1, i2
    integer :: j2, k2, ndv
 
-   !========== inject particles from the right 
+   !========== Inject particles from the right 
    !   xmx is the box xmax grid value at current time after window move
    !   in Comoving frame xmax is fixed and particles are left advected
    !=================================
@@ -183,14 +180,14 @@
    do ic = 1, nsp
     i1 = 1 + nptx(ic)
     i2 = i1 - 1
-    if (pex1) then
-     if (i1<=sptx_max(ic)) then
+    if ( pex1 ) then
+     if ( i1 <= sptx_max(ic) ) then
      !while particle index is less then the max index
       do ix = i1, sptx_max(ic)
-       if (xpt(ix,ic)>xmx) exit
+       if ( xpt(ix,ic) > xmx ) exit
       end do
       i2 = ix - 1
-      if (ix==sptx_max(ic)) i2 = ix
+      if ( ix == sptx_max(ic) ) i2 = ix
      else
       i2 = i1 - 1
      end if
@@ -216,12 +213,26 @@
     end select
     np_new = 0
     np_old = loc_npart(imody, imodz, imodx, ic)
-    np_new = max(np_old+npt_inj(ic), np_new)
+    np_new = max(np_old + npt_inj(ic), np_new)
     !=========================
+    loc_npart(imody, imodz, imodx, ic) = np_new
+    initial_index = i1
+    final_index = i2
+   end do
+
+  end subroutine
+
+  subroutine particles_inject_new(spec_in, spec_aux_in, np_old, np_new, i1, i2, mempool)
+   type(species_new), dimension(:), allocatable, intent(inout) :: spec_in
+   type(species_aux), dimension(:), allocatable, intent(inout) :: spec_aux_in
+   integer, intent(in) :: np_new, np_old, i1, i2
+   type(memory_pool_t), pointer, intent(in) :: mempool
+   integer :: ic, q
+
+   do ic = 1, nsp
     if ( pex1 ) then
      call spec_in(ic)%extend(np_new)
      call spec_aux_in(ic)%extend(np_new)
-     loc_npart(imody, imodz, imodx, ic) = np_new
     end if
     q = np_old
     call add_particles(spec_in, spec_aux_in, q, i1, i2, ic, mempool)
@@ -358,7 +369,7 @@
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    type(memory_pool_t), pointer, intent(in) :: mempool
-   integer :: i, ic, nshx
+   integer :: i, ic, nshx, np_new, np_old, i1, i2
    real (dp) :: dt_tot, dt_step
    logical, parameter :: mw = .true.
    !======================
@@ -399,9 +410,10 @@
    do ic = 1, nsp
     call cell_part_dist(mw, spec_in(ic), spec_aux_in(ic), ic) !particles are redistributes along the
    end do
+   call count_inject_particles(xmax, np_old, np_new, i1, i2)
    if (pex1) then
     if (targ_in<=xmax .and. targ_end>xmax) then
-     call particles_inject(xmax, spec_in, spec_aux_in, mempool)
+     call particles_inject(spec_in, spec_aux_in, np_old, np_new, i1, i2, mempool)
     end if
    end if
   end subroutine
@@ -463,7 +475,7 @@
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    type(memory_pool_t), pointer, intent(in) :: mempool
-   integer :: i1, n1p, nc_env
+   integer :: i1, n1p, nc_env, np_new, np_old, in_ind, fin_ind
    integer :: ix, nshx, wi2, ic
    real (dp), save :: xlapse, dt_step
    integer, save :: wi1
@@ -532,13 +544,17 @@
     do ic = 1, nsp
      call cell_part_dist(mw, spec_in(ic), spec_aux_in(ic), ic) !particles are redistributes along the
     end do
+   end if
+   call count_inject_particles(loc_xgrid(imodx)%gmax, np_old, np_new, in_ind, fin_ind)
     ! right-shifted x-coordinate in MPI domains
+   call part_numbers
+   if (part) then
     if (targ_in<=xmax) then
      if (targ_end>xmax) then
-      call particles_inject(loc_xgrid(imodx)%gmax, spec_in, spec_aux_in, mempool)
+      call particles_inject(spec_in, spec_aux_in, np_old, np_new, in_ind, fin_ind, mempool)
      end if
     end if
-    call part_numbers
+    
    end if
   end subroutine
   !==============================

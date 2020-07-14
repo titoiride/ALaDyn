@@ -114,7 +114,7 @@
    if ( sp_loc%empty ) return
    !================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 1)
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 1, mempool)
    xx => mempool%mp_xx_2d_A
    !================================
    spl_cell = 2
@@ -122,7 +122,7 @@
    select case (ndf)
    case (3)
 
-    call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 3, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:3) = zero_dp
     j2 = 1
@@ -152,7 +152,7 @@
    !========================
    case (6)
     j2 = 1
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:6) = zero_dp
     xx(1:np, 1) = sp_loc%x(1:np) !the current particle positions
@@ -278,14 +278,14 @@
    if ( sp_loc%empty ) return
    !=====================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
    xx => mempool%mp_xx_2d_A
    !================================
    spl_cell = 2
    spl_h_cell = 2
    select case (ndf) !Field components
    case (3)
-    call xx_realloc( mempool%mp_xx_2d_B, np, 3)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, 3, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:3) = zero_dp
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -335,7 +335,7 @@
     !==============
    case (6)
     !=====================
-    call xx_realloc( mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, 6, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:6) = zero_dp
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -542,9 +542,9 @@
    if ( sp_loc%empty ) return
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
    !================================
-   call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+   call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
    xx => mempool%mp_xx_2d_A
    ap => mempool%mp_xx_2d_B
    ap(1:np, 1:6) = zero_dp
@@ -793,7 +793,7 @@
    
    select case (ndim)
    case (2)
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
     kp2 = 1
     !==========================
@@ -849,7 +849,7 @@
 
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -1130,8 +1130,8 @@
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1228,8 +1228,8 @@
 
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 10)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 10, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1626,8 +1626,8 @@
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1693,8 +1693,8 @@
     !==========================
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1970,8 +1970,8 @@
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -2022,8 +2022,8 @@
     !=================================
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 4)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 4, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -2266,7 +2266,7 @@
    select case (ndim)
    case (2)
     k2 = 1
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2299,7 +2299,7 @@
     !========================
     end associate
    case (3)
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2461,7 +2461,7 @@
    allocate( curry(0:4) )
    !======================
    if (curr_ndim==2) then !Two current components
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
     
     ! Interpolation on new positions
@@ -2566,7 +2566,7 @@
    if (curr_ndim==3) then !Three currents conditions in 2D grid
 
     !============== ********************** =================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
     
     ! Interpolation on new positions
@@ -2963,7 +2963,7 @@
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
    !=============================================================
    allocate( axh(0:4) )
@@ -3348,8 +3348,8 @@
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-   call xx_realloc(mempool%mp_xx_2d_B, np, 2)
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+   call mp_xx_realloc(mempool%mp_xx_2d_B, np, 2, mempool)
 
    xx => mempool%mp_xx_2d_A
    vp => mempool%mp_xx_2d_B
@@ -3556,8 +3556,8 @@
    !=============================================================
    call interp_realloc(interp, np, sp_loc%pick_dimensions())
    call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-   call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+   call mp_xx_realloc(mempool%mp_xx_2d_B, np, 3, mempool)
 
    xx => mempool%mp_xx_2d_A
    vp => mempool%mp_xx_2d_B

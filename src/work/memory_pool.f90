@@ -39,8 +39,11 @@
 
   type memory_pool_t
 
-  integer :: iter_count = 0
-  integer :: used_memory = 0
+  integer :: reset_count = 1
+  !! Is reset to 1 when an array is allocated.
+  !! Keeps track of how many times the arrays are not reallocated
+
+  integer(dp_int) :: used_memory = 0
   real(dp), allocatable, dimension(:) :: mp_xx_1d_A
   real(dp), allocatable, dimension(:) :: mp_xx_1d_B
   real(dp), allocatable, dimension(:) :: mp_xx_1d_C
@@ -53,27 +56,58 @@
 
   contains
 
-  final :: final_clean
+  procedure :: clean
+  procedure :: memory_usage
+  final :: finalize_pool
 
   end type
 
+  integer, parameter :: EVERY_CLEAN = 500
+  integer, parameter :: RESET_CLEAN = 10*EVERY_CLEAN
+  !! Number of iterations after which the cleaning occurs
+
   contains
 
-  subroutine final_clean( this )
-   type(memory_pool_t), intent(inout) :: this
+  subroutine clean( this, iter_in )
+   class(memory_pool_t), intent(inout) :: this
+   integer, intent(in) :: iter_in
 
-   write(6, *) 'Called memory pool destructor'
-   if ( ALLOCATED(this%mp_xx_1d_A) ) then
-    deallocate( this%mp_xx_1d_A )
-   end if
-   if ( ALLOCATED(this%mp_xx_2d_A) ) then
-    deallocate( this%mp_xx_2d_A )
-   end if
-   if ( ALLOCATED(this%mp_xx_3d) ) then
-    deallocate( this%mp_xx_3d )
-   end if
-   if ( ALLOCATED(this%mp_species_new) ) then
-    deallocate( this%mp_species_new )
+   if( mod(this%reset_count, RESET_CLEAN) == 0 .and. mod(iter_in, EVERY_CLEAN) == 0 ) then
+    write(6, *) 'Called cleaning memory pool'
+    if ( ALLOCATED(this%mp_log_1d) ) then
+     deallocate( this%mp_log_1d )
+    end if
+
+    if ( ALLOCATED(this%mp_xx_1d_A) ) then
+     deallocate( this%mp_xx_1d_A )
+    end if
+    if ( ALLOCATED(this%mp_xx_1d_B) ) then
+     deallocate( this%mp_xx_1d_B )
+    end if
+    if ( ALLOCATED(this%mp_xx_1d_C) ) then
+     deallocate( this%mp_xx_1d_C )
+    end if
+    if ( ALLOCATED(this%mp_xx_1d_D) ) then
+     deallocate( this%mp_xx_1d_D )
+    end if
+
+    if ( ALLOCATED(this%mp_xx_2d_A) ) then
+     deallocate( this%mp_xx_2d_A )
+    end if
+    if ( ALLOCATED(this%mp_xx_2d_B) ) then
+     deallocate( this%mp_xx_2d_B )
+    end if
+
+    if ( ALLOCATED(this%mp_xx_3d) ) then
+     deallocate( this%mp_xx_3d )
+    end if
+
+    if ( ALLOCATED(this%mp_species_new) ) then
+     deallocate( this%mp_species_new )
+    end if
+
+    this%reset_count = 1
+    this%used_memory = 0
    end if
 
   end subroutine
@@ -82,8 +116,46 @@
    type(memory_pool_t), pointer, intent(inout) :: this
 
    if ( .not. ASSOCIATED(this) ) then
-    write(6, *) 'Constructing the memory pool'
+    !write(6, *) 'Constructing the memory pool'
     ALLOCATE(this)
+   end if
+
+  end subroutine
+
+  subroutine finalize_pool( this )
+   type(memory_pool_t), intent(inout) :: this
+
+   !write(6, *) 'Called memory pool destructor'
+   if ( ALLOCATED(this%mp_log_1d) ) then
+    deallocate( this%mp_log_1d )
+   end if
+
+   if ( ALLOCATED(this%mp_xx_1d_A) ) then
+    deallocate( this%mp_xx_1d_A )
+   end if
+   if ( ALLOCATED(this%mp_xx_1d_B) ) then
+    deallocate( this%mp_xx_1d_B )
+   end if
+   if ( ALLOCATED(this%mp_xx_1d_C) ) then
+    deallocate( this%mp_xx_1d_C )
+   end if
+   if ( ALLOCATED(this%mp_xx_1d_D) ) then
+    deallocate( this%mp_xx_1d_D )
+   end if
+
+   if ( ALLOCATED(this%mp_xx_2d_A) ) then
+    deallocate( this%mp_xx_2d_A )
+   end if
+   if ( ALLOCATED(this%mp_xx_2d_B) ) then
+    deallocate( this%mp_xx_2d_B )
+   end if
+
+   if ( ALLOCATED(this%mp_xx_3d) ) then
+    deallocate( this%mp_xx_3d )
+   end if
+
+   if ( ALLOCATED(this%mp_species_new) ) then
+    deallocate( this%mp_species_new )
    end if
 
   end subroutine
@@ -97,28 +169,45 @@
 
   end subroutine
 
-  subroutine allocate_1d( this )
-   type(memory_pool_t), pointer, intent(in) :: this
+  subroutine memory_usage( this )
+   class(memory_pool_t), intent(inout) :: this
+   integer(dp_int) :: um
 
-   allocate(this%mp_xx_1d_A(-5:5), source = 10.)
+   um = 0
+   if ( ALLOCATED(this%mp_log_1d) ) then
+    um = um + size(this%mp_log_1d)*kind(this%mp_log_1d)
+   end if
 
-  end subroutine
+   if ( ALLOCATED(this%mp_xx_1d_A) ) then
+    um = um + size(this%mp_xx_1d_A)*kind(this%mp_xx_1d_A)
+   end if
+   if ( ALLOCATED(this%mp_xx_1d_B) ) then
+    um = um + size(this%mp_xx_1d_B)*kind(this%mp_xx_1d_B)
+   end if
+   if ( ALLOCATED(this%mp_xx_1d_C) ) then
+    um = um + size(this%mp_xx_1d_C)*kind(this%mp_xx_1d_C)
+   end if
+   if ( ALLOCATED(this%mp_xx_1d_D) ) then
+    um = um + size(this%mp_xx_1d_D)*kind(this%mp_xx_1d_D)
+   end if
 
-  subroutine point_to_mp( this )
-   type(memory_pool_t), pointer, intent(in) :: this
-   real(dp), pointer, dimension(:) :: point_1d
+   if ( ALLOCATED(this%mp_xx_2d_A) ) then
+    um = um + size(this%mp_xx_2d_A)*kind(this%mp_xx_2d_A)
+   end if
+   if ( ALLOCATED(this%mp_xx_2d_B) ) then
+    um = um + size(this%mp_xx_2d_B)*kind(this%mp_xx_2d_B)
+   end if
 
-   point_1d => this%mp_xx_1d_A
+   if ( ALLOCATED(this%mp_xx_3d) ) then
+    um = um + size(this%mp_xx_3d)*kind(this%mp_xx_3d)
+   end if
 
-   write(6, *) "I'm pointing to ", point_1d(:)
-   write(6, *) "My size", SIZE( point_1d, DIM=1)
-   write(6, *) "Lower boundary", LBOUND( point_1d, DIM=1)
-   write(6, *) "Upper boundary", UBOUND( point_1d, DIM=1)
-   write(6, *) "I'm associated", ASSOCIATED(point_1d)
-   write(6, *) "Now I'm ", point_1d(:)
-   write(6, *) "My address", LOC(point_1d)
-   write(6, *) "My address", LOC(this%mp_xx_1d_A)
-   
+   if ( ALLOCATED(this%mp_species_new) ) then
+    um = um + this%mp_species_new%array_size()*this%mp_species_new%total_size()*sizeof(one_dp)
+   end if
+
+   this%used_memory = um
+
   end subroutine
   !==============================================
   ! Subroutines for allocation
@@ -171,20 +260,26 @@
    end if
   end subroutine
   !==========================================
-  !DIR$ ATTRIBUTES INLINE :: xx_realloc
-  subroutine xx_realloc( xx_in, npart_new, dimensions )
+  !DIR$ ATTRIBUTES INLINE :: mp_xx_realloc
+  subroutine mp_xx_realloc( xx_in, npart_new, dimensions, mempool )
    real(dp), allocatable, dimension(:, :), intent(inout) :: xx_in
    integer, intent(in) :: npart_new, dimensions
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: allocstatus, deallocstatus
 
    if ( ALLOCATED(xx_in) ) then   
     if (SIZE(xx_in, DIM=1) < npart_new .or. &
      SIZE(xx_in, DIM=2) < dimensions ) then
+     mempool%reset_count = 1
      deallocate(xx_in, stat=deallocstatus)
      allocate(xx_in(npart_new, dimensions), stat=allocstatus)
+    else
+     mempool%reset_count = min(mempool%reset_count + 1, RESET_CLEAN)
+     !Do not push index over RESET_CLEAN to allow clean call
     end if
    else
     allocate(xx_in(npart_new, dimensions), stat=allocstatus)
+    mempool%reset_count = 1
    end if
   end subroutine
   !==========================================

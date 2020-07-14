@@ -114,7 +114,7 @@
 #if !defined(OLD_SPECIES)
     call track_out( spec, ebfp, tnow, iter, mempool )
 #endif
-    call timing
+    call timing(mempool)
     call Data_out(mempool)
 #if !defined(OLD_SPECIES)
     tracking_written = .false.
@@ -125,8 +125,10 @@
     end if
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
+    call mempool%clean( iter )
    end do
    if (dump > 0) call dump_data(iter, tnow, spec, ebfp)
+
   end subroutine
 
   !--------------------------
@@ -155,7 +157,7 @@
 #if !defined(OLD_SPECIES)
     call track_out( spec, ebfp, tnow, iter, mempool )
 #endif
-    call timing !iter=iter+1  tnow=tnow+dt_loc
+    call timing(mempool) !iter=iter+1  tnow=tnow+dt_loc
     call Data_out(mempool)
 #if !defined(OLD_SPECIES)
     tracking_written = .false.
@@ -166,8 +168,10 @@
     end if
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
+    call mempool%clean( iter )
    end do
    if (dump > 0) call dump_data(iter, tnow, spec, ebfp)
+
   end subroutine
   !======================
   subroutine data_out(mempool)
