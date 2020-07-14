@@ -3,7 +3,8 @@ project(ALaDyn)
 enable_language(Fortran)
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
+cmake_policy(SET CMP0074 NEW)
 
 # uncomment the following definition to enable GDB attach to debug while running
 # add_definitions(-DENABLE_GDB_ATTACH)
@@ -11,6 +12,28 @@ if(NOT WIN32)
   add_definitions(-DUSE_GDB_ATTACH)
 endif()
 
+# Old species (provisional)
+# add_definitions(-DOLD_SPECIES)
+
+# Look for JSON-FORTRAN
+set(JSON_FORTRAN_SUPPORT FALSE CACHE BOOL "Building ALaDyn with json-fortran support" )
+if( JSON_FORTRAN_SUPPORT )
+  set(FOUND_JSON_FORTRAN FALSE)
+  set(JFORTRAN_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/json-fortran/json-fortran_source/build)
+  if( EXISTS ${JFORTRAN_MODULE_PATH})
+    set(jsonfortran-GNU_DIR ${JFORTRAN_MODULE_PATH})
+    find_package ( jsonfortran-${CMAKE_Fortran_COMPILER_ID} 8.1.0 )
+    include_directories ( "${jsonfortran_INCLUDE_DIRS}" )
+    if( jsonfortran-${CMAKE_Fortran_COMPILER_ID}_FOUND)
+      set(FOUND_JSON_FORTRAN TRUE)
+    endif()
+  endif()
+endif()
+
+if( FOUND_JSON_FORTRAN )
+  message(STATUS "Json fortran has been found")
+  add_definitions(-DJSON_FORTRAN)
+endif()
 # you can force FFTW if necessary, avoiding MKL (which is preferred on Intel systems)
 set(FORCE_FFTW OFF CACHE BOOL "Forcing FFTW libraries")
 
