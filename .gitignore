@@ -66,3 +66,6 @@ snippet_*
 
 #FORD documentations
 html/*
+
+#JSON-Fortran installed
+json-fortran_local
