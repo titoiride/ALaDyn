@@ -308,7 +308,7 @@
    spline = 2
    select case (ndim)
    case (2)
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
 
     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
@@ -349,7 +349,7 @@
     end associate
 
    case (3)
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
@@ -534,7 +534,7 @@
    spline = 2
    select case (ndim)
    case (1)
-    call xx_realloc(mempool%mp_xx_2d_A, np, 1)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 1, mempool)
     xx => mempool%mp_xx_2d_A
 
     call qden_1d_wgh( xx(1:np, 1:1), interp, mempool )
@@ -578,7 +578,7 @@
 
    case (2)
 
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
 
 
@@ -668,7 +668,7 @@
 
    case (3)
 
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -945,7 +945,7 @@
    case (1)
     j2 = 1
 
-    call xx_realloc(mempool%mp_xx_2d_A, np, 1)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 1, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -979,7 +979,7 @@
     end associate
    case (2)
 
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -1047,7 +1047,7 @@
 
    case (3)
 
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )

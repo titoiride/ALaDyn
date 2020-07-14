@@ -22,73 +22,73 @@
  module interpolation_lib
 
   use precision_def
-  use array_alloc, only: array_realloc_1d
 
   implicit none
 
   real (dp), parameter, private :: PP1 = 0.25, PP2 = 0.5, &
    PP3 = 0.75, PP4 = 2./3., PP5 = 1./6.
-  real(dp), allocatable, dimension(:), private, save :: dx2, dx3
-   type interp_coeff
-   !! Type containing particle-grid relations during
-   !! interpolation on grid
-    integer :: order
-    !! Interpolation order on integer cells
-    integer :: h_order
-    !! Interpolation order on half-integer cells
-    real(dp), allocatable, dimension(:) :: coeff_x
-    !! Interpolation coefficients along x (integer cells)
-    real(dp), allocatable, dimension(:) :: coeff_y
-    !! Interpolation coefficients along y (integer cells)
-    real(dp), allocatable, dimension(:) :: coeff_z
-    !! Interpolation coefficients along z (integer cells)
-    real(dp), allocatable, dimension(:) :: h_coeff_x
-    !! Interpolation coefficients along x (half-integer cells)
-    real(dp), allocatable, dimension(:) :: h_coeff_y
-    !! Interpolation coefficients along y (half-integer cells)
-    real(dp), allocatable, dimension(:) :: h_coeff_z
-    !! Interpolation coefficients along z (half-integer cells)
-    real(dp), allocatable, dimension(:, :) :: coeff_x_rank2
-    !! Interpolation coefficients along x for vectors (integer cells)
-    real(dp), allocatable, dimension(:, :) :: coeff_y_rank2
-    !! Interpolation coefficients along y for vectors (integer cells)
-    real(dp), allocatable, dimension(:, :) :: coeff_z_rank2
-    !! Interpolation coefficients along z for vectors (integer cells)
-    real(dp), allocatable, dimension(:, :) :: h_coeff_x_rank2
-    !! Interpolation coefficients along x for vectors (half-integer cells)
-    real(dp), allocatable, dimension(:, :) :: h_coeff_y_rank2
-    !! Interpolation coefficients along y for vectors (half-integer cells)
-    real(dp), allocatable, dimension(:, :) :: h_coeff_z_rank2
-    !! Interpolation coefficients along z for vectors (half-integer cells)
-    integer :: ix
-    !! Cell index along x
-    integer :: ihx
-    !! Half-cell index along x
-    integer :: iy
-    !! Cell index along y
-    integer :: ihy
-    !! Half-cell index along y
-    integer :: iz
-    !! Cell index along z
-    integer :: ihz
-    !! Half-cell index along z
-    integer, allocatable, dimension(:) :: ix_rank2
-    !! Cell index along x for vectors
-    integer, allocatable, dimension(:) :: ihx_rank2
-    !! Half-cell index along x for vectors
-    integer, allocatable, dimension(:) :: iy_rank2
-    !! Cell index along y for vectors
-    integer, allocatable, dimension(:) :: ihy_rank2
-    !! Half-cell index along y for vectors
-    integer, allocatable, dimension(:) :: iz_rank2
-    !! Cell index along z for vectors
-    integer, allocatable, dimension(:) :: ihz_rank2
-    !! Half-cell index along z for vectors
-    integer :: n_parts
-    contains
-    procedure, pass, public :: new_interp
-    procedure, pass, public :: sweep
-   end type
+  integer, parameter :: max_order = 2
+  integer, parameter :: max_h_order = 2
+  type interp_coeff
+  !! Type containing particle-grid relations during
+  !! interpolation on grid
+   integer :: order
+   !! Interpolation order on integer cells
+   integer :: h_order
+   !! Interpolation order on half-integer cells
+   real(dp), allocatable, dimension(:) :: coeff_x
+   !! Interpolation coefficients along x (integer cells)
+   real(dp), allocatable, dimension(:) :: coeff_y
+   !! Interpolation coefficients along y (integer cells)
+   real(dp), allocatable, dimension(:) :: coeff_z
+   !! Interpolation coefficients along z (integer cells)
+   real(dp), allocatable, dimension(:) :: h_coeff_x
+   !! Interpolation coefficients along x (half-integer cells)
+   real(dp), allocatable, dimension(:) :: h_coeff_y
+   !! Interpolation coefficients along y (half-integer cells)
+   real(dp), allocatable, dimension(:) :: h_coeff_z
+   !! Interpolation coefficients along z (half-integer cells)
+   real(dp), allocatable, dimension(:, :) :: coeff_x_rank2
+   !! Interpolation coefficients along x for vectors (integer cells)
+   real(dp), allocatable, dimension(:, :) :: coeff_y_rank2
+   !! Interpolation coefficients along y for vectors (integer cells)
+   real(dp), allocatable, dimension(:, :) :: coeff_z_rank2
+   !! Interpolation coefficients along z for vectors (integer cells)
+   real(dp), allocatable, dimension(:, :) :: h_coeff_x_rank2
+   !! Interpolation coefficients along x for vectors (half-integer cells)
+   real(dp), allocatable, dimension(:, :) :: h_coeff_y_rank2
+   !! Interpolation coefficients along y for vectors (half-integer cells)
+   real(dp), allocatable, dimension(:, :) :: h_coeff_z_rank2
+   !! Interpolation coefficients along z for vectors (half-integer cells)
+   integer :: ix
+   !! Cell index along x
+   integer :: ihx
+   !! Half-cell index along x
+   integer :: iy
+   !! Cell index along y
+   integer :: ihy
+   !! Half-cell index along y
+   integer :: iz
+   !! Cell index along z
+   integer :: ihz
+   !! Half-cell index along z
+   integer, allocatable, dimension(:) :: ix_rank2
+   !! Cell index along x for vectors
+   integer, allocatable, dimension(:) :: ihx_rank2
+   !! Half-cell index along x for vectors
+   integer, allocatable, dimension(:) :: iy_rank2
+   !! Cell index along y for vectors
+   integer, allocatable, dimension(:) :: ihy_rank2
+   !! Half-cell index along y for vectors
+   integer, allocatable, dimension(:) :: iz_rank2
+   !! Cell index along z for vectors
+   integer, allocatable, dimension(:) :: ihz_rank2
+   !! Half-cell index along z for vectors
+   integer :: n_parts
+   contains
+   procedure, pass, public :: new_interp
+   procedure, pass, public :: sweep
+  end type
 
   interface zeroth_order
    module procedure zeroth_order_real
@@ -335,12 +335,14 @@
   subroutine first_order_vector(deltax, ax1)
    real(dp), dimension(:), intent(in) :: deltax
    real(dp), dimension(:, :), intent(inout) :: ax1
-   integer :: length
+   integer :: length, i
    ! Here dx should be computed as
    ! dx = x - int(x)
    length = SIZE( deltax )
-   ax1(1:length, 2) = deltax
-   ax1(1:length, 1) = one_dp - ax1(1:length, 2)
+   do i = 1, length
+    ax1(i, 2) = deltax(i)
+    ax1(i, 1) = one_dp - ax1(i, 2)
+   end do
   end subroutine
 
   !DIR$ ATTRIBUTES INLINE :: second_order_real
@@ -360,15 +362,17 @@
   subroutine second_order_vector(deltax, ax2)
    real(dp), dimension(:), intent(in) :: deltax
    real(dp), dimension(:, :), intent(inout) :: ax2
-   integer :: length
+   real(dp) :: dx2
+   integer :: length, i
    ! Here dx should be computed as
    ! dx = x - int(x)
    length = SIZE( deltax )
-   call array_realloc_1d(dx2, length)
-   dx2(1:length) = deltax(1:length)*deltax(1:length)
-   ax2(1:length, 2) = PP3 - dx2(1:length)
-   ax2(1:length, 3) = PP2*(PP1 + deltax(1:length) + dx2(1:length))
-   ax2(1:length, 1) = one_dp - ax2(1:length, 2) - ax2(1:length, 3)
+   do i = 1, length
+    dx2 = deltax(i)*deltax(i)
+    ax2(i, 2) = PP3 - dx2
+    ax2(i, 3) = PP2*(PP1 + deltax(i) + dx2)
+    ax2(i, 1) = one_dp - ax2(i, 2) - ax2(i, 3)
+   end do
   end subroutine
 
   !DIR$ ATTRIBUTES INLINE :: third_order_real
@@ -391,19 +395,20 @@
   subroutine third_order_vector(deltax, ax3)
    real(dp), dimension(:), intent(in) :: deltax
    real(dp), dimension(:, :), intent(inout) :: ax3
-   integer :: length
+   real :: dx2, dx3
+   integer :: length, i
    ! Here dx should be computed as
    ! dx = x - int(x)
    length = SIZE( deltax )
-   call array_realloc_1d(dx2, length)
-   dx2(1:length) = deltax(1:length)*deltax(1:length)
-   dx3(1:length) = dx2(1:length)*deltax(1:length)
+   do i = 1, length
+    dx2 = deltax(i)*deltax(i)
+    dx3 = dx2*deltax(i)
 
-   ax3(1:length, 2) = PP4 - dx2(1:length) + PP2*dx3(1:length)
-   ax3(1:length, 3) = PP5 + PP2*(deltax(1:length) + dx2(1:length) - dx3(1:length))
-   ax3(1:length, 4) = PP5*dx3(1:length)
-   ax3(1:length, 1) = one_dp - ax3(1:length, 2) - ax3(1:length, 3) &
-    - ax3(1:length, 4)
+    ax3(i, 2) = PP4 - dx2 + PP2*dx3
+    ax3(i, 3) = PP5 + PP2*(deltax(i) + dx2 - dx3)
+    ax3(i, 4) = PP5*dx3
+    ax3(i, 1) = one_dp - ax3(i, 2) - ax3(i, 3) - ax3(i, 4)
+   end do
   end subroutine
 
  end module

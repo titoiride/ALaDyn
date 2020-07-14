@@ -322,7 +322,7 @@ module tracking
   ch = spec_in%pick_charge()
   out_parts = index_array(np)
 
-  call xx_realloc(mempool%mp_xx_2d_B, npt, spec_in%total_size())
+  call mp_xx_realloc(mempool%mp_xx_2d_B, npt, spec_in%total_size(), mempool)
   xx => mempool%mp_xx_2d_B
   call array_realloc_1d( mempool%mp_log_1d, np )
    track_mask => mempool%mp_log_1d

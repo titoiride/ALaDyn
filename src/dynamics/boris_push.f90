@@ -94,7 +94,7 @@
    !======================================
    if ( .not. sp_loc%ismobile() ) return
    !=============================================
-   call xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions())
+   call mp_xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions(), mempool)
    xx => mempool%mp_xx_2d_A
    !=============================================
    select case (curr_ndim)
@@ -264,7 +264,7 @@
    NULLIFY(pxpo)
    NULLIFY(pzpo)
    !=============================================
-   call xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions())
+   call mp_xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions(), mempool)
    pp => mempool%mp_xx_2d_A
    !=============================================
    select case (curr_ndim)
@@ -280,7 +280,7 @@
     ! For some (temporary) optimization,
     ! we store the rank 1 arrays for the computation in the strides
     ! of the usually already allocated 2d array
-    call xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     call array_realloc_1d( mempool%mp_xx_1d_C, np)
@@ -379,7 +379,7 @@
     ! For some (temporary) optimization,
     ! we store the rank 1 arrays for the computation in the strides
     ! of the usually already allocated 2d array
-    call xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     call array_realloc_1d( mempool%mp_xx_1d_C, np)
@@ -561,7 +561,7 @@
    NULLIFY(pxpo)
    NULLIFY(pzpo)
    !=============================================
-   call xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions())
+   call mp_xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions(), mempool)
    pp => mempool%mp_xx_2d_A
    !=============================================
    select case (curr_ndim)
@@ -577,7 +577,7 @@
     ! For some (temporary) optimization,
     ! we store the rank 1 arrays for the computation in the strides
     ! of the usually already allocated 2d array
-    call xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     call array_realloc_1d( mempool%mp_xx_1d_C, np)
@@ -684,7 +684,7 @@
     ! For some (temporary) optimization,
     ! we store the rank 1 arrays for the computation in the strides
     ! of the usually already allocated 2d array
-    call xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, bbdim + narrs, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     call array_realloc_1d( mempool%mp_xx_1d_C, np)
@@ -1065,14 +1065,14 @@
    NULLIFY(bv)
    NULLIFY(vp)
    !=============================================
-   call xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions())
+   call mp_xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions(), mempool)
    pp => mempool%mp_xx_2d_A
    !=============================================
    select case (curr_ndim)
    case (2)
     !F_pt(5)=wgh/gamp
     bbdim = 1
-    call xx_realloc( mempool%mp_xx_2d_B, np, bbdim)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, bbdim, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     bb => mempool%mp_xx_2d_B
@@ -1106,7 +1106,7 @@
    case (3)
 
     bbdim = 3
-    call xx_realloc( mempool%mp_xx_2d_B, np, bbdim)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, bbdim, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     call array_realloc_1d( mempool%mp_xx_1d_C, np)
@@ -1239,7 +1239,7 @@
    NULLIFY(b2)
    NULLIFY(gam_inv)
    !=============================================
-   call xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions())
+   call mp_xx_realloc( mempool%mp_xx_2d_A, np, sp_loc%pick_dimensions(), mempool)
    pp => mempool%mp_xx_2d_A
    !=============================================
    !==========================
@@ -1248,7 +1248,7 @@
    !             at time level t^{n+1/2} assigned to the x^n positions
    case (2)
 
-    call xx_realloc( mempool%mp_xx_2d_B, np, 2)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, 2, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     call array_realloc_1d( mempool%mp_xx_1d_C, np)
@@ -1291,7 +1291,7 @@
     !============enter F_pt(4)=F, F_pt (1:3) Grad[F] where F=|A|^2/2 at t^{n+1/2}
     ! assigned at x^n
 
-    call xx_realloc( mempool%mp_xx_2d_B, np, 3)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, 3, mempool)
     call array_realloc_1d( mempool%mp_xx_1d_A, np)
     call array_realloc_1d( mempool%mp_xx_1d_B, np)
     call array_realloc_1d( mempool%mp_xx_1d_C, np)

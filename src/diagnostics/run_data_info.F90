@@ -21,17 +21,18 @@
 
  module run_data_info
 
-  use pstruct_data
-  use fstruct_data
+  use boris_push, only: BORIS, HIGUERA
   use code_util
-  use common_param
-  use grid_param
-  use ionz_data
-  use parallel
   use control_bunch_input, only: reduced_charge, bunch_charge, epsy,&
   epsz, sxb, syb, gam, rhob, jb_norm
+  use common_param
+  use fstruct_data
+  use grid_param
+  use ionz_data
+  use memory_pool
+  use parallel
   use phys_param, only: electron_charge_norm
-  use boris_push, only: BORIS, HIGUERA
+  use pstruct_data
   implicit none
 
   interface Max_pmemory_check
@@ -41,7 +42,9 @@
 
  contains
 
-  subroutine timing
+  subroutine timing(mempool)
+   type(memory_pool_t), intent(inout) :: mempool
+   real(dp) :: used_memory
 
    if (mod(iter,write_every)==0) then
     mem_psize_max = 0.0
@@ -51,6 +54,7 @@
      call Max_pmemory_check(spec, ebfp, ebfp0, ebfp1)
 #else
      call Max_pmemory_check(spec, ebfp)
+     call Max_memory_pool_usage(mempool, used_memory)
 #endif
     end if
     if (pe0) then
@@ -66,9 +70,11 @@
          ' ', np_max
         write (6, '(a18,2i8)') ' where pmin/pmax  ', pe_npmin, pe_npmax
        end if
-       write (6, '(a24,e12.5)') ' max part memory in MB= ', &
+       write (6, '(a24,e12.5)') ' Max part memory in MB= ', &
           mem_psize_max
        write (6, '(a20,e12.5)') ' Max part  address= ', mem_max_addr
+       write (6, '(a31,e12.5)') ' Max memory pool memory in MB= ', &
+          used_memory
       end if
       write (6, '(a13,2E11.4)') ' xmin/xmax   ', xmin, xmax
       write (6, *) '========================'
@@ -565,9 +571,9 @@
    write (6, '(e11.4)') j0_norm
    write (6, *) '********** ALLOCATED MEMORY (MB) *********************'
    write (6, '(a28,e12.5)') ' Pe0 allocated grid memory= ', &
-     1.e-06*real(mem_size, dp)*kind(electron_charge_norm)
+     1.e-06*real(mem_size, dp)*sizeof(electron_charge_norm)
    write (6, '(a28,e12.5)') ' Pe0 allocated part memory= ', &
-     1.e-06*real(mem_psize, dp)*kind(electron_charge_norm)
+     1.e-06*real(mem_psize, dp)*sizeof(electron_charge_norm)
    if (prl) then
     write (6, '(a24,e12.5)') ' Max part memory (MB) = ', mem_psize_max
     !write(6,'(a20,e12.5)')' Max part  address= ',mem_max_addr
@@ -714,7 +720,7 @@
     mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
    end if
    call allreduce_dpreal(maxv, mem_loc, max_mem, 1)
-   mem_psize_max = kind(electron_charge_norm)*1.e-06*max_mem(1)
+   mem_psize_max = sizeof(electron_charge_norm)*1.e-06*max_mem(1)
 
    !call submem(adr)
    !mem_loc(1)=adr
@@ -737,42 +743,17 @@
    max_mem = 0.
    if (allocated(spec_in) ) then
     do ic = 1, SIZE(spec_in)
-     ndv1 = spec_in(ic)%how_many()
+     ndv1 = spec_in(ic)%array_size()
      ndv2 = spec_in(ic)%total_size()
      mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-     ndv1 = spec_aux_1_in(ic)%how_many()
+     ndv1 = spec_aux_1_in(ic)%array_size()
      ndv2 = spec_aux_1_in(ic)%total_size()
      mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
     end do
    end if
-   ! if (present(bunch_in) ) then
-   !  if (beam) then
-   !   if (allocated(bunch_in)) then
-   !    do ic = 1, SIZE(bunch_in)
-   !     ndv1 = bunch_in(ic)%how_many()
-   !     ndv2 = bunch_in(ic)%total_size()
-   !     mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   !    end do
-   !   end if
-   !   if (allocated(bunch_aux_in)) then
-   !    ndv1 = bunch_aux_in(ic)%how_many()
-   !    ndv2 = bunch_aux_in(ic)%total_size()
-   !    mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   !   end if
-   !  end if
-   ! end if
-   ! if (allocated(ebfp0_in)) then
-   !  ndv1 = ebfp0_in(ic)%how_many()
-   !  ndv2 = ebfp0_in(ic)%total_size()
-   !  mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   ! end if
-   ! if (allocated(ebfp1_in)) then
-   !  ndv1 = ebfp1_in(ic)%how_many()
-   !  ndv2 = ebfp1_in(ic)%total_size()
-   !  mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   ! end if
+
    call allreduce_dpreal(maxv, mem_loc, max_mem, 1)
-   mem_psize_max = kind(electron_charge_norm)*1.e-06*max_mem(1)
+   mem_psize_max = sizeof(electron_charge_norm)*1.e-06*max_mem(1)
 
    !call submem(adr)
    !mem_loc(1)=adr
@@ -781,4 +762,19 @@
 
   end subroutine
   !---------------------------
+  subroutine Max_memory_pool_usage( mempool, mp_usage )
+   type(memory_pool_t), intent(inout) :: mempool
+   real (dp) :: mp_usage
+   real (dp) :: mem_loc(1), max_mem(1)
+
+   mem_loc = 0.
+   max_mem = 0.
+   call mempool%memory_usage()
+   mem_loc(1) = real(mempool%used_memory, dp)
+
+   call allreduce_dpreal(maxv, mem_loc, max_mem, 1)
+
+   mp_usage = 1.e-06*max_mem(1)
+
+  end subroutine
  end module

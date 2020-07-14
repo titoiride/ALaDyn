@@ -91,10 +91,6 @@
    module procedure ncdef_3d_curr_old
   end interface
 
-  type(interp_coeff), private, allocatable, save :: interp
-  type(interp_coeff), private, allocatable, save :: interp_old
-  !! Useful variable to store interpolation results
-
   !========= SECTION FOR FIELDS ASSIGNEMENT
  contains
 
@@ -106,6 +102,7 @@
    integer, intent (in) :: np, ndf
    type(memory_pool_t), pointer, intent(in) :: mempool
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
+   type(interp_coeff), pointer :: interp => null()
    integer :: spl_cell, spl_h_cell
    integer :: i1, i2, j2, n
    !=================================
@@ -113,8 +110,9 @@
    !=================================
    if ( sp_loc%empty ) return
    !================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 1)
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 1, mempool)
    xx => mempool%mp_xx_2d_A
    !================================
    spl_cell = 2
@@ -122,7 +120,7 @@
    select case (ndf)
    case (3)
 
-    call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 3, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:3) = zero_dp
     j2 = 1
@@ -152,7 +150,7 @@
    !========================
    case (6)
     j2 = 1
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:6) = zero_dp
     xx(1:np, 1) = sp_loc%x(1:np) !the current particle positions
@@ -195,7 +193,7 @@
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)
    integer, intent (in) :: np, ndf
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: xp1(3), ap(6)
    real (dp) :: axh(0:2), ax1(0:2)
    integer :: i, ih, i1, i2, j2, n
@@ -266,6 +264,7 @@
    integer, intent (in) :: np, ndf
    type(memory_pool_t), pointer, intent(in) :: mempool
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
+   type(interp_coeff), pointer :: interp => null()
    real (dp) :: dvol, dvol1
    integer :: i1, j1, i2, j2, n, spl_cell, spl_h_cell
    !================================
@@ -277,15 +276,16 @@
    !=================================
    if ( sp_loc%empty ) return
    !=====================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
    xx => mempool%mp_xx_2d_A
    !================================
    spl_cell = 2
    spl_h_cell = 2
    select case (ndf) !Field components
    case (3)
-    call xx_realloc( mempool%mp_xx_2d_B, np, 3)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, 3, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:3) = zero_dp
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -335,7 +335,7 @@
     !==============
    case (6)
     !=====================
-    call xx_realloc( mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc( mempool%mp_xx_2d_B, np, 6, mempool)
     ap => mempool%mp_xx_2d_B
     ap(1:np, 1:6) = zero_dp
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -403,7 +403,7 @@
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)
    integer, intent (in) :: np, ndf
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: dvol, dvol1
    real (dp) :: xp1(3), ap(6)
    real (dp) :: axh(0:2), ax1(0:2)
@@ -527,6 +527,7 @@
    type (species_aux), intent (inout) :: pt
    type(memory_pool_t), pointer, intent(in) :: mempool
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
+   type(interp_coeff), pointer :: interp => null()
    integer, intent (in) :: np
    real (dp) :: dvol
    integer :: i1, j1, i2, j2, k1, k2, n, spl_cell, spl_h_cell
@@ -541,10 +542,11 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
    !================================
-   call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+   call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
    xx => mempool%mp_xx_2d_A
    ap => mempool%mp_xx_2d_B
    ap(1:np, 1:6) = zero_dp
@@ -654,7 +656,7 @@
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)
    integer, intent (in) :: np
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: dvol, ap(6), xp1(3)
    real (dp) :: axh(0:2), ax1(0:2)
    real (dp) :: ayh(0:2), ay1(0:2)
@@ -770,6 +772,7 @@
    type (species_aux), intent (inout) :: pt
    integer, intent (in) :: np
    type(memory_pool_t), pointer, intent(in) :: mempool
+   type(interp_coeff), pointer :: interp => null()
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null()
    real(dp), pointer, contiguous, dimension(:) :: ef_sqr => null()
 
@@ -788,12 +791,13 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
    !================================
    
    select case (ndim)
    case (2)
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
     kp2 = 1
     !==========================
@@ -849,7 +853,7 @@
 
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
@@ -935,7 +939,7 @@
    type (species), intent (in) :: sp_loc
    real (dp), intent (inout) :: pt(:, :)
    integer, intent (in) :: np
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: ef_sqr, dvol, ex, ey, ez
    real (dp) :: axh(0:2), ax1(0:2)
    real (dp) :: ayh(0:2), ay1(0:2)
@@ -1094,6 +1098,7 @@
    real (dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
    real (dp), pointer, contiguous, dimension(:) :: inv_gam => null(), aa1 => null()
    real (dp), pointer, contiguous, dimension(:) :: b1 => null(), dgam => null()
+   type(interp_coeff), pointer :: interp => null()
    real (dp) :: dvol, dvol1
    real (dp) :: dth, ch
    integer :: i1, j1, k1, i2, j2, k2
@@ -1125,13 +1130,14 @@
    !=================================
    if ( sp_loc%empty ) return
    !========================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
    !========================================
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1228,8 +1234,8 @@
 
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 10)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 10, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1366,7 +1372,7 @@
    real (dp), intent (inout) :: pt(:, :)
    integer, intent (in) :: np
    real (dp), intent (in) :: dt_step
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: dvol, dvol1
    real (dp) :: xp1(3), upart(3), ap(12)
    real (dp) :: aa1, b1, dgam, gam_inv, gam, gam2, dth
@@ -1599,6 +1605,7 @@
    real (dp), intent (in) :: om0
    type(memory_pool_t), pointer, intent(in) :: mempool
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
+   type(interp_coeff), pointer :: interp => null()
    real (dp) :: dvol, ddx, ddy
    integer :: i1, j1, i2, j2, k1, k2, n
    !==============================
@@ -1619,15 +1626,16 @@
    ddx = dx_inv
    ddy = dy_inv
    !========================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
    !========================================
    !===== enter species positions at t^{n+1} level========
    ! fields are at t^n
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1693,8 +1701,8 @@
     !==========================
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 6)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 6, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -1774,7 +1782,7 @@
    real (dp), intent (inout) :: pt(:, :)
    integer, intent (in) :: np
    real (dp), intent (in) :: om0
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: axh1(0:2), ax1(0:2)
    real (dp) :: ayh1(0:2), ay1(0:2)
    real (dp) :: azh1(0:2), az1(0:2)
@@ -1944,6 +1952,7 @@
    integer, intent (in) :: np, ndm
    type(memory_pool_t), pointer, intent(in) :: mempool
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null(), ap => null()
+   type(interp_coeff), pointer :: interp => null()
    real (dp) :: dvol, dvol1
    integer ::i1, j1, i2, j2, k1, k2, n
 
@@ -1965,13 +1974,14 @@
    !=================================
    if ( sp_loc%empty ) return
    !========================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
    !========================================
    select case (ndim)
    case (2)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -2022,8 +2032,8 @@
     !=================================
    case (3)
     !==========================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-    call xx_realloc(mempool%mp_xx_2d_B, np, 4)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+    call mp_xx_realloc(mempool%mp_xx_2d_B, np, 4, mempool)
     xx => mempool%mp_xx_2d_A
     ap => mempool%mp_xx_2d_B
     !==========================
@@ -2098,7 +2108,7 @@
    real (dp), intent (in) :: av(:, :, :, :)
    real (dp), intent (inout) :: pt(:, :)
    integer, intent (in) :: np, ndm
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: axh1(0:2), ax1(0:2)
    real (dp) :: ayh1(0:2), ay1(0:2)
    real (dp) :: azh1(0:2), az1(0:2)
@@ -2249,6 +2259,7 @@
    type(memory_pool_t), pointer, intent(in) :: mempool
    real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
    real (dp), pointer, contiguous, dimension(:) :: weight => null()
+   type(interp_coeff), pointer :: interp => null()
    real (dp) :: dvol, dvol1
    integer :: i1, j1, i2, j2, k1, k2, n
    !===============================================
@@ -2261,12 +2272,13 @@
    !=================================
    if ( sp_loc%empty ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
    !================================
    select case (ndim)
    case (2)
     k2 = 1
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2299,7 +2311,7 @@
     !========================
     end associate
    case (3)
-    call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
 
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -2345,7 +2357,7 @@
    real (dp), intent (inout) :: efp(:, :)
    real (dp), intent (inout) :: av(:, :, :, :)
    integer, intent (in) :: np, ic
-
+   type(interp_coeff), allocatable :: interp
    real (dp) :: dvol, dvol1, wghp
    real (dp) :: ax1(0:2), ay1(0:2), az1(0:2), xp1(3)
    integer :: i, j, i1, j1, i2, j2, k, k1, k2, n
@@ -2434,8 +2446,8 @@
    integer, intent (in) :: np
    type(memory_pool_t), pointer, intent(in) :: mempool
    real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
-   real (dp), allocatable, dimension(:) :: axh, ayh
-   real (dp), allocatable, dimension(:) :: currx, curry
+   type(interp_coeff), pointer :: interp => null(), interp_old => null()
+   real (dp), dimension(0:4) :: axh, ayh, currx, curry
    real (dp) :: dvol
    integer :: i1, j1, i2, j2, n, ih, jh
    integer :: x0, x1, y0, y1
@@ -2452,16 +2464,13 @@
    !=================================
    if ( sp_loc%istest() ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
+   call interp_realloc(mempool%interp_old, np, sp_loc%pick_dimensions())
+   interp_old => mempool%interp_old
    !=============================================================
-   allocate( axh(0:4) )
-   allocate( ayh(0:4) )
-   allocate( currx(0:4) )
-   allocate( curry(0:4) )
-   !======================
    if (curr_ndim==2) then !Two current components
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
     
     ! Interpolation on new positions
@@ -2566,7 +2575,7 @@
    if (curr_ndim==3) then !Three currents conditions in 2D grid
 
     !============== ********************** =================
-    call xx_realloc(mempool%mp_xx_2d_A, np, 2)
+    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
     xx => mempool%mp_xx_2d_A
     
     ! Interpolation on new positions
@@ -2705,6 +2714,7 @@
    real (dp), intent (inout) :: pt(:, :), jcurr(:, :, :, :)
    integer, intent (in) :: np
    real (dp) :: dvol
+   type(interp_coeff), allocatable :: interp
    real (dp) :: ax0(0:3), ay0(0:3), xp1(3), xp0(3)
    real (dp) :: ax1(0:3), ay1(0:3), vp(3)
    real (dp) :: axh(0:4), axh0(0:4), axh1(0:4), ayh(0:4)
@@ -2942,9 +2952,10 @@
    integer, intent (in) :: np
    type(memory_pool_t), pointer, intent(in) :: mempool
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null()
-   real (dp), allocatable, dimension(:) :: axh0, axh1, ayh0, ayh1
-   real (dp), allocatable, dimension(:) :: axh, ayh, azh
-   real (dp), allocatable, dimension(:) :: currx, curry, currz
+   type(interp_coeff), pointer :: interp => null(), interp_old => null()
+   real (dp), dimension(0:4) :: axh0, axh1, ayh0, ayh1
+   real (dp), dimension(0:4) :: axh, ayh, azh
+   real (dp), dimension(0:4) :: currx, curry, currz
    real (dp) :: dvol, dvolh
    integer :: ih, jh, kh
    integer :: x0, x1, y0, y1, z0, z1
@@ -2961,21 +2972,13 @@
    !=================================
    if ( sp_loc%istest() ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
+   call interp_realloc(mempool%interp_old, np, sp_loc%pick_dimensions())
+   interp_old => mempool%interp_old
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
     xx => mempool%mp_xx_2d_A
    !=============================================================
-   allocate( axh(0:4) )
-   allocate( ayh(0:4) )
-   allocate( azh(0:4) )
-   allocate( currx(0:4) )
-   allocate( curry(0:4) )
-   allocate( currz(0:4) )
-   allocate( axh0(0:4))
-   allocate( axh1(0:4))
-   allocate( ayh0(0:4))
-   allocate( ayh1(0:4))
 
    ! Interpolation on new positions
    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
@@ -3151,6 +3154,7 @@
    real (dp) :: axh(0:4), ayh(0:4), azh(0:4)
    real (dp) :: axh0(0:4), axh1(0:4), ayh0(0:4), ayh1(0:4)
    real (dp) :: currx(0:4), curry(0:4), currz(0:4)
+   type(interp_coeff), allocatable :: interp
    real (sp) :: wght
    integer :: i, j, k, ii0, jj0, kk0, i1, j1, k1, i2, j2, k2, n
    integer :: x0, x1, y0, y1, z0, z1, ih, jh, kh
@@ -3332,6 +3336,7 @@
 
    real (dp), pointer, contiguous, dimension(:, :) :: xx => null(), vp => null()
    real (dp), pointer, contiguous, dimension(:) :: weight => null()
+   type(interp_coeff), pointer :: interp => null(), interp_old => null()
    real (dp) ::dvol(3)
    integer :: i1, j1, i2, j2, n
    !=======================
@@ -3346,10 +3351,12 @@
    !=================================
    if ( sp_loc%istest() ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 2)
-   call xx_realloc(mempool%mp_xx_2d_B, np, 2)
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
+   call interp_realloc(mempool%interp_old, np, sp_loc%pick_dimensions())
+   interp_old => mempool%interp_old
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
+   call mp_xx_realloc(mempool%mp_xx_2d_B, np, 2, mempool)
 
    xx => mempool%mp_xx_2d_A
    vp => mempool%mp_xx_2d_B
@@ -3443,6 +3450,7 @@
    real (dp) :: ax0(0:2), ay0(0:2), xp0(1:2)
    real (dp) :: ax1(0:2), ay1(0:2), xp1(1:2)
    real (dp) :: vp(3), dvol(3)
+   type(interp_coeff), allocatable :: interp
    real (sp) :: wght
    integer :: i, j, ii0, jj0, i1, j1, i2, j2, n
    integer :: jh0, jh, ih0, ih
@@ -3535,6 +3543,7 @@
 
    real (dp), pointer, contiguous, dimension(:, :) :: xx => null(), vp => null()
    real (dp), pointer, contiguous, dimension(:) :: weight => null()
+   type(interp_coeff), pointer :: interp => null(), interp_old => null()
    real (dp) ::dvol(3)
    integer :: i1, j1, k1, i2, j2, k2, n
    !=======================
@@ -3554,10 +3563,12 @@
    !=================================
    if ( sp_loc%istest() ) return
    !=============================================================
-   call interp_realloc(interp, np, sp_loc%pick_dimensions())
-   call interp_realloc(interp_old, np, sp_loc%pick_dimensions())
-   call xx_realloc(mempool%mp_xx_2d_A, np, 3)
-   call xx_realloc(mempool%mp_xx_2d_B, np, 3)
+   call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
+   interp => mempool%interp
+   call interp_realloc(mempool%interp_old, np, sp_loc%pick_dimensions())
+   interp_old => mempool%interp_old
+   call mp_xx_realloc(mempool%mp_xx_2d_A, np, 3, mempool)
+   call mp_xx_realloc(mempool%mp_xx_2d_B, np, 3, mempool)
 
    xx => mempool%mp_xx_2d_A
    vp => mempool%mp_xx_2d_B
@@ -3699,6 +3710,7 @@
    real (dp) :: axh0(0:1), ayh0(0:1), azh0(0:1)
    real (dp) :: axh1(0:1), ayh1(0:1), azh1(0:1)
    real (dp) :: vp(3)
+   type(interp_coeff), allocatable :: interp
    real (sp) :: wght
    integer :: i, j, k, ii0, jj0, kk0, i1, j1, k1, i2, j2, k2, n
    integer :: ih, jh, kh, ih0, jh0, kh0
