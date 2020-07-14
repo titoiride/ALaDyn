@@ -44,7 +44,7 @@
    type (species_aux), intent (in) :: spec_aux_in
    integer, intent(in) :: np, order, polarization
    type(memory_pool_t), pointer, intent(in) :: mempool
-   logical, dimension(:), intent(in), target, optional :: mask_in
+   logical, dimension(:), intent(in), target, contiguous, optional :: mask_in
    real(dp) :: dvol
    integer :: npt, i1, i2, j1, j2, k1, k2, n, cc
    real(dp), pointer, contiguous, dimension(:, :) :: xx => null()
