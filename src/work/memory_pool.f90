@@ -27,6 +27,7 @@
   use base_species
   use particles_def
   use particles_aux_def
+  use interpolation_lib
 
   implicit none
   public
@@ -53,6 +54,8 @@
   real(dp), allocatable, dimension(:, :, :) :: mp_xx_3d
   logical, allocatable, dimension(:) :: mp_log_1d
   type(species_new), allocatable :: mp_species_new
+  type(interp_coeff), allocatable :: interp
+  type(interp_coeff), allocatable :: interp_old
 
   contains
 
@@ -282,5 +285,24 @@
     mempool%reset_count = 1
    end if
   end subroutine
+
   !==========================================
+  !DIR$ ATTRIBUTES INLINE :: interp_realloc
+  subroutine interp_realloc(interp_in, npart_new, dimensions)
+   type(interp_coeff), allocatable, intent(inout) :: interp_in
+   integer, intent(in) :: npart_new, dimensions
+
+   if ( allocated(interp_in) ) then   
+    if (interp_in%n_parts < npart_new ) then
+     call interp_in%sweep()
+     call interp_in%new_interp(npart_new, max_order, &
+      max_h_order, dimensions)
+    end if
+   else
+    allocate( interp_in )
+    call interp_in%new_interp(npart_new, max_order, &
+      max_h_order, dimensions)
+   end if
+
+  end subroutine
  end module

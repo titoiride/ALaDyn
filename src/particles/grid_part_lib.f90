@@ -33,8 +33,6 @@
   real (dp), parameter :: half = 0.5
   real (sp) :: shx, shy, shz
   integer (kind=2) :: err_ind
-  integer, parameter, private :: max_order = 2
-  integer, parameter, private :: max_h_order = 2
 
   interface qqh_1d_spline
    module procedure qqh_1d_spline_real
@@ -97,27 +95,6 @@
   !===========================================
   !     Computes particle density charge on grid integer points
   !==============================================
-  !DIR$ ATTRIBUTES INLINE :: ql_interpolate,qq_interpolate
-  !====================
-
-  
-  subroutine interp_realloc(interp_in, npart_new, dimensions)
-   type(interp_coeff), allocatable, intent(inout) :: interp_in
-   integer, intent(in) :: npart_new, dimensions
-
-   if ( allocated(interp_in) ) then   
-    if (interp_in%n_parts < npart_new ) then
-     call interp_in%sweep()
-     call interp_in%new_interp(npart_new, max_order, &
-      max_h_order, dimensions)
-    end if
-   else
-    allocate( interp_in )
-    call interp_in%new_interp(npart_new, max_order, &
-      max_h_order, dimensions)
-   end if
-
-  end subroutine
 
    !=======================
    !  1D
