@@ -332,7 +332,7 @@
     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
     do n = 0, 2
-     ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
+     ax0(n, 1:np) = weight(1:np)*ax0(n, 1:np)
     end do
 
     do n = 1, np
@@ -340,7 +340,7 @@
       j2 = j(n) + j1
       do i1 = 0, spline
        i2 = i(n) + i1
-       dvol = ax0(n, i1)*ay0(n, j1)
+       dvol = ax0(i1, n)*ay0(j1, n)
        den(i2, j2, 1, ic) = den(i2, j2, 1, ic) + dvol
       end do
      end do
@@ -375,17 +375,18 @@
     weight(1:np) = sp_loc%pick_charge()*sp_loc%call_component( W_COMP, lb=1, ub=np)
 
     do n = 0, 2
-     ax0(1:np, n) = weight(1:np)*ax0(1:np, n)
+     ax0(n, 1:np) = weight(1:np)*ax0(n, 1:np)
     end do
+
     do n = 1, np
      do k1 = 0, spline
       k2 = k(n) + k1
       do j1 = 0, spline
        j2 = j(n) + j1
-       dvol = az0(n, k1)*ay0(n, j1)
+       dvol = az0(k1, n)*ay0(j1, n)
        do i1 = 0, spline
         i2 = i(n) + i1
-        den(i2, j2, k2, ic) = den(i2, j2, k2, ic) + ax0(n, i1)*dvol
+        den(i2, j2, k2, ic) = den(i2, j2, k2, ic) + ax0(i1, n)*dvol
        end do
       end do
      end do
@@ -557,18 +558,18 @@
     do n = 1, np
      do i1 = 0, spline
       i2 = i(n) + i1
-      dvol = ax0(n, i1)
+      dvol = ax0(i1, n)
       gam(n) = gam(n) + dvol*eden(i2, j2, 1, icp)
      end do
     end do
     gam(1:np) = sqrt( one_dp + gam(1:np))
     do i1 = 0, spline
-     ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+     ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
     end do
     do n = 1, np
      do i1 = 0, spline
       i2 = i(n) + i1
-      dvol = ax0(n, i1)
+      dvol = ax0(i1, n)
       eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
       eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1)*dvol
      end do
@@ -609,21 +610,21 @@
        j2 = j(n) + j1
        do i1 = 0, spline
         i2 = i(n) + i1
-        dvol = ax0(n, i1)*ay0(n, j1)
+        dvol = ax0(i1, n)*ay0(j1, n)
         gam(n) = gam(n) + dvol*eden(i2, j2, 1, icp)
        end do
       end do
      end do
      gam(1:np) = sqrt(one_dp + gam(1:np))
      do i1 = 0, spline
-      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+      ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
      end do
      do n = 1, np
       do j1 = 0, spline
        j2 = j(n) + j1
        do i1 = 0, spline
         i2 = i(n) + i1
-        dvol = ax0(n, i1)*ay0(n, j1)
+        dvol = ax0(i1, n)*ay0(j1, n)
         eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
         eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1.)*dvol
        end do
@@ -642,21 +643,21 @@
        j2 = j(n) + j1
        do i1 = 0, spline
         i2 = i(n) + i1
-        dvol = ax0(n, i1)*ay0(n, j1)
+        dvol = ax0(i1, n)*ay0(j1, n)
         gam(n) = gam(n) + dvol*eden(i2, j2, 1, icp)
        end do
       end do
      end do
      gam(1:np) = sqrt(one_dp + gam(1:np))
      do i1 = 0, spline
-      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+      ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
      end do
      do n = 1, np
       do j1 = 0, spline
        j2 = j(n) + j1
        do i1 = 0, spline
         i2 = i(n) + i1
-        dvol = ax0(n, i1)*ay0(n, j1)
+        dvol = ax0(i1, n)*ay0(j1, n)
         eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
         eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n) - 1.)*dvol
        end do
@@ -700,29 +701,29 @@
       k2 = k(n) + k1
       do j1 = 0, spline
        j2 = j(n) + j1
-       dvol = az0(n, k1)*ay0(n, j1)
+       dvol = az0(k1, n)*ay0(j1, n)
        do i1 = 0, spline
         i2 = i(n) + i1
-        gam(n) = gam(n) + ax0(n, i1)*dvol*eden(i2, j2, k2, icp)
+        gam(n) = gam(n) + ax0(i1, n)*dvol*eden(i2, j2, k2, icp)
        end do
       end do
      end do
     end do
     gam(1:np) = sqrt(one_dp + gam(1:np))
     do i1 = 0, spline
-     ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+     ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
     end do
     do n = 1, np
      do k1 = 0, spline
       k2 = k(n) + k1
       do j1 = 0, spline
        j2 = j(n) + j1
-       dvol = az0(n, k1)*ay0(n, j1)
+       dvol = az0(k1, n)*ay0(j1, n)
        do i1 = 0, spline
         i2 = i(n) + i1
         eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(n, i1)*dvol*sp_loc%pick_charge()
         eden(i2, j2, k2, 2) = eden(i2, j2, k2, 2) + &
-          (gam(n) - 1.)*ax0(n, i1)*dvol
+          (gam(n) - 1.)*ax0(i1, n)*dvol
        end do
       end do
      end do
@@ -965,12 +966,12 @@
      gam(1:np) = sp_loc%call_component( PX_COMP, lb=1, ub=np)*sp_loc%call_component( PX_COMP, lb=1, ub=np)
      gam(1:np) = sqrt( one_dp + gam(1:np))
      do i1 = 0, spline
-      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+      ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
      end do
      do n = 1, np
       do i1 = 0, spline
        i2 = i(n) + i1
-       dvol = ax0(n, i1)
+       dvol = ax0(i1, n)
        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1)*dvol
       end do
@@ -1006,14 +1007,14 @@
 
      gam(1:np) = sqrt(one_dp + gam(1:np))
      do i1 = 0, spline
-      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+      ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
      end do
      do n = 1, np
       do j1 = 0, spline
        j2 = j(n) + j1
        do i1 = 0, spline
         i2 = i(n) + i1
-        dvol = ax0(n, i1)*ay0(n, j1)
+        dvol = ax0(i1, n)*ay0(j1, n)
         eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
         eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n)-1.)*dvol
        end do
@@ -1028,14 +1029,14 @@
 
      gam(1:np) = sqrt(one_dp + gam(1:np))
      do i1 = 0, spline
-      ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+      ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
      end do
      do n = 1, np
       do j1 = 0, spline
        j2 = j(n) + j1
        do i1 = 0, spline
         i2 = i(n) + i1
-        dvol = ax0(n, i1)*ay0(n, j1)
+        dvol = ax0(i1, n)*ay0(j1, n)
         eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*sp_loc%pick_charge()
         eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam(n) - 1.)*dvol
        end do
@@ -1076,19 +1077,19 @@
 
     gam(1:np) = sqrt(one_dp + gam(1:np))
     do i1 = 0, spline
-     ax0(1:np, i1) = weight(1:np)*ax0(1:np, i1)
+     ax0(i1, 1:np) = weight(1:np)*ax0(i1, 1:np)
     end do
     do n = 1, np
      do k1 = 0, spline
       k2 = k(n) + k1
       do j1 = 0, spline
        j2 = j(n) + j1
-       dvol = az0(n, k1)*ay0(n, j1)
+       dvol = az0(k1, n)*ay0(j1, n)
        do i1 = 0, spline
         i2 = i(n) + i1
-        eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(n, i1)*dvol*sp_loc%pick_charge()
+        eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(i1, n)*dvol*sp_loc%pick_charge()
         eden(i2, j2, k2, 2) = eden(i2, j2, k2, 2) + &
-          (gam(n) - 1.)*ax0(n, i1)*dvol
+          (gam(n) - 1.)*ax0(i1, n)*dvol
        end do
       end do
      end do

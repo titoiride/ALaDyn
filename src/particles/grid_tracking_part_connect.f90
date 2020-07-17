@@ -100,10 +100,10 @@
                 do n = 1, npt
                  do j1 = 0, 2
                   j2 = j(n) + j1
-                  dvol = ay1( n, j1 )
+                  dvol = ay1( j1, n )
                   do i1 = 0, 2
                    i2 = i(n) + i1
-                   ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+                   ap(n) = ap(n) + ax1(i1, n)*dvol*field(i2, j2, k2)
                   end do
                  end do
                 end do
@@ -131,10 +131,10 @@
        do n = 1, npt
         do j1 = 0, 2
          j2 = jh(n) + j1
-         dvol = ayh1( n, j1 )
+         dvol = ayh1( j1, n )
          do i1 = 0, 2
           i2 = i(n) + i1
-          ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+          ap(n) = ap(n) + ax1(i1, n)*dvol*field(i2, j2, k2)
          end do
         end do
        end do
@@ -151,10 +151,10 @@
        do n = 1, npt
         do j1 = 0, 2
          j2 = j(n) + j1
-         dvol = ay1( n, j1 )
+         dvol = ay1( j1, n )
          do i1 = 0, 2
           i2 = i(n) + i1
-          ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+          ap(n) = ap(n) + ax1(i1, n)*dvol*field(i2, j2, k2)
          end do
         end do
        end do
@@ -191,13 +191,13 @@
                 do n = 1, npt
                  do k1 = 0, 2
                   k2 = k(n) + k1
-                  dvol = az1( n, k1 )
+                  dvol = az1( k1, n )
                   do j1 = 0, 2
                    j2 = j(n) + j1
-                   dvol = dvol*ay1( n, j1 )
+                   dvol = dvol*ay1( j1, n )
                    do i1 = 0, 2
                     i2 = i(n) + i1
-                    ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+                    ap(n) = ap(n) + ax1(i1, n)*dvol*field(i2, j2, k2)
                    end do
                   end do
                  end do
@@ -227,13 +227,13 @@
                  do n = 1, npt
                   do k1 = 0, 2
                    k2 = k(n) + k1
-                   dvol = az1( n, k1 )
+                   dvol = az1( k1, n )
                    do j1 = 0, 2
                     j2 = jh(n) + j1
-                    dvol = dvol*ayh1( n, j1 )
+                    dvol = dvol*ayh1( j1, n )
                     do i1 = 0, 2
                      i2 = i(n) + i1
-                     ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+                     ap(n) = ap(n) + ax1(i1, n)*dvol*field(i2, j2, k2)
                     end do
                    end do
                   end do
@@ -253,13 +253,13 @@
                  do n = 1, npt
                   do k1 = 0, 2
                    k2 = kh(n) + k1
-                   dvol = azh1( n, k1 )
+                   dvol = azh1( k1, n )
                    do j1 = 0, 2
                     j2 = j(n) + j1
-                    dvol = dvol*ay1( n, j1 )
+                    dvol = dvol*ay1( j1, n )
                     do i1 = 0, 2
                      i2 = i(n) + i1
-                     ap(n) = ap(n) + ax1(n, i1)*dvol*field(i2, j2, k2)
+                     ap(n) = ap(n) + ax1(i1, n)*dvol*field(i2, j2, k2)
                     end do
                    end do
                   end do

@@ -300,14 +300,14 @@
     bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp/nstep
     b2(1:np) = bb(1:np, 1) * bb(1:np, 1)
 
+    !gam0 in Boris push gam0^2 = 1 + (u^-)^2
+    do p = 1, np
+     gam02(p) = 1. + dot_product(pp(p, 1:2), pp(p, 1:2))
+    end do
+
+    gam(1:np) = sqrt(gam02(1:np))
     if (nstep == 1) then
      ! Single substep version (fewer arrays employed)
-     !gam0 in Boris push gam0^2 = 1 + (u^-)^2
-     do p = 1, np
-      gam02(p) = 1. + dot_product(pp(p, 1:2), pp(p, 1:2))
-     end do
-
-     gam(1:np) = sqrt(gam02(1:np))
 
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*(gam02(1:np)*pp(1:np, 1) + &
@@ -331,9 +331,6 @@
      pypo(1:np) = pp(1:np, 2)
 
      do nss = 1, nstep
-      ! Gamma is recomputed within each substep
-      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
-      gam(1:np) = sqrt(gam02(1:np))
       pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*gam(1:np)*pypo(1:np)*bb(1:np, 1))/ &
         &(gam02(1:np) + b2(1:np))
       pyp(1:np) = ((gam02(1:np) - b2(1:np))*pypo(1:np) - 2*gam(1:np)*pxpo(1:np)*bb(1:np, 1))/ &
@@ -411,14 +408,14 @@
      bv(p) = dot_product(bb(p, 1:3), pp(p, 1:3))
     end do
 
+    !gam0 in Boris push gam0^2 = 1 + (u^-)^2
+    do p = 1, np
+     gam02(p) = 1. + dot_product(pp(p, 1:3), pp(p, 1:3))
+    end do
+
+    gam(1:np) = sqrt(gam02(1:np))
     if ( nstep == 1 ) then
      ! Single substep version (fewer arrays employed)
-     !gam0 in Boris push gam0^2 = 1 + (u^-)^2
-     do p = 1, np
-      gam02(p) = 1. + dot_product(pp(p, 1:3), pp(p, 1:3))
-     end do
-
-     gam(1:np) = sqrt(gam02(1:np))
 
      ! New PX_COMP calculation
      aux(1:np) = gam02(1:np)*pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
@@ -460,17 +457,13 @@
      pzpo(1:np) = pp(1:np, 3)
 
      do nss = 1, nstep
-      ! Gamma is recomputed within each substep
-      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np) + &
-      pzpo(1:np)*pzpo(1:np)
-      gam(1:np) = sqrt(gam02(1:np))
-      pxp(1:np) = ((gam02(1:np) + b2(1:np))*pxpo(1:np) + 2*(bv(1:np)*bb(1:np, 1) + &
+      pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*(bv(1:np)*bb(1:np, 1) + &
        gam(1:np)*(pypo(1:np)*bb(1:np, 3) - pzpo(1:np)*bb(1:np, 2))))/& 
        (gam02(1:np) + b2(1:np))
-      pyp(1:np) = ((gam02(1:np) + b2(1:np))*pypo(1:np) + 2*(bv(1:np)*bb(1:np, 2) + &
+      pyp(1:np) = ((gam02(1:np) - b2(1:np))*pypo(1:np) + 2*(bv(1:np)*bb(1:np, 2) + &
        gam(1:np)*(pzpo(1:np)*bb(1:np, 1) - pxpo(1:np)*bb(1:np, 3))))/& 
        (gam02(1:np) + b2(1:np))
-      pzp(1:np) = ((gam02(1:np) + b2(1:np))*pzpo(1:np) + 2*(bv(1:np)*bb(1:np, 3) + &
+      pzp(1:np) = ((gam02(1:np) - b2(1:np))*pzpo(1:np) + 2*(bv(1:np)*bb(1:np, 3) + &
        gam(1:np)*(pxpo(1:np)*bb(1:np, 2) - pypo(1:np)*bb(1:np, 1))))/& 
        (gam02(1:np) + b2(1:np))
       pxpo(1:np) = pxp(1:np)
@@ -598,20 +591,21 @@
     bb(1:np, 1) = pt%call_component( BZ_COMP, lb=1, ub=np )*alp/nstep
     b2(1:np) = bb(1:np, 1) * bb(1:np, 1)
 
+    do p = 1, np 
+     gam02(p) = 1. + dot_product(pp(p, 1:2), pp(p, 1:2))
+    end do
+    
+    !gam0 in Higuera push
+    gam02(1:np) = gam02(1:np) - b2(1:np)
+    
+    !exact gam^2 solution
+    gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+    4.*b2(1:np)))
+    
+    gam(1:np) = sqrt(gam02(1:np))
+    
     if ( nstep == 1 ) then
      ! Single substep version (fewer arrays employed)
-     do p = 1, np 
-      gam02(p) = 1. + dot_product(pp(p, 1:2), pp(p, 1:2))
-     end do
-
-     !gam0 in Higuera push
-     gam02(1:np) = gam02(1:np) - b2(1:np)
-
-     !exact gam^2 solution
-     gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
-      4.*b2(1:np)))
-
-     gam(1:np) = sqrt(gam02(1:np))
 
      !p_n=(gam2*vp+gam*(vp crossb)+b*bv/(gam2+b2)
      call sp_loc%set_component( 2.*(gam02(1:np)*pp(1:np, 1) + &
@@ -629,16 +623,11 @@
      pyp => mempool%mp_xx_2d_B(:, bbdim + 2)
      pxpo => mempool%mp_xx_2d_B(:, bbdim + 3)
      pypo => mempool%mp_xx_2d_B(:, bbdim + 4)
+
      pxpo(1:np) = pp(1:np, 1)
      pypo(1:np) = pp(1:np, 2)
 
      do nss = 1, nstep
-      ! Gamma is recomputed within each substep
-      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np)
-      gam02(1:np) = gam02(1:np) - b2(1:np)
-      gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
-       4.*b2(1:np)))
-      gam(1:np) = sqrt(gam02(1:np))
       pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*gam(1:np)*pypo(1:np)*bb(1:np, 1))/ &
         &(gam02(1:np) + b2(1:np))
       pyp(1:np) = ((gam02(1:np) - b2(1:np))*pypo(1:np) - 2*gam(1:np)*pxpo(1:np)*bb(1:np, 1))/ &
@@ -715,21 +704,21 @@
      b2(p) = dot_product(bb(p, 1:3), bb(p, 1:3))
      bv(p) = dot_product(bb(p, 1:3), pp(p, 1:3))
     end do
+    
+    do p = 1, np
+     gam02(p) = 1. + dot_product(pp(p, 1:3), pp(p, 1:3))
+    end do
+    
+    !gam0 in Higuera push
+    gam02(1:np) = gam02(1:np) - b2(1:np)
+    
+    !exact gam^2 solution
+    gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
+    4.*(b2(1:np) + bv(1:np) * bv(1:np))))
+    
+    gam(1:np) = sqrt(gam02(1:np))
+    
     if ( nstep == 1 ) then
-
-     do p = 1, np
-      gam02(p) = 1. + dot_product(pp(p, 1:3), pp(p, 1:3))
-     end do
-
-     !gam0 in Higuera push
-     gam02(1:np) = gam02(1:np) - b2(1:np)
-
-     !exact gam^2 solution
-     gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
-      4.*(b2(1:np) + bv(1:np) * bv(1:np))))
-
-     gam(1:np) = sqrt(gam02(1:np))
-
      ! New PX_COMP calculation
      aux(1:np) = gam02(1:np)*pp(1:np, 1) + bb(1:np, 1)*bv(1:np)
      aux(1:np) = (aux(1:np) + gam(1:np)*(pp(1:np, 2)*bb(1:np, 3) - &
@@ -770,19 +759,13 @@
      pzpo(1:np) = pp(1:np, 3)
 
      do nss = 1, nstep
-      gam02(1:np) = one_dp + pxpo(1:np)*pxpo(1:np) + pypo(1:np)*pypo(1:np) + &
-      pzpo(1:np)*pzpo(1:np)
-      gam02(1:np) = gam02(1:np) - b2(1:np)
-      gam02(1:np) = 0.5*(gam02(1:np) + sqrt(gam02(1:np) * gam02(1:np) + &
-       4.*b2(1:np)))
-      gam(1:np) = sqrt(gam02(1:np))
-      pxp(1:np) = ((gam02(1:np) + b2(1:np))*pxpo(1:np) + 2*(bv(1:np)*bb(1:np, 1) + &
+      pxp(1:np) = ((gam02(1:np) - b2(1:np))*pxpo(1:np) + 2*(bv(1:np)*bb(1:np, 1) + &
        gam(1:np)*(pypo(1:np)*bb(1:np, 3) - pzpo(1:np)*bb(1:np, 2))))/& 
        (gam02(1:np) + b2(1:np))
-      pyp(1:np) = ((gam02(1:np) + b2(1:np))*pypo(1:np) + 2*(bv(1:np)*bb(1:np, 2) + &
+      pyp(1:np) = ((gam02(1:np) - b2(1:np))*pypo(1:np) + 2*(bv(1:np)*bb(1:np, 2) + &
        gam(1:np)*(pzpo(1:np)*bb(1:np, 1) - pxpo(1:np)*bb(1:np, 3))))/& 
        (gam02(1:np) + b2(1:np))
-      pzp(1:np) = ((gam02(1:np) + b2(1:np))*pzpo(1:np) + 2*(bv(1:np)*bb(1:np, 3) + &
+      pzp(1:np) = ((gam02(1:np) - b2(1:np))*pzpo(1:np) + 2*(bv(1:np)*bb(1:np, 3) + &
        gam(1:np)*(pxpo(1:np)*bb(1:np, 2) - pypo(1:np)*bb(1:np, 1))))/& 
        (gam02(1:np) + b2(1:np))
       pxpo(1:np) = pxp(1:np)
