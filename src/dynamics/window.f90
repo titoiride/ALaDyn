@@ -177,6 +177,7 @@
    !===============================================
 
    ndv = nd2 + 1
+   np_new = 0
    do ic = 1, nsp
     i1 = 1 + nptx(ic)
     i2 = i1 - 1
@@ -211,7 +212,6 @@
      j2 = loc_npty(ic)
      npt_inj(ic) = (i2 - i1 + 1)*j2*k2
     end select
-    np_new = 0
     np_old = loc_npart(imody, imodz, imodx, ic)
     np_new = max(np_old + npt_inj(ic), np_new)
     !=========================
@@ -229,6 +229,7 @@
    type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic, q
 
+   if ( i2 - i1 + 1 <= 0 ) return
    do ic = 1, nsp
     if ( pex1 ) then
      call spec_in(ic)%extend(np_new)
@@ -550,9 +551,7 @@
    call part_numbers
    if (part) then
     if (targ_in<=xmax) then
-     if (targ_end>xmax) then
-      call particles_inject(spec_in, spec_aux_in, np_old, np_new, in_ind, fin_ind, mempool)
-     end if
+     call particles_inject(spec_in, spec_aux_in, np_old, np_new, in_ind, fin_ind, mempool)
     end if
     
    end if
