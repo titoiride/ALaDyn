@@ -87,7 +87,7 @@
    integer :: n_parts
    contains
    procedure, pass, public :: new_interp
-   procedure, pass, public :: sweep
+   final :: sweep
   end type
 
   interface zeroth_order
@@ -124,52 +124,53 @@
    select case(dimensions)
    case(1)
     allocate( this%coeff_x(0:order) )
-    allocate( this%coeff_x_rank2(n_parts, 0:order) )
+    allocate( this%coeff_x_rank2(0:order, n_parts) )
     allocate( this%h_coeff_x(0:h_order) )
-    allocate( this%h_coeff_x_rank2(n_parts, 0:h_order) )
+    allocate( this%h_coeff_x_rank2(0:h_order, n_parts) )
     allocate( this%ix_rank2(n_parts) )
     allocate( this%ihx_rank2(n_parts) )
    case(2)
     allocate( this%coeff_x(0:order) )
-    allocate( this%coeff_x_rank2(n_parts, 0:order) )
+    allocate( this%coeff_x_rank2(0:order, n_parts) )
     allocate( this%h_coeff_x(0:h_order) )
-    allocate( this%h_coeff_x_rank2(n_parts, 0:h_order) )
+    allocate( this%h_coeff_x_rank2(0:h_order, n_parts) )
     allocate( this%ix_rank2(n_parts) )
     allocate( this%ihx_rank2(n_parts) )
 
     allocate( this%coeff_y(0:order) )
-    allocate( this%coeff_y_rank2(n_parts, 0:order) )
+    allocate( this%coeff_y_rank2(0:order, n_parts) )
     allocate( this%h_coeff_y(0:h_order) )
-    allocate( this%h_coeff_y_rank2(n_parts, 0:h_order) )
+    allocate( this%h_coeff_y_rank2(0:h_order, n_parts) )
     allocate( this%iy_rank2(n_parts) )
     allocate( this%ihy_rank2(n_parts) )
    case(3)
     allocate( this%coeff_x(0:order) )
-    allocate( this%coeff_x_rank2(n_parts, 0:order) )
+    allocate( this%coeff_x_rank2(0:order, n_parts) )
     allocate( this%h_coeff_x(0:h_order) )
-    allocate( this%h_coeff_x_rank2(n_parts, 0:h_order) )
+    allocate( this%h_coeff_x_rank2(0:h_order, n_parts) )
     allocate( this%ix_rank2(n_parts) )
     allocate( this%ihx_rank2(n_parts) )
 
     allocate( this%coeff_y(0:order) )
-    allocate( this%coeff_y_rank2(n_parts, 0:order) )
+    allocate( this%coeff_y_rank2(0:order, n_parts) )
     allocate( this%h_coeff_y(0:h_order) )
-    allocate( this%h_coeff_y_rank2(n_parts, 0:h_order) )
+    allocate( this%h_coeff_y_rank2(0:h_order, n_parts) )
     allocate( this%iy_rank2(n_parts) )
     allocate( this%ihy_rank2(n_parts) )
 
     allocate( this%coeff_z(0:order) )
-    allocate( this%coeff_z_rank2(n_parts, 0:order) )
+    allocate( this%coeff_z_rank2(0:order, n_parts) )
     allocate( this%h_coeff_z(0:h_order) )
-    allocate( this%h_coeff_z_rank2(n_parts, 0:h_order) )
+    allocate( this%h_coeff_z_rank2(0:h_order, n_parts) )
     allocate( this%iz_rank2(n_parts) )
     allocate( this%ihz_rank2(n_parts) )
    end select
   end subroutine
 
   subroutine sweep( this )
-   class(interp_coeff), intent(inout) :: this
+   type(interp_coeff), intent(inout) :: this
 
+   ! write(6, *) 'Called interp destroyer'
    if ( allocated(this%coeff_x) ) then
     deallocate(this%coeff_x)
    end if
@@ -318,7 +319,7 @@
    ! Here dx should be computed as
    ! dx = x - int(x + 0.5)
    length = SIZE( deltax )
-   ax0(1:length, 1) = one_dp
+   ax0(1, 1:length) = one_dp
   end subroutine
 
   !DIR$ ATTRIBUTES INLINE :: first_order_real
@@ -340,8 +341,8 @@
    ! dx = x - int(x)
    length = SIZE( deltax )
    do i = 1, length
-    ax1(i, 2) = deltax(i)
-    ax1(i, 1) = one_dp - ax1(i, 2)
+    ax1(2, i) = deltax(i)
+    ax1(1, i) = one_dp - ax1(2, i)
    end do
   end subroutine
 
@@ -369,9 +370,9 @@
    length = SIZE( deltax )
    do i = 1, length
     dx2 = deltax(i)*deltax(i)
-    ax2(i, 2) = PP3 - dx2
-    ax2(i, 3) = PP2*(PP1 + deltax(i) + dx2)
-    ax2(i, 1) = one_dp - ax2(i, 2) - ax2(i, 3)
+    ax2(2, i) = PP3 - dx2
+    ax2(3, i) = PP2*(PP1 + deltax(i) + dx2)
+    ax2(1, i) = one_dp - ax2(2, i) - ax2(3, i)
    end do
   end subroutine
 
@@ -395,7 +396,7 @@
   subroutine third_order_vector(deltax, ax3)
    real(dp), dimension(:), intent(in) :: deltax
    real(dp), dimension(:, :), intent(inout) :: ax3
-   real :: dx2, dx3
+   real(dp) :: dx2, dx3
    integer :: length, i
    ! Here dx should be computed as
    ! dx = x - int(x)
@@ -404,10 +405,10 @@
     dx2 = deltax(i)*deltax(i)
     dx3 = dx2*deltax(i)
 
-    ax3(i, 2) = PP4 - dx2 + PP2*dx3
-    ax3(i, 3) = PP5 + PP2*(deltax(i) + dx2 - dx3)
-    ax3(i, 4) = PP5*dx3
-    ax3(i, 1) = one_dp - ax3(i, 2) - ax3(i, 3) - ax3(i, 4)
+    ax3(2, i) = PP4 - dx2 + PP2*dx3
+    ax3(3, i) = PP5 + PP2*(deltax(i) + dx2 - dx3)
+    ax3(4, i) = PP5*dx3
+    ax3(1, i) = one_dp - ax3(2, i) - ax3(3, i) - ax3(4, i)
    end do
   end subroutine
 

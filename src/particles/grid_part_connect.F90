@@ -304,24 +304,24 @@
     do n = 1, np
      do j1 = 0, spl_cell
       j2 = j(n) + j1
-      dvol = ay1(n, j1)
+      dvol = ay1(j1, n)
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       dvol1 = axh(n, i1)*dvol
+       dvol1 = axh(i1, n)*dvol
        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
       end do
      end do
      do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
-      dvol = ayh(n, j1)
+      dvol = ayh(j1, n)
       do i1 = 0, spl_cell
        i2 = i(n) + i1
-       dvol1 = ax1(n, i1)*dvol
+       dvol1 = ax1(i1, n)*dvol
        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       dvol1 = axh(n, i1)*dvol
+       dvol1 = axh(i1, n)*dvol
        ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Bz(i+1/2,j+1/2)
       end do
      end do
@@ -355,31 +355,31 @@
     do n = 1, np
      do j1 = 0, spl_cell
       j2 = j(n) + j1
-      dvol = ay1(n, j1)
+      dvol = ay1(j1, n)
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       dvol1 = axh(n, i1)*dvol
+       dvol1 = axh(i1, n)*dvol
        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, 1, 1) !Ex(i+1/2,j)
        ap(n, 5) = ap(n, 5) + dvol1*ef(i2, j2, 1, 5) !By(i+1/2,j)
       end do
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
-       dvol1 = ax1(n, i1)*dvol
+       dvol1 = ax1(i1, n)*dvol
        ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, 1, 3) !Ez(i,j,k+1/2)
       end do
      end do
      do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
-      dvol = ayh(n, j1)
+      dvol = ayh(j1, n)
       do i1 = 0, spl_cell
        i2 = i(n) + i1
-       dvol1 = ax1(n, i1)*dvol
+       dvol1 = ax1(i1, n)*dvol
        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, 1, 2) !Ey(i,j+1/2)
        ap(n, 4) = ap(n, 4) + dvol1*ef(i2, j2, 1, 4) !Bx(i,j+1/2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       dvol1 = axh(n, i1)*dvol
+       dvol1 = axh(i1, n)*dvol
        ap(n, 6) = ap(n, 6) + dvol1*ef(i2, j2, 1, 6) !Bz(i+1/2,j+1/2)
       end do
      end do
@@ -585,22 +585,22 @@
      k2 = k(n) + k1
      do j1 = 0, spl_cell
       j2 = j(n) + j1
-      dvol = ay1(n, j1)*az1(n, k1)
+      dvol = ay1(j1, n)*az1(k1, n)
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       ap(n, 1) = ap(n, 1) + axh(n, i1)*dvol*ef(i2, j2, k2, 1)
+       ap(n, 1) = ap(n, 1) + axh(i1, n)*dvol*ef(i2, j2, k2, 1)
       end do
      end do
      do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
-      dvol = ayh(n, j1)*az1(n, k1)
+      dvol = ayh(j1, n)*az1(k1, n)
       do i1 = 0, spl_cell
        i2 = i(n) + i1
-       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2)
+       ap(n, 2) = ap(n, 2) + ax1(i1, n)*dvol*ef(i2, j2, k2, 2)
       end do
       do i1 = 0, spl_h_cell
        i2 = i1 + ih(n)
-       ap(n, 6) = ap(n, 6) + axh(n, i1)*dvol*ef(i2, j2, k2, 6)
+       ap(n, 6) = ap(n, 6) + axh(i1, n)*dvol*ef(i2, j2, k2, 6)
       end do
      end do
     end do
@@ -618,22 +618,22 @@
      k2 = kh(n) + k1
      do j1 = 0, spl_h_cell
       j2 = jh(n) + j1
-      dvol = ayh(n, j1)*azh(n, k1)
+      dvol = ayh(j1, n)*azh(k1, n)
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
-       ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4)
+       ap(n, 4) = ap(n, 4) + ax1(i1, n)*dvol*ef(i2, j2, k2, 4)
       end do
      end do
      do j1 = 0, spl_cell
       j2 = j(n) + j1
-      dvol = ay1(n, j1)*azh(n, k1)
+      dvol = ay1(j1, n)*azh(k1, n)
       do i1 = 0, spl_h_cell
        i2 = ih(n) + i1
-       ap(n, 5) = ap(n, 5) + axh(n, i1)*dvol*ef(i2, j2, k2, 5)
+       ap(n, 5) = ap(n, 5) + axh(i1, n)*dvol*ef(i2, j2, k2, 5)
       end do
       do i1 = 0, spl_cell
        i2 = i1 + i(n)
-       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*ef(i2, j2, k2, 3)
+       ap(n, 3) = ap(n, 3) + ax1(i1, n)*dvol*ef(i2, j2, k2, 3)
       end do
      end do
     end do
@@ -827,20 +827,20 @@
      !==============
      do jp1 = 0, 2
       jp2 = j(n) + jp1
-      dvol = ay1(n, jp1)
+      dvol = ay1(jp1, n)
       do ip1 = 0, 2
        ip2 = ih(n) + ip1
        ex = ef(ip2, jp2, kp2, 1)
-       ef_sqr(n) = ef_sqr(n) + axh(n, ip1)*dvol*ex*ex
+       ef_sqr(n) = ef_sqr(n) + axh(ip1, n)*dvol*ex*ex
       end do
      end do
      do jp1 = 0, 2
       jp2 = jh(n) + jp1
-      dvol = ayh(n, jp1)
+      dvol = ayh(jp1, n)
       do ip1 = 0, 2
        ip2 = i(n) + ip1
        ey = ef(ip2, jp2, kp2, 2)
-       ef_sqr(n) = ef_sqr(n) + ax1(n, ip1)*dvol*ey*ey
+       ef_sqr(n) = ef_sqr(n) + ax1(ip1, n)*dvol*ey*ey
       end do
      end do
      !==============
@@ -891,20 +891,20 @@
       kp2 = k(n) + kp1
       do jp1 = 0, 2
        jp2 = j(n) + jp1
-       dvol = ay1(n, jp1)*az1(n, kp1)
+       dvol = ay1(jp1, n)*az1(kp1, n)
        do ip1 = 0, 2
         ip2 = ip1 + ih(n)
         ex = ef(ip2, jp2, kp2, 1)
-        ef_sqr(n) = ef_sqr(n) + axh(n, ip1)*dvol*ex*ex
+        ef_sqr(n) = ef_sqr(n) + axh(ip1, n)*dvol*ex*ex
        end do
       end do
       do jp1 = 0, 2
        jp2 = jh(n) + jp1
-       dvol = ayh(n, jp1)*az1(n, kp1)
+       dvol = ayh(jp1, n)*az1(kp1, n)
        do ip1 = 0, 2
         ip2 = i(n) + ip1
         ey = ef(ip2, jp2, kp2, 2)
-        ef_sqr(n) = ef_sqr(n) + ax1(n, ip1)*dvol*ey*ey
+        ef_sqr(n) = ef_sqr(n) + ax1(ip1, n)*dvol*ey*ey
        end do
       end do
      end do
@@ -915,11 +915,11 @@
       kp2 = kh(n) + kp1
       do jp1 = 0, 2
        jp2 = j(n) + jp1
-       dvol = ay1(n, jp1)*azh(n, kp1)
+       dvol = ay1(jp1, n)*azh(kp1, n)
        do ip1 = 0, 2
         ip2 = ip1 + i(n)
         ez = ef(ip2, jp2, kp2, 3)
-        ef_sqr(n) = ef_sqr(n) + ax1(n, ip1)*dvol*ez*ez
+        ef_sqr(n) = ef_sqr(n) + ax1(ip1, n)*dvol*ez*ez
        end do
       end do
      end do
@@ -1175,14 +1175,14 @@
     do n = 1, np
      do j1 = 0, stl
       j2 = j(n) + j1
-      dvol = ay1(n, j1)
+      dvol = ay1(j1, n)
       do i1 = 0, stl
        i2 = i(n) + i1
-       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned F=a^2/2 field
+       ap(n, 6) = ap(n, 6) + ax1(i1, n)*dvol*av(i2, j2, k2, 1) !t^n p-assigned F=a^2/2 field
       end do
       do i1 = 0, stl
        i2 = ih(n) + i1
-       dvol1 = dvol*axh1(n, i1)
+       dvol1 = dvol*axh1(i1, n)
        ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
        ap(n, 4) = ap(n, 4) + dvol1*av(i2, j2, k2, 2)
        !ap(4)=ap(4)+dvol1*dx_inv*(av(i2+1,j2,k2,1)-av(i2,j2,k2,1))
@@ -1190,17 +1190,17 @@
      end do
      do j1 = 0, stl
       j2 = jh(n) + j1
-      dvol = ayh1(n, j1)
+      dvol = ayh1(j1, n)
       do i1 = 0, stl
        i2 = i(n) + i1
-       dvol1 = dvol*ax1(n, i1)
+       dvol1 = dvol*ax1(i1, n)
        ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
        ap(n, 5) = ap(n, 5) + dvol1*av(i2, j2, k2, 3)
        !ap(5)=ap(5)+dvol1*dy_inv*(av(i2,j2+1,k2,1)-av(i2,j2,k2,1))
       end do
       do i1 = 0, stl
        i2 = ih(n) + i1
-       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*ef(i2, j2, k2, 3) !Bz(i+1/2,j+1/2,k)
+       ap(n, 3) = ap(n, 3) + axh1(i1, n)*dvol*ef(i2, j2, k2, 3) !Bz(i+1/2,j+1/2,k)
       end do
      end do
     end do
@@ -1276,30 +1276,30 @@
       k2 = k(n) + k1
       do j1 = 0, stl
        j2 = j(n) + j1
-       dvol = ay1(n, j1)*az1(n, k1)
+       dvol = ay1(j1, n)*az1(k1, n)
        do i1 = 0, stl
         i2 = i1 + i(n)
-        ap(n, 10) = ap(n, 10) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !t^n p-assigned Phi=a^2/2 field
+        ap(n, 10) = ap(n, 10) + ax1(i1, n)*dvol*av(i2, j2, k2, 1) !t^n p-assigned Phi=a^2/2 field
        end do
        do i1 = 0, stl
         i2 = i1 + ih(n)
-        dvol1 = dvol*axh1(n, i1)
+        dvol1 = dvol*axh1(i1, n)
         ap(n, 1) = ap(n, 1) + dvol1*ef(i2, j2, k2, 1) !Ex and Dx[F] (i+1/2,j,k))
         ap(n, 7) = ap(n, 7) + dvol1*av(i2, j2, k2, 2)
        end do
       end do
       do j1 = 0, stl
        j2 = jh(n) + j1
-       dvol = ayh1(n, j1)*az1(n, k1)
+       dvol = ayh1(j1, n)*az1(k1, n)
        do i1 = 0, 2
         i2 = i(n) + i1
-        dvol1 = dvol*ax1(n, i1)
+        dvol1 = dvol*ax1(i1, n)
         ap(n, 2) = ap(n, 2) + dvol1*ef(i2, j2, k2, 2) !Ey and Dy[F] (i,j+1/2,k)
         ap(n, 8) = ap(n, 8) + dvol1*av(i2, j2, k2, 3)
        end do
        do i1 = 0, stl
         i2 = i1 + ih(n)
-        ap(n, 6) = ap(n, 6) + axh1(n, i1)*dvol*ef(i2, j2, k2, 6) !Bz(i+1/2,j+1/2,k)
+        ap(n, 6) = ap(n, 6) + axh1(i1, n)*dvol*ef(i2, j2, k2, 6) !Bz(i+1/2,j+1/2,k)
        end do
       end do
      end do
@@ -1308,22 +1308,22 @@
       k2 = kh(n) + k1
       do j1 = 0, stl
        j2 = jh(n) + j1
-       dvol = ayh1(n, j1)*azh1(n, k1)
+       dvol = ayh1(j1, n)*azh1(k1, n)
        do i1 = 0, stl
         i2 = i1 + i(n)
-        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*ef(i2, j2, k2, 4) !Bx(i,j+1/2,k+1/2)
+        ap(n, 4) = ap(n, 4) + ax1(i1, n)*dvol*ef(i2, j2, k2, 4) !Bx(i,j+1/2,k+1/2)
        end do
       end do
       do j1 = 0, stl
        j2 = j(n) + j1
-       dvol = ay1(n, j1)*azh1(n, k1)
+       dvol = ay1(j1, n)*azh1(k1, n)
        do i1 = 0, stl
         i2 = ih(n) + i1
-        ap(n, 5) = ap(n, 5) + axh1(n, i1)*dvol*ef(i2, j2, k2, 5) !By(i+1/2,j,k+1/2)
+        ap(n, 5) = ap(n, 5) + axh1(i1, n)*dvol*ef(i2, j2, k2, 5) !By(i+1/2,j,k+1/2)
        end do
        do i1 = 0, stl
         i2 = i1 + i(n)
-        dvol1 = dvol*ax1(n, i1)
+        dvol1 = dvol*ax1(i1, n)
         ap(n, 3) = ap(n, 3) + dvol1*ef(i2, j2, k2, 3) !Ez and Dz[F] (i,j,k+1/2)
         ap(n, 9) = ap(n, 9) + dvol1*av(i2, j2, k2, 4)
        end do
@@ -1658,25 +1658,25 @@
     do n = 1, np
      do j1 = 0, 2
       j2 = j(n) + j1
-      dvol = ay1(n, j1)
+      dvol = ay1(j1, n)
       do i1 = 0, 2
        i2 = i1 + i(n)
-       ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
-       ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+       ap(n, 1) = ap(n, 1) + ax1(i1, n)*dvol*ef(i2, j2, k2, 1) !A_R
+       ap(n, 2) = ap(n, 2) + ax1(i1, n)*dvol*ef(i2, j2, k2, 2) !A_I
       end do
       do i1 = 0, 2
        i2 = i1 + ih(n)
-       ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
-       ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+       ap(n, 3) = ap(n, 3) + axh1(i1, n)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+       ap(n, 4) = ap(n, 4) + axh1(i1, n)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
       end do
      end do
      do j1 = 0, 2
       j2 = jh(n) + j1
-      dvol = ayh1(n, j1)
+      dvol = ayh1(j1, n)
       do i1 = 0, 2
        i2 = i(n) + i1
-       ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
-       ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+       ap(n, 5) = ap(n, 5) + ax1(i1, n)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+       ap(n, 6) = ap(n, 6) + ax1(i1, n)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
       end do
      end do
     end do
@@ -1731,25 +1731,25 @@
       k2 = k(n) + k1
       do j1 = 0, 2
        j2 = j(n) + j1
-       dvol = ay1(n, j1)*az1(n, k1)
+       dvol = ay1(j1, n)*az1(k1, n)
        do i1 = 0, 2
         i2 = i1 + i(n)
-        ap(n, 1) = ap(n, 1) + ax1(n, i1)*dvol*ef(i2, j2, k2, 1) !A_R
-        ap(n, 2) = ap(n, 2) + ax1(n, i1)*dvol*ef(i2, j2, k2, 2) !A_I
+        ap(n, 1) = ap(n, 1) + ax1(i1, n)*dvol*ef(i2, j2, k2, 1) !A_R
+        ap(n, 2) = ap(n, 2) + ax1(i1, n)*dvol*ef(i2, j2, k2, 2) !A_I
        end do
        do i1 = 0, 2
         i2 = i1 + ih(n)
-        ap(n, 3) = ap(n, 3) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
-        ap(n, 4) = ap(n, 4) + axh1(n, i1)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
+        ap(n, 3) = ap(n, 3) + axh1(i1, n)*dvol*(ef(i2+1,j2,k2,1)-ef(i2,j2,k2,1)) !DxA_R
+        ap(n, 4) = ap(n, 4) + axh1(i1, n)*dvol*(ef(i2+1,j2,k2,2)-ef(i2,j2,k2,2)) !DxA_I
        end do
       end do
       do j1 = 0, 2
        j2 = jh(n) + j1
-       dvol = ayh1(n, j1)*az1(n, k1)
+       dvol = ayh1(j1, n)*az1(k1, n)
        do i1 = 0, 2
         i2 = i(n) + i1
-        ap(n, 5) = ap(n, 5) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
-        ap(n, 6) = ap(n, 6) + ax1(n, i1)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
+        ap(n, 5) = ap(n, 5) + ax1(i1, n)*dvol*(ef(i2,j2+1,k2,1)-ef(i2,j2,k2,1)) !DyA_R
+        ap(n, 6) = ap(n, 6) + ax1(i1, n)*dvol*(ef(i2,j2+1,k2,2)-ef(i2,j2,k2,2)) !DyA_I
        end do
       end do
      end do
@@ -2004,21 +2004,21 @@
     do n = 1, np
      do j1 = 0, 2
       j2 = j(n) + j1
-      dvol = ay1(n, j1)
+      dvol = ay1(j1, n)
       do i1 = 0, 2
        i2 = i1 + ih(n)
-       dvol1 = dvol*axh1(n, i1)
+       dvol1 = dvol*axh1(i1, n)
        ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[Phi]
        i2 = i1 + i(n)
-       ap(n, 3) = ap(n, 3) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) ![Phi]
+       ap(n, 3) = ap(n, 3) + ax1(i1, n)*dvol*av(i2, j2, k2, 1) ![Phi]
       end do
      end do
      do j1 = 0, 2
       j2 = jh(n) + j1
-      dvol = ayh1(n, j1)
+      dvol = ayh1(j1, n)
       do i1 = 0, 2
        i2 = i(n) + i1
-       dvol1 = dvol*ax1(n, i1)
+       dvol1 = dvol*ax1(i1, n)
        ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[Phi]
       end do
      end do
@@ -2062,31 +2062,31 @@
       k2 = k(n) + k1
       do j1 = 0, 2
        j2 = j(n) + j1
-       dvol = ay1(n, j1)*az1(n, k1)
+       dvol = ay1(j1, n)*az1(k1, n)
        do i1 = 0, 2
         i2 = i1 + ih(n)
-        dvol1 = dvol*axh1(n, i1)
+        dvol1 = dvol*axh1(i1, n)
         ap(n, 1) = ap(n, 1) + dvol1*av(i2, j2, k2, 2) !Dx[F]
         i2 = i1 + i(n)
-        ap(n, 4) = ap(n, 4) + ax1(n, i1)*dvol*av(i2, j2, k2, 1) !Phi
+        ap(n, 4) = ap(n, 4) + ax1(i1, n)*dvol*av(i2, j2, k2, 1) !Phi
        end do
       end do
       do j1 = 0, 2
        j2 = jh(n) + j1
-       dvol = ayh1(n, j1)*az1(n, k1)
+       dvol = ayh1(j1, n)*az1(k1, n)
        do i1 = 0, 2
         i2 = i(n) + i1
-        dvol1 = dvol*ax1(n, i1)
+        dvol1 = dvol*ax1(i1, n)
         ap(n, 2) = ap(n, 2) + dvol1*av(i2, j2, k2, 3) !Dy[F]
        end do
       end do
       k2 = kh(n) + k1
       do j1 = 0, 2
        j2 = j(n) + j1
-       dvol = ay1(n, j1)*azh1(n, k1)
+       dvol = ay1(j1, n)*azh1(k1, n)
        do i1 = 0, 2
         i2 = i(n) + i1
-        dvol1 = dvol*ax1(n, i1)
+        dvol1 = dvol*ax1(i1, n)
         ap(n, 3) = ap(n, 3) + dvol1*av(i2, j2, k2, 4) !Dz[F]
        end do
       end do
@@ -2300,10 +2300,10 @@
     do n = 1, np
      do j1 = 0, 2
       j2 = j(n) + j1
-      dvol = ay1(n, j1)*weight(n)
+      dvol = ay1(j1, n)*weight(n)
       do i1 = 0, 2
        i2 = i1 + i(n)
-       dvol1 = dvol*ax1(n, i1)
+       dvol1 = dvol*ax1(i1, n)
        av(i2, j2, k2, ic) = av(i2, j2, k2, ic) + dvol1
       end do
      end do
@@ -2336,10 +2336,10 @@
       k2 = k(n) + k1
       do j1 = 0, 2
        j2 = j(n) + j1
-       dvol = ay1(n, j1)*az1(n, k1)*weight(n)
+       dvol = ay1(j1, n)*az1(k1, n)*weight(n)
        do i1 = 0, 2
         i2 = i1 + i(n)
-        dvol1 = dvol*ax1(n, i1)
+        dvol1 = dvol*ax1(i1, n)
         av(i2, j2, k2, ic) = av(i2, j2, k2, ic) + dvol1
        end do
       end do
@@ -2469,20 +2469,21 @@
    call interp_realloc(mempool%interp_old, np, sp_loc%pick_dimensions())
    interp_old => mempool%interp_old
    !=============================================================
+   call mp_xx_realloc(mempool%mp_xx_2d_B, np, 4, mempool)
+   xx => mempool%mp_xx_2d_B
+   
+   ! Interpolation on new positions
+   xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
+   xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
+   call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
+   
+   ! Interpolation on old positions
+   xx(1:np, 1) = set_local_positions( pt, X_COMP )
+   xx(1:np, 2) = set_local_positions( pt, Y_COMP )
+   
+   call qden_2d_wgh( xx(1:np, 1:2), interp_old, mempool )
+
    if (curr_ndim==2) then !Two current components
-    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
-    xx => mempool%mp_xx_2d_A
-    
-    ! Interpolation on new positions
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
-    
-    ! Interpolation on old positions
-    xx(1:np, 1) = set_local_positions( pt, X_COMP )
-    xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-    
-    call qden_2d_wgh( xx(1:np, 1:2), interp_old, mempool )
     
     ! Recycling xx since it's not needed anymore
     xx(1:np, 2) = sp_loc%pick_charge()*sp_loc%weight(1:np)
@@ -2504,17 +2505,17 @@
       ih = i(n) - ii0(n) + 1
       !========================================
       do i1 = 0, 2
-       axh(ih + i1) = ax1(n, i1)
+       axh(ih + i1) = ax1(i1, n)
       end do
 
       currx(0) = -axh(0)
       do i1 = 1, 3
-       currx(i1) = currx(i1-1) + ax0(n, i1-1) - axh(i1)
+       currx(i1) = currx(i1-1) + ax0(i1-1, n) - axh(i1)
       end do
       currx(4) = currx(3) - axh(4)
 
       do i1 = 1, 3
-       axh(i1) = axh(i1) + ax0(n, i1-1)
+       axh(i1) = axh(i1) + ax0(i1-1, n)
       end do
      
       ! Current times weight
@@ -2529,12 +2530,12 @@
       jh = j(n) - jj0(n) + 1
 
       do i1 = 0, 2
-       ayh(jh + i1) = ay1(n, i1)
+       ayh(jh + i1) = ay1(i1, n)
       end do
 
       curry(0) = -ayh(0)
       do i1 = 1, 3
-       curry(i1) = curry(i1-1) + ay0(n, i1-1) - ayh(i1)
+       curry(i1) = curry(i1-1) + ay0(i1-1, n) - ayh(i1)
       end do
       curry(4) = curry(3) - ayh(4)
       ! Current times weight
@@ -2543,7 +2544,7 @@
       end do
 
       do i1 = 1, 3
-       ayh(i1) = ayh(i1) + ay0(n, i1-1)
+       ayh(i1) = ayh(i1) + ay0(i1-1, n)
       end do
       y0 = min(jh, 1)
       y1 = max(jh + 2, 3)
@@ -2573,22 +2574,6 @@
    end if
     !========================================
    if (curr_ndim==3) then !Three currents conditions in 2D grid
-
-    !============== ********************** =================
-    call mp_xx_realloc(mempool%mp_xx_2d_A, np, 2, mempool)
-    xx => mempool%mp_xx_2d_A
-    
-    ! Interpolation on new positions
-    xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
-    xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
-    
-    call qden_2d_wgh( xx(1:np, 1:2), interp, mempool )
-    
-    ! Interpolation on old positions
-    xx(1:np, 1) = set_local_positions( pt, X_COMP )
-    xx(1:np, 2) = set_local_positions( pt, Y_COMP )
-    
-    call qden_2d_wgh( xx(1:np, 1:2), interp_old, mempool )
     
     !========================================
     ! Computing velocity along z
@@ -2621,17 +2606,17 @@
       ih = i(n) - ii0(n) + 1
 
       do i1 = 0, 2
-       axh(ih + i1) = ax1(n, i1)
+       axh(ih + i1) = ax1(i1, n)
       end do
 
       currx(0) = -axh(0)
       do i1 = 1, 3
-       currx(i1) = currx(i1-1) + ax0(n, i1-1) - axh(i1)
+       currx(i1) = currx(i1-1) + ax0(i1-1, n) - axh(i1)
       end do
       currx(4) = currx(3) - axh(4)
 
       do i1 = 1, 3
-       axh(i1) = axh(i1) + ax0(n, i1-1)
+       axh(i1) = axh(i1) + ax0(i1-1, n)
       end do
      
       do i1 = 0, 4
@@ -2644,18 +2629,18 @@
       !========================================
       jh = j(n) - jj0(n) + 1
       do i1 = 0, 2
-       ayh(jh + i1) = ay1(n, i1)
+       ayh(jh + i1) = ay1(i1, n)
       end do
       curry(0) = -ayh(0)
       do i1 = 1, 3
-       curry(i1) = curry(i1-1) + ay0(n, i1-1) - ayh(i1)
+       curry(i1) = curry(i1-1) + ay0(i1-1, n) - ayh(i1)
       end do
       curry(4) = curry(3) - ayh(4)
       do i1 = 0, 4
        curry(i1) = xx(n, 2)*curry(i1)
       end do
       do i1 = 1, 3
-       ayh(i1) = ayh(i1) + ay0(n, i1-1)
+       ayh(i1) = ayh(i1) + ay0(i1-1, n)
       end do
       y0 = min(jh, 1)
       y1 = max(jh + 2, 3)
@@ -2685,19 +2670,19 @@
       currx(0:4) = 0.5*axh(0:4)
       curry(0:4) = axh(0:4)
       do i1 = 1, 3
-       currx(i1) = currx(i1) + ax0(n, i1-1)
-       curry(i1) = curry(i1) + 0.5*ax0(n, i1-1)
+       currx(i1) = currx(i1) + ax0(i1-1, n)
+       curry(i1) = curry(i1) + 0.5*ax0(i1-1, n)
       end do
       !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
       do j1 = 0, 2
        j2 = jj0(n) + j1
-       dvol = ay0(n, j1)*xx(n, 1)
+       dvol = ay0(j1, n)*xx(n, 1)
        do i1 = x0, x1
         i2 = i1 + ih
         jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + currx(i1)*dvol
        end do
        j2 = j(n) + j1
-       dvol = ay1(n, j1)*xx(n, 1)
+       dvol = ay1(j1, n)*xx(n, 1)
        do i1 = x0, x1
         i2 = i1 + ih
         jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + curry(i1)*dvol
@@ -3023,7 +3008,7 @@
      end do
      currx(0) = -axh(0)
      do i1 = 1, 3
-      currx(i1) = currx(i1-1) + ax0(n, i1-1) - axh(i1)
+      currx(i1) = currx(i1-1) + ax0(i1-1, n) - axh(i1)
      end do
      currx(4) = currx(3) - axh(4)
      do i1 = 0, 4
@@ -3033,8 +3018,8 @@
      axh0(0:4) = 0.5*axh(0:4)
      axh1(0:4) = axh(0:4)
      do i1 = 1, 3
-      axh0(i1) = axh0(i1) + ax0(n, i1-1)
-      axh1(i1) = axh1(i1) + 0.5*ax0(n, i1-1)
+      axh0(i1) = axh0(i1) + ax0(i1-1, n)
+      axh1(i1) = axh1(i1) + 0.5*ax0(i1-1, n)
      end do
 
      x0 = min(ih, 1)
@@ -3043,11 +3028,11 @@
      !========== direct Jy-inversion
      jh = j(n) - jj0(n) + 1 !=[0,1,2]
      do i1 = 0, 2
-      ayh(jh + i1) = ay1(n, i1)
+      ayh(jh + i1) = ay1(i1, n)
      end do
      curry(0) = -ayh(0)
      do i1 = 1, 3
-      curry(i1) = curry(i1-1) + ay0(n, i1-1) - ayh(i1)
+      curry(i1) = curry(i1-1) + ay0(i1-1, n) - ayh(i1)
      end do
      curry(4) = curry(3) - ayh(4)
      do i1 = 0, 4
@@ -3060,8 +3045,8 @@
      ayh0(0:4) = 0.5*ayh(0:4)
      ayh1(0:4) = ayh(0:4)
      do i1 = 1, 3
-      ayh0(i1) = ayh0(i1) + ay0(n, i1-1)
-      ayh1(i1) = ayh1(i1) + 0.5*ay0 (n, i1-1)
+      ayh0(i1) = ayh0(i1) + ay0(i1-1, n)
+      ayh1(i1) = ayh1(i1) + 0.5*ay0 (i1-1, n)
      end do 
      y0 = min(jh, 1) ![0,1]
      y1 = max(jh + 2, 3) ![3,4]
@@ -3069,11 +3054,11 @@
      !============= Direct Jz inversion
      kh = k(n) - kk0(n) + 1
      do i1 = 0, 2
-      azh(kh + i1) = az1(n, i1)
+      azh(kh + i1) = az1(i1, n)
      end do
      currz(0) = -azh(0)
      do i1 = 1, 3
-      currz(i1) = currz(i1-1) + az0(n, i1-1) - azh(i1)
+      currz(i1) = currz(i1-1) + az0(i1-1, n) - azh(i1)
      end do
      currz(4) = currz(3) - azh(4)
      do i1 = 0, 4
@@ -3091,8 +3076,8 @@
       k2 = k(n) + k1
       do j1 = y0, y1
        j2 = jh + j1
-       dvol = ayh0(j1)*az0(n, k1)
-       dvolh = ayh1(j1)*az1(n, k1)
+       dvol = ayh0(j1)*az0(k1, n)
+       dvolh = ayh1(j1)*az1(k1, n)
        do i1 = x0, x1
         i2 = ih + i1
         jcurr(i2, j2, k20, 1) = jcurr(i2, j2, k20, 1) + &
@@ -3108,8 +3093,8 @@
       k2 = k(n) + k1
       do j1 = y0, y1
        j2 = jh + j1
-       dvol = curry(j1)*az0(n, k1)
-       dvolh = curry(j1)*az1(n, k1)
+       dvol = curry(j1)*az0(k1, n)
+       dvolh = curry(j1)*az1(k1, n)
        do i1 = x0, x1
         i2 = ih + i1
         jcurr(i2, j2, k20, 2) = jcurr(i2, j2, k20, 2) + &
@@ -3126,8 +3111,8 @@
       do j1 = 0, 2
        j20 = jj0(n) + j1
        j2 = j(n) + j1
-       dvol = ay0(n, j1)*currz(k1)
-       dvolh = ay1(n, j1)*currz(k1)
+       dvol = ay0(j1, n)*currz(k1)
+       dvolh = ay1(j1, n)*currz(k1)
        do i1 = x0, x1
         i2 = ih + i1
         jcurr(i2, j20, k2, 3) = jcurr(i2, j20, k2, 3) + &
