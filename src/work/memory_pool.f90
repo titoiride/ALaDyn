@@ -43,7 +43,11 @@
   integer :: reset_count = 1
   !! Is reset to 1 when an array is allocated.
   !! Keeps track of how many times the arrays are not reallocated
-
+  integer :: max_np = 0
+  !! Keeps track on the max number of particles,
+  !! which usually corresponds to the largest size of the allocated arrays.
+  integer :: iter_since_last_cleaning = 0
+  !! Iteration since the memory pool was last cleaned
   integer(dp_int) :: used_memory = 0
   real(dp), allocatable, dimension(:) :: mp_xx_1d_A
   real(dp), allocatable, dimension(:) :: mp_xx_1d_B
@@ -65,52 +69,37 @@
 
   end type
 
-  integer, parameter :: EVERY_CLEAN = 500
-  integer, parameter :: RESET_CLEAN = 10*EVERY_CLEAN
+  integer, parameter :: EVERY_CLEAN = 200
+  integer, parameter :: RESET_CLEAN = 100
   !! Number of iterations after which the cleaning occurs
 
   contains
 
-  subroutine clean( this, iter_in )
+  subroutine clean( this, np )
    class(memory_pool_t), intent(inout) :: this
-   integer, intent(in) :: iter_in
+   integer, intent(in) :: np
 
-   if( mod(this%reset_count, RESET_CLEAN) == 0 .and. mod(iter_in, EVERY_CLEAN) == 0 ) then
+   this%iter_since_last_cleaning = min(this%iter_since_last_cleaning + 1, EVERY_CLEAN)
+
+   if ( np > this%max_np ) then
+    this%max_np = np
+    this%reset_count = 1
+   else
+    this%reset_count = min(this%reset_count + 1, RESET_CLEAN)
+   end if
+
+   !write(6, *) 'ITER_SINCE_LAST_CLEANING', this%iter_since_last_cleaning
+   !write(6, *) 'RESET_COUNT', this%reset_count
+   if( mod(this%reset_count, RESET_CLEAN) == 0 .and. &
+       mod(this%iter_since_last_cleaning, EVERY_CLEAN) == 0 ) then
     write(6, *) 'Called cleaning memory pool'
-    if ( ALLOCATED(this%mp_log_1d) ) then
-     deallocate( this%mp_log_1d )
-    end if
 
-    if ( ALLOCATED(this%mp_xx_1d_A) ) then
-     deallocate( this%mp_xx_1d_A )
-    end if
-    if ( ALLOCATED(this%mp_xx_1d_B) ) then
-     deallocate( this%mp_xx_1d_B )
-    end if
-    if ( ALLOCATED(this%mp_xx_1d_C) ) then
-     deallocate( this%mp_xx_1d_C )
-    end if
-    if ( ALLOCATED(this%mp_xx_1d_D) ) then
-     deallocate( this%mp_xx_1d_D )
-    end if
-
-    if ( ALLOCATED(this%mp_xx_2d_A) ) then
-     deallocate( this%mp_xx_2d_A )
-    end if
-    if ( ALLOCATED(this%mp_xx_2d_B) ) then
-     deallocate( this%mp_xx_2d_B )
-    end if
-
-    if ( ALLOCATED(this%mp_xx_3d) ) then
-     deallocate( this%mp_xx_3d )
-    end if
-
-    if ( ALLOCATED(this%mp_species_new) ) then
-     deallocate( this%mp_species_new )
-    end if
+    call finalize_pool( this )
 
     this%reset_count = 1
     this%used_memory = 0
+    this%iter_since_last_cleaning = 0
+    this%max_np = 0
    end if
 
   end subroutine
@@ -159,6 +148,13 @@
 
    if ( ALLOCATED(this%mp_species_new) ) then
     deallocate( this%mp_species_new )
+   end if
+
+   if ( ALLOCATED(this%interp) ) then
+    deallocate( this%interp )
+   end if
+   if ( ALLOCATED(this%interp_old) ) then
+    deallocate( this%interp_old )
    end if
 
   end subroutine
@@ -273,16 +269,11 @@
    if ( ALLOCATED(xx_in) ) then   
     if (SIZE(xx_in, DIM=1) < npart_new .or. &
      SIZE(xx_in, DIM=2) < dimensions ) then
-     mempool%reset_count = 1
      deallocate(xx_in, stat=deallocstatus)
      allocate(xx_in(npart_new, dimensions), stat=allocstatus)
-    else
-     mempool%reset_count = min(mempool%reset_count + 1, RESET_CLEAN)
-     !Do not push index over RESET_CLEAN to allow clean call
     end if
    else
     allocate(xx_in(npart_new, dimensions), stat=allocstatus)
-    mempool%reset_count = 1
    end if
   end subroutine
 
@@ -294,7 +285,7 @@
 
    if ( allocated(interp_in) ) then   
     if (interp_in%n_parts < npart_new ) then
-     call interp_in%sweep()
+     call sweep( interp_in )
      call interp_in%new_interp(npart_new, max_order, &
       max_h_order, dimensions)
     end if

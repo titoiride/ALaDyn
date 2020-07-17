@@ -125,7 +125,7 @@
     end if
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
-    call mempool%clean( iter )
+    call mempool%clean( maxval(loc_npart(imody, imodz, imodx, 1:nsp)) )
    end do
    if (dump > 0) call dump_data(iter, tnow, spec, ebfp)
 
@@ -168,7 +168,7 @@
     end if
     if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
-    call mempool%clean( iter )
+    call mempool%clean( maxval(loc_npart(imody, imodz, imodx, 1:nsp)) )
    end do
    if (dump > 0) call dump_data(iter, tnow, spec, ebfp)
 
