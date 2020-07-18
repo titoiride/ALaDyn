@@ -229,7 +229,6 @@
    type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic, q
 
-   if ( i2 - i1 + 1 <= 0 ) return
    do ic = 1, nsp
     if ( pex1 ) then
      call spec_in(ic)%extend(np_new)

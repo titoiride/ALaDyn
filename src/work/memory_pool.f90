@@ -92,7 +92,7 @@
    !write(6, *) 'RESET_COUNT', this%reset_count
    if( mod(this%reset_count, RESET_CLEAN) == 0 .and. &
        mod(this%iter_since_last_cleaning, EVERY_CLEAN) == 0 ) then
-    write(6, *) 'Called cleaning memory pool'
+    !write(6, *) 'Called cleaning memory pool'
 
     call finalize_pool( this )
 
