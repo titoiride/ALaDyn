@@ -123,7 +123,11 @@
   real (dp) :: energy_in_targ
   integer (kind=8) :: nptot_global
 
-
+  !==================
+  ! PARTICLE PUSHER
+  !==================
+  integer, parameter :: HIGUERA = 1
+  integer, parameter :: BORIS = 2
  end module
 
 

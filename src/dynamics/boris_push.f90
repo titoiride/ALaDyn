@@ -29,9 +29,6 @@
 
   implicit none
 
-  integer, parameter :: HIGUERA = 1
-  integer, parameter :: BORIS = 2
-
   interface boris_pusher
    module procedure boris_pusher_new
    module procedure boris_pusher_old
@@ -699,7 +696,7 @@
     bb(1:np, 1) = alp * pt%call_component( BX_COMP, lb=1, ub=np )
     bb(1:np, 2) = alp * pt%call_component( BY_COMP, lb=1, ub=np )
     bb(1:np, 3) = alp * pt%call_component( BZ_COMP, lb=1, ub=np )
-
+    
     do p = 1, np
      b2(p) = dot_product(bb(p, 1:3), bb(p, 1:3))
      bv(p) = dot_product(bb(p, 1:3), pp(p, 1:3))
@@ -746,7 +743,7 @@
      call sp_loc%set_component( 2.*aux(1:np) - sp_loc%pz(1:np), &
       PZ_COMP, lb=1, ub=np)
     else if ( nstep > 1 ) then
-
+     ! Multiple substeps version
      pxp => mempool%mp_xx_2d_B(:, bbdim + 2)
      pyp => mempool%mp_xx_2d_B(:, bbdim + 3)
      pzp => mempool%mp_xx_2d_B(:, bbdim + 4)

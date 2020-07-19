@@ -87,7 +87,7 @@
     case (1)
      call set_grid_charge(spec_in, jc, np, 1, mempool)
      !nden=1 exit density for each ic species
-    case (2)
+    case default
      !nden=2 exit density and energy density for each species
      if (envelope) then
       if(ic==1)then

@@ -64,28 +64,10 @@ call gdbattach
     call End_parallel
     stop
    end if
-   if ( mod(nx, nprocx) /= 0 ) then
-    if (pe0) write (6, *) ' ==================================================='
-    if (pe0) write (6, *) ' WARNING: Number of cells in the X direction is not '
-    if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
-    if (pe0) write (6, *) ' ==================================================='
-   end if
-   if ( ndim > 1 ) then
-    if ( mod(ny, nprocy) /= 0 ) then
-     if (pe0) write (6, *) ' ==================================================='
-     if (pe0) write (6, *) ' WARNING: Number of cells in the Y direction is not '
-     if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
-     if (pe0) write (6, *) ' ==================================================='
-    end if
-   end if
-   if ( ndim > 2 ) then
-    if ( mod(nz, nprocz) /= 0 ) then
-     if (pe0) write (6, *) ' ==================================================='
-     if (pe0) write (6, *) ' WARNING: Number of cells in the Z direction is not '
-     if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
-     if (pe0) write (6, *) ' ==================================================='
-    end if
-   end if
+
+   ! Check the namelist for inconsistency
+   call check_namelist
+
    !sets parameters related to initial condition
    !=== Ascii art generated on http://patorjk.com/software/taag using the Star Wars font ===
    if (pe0) then
@@ -263,29 +245,82 @@ call gdbattach
     end if
    ! to count outputs in energy-data (iene+1 times)
    end select
-  contains
-   ! in general data (nouts+1 times)
-   subroutine check_grid_size
+  ! in general data (nouts+1 times)
+ end subroutine
 
-    if (mod(nx,2)/=0) then
-     write (6, *) ' Wrong x dimension'
-     stop
-    end if
-    if (ny==0) then
+  subroutine check_grid_size
+
+   if (mod(nx,2)/=0) then
+    write (6, *) ' Wrong x dimension'
+    stop
+   end if
+   if (ny==0) then
+    write (6, *) ' Wrong y dimension'
+    stop
+   end if
+   if (ny>1) then
+    if (mod(ny,2)/=0) then
      write (6, *) ' Wrong y dimension'
      stop
     end if
-    if (ny>1) then
-     if (mod(ny,2)/=0) then
-      write (6, *) ' Wrong y dimension'
-      stop
-     end if
+   end if
+  end subroutine
+
+
+  subroutine check_namelist
+   logical :: error = .false.
+   ! Check if grid and mpi decomposition are compatible
+   if ( mod(nx, nprocx) /= 0 ) then
+    if (pe0) write (6, *) ' ==================================================='
+    if (pe0) write (6, *) ' WARNING: Number of cells in the X direction is not '
+    if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
+    if (pe0) write (6, *) ' ==================================================='
+    error = .true.
+   end if
+   if ( ndim > 1 ) then
+    if ( mod(ny, nprocy) /= 0 ) then
+     if (pe0) write (6, *) ' ==================================================='
+     if (pe0) write (6, *) ' WARNING: Number of cells in the Y direction is not '
+     if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
+     if (pe0) write (6, *) ' ==================================================='
+     error = .true.
     end if
-   end subroutine
+   end if
+   if ( ndim > 2 ) then
+    if ( mod(nz, nprocz) /= 0 ) then
+     if (pe0) write (6, *) ' ==================================================='
+     if (pe0) write (6, *) ' WARNING: Number of cells in the Z direction is not '
+     if (pe0) write (6, *) ' an integer multiple of the number of cores requested.' 
+     if (pe0) write (6, *) ' ==================================================='
+     error = .true.
+    end if
+   end if
+   call stop_if_error(error)
+
+
+   !========= Check particle pusher
+   if ( n_substeps > 1 .and. pusher /= BORIS ) then
+    if (pe0) then
+     write(6, *) '******************************************'
+     write(6, *) ' WARNING: Substepping is only enabled for '
+     write(6, *) ' the Boris pusher. Reverting to that one. '
+     write(6, *) '******************************************'
+    end if
+    pusher = BORIS
+   end if
+
+   !========== Stop if any error has been found
 
   end subroutine
-  ! reads from dump evolved data
-  !=============================
+
+  subroutine stop_if_error( error_flag )
+   logical, intent(in) :: error_flag
+
+   if ( error_flag ) then
+    stop
+   end if
+  end subroutine
+
  end module
 
 
