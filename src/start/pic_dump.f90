@@ -215,7 +215,8 @@
    type(species_aux), dimension(:), intent(in) :: spec_aux_in
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
-   character (9) :: fname
+   character (9) :: fname_comm
+   character (14) :: fname_comm_mype
    character (9) :: fname_yz
    character (9) :: fname_ebf
    character (9) :: fname_env
@@ -242,7 +243,7 @@
    character (11) :: foldername
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, disp_coord
-   integer :: ic, lun, i, j, k, kk, ipe, lenbuff
+   integer :: ic, lun, i, j, k, kk, lenbuff
    integer :: nxf_loc, nyf_loc, nzf_loc, ndv
    integer :: npt_arr(npe, nsp), ip_loc(npe)
    integer :: loc_grid_size(npe), loc2d_grid_size(npe), lenw(npe)
@@ -250,10 +251,8 @@
    integer :: env_cp, env1_cp, fl_cp, ebf_cp
    real (dp) :: rdata(10)
    integer :: ndata(10)
-   integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
-   logical :: sd
    !==============
-   write (fname, '(a9)') 'Comm-data'
+   write (fname_comm, '(a9)') 'Comm-data'
    write (fname_yz, '(a9)') 'Dist-wgyz'
    write (fname_ebf, '(a9)') 'EB-fields'
    write (fname_env, '(a9)') 'ENVfields'
@@ -269,6 +268,7 @@
    ebf_cp = size(ebf, 4)
 
    !======== Write files name ===========
+   write (fname_comm_mype, '(a9, i5.5)') fname_comm, mype
    write (name_prop, '(a8,2i3.3)') fname_prop, imodx, imodz
    fnamel_prop = foldername //'/' // name_prop // '.bin' 
    write (name_file, '(a9)') fname_names
@@ -307,42 +307,16 @@
    lenbuff = lenbuff*grid_size_max + grid2d_size_max
    !===============================
    ndv = nd2+1
-    do i = 1, nsp
-     kk = loc_npart(imody, imodz, imodx, i)
-     call intvec_distribute(kk, ip_loc, npe)
-     npt_arr(1:npe, i) = ip_loc(1:npe)
-    end do
-    do i = 1, npe
-     ip_loc(i) = sum(npt_arr(i,1:nsp))
-    end do
-    max_npt_size = ndv*maxval(ip_loc(1:npe))
-    lenbuff = max(lenbuff, max_npt_size)
-   !===============================
-    dist_npy(:, :) = 0
-    dist_npz(:, :) = 0
-    dist_npy(imody+1, 1:nsp) = loc_npty(1:nsp)
-    dist_npz(imodz+1, 1:nsp) = loc_nptz(1:nsp)
-   !===============================
-    if (.not. pe0y) then
-     sd = .true.
-     call exchange_rdata_int(loc_npty, sd, nsp, pe_min_y, 1, 100 + imody)
-    else
-     sd = .false.
-     do ipe = 1, npe_yloc - 1
-      call exchange_rdata_int(loc_npty, sd, nsp, ipe, 1, 100 + ipe)
-      dist_npy(ipe+1, 1:nsp) = loc_npty(1:nsp)
-     end do
-    end if
-    if (.not. pe0z) then
-     sd = .true.
-     call exchange_rdata_int(loc_nptz, sd, nsp, pe_min_z, 2, 100 + imodz)
-    else
-     sd = .false.
-     do ipe = 1, npe_zloc - 1
-      call exchange_rdata_int(loc_nptz, sd, nsp, ipe, 2, 100 + ipe)
-      dist_npz(ipe+1, 1:nsp) = loc_nptz(1:nsp)
-     end do
-    end if
+   do i = 1, nsp
+    kk = loc_npart(imody, imodz, imodx, i)
+    call intvec_distribute(kk, ip_loc, npe)
+    npt_arr(1:npe, i) = ip_loc(1:npe)
+   end do
+   do i = 1, npe
+    ip_loc(i) = sum(npt_arr(i, 1:nsp))
+   end do
+   max_npt_size = ndv*maxval(ip_loc(1:npe))
+   lenbuff = max(lenbuff, max_npt_size)
    !=========================
    ndata = 0
    rdata = 0.0
@@ -366,34 +340,31 @@
    ndata(7) = nxf
    ndata(8) = nd2
    !==========================
-   !==============
    lun = 10
-   if (pe0) then
-    open (lun, file=foldername //'/'//fname//'.bin', form='unformatted', &
-      status='unknown')
-    write (lun) rdata(1:10)
-    write (lun) ndata(1:10)
-    write (lun) nptx(1:nsp) !the index of particles inside the box
-    write (lun) sptx_max(1:nsp) !the max index inside the target
-    !=====================
-    if (targ_end>xmax) then
-     do i = 1, nsp
-      do j = 1, nptx_max
-       write (lun) xpt(j, i), wghpt(j, i)
-      end do
+   open (lun, file=foldername //'/'//fname_comm_mype//'.bin', form='unformatted', &
+     status='unknown')
+   write (lun) rdata(1:10)
+   write (lun) ndata(1:10)
+   write (lun) nptx(1:nsp) !the index of particles inside the box
+   write (lun) sptx_max(1:nsp) !the max index inside the target
+   !=====================
+   if (targ_end > xmax) then
+    do i = 1, nsp
+     do j = 1, nptx_max
+      write (lun) xpt(j, i), wghpt(j, i)
      end do
-     if (hybrid) then
-      if (nxf>0) then
-       write (lun) fluid_x_profile(1:nxf)
-      end if
+    end do
+    if (hybrid) then
+     if (nxf > 0) then
+      write (lun) fluid_x_profile(1:nxf)
      end if
     end if
-    write (lun) npt_arr(1:npe, 1:nsp)
-    write (lun) dist_npy(1:npe_yloc, 1:nsp)
-    write (lun) dist_npz(1:npe_zloc, 1:nsp)
-    !==================
-    close (lun)
-   end if !end pe0 write on fname
+   end if
+   write (lun) npt_arr(1:npe, 1:nsp)
+   write (lun) loc_npty(1:nsp)
+   write (lun) loc_nptz(1:nsp)
+   !==================
+   close (lun)
    if (pe0) write (6, *) 'End write Common data'
    !===========================
    allocate (send_buff(lenbuff)) !to be used for all mpi_write()
@@ -404,7 +375,7 @@
     call particles_dump_properties( spec_in, spec_aux_in, lenw, max_npt_size, send_buff)
     disp_col = 0
     disp_coord = imodz*npe_yloc + npe_zloc*npe_yloc*imodx
-    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
+    if (mod(mype, npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, &
     fnamel_prop)
@@ -419,7 +390,7 @@
     end if
     disp_col = 0
     disp_coord = imodz*npe_yloc + npe_zloc*npe_yloc*imodx
-    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
+    if (mod(mype, npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
     call mpi_write_col_dp(send_buff, lenw(mype+1), disp_col, &
     fnamel_part)
@@ -909,7 +880,8 @@
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (out) :: it_loc
    real (dp), intent (out) :: tloc
-   character (9) :: fname
+   character (9) :: fname_comm
+   character (14) :: fname_comm_mype
    character (9) :: fname_yz
    character (9) :: fname_ebf
    character (9) :: fname_env
@@ -934,21 +906,18 @@
    character (100) :: name_buff
    integer (offset_kind) :: disp_col, disp
    integer :: max_npt_size, ipe, npt_arr(npe, nsp), disp_coord, init_part(nsp)
-   integer :: k1, ndv, ic, lun, i, j, k, kk, lenw(npe), lenbuff, &
-    k2, k3
+   integer :: ndv, ic, lun, i, j, k, kk, lenw(npe), lenbuff
    integer :: ip_loc(npe), loc_grid_size(npe), loc2d_grid_size(npe)
    integer :: grid_size_max, grid2d_size_max
    integer :: env_cp, env1_cp, fl_cp, ebf_cp
    integer :: ndata(10), nps_loc(4), n1_old
    integer :: n1_loc, n2_loc, n3_loc, nypt_max, nzpt_max
-   integer :: dist_npy(npe_yloc, nsp), dist_npz(npe_zloc, nsp)
    integer :: size_spec, size_spec_aux, size_prop, size_prop_aux
    real (dp) :: rdata(10), x0_new
-   logical :: sd
    logical(c_bool) :: isempty
 
    !==============
-   write (fname, '(a9)') 'Comm-data'
+   write (fname_comm, '(a9)') 'Comm-data'
    write (fname_ebf, '(a9)') 'EB-fields'
    write (fname_env, '(a9)') 'ENVfields'
    write (fname_fl, '(a9)') 'FL-fields'
@@ -963,6 +932,7 @@
    n3_loc = size(ebf, 3)
    ebf_cp = size(ebf, 4)
    !======== Write files name ===========
+   write (fname_comm_mype, '(a9, i5.5)') fname_comm, mype
    write (name_prop, '(a8,2i3.3)') fname_prop, imodx, imodz
    fnamel_prop = foldername //'/' // name_prop // '.bin' 
    write (name_file, '(a9)') fname_names
@@ -1015,56 +985,13 @@
    !===================
    if (pe0) write (6, *) 'Max size of recieve buffer', lenbuff
    lun = 10
-   if (pe0) then
-    open (lun, file='dumpRestart/'//fname//'.bin', form='unformatted', &
-      status='unknown')
+   open (lun, file='dumpRestart/'//fname_comm_mype//'.bin', form='unformatted', &
+     status='unknown')
 
-    read (lun) rdata(1:10)
-    read (lun) ndata(1:10)
-    read (lun) nptx(1:nsp)
-    read (lun) sptx_max(1:nsp)
-    it_loc = ndata(1)
-    nptx_max = ndata(5)
-    n1_old = ndata(6)
-    nxf = ndata(7)
-    ndv = ndata(8) + 1
-    !=========================
-    tloc = rdata(1)
-    targ_in = rdata(4)
-    targ_end = rdata(5)
-    lp_in(1) = rdata(6)
-    x0_new = rdata(9)
-    !=============================
-    if (targ_end>xmax+x0_new) then
-     allocate (xpt(nptx_max,nsp))
-     allocate (wghpt(nptx_max,nsp))
-     do i = 1, nsp
-      do j = 1, nptx_max
-       read (lun) xpt(j, i), wghpt(j, i)
-      end do
-     end do
-     if (hybrid) then
-      if (nxf>0) then
-       allocate (fluid_x_profile(nxf))
-       read (lun) fluid_x_profile(1:nxf)
-      end if
-     end if
-    end if
-!==================== dumped by pe0 even if no particles are present
-    read (lun) npt_arr(1:npe, 1:nsp)
-    read (lun) dist_npy(1:npe_yloc, 1:nsp)
-    read (lun) dist_npz(1:npe_zloc, 1:nsp)
-    close (lun)
-   end if !end pe0 read on fname
-   !========================= distribute comm data
-   kk = size(rdata)
-   k1 = size(ndata)
-   k2 = size(nptx)
-   k3 = size(sptx_max)
-   call vint_bcast(ndata, k1)
-   call vint_bcast(nptx, k2)
-   call vint_bcast(sptx_max, k3)
-   call real_bcast(rdata, kk)
+   read (lun) rdata(1:10)
+   read (lun) ndata(1:10)
+   read (lun) nptx(1:nsp)
+   read (lun) sptx_max(1:nsp)
    it_loc = ndata(1)
    nptx_max = ndata(5)
    n1_old = ndata(6)
@@ -1076,7 +1003,29 @@
    targ_end = rdata(5)
    lp_in(1) = rdata(6)
    x0_new = rdata(9)
-   if (x0_new>0.0) then
+   !=============================
+   if (targ_end > xmax + x0_new) then
+    allocate (xpt(nptx_max,nsp))
+    allocate (wghpt(nptx_max,nsp))
+    do i = 1, nsp
+     do j = 1, nptx_max
+      read (lun) xpt(j, i), wghpt(j, i)
+     end do
+    end do
+    if (hybrid) then
+     if (nxf>0) then
+      allocate (fluid_x_profile(nxf))
+      read (lun) fluid_x_profile(1:nxf)
+     end if
+    end if
+   end if
+   !==================== dumped by pe0 even if no particles are present
+   read (lun) npt_arr(1:npe, 1:nsp)
+   read (lun) loc_npty(1:nsp)
+   read (lun) loc_nptz(1:nsp)
+   close (lun)
+   !=========================
+   if (x0_new > 0.0) then
     x = x + x0_new
     xh = xh + x0_new
     xmin = xmin + x0_new
@@ -1087,44 +1036,8 @@
     xp1_out = xp1_out + x0_new
     xmn = loc_xgrid(imodx)%gmin
    end if
-   if (targ_end>xmax) then
-    if (mype>0) then
-     allocate (xpt(nptx_max,nsp))
-     allocate (wghpt(nptx_max,nsp))
-     if (hybrid) then
-      if (nxf>0) allocate (fluid_x_profile(nxf))
-     end if
-    end if
-    if (pe0) then
-     sd = .true.
-     do ipe = 1, npe - 1
-      call exchange_2d_grdata(sd, xpt, nptx_max, nsp, ipe, ipe + 100)
-      call exchange_2d_grdata(sd, wghpt, nptx_max, nsp, ipe, ipe + 400)
-     end do
-    else
-     sd = .false.
-     call exchange_2d_grdata(sd, xpt, nptx_max, nsp, pe_min, mype + 100)
-     call exchange_2d_grdata(sd, wghpt, nptx_max, nsp, pe_min, mype + 400)
-    end if
-    !===========================
-    if (hybrid) then
-     if (nxf>0) then
-      if (pe0) then
-       sd = .true.
-       do ipe = 1, npe - 1
-        call exchange_1d_grdata(sd, fluid_x_profile, nxf, ipe, ipe + 10)
-       end do
-      else
-       sd = .false.
-       call exchange_1d_grdata(sd, fluid_x_profile, nxf, pe_min, mype + 10)
-      end if
-     end if
-    end if
-   end if
-   !Pe0 distributes npart => npt(npe,nsp)
-   call vint_2d_bcast(npt_arr, npe, nsp)
    do i = 1, npe
-    ip_loc(i) = sum(npt_arr(i,1:nsp))
+    ip_loc(i) = sum(npt_arr(i, 1:nsp))
    end do
    ipe = 0
    do i = 0, npe_xloc - 1
@@ -1135,18 +1048,12 @@
      end do
     end do
    end do
-   !========== distributes npty,nptz initial particle distribution
-   call vint_2d_bcast(dist_npy, npe_yloc, nsp)
-   call vint_2d_bcast(dist_npz, npe_zloc, nsp)
-   loc_npty(1:nsp) = dist_npy(imody+1, 1:nsp)
-   loc_nptz(1:nsp) = dist_npz(imodz+1, 1:nsp)
    nypt_max = maxval(loc_npty(1:nsp))
    nzpt_max = maxval(loc_nptz(1:nsp))
    allocate (loc_ypt(nypt_max,nsp))
    allocate (loc_zpt(nzpt_max,nsp))
    allocate (loc_wghyz(nypt_max,nzpt_max,nsp))
    ! x() defined on the grid module starting from x(1)=0.0
-   !---------- Particle read
    !============================================
    allocate (recv_buff(lenbuff))
    recv_buff(:) = 0.0
@@ -1267,7 +1174,7 @@
     lenw(1:npe) = (size_prop + size_prop_aux)*nsp
     disp_col = 0
     disp_coord = imodz*npe_yloc + npe_yloc*npe_zloc*imodx
-    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
+    if (mod(mype, npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
     fnamel_prop)
@@ -1287,14 +1194,14 @@
     lenw(1:npe) = lenw(1:npe) + (size_spec + size_spec_aux)* ip_loc(1:npe)
     disp_col = 0
     disp_coord = imodz*npe_yloc + npe_yloc*npe_zloc*imodx
-    if (mod(mype,npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
+    if (mod(mype, npe_yloc)>0) disp_col = sum(lenw(disp_coord + 1:mype))
     disp_col = 8*disp_col
     max_npt_size = (size_spec + size_spec_aux)*maxval(ip_loc(1:npe))
     lenbuff = max(lenbuff, max_npt_size)
     call array_realloc_1d(recv_buff, lenbuff)
     call mpi_read_col_dp(recv_buff, lenw(1+mype), disp_col, &
     fnamel_part)
-
+    
     !==============================
     call particles_restart(spec_in, spec_aux_in, loc_npart, recv_buff)
    end if
