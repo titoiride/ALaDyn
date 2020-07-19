@@ -62,23 +62,21 @@ module tracking
    type(species_new), intent(in) :: spec_in
    integer, allocatable, dimension(:), intent(inout) :: index_in
    integer, intent(in) :: new_parts
-   integer :: max_index_loc(npe), new_parts_loc(npe)
+   integer :: new_parts_loc(npe)
    integer :: max_index, last_collective_index, tot_newparts, cum_sum
    type( track_data_t ) :: track_data
    type( index_array) :: new_inds
 
    track_data = spec_in%pick_track_params()
    max_index = track_data%highest_index
-   max_index_loc( mype + 1 ) = max_index
    new_parts_loc( mype + 1 ) = new_parts
 
-   call intvec_distribute( max_index, max_index_loc, npe)
    call intvec_distribute( new_parts, new_parts_loc, npe)
+   ! Max of all the already used indices
+   call allreduce_sint(1, max_index, last_collective_index)
+   ! Sum of all the tracked particles
+   call allreduce_sint(0, new_parts, tot_newparts)
 
-   last_collective_index = MAXVAL( max_index_loc(:) )
-
-   tot_newparts = SUM( new_parts_loc(:) )
-   
    allocate ( index_in( new_parts ), source=0 )
    if ( tot_newparts == 0 ) return
 
@@ -97,7 +95,7 @@ module tracking
    integer, intent(in) :: lowb, upb, ic
    type(memory_pool_t), pointer, intent(in) :: mempool
    integer, allocatable, dimension(:) :: parts, track_index, temp_track_index
-   integer :: npt, np, part_jump, npt_jump, i
+   integer :: npt, np, part_jump, npt_jump, i, dimensions
    type(track_data_t) :: track_data
    logical, pointer, contiguous, dimension(:) :: track_mask => null()
 
@@ -114,8 +112,8 @@ module tracking
 
    track_data = spec_in(ic)%pick_track_params()
    part_jump = track_data%jump
-
-   if (ndim>2) then
+   dimensions = spec_in(ic)%pick_dimensions()
+   if (dimensions > 2) then
 
     associate( xx => spec_in(ic)%call_component(X_COMP, lb=lowb, ub=upb), &
                yy => spec_in(ic)%call_component(Y_COMP, lb=lowb, ub=upb), &
@@ -292,6 +290,23 @@ module tracking
   write(track_dic(pid), '(a20,i1.1,a4)') 'tracking_dictionary_',pid,'.dat'
   write (foldername, '(a8)') 'tracking'
 
+  
+  ! Counting tracking particles
+  ndv = spec_in%total_size()
+  np = spec_in%how_many()
+  n_comp_out = ndv
+  
+  track_data = spec_in%pick_track_params()
+  
+  npt = track_data%n_tracked
+  
+  npt_loc(mype + 1) = npt
+  
+  call intvec_distribute(npt, npt_loc, npe)
+  
+  if (ALL(npt_loc <= 0)) return
+
+  ! Verifying previous output and preparing the subsequent
   iostat = 0
   open(unit=track_iounit(pid), file=foldername//'/'//track_dic(pid), &
   form='formatted', status='old', action="read")
@@ -305,20 +320,6 @@ module tracking
   write( fname, '(a6, i1.1, a1, i4.4)') 'Track_', pid, '_', iter_index(pid)
 
   fname_out = foldername // '/' // fname // '.bin'
-
-  ndv = spec_in%total_size()
-  np = spec_in%how_many()
-  n_comp_out = ndv
-
-  track_data = spec_in%pick_track_params()
-
-  npt = track_data%n_tracked
-
-  npt_loc(mype + 1) = npt
-
-  call intvec_distribute(npt, npt_loc, npe)
-
-  if (ALL(npt_loc <= 0)) return
   ch = spec_in%pick_charge()
   out_parts = index_array(np)
 
