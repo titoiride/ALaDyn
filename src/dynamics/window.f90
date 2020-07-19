@@ -185,7 +185,7 @@
      if ( i1 <= sptx_max(ic) ) then
      !while particle index is less then the max index
       do ix = i1, sptx_max(ic)
-       if ( xpt(ix,ic) > xmx ) exit
+       if ( xpt(ix, ic) > xmx ) exit
       end do
       i2 = ix - 1
       if ( ix == sptx_max(ic) ) i2 = ix
