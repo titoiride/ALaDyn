@@ -309,6 +309,17 @@ call gdbattach
     pusher = BORIS
    end if
 
+   !========= Check plasma target
+   if ( ny_targ > ny ) then
+    if (pe0) then
+     write(6, *) '******************************************'
+     write(6, *) ' WARNING: ny_targ > ny. By default it is  '
+     write(6, *) '       resetted to the value ny - 20      '
+     write(6, *) '******************************************'
+    end if
+    ny_targ = ny - 20
+   end if
+
    !========== Stop if any error has been found
 
   end subroutine
