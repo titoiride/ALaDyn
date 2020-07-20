@@ -17,26 +17,50 @@ endif()
 
 # Look for JSON-FORTRAN
 set(FOUND_JSON_FORTRAN FALSE)
-set(JSON_FORTRAN_SUPPORT FALSE CACHE BOOL "Building ALaDyn with json-fortran support" )
+set(JSON_FORTRAN_SUPPORT TRUE CACHE BOOL "ALaDyn: Building ALaDyn with JSON-Fortran support")
 if( JSON_FORTRAN_SUPPORT )
-  add_custom_target()
-  set(JFORTRAN_SOURCE_PATH ${CMAKE_SOURCE_DIR}/third_party/json-fortran/json-fortran_source/src)
-  set(JFORTRAN_BINARY_PATH ${CMAKE_SOURCE_DIR}/third_party/json-fortran/json-fortran_source/build)
-  if( EXISTS ${JFORTRAN_BINARY_PATH})
-    add_subdirectory(${JFORTRAN_BINARY_PATH})
-    set(jsonfortran-GNU_DIR ${JFORTRAN_BINARY_PATH})
-    find_package ( jsonfortran-${CMAKE_Fortran_COMPILER_ID} 8.1.0 )
-    include_directories ( "${jsonfortran_INCLUDE_DIRS}" )
-    if( jsonfortran-${CMAKE_Fortran_COMPILER_ID}_FOUND)
-      set(FOUND_JSON_FORTRAN TRUE)
-    endif()
+  message(STATUS "ALaDyn: Building ALaDyn with JSON-Fortran support")
+  set(JFORTRAN_BASE_PATH ${CMAKE_SOURCE_DIR}/third_party/json-fortran)
+  set(JFORTRAN_PATH ${JFORTRAN_BASE_PATH}/json-fortran_source)
+  set(JFORTRAN_LOCALS_PATH ${JFORTRAN_BASE_PATH}/json-fortran_locals)
+  set(JFORTRAN_SOURCE_PATH ${JFORTRAN_PATH}/src)
+  set(JFORTRAN_BINARY_PATH ${JFORTRAN_PATH}/build)
+  find_package(Git QUIET)
+  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+  # Update submodules as needed
+      option(GIT_SUBMODULE "Check submodules during build" ON)
+      if(GIT_SUBMODULE)
+          message(STATUS "ALaDyn: Submodule update")
+          execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                          RESULT_VARIABLE GIT_SUBMOD_RESULT)
+          if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+              message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+          endif()
+      endif()
+  endif()
+
+  if(NOT EXISTS "${JFORTRAN_PATH}/CMakeLists.txt")
+      message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+  endif()
+
+  if( EXISTS ${JFORTRAN_PATH} AND NOT EXISTS ${JFORTRAN_LOCALS_PATH})
+    file(MAKE_DIRECTORY ${JFORTRAN_BINARY_PATH})
+    set(CMAKE_INSTALL_MESSAGE LAZY)
+    # Configure subproject into ${JFORTRAN_BINARY_PATH}
+    execute_process(COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_INSTALL_MESSAGE=LAZY
+    -DCMAKE_INSTALL_PREFIX=${JFORTRAN_LOCALS_PATH}
+    -DSKIP_DOC_GEN=TRUE
+    ${JFORTRAN_PATH} 
+    WORKING_DIRECTORY ${JFORTRAN_BINARY_PATH})
+    # Building and installing
+    execute_process(COMMAND ${CMAKE_COMMAND}
+    --build ${JFORTRAN_BINARY_PATH}
+    --target install)
   endif()
 endif()
 
-if( FOUND_JSON_FORTRAN )
-  message(STATUS "Json fortran has been found")
-  add_definitions(-DJSON_FORTRAN)
-endif()
 # you can force FFTW if necessary, avoiding MKL (which is preferred on Intel systems)
 set(FORCE_FFTW OFF CACHE BOOL "Forcing FFTW libraries")
 
@@ -83,6 +107,8 @@ list(APPEND ALaDyn_Fortran_sources
   src/IO/init_laser_field.f90
   src/IO/init_part_distrib.f90
   src/IO/init_beam_part_distrib.f90
+  src/IO/read_json.f90
+  src/IO/read_namelist.f90
   src/IO/pic_out.f90
   src/IO/pic_out_util.f90
   src/IO/psolve.f90
@@ -95,7 +121,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/parallel/mpi_curr_interface.f90
   src/parallel/parallel.F90
   src/start/pic_dump.f90
-  src/start/read_input.f90
+  src/start/read_input.F90
   src/start/set_init_param.f90
   src/start/start_all.F90
   src/start/system_utilities.f90
@@ -107,6 +133,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/work/phys_param.f90
   src/work/precision_def.F90
   src/work/pstruct_data.f90
+  src/work/sim_params_types.f90
   src/work/struct_def.f90
   src/work/util.f90
 )
@@ -232,6 +259,11 @@ else()
   find_package(FFTW REQUIRED OPTIONAL_COMPONENTS MPI)
 endif()
 
+set(jsonfortran-GNU_DIR ${JFORTRAN_BINARY_PATH})
+if(JSON_FORTRAN_SUPPORT)
+  find_package ( jsonfortran-${CMAKE_Fortran_COMPILER_ID} 8.1.0)
+endif()
+
 string(APPEND CMAKE_CXX_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS}")
 string(APPEND CMAKE_CXX_LINK_FLAGS " ${MPI_LINK_FLAGS}")
 string(APPEND CMAKE_Fortran_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
@@ -257,6 +289,15 @@ if(FFTW_MPI_FOUND)
    ${FFTW_MPI_INCLUDE_DIR}
   )
 endif()
+
+if(jsonfortran-${CMAKE_Fortran_COMPILER_ID}_FOUND)
+  include_directories (
+    ${jsonfortran_INCLUDE_DIRS}
+  )
+  message(STATUS "ALaDyn: JSON-Fortran has been found")
+  add_definitions(-DJSON_FORTRAN)
+endif()
+  
 add_executable(ALaDyn
   ${ALaDyn_Fortran_sources}
 )
@@ -310,6 +351,12 @@ endif()
 if(NUMA_LIBRARY)
   target_link_libraries(ALaDyn
     ${NUMA_LIBRARY}
+  )
+endif()
+
+if(jsonfortran-${CMAKE_Fortran_COMPILER_ID}_FOUND)
+  target_link_libraries(ALaDyn
+    jsonfortran-static
   )
 endif()
 

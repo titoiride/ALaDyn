@@ -68,4 +68,4 @@ snippet_*
 html/*
 
 #JSON-Fortran installed
-json-fortran_local
+json-fortran_locals

@@ -19,41 +19,39 @@
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
 
- module code_util
+ module read_input
 
-  use precision_def
+  use read_namelist
+#if defined(JSON_FORTRAN)
+  use read_json
+#endif
 
   implicit none
 
-  integer, parameter :: major_version = 8
-  integer, parameter :: minor_version = 2
-  character (6) :: sw_name = 'ALaDyn'
-  character(:), allocatable :: input_namelist_filename
-  character(:), allocatable :: input_json_filename
-  character (10) :: input_data_filename = 'input.data'
-  integer, parameter :: maxv = 1, sumv = 0, minv = -1
-  integer, parameter :: left = -1, right = 1
-  integer, parameter :: field = 0, curr = 1
-  integer, parameter :: sh_ix = 3
-  integer :: time2dump(1) = 0
-  integer :: mem_size, mem_psize
-  integer :: last_iter, iter_max,write_every
-  integer :: t_ind, inject_ind, tk_ind
-  integer :: ienout, iout, iter, ier
-  real (dp) :: mem_psize_max, dump_t0, dump_t1
-  real (dp) :: unix_time_begin, unix_time_now
-  real (dp) :: time_interval_dumps, unix_time_last_dump
-  real (dp) :: gamma_cut_min, weights_cut_min, weights_cut_max
-  real (dp) :: tdia, dtdia, tout, dtout, tstart, mem_max_addr
+ contains
 
-  logical :: diag, tpart
-  logical :: l_intdiagnostics_pwfa, l_intdiagnostics_classic
-  logical :: l_force_singlefile_output
-  logical :: l_print_j_on_grid
-  logical :: l_first_output_on_restart
-  logical :: l_use_unique_dumps
-  logical :: l_disable_rng_seed
-  logical :: l_intdiagnostics_background
-  logical :: l_env_modulus
+
+  subroutine read_main_input
+   logical :: exist_nml = .false.
+   logical :: exist_json = .false.
+
+   input_json_filename = 'input.json'
+   input_namelist_filename = 'input.nml'
+   inquire (file=input_namelist_filename, exist=exist_nml)
+
+#if defined(JSON_FORTRAN)
+   inquire (file=input_json_filename, exist=exist_json)   
+   if (exist_json) then
+    call read_input_json( input_json_filename, namelist)
+   end if
+#endif
+
+   if (.not. exist_json .and. exist_nml) then
+    call read_input_nml
+   else
+    write (6, *) 'No usable input file (.json or .nml) has been found'
+    stop
+   end if
+  end subroutine
 
  end module

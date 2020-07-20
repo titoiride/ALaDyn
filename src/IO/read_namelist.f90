@@ -19,7 +19,7 @@
 !  along with ALaDyn.  If not, see <http://www.gnu.org/licenses/>.                                    !
 !*****************************************************************************************************!
 
- module read_input
+ module read_namelist
 
   use common_param
   use control_bunch_input
@@ -27,30 +27,11 @@
   use mpi_var
 
   implicit none
-  private
-  public :: read_main_input, write_read_nml
 
   integer :: nml_iounit=1, nml_ierr=0
   character (100) :: nml_error_message=''
 
  contains
-
-
-  subroutine read_main_input
-   logical exist_nml
-   logical exist_data
-
-   inquire (file=input_namelist_filename, exist=exist_nml)
-   inquire (file=input_data_filename, exist=exist_data)
-
-   if (exist_nml) then
-    call read_input_nml
-   else
-    write (6, *) 'No usable input file (.nml or .data) has been found'
-    stop 5
-   end if
-  end subroutine
-
 
   subroutine read_input_nml
    !===========================================================
