@@ -303,6 +303,7 @@
      end do
     end do
     zpt(1, 1:nc) = 0.0
+    loc_zpt(1, 1:nc) = zpt(1, 1:nc)
     return
    end if
    !==========================

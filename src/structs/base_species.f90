@@ -67,7 +67,7 @@ module base_species
   !! Maximum z position of the tracked particles
   integer, public :: jump = 1
   !! Jump parameter in particles selection
-  integer, public :: highest_index = 1
+  integer, public :: highest_index = 0
   !! Highest particle index available
   integer, public :: extra_outputs = 0
   !! Number of extra outputs (*i.e.* not included in the particles dynamics)

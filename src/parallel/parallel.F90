@@ -935,13 +935,13 @@
     select case (ib)
     case (-1) !min
 
-     call mpi_allreduce(rv_loc, rv, nt, mpi_sd, mpi_min, comm, error)
+     call MPI_ALLREDUCE(rv_loc, rv, nt, mpi_sd, mpi_min, comm, error)
     case (0) !sum
 
-     call mpi_allreduce(rv_loc, rv, nt, mpi_sd, mpi_sum, comm, error)
+     call MPI_ALLREDUCE(rv_loc, rv, nt, mpi_sd, mpi_sum, comm, error)
     case (1) !max
 
-     call mpi_allreduce(rv_loc, rv, nt, mpi_sd, mpi_max, comm, error)
+     call MPI_ALLREDUCE(rv_loc, rv, nt, mpi_sd, mpi_max, comm, error)
     end select
 
    else
@@ -977,18 +977,14 @@
     select case (ib)
     case (-1) !---------------------------------------------
 
-     call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_min, pe_min, comm, &
-       error)
+     call MPI_ALLREDUCE(dt0, dt_tot, 1, mpi_integer, mpi_min, comm, error)
     case (0) 
 
-     call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_sum, pe_min, comm, &
-       error)
+     call MPI_ALLREDUCE(dt0, dt_tot, 1, mpi_integer, mpi_sum, comm, error)
     case (1) 
 
-     call MPI_REDUCE(dt0, dt_tot, 1, mpi_integer, mpi_max, pe_min, comm, &
-       error)
+     call MPI_ALLREDUCE(dt0, dt_tot, 1, mpi_integer, mpi_max, comm, error)
     end select
-    call MPI_BCAST(dt_tot, 1, mpi_integer, pe_min, comm, error)
    else
     dt_tot = dt0
    end if
