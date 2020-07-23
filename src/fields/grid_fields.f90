@@ -676,7 +676,7 @@
    do k = k01, k02
     do j = j01, j02
      jj = j - gcy + 1
-     shy = loc_yg(jj, 3, imody)*0.5
+     shy = loc_yg(jj, 3, imody)*0.5*ay1
      do i = i01, i02
       do ic = 1, 2
        AA = shy*(env_in(i, j + 1, k, ic) - env_in(i, j - 1, k, ic))
