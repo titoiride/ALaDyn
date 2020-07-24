@@ -312,5 +312,7 @@ if(NUMA_LIBRARY)
 endif()
 
 set_target_properties(ALaDyn PROPERTIES LINKER_LANGUAGE Fortran)
+string(TOLOWER ${CMAKE_Fortran_COMPILER_ID} EXE_SUFFIX)
+set_target_properties(ALaDyn PROPERTIES OUTPUT_NAME ALaDyn_${EXE_SUFFIX})
 
 install(TARGETS ALaDyn DESTINATION ${CMAKE_SOURCE_DIR}/bin/)
