@@ -37,17 +37,15 @@
    type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic
    !======================================
-   if (model_id<3) then
+   select case (model_id)
+   case(1:2)
     call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2) 
-   else
-    select case (model_id)
-    case (3)
+   case (3)
      call cp_pulse(model_id, xf0) !Circular polarization
-    case (4)
-     call set_envelope(xf0) !Envelope  approximation for laser
+   case (4)
+    call set_envelope(xf0) !Envelope  approximation for laser
      ! vector potential Ay
-    end select
-   end if
+   end select
    call part_distribute(spec, ebfp, dmodel_id, xf0)
 
    if (hybrid) call init_fluid_density_momenta(dmodel_id, xf0)
