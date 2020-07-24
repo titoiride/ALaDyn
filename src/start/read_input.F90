@@ -47,9 +47,13 @@
 #endif
 
    if (.not. exist_json .and. exist_nml) then
+    write (6, *) '==========================================='
+    write (6, *) 'No JSON input file has been found.&
+    & Instead, the old nml format will be used.'
+    write (6, *) '==========================================='
     call read_input_nml
    else
-    write (6, *) 'No usable input file (.json or .nml) has been found'
+    write (6, *) 'No input file (.json or .nml) has been found'
     stop
    end if
   end subroutine

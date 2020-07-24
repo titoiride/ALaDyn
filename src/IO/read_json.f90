@@ -42,7 +42,7 @@ module read_json
   type(json_value), pointer :: targ_desc => null()
   logical :: status_ok, found
   character(:), allocatable :: error
-  character(:), allocatable :: filename_json_out
+  character(13) :: filename_json_out
 
   ! Initializing the json file
   call namelist_in%initialize()
@@ -180,6 +180,42 @@ module read_json
 
   call json%get(targ_json, 'nsp', targ_params%nsp, found, &
    default=targ_params_init%nsp)
+  call json%get(targ_json, 'nsb', targ_params%nsb, found, &
+   default=targ_params_init%nsb)
+  call json%get(targ_json, 'ionz_lev', targ_params%ionz_lev, found, &
+   default=targ_params_init%ionz_lev)
+  call json%get(targ_json, 'ion_min', targ_params%ion_min, found, &
+   default=targ_params_init%ion_min)
+  call json%get(targ_json, 'ion_max', targ_params%ion_max, found, &
+   default=targ_params_init%ion_max)
+  call json%get(targ_json, 'atomic_number', targ_params%atomic_number, found, &
+   default=targ_params_init%atomic_number)
+  call json%get(targ_json, 'mass_number', targ_params%mass_number, found, &
+   default=targ_params_init%mass_number)
+  call json%get(targ_json, 't0_pl', targ_params%t0_pl, found, &
+   default=targ_params_init%t0_pl)
+  call json%get(targ_json, 'np_per_xc', targ_params%np_per_xc, found, &
+   default=targ_params_init%np_per_xc)
+  call json%get(targ_json, 'np_per_yc', targ_params%np_per_yc, found, &
+   default=targ_params_init%np_per_yc)
+  call json%get(targ_json, 'np_per_zc', targ_params%np_per_zc, found, &
+   default=targ_params_init%np_per_zc)
+  call json%get(targ_json, 'concetration', targ_params%concentration, found, &
+   default=targ_params_init%concentration)
+  call json%get(targ_json, 'lpx', targ_params%lpx, found, &
+   default=targ_params_init%lpx)
+  call json%get(targ_json, 'lpy', targ_params%lpy, found, &
+   default=targ_params_init%lpy)
+  call json%get(targ_json, 'n0_ref', targ_params%n0_ref, found, &
+   default=targ_params_init%n0_ref)
+  call json%get(targ_json, 'np1', targ_params%np1, found, &
+   default=targ_params_init%np1)
+  call json%get(targ_json, 'np2', targ_params%np2, found, &
+   default=targ_params_init%np2)
+  call json%get(targ_json, 'r_c', targ_params%r_c, found, &
+   default=targ_params_init%r_c)
+  call json%get(targ_json, 'l_disable_rng_seed', targ_params%l_disable_rng_seed, found, &
+   default=targ_params_init%l_disable_rng_seed)
 
   call json%destroy()
  end subroutine
