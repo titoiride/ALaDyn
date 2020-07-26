@@ -53,8 +53,8 @@ module sim_params_types
 
  type targ_description_parameters_t
  !! Container with the target parameters
-  integer                             :: nsp                = 1
-  integer                             :: nsb                = 1
+  integer                             :: nsp                = 0
+  integer                             :: nsb                = 0
   integer                             :: ionz_lev           = 0
   integer                             :: ionz_model         = 1
   integer,  allocatable, dimension(:) :: ion_min
@@ -94,7 +94,7 @@ module sim_params_types
   real(dp)                            :: lam1 = one_dp
   logical                             :: symmetrization_pulse = .false.
   real(dp)                            :: a_symm_rat = one_dp
-  logical,               dimension(2) :: enable_ionization = .true.
+  logical,  allocatable, dimension(:) :: enable_ionization
   real(dp), allocatable, dimension(:) :: y0_cent
   real(dp), allocatable, dimension(:) :: z0_cent
   real(dp), allocatable, dimension(:) :: y1_cent
@@ -122,8 +122,8 @@ module sim_params_types
  !! Container with the moving window parameters
   integer  :: w_sh    = 10
   real(dp) :: wi_time = zero_dp
-  real(dp) :: wf_time = one_dp
-  real(dp) :: w_speed = one_dp
+  real(dp) :: wf_time = zero_dp
+  real(dp) :: w_speed = zero_dp
  end type
 
  type output_parameters_t
@@ -149,11 +149,12 @@ module sim_params_types
   logical  :: l_print_j_on_grid         = .true.
   logical  :: l_first_output_on_restart = .false.
   logical  :: l_env_modulus             = .true.
-  real(dp) :: time_interval_dump        = -one_dp
+  real(dp) :: time_interval_dumps        = -one_dp
  end type
 
  type tracking_parameters_t
  !! Container with the tracking parameters
+  logical  :: p_tracking = .false.
   integer  :: tkjump = 1
   integer  :: nkjump = 1
   real(dp) :: txmin  = zero_dp

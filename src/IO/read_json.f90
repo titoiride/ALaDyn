@@ -40,12 +40,19 @@ module read_json
   type(json_value), pointer :: grid => null()
   type(json_value), pointer :: sim => null()
   type(json_value), pointer :: targ_desc => null()
+  type(json_value), pointer :: laser => null()
+  type(json_value), pointer :: beam_inject => null()
+  type(json_value), pointer :: window => null()
+  type(json_value), pointer :: output => null()
+  type(json_value), pointer :: tracking => null()
+  type(json_value), pointer :: mpi => null()
   logical :: status_ok, found
   character(:), allocatable :: error
   character(13) :: filename_json_out
 
   ! Initializing the json file
-  call namelist_in%initialize()
+  ! Enabling the comments on lines that start with !
+  call namelist_in%initialize(comment_char=json_CK_'!')
   call json%initialize()
 
   ! Loading the file
@@ -61,6 +68,9 @@ module read_json
    stop
   end if
 
+  ! Create check file for input.nml
+  call json%create_object(inp, '')
+
   !========================================
   ! Read grid parameters
   !========================================
@@ -71,6 +81,7 @@ module read_json
    stop
   end if
   call read_json_grid( grid, params%grid_params )  
+  call json%add(inp, grid)
 
   !========================================
   ! Read simulation parameters
@@ -82,6 +93,7 @@ module read_json
    stop
   end if
   call read_json_sim( sim, params%sim_params )  
+  call json%add(inp, sim)
 
   !========================================
   ! Read target parameters
@@ -90,17 +102,86 @@ module read_json
   call namelist_in%get('target_description', targ_desc, found)
   if ( .not. found ) then
    write(6, *) "'Target_description' not found in json input"
-   stop
+  else
+   call read_json_targ( targ_desc, params%targ_params )
+   call json%add(inp, targ_desc)
   end if
 
+  !========================================
+  ! Read laser parameters
+  !========================================
+  
+  call namelist_in%get('laser', laser, found)
+  if ( .not. found ) then
+   write(6, *) "'laser' not found in json input"
+  else
+   call read_json_laser( laser, params%laser_params ) 
+   call json%add(inp, laser)
+  end if
+  !========================================
+  ! Read beam parameters
+  !========================================
+  
+  call namelist_in%get('beam_inject', beam_inject, found)
+  if ( .not. found ) then
+   write(6, *) "'beam_inject' not found in json input"
+  else
+   call read_json_beam( beam_inject, params%beam_params )
+   call json%add(inp, beam_inject)
+  end if
+
+  !========================================
+  ! Read window parameters
+  !========================================
+  
+  call namelist_in%get('moving_window', window, found)
+  if ( .not. found ) then
+   write(6, *) "'moving_window' not found in json input"
+  else
+   call read_json_window( window, params%window_params ) 
+   call json%add(inp, window)
+  end if
+
+  !========================================
+  ! Read output parameters
+  !========================================
+  
+  call namelist_in%get('output', output, found)
+  if ( .not. found ) then
+   write(6, *) "'output' not found in json input"
+   stop
+  end if
+  call read_json_output( output, params%output_params ) 
+  call json%add(inp, output)
+
+  !========================================
+  ! Read tracking parameters
+  !========================================
+  
+  call namelist_in%get('tracking', tracking, found)
+  if ( .not. found ) then
+   write(6, *) "'tracking' not found in json input"
+  else
+   call read_json_tracking( tracking, params%track_params ) 
+   call json%add(inp, tracking)
+  end if
+
+  !========================================
+  ! Read MPI parameters
+  !========================================
+  
+  call namelist_in%get('mpiparams', mpi, found)
+  if ( .not. found ) then
+   write(6, *) "'mpiparams' not found in json input"
+  else
+   call read_json_mpi( mpi, params%mpi_params ) 
+   call json%add(inp, mpi)
+  end if
+
+  ! Writing the check file
   write(filename_json_out, '(a6,i2.2,a5)') 'input_', 0, '.json'
-  call json%create_object(inp, '')
-  call json%add(inp, grid)
-  call json%add(inp, sim)
-  call json%add(inp, targ_desc)
   call json%print(inp, filename_json_out)
 
-  
   call namelist_in%destroy()
   call json%destroy()
   stop
@@ -114,7 +195,7 @@ module read_json
   type(grid_parameters_t) :: grid_params_init
   logical :: found
 
-  call json%initialize()
+  call json%initialize(comment_char=json_CK_'!')
 
   call json%get(grid_json, 'nx', grid_params%nx, found, &
    default=grid_params_init%nx)
@@ -141,7 +222,7 @@ module read_json
   type(simulation_parameters_t) :: sim_params_init
   logical :: found
 
-  call json%initialize()
+  call json%initialize(comment_char=json_CK_'!')
 
   call json%get(sim_json, 'lpf_ord', sim_params%lpf_ord, found, &
    default=sim_params_init%lpf_ord)
@@ -176,7 +257,7 @@ module read_json
   type(targ_description_parameters_t):: targ_params_init
   logical :: found
 
-  call json%initialize()
+  call json%initialize(comment_char=json_CK_'!')
 
   call json%get(targ_json, 'nsp', targ_params%nsp, found, &
    default=targ_params_init%nsp)
@@ -216,6 +297,234 @@ module read_json
    default=targ_params_init%r_c)
   call json%get(targ_json, 'l_disable_rng_seed', targ_params%l_disable_rng_seed, found, &
    default=targ_params_init%l_disable_rng_seed)
+
+  call json%destroy()
+ end subroutine
+
+ subroutine read_json_laser( laser_json, laser_params)
+  type(json_value), pointer, intent(in) :: laser_json
+  type(laser_parameters_t), intent(inout) :: laser_params
+  type(json_core) :: json
+  type(laser_parameters_t):: laser_params_init
+  logical :: found
+
+  call json%initialize(comment_char=json_CK_'!')
+
+  call json%get(laser_json, 'nb_laser', laser_params%nb_laser, found, &
+   default=laser_params_init%nb_laser)
+  call json%get(laser_json, 'g_prof', laser_params%g_prof, found, &
+   default=laser_params_init%g_prof)
+  call json%get(laser_json, 't0_lp', laser_params%t0_lp, found, &
+   default=laser_params_init%t0_lp)
+  call json%get(laser_json, 'xc_lp', laser_params%xc_lp, found, &
+   default=laser_params_init%xc_lp)
+  call json%get(laser_json, 'tau_fwhm', laser_params%tau_fwhm, found, &
+   default=laser_params_init%tau_fwhm)
+  call json%get(laser_json, 'w0_y', laser_params%w0_y, found, &
+   default=laser_params_init%w0_y)
+  call json%get(laser_json, 'a0', laser_params%a0, found, &
+   default=laser_params_init%a0)
+  call json%get(laser_json, 'lam0', laser_params%lam0, found, &
+   default=laser_params_init%lam0)
+  call json%get(laser_json, 'lp_delay', laser_params%lp_delay, found, &
+   default=laser_params_init%lp_delay)
+  call json%get(laser_json, 'lp_offset', laser_params%lp_offset, found, &
+   default=laser_params_init%lp_offset)
+  call json%get(laser_json, 't1_lp', laser_params%t1_lp, found, &
+   default=laser_params_init%t1_lp)
+  call json%get(laser_json, 'tau1_fwhm', laser_params%tau1_fwhm, found, &
+   default=laser_params_init%tau1_fwhm)
+  call json%get(laser_json, 'w1_y', laser_params%w1_y, found, &
+   default=laser_params_init%w1_y)
+  call json%get(laser_json, 'a1', laser_params%a1, found, &
+   default=laser_params_init%a1)
+  call json%get(laser_json, 'lam1', laser_params%lam1, found, &
+   default=laser_params_init%lam1)
+  call json%get(laser_json, 'symmetrization_pulse', laser_params%symmetrization_pulse, found, &
+   default=laser_params_init%symmetrization_pulse)
+  call json%get(laser_json, 'a_symm_rat', laser_params%a_symm_rat, found, &
+   default=laser_params_init%a_symm_rat)
+  call json%get(laser_json, 'enable_ionization', laser_params%enable_ionization, found, &
+   default=laser_params_init%enable_ionization)
+  call json%get(laser_json, 'y0_cent', laser_params%y0_cent, found, &
+   default=laser_params_init%y0_cent)
+  call json%get(laser_json, 'z0_cent', laser_params%z0_cent, found, &
+   default=laser_params_init%z0_cent)
+  call json%get(laser_json, 'y1_cent', laser_params%y1_cent, found, &
+   default=laser_params_init%y1_cent)
+  call json%get(laser_json, 'z1_cent', laser_params%z1_cent, found, &
+   default=laser_params_init%z1_cent)
+  call json%get(laser_json, 'incid_angle', laser_params%incid_angle, found, &
+   default=laser_params_init%incid_angle)
+
+  call json%destroy()
+ end subroutine
+
+ subroutine read_json_beam( beam_json, beam_params)
+  type(json_value), pointer, intent(in) :: beam_json
+  type(beam_parameters_t), intent(inout) :: beam_params
+  type(json_core) :: json
+  type(beam_parameters_t):: beam_params_init
+  logical :: found
+
+  call json%initialize(comment_char=json_CK_'!')
+
+  call json%get(beam_json, 'nb_1', beam_params%nb_1, found, &
+   default=beam_params_init%nb_1)
+  call json%get(beam_json, 'xc_1', beam_params%xc_1, found, &
+   default=beam_params_init%xc_1)
+  call json%get(beam_json, 'gam_1', beam_params%gam_1, found, &
+   default=beam_params_init%gam_1)
+  call json%get(beam_json, 'sxb_1', beam_params%sxb_1, found, &
+   default=beam_params_init%sxb_1)
+  call json%get(beam_json, 'syb_1', beam_params%syb_1, found, &
+   default=beam_params_init%syb_1)
+  call json%get(beam_json, 'epsy_1', beam_params%epsy_1, found, &
+   default=beam_params_init%epsy_1)
+  call json%get(beam_json, 'epsz_1', beam_params%epsz_1, found, &
+   default=beam_params_init%epsz_1)
+  call json%get(beam_json, 'dg_1', beam_params%dg_1, found, &
+   default=beam_params_init%dg_1)
+  call json%get(beam_json, 'charge_1', beam_params%charge_1, found, &
+   default=beam_params_init%charge_1)
+  call json%get(beam_json, 'ap1_twiss', beam_params%ap1_twiss, found, &
+   default=beam_params_init%ap1_twiss)
+  call json%get(beam_json, 'bt1_twiss', beam_params%bt1_twiss, found, &
+   default=beam_params_init%bt1_twiss)
+  call json%get(beam_json, 't_inject', beam_params%t_inject, found, &
+   default=beam_params_init%t_inject)
+
+  call json%destroy()
+ end subroutine
+
+ subroutine read_json_window( window_json, window_params)
+  type(json_value), pointer, intent(in) :: window_json
+  type(window_parameters_t), intent(inout) :: window_params
+  type(json_core) :: json
+  type(window_parameters_t):: window_params_init
+  logical :: found
+
+  call json%initialize(comment_char=json_CK_'!')
+
+  call json%get(window_json, 'w_sh', window_params%w_sh, found, &
+   default=window_params_init%w_sh)
+  call json%get(window_json, 'wi_time', window_params%wi_time, found, &
+   default=window_params_init%wi_time)
+  call json%get(window_json, 'wf_time', window_params%wf_time, found, &
+   default=window_params_init%wf_time)
+  call json%get(window_json, 'w_speed', window_params%w_speed, found, &
+   default=window_params_init%w_speed)
+
+  call json%destroy()
+ end subroutine
+
+ subroutine read_json_output( output_json, output_params)
+  type(json_value), pointer, intent(in) :: output_json
+  type(output_parameters_t), intent(inout) :: output_params
+  type(json_core) :: json
+  type(output_parameters_t):: output_params_init
+  logical :: found
+
+  call json%initialize(comment_char=json_CK_'!')
+
+  call json%get(output_json, 'nouts', output_params%nouts, found, &
+   default=output_params_init%nouts)
+  call json%get(output_json, 'iene', output_params%iene, found, &
+   default=output_params_init%iene)
+  call json%get(output_json, 'nvout', output_params%nvout, found, &
+   default=output_params_init%nvout)
+  call json%get(output_json, 'nden', output_params%nden, found, &
+   default=output_params_init%nden)
+  call json%get(output_json, 'ncurr', output_params%ncurr, found, &
+   default=output_params_init%ncurr)
+  call json%get(output_json, 'npout', output_params%npout, found, &
+   default=output_params_init%npout)
+  call json%get(output_json, 'jump', output_params%jump, found, &
+   default=output_params_init%jump)
+  call json%get(output_json, 'pjump', output_params%pjump, found, &
+   default=output_params_init%pjump)
+  call json%get(output_json, 'gam_min', output_params%gamma_min, found, &
+   default=output_params_init%gamma_min)
+  call json%get(output_json, 'xp0_out', output_params%xp0_out, found, &
+   default=output_params_init%xp0_out)
+  call json%get(output_json, 'xp1_out', output_params%xp1_out, found, &
+   default=output_params_init%xp1_out)
+  call json%get(output_json, 'yp_out', output_params%yp_out, found, &
+   default=output_params_init%yp_out)
+  call json%get(output_json, 'tmax', output_params%tmax, found, &
+   default=output_params_init%tmax)
+  call json%get(output_json, 'cfl', output_params%cfl, found, &
+   default=output_params_init%cfl)
+  call json%get(output_json, 'new_sim', output_params%new_sim, found, &
+   default=output_params_init%new_sim)
+  call json%get(output_json, 'id_new', output_params%id_new, found, &
+   default=output_params_init%id_new)
+  call json%get(output_json, 'dump', output_params%dump, found, &
+   default=output_params_init%dump)
+  call json%get(output_json, 'time_interval_dumps', output_params%time_interval_dumps, found, &
+   default=output_params_init%time_interval_dumps)
+  call json%get(output_json, 'l_force_singlefile_output', output_params%l_force_single_output, found, &
+   default=output_params_init%l_force_single_output)
+  call json%get(output_json, 'l_print_j_on_grid', output_params%l_print_j_on_grid, found, &
+   default=output_params_init%l_print_j_on_grid)
+  call json%get(output_json, 'l_first_output_on_restart', output_params%l_first_output_on_restart, found, &
+   default=output_params_init%l_first_output_on_restart)
+  call json%get(output_json, 'l_env_modulus', output_params%l_env_modulus, found, &
+   default=output_params_init%l_env_modulus)
+
+  call json%destroy()
+ end subroutine
+
+ subroutine read_json_tracking( tracking_json, tracking_params)
+  type(json_value), pointer, intent(in) :: tracking_json
+  type(tracking_parameters_t), intent(inout) :: tracking_params
+  type(json_core) :: json
+  type(tracking_parameters_t):: tracking_params_init
+  logical :: found
+
+  call json%initialize(comment_char=json_CK_'!')
+
+  call json%get(tracking_json, 'tkjump', tracking_params%tkjump, found, &
+   default=tracking_params_init%tkjump)
+  call json%get(tracking_json, 'nkjump', tracking_params%nkjump, found, &
+   default=tracking_params_init%nkjump)
+  call json%get(tracking_json, 'txmin', tracking_params%txmin, found, &
+   default=tracking_params_init%txmin)
+  call json%get(tracking_json, 'txmax', tracking_params%txmax, found, &
+   default=tracking_params_init%txmax)
+  call json%get(tracking_json, 'tymin', tracking_params%tymin, found, &
+   default=tracking_params_init%tymin)
+  call json%get(tracking_json, 'tymax', tracking_params%tymax, found, &
+   default=tracking_params_init%tymax)
+  call json%get(tracking_json, 'tzmin', tracking_params%tzmin, found, &
+   default=tracking_params_init%tzmin)
+  call json%get(tracking_json, 'tzmax', tracking_params%tzmax, found, &
+   default=tracking_params_init%tzmax)
+  call json%get(tracking_json, 't_in', tracking_params%t_in, found, &
+   default=tracking_params_init%t_in)
+  call json%get(tracking_json, 't_out', tracking_params%t_out, found, &
+   default=tracking_params_init%t_out)
+  call json%get(tracking_json, 'p_tracking', tracking_params%p_tracking, found, &
+   default=tracking_params_init%p_tracking)
+
+  call json%destroy()
+ end subroutine
+ 
+ subroutine read_json_mpi( mpi_json, mpi_params)
+  type(json_value), pointer, intent(in) :: mpi_json
+  type(mpi_parameters_t), intent(inout) :: mpi_params
+  type(json_core) :: json
+  type(mpi_parameters_t):: mpi_params_init
+  logical :: found
+
+  call json%initialize(comment_char=json_CK_'!')
+
+  call json%get(mpi_json, 'nprocx', mpi_params%nprocx, found, &
+   default=mpi_params_init%nprocx)
+  call json%get(mpi_json, 'nprocy', mpi_params%nprocy, found, &
+   default=mpi_params_init%nprocy)
+  call json%get(mpi_json, 'nprocz', mpi_params%nprocz, found, &
+   default=mpi_params_init%nprocz)
 
   call json%destroy()
  end subroutine
