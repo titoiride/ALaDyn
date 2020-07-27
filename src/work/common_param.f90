@@ -26,11 +26,14 @@
 
  module common_param
   use precision_def
+  use sim_params_types
   
   implicit none
 
   integer, parameter :: ref_nlayer = 6, ref_nlas = 8, &
    ref_nspec = 8
+  ! Parameters type
+  type(parameters_t) :: parameters
   !namelist input parameters
   integer :: nx, ny, nz, ny_targ
   integer :: n1ft, n2ft, n3ft

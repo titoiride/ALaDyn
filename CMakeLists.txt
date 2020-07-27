@@ -16,7 +16,6 @@ endif()
 # add_definitions(-DOLD_SPECIES)
 
 # Look for JSON-FORTRAN
-set(FOUND_JSON_FORTRAN FALSE)
 set(JSON_FORTRAN_SUPPORT TRUE CACHE BOOL "ALaDyn: Building ALaDyn with JSON-Fortran support")
 if( JSON_FORTRAN_SUPPORT )
   message(STATUS "ALaDyn: Building ALaDyn with JSON-Fortran support")

@@ -28,13 +28,13 @@ module read_json
  implicit none
 
  type(json_file)    :: namelist
- type(parameters_t) :: params
 
  contains
 
- subroutine read_input_json( input_name, namelist_in )
+ subroutine read_input_json( input_name, namelist_in, parameters_out )
   character(LEN=:), allocatable, intent(in) :: input_name
   type(json_file), intent(inout) :: namelist_in
+  type(parameters_t), intent(inout) :: parameters_out
   type(json_core) :: json
   type(json_value), pointer :: inp => null()
   type(json_value), pointer :: grid => null()
@@ -80,7 +80,8 @@ module read_json
    write(6, *) "'Grid' not found in json input"
    stop
   end if
-  call read_json_grid( grid, params%grid_params )  
+  allocate(parameters_out%grid_params)
+  call read_json_grid( grid, parameters_out%grid_params )  
   call json%add(inp, grid)
 
   !========================================
@@ -92,7 +93,8 @@ module read_json
    write(6, *) "'Simulation' not found in json input"
    stop
   end if
-  call read_json_sim( sim, params%sim_params )  
+  allocate(parameters_out%sim_params)
+  call read_json_sim( sim, parameters_out%sim_params )  
   call json%add(inp, sim)
 
   !========================================
@@ -103,7 +105,8 @@ module read_json
   if ( .not. found ) then
    write(6, *) "'Target_description' not found in json input"
   else
-   call read_json_targ( targ_desc, params%targ_params )
+   allocate(parameters_out%targ_params)
+   call read_json_targ( targ_desc, parameters_out%targ_params )
    call json%add(inp, targ_desc)
   end if
 
@@ -115,7 +118,8 @@ module read_json
   if ( .not. found ) then
    write(6, *) "'laser' not found in json input"
   else
-   call read_json_laser( laser, params%laser_params ) 
+   allocate(parameters_out%laser_params)
+   call read_json_laser( laser, parameters_out%laser_params ) 
    call json%add(inp, laser)
   end if
   !========================================
@@ -126,7 +130,8 @@ module read_json
   if ( .not. found ) then
    write(6, *) "'beam_inject' not found in json input"
   else
-   call read_json_beam( beam_inject, params%beam_params )
+   allocate(parameters_out%beam_params)
+   call read_json_beam( beam_inject, parameters_out%beam_params )
    call json%add(inp, beam_inject)
   end if
 
@@ -138,7 +143,8 @@ module read_json
   if ( .not. found ) then
    write(6, *) "'moving_window' not found in json input"
   else
-   call read_json_window( window, params%window_params ) 
+   allocate(parameters_out%window_params)
+   call read_json_window( window, parameters_out%window_params ) 
    call json%add(inp, window)
   end if
 
@@ -151,7 +157,8 @@ module read_json
    write(6, *) "'output' not found in json input"
    stop
   end if
-  call read_json_output( output, params%output_params ) 
+  allocate(parameters_out%output_params)
+  call read_json_output( output, parameters_out%output_params ) 
   call json%add(inp, output)
 
   !========================================
@@ -162,7 +169,8 @@ module read_json
   if ( .not. found ) then
    write(6, *) "'tracking' not found in json input"
   else
-   call read_json_tracking( tracking, params%track_params ) 
+   allocate(parameters_out%track_params)
+   call read_json_tracking( tracking, parameters_out%track_params ) 
    call json%add(inp, tracking)
   end if
 
@@ -174,17 +182,18 @@ module read_json
   if ( .not. found ) then
    write(6, *) "'mpiparams' not found in json input"
   else
-   call read_json_mpi( mpi, params%mpi_params ) 
+   allocate(parameters_out%mpi_params)
+   call read_json_mpi( mpi, parameters_out%mpi_params ) 
    call json%add(inp, mpi)
   end if
 
   ! Writing the check file
-  write(filename_json_out, '(a6,i2.2,a5)') 'input_', 0, '.json'
+  write(filename_json_out, '(a6,i2.2,a5)') 'input_', &
+   parameters_out%output_params%id_new, '.json'
   call json%print(inp, filename_json_out)
 
   call namelist_in%destroy()
   call json%destroy()
-  stop
 
  end subroutine
 

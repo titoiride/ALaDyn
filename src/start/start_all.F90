@@ -48,14 +48,16 @@
 #ifdef ENABLE_GDB_ATTACH
 ! call gdbattach
 #endif
-   call read_main_input
+   call read_main_input(parameters)
+
+   call assign_parameters(parameters)
 
    call check_grid_size
 
    call set_initial_param 
 
    !Read parameters from input.nml file
-
+    stop
    call start_parallel(nd2, nsp, nsb)
 
    if (mpi_err>0) then

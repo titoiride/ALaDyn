@@ -104,18 +104,18 @@ module sim_params_types
 
  type beam_parameters_t
  !! Container with the beam parameters
-  integer  :: nb_1 = 1
-  real(dp) :: xc_1
-  real(dp) :: gam_1
-  real(dp) :: sxb_1
-  real(dp) :: syb_1
-  real(dp) :: epsy_1
-  real(dp) :: epsz_1
-  real(dp) :: dg_1
-  real(dp) :: charge_1
-  real(dp) :: ap1_twiss
-  real(dp) :: bt1_twiss
-  real(dp) :: t_inject
+  integer  :: nb_1 = 0
+  real(dp) :: xc_1 = one_dp
+  real(dp) :: gam_1 = one_dp
+  real(dp) :: sxb_1 = one_dp
+  real(dp) :: syb_1 = one_dp
+  real(dp) :: epsy_1 = one_dp
+  real(dp) :: epsz_1 = one_dp
+  real(dp) :: dg_1 = one_dp
+  real(dp) :: charge_1 = one_dp
+  real(dp) :: ap1_twiss = one_dp
+  real(dp) :: bt1_twiss = one_dp
+  real(dp) :: t_inject = zero_dp
  end type
 
  type window_parameters_t
@@ -176,14 +176,14 @@ module sim_params_types
 
  type parameters_t
  !! Container with the all parameters
- type(grid_parameters_t)             :: grid_params
- type(simulation_parameters_t)       :: sim_params
- type(targ_description_parameters_t) :: targ_params
- type(laser_parameters_t)            :: laser_params
- type(beam_parameters_t)             :: beam_params
- type(window_parameters_t)           :: window_params
- type(tracking_parameters_t)         :: track_params
- type(output_parameters_t)           :: output_params
- type(mpi_parameters_t)              :: mpi_params
+ type(grid_parameters_t), allocatable             :: grid_params
+ type(simulation_parameters_t), allocatable       :: sim_params
+ type(targ_description_parameters_t), allocatable :: targ_params
+ type(laser_parameters_t), allocatable            :: laser_params
+ type(beam_parameters_t), allocatable             :: beam_params
+ type(window_parameters_t), allocatable           :: window_params
+ type(tracking_parameters_t), allocatable         :: track_params
+ type(output_parameters_t), allocatable           :: output_params
+ type(mpi_parameters_t), allocatable              :: mpi_params
  end type
 end module
