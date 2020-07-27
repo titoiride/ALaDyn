@@ -58,6 +58,7 @@
   if (pe0)then
    call initial_run_info(new_sim)
   endif
+  stop
   !=============================
   call CPU_TIME( unix_time_now )
   unix_time_begin = unix_time_now

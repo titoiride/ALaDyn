@@ -32,41 +32,45 @@
  contains
 
 
-  subroutine read_main_input(parameters_out)
+  subroutine read_main_input(parameters_out, exist_json_out)
   !! Reads the input file
    type(parameters_t), intent(inout) :: parameters_out
+   logical, intent(inout) :: exist_json_out
    logical :: exist_nml = .false.
-   logical :: exist_json = .false.
 
    input_json_filename = 'input.json'
    input_namelist_filename = 'input.nml'
    inquire (file=input_namelist_filename, exist=exist_nml)
 
 #if defined(JSON_FORTRAN)
-   inquire (file=input_json_filename, exist=exist_json)   
-   if (exist_json) then
+   inquire (file=input_json_filename, exist=exist_json_out)   
+   if (exist_json_out) then
     call read_input_json( input_json_filename, namelist, parameters_out)
    end if
 #endif
 
-   if (.not. exist_json .and. exist_nml) then
+   if (.not. exist_json_out .and. exist_nml) then
     write (6, *) '==========================================='
-    write (6, *) 'No JSON input file has been found.&
-    & Instead, the old nml format will be used.'
+    write (6, *) 'No JSON input file has been found.'
+    write (6, *) 'Instead, the old nml format will be used.'
     write (6, *) '==========================================='
     call read_input_nml
-   else if ((.not. exist_json) .and. (.not. exist_nml)) then
+   else if ((.not. exist_json_out) .and. (.not. exist_nml)) then
     write (6, *) 'No input file (.json or .nml) has been found'
     stop
    end if
   end subroutine
 
 #if defined(JSON_FORTRAN)
-  subroutine assign_parameters( parameters_in )
+  subroutine assign_parameters( parameters_in, exist_json_in )
   !! Assignes all the parameters contained in parameters_in and read from the json input file
   !! to the global parameters used in the simulation
     type(parameters_t), intent(in) :: parameters_in
+    logical, intent(in) :: exist_json_in
 
+    if (.not. exist_json_in) then
+      return
+    end if
     !========================
     ! Assign grid parameters
     !========================
@@ -315,9 +319,15 @@
 
   end subroutine
 #else
-  subroutine assign_parameters( parameters_in )
+  subroutine assign_parameters( parameters_in, exist_json_in )
     type(parameters_t), intent(in) :: parameters_in
+    logical, intent(in) :: exist_json_in
     type(parameters_t) :: parameters_mock
+
+    if (.not. exist_json_in) then
+      return
+    end if
+
     parameters_mock = parameters_in
   end subroutine
 #endif
