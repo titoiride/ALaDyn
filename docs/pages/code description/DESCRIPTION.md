@@ -1,4 +1,4 @@
-title: Code description
+title: ALaDyn PIC
 
 # The ALaDyn PIC Code
 
