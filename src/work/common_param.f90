@@ -46,7 +46,7 @@
   integer :: atomic_number(ref_nlayer), n_mol_atoms(ref_nlayer)
   integer :: nb_laser, nb_1, np_per_xc(ref_nlayer), &
     np_per_yc(ref_nlayer)
-  real (dp) :: mass_number(3), t0_pl(4)
+  real (dp) :: mass_number(ref_nlayer), t0_pl(ref_nlayer)
   real (dp) :: lpx(7), lpy(2), n_over_nc, np1, np2, r_c
   real (dp) :: t0_lp, xc_lp, tau_fwhm, w0_y, a0, lam0, &
     lp_delay(ref_nlas)

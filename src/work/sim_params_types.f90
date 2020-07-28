@@ -81,8 +81,8 @@ module sim_params_types
   integer                             :: nb_laser = 1
   real(dp)                            :: t0_lp = zero_dp
   real(dp)                            :: xc_lp = zero_dp
-  real(dp)                            :: tau_fwhm = zero_dp
-  real(dp)                            :: w0_y = zero_dp
+  real(dp)                            :: tau_fwhm = one_dp
+  real(dp)                            :: w0_y = one_dp
   real(dp)                            :: a0 = zero_dp
   real(dp)                            :: lam0 = one_dp
   real(dp), allocatable, dimension(:) :: lp_delay
@@ -97,8 +97,8 @@ module sim_params_types
   logical,  allocatable, dimension(:) :: enable_ionization
   real(dp), allocatable, dimension(:) :: y0_cent
   real(dp), allocatable, dimension(:) :: z0_cent
-  real(dp), allocatable, dimension(:) :: y1_cent
-  real(dp), allocatable, dimension(:) :: z1_cent
+  real(dp)                            :: y1_cent = zero_dp
+  real(dp)                            :: z1_cent = zero_dp
   real(dp)                            :: incid_angle = zero_dp
  end type
 
@@ -177,13 +177,22 @@ module sim_params_types
  type parameters_t
  !! Container with the all parameters
  type(grid_parameters_t), allocatable             :: grid_params
+ logical                                          :: exists_grid = .false.
  type(simulation_parameters_t), allocatable       :: sim_params
+ logical                                          :: exists_simulation = .false.
  type(targ_description_parameters_t), allocatable :: targ_params
+ logical                                          :: exists_target = .false.
  type(laser_parameters_t), allocatable            :: laser_params
+ logical                                          :: exists_laser = .false.
  type(beam_parameters_t), allocatable             :: beam_params
+ logical                                          :: exists_beam = .false.
  type(window_parameters_t), allocatable           :: window_params
+ logical                                          :: exists_window = .false.
  type(tracking_parameters_t), allocatable         :: track_params
+ logical                                          :: exists_tracking = .false.
  type(output_parameters_t), allocatable           :: output_params
+ logical                                          :: exists_output = .false.
  type(mpi_parameters_t), allocatable              :: mpi_params
+ logical                                          :: exists_mpi = .false.
  end type
 end module

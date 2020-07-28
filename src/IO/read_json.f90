@@ -32,11 +32,10 @@ module read_json
  contains
 
  subroutine read_input_json( input_name, namelist_in, parameters_out )
+  !! Subroutines that reads the JSON inputn file, if found
   character(LEN=:), allocatable, intent(in) :: input_name
   type(json_file), intent(inout) :: namelist_in
   type(parameters_t), intent(inout) :: parameters_out
-  type(json_core) :: json
-  type(json_value), pointer :: inp => null()
   type(json_value), pointer :: grid => null()
   type(json_value), pointer :: sim => null()
   type(json_value), pointer :: targ_desc => null()
@@ -48,12 +47,10 @@ module read_json
   type(json_value), pointer :: mpi => null()
   logical :: status_ok, found
   character(:), allocatable :: error
-  character(13) :: filename_json_out
 
   ! Initializing the json file
   ! Enabling the comments on lines that start with !
   call namelist_in%initialize(comment_char=json_CK_'!')
-  call json%initialize()
 
   ! Loading the file
   call namelist_in%load_file(trim(input_name))
@@ -68,9 +65,6 @@ module read_json
    stop
   end if
 
-  ! Create check file for input.nml
-  call json%create_object(inp, '')
-
   !========================================
   ! Read grid parameters
   !========================================
@@ -81,8 +75,8 @@ module read_json
    stop
   end if
   allocate(parameters_out%grid_params)
-  call read_json_grid( grid, parameters_out%grid_params )  
-  call json%add(inp, grid)
+  call read_json_grid( grid, parameters_out%grid_params )
+  parameters_out%exists_grid = .true.
 
   !========================================
   ! Read simulation parameters
@@ -94,8 +88,8 @@ module read_json
    stop
   end if
   allocate(parameters_out%sim_params)
-  call read_json_sim( sim, parameters_out%sim_params )  
-  call json%add(inp, sim)
+  call read_json_sim( sim, parameters_out%sim_params )
+  parameters_out%exists_simulation = .true.  
 
   !========================================
   ! Read target parameters
@@ -107,7 +101,7 @@ module read_json
   else
    allocate(parameters_out%targ_params)
    call read_json_targ( targ_desc, parameters_out%targ_params )
-   call json%add(inp, targ_desc)
+   parameters_out%exists_target = .true.
   end if
 
   !========================================
@@ -119,8 +113,8 @@ module read_json
    write(6, *) "'laser' not found in json input"
   else
    allocate(parameters_out%laser_params)
-   call read_json_laser( laser, parameters_out%laser_params ) 
-   call json%add(inp, laser)
+   call read_json_laser( laser, parameters_out%laser_params )
+   parameters_out%exists_laser = .true.
   end if
   !========================================
   ! Read beam parameters
@@ -132,7 +126,7 @@ module read_json
   else
    allocate(parameters_out%beam_params)
    call read_json_beam( beam_inject, parameters_out%beam_params )
-   call json%add(inp, beam_inject)
+   parameters_out%exists_beam = .true.
   end if
 
   !========================================
@@ -144,8 +138,8 @@ module read_json
    write(6, *) "'moving_window' not found in json input"
   else
    allocate(parameters_out%window_params)
-   call read_json_window( window, parameters_out%window_params ) 
-   call json%add(inp, window)
+   call read_json_window( window, parameters_out%window_params )
+   parameters_out%exists_window = .true.
   end if
 
   !========================================
@@ -158,8 +152,8 @@ module read_json
    stop
   end if
   allocate(parameters_out%output_params)
-  call read_json_output( output, parameters_out%output_params ) 
-  call json%add(inp, output)
+  call read_json_output( output, parameters_out%output_params )
+  parameters_out%exists_output = .true.
 
   !========================================
   ! Read tracking parameters
@@ -171,7 +165,7 @@ module read_json
   else
    allocate(parameters_out%track_params)
    call read_json_tracking( tracking, parameters_out%track_params ) 
-   call json%add(inp, tracking)
+   parameters_out%exists_tracking = .true.
   end if
 
   !========================================
@@ -183,17 +177,11 @@ module read_json
    write(6, *) "'mpiparams' not found in json input"
   else
    allocate(parameters_out%mpi_params)
-   call read_json_mpi( mpi, parameters_out%mpi_params ) 
-   call json%add(inp, mpi)
+   call read_json_mpi( mpi, parameters_out%mpi_params )
+   parameters_out%exists_mpi = .true.
   end if
 
-  ! Writing the check file
-  write(filename_json_out, '(a6,i2.2,a5)') 'input_', &
-   parameters_out%output_params%id_new, '.json'
-  call json%print(inp, filename_json_out)
-
   call namelist_in%destroy()
-  call json%destroy()
 
  end subroutine
 
@@ -290,7 +278,7 @@ module read_json
    default=targ_params_init%np_per_yc)
   call json%get(targ_json, 'np_per_zc', targ_params%np_per_zc, found, &
    default=targ_params_init%np_per_zc)
-  call json%get(targ_json, 'concetration', targ_params%concentration, found, &
+  call json%get(targ_json, 'concentration', targ_params%concentration, found, &
    default=targ_params_init%concentration)
   call json%get(targ_json, 'lpx', targ_params%lpx, found, &
    default=targ_params_init%lpx)

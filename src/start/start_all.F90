@@ -53,6 +53,8 @@
 
    call assign_parameters(parameters, exist_json)
 
+   call write_checklist(parameters, exist_json)
+
    call check_grid_size
 
    call set_initial_param 
@@ -105,7 +107,6 @@
       major_version, '.', minor_version, '                ='
     write (6, *) '======================================================'
     call create_initial_folders
-    call write_read_nml
    end if
    !call set_grid() to define global grid and grid
    !parameters
