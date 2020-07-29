@@ -1,5 +1,3 @@
-title: ALaDyn PIC
-
 # The ALaDyn PIC Code
 
 ## Overview
