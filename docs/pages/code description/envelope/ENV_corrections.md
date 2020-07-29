@@ -5,17 +5,17 @@ title: Corrected divergence
 ## Standard loop
 The standard PIC loop associated with the ponderomotive approximation in `ALaDyn` is structured as
 
-1. Compute the $\Phi=|A|^2/2$ term associated with the Lorentz gamma factor,
-2. Compute the gradient of $\Phi$,
-3. Interpolate $\mathbf{E}$, $\mathbf{B}$, $\nabla\Phi$ and $\Phi$ on particles position,
+1. Compute the \(\Phi=|A|^2/2\) term associated with the Lorentz gamma factor,
+2. Compute the gradient of \(\Phi\),
+3. Interpolate \(\mathbf{E}\), \(\mathbf{B}\), \(\nabla\Phi\) and \(\Phi\) on particles position,
 4. Update envelope momenta according to the [modified pusher](https://www.sciencedirect.com/science/article/pii/S0010465519301195),
 $$\mathbf{p}^n = \mathbf{p}^{n-1/2}+\left(\widetilde{\mathbf{E}} - \widetilde{\Phi}/\gamma \right)+ \mathbf{p}^n/\gamma\times\widetilde{\mathbf{B}},$$
 that is solved with a Boris like procedure. Lorentz factor is evaluated as
 $$\widetilde{\gamma}^2 = \left[ \gamma_0^2 + 2\left(\widetilde{\mathbf{E}} - \widetilde{\Phi}/\gamma \right)\cdot\mathbf{p}^{n-1/2}\right], \quad \gamma_0^2=1+\Phi^n+|\mathbf{p}^{n-1/2}|^2.$$
-5. Each particle $W/\gamma$, where $W$ is the weight, is deposited on the grid to get $\left<n/\gamma \right>$,
+5. Each particle \(W/\gamma\), where \(W\) is the weight, is deposited on the grid to get \(\left<n/\gamma \right>\),
 6. Envelope field is advanced,
-7. Again, $\Phi$ and its gradient are computed, but this time the midtime $A$ is used: $A^{n+1/2} = \left(A^{n+1} - A^{n}\right)/2$,
-8. The new $\Phi$ and $\nabla \Phi$ are interpolated on particles position,
+7. Again, \(\Phi\) and its gradient are computed, but this time the midtime \(A\) is used: \(A^{n+1/2} = \left(A^{n+1} - A^{n}\right)/2\),
+8. The new \(\Phi\) and \(\nabla \Phi\) are interpolated on particles position,
 9. Positions are advanced as
 $$\mathbf{x}^{n+1} = \mathbf{x}^2+ \Delta t\frac{c\mathbf{p}^{n+1/2}}{\gamma^{n+1/2}},$$
 where $$\gamma^{-1} = \frac{1}{\gamma_0}\left[ 1-\frac{\Delta t}{4\gamma_0^3}\left(\mathbf{p}^{n+1/2}\cdot \nabla \Phi\right)\right]$$.
@@ -24,9 +24,9 @@ where $$\gamma^{-1} = \frac{1}{\gamma_0}\left[ 1-\frac{\Delta t}{4\gamma_0^3}\le
 
 ## Improved envelope
 
-The introduction of the divergence correction on the envelope field inside the Lorentz factor, $|\partial_x A|^2/2k_0^2$ does not alter the preiously described procedure. Instead, via the sostitution $\Phi \to \Phi + \frac{1}{2k_0^2}|\partial_x A|^2$, one could reuse all the [1 - 7] points.
+The introduction of the divergence correction on the envelope field inside the Lorentz factor, \(|\partial_x A|^2/2k_0^2\) does not alter the preiously described procedure. Instead, via the sostitution \(\Phi \to \Phi + \frac{1}{2k_0^2}|\partial_x A|^2\), one could reuse all the [1 - 7] points.
 
-In `ALaDyn`, $A$ is represented as $(A^R, A^I)$ in the complex space, so $|\partial_x A|^2$ becomes $\left(\partial_x A^R\right)^2 + \left(\partial_x A^I\right)^2$.
+In `ALaDyn`, \(A\) is represented as \((A^R, A^I)\) in the complex space, so \(|\partial_x A|^2\) becomes \(\left(\partial_x A^R\right)^2 + \left(\partial_x A^I\right)^2\).
 
 ## Implementation
 
