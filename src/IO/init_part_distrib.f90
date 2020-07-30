@@ -38,33 +38,33 @@
  contains
 
   subroutine set_pgrid_xind(npx, ic)
-   integer, intent (in) :: npx, ic
+   integer, intent(in) :: npx, ic
    integer :: i, p, ip
-   real (dp) :: xp, x1, x2
+   real(dp) :: xp, x1, x2
 
    !Defines the the number of particles on each mpi x-domain
    ! Enter the total particle number npx and the particle species ic
    ! Particle x-distribution is already defined by xpt(nptx,ic)
    ! Exit loc_imax(pex,ic) for each pex task
    !=================================================
-   loc_imax(0:npe_xloc-1, ic) = 1
+   loc_imax(0:npe_xloc - 1, ic) = 1
    p = 0
    ip = 0
    x1 = loc_xgrid(0)%gmin
    x2 = loc_xgrid(0)%gmax
    do i = 1, npx
     xp = xpt(i, ic)
-    if (xp>=x1 .and. xp<x2) ip = ip + 1
+    if (xp >= x1 .and. xp < x2) ip = ip + 1
    end do
    loc_imax(p, ic) = ip !number of grid points in [loc_xmin,loc_xmax]
-   if (npe_xloc>1) then
+   if (npe_xloc > 1) then
     do p = 1, npe_xloc - 1
      x1 = loc_xgrid(p)%gmin
      x2 = loc_xgrid(p)%gmax
      ip = 0
      do i = 1, npx
       xp = xpt(i, ic)
-      if (xp>=x1 .and. xp<x2) ip = ip + 1
+      if (xp >= x1 .and. xp < x2) ip = ip + 1
      end do
      loc_imax(p, ic) = ip
     end do
@@ -72,17 +72,17 @@
   end subroutine
 
   subroutine set_pgrid_ind(npy, npz, ic)
-   integer, intent (in) :: npy, npz, ic
+   integer, intent(in) :: npy, npz, ic
    integer :: i, p, ip
-   real (dp) :: yp, y1, y2
+   real(dp) :: yp, y1, y2
 
    ! Particles number index on each y-z mpi domain
    ! Enter the total particle number npy, npz and the particle species ic
    ! Particle y-z-distributions are ypt(npy,ic), zpt(npz,ic)
    ! Exit loc_jmax(pey,ic) loc_kmax(pez,ic)for each pey peztask
    !=======================================
-   loc_jmax(0:npe_yloc-1, ic) = 1
-   loc_kmax(0:npe_zloc-1, ic) = 1
+   loc_jmax(0:npe_yloc - 1, ic) = 1
+   loc_kmax(0:npe_zloc - 1, ic) = 1
 
    p = 0
    ip = 0
@@ -90,17 +90,17 @@
     yp = ypt(i, ic)
     y1 = ymin_t
     y2 = loc_ygrid(p)%gmax
-    if (yp>=y1 .and. yp<y2) ip = ip + 1
+    if (yp >= y1 .and. yp < y2) ip = ip + 1
    end do
    loc_jmax(p, ic) = ip !number of particle y-positions in [loc_ymin,loc_ymax]
-   if (npe_yloc>2) then
+   if (npe_yloc > 2) then
     do p = 1, npe_yloc - 2
      ip = 0
      do i = 1, npy
       yp = ypt(i, ic)
       y1 = loc_ygrid(p)%gmin
       y2 = loc_ygrid(p)%gmax
-      if (yp>=y1 .and. yp<y2) ip = ip + 1
+      if (yp >= y1 .and. yp < y2) ip = ip + 1
      end do
      loc_jmax(p, ic) = ip
     end do
@@ -111,10 +111,10 @@
     yp = ypt(i, ic)
     y1 = loc_ygrid(p)%gmin
     y2 = ymax_t
-    if (yp>=y1 .and. yp<y2) ip = ip + 1
+    if (yp >= y1 .and. yp < y2) ip = ip + 1
    end do
    loc_jmax(p, ic) = ip
-   if (npz==1) return
+   if (npz == 1) return
 
    p = 0
    ip = 0
@@ -122,17 +122,17 @@
     yp = zpt(i, ic)
     y1 = zmin_t
     y2 = loc_zgrid(p)%gmax
-    if (yp>=y1 .and. yp<y2) ip = ip + 1
+    if (yp >= y1 .and. yp < y2) ip = ip + 1
    end do
    loc_kmax(p, ic) = ip
-   if (npe_zloc>2) then
+   if (npe_zloc > 2) then
     do p = 1, npe_zloc - 2
      ip = 0
      do i = 1, npz
       yp = zpt(i, ic)
       y1 = loc_zgrid(p)%gmin
       y2 = loc_zgrid(p)%gmax
-      if (yp>=y1 .and. yp<y2) ip = ip + 1
+      if (yp >= y1 .and. yp < y2) ip = ip + 1
      end do
      loc_kmax(p, ic) = ip
     end do
@@ -143,19 +143,19 @@
     yp = zpt(i, ic)
     y1 = loc_zgrid(p)%gmin
     y2 = zmax_t
-    if (yp>=y1 .and. yp<y2) ip = ip + 1
+    if (yp >= y1 .and. yp < y2) ip = ip + 1
    end do
    loc_kmax(p, ic) = ip
   end subroutine
 
   !--------------------------
   subroutine pspecies_distribute(loc_sp, t_x, ch, q, ic, i2, p)
-   type (species), intent (inout) :: loc_sp
-   real (dp), intent (in) :: t_x, ch
-   integer, intent (in) :: q, ic, i2
-   integer, intent (out) :: p
+   type(species), intent(inout) :: loc_sp
+   real(dp), intent(in) :: t_x, ch
+   integer, intent(in) :: q, ic, i2
+   integer, intent(out) :: p
    integer :: i, j, k, j2, k2
-   real (dp) :: u, whz
+   real(dp) :: u, whz
 
    call init_random_seed(mype)
    p = q
@@ -163,7 +163,7 @@
    part_ind = 0
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
-   if (curr_ndim>2) then
+   if (curr_ndim > 2) then
     do k = 1, k2
      do j = 1, j2
       do i = 1, i2
@@ -204,15 +204,15 @@
   !==============================
   subroutine mpi_x_part_distrib(nc)
    !Local to imodx distribution
-   integer, intent (in) :: nc
+   integer, intent(in) :: nc
    integer :: ic, i2, ix_min
-   real (dp) :: x1
+   real(dp) :: x1
 
    x1 = loc_xgrid(imodx)%gmin
    do ic = 1, nc
     ix_min = 0
     do i2 = 1, nptx(ic) !the total particle number
-     if (xpt(i2,ic)<x1) ix_min = i2
+     if (xpt(i2, ic) < x1) ix_min = i2
     end do
     do i2 = 1, loc_nptx(ic) !the local particle number
      ix_min = ix_min + 1
@@ -224,18 +224,18 @@
   !=====================================
   subroutine mpi_yz_part_distrib(nc, ky2_in, kz2_in, nyc, nzc, ymt, zmt, whyz)
 
-   integer, intent (in) :: nc, ky2_in(:), kz2_in(:), nyc(:), nzc(:)
-   real (dp), intent (in) :: ymt, zmt, whyz(:, :, :)
+   integer, intent(in) :: nc, ky2_in(:), kz2_in(:), nyc(:), nzc(:)
+   real(dp), intent(in) :: ymt, zmt, whyz(:, :, :)
    integer :: ic, i2, k1, j1, j2
-   real (dp) :: loc_ym, loc_zm
+   real(dp) :: loc_ym, loc_zm
 
-   if (ndim<3) then
+   if (ndim < 3) then
     loc_ym = loc_ygrid(imody)%gmin
-    if (imody==0) loc_ym = ymt
+    if (imody == 0) loc_ym = ymt
     do ic = 1, nc
      k1 = 0
      do i2 = 1, nyc(ic)
-      if (ypt(i2,ic)<loc_ym) k1 = i2
+      if (ypt(i2, ic) < loc_ym) k1 = i2
      end do
      do i2 = 1, ky2_in(ic)
       k1 = k1 + 1
@@ -248,21 +248,21 @@
    end if
    !==========================
    loc_zm = loc_zgrid(imodz)%gmin
-   if (imodz==0) loc_zm = zmt
+   if (imodz == 0) loc_zm = zmt
    loc_ym = loc_ygrid(imody)%gmin
-   if (imody==0) loc_ym = ymt
+   if (imody == 0) loc_ym = ymt
 
    do ic = 1, nc
     k1 = 0
     do i2 = 1, nzc(ic)
-     if (zpt(i2,ic)<loc_zm) k1 = i2
+     if (zpt(i2, ic) < loc_zm) k1 = i2
     end do
     do i2 = 1, kz2_in(ic)
      k1 = k1 + 1
      loc_zpt(i2, ic) = zpt(k1, ic)
      j1 = 0
      do j2 = 1, nyc(ic)
-      if (ypt(j2,ic)<loc_ym) j1 = j2
+      if (ypt(j2, ic) < loc_ym) j1 = j2
      end do
      do j2 = 1, ky2_in(ic)
       j1 = j1 + 1
@@ -275,13 +275,13 @@
   !--------------------------
   subroutine set_uniform_yz_distrib(nyh_in, nc)
 
-   integer, intent (in) :: nyh_in, nc
+   integer, intent(in) :: nyh_in, nc
    integer :: j, i, i1, i2, ic
    integer :: npyc(6), npzc(6), npty_ne, nptz_ne
-   real (dp) :: yy, zz, dxip, dpy, dpz
-   real (dp) :: zp_min, zp_max, yp_min, yp_max
+   real(dp) :: yy, zz, dxip, dpy, dpz
+   real(dp) :: zp_min, zp_max, yp_min, yp_max
    integer :: nyl1, nzl1
-   real (dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
+   real(dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
    !=================
    !========= gridding the transverse target size
    nyl1 = 1 + ny/2 - nyh_in/2 !=1 if nyh_in=ny
@@ -298,53 +298,53 @@
    nptz = 1
    zp_min = zero_dp
    zp_max = zero_dp
-   if (ndim==3) then
+   if (ndim == 3) then
     npzc(1:nc) = nyh_in*np_per_zc(1:nc)
     zp_min = zmin_t !-Lz
     zp_max = zmax_t !+Lz
     nptz = maxval(npzc(1:nc))
    end if
-   allocate (ypt(npty,nc))
-   allocate (zpt(nptz,nc))
-   allocate (wy(npty,nc))
-   allocate (wz(nptz,nc))
-   allocate (wyz(npty,nptz,nc))
+   allocate (ypt(npty, nc))
+   allocate (zpt(nptz, nc))
+   allocate (wy(npty, nc))
+   allocate (wz(nptz, nc))
+   allocate (wyz(npty, nptz, nc))
    ypt = 0.
    zpt = 0.
    wyz = 1.
    wy = 1.
    wz = 1.
    !==================
-   allocate (loc_jmax(0:npe_yloc-1,1:nc))
-   allocate (loc_kmax(0:npe_zloc-1,1:nc))
-   allocate (loc_imax(0:npe_xloc-1,1:nc))
+   allocate (loc_jmax(0:npe_yloc - 1, 1:nc))
+   allocate (loc_kmax(0:npe_zloc - 1, 1:nc))
+   allocate (loc_imax(0:npe_xloc - 1, 1:nc))
    !====================
    ! Uniform layers along y-z coordinates
    !===============
    do ic = 1, nc
     npty_ne = npyc(ic)
-    if (npty_ne>0) then
-     dpy = (yp_max-yp_min)/real(npty_ne, dp)
+    if (npty_ne > 0) then
+     dpy = (yp_max - yp_min)/real(npty_ne, dp)
      do i = 1, npty_ne
-      ypt(i, ic) = yp_min + dpy*(real(i,dp)-0.5)
+      ypt(i, ic) = yp_min + dpy*(real(i, dp) - 0.5)
      end do
      if (stretch) then
       yy = str_ygrid%smin
-      if (yy>yp_min) then
+      if (yy > yp_min) then
        dpy = dyi/real(np_per_yc(ic), dp)
-       i1 = (str_ygrid%sind(1)-nyl1+1)*np_per_yc(ic)
+       i1 = (str_ygrid%sind(1) - nyl1 + 1)*np_per_yc(ic)
        i2 = npty_ne - i1
        do i = 1, i1
-        dxip = dpy*(real(i-i1,dp)-0.5)
+        dxip = dpy*(real(i - i1, dp) - 0.5)
         ypt(i, ic) = str_ygrid%smin + l_s*tan(dxip)
         wy(i, ic) = 1./(cos(dxip)*cos(dxip))
        end do
        dxip = dy/real(np_per_yc(ic), dp)
        do i = i1 + 1, i2
-        ypt(i, ic) = str_ygrid%smin + dxip*(real(i-i1,dp)-0.5)
+        ypt(i, ic) = str_ygrid%smin + dxip*(real(i - i1, dp) - 0.5)
        end do
        do i = i2 + 1, npty_ne
-        dxip = dpy*(real(i-i2,dp)-0.5)
+        dxip = dpy*(real(i - i2, dp) - 0.5)
         ypt(i, ic) = str_ygrid%smax + l_s*tan(dxip)
         wy(i, ic) = 1./(cos(dxip)*cos(dxip))
        end do
@@ -355,30 +355,30 @@
      end do
     end if ! end np_per_yc >0
     nptz_ne = 1
-    if (ndim==3) then
+    if (ndim == 3) then
      nptz_ne = npzc(ic)
-     if (nptz_ne>0) then
-      dpz = (zp_max-zp_min)/real(nptz_ne, dp)
+     if (nptz_ne > 0) then
+      dpz = (zp_max - zp_min)/real(nptz_ne, dp)
       do i = 1, nptz_ne
-       zpt(i, ic) = zp_min + dpz*(real(i,dp)-0.5)
+       zpt(i, ic) = zp_min + dpz*(real(i, dp) - 0.5)
       end do
       if (stretch) then
        zz = str_zgrid%smin
-       if (zz>zp_min) then
+       if (zz > zp_min) then
         dpz = dzi/real(np_per_zc(ic), dp)
-        i1 = (str_zgrid%sind(1)-nzl1+1)*np_per_zc(ic)
+        i1 = (str_zgrid%sind(1) - nzl1 + 1)*np_per_zc(ic)
         i2 = nptz_ne - i1
         do i = 1, i1
-         dxip = dpy*(real(i-i1,dp)-0.5)
+         dxip = dpy*(real(i - i1, dp) - 0.5)
          zpt(i, ic) = str_zgrid%smin + l_s*tan(dxip)
          wz(i, ic) = 1./(cos(dxip)*cos(dxip))
         end do
         dxip = dz/real(np_per_zc(ic), dp)
         do i = i1 + 1, i2
-         zpt(i, ic) = str_zgrid%smin + dxip*(real(i-i1,dp)-0.5)
+         zpt(i, ic) = str_zgrid%smin + dxip*(real(i - i1, dp) - 0.5)
         end do
         do i = i2 + 1, nptz_ne
-         dxip = dpy*(real(i-i2,dp)-0.5)
+         dxip = dpy*(real(i - i2, dp) - 0.5)
          zpt(i, ic) = str_zgrid%smax + l_s*tan(dxip)
          wz(i, ic) = 1./(cos(dxip)*cos(dxip))
         end do
@@ -390,12 +390,12 @@
        wyz(j, i, ic) = wy(j, ic)*wz(i, ic)
       end do
      end do
-     if (chann_fact>0.0) then
+     if (chann_fact > 0.0) then
       do i = 1, nptz_ne
        zz = zpt(i, ic)
        do j = 1, npty_ne
         yy = ypt(j, ic)
-        wyz(j, i, ic) = 1. + chann_fact*(yy*yy+zz*zz)/(w0_y*w0_y)
+        wyz(j, i, ic) = 1.+chann_fact*(yy*yy + zz*zz)/(w0_y*w0_y)
        end do
       end do
      end if
@@ -411,12 +411,12 @@
    npty_ne = maxval(loc_npty(1:nc))
    nptz_ne = maxval(loc_nptz(1:nc))
    !======================
-   allocate (loc_wghyz(npty_ne,nptz_ne,nc))
-   allocate (loc_ypt(npty_ne,nc))
-   allocate (loc_zpt(nptz_ne,nc))
+   allocate (loc_wghyz(npty_ne, nptz_ne, nc))
+   allocate (loc_ypt(npty_ne, nc))
+   allocate (loc_zpt(nptz_ne, nc))
    loc_wghyz = 1.
    call mpi_yz_part_distrib(nc, loc_npty, loc_nptz, npyc, npzc, ymin_t, &
-     zmin_t, wyz)
+                            zmin_t, wyz)
 
    !=EXIT local to mpi (imody,imodz) tasks (loc_ypt,loc_zpt), weights (loc_wghyz)
    ! => set in common in pstruct_data.f90 file/
@@ -428,13 +428,13 @@
   !===========================================
   subroutine multi_layer_gas_target(layer_mod, nyh_in, xf0)
 
-   integer, intent (in) :: layer_mod, nyh_in
-   real (dp), intent (in) :: xf0
+   integer, intent(in) :: layer_mod, nyh_in
+   real(dp), intent(in) :: xf0
    integer :: p, i, j, i1, i2, ic
    integer :: n_peak, npmax, nxtot, len_conc
-   real (dp) :: uu, u2, xp_min, xp_max, u3, ramp_prefactor
-   real (dp) :: xfsh, un(2), wgh_sp(nsp)
-   real (dp), allocatable :: conc(:)
+   real(dp) :: uu, u2, xp_min, xp_max, u3, ramp_prefactor
+   real(dp) :: xfsh, un(2), wgh_sp(nsp)
+   real(dp), allocatable :: conc(:)
    integer :: nxl(6)
    integer :: nps_loc(4), last_particle_index(4), nptx_alloc(4)
    !==========================
@@ -456,7 +456,7 @@
    ! Layers nxl(1:5) all containing the same ion species
    len_conc = size(concentration)
    allocate (conc(len_conc))
-   conc(:) = concentration(:)   
+   conc(:) = concentration(:)
    xtot = 0.0
    nxtot = 0
    do i = 1, 6
@@ -465,7 +465,7 @@
     xtot = xtot + lpx(i)
     nxtot = nxtot + nxl(i)
    end do
-   if (xf0>0.0) then
+   if (xf0 > 0.0) then
     targ_in = xf0
     targ_end = targ_in + xtot
    else
@@ -475,13 +475,13 @@
    xfsh = xf0
    !=============================
    loc_nptx = 0
-   loc_nptx(1:nsp) = (nxl(1)+nxl(2)+nxl(3)+nxl(4)+nxl(5)+nxl(6))* &
-     np_per_xc(1:nsp)
+   loc_nptx(1:nsp) = (nxl(1) + nxl(2) + nxl(3) + nxl(4) + nxl(5) + nxl(6))* &
+                     np_per_xc(1:nsp)
 
    nptx_max = maxval(loc_nptx(1:nsp))
-   allocate (xpt(nptx_max,nsp))
-   allocate (wghpt(nptx_max,nsp))
-   allocate (loc_xpt(nptx_max,nsp))
+   allocate (xpt(nptx_max, nsp))
+   allocate (wghpt(nptx_max, nsp))
+   allocate (loc_xpt(nptx_max, nsp))
    !=============================
    wghpt = one_dp
    un = one_dp
@@ -500,18 +500,18 @@
 
    wgh_sp(1) = j0_norm*n0_ref*n_plasma
    do i = 2, nsp
-    if (mp_per_cell(i)>0) wgh_sp(i) = n0_ref/real(mp_per_cell(i), dp)
-    wgh_sp(i) = conc(i-1)*wgh_sp(i)
+    if (mp_per_cell(i) > 0) wgh_sp(i) = n0_ref/real(mp_per_cell(i), dp)
+    wgh_sp(i) = conc(i - 1)*wgh_sp(i)
    end do
    select case (layer_mod)
-   !================ first uniform layer np1=================
+    !================ first uniform layer np1=================
    case (1)
-    if (nxl(1)>0) then
+    if (nxl(1) > 0) then
      ramp_prefactor = one_dp - np1
      do ic = 1, nsp
       n_peak = nxl(1)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(1)*uu
        wghpt(i1, ic) = np1*wgh_sp(ic)
@@ -521,11 +521,11 @@
      xfsh = xfsh + lpx(1)
     end if
     !================ first CUBIC ramp np1 => 1 --linear or exponential still available but commented =================
-    if (nxl(2)>0) then
+    if (nxl(2) > 0) then
      do ic = 1, nsp
       n_peak = nxl(2)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(2)*uu
        !u2=(uu-1.)*(uu-1.)
@@ -533,19 +533,19 @@
        u3 = u2*uu
        !wghpt(i1,ic)=(np1+exp(-4.5*u2)*(1.-np1))*wgh_sp(ic)
        !wghpt(i1,ic)=exp(-4.5*u2)*wgh_sp(ic)
-       wghpt(i1, ic) = (-2.*ramp_prefactor*u3+3.*ramp_prefactor*u2+ &
-         one_dp-ramp_prefactor)*wgh_sp(ic)
+       wghpt(i1, ic) = (-2.*ramp_prefactor*u3 + 3.*ramp_prefactor*u2 + &
+                        one_dp - ramp_prefactor)*wgh_sp(ic)
       end do
       nptx(ic) = nptx(ic) + n_peak
      end do
      xfsh = xfsh + lpx(2)
     end if
     !================ Central layer=================
-    if (nxl(3)>0) then
+    if (nxl(3) > 0) then
      do ic = 1, nsp
       n_peak = nxl(3)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(3)*uu
        wghpt(i1, ic) = wgh_sp(ic)
@@ -555,11 +555,11 @@
      xfsh = xfsh + lpx(3)
     end if
     !================ second linear ramp =================
-    if (nxl(4)>0) then
+    if (nxl(4) > 0) then
      do ic = 1, nsp
       n_peak = nxl(4)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(4)*uu
        wghpt(i1, ic) = (1.-uu*(1.-np2))*wgh_sp(ic)
@@ -568,11 +568,11 @@
      end do
      xfsh = xfsh + lpx(4)
     end if
-    if (nxl(5)>0) then
+    if (nxl(5) > 0) then
      do ic = 1, nsp
       n_peak = nxl(5)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(5)*uu
        wghpt(i1, ic) = np2*wgh_sp(ic)
@@ -582,7 +582,7 @@
      xfsh = xfsh + lpx(5)
     end if
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic) + 10, nx*np_per_xc(ic))
     end do
     !=========================================
    case (2)
@@ -592,11 +592,11 @@
     !                 particle per cell uniform
     !================================================
     !================ first linear ramp to first plateau n1/n_c =================
-    if (nxl(1)>0) then
+    if (nxl(1) > 0) then
      do ic = 1, nsp
       n_peak = nxl(1)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(1)*uu
        wghpt(i1, ic) = uu*np1*wgh_sp(ic)
@@ -605,11 +605,11 @@
      end do
      xfsh = xfsh + lpx(1)
     end if
-    if (nxl(2)>0) then !first plateau
+    if (nxl(2) > 0) then !first plateau
      do ic = 1, nsp
       n_peak = nxl(2)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(2)*uu
        wghpt(i1, ic) = np1*wgh_sp(ic)
@@ -619,25 +619,25 @@
      xfsh = xfsh + lpx(2)
     end if
     !================ np1 => np2 down-ramp =================
-    if (nxl(3)>0) then
+    if (nxl(3) > 0) then
      do ic = 1, nsp
       n_peak = nxl(3)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(3)*uu
-       wghpt(i1, ic) = wgh_sp(ic)*(np1+uu*(np2-np1))
+       wghpt(i1, ic) = wgh_sp(ic)*(np1 + uu*(np2 - np1))
       end do
       nptx(ic) = nptx(ic) + n_peak
      end do
      xfsh = xfsh + lpx(3)
     end if
     !================ second plateau n2/n_c < n1/n_c =================
-    if (nxl(4)>0) then
+    if (nxl(4) > 0) then
      do ic = 1, nsp
       n_peak = nxl(4)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(4)*uu
        wghpt(i1, ic) = np2*wgh_sp(ic)
@@ -646,11 +646,11 @@
      end do
      xfsh = xfsh + lpx(4)
     end if
-    if (nxl(5)>0) then !second down-ramp n2/n_c ==> 0
+    if (nxl(5) > 0) then !second down-ramp n2/n_c ==> 0
      do ic = 1, nsp
       n_peak = nxl(5)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i)-0.5)/real(n_peak, dp)
+       uu = (real(i) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(5)*uu
        wghpt(i1, ic) = (1.-uu)*np2*wgh_sp(ic)
@@ -660,7 +660,7 @@
      xfsh = xfsh + lpx(5)
     end if
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic) + 10, nx*np_per_xc(ic))
     end do
     !=====================================
    case (3)
@@ -671,14 +671,14 @@
     !---------------
     !================================================
     !Z1 electrons are accounted for by a larger electron weight
-    un(1) = 1. + ion_min(1)*np1
+    un(1) = 1.+ion_min(1)*np1
     un(2) = np1 !float(mp_per_cell(1))/float(mp_per_cell(ic))
 
-    if (nxl(1)>0) then
+    if (nxl(1) > 0) then
      do ic = 1, nsp_run
       n_peak = nxl(1)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(1)*uu
        wghpt(i1, ic) = uu*wgh_sp(ic)
@@ -687,11 +687,11 @@
      end do
      xfsh = xfsh + lpx(1)
     end if
-    if (nxl(2)>0) then !first plateau
+    if (nxl(2) > 0) then !first plateau
      do ic = 1, nsp_run
       n_peak = nxl(2)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(2)*uu
        wghpt(i1, ic) = wgh_sp(ic)
@@ -701,11 +701,11 @@
      xfsh = xfsh + lpx(2)
     end if
     !================
-    if (nxl(3)>0) then !el+H(+) + dopant un(1:2) correct (electron,Z1) weights
+    if (nxl(3) > 0) then !el+H(+) + dopant un(1:2) correct (electron,Z1) weights
      do ic = 1, nsp
       n_peak = nxl(3)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(3)*uu
        wghpt(i1, ic) = un(ic)*wgh_sp(ic)
@@ -715,11 +715,11 @@
      xfsh = xfsh + lpx(3)
     end if
     !================ second plateau only electrons =================
-    if (nxl(4)>0) then
+    if (nxl(4) > 0) then
      do ic = 1, nsp_run
       n_peak = nxl(4)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(4)*uu
        wghpt(i1, ic) = wgh_sp(ic)
@@ -728,11 +728,11 @@
      end do
      xfsh = xfsh + lpx(4)
     end if
-    if (nxl(5)>0) then !second down-ramp ==> 0
+    if (nxl(5) > 0) then !second down-ramp ==> 0
      do ic = 1, nsp_run
       n_peak = nxl(5)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i)-0.5)/real(n_peak, dp)
+       uu = (real(i) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(5)*uu
        wghpt(i1, ic) = (1.-uu)*wgh_sp(ic)
@@ -742,22 +742,22 @@
      xfsh = xfsh + lpx(5)
     end if
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic) + 10, nx*np_per_xc(ic))
     end do
     !===================================
    case (4)
     !================ cos^2 upramp with peak n0 =================
-    if (nxl(1)>0) then
+    if (nxl(1) > 0) then
      do ic = 1, nsp
       n_peak = nxl(1)*np_per_xc(ic)
-      if (n_peak>0) then
+      if (n_peak > 0) then
        do i = 1, n_peak
-        uu = (real(i,dp)-0.5)/real(n_peak, dp)
+        uu = (real(i, dp) - 0.5)/real(n_peak, dp)
         i1 = nptx(ic) + i
         xpt(i1, ic) = xfsh + lpx(1)*uu
         uu = uu - 1.
         wghpt(i1, ic) = one_dp*cos(0.5*pi*(uu))*cos(0.5*pi*(uu))* &
-          wgh_sp(ic)
+                        wgh_sp(ic)
        end do
       end if
       nptx(ic) = nptx(ic) + n_peak
@@ -765,12 +765,12 @@
      xfsh = xfsh + lpx(1)
     end if
     !================ uniform layer n0=================
-    if (nxl(2)>0) then
+    if (nxl(2) > 0) then
      do ic = 1, nsp
       n_peak = nxl(2)*np_per_xc(ic)
-      if (n_peak>0) then
+      if (n_peak > 0) then
        do i = 1, n_peak
-        uu = (real(i,dp)-0.5)/real(n_peak, dp)
+        uu = (real(i, dp) - 0.5)/real(n_peak, dp)
         i1 = nptx(ic) + i
         xpt(i1, ic) = xfsh + lpx(2)*uu
         wghpt(i1, ic) = one_dp*wgh_sp(ic)
@@ -781,17 +781,17 @@
      xfsh = xfsh + lpx(2)
     end if
     !================ cos^2 downramp to the plateau np1*n0 =================
-    if (nxl(3)>0) then
+    if (nxl(3) > 0) then
      do ic = 1, nsp
       n_peak = nxl(3)*np_per_xc(ic)
-      if (n_peak>0) then
+      if (n_peak > 0) then
        do i = 1, n_peak
-        uu = (real(i,dp)-0.5)/real(n_peak, dp)
+        uu = (real(i, dp) - 0.5)/real(n_peak, dp)
         i1 = nptx(ic) + i
         xpt(i1, ic) = xfsh + lpx(3)*uu
         uu = uu - 1.
-        wghpt(i1, ic) = (np1+(one_dp-np1)*sin(0.5*pi*(uu))*sin(0.5*pi*( &
-          uu)))*wgh_sp(ic)
+        wghpt(i1, ic) = (np1 + (one_dp - np1)*sin(0.5*pi*(uu))*sin(0.5*pi*( &
+                                                                   uu)))*wgh_sp(ic)
        end do
       end if
       nptx(ic) = nptx(ic) + n_peak
@@ -799,12 +799,12 @@
      xfsh = xfsh + lpx(3)
     end if
     !================ Central layer of density np1*n0 =================
-    if (nxl(4)>0) then
+    if (nxl(4) > 0) then
      do ic = 1, nsp
       n_peak = nxl(4)*np_per_xc(ic)
-      if (n_peak>0) then
+      if (n_peak > 0) then
        do i = 1, n_peak
-        uu = (real(i,dp)-0.5)/real(n_peak, dp)
+        uu = (real(i, dp) - 0.5)/real(n_peak, dp)
         i1 = nptx(ic) + i
         xpt(i1, ic) = xfsh + lpx(4)*uu
         wghpt(i1, ic) = np1*wgh_sp(ic)
@@ -815,16 +815,16 @@
      xfsh = xfsh + lpx(4)
     end if
     !================ cos^2 downramp to second plateau np2*n0 =================
-    if (nxl(5)>0) then
+    if (nxl(5) > 0) then
      do ic = 1, nsp
       n_peak = nxl(5)*np_per_xc(ic)
-      if (n_peak>0) then
+      if (n_peak > 0) then
        do i = 1, n_peak
-        uu = (real(i,dp)-0.5)/real(n_peak, dp)
+        uu = (real(i, dp) - 0.5)/real(n_peak, dp)
         i1 = nptx(ic) + i
         xpt(i1, ic) = xfsh + lpx(5)*uu
-        wghpt(i1, ic) = (np2+(np1-np2)*cos(0.5*pi*(uu))*cos(0.5*pi*( &
-          uu)))*wgh_sp(ic)
+        wghpt(i1, ic) = (np2 + (np1 - np2)*cos(0.5*pi*(uu))*cos(0.5*pi*( &
+                                                                uu)))*wgh_sp(ic)
        end do
       end if
       nptx(ic) = nptx(ic) + n_peak
@@ -832,11 +832,11 @@
      xfsh = xfsh + lpx(5)
     end if
     !================ Second plateau of density np2*n0 =================
-    if (nxl(6)>0) then
+    if (nxl(6) > 0) then
      do ic = 1, nsp
       n_peak = nxl(6)*np_per_xc(ic)
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        i1 = nptx(ic) + i
        xpt(i1, ic) = xfsh + lpx(6)*uu
        wghpt(i1, ic) = np2*wgh_sp(ic)
@@ -847,16 +847,16 @@
     end if
 
     do ic = 1, nsp
-     nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+     nptx_alloc(ic) = min(nptx(ic) + 10, nx*np_per_xc(ic))
     end do
     !=========================================
    end select
-   if (xf0<0.) then
+   if (xf0 < 0.) then
     do ic = 1, nsp
      i1 = 0
      if (pe0) write (6, *) 'tot part number', ic, nptx(ic)
      do i = 1, nptx(ic)
-      if (xpt(i,ic)>xmin) then
+      if (xpt(i, ic) > xmin) then
        i1 = i1 + 1
        xpt(i1, ic) = xpt(i, ic)
        wghpt(i1, ic) = wghpt(i, ic)
@@ -866,9 +866,9 @@
      if (pe0) write (6, *) 'new tot part number', ic, nptx(ic)
     end do
    end if
-   !============================= 
+   !=============================
    do ic = 1, nsp
-    nptx_alloc(ic) = min(nptx(ic)+10, nx*np_per_xc(ic))
+    nptx_alloc(ic) = min(nptx(ic) + 10, nx*np_per_xc(ic))
    end do
    do ic = 1, nsp
     sptx_max(ic) = nptx(ic)
@@ -894,32 +894,32 @@
    ! END of section setting global coordinates
    !=================================
    !Resets nptx(ic)=last particle coordinate inside the computational box
-   !in the initial condition: for t>0  nptx(ic) updated by mowing window 
+   !in the initial condition: for t>0  nptx(ic) updated by mowing window
    !==============================
    do ic = 1, nsp
     i1 = 0
     do j = 1, nptx(ic)
-     if (xpt(j,ic)<xmax) i1 = i1 + 1
+     if (xpt(j, ic) < xmax) i1 = i1 + 1
     end do
     nptx(ic) = i1
    end do
    !=========== Local x-distribution
    !Local to the x-cordinate MPI domain particle number
    !==================
-   allocate (loc_wghx(nptx_max,nsp))
+   allocate (loc_wghx(nptx_max, nsp))
    do ic = 1, nsp
     call set_pgrid_xind(nptx(ic), ic)
    end do
    loc_nptx(1:nsp) = loc_imax(imodx, 1:nsp)
    ! Alocation using a large buffer npt_max=mp_per_cell(1)*nx_loc*ny_loc*nz_loc
    do ic = 1, nsp
-    nptx_alloc(ic) = min(loc_nptx(ic)+10, nx_loc*np_per_xc(ic))
+    nptx_alloc(ic) = min(loc_nptx(ic) + 10, nx_loc*np_per_xc(ic))
    end do
    do ic = 1, nsp
     nps_loc(ic) = nptx_alloc(ic)*loc_jmax(imody, ic)*loc_kmax(imodz, ic)
    end do
    npmax = maxval(nps_loc(1:nsp))
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2 + 1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !==================================
    !==================== Local distribution of nptx particles==================
    call mpi_x_part_distrib(nsp)
@@ -931,8 +931,8 @@
    do ic = 1, nsp
     p = 0
     i2 = loc_nptx(ic)
-    if (i2>0) call pspecies_distribute(spec(ic), t0_pl(ic), &
-      unit_charge(ic), p, ic, i2, last_particle_index(ic))
+    if (i2 > 0) call pspecies_distribute(spec(ic), t0_pl(ic), &
+                                         unit_charge(ic), p, ic, i2, last_particle_index(ic))
     loc_npart(imody, imodz, imodx, ic) = last_particle_index(ic)
    end do
   end subroutine
@@ -940,15 +940,15 @@
   !===============================
   subroutine preplasma_multisp(nyh_in, xf0)
 
-   integer, intent (in) :: nyh_in
-   real (dp), intent (in) :: xf0
+   integer, intent(in) :: nyh_in
+   real(dp), intent(in) :: xf0
    integer :: p, ip
    integer :: l, i, i1, i2, ic
    integer :: n_peak, nptx_loc(6)
    integer :: npmax, nps_loc(4)
-   real (dp) :: uu, np1_loc
-   real (dp) :: xp_min, xp_max
-   real (dp) :: xfsh, l_inv
+   real(dp) :: uu, np1_loc
+   real(dp) :: xp_min, xp_max
+   real(dp) :: xfsh, l_inv
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
    !=================
@@ -965,11 +965,11 @@
     xtot = xtot + lpx(i)
    end do
    nxl(4) = 0 !attached coating
-   if (nsp<3) then
+   if (nsp < 3) then
     nxl(5) = 0
     if (pe0) then
      write (6, *) &
-       'Warning : for nsp=2 nxl(5) forced to zero => NO coating layer'
+      'Warning : for nsp=2 nxl(5) forced to zero => NO coating layer'
     end if
    end if
    xfsh = xf0 + lpx(7)
@@ -979,8 +979,8 @@
    !               preplasma
    !==================================
    !            lx(2:3) (Z1-A1+El) central target
-   nptx_loc(1:2) = (nxl(2)+nxl(3))*np_per_xc(1:2)
-   !            lx(1) (Z1-A1-El) uniform with np1 density pre-plasma 
+   nptx_loc(1:2) = (nxl(2) + nxl(3))*np_per_xc(1:2)
+   !            lx(1) (Z1-A1-El) uniform with np1 density pre-plasma
    nptx_loc(3:4) = nxl(1)*np_per_xc(3:4)
    !            lx(5) (Z2-A2+El) ) uniform with np2 density coating
    nptx_loc(5:6) = nxl(5)*np_per_xc(5:6)
@@ -991,28 +991,28 @@
    nptx(4) = nptx_loc(6) !Z2-A2  species nlx(5)
    nptx_max = maxval(nptx_loc(1:6))
    !=======================
-   allocate (xpt(nptx_max,6))
-   allocate (wghpt(nptx_max,6))
+   allocate (xpt(nptx_max, 6))
+   allocate (wghpt(nptx_max, 6))
 
-   allocate (loc_xpt(nptx_max,6))
-   allocate (loc_wghx(nptx_max,6))
+   allocate (loc_xpt(nptx_max, 6))
+   allocate (loc_wghx(nptx_max, 6))
    wghpt(1:nptx_max, 1:6) = one_dp
    !=============================
    ! first layer: electrons and Z1 ions
    !x distribution
    loc_imax(imodx, 1:6) = nptx_loc(1:6)
    nps_loc = 0
-   if (nxl(1)>0) then
+   if (nxl(1) > 0) then
     do ic = 3, 4
      n_peak = nptx_loc(ic)
      do i = 1, n_peak
-      uu = (real(i,dp)-0.5)/real(n_peak, dp)
+      uu = (real(i, dp) - 0.5)/real(n_peak, dp)
       xpt(i, ic) = xfsh + lpx(1)*uu
      end do
     end do
     wghpt(1:nptx_loc(3), 3) = np1*j0_norm
     wghpt(1:nptx_loc(4), 4) = np1*j0_norm
-    if (mp_per_cell(3)>0) then
+    if (mp_per_cell(3) > 0) then
      uu = ratio_mpc(3) !float(mp_per_cell(1))/float(mp_per_cell(3))
      wghpt(1:nptx_loc(3), 3) = wghpt(1:nptx_loc(3), 3)*uu
      uu = ratio_mpc(4)/unit_charge(2) !float(mp_per_cell(1))/float(mp_per_cell(4))
@@ -1023,8 +1023,8 @@
     do ic = 3, 4
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1040,9 +1040,9 @@
     ! Counts particles in first layer
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 3)*loc_jmax(l, 3)*loc_kmax(ip, &
-      3)
+                                                                     3)
     nps_loc(2) = nps_loc(2) + loc_imax(p, 4)*loc_jmax(l, 4)*loc_kmax(ip, &
-      4)
+                                                                     4)
 
    end if
    !------------------------------
@@ -1052,8 +1052,8 @@
    do ic = 1, 2
     n_peak = nptx_loc(ic)
     do i = 1, n_peak
-     xpt(i, ic) = xfsh + (lpx(2)+lpx(3))*(real(i,dp)-0.5)/real(n_peak, &
-       dp)
+     xpt(i, ic) = xfsh + (lpx(2) + lpx(3))*(real(i, dp) - 0.5)/real(n_peak, &
+                                                                    dp)
      wghpt(i, ic) = j0_norm
     end do
    end do
@@ -1065,18 +1065,18 @@
    ! Electrons and Z1 ions have the same weight if uu=1
    !=================================
    xfsh = xfsh + lpx(3) + lpx(2)
-   if (np1>0.0) then
+   if (np1 > 0.0) then
     np1_loc = np1
    else
     np1_loc = 0.005
    end if
    !======== a preplasma rump
-   if (nxl(2)>0) then
+   if (nxl(2) > 0) then
     do ic = 1, 2
      n_peak = nxl(2)*np_per_xc(ic)
      l_inv = log(1./np1_loc)
      do i = 1, n_peak
-      uu = (real(i,dp)-0.5)/real(n_peak, dp)
+      uu = (real(i, dp) - 0.5)/real(n_peak, dp)
       ! rampa esponenziale v1
       ! wghpt(i,ic)=wghpt(i,ic)*exp(-5.*(1.-uu))
       ! rampa esponenziale v2
@@ -1091,8 +1091,8 @@
    do ic = 1, 2
     i1 = 0
     do i = 1, nptx_loc(ic)
-     if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. xpt(i,ic)<loc_xgrid( &
-       imodx)%gmax) then
+     if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. xpt(i, ic) < loc_xgrid( &
+         imodx)%gmax) then
       i1 = i1 + 1
       loc_xpt(i1, ic) = xpt(i, ic)
       loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1105,20 +1105,20 @@
    ip = imodz
 
    nps_loc(1) = nps_loc(1) + loc_imax(p, 1)*loc_jmax(l, 1)*loc_kmax(ip, &
-     1)
+                                                                    1)
    nps_loc(2) = nps_loc(2) + loc_imax(p, 2)*loc_jmax(l, 2)*loc_kmax(ip, &
-     2)
+                                                                    2)
    !============================
-   if (nptx_loc(5)>0.0) then
+   if (nptx_loc(5) > 0.0) then
     do ic = 5, 6
      n_peak = nptx_loc(ic)
      do i = 1, n_peak
-      xpt(i, ic) = xfsh + lpx(5)*(real(i,dp)-0.5)/real(n_peak, dp)
+      xpt(i, ic) = xfsh + lpx(5)*(real(i, dp) - 0.5)/real(n_peak, dp)
      end do
      wghpt(1:n_peak, ic) = np2*j0_norm
     end do
     do ic = 5, 6
-     if (mp_per_cell(ic)>0) then
+     if (mp_per_cell(ic) > 0) then
       uu = ratio_mpc(ic) !float(mp_per_cell(1))/float(mp_per_cell(ic))
       n_peak = nptx_loc(ic)
       wghpt(1:n_peak, ic) = wghpt(1:n_peak, ic)*uu
@@ -1131,8 +1131,8 @@
     do ic = 5, 6
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1145,54 +1145,54 @@
     ip = imodz
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 5)*loc_jmax(l, 5)*loc_kmax(ip, &
-      5)
+                                                                     5)
     nps_loc(3) = nps_loc(3) + loc_imax(p, 6)*loc_jmax(l, 6)*loc_kmax(ip, &
-      6)
+                                                                     6)
 
    end if
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2 + 1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
    ip_ion = 0
    !============
    ! The first electron-proton(or C) foam layer
-   if (nxl(1)>0) then
+   if (nxl(1) > 0) then
     p = 0
     i2 = loc_imax(imodx, 3)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 3, &
-      i2, ip_el)
+                             i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 4)
     call pspecies_distribute(spec(2), t0_pl(2), unit_charge(2), p, 4, &
-      i2, ip_ion)
+                             i2, ip_ion)
    end if
    !=========================
    ! The second electron-ion solid electron-Z1 layer
    p = ip_el
    i2 = loc_imax(imodx, 1)
    call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 1, i2, &
-     ip_el)
+                            ip_el)
 
    p = ip_ion
    i2 = loc_imax(imodx, 2)
    call pspecies_distribute(spec(2), t0_pl(2), unit_charge(2), p, 2, i2, &
-     ip_ion)
+                            ip_ion)
    !============
    ! The third electron-proton layer
    !=========================
-   if (nxl(5)>0.0) then
+   if (nxl(5) > 0.0) then
     p = ip_el
     i2 = loc_imax(imodx, 5)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 5, &
-      i2, ip_el)
+                             i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 6)
     call pspecies_distribute(spec(3), t0_pl(3), unit_charge(3), p, 6, &
-      i2, ip_pr)
+                             i2, ip_pr)
    end if
 
    do ic = 1, nsp
@@ -1204,12 +1204,12 @@
   !=====================
   subroutine multi_layer_twosp_target(nyh_in, xf0)
 
-   integer, intent (in) :: nyh_in
-   real (dp), intent (in) :: xf0
+   integer, intent(in) :: nyh_in
+   real(dp), intent(in) :: xf0
    integer :: p, ip, l, i, i1, i2, ic, n_peak, nptx_loc(6)
    integer :: npmax, nps_loc(4)
-   real (dp) :: l_inv, uu, np1_loc, xp_min, xp_max
-   real (dp) :: xfsh, wgh_sp(6)
+   real(dp) :: l_inv, uu, np1_loc, xp_min, xp_max
+   real(dp) :: xfsh, wgh_sp(6)
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
    !=================
@@ -1229,7 +1229,7 @@
    xfsh = xf0 + lpx(7)
    targ_in = xfsh
    targ_end = targ_in + xtot
-   if (nsp<3) then
+   if (nsp < 3) then
     nxl(1) = 0
     nxl(5) = 0
     if (pe0) then
@@ -1243,7 +1243,7 @@
    !size lpx(1)
    !========= np_per_xc(5:6) electrons and Z3-ions in layer 3 +ramp
    !                                                  sizes lpx(4)+lpx(5)
-   nptx_loc(1:2) = (nxl(2)+nxl(3))*np_per_xc(1:2) !Z1 ions
+   nptx_loc(1:2) = (nxl(2) + nxl(3))*np_per_xc(1:2) !Z1 ions
    nptx_loc(3:4) = nxl(1)*np_per_xc(3:4) !Z2 ions
    nptx_loc(5:6) = nxl(5)*np_per_xc(5:6) !Z3 ions
    nptx(1) = nptx_loc(1) + nptx_loc(3) + nptx_loc(5) !electrons
@@ -1251,33 +1251,33 @@
    nptx(3) = nptx_loc(4) + nptx_loc(6) !Z2-A2  species nxl(1)+nlx(4)
    nptx_max = maxval(nptx_loc(1:6))
    !=======================
-   allocate (xpt(nptx_max,6))
-   allocate (wghpt(nptx_max,6))
+   allocate (xpt(nptx_max, 6))
+   allocate (wghpt(nptx_max, 6))
 
-   allocate (loc_xpt(nptx_max,6))
-   allocate (loc_wghx(nptx_max,6))
+   allocate (loc_xpt(nptx_max, 6))
+   allocate (loc_wghx(nptx_max, 6))
    wghpt(1:nptx_max, 1:6) = 1.
    !==================
    ! nsp=1-4 ordering: electrons+ Z1 ions + Z2 ions +Z3 ions
    !Weights for multilayer multisp targets
    ! first layer: electrons and Z2 (protons) ions
    wgh_sp(3) = 1./real(mp_per_cell(3), dp)
-   wgh_sp(4) = 1./(real(ion_min(2),dp)*real(mp_per_cell(4),dp))
+   wgh_sp(4) = 1./(real(ion_min(2), dp)*real(mp_per_cell(4), dp))
    ! central layer: electrons and Z1 ions
    wgh_sp(1) = j0_norm
    wgh_sp(2) = wgh_ion !ion spec 1 (ionizable)
    ! coiating layer: electrons and Z3 (H+)
    wgh_sp(5) = 1./real(mp_per_cell(5), dp)
-   wgh_sp(6) = 1./(real(ion_min(2),dp)*real(mp_per_cell(6),dp))
+   wgh_sp(6) = 1./(real(ion_min(2), dp)*real(mp_per_cell(6), dp))
    !================================================
    !x distribution
    loc_imax(imodx, 1:6) = nptx_loc(1:6)
    nps_loc = 0
-   if (nxl(1)>0) then
+   if (nxl(1) > 0) then
     do ic = 3, 4
      n_peak = nptx_loc(ic)
      do i = 1, n_peak
-      uu = (real(i,dp)-0.5)/real(n_peak, dp)
+      uu = (real(i, dp) - 0.5)/real(n_peak, dp)
       xpt(i, ic) = xfsh + lpx(1)*uu
       wghpt(i, ic) = np1*wgh_sp(ic)
      end do
@@ -1287,8 +1287,8 @@
     do ic = 3, 4
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1304,9 +1304,9 @@
     ! Counts particles (e+Z2 ions)
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 3)*loc_jmax(l, 3)*loc_kmax(ip, &
-      3)
+                                                                     3)
     nps_loc(3) = nps_loc(3) + loc_imax(p, 4)*loc_jmax(l, 4)*loc_kmax(ip, &
-      4)
+                                                                     4)
    end if
    !------------------------------
    ! Electrons and Z1_ions : central layer
@@ -1316,28 +1316,28 @@
     n_peak = nptx_loc(ic)
     n_peak = max(1, n_peak)
     do i = 1, n_peak
-     xpt(i, ic) = xfsh + (lpx(2)+lpx(3))*(real(i,dp)-0.5)/real(n_peak, &
-       dp)
+     xpt(i, ic) = xfsh + (lpx(2) + lpx(3))*(real(i, dp) - 0.5)/real(n_peak, &
+                                                                    dp)
      wghpt(i, ic) = wgh_sp(ic)
     end do
    end do
    !================================
-   ! WARNING : electrons and Z1 ions have the same weight 
+   ! WARNING : electrons and Z1 ions have the same weight
    ! if mp_per_cell(1)=Z1*mp_per_cell(2)
    !=================================
    xfsh = xfsh + lpx(3) + lpx(2)
-   if (np1>0.0) then
+   if (np1 > 0.0) then
     np1_loc = np1
    else
     np1_loc = 0.005
    end if
    !======== a preplasma rump
-   if (nxl(2)>0) then
+   if (nxl(2) > 0) then
     do ic = 1, 2
      n_peak = nxl(2)*np_per_xc(ic)
      l_inv = log(1./np1_loc)
      do i = 1, n_peak
-      uu = (real(i,dp)-0.5)/real(n_peak, dp)
+      uu = (real(i, dp) - 0.5)/real(n_peak, dp)
       ! rampa esponenziale v1
       ! wghpt(i,ic)=wghpt(i,ic)*exp(-5.*(1.-uu))
       ! rampa esponenziale v2
@@ -1352,8 +1352,8 @@
    do ic = 1, 2
     i1 = 0
     do i = 1, nptx_loc(ic)
-     if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. xpt(i,ic)<loc_xgrid( &
-       imodx)%gmax) then
+     if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. xpt(i, ic) < loc_xgrid( &
+         imodx)%gmax) then
       i1 = i1 + 1
       loc_xpt(i1, ic) = xpt(i, ic)
       loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1366,15 +1366,15 @@
    ip = imodz
 
    nps_loc(1) = nps_loc(1) + loc_imax(p, 1)*loc_jmax(l, 1)*loc_kmax(ip, &
-     1)
+                                                                    1)
    nps_loc(2) = nps_loc(2) + loc_imax(p, 2)*loc_jmax(l, 2)*loc_kmax(ip, &
-     2)
+                                                                    2)
    !============================
-   if (nptx_loc(5)>0.0) then
+   if (nptx_loc(5) > 0.0) then
     do ic = 5, 6
      n_peak = nptx_loc(ic)
      do i = 1, n_peak
-      xpt(i, ic) = xfsh + lpx(5)*(real(i,dp)-0.5)/real(n_peak, dp)
+      xpt(i, ic) = xfsh + lpx(5)*(real(i, dp) - 0.5)/real(n_peak, dp)
       wghpt(i, ic) = np2*wgh_sp(ic)
      end do
     end do
@@ -1383,8 +1383,8 @@
     do ic = 5, 6
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1397,54 +1397,54 @@
     ip = imodz
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 5)*loc_jmax(l, 5)*loc_kmax(ip, &
-      5)
+                                                                     5)
     nps_loc(3) = nps_loc(3) + loc_imax(p, 6)*loc_jmax(l, 6)*loc_kmax(ip, &
-      6)
+                                                                     6)
 
    end if
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2 + 1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
    ip_ion = 0
    !============
    ! The first electron-proton(or C) foam layer
-   if (nxl(1)>0) then
+   if (nxl(1) > 0) then
     p = 0
     i2 = loc_imax(imodx, 3)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 3, &
-      i2, ip_el)
+                             i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 4)
     call pspecies_distribute(spec(3), t0_pl(3), unit_charge(3), p, 4, &
-      i2, ip_pr)
+                             i2, ip_pr)
    end if
    !=========================
    ! The second electron-ion solid electron-Z1 layer
    p = ip_el
    i2 = loc_imax(imodx, 1)
    call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 1, i2, &
-     ip_el)
+                            ip_el)
 
    p = 0
    i2 = loc_imax(imodx, 2)
    call pspecies_distribute(spec(2), t0_pl(2), unit_charge(2), p, 2, i2, &
-     ip_ion)
+                            ip_ion)
    !============
    ! The third electron-proton layer
    !=========================
-   if (nxl(5)>0.0) then
+   if (nxl(5) > 0.0) then
     p = ip_el
     i2 = loc_imax(imodx, 5)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 5, &
-      i2, ip)
+                             i2, ip)
     p = ip_pr
     i2 = loc_imax(imodx, 6)
     call pspecies_distribute(spec(3), t0_pl(3), unit_charge(3), p, 6, &
-      i2, ip)
+                             i2, ip)
    end if
 
    do ic = 1, nsp
@@ -1456,14 +1456,14 @@
   !=======================
   subroutine multi_layer_threesp_target(nyh_in, xf0)
 
-   integer, intent (in) :: nyh_in
-   real (dp), intent (in) :: xf0
+   integer, intent(in) :: nyh_in
+   real(dp), intent(in) :: xf0
    integer :: p, ip
    integer :: l, i, i1, i2, ic
    integer :: n_peak, nptx_loc(7)
    integer :: npmax, nps_loc(4)
-   real (dp) :: uu, xp_min, xp_max, np1_loc
-   real (dp) :: xfsh, l_inv, wgh_sp(7)
+   real(dp) :: uu, xp_min, xp_max, np1_loc
+   real(dp) :: xfsh, l_inv, wgh_sp(7)
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
    !=================
@@ -1501,21 +1501,21 @@
    !=  np_per_xc(5:6) electrons and Z3-ions front and rear side contaminants (same
    !composition) If nsp=3 Z3=Z2
    !======================================
-   nptx_loc(1:3) = (nxl(2)+nxl(3))*np_per_xc(1:3)
+   nptx_loc(1:3) = (nxl(2) + nxl(3))*np_per_xc(1:3)
    nptx_loc(4:5) = nxl(1)*np_per_xc(5:6)
    nptx_loc(6:7) = nxl(5)*np_per_xc(5:6)
    !============ nptx(nsp)  distribution
    nptx(1) = nptx_loc(1) + nptx_loc(4) + nptx_loc(6) !electrons
    nptx(2) = nptx_loc(2) !Z1-A1 species
-   nptx(3) = nptx_loc(3) !Z2-A2 species 
+   nptx(3) = nptx_loc(3) !Z2-A2 species
    nptx(4) = nptx_loc(5) + nptx_loc(7) !Z3-A3  species in nxl(1) and nxl(5) layer
    nptx_max = maxval(nptx_loc(1:7))
    !=======================
-   allocate (xpt(nptx_max,7))
-   allocate (wghpt(nptx_max,7))
+   allocate (xpt(nptx_max, 7))
+   allocate (wghpt(nptx_max, 7))
 
-   allocate (loc_xpt(nptx_max,7))
-   allocate (loc_wghx(nptx_max,7))
+   allocate (loc_xpt(nptx_max, 7))
+   allocate (loc_wghx(nptx_max, 7))
    wghpt(1:nptx_max, 1:7) = 1.
    !=============================
    ! nsp ordering: electrons+ Z1 ions + Z2 ions
@@ -1524,14 +1524,14 @@
    nps_loc = 0
    !==========================================
    wgh_sp(1) = j0_norm*ratio_mpc(5)
-   wgh_sp(2) = j0_norm*ratio_mpc(6)/real(ion_min(nsp-1), dp)
+   wgh_sp(2) = j0_norm*ratio_mpc(6)/real(ion_min(nsp - 1), dp)
    wgh_sp(3:5) = j0_norm
    !===================================
-   if (nxl(1)>0) then !first contaminant layer El+Z(nsp-1)
+   if (nxl(1) > 0) then !first contaminant layer El+Z(nsp-1)
     do ic = 4, 5
      n_peak = nptx_loc(ic)
      do i = 1, n_peak
-      uu = (real(i,dp)-0.5)/real(n_peak, dp)
+      uu = (real(i, dp) - 0.5)/real(n_peak, dp)
       xpt(i, ic) = xfsh + lpx(1)*uu
       wghpt(i, ic) = np1*wgh_sp(ic) !pp weights using mp_per_cell(5:6)
      end do
@@ -1541,8 +1541,8 @@
     do ic = 4, 5
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1558,9 +1558,9 @@
     ! Counts particles (e+Z3 ions)
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 4)*loc_jmax(l, 4)*loc_kmax(ip, &
-      4)
+                                                                     4)
     nps_loc(nsp) = nps_loc(nsp) + loc_imax(p, 5)*loc_jmax(l, 5)*loc_kmax &
-      (ip, 5)
+                   (ip, 5)
 
    end if
    !====================
@@ -1573,14 +1573,14 @@
    do ic = 1, 3
     n_peak = nptx_loc(ic) !central target
     do i = 1, n_peak
-     uu = (real(i,dp)-0.5)/real(n_peak, dp)
-     xpt(i, ic) = xfsh + (lpx(2)+lpx(3))*uu
+     uu = (real(i, dp) - 0.5)/real(n_peak, dp)
+     xpt(i, ic) = xfsh + (lpx(2) + lpx(3))*uu
      wghpt(i, ic) = wgh_sp(ic) !weights usig mp_per_cell(1:3)  (El, Z1, Z2) ions
     end do
-    if (nxl(2)>0) then
+    if (nxl(2) > 0) then
      n_peak = nxl(2)*np_per_xc(ic) !preplasma
      do i = 1, n_peak
-      uu = (real(i,dp)-0.5)/real(n_peak, dp)
+      uu = (real(i, dp) - 0.5)/real(n_peak, dp)
       wghpt(i, ic) = wghpt(i, ic)*np1_loc*exp(uu*l_inv)
      end do
     end if
@@ -1593,8 +1593,8 @@
    do ic = 1, 3
     i1 = 0
     do i = 1, nptx_loc(ic)
-     if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. xpt(i,ic)<loc_xgrid( &
-       imodx)%gmax) then
+     if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. xpt(i, ic) < loc_xgrid( &
+         imodx)%gmax) then
       i1 = i1 + 1
       loc_xpt(i1, ic) = xpt(i, ic)
       loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1607,18 +1607,18 @@
    ip = imodz
 
    nps_loc(1) = nps_loc(1) + loc_imax(p, 1)*loc_jmax(l, 1)*loc_kmax(ip, &
-     1)
+                                                                    1)
    nps_loc(2) = nps_loc(2) + loc_imax(p, 2)*loc_jmax(l, 2)*loc_kmax(ip, &
-     2)
+                                                                    2)
    nps_loc(3) = nps_loc(3) + loc_imax(p, 3)*loc_jmax(l, 3)*loc_kmax(ip, &
-     3)
+                                                                    3)
    !============================
-   if (lpx(5)>0.0) then
+   if (lpx(5) > 0.0) then
     do ic = 6, 7
      n_peak = nptx_loc(ic)
      do i = 1, n_peak
-      xpt(i, ic) = xfsh + lpx(5)*(real(i,dp)-0.5)/real(n_peak, dp)
-      wghpt(i, ic) = np2*wgh_sp(ic-5) !weights using mp_per_cell(5:6) as in layer lpx(1)
+      xpt(i, ic) = xfsh + lpx(5)*(real(i, dp) - 0.5)/real(n_peak, dp)
+      wghpt(i, ic) = np2*wgh_sp(ic - 5) !weights using mp_per_cell(5:6) as in layer lpx(1)
      end do
     end do
     xfsh = xfsh + lpx(5)
@@ -1626,8 +1626,8 @@
     do ic = 6, 7
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -1640,30 +1640,30 @@
     ip = imodz
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 6)*loc_jmax(l, 6)*loc_kmax(ip, &
-      6)
+                                                                     6)
     nps_loc(nsp) = nps_loc(nsp) + loc_imax(p, 7)*loc_jmax(l, 7)*loc_kmax &
-      (ip, 7)
+                   (ip, 7)
 
    end if
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2 + 1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
    ip_ion = 0
    !============
    ! The first electron-Z3 layer
-   if (nxl(1)>0) then
+   if (nxl(1) > 0) then
     p = 0
     i2 = loc_imax(imodx, 4)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 4, &
-      i2, ip_el)
+                             i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 5)
     call pspecies_distribute(spec(nsp), t0_pl(nsp), unit_charge(nsp), p, &
-      5, i2, ip_pr)
+                             5, i2, ip_pr)
     !Z3 for nsp=4  Z3=Z2 for nsp=3
    end if
    !=========================
@@ -1671,29 +1671,29 @@
    p = ip_el
    i2 = loc_imax(imodx, 1)
    call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 1, i2, &
-     ip_el)
+                            ip_el)
    p = 0
    i2 = loc_imax(imodx, 2)
    call pspecies_distribute(spec(2), t0_pl(2), unit_charge(2), p, 2, i2, &
-     ip_ion)
+                            ip_ion)
    p = 0
-   if (nsp==3) p = ip_pr
+   if (nsp == 3) p = ip_pr
    i2 = loc_imax(imodx, 3)
    call pspecies_distribute(spec(3), t0_pl(3), unit_charge(3), p, 3, i2, &
-     ip_ion)
+                            ip_ion)
    !============
    ! The third electron-proton layer
    !=========================
-   if (nxl(5)>0.0) then
+   if (nxl(5) > 0.0) then
     p = ip_el
     i2 = loc_imax(imodx, 6)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 6, &
-      i2, ip)
+                             i2, ip)
     p = ip_pr
-    if (nsp==3) p = ip_ion
+    if (nsp == 3) p = ip_ion
     i2 = loc_imax(imodx, 7)
     call pspecies_distribute(spec(nsp), t0_pl(nsp), unit_charge(nsp), p, &
-      7, i2, ip)
+                             7, i2, ip)
    end if
 
    do ic = 1, nsp
@@ -1705,20 +1705,20 @@
   !=====================
   subroutine one_layer_nano_wires(nyh_in, xf0)
 
-   integer, intent (in) :: nyh_in
-   real (dp), intent (in) :: xf0
+   integer, intent(in) :: nyh_in
+   real(dp), intent(in) :: xf0
    integer :: p, ip
    integer :: l, i, i1, i2, ic
    integer :: np_per_zcell(6), n_peak
    integer :: nptx_loc(8)
    integer :: npty_layer(8), npyc(8), npty_ne, nptz_ne
    integer :: npmax, nps_loc(4)
-   real (dp) :: uu, yy, dxip, dpy
-   real (dp) :: zp_min, zp_max, yp_min, yp_max, xp_min, xp_max
-   real (dp) :: xfsh, dlpy, tot_lpy, loc_ymp
+   real(dp) :: uu, yy, dxip, dpy
+   real(dp) :: zp_min, zp_max, yp_min, yp_max, xp_min, xp_max
+   real(dp) :: xfsh, dlpy, tot_lpy, loc_ymp
    integer :: z2, nxl(6), nyl1, nlpy, nholes
    integer :: ip_ion, ip_el, ip_pr, nwires
-   real (dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
+   real(dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
    !=================
    !++++++++++++++++ WARNING
    ! ONLY layers (3) and (4) n_over_nc, np2*n_over_nc layer (5)
@@ -1728,7 +1728,7 @@
    np_per_zcell(1:6) = 1
    !============================
    nxl = 0
-   z2 = ion_min(nsp-1)
+   z2 = ion_min(nsp - 1)
    !========= gridding the transverese target size
    nyl1 = 1 + ny/2 - nyh_in/2 !=1 if nyh_in=ny
    yp_min = ymin_t
@@ -1736,7 +1736,7 @@
 
    dlpy = lpy(1) !nanowire (y,z) thickness
    tot_lpy = dlpy + lpy(2) !distance among elements (void+nanowire)`
-   nwires = nint((yp_max-yp_min)/tot_lpy) !numbers of lpy elements
+   nwires = nint((yp_max - yp_min)/tot_lpy) !numbers of lpy elements
    nlpy = nint(dy_inv*dlpy) ! cell numbers in dlpy
    nholes = nint(dy_inv*lpy(2)) ! cell number in the lpy(2) interwire region
    if (pe0) then
@@ -1749,36 +1749,36 @@
    npty = maxval(np_per_yc(1:6))
    npty = nyh_in*npty
    nptz = 1
-   if (ndim==3) then
+   if (ndim == 3) then
     np_per_zcell(1:6) = np_per_yc(1:6)
     zp_min = zmin_t !-Lz
     zp_max = zmax_t !+Lz
     nptz = maxval(np_per_zc(1:6))
     nptz = nyh_in*nptz
    end if
-   allocate (ypt(npty+1,8))
-   allocate (zpt(nptz+1,8))
-   allocate (wy(npty+1,8))
-   allocate (wz(nptz+1,8))
-   allocate (wyz(npty+1,nptz+1,8))
+   allocate (ypt(npty + 1, 8))
+   allocate (zpt(nptz + 1, 8))
+   allocate (wy(npty + 1, 8))
+   allocate (wz(nptz + 1, 8))
+   allocate (wyz(npty + 1, nptz + 1, 8))
    ypt = 0.
    zpt = 0.
    wy = 1.
    wz = 1.
    wyz = 1.
    !==================
-   allocate (loc_jmax(0:npe_yloc-1,1:8))
-   allocate (loc_kmax(0:npe_zloc-1,1:8))
-   allocate (loc_imax(0:npe_xloc-1,1:8))
+   allocate (loc_jmax(0:npe_yloc - 1, 1:8))
+   allocate (loc_kmax(0:npe_zloc - 1, 1:8))
+   allocate (loc_imax(0:npe_xloc - 1, 1:8))
    !====================
    !layers in y-z transverse coordinates
    !====================================
    npyc(1:2) = np_per_yc(1:2) !layer of nano_wires electron+Z1_ion
    npyc(3:4) = np_per_yc(1:2) !layer of inter wire plasma of np1 density layer[1:4] of x-length=lpx(3)
-   npyc(5:6) = np_per_yc(3:4) !bulk of electron-Z1_ion      x-length lpx(4)        
-   npyc(7:8) = np_per_yc(5:6) ! coating of electron-Z2_ion      x-length lpx(5)        
+   npyc(5:6) = np_per_yc(3:4) !bulk of electron-Z1_ion      x-length lpx(4)
+   npyc(7:8) = np_per_yc(5:6) ! coating of electron-Z2_ion      x-length lpx(5)
    nptz_ne = 1
-   if (nwires>2) then
+   if (nwires > 2) then
     do ic = 1, 2
      npty_ne = nlpy*npyc(ic) !number of yp points in a dlpy layer
      i2 = 0
@@ -1786,7 +1786,7 @@
      do i1 = 1, nwires !layers of lpy=dlpy(1+rat) length
       dpy = dlpy/real(npty_ne, dp)
       do i = 1, npty_ne
-       ypt(i+i2, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+       ypt(i + i2, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
       end do
       i2 = i2 + npty_ne
       loc_ymp = loc_ymp + tot_lpy
@@ -1800,7 +1800,7 @@
      do i1 = 1, nwires
       dpy = lpy(2)/real(npty_ne, dp)
       do i = 1, npty_ne
-       ypt(i+i2, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+       ypt(i + i2, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
       end do
       i2 = i2 + npty_ne
       loc_ymp = loc_ymp + tot_lpy
@@ -1808,7 +1808,7 @@
      npty_layer(ic) = i2
      !===========================
     end do
-    if (lpx(4)<=0) then
+    if (lpx(4) <= 0) then
      do ic = 7, 8
       npty_ne = nlpy*npyc(ic) !number of yp points in a dlpy layer
       i2 = 0
@@ -1816,7 +1816,7 @@
       do i1 = 1, nwires !layers of lpy=dlpy(1+rat) length
        dpy = dlpy/real(npty_ne, dp)
        do i = 1, npty_ne
-        ypt(i+i2, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+        ypt(i + i2, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
        end do
        i2 = i2 + npty_ne
        loc_ymp = loc_ymp + tot_lpy
@@ -1831,13 +1831,13 @@
      loc_ymp = -0.5*tot_lpy
      dpy = dlpy/real(npty_ne, dp)
      do i = 1, npty_ne
-      ypt(i+i2, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+      ypt(i + i2, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
      end do
      loc_ymp = loc_ymp + lpy(2) !first layer
      i2 = i2 + npty_ne
      !===========================
      do i = 1, npty_ne
-      ypt(i+i2, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+      ypt(i + i2, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
      end do
      i2 = i2 + npty_ne
      !====================
@@ -1848,25 +1848,25 @@
      loc_ymp = -0.5*lpy(2)
      dpy = lpy(2)/real(npty_ne, dp)
      do i = 1, npty_ne
-      ypt(i, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+      ypt(i, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
      end do
      npty_layer(ic) = npty_ne
      !===========================
     end do
-    if (lpx(4)<=0) then
+    if (lpx(4) <= 0) then
      do ic = 7, 8
       npty_ne = nlpy*npyc(ic) !number of yp points in a dlpy layer
       i2 = 0
       loc_ymp = -0.5*tot_lpy
       dpy = dlpy/real(npty_ne, dp)
       do i = 1, npty_ne
-       ypt(i+i2, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+       ypt(i + i2, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
       end do
       loc_ymp = loc_ymp + lpy(2) !first layer
       i2 = i2 + npty_ne
       !===========================
       do i = 1, npty_ne
-       ypt(i+i2, ic) = loc_ymp + dpy*(real(i,dp)-0.1)
+       ypt(i + i2, ic) = loc_ymp + dpy*(real(i, dp) - 0.1)
       end do
       i2 = i2 + npty_ne
       !====================
@@ -1878,18 +1878,18 @@
    do ic = 5, 6
     npty_layer(ic) = nyh_in*npyc(ic)
     npty_ne = npty_layer(ic)
-    dpy = (yp_max-yp_min)/real(npty_ne, dp)
+    dpy = (yp_max - yp_min)/real(npty_ne, dp)
     do i = 1, npty_ne
-     ypt(i, ic) = yp_min + dpy*(real(i,dp)-0.5)
+     ypt(i, ic) = yp_min + dpy*(real(i, dp) - 0.5)
     end do
    end do
-   if (lpx(4)>0) then
+   if (lpx(4) > 0) then
     do ic = 7, 8
      npty_layer(ic) = nyh_in*npyc(ic)
      npty_ne = npty_layer(ic)
-     dpy = (yp_max-yp_min)/real(npty_ne, dp)
+     dpy = (yp_max - yp_min)/real(npty_ne, dp)
      do i = 1, npty_ne
-      ypt(i, ic) = yp_min + dpy*(real(i,dp)-0.5)
+      ypt(i, ic) = yp_min + dpy*(real(i, dp) - 0.5)
      end do
     end do
    end if
@@ -1898,21 +1898,21 @@
     npty_ne = npty_layer(ic)
     if (stretch) then
      yy = str_ygrid%smin
-     if (yy>yp_min) then
+     if (yy > yp_min) then
       dpy = dyi/real(npyc(ic), dp)
-      i1 = (str_ygrid%sind(1)-nyl1+1)*npyc(ic)
+      i1 = (str_ygrid%sind(1) - nyl1 + 1)*npyc(ic)
       i2 = npty_ne - i1
       do i = 1, i1
-       dxip = dpy*(real(i-i1,dp)-0.5)
+       dxip = dpy*(real(i - i1, dp) - 0.5)
        ypt(i, ic) = str_ygrid%smin + l_s*tan(dxip)
        wy(i, ic) = 1./(cos(dxip)*cos(dxip))
       end do
       dxip = dy/real(npyc(ic), dp)
       do i = i1 + 1, i2
-       ypt(i, ic) = str_ygrid%smin + dxip*(real(i-i1,dp)-0.5)
+       ypt(i, ic) = str_ygrid%smin + dxip*(real(i - i1, dp) - 0.5)
       end do
       do i = i2 + 1, npty_ne
-       dxip = dpy*(real(i-i2,dp)-0.5)
+       dxip = dpy*(real(i - i2, dp) - 0.5)
        ypt(i, ic) = str_ygrid%smax + l_s*tan(dxip)
        wy(i, ic) = 1./(cos(dxip)*cos(dxip))
       end do
@@ -1920,7 +1920,7 @@
     end if
     !============= end stretching correction
     nptz_ne = 1
-    if (ndim==3) then
+    if (ndim == 3) then
      zpt(1:npty_ne, ic) = ypt(1:npty_ne, ic)
      wz(1:npty_ne, ic) = wy(1:npty_ne, ic)
      nptz_ne = npty_ne
@@ -1935,12 +1935,12 @@
    npty_ne = maxval(loc_npty(1:8))
    nptz_ne = maxval(loc_nptz(1:8))
    !======================
-   allocate (loc_wghyz(npty_ne,nptz_ne,8))
-   allocate (loc_ypt(npty_ne,8))
-   allocate (loc_zpt(nptz_ne,8))
+   allocate (loc_wghyz(npty_ne, nptz_ne, 8))
+   allocate (loc_ypt(npty_ne, 8))
+   allocate (loc_zpt(nptz_ne, 8))
    loc_wghyz = 1.
    call mpi_yz_part_distrib(8, loc_npty, loc_nptz, npty_layer, &
-     npty_layer, ymin_t, zmin_t, wyz)
+                            npty_layer, ymin_t, zmin_t, wyz)
    !=======================
    !Longitudinal layer distribution
    !===========================
@@ -1968,11 +1968,11 @@
 
    nptx_max = maxval(nptx_loc(1:8))
    !=======================
-   allocate (xpt(nptx_max,8))
-   allocate (wghpt(nptx_max,8))
+   allocate (xpt(nptx_max, 8))
+   allocate (wghpt(nptx_max, 8))
 
-   allocate (loc_xpt(nptx_max,8))
-   allocate (loc_wghx(nptx_max,8))
+   allocate (loc_xpt(nptx_max, 8))
+   allocate (loc_wghx(nptx_max, 8))
    wghpt(1:nptx_max, 1:8) = 1.
    !=================
    !========================
@@ -1980,16 +1980,16 @@
    nps_loc(1:nsp) = 0
    ! Nanowires x-layer: electrons and Z1-ions
    ! nanowires density is the reference density
-   if (nxl(3)>0) then
+   if (nxl(3) > 0) then
     do ic = 1, 2
      n_peak = nptx_loc(ic)
-     if (n_peak>0) then
+     if (n_peak > 0) then
       do i = 1, n_peak
-       uu = (real(i,dp)-0.5)/real(n_peak, dp)
+       uu = (real(i, dp) - 0.5)/real(n_peak, dp)
        xpt(i, ic) = xfsh + lpx(3)*uu
        wghpt(i, ic) = ratio_mpc(ic)*j0_norm
-       xpt(i, ic+2) = xpt(i, ic)
-       wghpt(i, ic+2) = np1*wghpt(i, ic) !inter-wire plasma (or vacuum)
+       xpt(i, ic + 2) = xpt(i, ic)
+       wghpt(i, ic + 2) = np1*wghpt(i, ic) !inter-wire plasma (or vacuum)
       end do
      end if
      !========================= np1>0 a low density  interwire plasma
@@ -1999,17 +1999,17 @@
     do ic = 1, 2
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
-       loc_xpt(i1, ic+2) = xpt(i, ic+2)
-       loc_wghx(i1, ic+2) = wghpt(i, ic+2)
+       loc_xpt(i1, ic + 2) = xpt(i, ic + 2)
+       loc_wghx(i1, ic + 2) = wghpt(i, ic + 2)
       end if
      end do
      loc_imax(imodx, ic) = i1
-     loc_imax(imodx, ic+2) = i1
+     loc_imax(imodx, ic + 2) = i1
     end do
     !========================
     p = imodx
@@ -2019,27 +2019,27 @@
     ! Counts particles
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 1)*loc_jmax(l, 1)*loc_kmax(ip, &
-      1)
+                                                                     1)
     nps_loc(2) = nps_loc(2) + loc_imax(p, 2)*loc_jmax(l, 2)*loc_kmax(ip, &
-      2)
-    if (np1>0.0) then
+                                                                     2)
+    if (np1 > 0.0) then
      nps_loc(1) = nps_loc(1) + loc_imax(p, 3)*loc_jmax(l, 3)*loc_kmax(ip &
-       , 3)
+                                                                      , 3)
      nps_loc(2) = nps_loc(2) + loc_imax(p, 4)*loc_jmax(l, 4)*loc_kmax(ip &
-       , 4)
+                                                                      , 4)
     end if
    end if
    !------------------------------
-   !  Electrons and Z1_ions: bulk layer 
+   !  Electrons and Z1_ions: bulk layer
    !     x distribution. Density given by the particle density mpc(3:4)
    !====================
-   if (nxl(4)>0) then
+   if (nxl(4) > 0) then
     do ic = 5, 6
      n_peak = nptx_loc(ic)
-     if (n_peak>0) then
+     if (n_peak > 0) then
       do i = 1, n_peak
-       xpt(i, ic) = xfsh + lpx(4)*(real(i,dp)-0.5)/real(n_peak, dp)
-       uu = j0_norm*ratio_mpc(ic-2)
+       xpt(i, ic) = xfsh + lpx(4)*(real(i, dp) - 0.5)/real(n_peak, dp)
+       uu = j0_norm*ratio_mpc(ic - 2)
        wghpt(i, ic) = uu
       end do
      end if
@@ -2048,8 +2048,8 @@
     do ic = 5, 6
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -2062,34 +2062,34 @@
     ip = imodz
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 5)*loc_jmax(l, 5)*loc_kmax(ip, &
-      5)
+                                                                     5)
     nps_loc(2) = nps_loc(2) + loc_imax(p, 6)*loc_jmax(l, 6)*loc_kmax(ip, &
-      6)
+                                                                     6)
    end if
    !  Electrons and Z3_ions contaminants
    !     x distribution density given by np2
    !====================
-   if (nxl(5)>0) then
+   if (nxl(5) > 0) then
     do ic = 7, 8
      n_peak = nptx_loc(ic)
-     if (n_peak>0) then
+     if (n_peak > 0) then
       do i = 1, n_peak
-       xpt(i, ic) = xfsh + lpx(5)*(real(i,dp)-0.5)/real(n_peak, dp)
-       uu = j0_norm*ratio_mpc(ic-2)
+       xpt(i, ic) = xfsh + lpx(5)*(real(i, dp) - 0.5)/real(n_peak, dp)
+       uu = j0_norm*ratio_mpc(ic - 2)
        wghpt(i, ic) = uu*np2
       end do
      end if
     end do
     ic = 8
     n_peak = nptx_loc(ic)
-    wghpt(1:n_peak, ic) = wghpt(1:n_peak, ic)/real(ion_min(nsp-1), dp)
+    wghpt(1:n_peak, ic) = wghpt(1:n_peak, ic)/real(ion_min(nsp - 1), dp)
     xfsh = xfsh + lpx(5)
     !===============
     do ic = 7, 8
      i1 = 0
      do i = 1, nptx_loc(ic)
-      if (xpt(i,ic)>=loc_xgrid(imodx)%gmin .and. &
-        xpt(i,ic)<loc_xgrid(imodx)%gmax) then
+      if (xpt(i, ic) >= loc_xgrid(imodx)%gmin .and. &
+          xpt(i, ic) < loc_xgrid(imodx)%gmax) then
        i1 = i1 + 1
        loc_xpt(i1, ic) = xpt(i, ic)
        loc_wghx(i1, ic) = wghpt(i, ic)
@@ -2102,64 +2102,64 @@
     ip = imodz
 
     nps_loc(1) = nps_loc(1) + loc_imax(p, 7)*loc_jmax(l, 7)*loc_kmax(ip, &
-      7)
+                                                                     7)
     nps_loc(nsp) = nps_loc(nsp) + loc_imax(p, 8)*loc_jmax(l, 8)*loc_kmax &
-      (ip, 8)
+                   (ip, 8)
    end if
    !==============END target x-distribution
    !==============
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2 + 1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    ip_el = 0
    ip_pr = 0
    ip_ion = 0
    ! The first electron-Z1-ions nanowires layer
-   if (nxl(3)>0) then
+   if (nxl(3) > 0) then
     p = 0
     i2 = loc_imax(imodx, 1)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 1, &
-      i2, ip_el)
+                             i2, ip_el)
     p = 0
     i2 = loc_imax(imodx, 2)
     call pspecies_distribute(spec(2), t0_pl(2), unit_charge(2), p, 2, &
-      i2, ip_ion)
-    if (np1>0.0) then
+                             i2, ip_ion)
+    if (np1 > 0.0) then
      p = ip_el
      i2 = loc_imax(imodx, 3)
      call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 3, &
-       i2, ip_el)
+                              i2, ip_el)
      p = ip_ion
      i2 = loc_imax(imodx, 4)
      call pspecies_distribute(spec(2), t0_pl(2), unit_charge(2), p, 4, &
-       i2, ip_ion)
+                              i2, ip_ion)
     end if
    end if
    !=========================
    ! The second electron-ion solid layer with Z1 A1 ion element
-   if (nxl(4)>0) then
+   if (nxl(4) > 0) then
     p = ip_el
     i2 = loc_imax(imodx, 5)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 5, &
-      i2, ip_el)
+                             i2, ip_el)
     p = ip_ion
     i2 = loc_imax(imodx, 6)
     call pspecies_distribute(spec(2), t0_pl(2), unit_charge(2), p, 6, &
-      i2, ip_ion)
+                             i2, ip_ion)
    end if
    !============
    ! The contaminant electron-ion solid layer Z3=proton ion element
-   if (nxl(5)>0) then
+   if (nxl(5) > 0) then
     p = ip_el
     i2 = loc_imax(imodx, 7)
     call pspecies_distribute(spec(1), t0_pl(1), unit_charge(1), p, 7, &
-      i2, ip_el)
+                             i2, ip_el)
 
     p = 0
     i2 = loc_imax(imodx, 8)
     call pspecies_distribute(spec(nsp), t0_pl(nsp), unit_charge(nsp), p, &
-      8, i2, ip_ion)
+                             8, i2, ip_ion)
    end if
    do ic = 1, nsp
     loc_npart(imody, imodz, imodx, ic) = nps_loc(ic)
@@ -2169,23 +2169,23 @@
   !============
   subroutine one_layer_nano_tubes(nyh_in, xf0)
 
-   integer, intent (in) :: nyh_in
-   real (dp), intent (in) :: xf0
+   integer, intent(in) :: nyh_in
+   real(dp), intent(in) :: xf0
    integer :: p
    integer :: i, j, i1, i2, ic, k1, k2
    integer :: np_per_zcell(2), n_peak, ntubes
    integer :: npty_ne, nptz_ne
    integer :: npmax, nps_loc(2)
-   real (dp) :: uu, dpy, dlpy, rat
-   real (dp) :: zp_min, zp_max, yp_min, yp_max, xp_min, xp_max
-   real (dp) :: loc_ym, loc_ymx, loc_zm, loc_zmx
-   real (dp) :: xfsh, r_int, r_ext, ffactor
+   real(dp) :: uu, dpy, dlpy, rat
+   real(dp) :: zp_min, zp_max, yp_min, yp_max, xp_min, xp_max
+   real(dp) :: loc_ym, loc_ymx, loc_zm, loc_zmx
+   real(dp) :: xfsh, r_int, r_ext, ffactor
    integer :: nxl(5), npt_nano(4)
    integer :: nlpy
    integer :: npty_layer(2), nptz_layer(2)
-   real (dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
-   real (dp), allocatable :: yc(:), ypt_nano(:, :), zpt_nano(:, :)
-   real (dp), allocatable :: locy_nano(:, :), locz_nano(:, :)
+   real(dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
+   real(dp), allocatable :: yc(:), ypt_nano(:, :), zpt_nano(:, :)
+   real(dp), allocatable :: locy_nano(:, :), locz_nano(:, :)
    !=================
    xp_min = xmin
    xp_max = xmax
@@ -2206,33 +2206,33 @@
    npty = maxval(np_per_yc(1:2))
    npty = nyh_in*npty !particles number in 3 nlpy slabs
    nptz = 1
-   if (ndim==3) then
+   if (ndim == 3) then
     np_per_zcell(1:2) = np_per_zc(1:2)
     zp_min = yp_min !-Lz
     zp_max = yp_max !+Lz
     nptz = maxval(np_per_zc(1:6))
     nptz = nyh_in*nptz
    end if
-   allocate (ypt(npty,2))
-   allocate (wy(npty,2))
-   allocate (zpt(nptz,2))
-   allocate (wz(nptz,2))
+   allocate (ypt(npty, 2))
+   allocate (wy(npty, 2))
+   allocate (zpt(nptz, 2))
+   allocate (wz(nptz, 2))
    wy = 1.
    wz = 1.
    !==================
-   allocate (loc_jmax(0:npe_yloc-1,1:2))
-   allocate (loc_kmax(0:npe_zloc-1,1:2))
+   allocate (loc_jmax(0:npe_yloc - 1, 1:2))
+   allocate (loc_kmax(0:npe_zloc - 1, 1:2))
    !====================
    ! Uniform yp grid of size npty_ne
    do ic = 1, 2
     npty_ne = nyh_in*np_per_yc(ic) !number of yp points in 2*ymax size
-    dpy = (yp_max-yp_min)/real(npty_ne, dp)
+    dpy = (yp_max - yp_min)/real(npty_ne, dp)
     do i = 1, npty_ne
-     ypt(i, ic) = yp_min + dpy*(real(i,dp)-0.5)
+     ypt(i, ic) = yp_min + dpy*(real(i, dp) - 0.5)
     end do
     npty_layer(ic) = npty_ne
     nptz_layer(ic) = 1
-    if (ndim==3) then
+    if (ndim == 3) then
      i2 = npty_ne
      zpt(1:i2, ic) = ypt(1:i2, ic)
      wz(1:i2, ic) = wy(1:i2, ic)
@@ -2257,9 +2257,9 @@
    loc_nptx(3:4) = nxl(4)*np_per_xc(3:4)
    nptx_max = maxval(loc_nptx(1:4))
 
-   allocate (xpt(nptx_max,nsp))
-   allocate (loc_xpt(nptx_max,nsp))
-   allocate (wghpt(nptx_max,nsp))
+   allocate (xpt(nptx_max, nsp))
+   allocate (loc_xpt(nptx_max, nsp))
+   allocate (wghpt(nptx_max, nsp))
    !======================================
    ! Uses the yp,zp=yp for ic=1,2 uniform p-grid
    ! to select a three-layer array of circular nanotubes
@@ -2270,16 +2270,16 @@
    r_int = 0.5*lpy(2)
    r_ext = r_int + 0.5*dlpy
 
-   uu = (yp_max-yp_min-0.5*dlpy)/(lpy(2)+1.5*dlpy)
+   uu = (yp_max - yp_min - 0.5*dlpy)/(lpy(2) + 1.5*dlpy)
    ntubes = nint(uu)
    allocate (yc(ntubes))
    !=========================
    yc(1) = yp_min + 0.5*dlpy + r_ext
    do ic = 2, ntubes
-    yc(ic) = yc(ic-1) + lpy(2) + 1.5*dlpy
+    yc(ic) = yc(ic - 1) + lpy(2) + 1.5*dlpy
    end do
    !========= filling factor
-   ffactor = acos(-1.)*(r_ext*r_ext-r_int*r_int)/(lpy(2)+1.5*dlpy)**2
+   ffactor = acos(-1.)*(r_ext*r_ext - r_int*r_int)/(lpy(2) + 1.5*dlpy)**2
    !=============================
    do ic = 1, 2
     npty_ne = nyh_in*np_per_yc(ic) !number of yp points in Ly=2*ymax size
@@ -2289,8 +2289,8 @@
      do k2 = 1, ntubes
       do i = 1, nptz_ne
        do j = 1, npty_ne
-        dpy = sqrt((ypt(j,ic)-yc(k2))**2+(zpt(i,ic)-yc(k1))**2)
-        if (dpy>=r_int .and. dpy<r_ext) npt_nano(ic) = npt_nano(ic) + 1
+        dpy = sqrt((ypt(j, ic) - yc(k2))**2 + (zpt(i, ic) - yc(k1))**2)
+        if (dpy >= r_int .and. dpy < r_ext) npt_nano(ic) = npt_nano(ic) + 1
        end do
       end do
      end do
@@ -2299,7 +2299,7 @@
    ! npt_nano(ic) nanotubes section
    !====================
    npty_ne = npt_nano(1)
-   allocate (ypt_nano(npty_ne,nsp), zpt_nano(npty_ne,nsp))
+   allocate (ypt_nano(npty_ne, nsp), zpt_nano(npty_ne, nsp))
    loc_ym = loc_ygrid(imody)%gmin
    loc_ymx = loc_ygrid(imody)%gmax
    loc_zm = loc_zgrid(imodz)%gmin
@@ -2312,8 +2312,8 @@
      do k2 = 1, ntubes
       do i = 1, nptz_ne
        do j = 1, npty_ne
-        dpy = sqrt((ypt(j,ic)-yc(k2))**2+(zpt(i,ic)-yc(k1))**2)
-        if (dpy>=r_int .and. dpy<r_ext) then
+        dpy = sqrt((ypt(j, ic) - yc(k2))**2 + (zpt(i, ic) - yc(k1))**2)
+        if (dpy >= r_int .and. dpy < r_ext) then
          i2 = i2 + 1
          ypt_nano(i2, ic) = ypt(j, ic)
          zpt_nano(i2, ic) = zpt(i, ic)
@@ -2325,29 +2325,29 @@
     loc_npty(ic) = 0
     do i = 1, i2
      uu = ypt_nano(i, ic)
-     if (uu>=loc_ym .and. uu<loc_ymx) then
+     if (uu >= loc_ym .and. uu < loc_ymx) then
       uu = zpt_nano(i, ic)
-      if (uu>=loc_zm .and. uu<loc_zmx) loc_npty(ic) = loc_npty(ic) + 1
+      if (uu >= loc_zm .and. uu < loc_zmx) loc_npty(ic) = loc_npty(ic) + 1
      end if
     end do
    end do
    npty_ne = loc_npty(1)
    nptz_ne = npty_ne
    !==========================
-   if (npty_ne>0) then
-    allocate (locy_nano(npty_ne,2))
-    allocate (locz_nano(nptz_ne,2))
+   if (npty_ne > 0) then
+    allocate (locy_nano(npty_ne, 2))
+    allocate (locz_nano(nptz_ne, 2))
    end if
    !==========================
    !========== Nanotubes layer
    do ic = 1, 2
-    if (loc_nptx(ic)>0) then
+    if (loc_nptx(ic) > 0) then
      k1 = 0
      do i = 1, npt_nano(ic)
       uu = ypt_nano(i, ic)
-      if (uu>=loc_ym .and. uu<loc_ymx) then
+      if (uu >= loc_ym .and. uu < loc_ymx) then
        uu = zpt_nano(i, ic)
-       if (uu>=loc_zm .and. uu<loc_zmx) then
+       if (uu >= loc_zm .and. uu < loc_zmx) then
         k1 = k1 + 1
         locy_nano(k1, ic) = ypt_nano(i, ic)
         locz_nano(k1, ic) = zpt_nano(i, ic)
@@ -2366,13 +2366,13 @@
    npty_ne = maxval(loc_npty(1:nsp))
    nptz_ne = maxval(loc_nptz(1:nsp))
    !======================
-   allocate (loc_wghyz(npty_ne,nptz_ne,nsp))
-   allocate (loc_ypt(npty_ne,nsp))
-   allocate (loc_zpt(nptz_ne,nsp))
+   allocate (loc_wghyz(npty_ne, nptz_ne, nsp))
+   allocate (loc_ypt(npty_ne, nsp))
+   allocate (loc_zpt(nptz_ne, nsp))
    loc_wghyz = 1.
    !============================ Uniform target
    call mpi_yz_part_distrib(2, loc_npty, loc_nptz, npty_layer, &
-     nptz_layer, ymin_t, zmin_t, wyz)
+                            nptz_layer, ymin_t, zmin_t, wyz)
    !==========================
    nptx(1:nsp) = 0
    !========================
@@ -2381,22 +2381,22 @@
     n_peak = nxl(3)*np_per_xc(ic)
     do i = 1, n_peak
      i1 = i1 + 1
-     uu = (real(i,dp)-0.5)/real(n_peak, dp)
+     uu = (real(i, dp) - 0.5)/real(n_peak, dp)
      xpt(i1, ic) = xfsh + lpx(3)*uu
      wghpt(i1, ic) = j0_norm
-     if (ic==2) wghpt(i1, ic) = wghpt(i1, ic)*wgh_ion
+     if (ic == 2) wghpt(i1, ic) = wghpt(i1, ic)*wgh_ion
      loc_xpt(i1, ic) = xpt(i1, ic)
     end do
     nptx(ic) = i1
    end do
    xfsh = xfsh + lpx(3)
-   if (nxl(4)>0) then !a bulk
+   if (nxl(4) > 0) then !a bulk
     do ic = 1, nsp
      i1 = nptx(ic)
      n_peak = nxl(4)*np_per_xc(ic)
      do i = 1, n_peak
       i1 = i1 + 1
-      uu = (real(i,dp)-0.5)/real(n_peak, dp)
+      uu = (real(i, dp) - 0.5)/real(n_peak, dp)
       xpt(i1, ic) = xfsh + lpx(4)*uu
       wghpt(i1, ic) = j0_norm
       loc_xpt(i, ic) = xpt(i1, ic)
@@ -2409,10 +2409,10 @@
    !======================
    do ic = 1, nsp
     j = nptx(ic)
-    if (xpt(j,ic)>xmax) then
+    if (xpt(j, ic) > xmax) then
      p = 0
      do i = 1, nptx_max
-      if (xpt(i,ic)<=xmax) p = i !inside the box xpt[1:nptx(ic)]
+      if (xpt(i, ic) <= xmax) p = i !inside the box xpt[1:nptx(ic)]
      end do
      nptx(ic) = p
     end if
@@ -2426,7 +2426,7 @@
       nps_loc(ic) = nps_loc(ic) + 1
      end do
     end do
-    if (nptx(ic)>i2) then
+    if (nptx(ic) > i2) then
      do i1 = 1, loc_kmax(imodz, ic)
       do k1 = 1, loc_jmax(imody, ic)
        do i = i2 + 1, nptx(ic)
@@ -2439,7 +2439,7 @@
    loc_npart(imody, imodz, imodx, 1:nsp) = nps_loc(1:nsp)
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
+   call p_alloc(npmax, nd2 + 1, nps_loc, nsp, lpf_ord, 1, 1, mem_psize)
    !===========================
    call init_random_seed(mype)
    !============
@@ -2449,7 +2449,7 @@
     p = 0
     do k1 = 1, loc_npty(ic)
      do i = 1, i2
-      wgh = real(wghpt(i,ic), sp)
+      wgh = real(wghpt(i, ic), sp)
       p = p + 1
       spec(ic)%part(p, 1) = xpt(i, ic)
       spec(ic)%part(p, 2) = locy_nano(k1, ic)
@@ -2463,18 +2463,18 @@
       spec(ic)%part(p, 7) = wgh_cmp
      end do
     end do
-    if (nptx(ic)>loc_nptx(ic)) then
+    if (nptx(ic) > loc_nptx(ic)) then
      i2 = nptx(ic) + 1 - loc_nptx(ic)
      call pspecies_distribute(spec(ic), t0_pl(ic), unit_charge(ic), p, &
-       ic, i2, i1)
+                              ic, i2, i1)
     end if
    end do
    !============
   end subroutine
   !====================================
   subroutine part_distribute(id, xf0)
-   integer, intent (in) :: id
-   real (dp), intent (in) :: xf0
+   integer, intent(in) :: id
+   real(dp), intent(in) :: xf0
    integer :: ip, pp, l, p
    integer :: tot_nploc(npe)
    !=================
@@ -2495,7 +2495,7 @@
     !lpx(4) second plateau density np2 and to final downramp lpx(5)
     !n_0=n_over_nc can be an average, or n0_=n1_over_nc or n0_=n2_over_nc
     !Multispecies implementation
-    ! target in models id=1 and id=2 contain (implicitely) an ion species id_sp=1 
+    ! target in models id=1 and id=2 contain (implicitely) an ion species id_sp=1
     !as a neutralizing background. If ionization is on, nsp=2 and ionizing species
     !is loaded and activated for ionization.
     !====================================
@@ -2503,7 +2503,7 @@
     !as a neutralizing background:
     ! layer(1) + layer(2) only electrons and H+ with ne=n0=n_over_nc
     ! layer(3) is a plateau with an added dopant (A1,Z1) with density
-    ! np1=n1_over_n/n0 (few %) 
+    ! np1=n1_over_n/n0 (few %)
     ! layer(4)+layer(5) as layer(1)+layer(2)
     !----------
    else
@@ -2539,22 +2539,22 @@
     do ip = 0, npe_zloc - 1
      do l = 0, npe_yloc - 1
       pp = pp + 1
-      tot_nploc(pp) = sum(loc_npart(l,ip,p,1:nsp))
+      tot_nploc(pp) = sum(loc_npart(l, ip, p, 1:nsp))
      end do
     end do
    end do
    np_max = maxval(tot_nploc(1:npe))
    np_min = minval(tot_nploc(1:npe))
    do ip = 1, npe
-    if (tot_nploc(ip)==np_max) pe_npmax = ip - 1
-    if (tot_nploc(ip)==np_min) pe_npmin = ip - 1
+    if (tot_nploc(ip) == np_max) pe_npmax = ip - 1
+    if (tot_nploc(ip) == np_min) pe_npmin = ip - 1
    end do
    !===============
   end subroutine
   subroutine clean_field(ef, lp1, i1, j1, j2, k1, k2, nc)
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   real (dp), intent (in) :: lp1
-   integer, intent (in) :: i1, j1, j2, k1, k2, nc
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   real(dp), intent(in) :: lp1
+   integer, intent(in) :: i1, j1, j2, k1, k2, nc
    integer :: ilp, i, j, k, ic
 
    ilp = int(dx_inv*lp1)

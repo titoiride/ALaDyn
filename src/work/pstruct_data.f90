@@ -28,15 +28,15 @@
 
   implicit none
 
-  real (dp), allocatable :: ebfp(:, :), ebfb(:, :)
-  real (dp), allocatable :: ebfp0(:, :), ebfp1(:, :)
-  real (dp), allocatable :: pdata_tracking(:, :, :)
-  real (dp), allocatable :: track_aux(:)
-  real (dp), allocatable :: xpt(:, :), ypt(:, :), zpt(:, :), wghpt(:, :)
-  real (dp), allocatable :: loc_ypt(:, :), loc_zpt(:, :), &
-    loc_wghyz(:, :, :)
-  real (dp), allocatable :: loc_xpt(:, :), loc_wghx(:, :)
-  type (species) :: spec(4), bunch(5)
-  integer (hp_int), parameter :: ihx = 3
+  real(dp), allocatable :: ebfp(:, :), ebfb(:, :)
+  real(dp), allocatable :: ebfp0(:, :), ebfp1(:, :)
+  real(dp), allocatable :: pdata_tracking(:, :, :)
+  real(dp), allocatable :: track_aux(:)
+  real(dp), allocatable :: xpt(:, :), ypt(:, :), zpt(:, :), wghpt(:, :)
+  real(dp), allocatable :: loc_ypt(:, :), loc_zpt(:, :), &
+                           loc_wghyz(:, :, :)
+  real(dp), allocatable :: loc_xpt(:, :), loc_wghx(:, :)
+  type(species) :: spec(4), bunch(5)
+  integer(hp_int), parameter :: ihx = 3
 
  end module

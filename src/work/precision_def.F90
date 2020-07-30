@@ -30,28 +30,28 @@
   integer, parameter :: hp_int = selected_int_kind(4)
   integer, parameter :: qp = selected_real_kind(33, 4931)
 
-  logical (kind=1), dimension (8) :: res_string
-  real (dp) :: wgh_cmp
-  real (sp) :: wgh
-  integer (hp_int) :: charge
-  integer (hp_int) :: part_ind
+  logical(kind=1), dimension(8) :: res_string
+  real(dp) :: wgh_cmp
+  real(sp) :: wgh
+  integer(hp_int) :: charge
+  integer(hp_int) :: part_ind
 
-  equivalence (charge, res_string(1)), (part_ind, res_string(3)), &
-    (wgh, res_string(5)), (wgh_cmp, res_string(1))
+  equivalence(charge, res_string(1)), (part_ind, res_string(3)), &
+   (wgh, res_string(5)), (wgh_cmp, res_string(1))
 
-  real (dp), parameter :: zero_dp = 0.0
-  real (sp), parameter :: zero_sp = real(0.0, sp)
-  real (dp), parameter :: one_dp = 1.0
-  real (sp), parameter :: one_sp = real(1.0, sp)
+  real(dp), parameter :: zero_dp = 0.0
+  real(sp), parameter :: zero_sp = real(0.0, sp)
+  real(dp), parameter :: one_dp = 1.0
+  real(sp), parameter :: one_sp = real(1.0, sp)
   integer, parameter :: zero = 0
   integer, parameter :: one = 1
   integer(hp_int), parameter :: one_int_hp = int(1, hp_int)
 
  contains
 
-  function is_zero(value) result (check)
-   real (dp), intent (in) :: value
-   real (dp), parameter :: small_value = 0.1
+  function is_zero(value) result(check)
+   real(dp), intent(in) :: value
+   real(dp), parameter :: small_value = 0.1
    logical :: check
 
    check = (abs(value) < epsilon(small_value))

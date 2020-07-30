@@ -38,10 +38,10 @@
   !============================
   subroutine set_lpf_acc(ef, sp_loc, apt, np, nf)
 
-   real (dp), intent (in) :: ef(:, :, :, :)
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: apt(:, :)
-   integer, intent (in) :: np, nf
+   real(dp), intent(in) :: ef(:, :, :, :)
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: apt(:, :)
+   integer, intent(in) :: np, nf
 
    ! Uses alternating order quadratic or linear shapes
 
@@ -57,9 +57,9 @@
 
   subroutine field_charge_multiply(sp_loc, apt, np, ncmp)
 
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: apt(:, :)
-   integer, intent (in) :: np, ncmp
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: apt(:, :)
+   integer, intent(in) :: np, ncmp
    integer :: p, ch
 
    ch = size(apt, 2)
@@ -72,9 +72,9 @@
   end subroutine
 
   subroutine curr_accumulate(sp_loc, pdata, curr, npt)
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pdata(:, :), curr(:, :, :, :)
-   integer, intent (in) :: npt
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: pdata(:, :), curr(:, :, :, :)
+   integer, intent(in) :: npt
    ! real(dp),intent(in) :: dtloc
    !=========================
    ! charge preserving for iform=0, 1
@@ -82,16 +82,16 @@
    !iform=1    as iform=0
    !iform=2    no charge preserving
    !=========================
-   if (npt==0) return
-   if (ndim<3) then
-    if (iform<2) then
+   if (npt == 0) return
+   if (ndim < 3) then
+    if (iform < 2) then
      call esirkepov_2d_curr(sp_loc, pdata, curr, npt)
     else
      call ncdef_2d_curr(sp_loc, pdata, curr, npt)
     end if
     return
    end if
-   if (iform<2) then
+   if (iform < 2) then
     call esirkepov_3d_curr(sp_loc, pdata, curr, npt)
    else
     call ncdef_3d_curr(sp_loc, pdata, curr, npt)
@@ -103,16 +103,16 @@
   !==============================
   subroutine curr_mpi_collect(curr)
 
-   real (dp), intent (inout) :: curr(:, :, :, :)
+   real(dp), intent(inout) :: curr(:, :, :, :)
    integer :: i, j, k, jj, kk
-   real (dp) :: dery, derhy, derz, derhz
+   real(dp) :: dery, derhy, derz, derhz
    !============sums data on ghost points
    if (prl) then
     call fill_curr_yzxbdsdata(curr, curr_ndim)
    end if
    call jc_xyzbd(curr, curr_ndim)
    !=================
-   if (iform<2) then
+   if (iform < 2) then
     do i = 1, ndim
      curr(:, :, :, i) = djc(i)*curr(:, :, :, i)
     end do
@@ -154,8 +154,8 @@
   ! END SECTION ON GRID DEFINED PARTICLE VARIABLES
   !================================================
   subroutine pfields_prepare(ef, nc, spr, spl)
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   integer, intent (in) :: nc, spr, spl
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   integer, intent(in) :: nc, spr, spl
    !===================
    ! Enter fields ef[i1:i2,j1,j2,k1,k2,1:nc)
    ! Exit fields ef[i1:i2,j1,j2,k1,k2,1:nc)
@@ -163,7 +163,7 @@
    if (prl) then
     call fill_ebfield_yzxbdsdata(ef, 1, nc, spr, spl)
     !======================
-    ! Adds point data => spl to the left spr to the right  
+    ! Adds point data => spl to the left spr to the right
     ! Sets periodic BCs for
     ! iby,ibz,ibx =2
     !==================
@@ -174,11 +174,11 @@
   end subroutine
   !================================
   subroutine advance_lpf_fields(ef, curr, ibd)
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   real (dp), intent (in) :: curr(:, :, :, :)
-   integer, intent (in) :: ibd
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   real(dp), intent(in) :: curr(:, :, :, :)
+   integer, intent(in) :: ibd
    integer :: str, stl, ik
-   real (dp) :: dth, dt_lp
+   real(dp) :: dth, dt_lp
 
    dt_lp = dt_loc
    dth = 0.5*dt_lp
@@ -198,12 +198,12 @@
    ! Uses upper BCs of E fields: ibd=0 for inflow-outflow
    !                             ibd=1 for symmetric
    if (comoving) then
-    call field_xadvect(ef, dth, -vbeam, curr_ndim+1, nfield, 0)
+    call field_xadvect(ef, dth, -vbeam, curr_ndim + 1, nfield, 0)
     ! Solves for one-half step backward advection B field explicit
     ! B^{n} => B^{n}+v_b*Dth[Dx]B^n  v_b >0
    end if
    !==================================
-   ! solves B^{n+1/2}= B^n -Dth[rot E]^n 
+   ! solves B^{n+1/2}= B^n -Dth[rot E]^n
    !============================
    call rote(ef, dth)
    !=============================
@@ -211,7 +211,7 @@
    if (prl) then
     str = 2
     stl = 1
-    call fill_ebfield_yzxbdsdata(ef, curr_ndim+1, nfield, str, stl)
+    call fill_ebfield_yzxbdsdata(ef, curr_ndim + 1, nfield, str, stl)
     ! sends nyp+1-str to the right
     ! recvs str points from left at (1-str)
    end if
@@ -225,14 +225,14 @@
     ! E^{n} => E^{n}+v_b*Dth[Dx]E^n
    end if
    !=======================
-   ! solves E^{n+1}= E^n +DT[rot B]^{n+1/2}- ompe*DT*J^{n+1/2} 
+   ! solves E^{n+1}= E^n +DT[rot B]^{n+1/2}- ompe*DT*J^{n+1/2}
    !==================
    call rotb(ef, dt_lp)
    !===================
    ! adds currents
    do ik = 1, curr_ndim
     ef(ix1:ix2, jy1:jy2, kz1:kz2, ik) = ef(ix1:ix2, jy1:jy2, kz1:kz2, &
-      ik) - ompe*curr(ix1:ix2, jy1:jy2, kz1:kz2, ik)
+                                           ik) - ompe*curr(ix1:ix2, jy1:jy2, kz1:kz2, ik)
    end do
    if (comoving) then
     call field_xadvect(ef, dth, -vbeam, 1, curr_ndim, 2)
@@ -247,12 +247,12 @@
    end if
    ! E field gets stl points from right (nyp+stl), (nzp+stl)
    call ef_bds(ef, dt_lp, ibd)
-   ! solves B^{n+1}= B^{n+1/2} -Dth[rot E]^{n+1} 
+   ! solves B^{n+1}= B^{n+1/2} -Dth[rot E]^{n+1}
    !===================
    call rote(ef, dth)
    !==============
    if (comoving) then
-    call field_xadvect(ef, dth, -vbeam, curr_ndim+1, nfield, 2)
+    call field_xadvect(ef, dth, -vbeam, curr_ndim + 1, nfield, 2)
     ! Solves for one-half step backward advection B field implicit
     ! B^{n+1} => B^{n+1/2}+v_b*Dth[Dx]B^{n+1}
    end if
@@ -261,8 +261,8 @@
   !======================
   subroutine advance_lpf_envelope(curr, evf, omg)
 
-   real (dp), intent (inout) :: curr(:, :, :, :), evf(:, :, :, :)
-   real (dp), intent (in) :: omg
+   real(dp), intent(inout) :: curr(:, :, :, :), evf(:, :, :, :)
+   real(dp), intent(in) :: omg
    integer :: i, j, k
    integer :: str, stl, cind, ib
    !====== enter env(3:4)=A^{n-1} and env(1:2)= A^{n}
@@ -277,7 +277,7 @@
    if (prl) then
     call fill_ebfield_yzxbdsdata(evf, 1, 2, str, stl)
    end if
-   call env_bds( evf, str, stl )
+   call env_bds(evf, str, stl)
 
    do k = kz1, kz2
     do j = jy1, jy2
@@ -289,7 +289,7 @@
    end do
    !  curr(1:2)=-ompe*chi*env(1:2)  the J_{env} source term
    !==================================
-   if (ib==0) then
+   if (ib == 0) then
     call env_lpf_solve(jc, evf, ib, omg, dt_loc)
    else
     !=================== second order in time full wave equation
@@ -300,9 +300,9 @@
   !========================================================
 
   subroutine wave_field_left_inject(ef, x_left)
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   real (dp), intent (in) :: x_left
-   real (dp) :: tnew, xm
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   real(dp), intent(in) :: x_left
+   real(dp) :: tnew, xm
    integer :: wmodel_id, ic
 
    wmodel_id = model_id
@@ -314,10 +314,10 @@
     if (lp_in(ic) < x_left) then
      if (lp_end(ic) >= xm) then
       lp_inject = .true.
-      if (model_id<3) call inflow_lp_fields(ebf, lp_amp, tnew, t0_lp, &
-        w0_x, w0_y, xf_loc(ic), oml, wmodel_id, ix1, jy1, jy2, kz1, kz2)
-      if (model_id==3) call inflow_cp_fields(ebf, lp_amp, tnew, t0_lp, &
-        w0_x, w0_y, xf_loc(ic), wmodel_id, ix1, jy1, jy2, kz1, kz2)
+      if (model_id < 3) call inflow_lp_fields(ebf, lp_amp, tnew, t0_lp, &
+                                              w0_x, w0_y, xf_loc(ic), oml, wmodel_id, ix1, jy1, jy2, kz1, kz2)
+      if (model_id == 3) call inflow_cp_fields(ebf, lp_amp, tnew, t0_lp, &
+                                               w0_x, w0_y, xf_loc(ic), wmodel_id, ix1, jy1, jy2, kz1, kz2)
      end if
     end if
     lp_in(ic) = lp_in(ic) + dt_loc
@@ -328,7 +328,7 @@
      if (lp_ionz_end >= xm) then
       lp_inject = .true.
       call inflow_lp_fields(ebf, lp1_amp, tnew, t1_lp, w1_x, w1_y, xf1, &
-        om1, model_id, ix1, jy1, jy2, kz1, kz2)
+                            om1, model_id, ix1, jy1, jy2, kz1, kz2)
      end if
     end if
     lp_ionz_in = lp_ionz_in + dt_loc
@@ -338,9 +338,9 @@
   !===================================================
   subroutine advect_bunch_fields(fb, curr, v_b)
 
-   real (dp), intent (inout) :: fb(:, :, :, :), curr(:, :, :, :)
-   real (dp), intent (in) :: v_b
-   real (dp) :: dth
+   real(dp), intent(inout) :: fb(:, :, :, :), curr(:, :, :, :)
+   real(dp), intent(in) :: v_b
+   real(dp) :: dth
    integer :: ix, iy, iz
 
    dth = 0.5*dt_loc
@@ -361,7 +361,7 @@
     end do
    end do
    ! Subtracts from the longitudinal bunch current the advected initial bunch
-   ! current  
+   ! current
   end subroutine
   !============================
  end module

@@ -30,15 +30,15 @@
 
   type str_params
    real(dp) :: const, smin, smax, nl_stretch, xs, dli_inv, ratio, &
-    dl_inv, init_cell
+               dl_inv, init_cell
   end type
 
   type(str_params) :: y_params, z_params
 
   real(dp), parameter :: SYMM_CENTER = zero_dp
-  
+
   public :: map2dy_part_sind, map3d_part_sind
-  
+
  contains
   !============== Mapping for stretched grids==========
 
@@ -54,7 +54,7 @@
    dli_inv = params%dli_inv
    ratio = params%ratio
 
-   stretched = dli_inv*atan(ratio*(yp_in+const-xs)) + nl_stretch
+   stretched = dli_inv*atan(ratio*(yp_in + const - xs)) + nl_stretch
 
   end function
 
@@ -71,9 +71,9 @@
   end function
 
   subroutine map2dy_part_sind(np, ic1, pt)
-   integer, intent (in) :: np, ic1
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp) :: yp, yp_loc
+   integer, intent(in) :: np, ic1
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp) :: yp, yp_loc
    integer :: n
    !========================
    !  enter the y=part(ic1,n) particle position in stretched grid
@@ -107,9 +107,9 @@
   end subroutine
 
   subroutine map2dz_part_sind(np, ic1, pt)
-   integer, intent (in) :: np, ic1
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp) :: zp, zp_loc
+   integer, intent(in) :: np, ic1
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp) :: zp, zp_loc
    integer :: n
    !========================
    !  enter the z=part(ic1,n) particle position in stretched grid
@@ -143,8 +143,8 @@
   end subroutine
 
   subroutine map3d_part_sind(pt, np, ic1, ic2)
-   integer, intent (in) :: np, ic1, ic2
-   real (dp), intent (inout) :: pt(:, :)
+   integer, intent(in) :: np, ic1, ic2
+   real(dp), intent(inout) :: pt(:, :)
 
    !========================
    !  enter the y=part(n,ic1) z=part(n,ic2) particle positions
@@ -154,8 +154,8 @@
    !    normalized to the (Dxi Dzi) cell sizes
    !==========================================
 
-   call map2dy_part_sind( np, ic1, pt)
-   call map2dz_part_sind( np, ic2, pt)
+   call map2dy_part_sind(np, ic1, pt)
+   call map2dz_part_sind(np, ic2, pt)
 
   end subroutine
   !========================================

@@ -27,23 +27,23 @@
 
   integer, parameter :: major_version = 8
   integer, parameter :: minor_version = 2
-  character (6) :: sw_name = 'ALaDyn'
-  character (9) :: input_namelist_filename = 'input.nml'
-  character (10) :: input_data_filename = 'input.data'
+  character(6) :: sw_name = 'ALaDyn'
+  character(9) :: input_namelist_filename = 'input.nml'
+  character(10) :: input_data_filename = 'input.data'
   integer, parameter :: maxv = 1, sumv = 0, minv = -1
   integer, parameter :: left = -1, right = 1
   integer, parameter :: field = 0, curr = 1
   integer, parameter :: sh_ix = 3
   integer :: time2dump(1) = 0
   integer :: mem_size, mem_psize
-  integer :: last_iter, iter_max,write_every
+  integer :: last_iter, iter_max, write_every
   integer :: t_ind, inject_ind, tk_ind
   integer :: ienout, iout, iter, ier
-  real (dp) :: mem_psize_max, dump_t0, dump_t1
-  real (dp) :: unix_time_begin, unix_time_now
-  real (dp) :: time_interval_dumps, unix_time_last_dump
-  real (dp) :: gamma_cut_min, weights_cut_min, weights_cut_max
-  real (dp) :: tdia, dtdia, tout, dtout, tstart, mem_max_addr
+  real(dp) :: mem_psize_max, dump_t0, dump_t1
+  real(dp) :: unix_time_begin, unix_time_now
+  real(dp) :: time_interval_dumps, unix_time_last_dump
+  real(dp) :: gamma_cut_min, weights_cut_min, weights_cut_max
+  real(dp) :: tdia, dtdia, tout, dtout, tstart, mem_max_addr
 
   logical :: diag, tpart
   logical :: l_intdiagnostics_pwfa, l_intdiagnostics_classic

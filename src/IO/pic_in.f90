@@ -26,13 +26,13 @@
 
   implicit none
 
-  real (dp) :: xf0
+  real(dp) :: xf0
 
  contains
   subroutine init
    !======================================
-   if (model_id<3) then
-    call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2) 
+   if (model_id < 3) then
+    call lp_pulse(model_id, xf0) !Linear polarization along y (1)   z(2)
    else
     select case (model_id)
     case (3)
