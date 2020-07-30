@@ -15,7 +15,7 @@ matrix:
           - gcc
           update: true
       env:
-        - MATRIX_EVAL="FC=/usr/local/bin/gfortran-9"
+        - MATRIX_EVAL="FC=/usr/local/bin/gfortran-10"
 
     - os: osx
       compiler: clang
