@@ -26,8 +26,8 @@
   use curr_and_fields_util
   use mpi_part_interface, only: cell_part_dist
   use ionize, only: set_field_ioniz_wfunction, ionization_cycle, de_inv
-  use fluid_density_momenta, only: fluid_curr_accumulate,&
-   set_env_momentum_density_flux, update_adam_bash_fluid_variables
+  use fluid_density_momenta, only: fluid_curr_accumulate, &
+                                   set_env_momentum_density_flux, update_adam_bash_fluid_variables
   use util, only: init_random_seed
 
   implicit none
@@ -38,9 +38,9 @@
   !============================
   subroutine env_den_collect(source_in)
 
-   real (dp), intent (inout) :: source_in(:, :, :, :)
+   real(dp), intent(inout) :: source_in(:, :, :, :)
    integer :: i, j, k, kk, jj, ic
-   real (dp) :: dery, derz
+   real(dp) :: dery, derz
 
    ic = 1
    if (prl) then
@@ -51,7 +51,7 @@
    !==================================
    if (stretch) then
     ic = 1
-    if (ndim==2) then
+    if (ndim == 2) then
      k = 1
      do j = jy1, jy2
       jj = j - 2
@@ -80,21 +80,21 @@
   end subroutine
   !=========================
   subroutine env_two_fields_average(evf, ev1f, av, spl_in, spr_in)
-   real (dp), intent (in) :: evf(:, :, :, :), ev1f(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: spl_in, spr_in
+   real(dp), intent(in) :: evf(:, :, :, :), ev1f(:, :, :, :)
+   real(dp), intent(out) :: av(:, :, :, :)
+   integer, intent(in) :: spl_in, spr_in
    integer :: ix, iy, iz
-   real (dp) :: ar, ai
+   real(dp) :: ar, ai
    !===================
    do iz = kz1, kz2
     do iy = jy1, jy2
      do ix = ix1, ix2
-      ar = 0.5*(evf(ix,iy,iz,1)+evf(ix,iy,iz,3)) !A^{n+1/2}=(A^n+1+A^n)/2
-      ai = 0.5*(evf(ix,iy,iz,2)+evf(ix,iy,iz,4))
-      av(ix, iy, iz, 1) = 0.5*(ar*ar+ai*ai)
-      ar = 0.5*(ev1f(ix,iy,iz,1)+ev1f(ix,iy,iz,3)) !A^{n+1/2}=(A^n+1+A^n)/2
-      ai = 0.5*(ev1f(ix,iy,iz,2)+ev1f(ix,iy,iz,4))
-      av(ix, iy, iz, 1) = av(ix, iy, iz, 1) + 0.5*(ar*ar+ai*ai)
+      ar = 0.5*(evf(ix, iy, iz, 1) + evf(ix, iy, iz, 3)) !A^{n+1/2}=(A^n+1+A^n)/2
+      ai = 0.5*(evf(ix, iy, iz, 2) + evf(ix, iy, iz, 4))
+      av(ix, iy, iz, 1) = 0.5*(ar*ar + ai*ai)
+      ar = 0.5*(ev1f(ix, iy, iz, 1) + ev1f(ix, iy, iz, 3)) !A^{n+1/2}=(A^n+1+A^n)/2
+      ai = 0.5*(ev1f(ix, iy, iz, 2) + ev1f(ix, iy, iz, 4))
+      av(ix, iy, iz, 1) = av(ix, iy, iz, 1) + 0.5*(ar*ar + ai*ai)
       ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
       !  NO overlap assumed
      end do
@@ -106,88 +106,88 @@
   end subroutine
   !===========================
   subroutine env_fields_average(evf, av, spl_in, spr_in)
-   real (dp), intent (in) :: evf(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: spl_in, spr_in
+   real(dp), intent(in) :: evf(:, :, :, :)
+   real(dp), intent(out) :: av(:, :, :, :)
+   integer, intent(in) :: spl_in, spr_in
    integer :: ix, iy, iz, ord
-   real (dp) :: ar, ai
-   real (dp), parameter :: frac = one_dp/8.
+   real(dp) :: ar, ai
+   real(dp), parameter :: frac = one_dp/8.
    !===================
    ord = 2
    ! |A|^2/2 at t^{n+1/2}=> gamp^{n+1/2}
    av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = &
     frac*( &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 3)) * &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 3)) + &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 4)) * &
-    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2)+evf(ix1:ix2, jy1:jy2, kz1:kz2, 4)) )
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1) + evf(ix1:ix2, jy1:jy2, kz1:kz2, 3))* &
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 1) + evf(ix1:ix2, jy1:jy2, kz1:kz2, 3)) + &
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2) + evf(ix1:ix2, jy1:jy2, kz1:kz2, 4))* &
+    (evf(ix1:ix2, jy1:jy2, kz1:kz2, 2) + evf(ix1:ix2, jy1:jy2, kz1:kz2, 4)))
 
    if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr_in, spl_in)
    call env_grad(av)
-   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
+   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3)
 
-   if (prl) call fill_ebfield_yzxbdsdata(av, 2, curr_ndim+1, spr_in, &
-     spl_in)
+   if (prl) call fill_ebfield_yzxbdsdata(av, 2, curr_ndim + 1, spr_in, &
+                                         spl_in)
    !=====================
   end subroutine
   !===========================
   subroutine env_amp_prepare(envf, av, ord, spl_in, spr_in)
-   real (dp), intent (in) :: envf(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: ord, spl_in, spr_in
+   real(dp), intent(in) :: envf(:, :, :, :)
+   real(dp), intent(out) :: av(:, :, :, :)
+   integer, intent(in) :: ord, spl_in, spr_in
    integer :: spl, spr
    !real(dp) :: ar,ai
    !===================
    !|A|^2/2 at current t^n time level
-   av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = 0.5 * &
-    (envf(ix1:ix2, jy1:jy2, kz1:kz2, 1)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 1)+&
-    envf(ix1:ix2, jy1:jy2, kz1:kz2, 2)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 2))
+   av(ix1:ix2, jy1:jy2, kz1:kz2, 1) = 0.5* &
+                                      (envf(ix1:ix2, jy1:jy2, kz1:kz2, 1)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 1) + &
+                                       envf(ix1:ix2, jy1:jy2, kz1:kz2, 2)*envf(ix1:ix2, jy1:jy2, kz1:kz2, 2))
    spl = spl_in
    spr = spr_in
-   if (spl>2) spl = 2
-   if (spr>2) spr = 2
-
-   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr, spl)
-
-   call env_grad(av)
-   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3) 
-
-   if (prl) call fill_ebfield_yzxbdsdata(av, 1, curr_ndim+1, spr, spl)
-
-   !call field_xyzbd(av,i1,i2,j1,j2,k1,k2,nj_dim,spr,spl)
-   !=====================
-  end subroutine
-  !=============================
-  subroutine env_amp_two_fields_prepare(envf, env1f, av, ord, spl_in, &
-    spr_in)
-   real (dp), intent (in) :: envf(:, :, :, :), env1f(:, :, :, :)
-   real (dp), intent (out) :: av(:, :, :, :)
-   integer, intent (in) :: ord, spl_in, spr_in
-   integer :: ix, iy, iz, spl, spr
-   !real(dp) :: ar,ai
-   !===================
-   do iz = kz1, kz2
-    do iy = jy1, jy2
-     do ix = ix1, ix2
-      av(ix, iy, iz, 1) = 0.5*(envf(ix,iy,iz,1)*envf(ix,iy,iz,1)+envf(ix &
-        ,iy,iz,2)*envf(ix,iy,iz,2))
-      av(ix, iy, iz, 1) = av(ix, iy, iz, 1) + 0.5*(env1f(ix,iy,iz,1)* &
-        env1f(ix,iy,iz,1)+env1f(ix,iy,iz,2)*env1f(ix,iy,iz,2))
-      !|A|^2/2 at current t^n time level
-     end do
-    end do
-   end do
-   spl = spl_in
-   spr = spr_in
-   if (spl>2) spl = 2
-   if (spr>2) spr = 2
+   if (spl > 2) spl = 2
+   if (spr > 2) spr = 2
 
    if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr, spl)
 
    call env_grad(av)
    !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3)
 
-   if (prl) call fill_ebfield_yzxbdsdata(av, 2, curr_ndim+1, spr, spl)
+   if (prl) call fill_ebfield_yzxbdsdata(av, 1, curr_ndim + 1, spr, spl)
+
+   !call field_xyzbd(av,i1,i2,j1,j2,k1,k2,nj_dim,spr,spl)
+   !=====================
+  end subroutine
+  !=============================
+  subroutine env_amp_two_fields_prepare(envf, env1f, av, ord, spl_in, &
+                                        spr_in)
+   real(dp), intent(in) :: envf(:, :, :, :), env1f(:, :, :, :)
+   real(dp), intent(out) :: av(:, :, :, :)
+   integer, intent(in) :: ord, spl_in, spr_in
+   integer :: ix, iy, iz, spl, spr
+   !real(dp) :: ar,ai
+   !===================
+   do iz = kz1, kz2
+    do iy = jy1, jy2
+     do ix = ix1, ix2
+      av(ix, iy, iz, 1) = 0.5*(envf(ix, iy, iz, 1)*envf(ix, iy, iz, 1) + envf(ix &
+                                                                              , iy, iz, 2)*envf(ix, iy, iz, 2))
+      av(ix, iy, iz, 1) = av(ix, iy, iz, 1) + 0.5*(env1f(ix, iy, iz, 1)* &
+                                                   env1f(ix, iy, iz, 1) + env1f(ix, iy, iz, 2)*env1f(ix, iy, iz, 2))
+      !|A|^2/2 at current t^n time level
+     end do
+    end do
+   end do
+   spl = spl_in
+   spr = spr_in
+   if (spl > 2) spl = 2
+   if (spr > 2) spr = 2
+
+   if (prl) call fill_ebfield_yzxbdsdata(av, 1, 1, spr, spl)
+
+   call env_grad(av)
+   !Exit staggered grad|A|^2/2 in jc(2:4) or jc(2:3)
+
+   if (prl) call fill_ebfield_yzxbdsdata(av, 2, curr_ndim + 1, spr, spl)
 
    !call field_xyzbd(av,nj_dim,spr,spl)
    !=====================
@@ -195,9 +195,9 @@
   !=======================================
   subroutine env_lpf2_evolve(it_loc)
 
-   integer, intent (in) :: it_loc
+   integer, intent(in) :: it_loc
    integer :: np, ic, id_ch
-   real (dp) :: ef2_ion, loc_ef2_ion(2)
+   real(dp) :: ef2_ion, loc_ef2_ion(2)
    logical, parameter :: mw = .false.
    !============================
    ef2_ion = zero_dp
@@ -205,7 +205,7 @@
    if (prl) call fill_ebfield_yzxbdsdata(ebf, 1, nfield, 2, 2)
    !======================================
    if (ionization) then
-    if (it_loc==0) then
+    if (it_loc == 0) then
      call init_random_seed(mype)
     end if
     id_ch = nd2 + 1
@@ -213,16 +213,16 @@
      if (prl) call pfields_prepare(env, 2, 2, 2)
      do ic = 2, nsp_ionz
       np = loc_npart(imody, imodz, imodx, ic)
-      if (np>0) then
+      if (np > 0) then
        call set_ion_env_field(env, spec(ic), ebfp, np, oml)
-       if (mod(it_loc,100)==0) then
-        loc_ef2_ion(1) = maxval(ebfp(1:np,id_ch))
+       if (mod(it_loc, 100) == 0) then
+        loc_ef2_ion(1) = maxval(ebfp(1:np, id_ch))
         loc_ef2_ion(1) = sqrt(loc_ef2_ion(1))
         ef2_ion = max(loc_ef2_ion(1), ef2_ion)
-        if (ef2_ion>lp_max) then
+        if (ef2_ion > lp_max) then
          lp_max = 1.1*ef2_ion
-         call set_field_ioniz_wfunction(ion_min(ic-1), &
-           atomic_number(ic-1), ic, ionz_lev, ionz_model, lp_max)
+         call set_field_ioniz_wfunction(ion_min(ic - 1), &
+                                        atomic_number(ic - 1), ic, ionz_lev, ionz_model, lp_max)
         end if
        end if
        call ionization_cycle(spec(ic), ebfp, np, ic, it_loc, 1, de_inv)
@@ -234,18 +234,18 @@
       if (prl) call pfields_prepare(env1, 2, 2, 2)
       do ic = 2, nsp_ionz
        np = loc_npart(imody, imodz, imodx, ic)
-       if (np>0) then
+       if (np > 0) then
         call set_ion_env_field(env1, spec(ic), ebfp, np, om1)
-        if (mod(it_loc,100)==0) then
-         loc_ef2_ion(1) = maxval(ebfp(1:np,id_ch))
+        if (mod(it_loc, 100) == 0) then
+         loc_ef2_ion(1) = maxval(ebfp(1:np, id_ch))
          loc_ef2_ion(1) = sqrt(loc_ef2_ion(1))
          ef2_ion = max(loc_ef2_ion(1), ef2_ion)
-         if (ef2_ion>lp_max) then
+         if (ef2_ion > lp_max) then
           write (6, '(a22,i6,2E11.4)') 'reset high ionz field ', mype, &
-            ef2_ion, lp_max
+           ef2_ion, lp_max
           lp_max = 1.1*ef2_ion
-          call set_field_ioniz_wfunction(ion_min(ic-1), &
-            atomic_number(ic-1), ic, ionz_lev, ionz_model, lp_max)
+          call set_field_ioniz_wfunction(ion_min(ic - 1), &
+                                         atomic_number(ic - 1), ic, ionz_lev, ionz_model, lp_max)
          end if
         end if
         call ionization_cycle(spec(ic), ebfp, np, ic, it_loc, 1, de_inv)
@@ -284,16 +284,16 @@
     !+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     call set_env_momentum_density_flux(up, ebf, jc, ebf0, flux)
     !exit jc(1)=q^2*n/gam, jc(2:4) ponderomotive force on a grid
-    !ebf0= total fields flux(1:4)=(P,den)^n 
+    !ebf0= total fields flux(1:4)=(P,den)^n
     !============================
     call update_adam_bash_fluid_variables(up, up0, flux, ebf0)
     ! In up exit updated momenta-density variables u^{n+1}
     ! in  u0^{n} stores Dt*F(u^n), in flux(1:fdim)=(P,den)^{n+1/2}
 
-    flux(:, :, :, curr_ndim+2) = jc(:, :, :, 1)
+    flux(:, :, :, curr_ndim + 2) = jc(:, :, :, 1)
 
-   ! in flux(fdim+1) exit the fluid contribution of the sorce term q^2*n/gam
-   ! for the envelope field solver
+    ! in flux(fdim+1) exit the fluid contribution of the sorce term q^2*n/gam
+    ! for the envelope field solver
    end if
    jc(:, :, :, 1) = 0.0
    call set_env_density(ebfp, jc, np, 1)
@@ -302,7 +302,7 @@
    ! to be added to the fluid contribution if (Hybrid)
    jc(:, :, :, 3) = jc(:, :, :, 1)
    if (hybrid) then
-    jc(:, :, :, 3) = jc(:, :, :, 3) + flux(:, :, :, curr_ndim+2)
+    jc(:, :, :, 3) = jc(:, :, :, 3) + flux(:, :, :, curr_ndim + 2)
    end if
    !===================
    ! in the envelope equation (A^{n-1},A^n)==> (A^n,A^{n+1})
@@ -321,9 +321,9 @@
    else
     call env_fields_average(env, jc, 2, 2)
    end if
-   ! In jc(1)= Phi= |A|^2/2 +|A_1|/2 at t^{n+1/2} 
+   ! In jc(1)= Phi= |A|^2/2 +|A_1|/2 at t^{n+1/2}
    if (hybrid) then
-    flux(:, :, :, curr_ndim+2) = jc(:, :, :, 1)
+    flux(:, :, :, curr_ndim + 2) = jc(:, :, :, 1)
     !stores in flux()
    end if
    call set_env_grad_interp(jc, spec(ic), ebfp, np, curr_ndim)
@@ -362,8 +362,8 @@
   !=============== END ENV PIC SECTION
   subroutine env_run(t_loc, iter_loc)
 
-   real (dp), intent (in) :: t_loc
-   integer, intent (in) :: iter_loc
+   real(dp), intent(in) :: t_loc
+   integer, intent(in) :: iter_loc
 
    !=========================
    call env_lpf2_evolve(iter_loc)
@@ -372,10 +372,10 @@
    !for vbeam >0 uses the xw=(x+vbeam*t)
    !x=xi=(xw-vbeam*t) fixed
    !+++++++++++++++++++++++++++++++++
-   if (w_speed>0.0) then ! moves the computational box with w_speed>0.
+   if (w_speed > 0.0) then ! moves the computational box with w_speed>0.
     if (t_loc >= wi_time) then
      if (t_loc < wf_time) then
-      if (mod(iter_loc,w_sh) == 0) then
+      if (mod(iter_loc, w_sh) == 0) then
        call lp_window_xshift(w_sh, iter_loc)
       end if
      end if
@@ -384,7 +384,7 @@
    if (comoving) then
     if (t_loc >= wi_time) then
      if (t_loc < wf_time) then
-      if (mod(iter_loc,w_sh)==0) then
+      if (mod(iter_loc, w_sh) == 0) then
        call comoving_coordinate(vbeam, w_sh, iter_loc)
       end if
      end if

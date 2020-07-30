@@ -32,7 +32,7 @@
 
   integer :: np_max, pe_npmax, np_min, pe_npmin
   integer :: mype, imodx, imody, imodz, npe, npe_yloc, npe_zloc, &
-    npe_xloc
+             npe_xloc
   integer :: npe_yz, mpi_size, mpi_rank
   integer :: partype
   integer :: imodzx, imodyz, imodyx
