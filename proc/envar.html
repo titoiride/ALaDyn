@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="A High-Accuracy PIC Code for the Maxwell-Vlasov Equations">
+    
+    <meta name="author" content="The ALaDyn Collaboration" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>Envar &ndash; ALaDyn</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">ALaDyn <small>3.0.1</small></a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li><a href='../page/index.html'>Guide</a></li>
+      
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/aladyn.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/aladyn.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>Envar
+      <small>Subroutine</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 0.1% of total for procedures.">201 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/diag_part_and_fields.f90"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+     <li><a href='../sourcefile/diag_part_and_fields.f90.html'>diag_part_and_fields.f90</a></li>
+    
+     <li><a href='../module/diag_part_and_fields.html'>diag_part_and_fields</a></li>
+    
+  
+     <li class="active">Envar</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<em>None</em>
+
+
+</div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    <h2>
+public subroutine Envar(nst)
+    
+    
+   
+</h2>
+    
+  
+
+
+    
+
+    <h3>Arguments</h3>
+    
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-nst~4"></span>integer,</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>nst</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+    
+    
+    
+    <br>
+    
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Calls</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: proc~~envar~~CallsGraph Pages: 1 -->
+<svg id="procenvarCallsGraph" width="595pt" height="179pt"
+ viewBox="0.00 0.00 595.00 179.49" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="proc~~envar~~CallsGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 175.4904)">
+<title>proc~~envar~~CallsGraph</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-175.4904 591,-175.4904 591,4 -4,4"/>
+<!-- proc~envar -->
+<g id="proc~~envar~~CallsGraph_node1" class="node">
+<title>proc~envar</title>
+<polygon fill="none" stroke="#000000" points="54,-106 0,-106 0,-82 54,-82 54,-106"/>
+<text text-anchor="middle" x="27" y="-91.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">Envar</text>
+</g>
+<!-- proc~allreduce_dpreal -->
+<g id="proc~~envar~~CallsGraph_node2" class="node">
+<title>proc~allreduce_dpreal</title>
+<g id="a_proc~~envar~~CallsGraph_node2"><a xlink:href=".././proc/allreduce_dpreal.html" xlink:title="allreduce_dpreal">
+<polygon fill="#d9534f" stroke="#d9534f" points="463,-105 360,-105 360,-81 463,-81 463,-105"/>
+<text text-anchor="middle" x="411.5" y="-90.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">allreduce_dpreal</text>
+</a>
+</g>
+</g>
+<!-- proc~envar&#45;&gt;proc~allreduce_dpreal -->
+<g id="proc~~envar~~CallsGraph_edge1" class="edge">
+<title>proc~envar&#45;&gt;proc~allreduce_dpreal</title>
+<path fill="none" stroke="#ff0000" d="M47.1821,-106.0147C59.2896,-112.853 75.1708,-121.187 90,-127 187.5671,-165.2464 224.2641,-188.1695 324,-156 350.6391,-147.4077 376.0113,-127.3586 392.5079,-112.1683"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="395.0279,-114.6018 399.8599,-105.173 390.2027,-109.5306 395.0279,-114.6018"/>
+</g>
+<!-- loc_npart -->
+<g id="proc~~envar~~CallsGraph_node3" class="node">
+<title>loc_npart</title>
+<polygon fill="#777777" stroke="#777777" points="291.5,-105 229.5,-105 229.5,-81 291.5,-81 291.5,-105"/>
+<text text-anchor="middle" x="260.5" y="-90.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">loc_npart</text>
+</g>
+<!-- proc~envar&#45;&gt;loc_npart -->
+<g id="proc~~envar~~CallsGraph_edge2" class="edge">
+<title>proc~envar&#45;&gt;loc_npart</title>
+<path fill="none" stroke="#ff0000" d="M54.2424,-93.8833C94.8416,-93.7095 171.5303,-93.381 219.0943,-93.1773"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="219.3733,-96.6763 229.3582,-93.1334 219.3432,-89.6763 219.3733,-96.6763"/>
+</g>
+<!-- proc~envelope_struct_data -->
+<g id="proc~~envar~~CallsGraph_node4" class="node">
+<title>proc~envelope_struct_data</title>
+<g id="a_proc~~envar~~CallsGraph_node4"><a xlink:href=".././proc/envelope_struct_data.html" xlink:title="envelope_struct_data">
+<polygon fill="#d9534f" stroke="#d9534f" points="324,-147 197,-147 197,-123 324,-123 324,-147"/>
+<text text-anchor="middle" x="260.5" y="-132.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">envelope_struct_data</text>
+</a>
+</g>
+</g>
+<!-- proc~envar&#45;&gt;proc~envelope_struct_data -->
+<g id="proc~~envar~~CallsGraph_edge3" class="edge">
+<title>proc~envar&#45;&gt;proc~envelope_struct_data</title>
+<path fill="none" stroke="#ff0000" d="M54.2412,-99.8737C65.3165,-102.1957 78.2501,-104.8238 90,-107 121.6674,-112.865 156.7616,-118.7354 186.8383,-123.5751"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="186.4061,-127.0504 196.8337,-125.1754 187.5128,-120.1384 186.4061,-127.0504"/>
+</g>
+<!-- proc~enb_bunch -->
+<g id="proc~~envar~~CallsGraph_node5" class="node">
+<title>proc~enb_bunch</title>
+<g id="a_proc~~envar~~CallsGraph_node5"><a xlink:href=".././proc/enb_bunch.html" xlink:title="enb_bunch">
+<polygon fill="#d9534f" stroke="#d9534f" points="161,-66 90,-66 90,-42 161,-42 161,-66"/>
+<text text-anchor="middle" x="125.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">enb_bunch</text>
+</a>
+</g>
+</g>
+<!-- proc~envar&#45;&gt;proc~enb_bunch -->
+<g id="proc~~envar~~CallsGraph_edge4" class="edge">
+<title>proc~envar&#45;&gt;proc~enb_bunch</title>
+<path fill="none" stroke="#ff0000" d="M54.1763,-82.9639C64.0294,-78.9627 75.3688,-74.3579 86.0644,-70.0144"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="87.6967,-73.1293 95.6449,-66.1239 85.0629,-66.6436 87.6967,-73.1293"/>
+</g>
+<!-- mass -->
+<g id="proc~~envar~~CallsGraph_node6" class="node">
+<title>mass</title>
+<polygon fill="#777777" stroke="#777777" points="152.5,-24 98.5,-24 98.5,0 152.5,0 152.5,-24"/>
+<text text-anchor="middle" x="125.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">mass</text>
+</g>
+<!-- proc~envar&#45;&gt;mass -->
+<g id="proc~~envar~~CallsGraph_edge5" class="edge">
+<title>proc~envar&#45;&gt;mass</title>
+<path fill="none" stroke="#ff0000" d="M37.8702,-81.8957C49.8772,-68.9196 70.1495,-48.1446 90,-33 91.5371,-31.8273 93.1449,-30.6683 94.7914,-29.5333"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="96.6959,-32.4698 103.1975,-24.1043 92.8982,-26.5895 96.6959,-32.4698"/>
+</g>
+<!-- mpi_allreduce -->
+<g id="proc~~envar~~CallsGraph_node8" class="node">
+<title>mpi_allreduce</title>
+<polygon fill="#777777" stroke="#777777" points="587,-105 499,-105 499,-81 587,-81 587,-105"/>
+<text text-anchor="middle" x="543" y="-90.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">mpi_allreduce</text>
+</g>
+<!-- proc~allreduce_dpreal&#45;&gt;mpi_allreduce -->
+<g id="proc~~envar~~CallsGraph_edge6" class="edge">
+<title>proc~allreduce_dpreal&#45;&gt;mpi_allreduce</title>
+<path fill="none" stroke="#ff0000" d="M463.0949,-93C471.4843,-93 480.1964,-93 488.6493,-93"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="488.7923,-96.5001 498.7922,-93 488.7922,-89.5001 488.7923,-96.5001"/>
+</g>
+<!-- proc~envelope_struct_data&#45;&gt;proc~allreduce_dpreal -->
+<g id="proc~~envar~~CallsGraph_edge7" class="edge">
+<title>proc~envelope_struct_data&#45;&gt;proc~allreduce_dpreal</title>
+<path fill="none" stroke="#00ff66" d="M303.7705,-122.9645C320.8299,-118.2195 340.5919,-112.7228 358.4963,-107.7427"/>
+<polygon fill="#00ff66" stroke="#00ff66" points="359.5268,-111.0891 368.2231,-105.0373 357.6509,-104.3451 359.5268,-111.0891"/>
+</g>
+<!-- proc~enb_bunch&#45;&gt;proc~allreduce_dpreal -->
+<g id="proc~~envar~~CallsGraph_edge10" class="edge">
+<title>proc~enb_bunch&#45;&gt;proc~allreduce_dpreal</title>
+<path fill="none" stroke="#0066ff" d="M154.5248,-41.8786C167.3086,-37.1664 182.656,-32.3432 197,-30 252.7061,-20.9002 270.2808,-12.673 324,-30 350.6391,-38.5923 376.0113,-58.6414 392.5079,-73.8317"/>
+<polygon fill="#0066ff" stroke="#0066ff" points="390.2027,-76.4694 399.8599,-80.827 395.0279,-71.3982 390.2027,-76.4694"/>
+</g>
+<!-- proc~enb_bunch&#45;&gt;loc_npart -->
+<g id="proc~~envar~~CallsGraph_edge9" class="edge">
+<title>proc~enb_bunch&#45;&gt;loc_npart</title>
+<path fill="none" stroke="#0066ff" d="M161.3231,-64.3489C179.2008,-69.5136 200.9127,-75.7859 219.4586,-81.1436"/>
+<polygon fill="#0066ff" stroke="#0066ff" points="218.532,-84.519 229.1106,-83.932 220.4749,-77.794 218.532,-84.519"/>
+</g>
+<!-- proc~bunch_corr -->
+<g id="proc~~envar~~CallsGraph_node7" class="node">
+<title>proc~bunch_corr</title>
+<g id="a_proc~~envar~~CallsGraph_node7"><a xlink:href=".././proc/bunch_corr.html" xlink:title="bunch_corr">
+<polygon fill="#d9534f" stroke="#d9534f" points="297,-63 224,-63 224,-39 297,-39 297,-63"/>
+<text text-anchor="middle" x="260.5" y="-48.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">bunch_corr</text>
+</a>
+</g>
+</g>
+<!-- proc~enb_bunch&#45;&gt;proc~bunch_corr -->
+<g id="proc~~envar~~CallsGraph_edge8" class="edge">
+<title>proc~enb_bunch&#45;&gt;proc~bunch_corr</title>
+<path fill="none" stroke="#0066ff" d="M161.3231,-53.2039C177.2364,-52.8503 196.1875,-52.4292 213.2396,-52.0502"/>
+<polygon fill="#0066ff" stroke="#0066ff" points="213.6477,-55.5421 223.5674,-51.8207 213.4921,-48.5438 213.6477,-55.5421"/>
+</g>
+<!-- proc~bunch_corr&#45;&gt;proc~allreduce_dpreal -->
+<g id="proc~~envar~~CallsGraph_edge11" class="edge">
+<title>proc~bunch_corr&#45;&gt;proc~allreduce_dpreal</title>
+<path fill="none" stroke="#ff0000" d="M297.0529,-61.167C315.505,-66.2994 338.2313,-72.6206 358.5561,-78.2739"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="357.7394,-81.6795 368.3116,-80.9873 359.6152,-74.9355 357.7394,-81.6795"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="599pt" height="32pt"
+ viewBox="0.00 0.00 598.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-28 594.5,-28 594.5,4 -4,4"/>
+<!-- Subroutine -->
+<g id="node1" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="71,-24 0,-24 0,0 71,0 71,-24"/>
+<text text-anchor="middle" x="35.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node2" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="147.5,-24 89.5,-24 89.5,0 147.5,0 147.5,-24"/>
+<text text-anchor="middle" x="118.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Function</text>
+</g>
+<!-- Interface -->
+<g id="node3" class="node">
+<title>Interface</title>
+<polygon fill="#a7506f" stroke="#a7506f" points="227,-24 166,-24 166,0 227,0 227,-24"/>
+<text text-anchor="middle" x="196.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Interface</text>
+</g>
+<!-- Unknown Procedure Type -->
+<g id="node4" class="node">
+<title>Unknown Procedure Type</title>
+<polygon fill="#777777" stroke="#777777" points="392,-24 245,-24 245,0 392,0 392,-24"/>
+<text text-anchor="middle" x="318.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Unknown Procedure Type</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="468.5,-24 410.5,-24 410.5,0 468.5,0 468.5,-24"/>
+<text text-anchor="middle" x="439.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="#000000" points="590.5,-24 486.5,-24 486.5,0 590.5,0 590.5,-24"/>
+<text text-anchor="middle" x="538.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a procedure to one which it calls. Dashed 
+    arrows point from an interface to procedures which implement that interface.
+    This could include the module procedures in a generic interface or the
+    implementation in a submodule of an interface in a parent module. Where possible, edges connecting nodes are given different colours to make them easier to distinguish in large graphs.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+     
+     
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Called by</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: proc~~envar~~CalledByGraph Pages: 1 -->
+<svg id="procenvarCalledByGraph" width="348pt" height="74pt"
+ viewBox="0.00 0.00 348.00 74.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="proc~~envar~~CalledByGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 70)">
+<title>proc~~envar~~CalledByGraph</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-70 344,-70 344,4 -4,4"/>
+<!-- proc~envar -->
+<g id="proc~~envar~~CalledByGraph_node1" class="node">
+<title>proc~envar</title>
+<polygon fill="none" stroke="#000000" points="340,-45 286,-45 286,-21 340,-21 340,-45"/>
+<text text-anchor="middle" x="313" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">Envar</text>
+</g>
+<!-- proc~data_out -->
+<g id="proc~~envar~~CalledByGraph_node2" class="node">
+<title>proc~data_out</title>
+<g id="a_proc~~envar~~CalledByGraph_node2"><a xlink:href=".././proc/data_out.html" xlink:title="data_out">
+<polygon fill="#d9534f" stroke="#d9534f" points="250,-45 191,-45 191,-21 250,-21 250,-45"/>
+<text text-anchor="middle" x="220.5" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">data_out</text>
+</a>
+</g>
+</g>
+<!-- proc~data_out&#45;&gt;proc~envar -->
+<g id="proc~~envar~~CalledByGraph_edge1" class="edge">
+<title>proc~data_out&#45;&gt;proc~envar</title>
+<path fill="none" stroke="#ff0000" d="M250.0219,-33C258.2163,-33 267.2204,-33 275.7932,-33"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="275.9528,-36.5001 285.9527,-33 275.9527,-29.5001 275.9528,-36.5001"/>
+</g>
+<!-- proc~lp_cycle -->
+<g id="proc~~envar~~CalledByGraph_node3" class="node">
+<title>proc~lp_cycle</title>
+<g id="a_proc~~envar~~CalledByGraph_node3"><a xlink:href=".././proc/lp_cycle.html" xlink:title="Lp_cycle">
+<polygon fill="#d9534f" stroke="#d9534f" points="151.5,-66 93.5,-66 93.5,-42 151.5,-42 151.5,-66"/>
+<text text-anchor="middle" x="122.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Lp_cycle</text>
+</a>
+</g>
+</g>
+<!-- proc~lp_cycle&#45;&gt;proc~data_out -->
+<g id="proc~~envar~~CalledByGraph_edge2" class="edge">
+<title>proc~lp_cycle&#45;&gt;proc~data_out</title>
+<path fill="none" stroke="#ff0000" d="M151.6379,-47.7562C160.8504,-45.782 171.1905,-43.5663 181.0021,-41.4638"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="181.9213,-44.8464 190.9659,-39.3287 180.4545,-38.0018 181.9213,-44.8464"/>
+</g>
+<!-- proc~env_cycle -->
+<g id="proc~~envar~~CalledByGraph_node4" class="node">
+<title>proc~env_cycle</title>
+<g id="a_proc~~envar~~CalledByGraph_node4"><a xlink:href=".././proc/env_cycle.html" xlink:title="Env_cycle">
+<polygon fill="#d9534f" stroke="#d9534f" points="155,-24 90,-24 90,0 155,0 155,-24"/>
+<text text-anchor="middle" x="122.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Env_cycle</text>
+</a>
+</g>
+</g>
+<!-- proc~env_cycle&#45;&gt;proc~data_out -->
+<g id="proc~~envar~~CalledByGraph_edge3" class="edge">
+<title>proc~env_cycle&#45;&gt;proc~data_out</title>
+<path fill="none" stroke="#ff0000" d="M155.1326,-18.9927C163.4568,-20.7765 172.493,-22.7128 181.1156,-24.5605"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="180.4691,-28.0013 190.9805,-26.6744 181.9358,-21.1567 180.4691,-28.0013"/>
+</g>
+<!-- program~aladyn -->
+<g id="proc~~envar~~CalledByGraph_node5" class="node">
+<title>program~aladyn</title>
+<g id="a_proc~~envar~~CalledByGraph_node5"><a xlink:href=".././program/aladyn.html" xlink:title="aladyn">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="54,-45 0,-45 0,-21 54,-21 54,-45"/>
+<text text-anchor="middle" x="27" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">aladyn</text>
+</a>
+</g>
+</g>
+<!-- program~aladyn&#45;&gt;proc~lp_cycle -->
+<g id="proc~~envar~~CalledByGraph_edge4" class="edge">
+<title>program~aladyn&#45;&gt;proc~lp_cycle</title>
+<path fill="none" stroke="#ff0000" d="M54.111,-38.9616C63.1969,-40.9595 73.5174,-43.229 83.3369,-45.3882"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="82.7974,-48.8531 93.3157,-47.5825 84.3008,-42.0165 82.7974,-48.8531"/>
+</g>
+<!-- program~aladyn&#45;&gt;proc~env_cycle -->
+<g id="proc~~envar~~CalledByGraph_edge5" class="edge">
+<title>program~aladyn&#45;&gt;proc~env_cycle</title>
+<path fill="none" stroke="#00ffff" d="M54.111,-27.0384C62.2043,-25.2587 71.2772,-23.2637 80.103,-21.3229"/>
+<polygon fill="#00ffff" stroke="#00ffff" points="80.8823,-24.7352 89.8973,-19.1692 79.3789,-17.8986 80.8823,-24.7352"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="599pt" height="32pt"
+ viewBox="0.00 0.00 598.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-28 594.5,-28 594.5,4 -4,4"/>
+<!-- Subroutine -->
+<g id="node1" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="71,-24 0,-24 0,0 71,0 71,-24"/>
+<text text-anchor="middle" x="35.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node2" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="147.5,-24 89.5,-24 89.5,0 147.5,0 147.5,-24"/>
+<text text-anchor="middle" x="118.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Function</text>
+</g>
+<!-- Interface -->
+<g id="node3" class="node">
+<title>Interface</title>
+<polygon fill="#a7506f" stroke="#a7506f" points="227,-24 166,-24 166,0 227,0 227,-24"/>
+<text text-anchor="middle" x="196.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Interface</text>
+</g>
+<!-- Unknown Procedure Type -->
+<g id="node4" class="node">
+<title>Unknown Procedure Type</title>
+<polygon fill="#777777" stroke="#777777" points="392,-24 245,-24 245,0 392,0 392,-24"/>
+<text text-anchor="middle" x="318.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Unknown Procedure Type</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="468.5,-24 410.5,-24 410.5,0 468.5,0 468.5,-24"/>
+<text text-anchor="middle" x="439.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="#000000" points="590.5,-24 486.5,-24 486.5,0 590.5,0 590.5,-24"/>
+<text text-anchor="middle" x="538.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a procedure to one which it calls. Dashed 
+    arrows point from an interface to procedures which implement that interface.
+    This could include the module procedures in a generic interface or the
+    implementation in a submodule of an interface in a parent module. Where possible, edges connecting nodes are given different colours to make them easier to distinguish in large graphs.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+     
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<em>None</em>
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    
+
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+
+
+    
+    
+    
+    
+    </div>
+  </div>
+
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2020 <a rel="license" href="http://www.gnu.org/licenses/old-licenses/fdl-1.2.en.html">GNU Free Documentation License</a>
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+             on 2020-07-30 
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> ALaDyn was developed by The ALaDyn Collaboration</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

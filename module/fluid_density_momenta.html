@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="A High-Accuracy PIC Code for the Maxwell-Vlasov Equations">
+    
+    <meta name="author" content="The ALaDyn Collaboration" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>fluid_density_momenta &ndash; ALaDyn</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">ALaDyn <small>3.0.1</small></a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li><a href='../page/index.html'>Guide</a></li>
+      
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/aladyn.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/aladyn.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>fluid_density_momenta 
+    <small>Module</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 0.9% of total for modules and submodules.">231 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/fluid_density_momenta.f90"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+     <li><a href='../sourcefile/fluid_density_momenta.f90.html'>fluid_density_momenta.f90</a></li>
+    
+  
+     <li class="active">fluid_density_momenta</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-0">Subroutines</a></h3></div>
+  <div class="list-group">
+    <div id="subs-0" class="panel-collapse collapse">
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-fluid_curr_accumulate">fluid_curr_accumulate</a>
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-set_env_momentum_density_flux">set_env_momentum_density_flux</a>
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-set_momentum_density_flux">set_momentum_density_flux</a>
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-update_adam_bash_fluid_variables">update_adam_bash_fluid_variables</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+</div>
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+    
+      <br>
+    
+  
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Uses</h3>
+      </div>
+      <ul class="list-group">
+      
+      <li class="list-group-item">
+  <ul class="list-inline">
+    
+    <li><a href='../module/mpi_field_interface.html'>mpi_field_interface</a></li>
+    
+    <li><a href='../module/grid_fields.html'>grid_fields</a></li>
+    
+  </ul>
+      </li>
+      
+      
+      
+      <li class="list-group-item">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: module~~fluid_density_momenta~~UsesGraph Pages: 1 -->
+<svg id="modulefluid_density_momentaUsesGraph" width="641pt" height="224pt"
+ viewBox="0.00 0.00 641.00 223.79" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~fluid_density_momenta~~UsesGraph" class="graph" transform="scale(.7993 .7993) rotate(0) translate(4 276)">
+<title>module~~fluid_density_momenta~~UsesGraph</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-276 798,-276 798,4 -4,4"/>
+<!-- module~fluid_density_momenta -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node1" class="node">
+<title>module~fluid_density_momenta</title>
+<polygon fill="none" stroke="#000000" points="794,-150 658,-150 658,-126 794,-126 794,-150"/>
+<text text-anchor="middle" x="726" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">fluid_density_momenta</text>
+</g>
+<!-- module~mpi_field_interface -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node2" class="node">
+<title>module~mpi_field_interface</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node2"><a xlink:href=".././module/mpi_field_interface.html" xlink:title="mpi_field_interface">
+<polygon fill="#337ab7" stroke="#337ab7" points="622,-171 507,-171 507,-147 622,-147 622,-171"/>
+<text text-anchor="middle" x="564.5" y="-156.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">mpi_field_interface</text>
+</a>
+</g>
+</g>
+<!-- module~fluid_density_momenta&#45;&gt;module~mpi_field_interface -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge1" class="edge">
+<title>module~fluid_density_momenta&#45;&gt;module~mpi_field_interface</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M657.9775,-146.845C649.52,-147.9448 640.8715,-149.0693 632.4156,-150.1689"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="631.6878,-146.7339 622.2227,-151.4943 632.5905,-153.6755 631.6878,-146.7339"/>
+</g>
+<!-- module~grid_fields -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node3" class="node">
+<title>module~grid_fields</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node3"><a xlink:href=".././module/grid_fields.html" xlink:title="grid_fields">
+<polygon fill="#337ab7" stroke="#337ab7" points="598,-129 531,-129 531,-105 598,-105 598,-129"/>
+<text text-anchor="middle" x="564.5" y="-114.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">grid_fields</text>
+</a>
+</g>
+</g>
+<!-- module~fluid_density_momenta&#45;&gt;module~grid_fields -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge2" class="edge">
+<title>module~fluid_density_momenta&#45;&gt;module~grid_fields</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M657.9775,-129.155C641.1676,-126.9692 623.6028,-124.6852 608.2966,-122.6949"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="608.4656,-119.1875 598.0978,-121.3687 607.5629,-126.1291 608.4656,-119.1875"/>
+</g>
+<!-- module~grid_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node4" class="node">
+<title>module~grid_param</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node4"><a xlink:href=".././module/grid_param.html" xlink:title="grid_param">
+<polygon fill="#337ab7" stroke="#337ab7" points="319,-272 245,-272 245,-248 319,-248 319,-272"/>
+<text text-anchor="middle" x="282" y="-257.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">grid_param</text>
+</a>
+</g>
+</g>
+<!-- module~mpi_field_interface&#45;&gt;module~grid_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge5" class="edge">
+<title>module~mpi_field_interface&#45;&gt;module~grid_param</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M419.5,-220C388.1665,-226.3225 353.623,-236.384 326.9976,-244.834"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="325.653,-241.5898 317.2041,-247.9825 327.7955,-248.2539 325.653,-241.5898"/>
+</g>
+<!-- module~fstruct_data -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node5" class="node">
+<title>module~fstruct_data</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node5"><a xlink:href=".././module/fstruct_data.html" xlink:title="fstruct_data">
+<polygon fill="#337ab7" stroke="#337ab7" points="196,-232 120,-232 120,-208 196,-208 196,-232"/>
+<text text-anchor="middle" x="158" y="-217.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">fstruct_data</text>
+</a>
+</g>
+</g>
+<!-- module~mpi_field_interface&#45;&gt;module~fstruct_data -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge6" class="edge">
+<title>module~mpi_field_interface&#45;&gt;module~fstruct_data</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M419.5,-220C346.2797,-234.7744 259.1607,-230.5578 206.253,-225.6585"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="206.4338,-222.1596 196.1419,-224.6749 205.756,-229.1267 206.4338,-222.1596"/>
+</g>
+<!-- module~parallel -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node6" class="node">
+<title>module~parallel</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node6"><a xlink:href=".././module/parallel.html" xlink:title="parallel">
+<polygon fill="#337ab7" stroke="#337ab7" points="446.5,-108 392.5,-108 392.5,-84 446.5,-84 446.5,-108"/>
+<text text-anchor="middle" x="419.5" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">parallel</text>
+</a>
+</g>
+</g>
+<!-- module~mpi_field_interface&#45;&gt;module~parallel -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge4" class="edge">
+<title>module~mpi_field_interface&#45;&gt;module~parallel</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M528.5154,-146.9758C521.2939,-144.2518 513.8297,-141.208 507,-138 490.2341,-130.125 487.6173,-125.184 471,-117 466.2493,-114.6603 461.1705,-112.3593 456.1222,-110.1877"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="457.1228,-106.8129 446.546,-106.1952 454.4291,-113.2739 457.1228,-106.8129"/>
+</g>
+<!-- module~pstruct_data -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node7" class="node">
+<title>module~pstruct_data</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node7"><a xlink:href=".././module/pstruct_data.html" xlink:title="pstruct_data">
+<polygon fill="#337ab7" stroke="#337ab7" points="321.5,-192 242.5,-192 242.5,-168 321.5,-168 321.5,-192"/>
+<text text-anchor="middle" x="282" y="-177.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">pstruct_data</text>
+</a>
+</g>
+</g>
+<!-- module~mpi_field_interface&#45;&gt;module~pstruct_data -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge3" class="edge">
+<title>module~mpi_field_interface&#45;&gt;module~pstruct_data</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M543.2625,-171.1316C515.7502,-186.0827 465.8138,-210.6548 419.5,-220"/>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M419.5,-220C400.7021,-223.7931 354.6265,-208.4884 320.9762,-195.726"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="322.0022,-192.3705 311.4124,-192.0417 319.4857,-198.9026 322.0022,-192.3705"/>
+</g>
+<!-- module~grid_fields&#45;&gt;module~parallel -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge7" class="edge">
+<title>module~grid_fields&#45;&gt;module~parallel</title>
+<path fill="none" stroke="#00ffff" stroke-dasharray="5,2" d="M530.8696,-112.1294C508.6694,-108.9142 479.5656,-104.6991 456.6774,-101.3843"/>
+<polygon fill="#00ffff" stroke="#00ffff" points="457.0442,-97.901 446.6458,-99.9315 456.0408,-104.8287 457.0442,-97.901"/>
+</g>
+<!-- module~grid_field_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node8" class="node">
+<title>module~grid_field_param</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node8"><a xlink:href=".././module/grid_field_param.html" xlink:title="grid_field_param">
+<polygon fill="#337ab7" stroke="#337ab7" points="471,-150 368,-150 368,-126 471,-126 471,-150"/>
+<text text-anchor="middle" x="419.5" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">grid_field_param</text>
+</a>
+</g>
+</g>
+<!-- module~grid_fields&#45;&gt;module~grid_field_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge8" class="edge">
+<title>module~grid_fields&#45;&gt;module~grid_field_param</title>
+<path fill="none" stroke="#00ffff" stroke-dasharray="5,2" d="M530.8696,-121.8706C516.0433,-124.0179 498.1379,-126.6111 481.0612,-129.0842"/>
+<polygon fill="#00ffff" stroke="#00ffff" points="480.5271,-125.625 471.132,-130.5223 481.5305,-132.5527 480.5271,-125.625"/>
+</g>
+<!-- module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node9" class="node">
+<title>module~precision_def</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node9"><a xlink:href=".././module/precision_def.html" xlink:title="precision_def">
+<polygon fill="#337ab7" stroke="#337ab7" points="84,-190 0,-190 0,-166 84,-166 84,-190"/>
+<text text-anchor="middle" x="42" y="-175.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">precision_def</text>
+</a>
+</g>
+</g>
+<!-- module~grid_param&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge10" class="edge">
+<title>module~grid_param&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M244.8145,-261.4064C210.9858,-261.3692 160.3299,-257.9601 120,-241 96.7133,-231.2072 74.762,-212.2711 60.1157,-197.7054"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="62.2488,-194.8785 52.7683,-190.1487 57.2301,-199.7583 62.2488,-194.8785"/>
+</g>
+<!-- module~struct_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node14" class="node">
+<title>module~struct_def</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node14"><a xlink:href=".././module/struct_def.html" xlink:title="struct_def">
+<polygon fill="#337ab7" stroke="#337ab7" points="190.5,-190 125.5,-190 125.5,-166 190.5,-166 190.5,-190"/>
+<text text-anchor="middle" x="158" y="-175.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">struct_def</text>
+</a>
+</g>
+</g>
+<!-- module~grid_param&#45;&gt;module~struct_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge9" class="edge">
+<title>module~grid_param&#45;&gt;module~struct_def</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M266.2003,-247.982C249.2223,-235.262 221.2655,-214.8719 196,-199 193.8778,-197.6668 191.6658,-196.3257 189.4231,-195.0011"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="191.1629,-191.9642 180.7467,-190.0268 187.6812,-198.0369 191.1629,-191.9642"/>
+</g>
+<!-- module~fstruct_data&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge11" class="edge">
+<title>module~fstruct_data&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#cbff00" stroke-dasharray="5,2" d="M124.7591,-207.9645C112.3819,-203.4831 98.1529,-198.3312 85.0231,-193.5773"/>
+<polygon fill="#cbff00" stroke="#cbff00" points="85.84,-190.1508 75.2458,-190.0373 83.4569,-196.7327 85.84,-190.1508"/>
+</g>
+<!-- module~common_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node10" class="node">
+<title>module~common_param</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node10"><a xlink:href=".././module/common_param.html" xlink:title="common_param">
+<polygon fill="#337ab7" stroke="#337ab7" points="332,-150 232,-150 232,-126 332,-126 332,-150"/>
+<text text-anchor="middle" x="282" y="-135.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">common_param</text>
+</a>
+</g>
+</g>
+<!-- module~parallel&#45;&gt;module~common_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge13" class="edge">
+<title>module~parallel&#45;&gt;module~common_param</title>
+<path fill="none" stroke="#00ff66" stroke-dasharray="5,2" d="M392.3344,-104.2978C374.8352,-109.6431 351.5783,-116.747 330.9297,-123.0542"/>
+<polygon fill="#00ff66" stroke="#00ff66" points="329.8901,-119.712 321.3488,-125.9807 331.935,-126.4067 329.8901,-119.712"/>
+</g>
+<!-- mpi -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node11" class="node">
+<title>mpi</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node11"><a xlink:href="http://www.mpi-forum.org/docs/mpi-3.1/mpi31-report/node410.htm" xlink:title="mpi">
+<polygon fill="#337ab7" stroke="#337ab7" points="309,-24 255,-24 255,0 309,0 309,-24"/>
+<text text-anchor="middle" x="282" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">mpi</text>
+</a>
+</g>
+</g>
+<!-- module~parallel&#45;&gt;mpi -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge15" class="edge">
+<title>module~parallel&#45;&gt;mpi</title>
+<path fill="none" stroke="#00ff66" stroke-dasharray="5,2" d="M405.0142,-83.9926C388.1968,-70.4364 359.2698,-48.2832 332,-33 327.7574,-30.6223 323.1911,-28.349 318.6046,-26.235"/>
+<polygon fill="#00ff66" stroke="#00ff66" points="319.8226,-22.9474 309.2588,-22.1367 317.0113,-29.3581 319.8226,-22.9474"/>
+</g>
+<!-- module~mpi_var -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node12" class="node">
+<title>module~mpi_var</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node12"><a xlink:href=".././module/mpi_var.html" xlink:title="mpi_var">
+<polygon fill="#337ab7" stroke="#337ab7" points="309.5,-108 254.5,-108 254.5,-84 309.5,-84 309.5,-108"/>
+<text text-anchor="middle" x="282" y="-93.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">mpi_var</text>
+</a>
+</g>
+</g>
+<!-- module~parallel&#45;&gt;module~mpi_var -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge14" class="edge">
+<title>module~parallel&#45;&gt;module~mpi_var</title>
+<path fill="none" stroke="#00ff66" stroke-dasharray="5,2" d="M392.3344,-96C371.5661,-96 342.688,-96 319.685,-96"/>
+<polygon fill="#00ff66" stroke="#00ff66" points="319.5798,-92.5001 309.5798,-96 319.5797,-99.5001 319.5798,-92.5001"/>
+</g>
+<!-- module~util -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node13" class="node">
+<title>module~util</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node13"><a xlink:href=".././module/util.html" xlink:title="util">
+<polygon fill="#337ab7" stroke="#337ab7" points="309,-66 255,-66 255,-42 309,-42 309,-66"/>
+<text text-anchor="middle" x="282" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">util</text>
+</a>
+</g>
+</g>
+<!-- module~parallel&#45;&gt;module~util -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge12" class="edge">
+<title>module~parallel&#45;&gt;module~util</title>
+<path fill="none" stroke="#00ff66" stroke-dasharray="5,2" d="M392.3344,-87.7022C371.3362,-81.2881 342.0476,-72.3418 318.9233,-65.2784"/>
+<polygon fill="#00ff66" stroke="#00ff66" points="319.6954,-61.8547 309.1091,-62.2806 317.6505,-68.5493 319.6954,-61.8547"/>
+</g>
+<!-- module~pstruct_data&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge17" class="edge">
+<title>module~pstruct_data&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#0066ff" stroke-dasharray="5,2" d="M251.9942,-167.9219C218.3643,-154.6896 167.3047,-135.625 158,-138"/>
+</g>
+<!-- module~pstruct_data&#45;&gt;module~struct_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge16" class="edge">
+<title>module~pstruct_data&#45;&gt;module~struct_def</title>
+<path fill="none" stroke="#0066ff" stroke-dasharray="5,2" d="M242.4247,-179.3617C229.0952,-179.1467 214.1676,-178.9059 200.6142,-178.6873"/>
+<polygon fill="#0066ff" stroke="#0066ff" points="200.6221,-175.1871 190.5669,-178.5253 200.5091,-182.1862 200.6221,-175.1871"/>
+</g>
+<!-- module~grid_field_param&#45;&gt;module~grid_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge20" class="edge">
+<title>module~grid_field_param&#45;&gt;module~grid_param</title>
+<path fill="none" stroke="#cc00ff" stroke-dasharray="5,2" d="M405.8133,-150.1439C381.8252,-171.4278 332.0266,-215.6127 303.4337,-240.9825"/>
+<polygon fill="#cc00ff" stroke="#cc00ff" points="300.7886,-238.6503 295.6314,-247.9053 305.4344,-243.8864 300.7886,-238.6503"/>
+</g>
+<!-- module~grid_field_param&#45;&gt;module~common_param -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge18" class="edge">
+<title>module~grid_field_param&#45;&gt;module~common_param</title>
+<path fill="none" stroke="#cc00ff" stroke-dasharray="5,2" d="M367.9089,-138C359.5658,-138 350.8625,-138 342.3346,-138"/>
+<polygon fill="#cc00ff" stroke="#cc00ff" points="342.0555,-134.5001 332.0555,-138 342.0554,-141.5001 342.0555,-134.5001"/>
+</g>
+<!-- module~grid_field_param&#45;&gt;module~mpi_var -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge19" class="edge">
+<title>module~grid_field_param&#45;&gt;module~mpi_var</title>
+<path fill="none" stroke="#cc00ff" stroke-dasharray="5,2" d="M380.098,-125.9645C360.994,-120.1291 338.1679,-113.1567 319.3433,-107.4067"/>
+<polygon fill="#cc00ff" stroke="#cc00ff" points="320.2125,-104.0126 309.6262,-104.4386 318.1675,-110.7073 320.2125,-104.0126"/>
+</g>
+<!-- module~common_param&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge21" class="edge">
+<title>module~common_param&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#ffff00" stroke-dasharray="5,2" d="M231.8178,-132.3976C208.9697,-131.2665 181.7793,-131.9304 158,-138"/>
+</g>
+<!-- module~mpi_var&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge22" class="edge">
+<title>module~mpi_var&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#00ffff" stroke-dasharray="5,2" d="M254.2969,-106.7491C229.4061,-116.0771 191.6953,-129.3994 158,-138"/>
+</g>
+<!-- module~util&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge24" class="edge">
+<title>module~util&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#0000ff" stroke-dasharray="5,2" d="M254.7805,-63.6533C247.1707,-66.8212 239.0571,-70.6591 232,-75 195.2093,-97.6302 199.8517,-127.3175 158,-138"/>
+<path fill="none" stroke="#0000ff" stroke-dasharray="5,2" d="M158,-138C132.2885,-144.5628 104.1338,-154.2095 82.0011,-162.3852"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="80.7378,-159.1208 72.5985,-165.9033 83.1909,-165.6769 80.7378,-159.1208"/>
+</g>
+<!-- module~code_util -->
+<g id="module~~fluid_density_momenta~~UsesGraph_node15" class="node">
+<title>module~code_util</title>
+<g id="a_module~~fluid_density_momenta~~UsesGraph_node15"><a xlink:href=".././module/code_util.html" xlink:title="code_util">
+<polygon fill="#337ab7" stroke="#337ab7" points="188.5,-88 127.5,-88 127.5,-64 188.5,-64 188.5,-88"/>
+<text text-anchor="middle" x="158" y="-73.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">code_util</text>
+</a>
+</g>
+</g>
+<!-- module~util&#45;&gt;module~code_util -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge23" class="edge">
+<title>module~util&#45;&gt;module~code_util</title>
+<path fill="none" stroke="#0000ff" stroke-dasharray="5,2" d="M254.7877,-58.828C238.3059,-61.7522 216.9747,-65.5367 198.5339,-68.8085"/>
+<polygon fill="#0000ff" stroke="#0000ff" points="197.8703,-65.3715 188.6355,-70.5647 199.0932,-72.2639 197.8703,-65.3715"/>
+</g>
+<!-- module~struct_def&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge25" class="edge">
+<title>module~struct_def&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#ff00ff" stroke-dasharray="5,2" d="M125.3788,-178C115.7302,-178 104.9144,-178 94.3509,-178"/>
+<polygon fill="#ff00ff" stroke="#ff00ff" points="94.3467,-174.5001 84.3467,-178 94.3466,-181.5001 94.3467,-174.5001"/>
+</g>
+<!-- module~code_util&#45;&gt;module~precision_def -->
+<g id="module~~fluid_density_momenta~~UsesGraph_edge26" class="edge">
+<title>module~code_util&#45;&gt;module~precision_def</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M144.2378,-88.1013C124.2671,-105.6617 87.0691,-138.3703 63.4728,-159.1187"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="60.9429,-156.6827 55.7443,-165.9145 65.5653,-161.9395 60.9429,-156.6827"/>
+</g>
+</g>
+</svg>
+</div><script>var panmodulefluid_density_momentaUsesGraph = svgPanZoom('#modulefluid_density_momentaUsesGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="517pt" height="32pt"
+ viewBox="0.00 0.00 517.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-28 513,-28 513,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node">
+<title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,0 54,0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node">
+<title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="145.5,-24 72.5,-24 72.5,0 145.5,0 145.5,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="234.5,-24 163.5,-24 163.5,0 234.5,0 234.5,-24"/>
+<text text-anchor="middle" x="199" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="311,-24 253,-24 253,0 311,0 311,-24"/>
+<text text-anchor="middle" x="282" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="387,-24 329,-24 329,0 387,0 387,-24"/>
+<text text-anchor="middle" x="358" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="#000000" points="509,-24 405,-24 405,0 509,0 509,-24"/>
+<text text-anchor="middle" x="457" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses. Where possible, edges connecting nodes are given different colours to make them easier to distinguish in large graphs.
+    </p>
+    </div></div></div></div>
+      </li>
+      
+      </ul>
+    </div>
+    
+
+    
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Used by</h3>
+      </div>
+      <ul class="list-group">
+  
+  
+  <li class="list-group-item">
+    <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: module~~fluid_density_momenta~~UsedByGraph Pages: 1 -->
+<svg id="modulefluid_density_momentaUsedByGraph" width="343pt" height="74pt"
+ viewBox="0.00 0.00 343.00 74.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~fluid_density_momenta~~UsedByGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 70)">
+<title>module~~fluid_density_momenta~~UsedByGraph</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-70 339,-70 339,4 -4,4"/>
+<!-- module~fluid_density_momenta -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_node1" class="node">
+<title>module~fluid_density_momenta</title>
+<polygon fill="none" stroke="#000000" points="136,-45 0,-45 0,-21 136,-21 136,-45"/>
+<text text-anchor="middle" x="68" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">fluid_density_momenta</text>
+</g>
+<!-- module~pic_evolve -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_node2" class="node">
+<title>module~pic_evolve</title>
+<g id="a_module~~fluid_density_momenta~~UsedByGraph_node2"><a xlink:href=".././module/pic_evolve.html" xlink:title="pic_evolve">
+<polygon fill="#337ab7" stroke="#337ab7" points="243,-66 174,-66 174,-42 243,-42 243,-66"/>
+<text text-anchor="middle" x="208.5" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">pic_evolve</text>
+</a>
+</g>
+</g>
+<!-- module~pic_evolve&#45;&gt;module~fluid_density_momenta -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_edge1" class="edge">
+<title>module~pic_evolve&#45;&gt;module~fluid_density_momenta</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M173.7697,-48.809C165.2657,-47.5379 155.8194,-46.126 146.1713,-44.684"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="146.4824,-41.1917 136.0748,-43.1749 145.4476,-48.1148 146.4824,-41.1917"/>
+</g>
+<!-- module~env_evolve -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_node3" class="node">
+<title>module~env_evolve</title>
+<g id="a_module~~fluid_density_momenta~~UsedByGraph_node3"><a xlink:href=".././module/env_evolve.html" xlink:title="env_evolve">
+<polygon fill="#337ab7" stroke="#337ab7" points="245,-24 172,-24 172,0 245,0 245,-24"/>
+<text text-anchor="middle" x="208.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">env_evolve</text>
+</a>
+</g>
+</g>
+<!-- module~env_evolve&#45;&gt;module~fluid_density_momenta -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_edge2" class="edge">
+<title>module~env_evolve&#45;&gt;module~fluid_density_momenta</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M171.9521,-17.4627C163.9769,-18.6547 155.2423,-19.9602 146.332,-21.292"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="145.601,-17.8623 136.2283,-22.8022 146.6359,-24.7854 145.601,-17.8623"/>
+</g>
+<!-- program~aladyn -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_node4" class="node">
+<title>program~aladyn</title>
+<g id="a_module~~fluid_density_momenta~~UsedByGraph_node4"><a xlink:href=".././program/aladyn.html" xlink:title="aladyn">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="335,-45 281,-45 281,-21 335,-21 335,-45"/>
+<text text-anchor="middle" x="308" y="-30.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">aladyn</text>
+</a>
+</g>
+</g>
+<!-- program~aladyn&#45;&gt;module~pic_evolve -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_edge3" class="edge">
+<title>program~aladyn&#45;&gt;module~pic_evolve</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M280.8112,-38.7383C272.2756,-40.5398 262.6159,-42.5786 253.2,-44.5658"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="252.2048,-41.1987 243.1431,-46.6884 253.6504,-48.0478 252.2048,-41.1987"/>
+</g>
+<!-- program~aladyn&#45;&gt;module~env_evolve -->
+<g id="module~~fluid_density_momenta~~UsedByGraph_edge4" class="edge">
+<title>program~aladyn&#45;&gt;module~env_evolve</title>
+<path fill="none" stroke="#00ffff" stroke-dasharray="5,2" d="M280.8112,-27.2617C272.8681,-25.5852 263.9515,-23.7033 255.1638,-21.8486"/>
+<polygon fill="#00ffff" stroke="#00ffff" points="255.863,-18.4192 245.3557,-19.7786 254.4174,-25.2683 255.863,-18.4192"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="517pt" height="32pt"
+ viewBox="0.00 0.00 517.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-28 513,-28 513,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node">
+<title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,0 54,0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node">
+<title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="145.5,-24 72.5,-24 72.5,0 145.5,0 145.5,-24"/>
+<text text-anchor="middle" x="109" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node">
+<title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="234.5,-24 163.5,-24 163.5,0 234.5,0 234.5,-24"/>
+<text text-anchor="middle" x="199" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node">
+<title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="311,-24 253,-24 253,0 311,0 311,-24"/>
+<text text-anchor="middle" x="282" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node">
+<title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="387,-24 329,-24 329,0 387,0 387,-24"/>
+<text text-anchor="middle" x="358" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="#000000" points="509,-24 405,-24 405,0 509,0 509,-24"/>
+<text text-anchor="middle" x="457" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a submodule to the (sub)module which it is
+    descended from. Dashed arrows point from a module or program unit to 
+    modules which it uses. Where possible, edges connecting nodes are given different colours to make them easier to distinguish in large graphs.
+    </p>
+    </div></div></div></div>
+  </li>
+  
+      </ul>
+    </div>
+    
+
+    <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#subs-1">Subroutines</a></h3></div>
+  <div class="list-group">
+    <div id="subs-1" class="panel-collapse collapse">
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-fluid_curr_accumulate">fluid_curr_accumulate</a>
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-set_env_momentum_density_flux">set_env_momentum_density_flux</a>
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-set_momentum_density_flux">set_momentum_density_flux</a>
+      
+      <a class="list-group-item" href="../module/fluid_density_momenta.html#proc-update_adam_bash_fluid_variables">update_adam_bash_fluid_variables</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    
+
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+
+    
+    <section>
+    <h2>Subroutines</h2>
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-fluid_curr_accumulate"></span><h3>
+public subroutine <a href='../proc/fluid_curr_accumulate.html'>fluid_curr_accumulate</a>(flx, curr)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>flx</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>curr</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-set_env_momentum_density_flux"></span><h3>
+public subroutine <a href='../proc/set_env_momentum_density_flux.html'>set_env_momentum_density_flux</a>(uv, ef, curr, eb_tot, flx)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>uv</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>ef</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>curr</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(out)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>eb_tot</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(out)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>flx</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-set_momentum_density_flux"></span><h3>
+public subroutine <a href='../proc/set_momentum_density_flux.html'>set_momentum_density_flux</a>(uv, flx)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(in)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>uv</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>flx</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    
+  <div class="panel panel-default">
+  <div class="panel-heading codesum"><span class="anchor" id="proc-update_adam_bash_fluid_variables"></span><h3>
+public subroutine <a href='../proc/update_adam_bash_fluid_variables.html'>update_adam_bash_fluid_variables</a>(u, u0, flx, ef)
+    
+    
+   
+</h3></div>
+  <div class="panel-body">
+       
+    
+    
+    <h4>Arguments</h4>
+    
+      
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>u</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>u0</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>flx</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" ></span>real(kind=dp),</td>
+  <td>intent(inout)</td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>ef</strong>(:,:,:,:)</td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+      
+    
+    
+
+  </div>
+  </div>
+
+    
+    </section>    
+    <br>
+    
+    
+    
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2020 <a rel="license" href="http://www.gnu.org/licenses/old-licenses/fdl-1.2.en.html">GNU Free Documentation License</a>
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+             on 2020-07-30 
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> ALaDyn was developed by The ALaDyn Collaboration</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>

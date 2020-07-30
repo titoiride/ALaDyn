@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+   <meta name="description" content="A High-Accuracy PIC Code for the Maxwell-Vlasov Equations">
+    
+    <meta name="author" content="The ALaDyn Collaboration" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>phys_param.f90 &ndash; ALaDyn</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">ALaDyn <small>3.0.1</small></a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+        
+            <li><a href='../page/index.html'>Guide</a></li>
+      
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+     aria-expanded="false">Contents <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+        
+        
+        
+            <li><a href="../lists/modules.html">Modules</a></li>
+        
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+        
+               
+            <li><a href="../lists/types.html">Derived Types</a></li>
+        
+        
+            <li><a href="../program/aladyn.html">Program</a></li>
+      
+            </ul>
+            </li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/aladyn.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>phys_param.f90
+    <small>Source File</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+    data-placement="bottom" data-html="true"
+    title=" 0.1% of total for source files.">22 statements</a>
+     </li> 
+     
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/phys_param.f90"> Source File</a></li>
+     
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+    
+  
+     <li class="active">phys_param.f90</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-0">Modules</a></h3></div>
+  <div id="mods-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/phys_param.html">phys_param</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/phys_param.f90.html#src">phys_param.f90</a>
+  </div>
+</div>
+
+
+
+</div>
+
+    </div>
+    <div class="col-md-9" id='text'>
+      
+      <br>
+    
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">This file depends on</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: sourcefile~~phys_param.f90~~EfferentGraph Pages: 1 -->
+<svg id="sourcefilephys_paramf90EfferentGraph" width="248pt" height="32pt"
+ viewBox="0.00 0.00 248.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~phys_param.f90~~EfferentGraph" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>sourcefile~~phys_param.f90~~EfferentGraph</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-28 244,-28 244,4 -4,4"/>
+<!-- sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~EfferentGraph_node1" class="node">
+<title>sourcefile~phys_param.f90</title>
+<polygon fill="none" stroke="#000000" points="240,-24 142,-24 142,0 240,0 240,-24"/>
+<text text-anchor="middle" x="191" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">phys_param.f90</text>
+</g>
+<!-- sourcefile~precision_def.f90 -->
+<g id="sourcefile~~phys_param.f90~~EfferentGraph_node2" class="node">
+<title>sourcefile~precision_def.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~EfferentGraph_node2"><a xlink:href=".././sourcefile/precision_def.f90.html" xlink:title="precision_def.F90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="106,-24 0,-24 0,0 106,0 106,-24"/>
+<text text-anchor="middle" x="53" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">precision_def.F90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~phys_param.f90&#45;&gt;sourcefile~precision_def.f90 -->
+<g id="sourcefile~~phys_param.f90~~EfferentGraph_edge1" class="edge">
+<title>sourcefile~phys_param.f90&#45;&gt;sourcefile~precision_def.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M141.9578,-12C133.6055,-12 124.8262,-12 116.1702,-12"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="116.0985,-8.5001 106.0984,-12 116.0984,-15.5001 116.0985,-8.5001"/>
+</g>
+</g>
+</svg>
+</div><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="202pt" height="32pt"
+ viewBox="0.00 0.00 201.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-28 197.5,-28 197.5,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node">
+<title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="71,-24 0,-24 0,0 71,0 71,-24"/>
+<text text-anchor="middle" x="35.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="#000000" points="193.5,-24 89.5,-24 89.5,0 193.5,0 193.5,-24"/>
+<text text-anchor="middle" x="141.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be. Where possible, edges connecting nodes are given different colours to make them easier to distinguish in large graphs.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+    
+      
+    <div class="panel panel-default">
+      <div class="panel-heading">
+  <h3 class="panel-title">Files dependent on this one</h3>
+      </div>
+      <div class="panel-body">
+  <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: sourcefile~~phys_param.f90~~AfferentGraph Pages: 1 -->
+<svg id="sourcefilephys_paramf90AfferentGraph" width="641pt" height="247pt"
+ viewBox="0.00 0.00 641.00 247.29" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="sourcefile~~phys_param.f90~~AfferentGraph" class="graph" transform="scale(.6907 .6907) rotate(0) translate(4 354.0045)">
+<title>sourcefile~~phys_param.f90~~AfferentGraph</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-354.0045 924,-354.0045 924,4 -4,4"/>
+<!-- sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node1" class="node">
+<title>sourcefile~phys_param.f90</title>
+<polygon fill="none" stroke="#000000" points="98,-184 0,-184 0,-160 98,-160 98,-184"/>
+<text text-anchor="middle" x="49" y="-169.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">phys_param.f90</text>
+</g>
+<!-- sourcefile~diag_part_and_fields.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node2" class="node">
+<title>sourcefile~diag_part_and_fields.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node2"><a xlink:href=".././sourcefile/diag_part_and_fields.f90.html" xlink:title="diag_part_and_fields.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="276,-344 134,-344 134,-320 276,-320 276,-344"/>
+<text text-anchor="middle" x="205" y="-329.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">diag_part_and_fields.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~diag_part_and_fields.f90&#45;&gt;sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge1" class="edge">
+<title>sourcefile~diag_part_and_fields.f90&#45;&gt;sourcefile~phys_param.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M158.3536,-319.8995C149.7055,-316.322 141.1549,-311.7655 134,-306 96.0055,-275.3836 69.8976,-222.9894 57.4155,-193.6073"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="60.6083,-192.1682 53.5716,-184.2476 54.1331,-194.8276 60.6083,-192.1682"/>
+</g>
+<!-- sourcefile~run_data_info.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node3" class="node">
+<title>sourcefile~run_data_info.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node3"><a xlink:href=".././sourcefile/run_data_info.f90.html" xlink:title="run_data_info.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="440.5,-146 334.5,-146 334.5,-122 440.5,-122 440.5,-146"/>
+<text text-anchor="middle" x="387.5" y="-131.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">run_data_info.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~run_data_info.f90&#45;&gt;sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge2" class="edge">
+<title>sourcefile~run_data_info.f90&#45;&gt;sourcefile~phys_param.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M334.237,-139.9793C272.8617,-146.8693 172.2777,-158.1608 108.416,-165.33"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="107.652,-161.8937 98.1049,-166.4875 108.433,-168.85 107.652,-161.8937"/>
+</g>
+<!-- sourcefile~pic_out_util.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node4" class="node">
+<title>sourcefile~pic_out_util.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node4"><a xlink:href=".././sourcefile/pic_out_util.f90.html" xlink:title="pic_out_util.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="613.5,-304 520.5,-304 520.5,-280 613.5,-280 613.5,-304"/>
+<text text-anchor="middle" x="567" y="-289.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">pic_out_util.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~pic_out_util.f90&#45;&gt;sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge3" class="edge">
+<title>sourcefile~pic_out_util.f90&#45;&gt;sourcefile~phys_param.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M520.487,-299.8633C450.5152,-309.9531 314.6837,-322.7425 205,-292"/>
+</g>
+<!-- sourcefile~set_init_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node5" class="node">
+<title>sourcefile~set_init_param.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node5"><a xlink:href=".././sourcefile/set_init_param.f90.html" xlink:title="set_init_param.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="443,-24 332,-24 332,0 443,0 443,-24"/>
+<text text-anchor="middle" x="387.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">set_init_param.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~set_init_param.f90&#45;&gt;sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge4" class="edge">
+<title>sourcefile~set_init_param.f90&#45;&gt;sourcefile~phys_param.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M331.9998,-11.621C277.7185,-13.6782 194.6073,-23.4977 134,-61 98.6504,-82.8734 72.5556,-125.1601 59.154,-150.757"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="55.8793,-149.4773 54.4961,-159.9814 62.1279,-152.6325 55.8793,-149.4773"/>
+</g>
+<!-- sourcefile~init_grid_fields.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node6" class="node">
+<title>sourcefile~init_grid_fields.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node6"><a xlink:href=".././sourcefile/init_grid_fields.f90.html" xlink:title="init_grid_fields.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="259.5,-214 150.5,-214 150.5,-190 259.5,-190 259.5,-214"/>
+<text text-anchor="middle" x="205" y="-199.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">init_grid_fields.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~init_grid_fields.f90&#45;&gt;sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge5" class="edge">
+<title>sourcefile~init_grid_fields.f90&#45;&gt;sourcefile~phys_param.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M150.4388,-191.5075C136.7225,-188.8697 121.9402,-186.027 108.0171,-183.3495"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="108.5394,-179.8858 98.0583,-181.4343 107.2174,-186.7599 108.5394,-179.8858"/>
+</g>
+<!-- sourcefile~init_beam_part_distrib.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node7" class="node">
+<title>sourcefile~init_beam_part_distrib.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node7"><a xlink:href=".././sourcefile/init_beam_part_distrib.f90.html" xlink:title="init_beam_part_distrib.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="463,-264 312,-264 312,-240 463,-240 463,-264"/>
+<text text-anchor="middle" x="387.5" y="-249.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">init_beam_part_distrib.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~init_beam_part_distrib.f90&#45;&gt;sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge6" class="edge">
+<title>sourcefile~init_beam_part_distrib.f90&#45;&gt;sourcefile~phys_param.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M351.6855,-264.0271C306.7177,-278.4 232.1723,-299.6159 205,-292"/>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M205,-292C144.8523,-275.1416 91.0559,-221.1662 65.2124,-191.6821"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="67.8488,-189.3798 58.6824,-184.0667 62.5348,-193.9364 67.8488,-189.3798"/>
+</g>
+<!-- sourcefile~init_beam_part_distrib.f90&#45;&gt;sourcefile~init_grid_fields.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge16" class="edge">
+<title>sourcefile~init_beam_part_distrib.f90&#45;&gt;sourcefile~init_grid_fields.f90</title>
+<path fill="none" stroke="#0091ff" stroke-dasharray="5,2" d="M343.3218,-239.8964C317.8606,-232.9207 285.6662,-224.1003 258.7448,-216.7246"/>
+<polygon fill="#0091ff" stroke="#0091ff" points="259.6567,-213.3455 249.0872,-214.0787 257.807,-220.0967 259.6567,-213.3455"/>
+</g>
+<!-- sourcefile~init_part_distrib.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node8" class="node">
+<title>sourcefile~init_part_distrib.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node8"><a xlink:href=".././sourcefile/init_part_distrib.f90.html" xlink:title="init_part_distrib.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="262.5,-94 147.5,-94 147.5,-70 262.5,-70 262.5,-94"/>
+<text text-anchor="middle" x="205" y="-79.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">init_part_distrib.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~init_part_distrib.f90&#45;&gt;sourcefile~phys_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge7" class="edge">
+<title>sourcefile~init_part_distrib.f90&#45;&gt;sourcefile~phys_param.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M183.9611,-94.1378C156.9034,-109.748 109.738,-136.9588 78.9446,-154.7243"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="76.8669,-151.8822 69.9541,-159.9111 80.365,-157.9455 76.8669,-151.8822"/>
+</g>
+<!-- sourcefile~pic_in.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node9" class="node">
+<title>sourcefile~pic_in.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node9"><a xlink:href=".././sourcefile/pic_in.f90.html" xlink:title="pic_in.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="599,-64 535,-64 535,-40 599,-40 599,-64"/>
+<text text-anchor="middle" x="567" y="-49.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">pic_in.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~pic_in.f90&#45;&gt;sourcefile~init_part_distrib.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge19" class="edge">
+<title>sourcefile~pic_in.f90&#45;&gt;sourcefile~init_part_distrib.f90</title>
+<path fill="none" stroke="#ff00da" stroke-dasharray="5,2" d="M534.7731,-54.11C486.3703,-57.3451 392.0385,-63.9055 312,-71 299.3772,-72.1189 285.9281,-73.4175 272.9776,-74.7219"/>
+<polygon fill="#ff00da" stroke="#ff00da" points="272.3177,-71.2709 262.7238,-75.766 273.0269,-78.2349 272.3177,-71.2709"/>
+</g>
+<!-- sourcefile~init_laser_field.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node12" class="node">
+<title>sourcefile~init_laser_field.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node12"><a xlink:href=".././sourcefile/init_laser_field.f90.html" xlink:title="init_laser_field.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="442,-104 333,-104 333,-80 442,-80 442,-104"/>
+<text text-anchor="middle" x="387.5" y="-89.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">init_laser_field.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~pic_in.f90&#45;&gt;sourcefile~init_laser_field.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge24" class="edge">
+<title>sourcefile~pic_in.f90&#45;&gt;sourcefile~init_laser_field.f90</title>
+<path fill="none" stroke="#00ff91" stroke-dasharray="5,2" d="M534.909,-59.1512C511.7262,-64.3173 479.6427,-71.4668 451.3254,-77.7771"/>
+<polygon fill="#00ff91" stroke="#00ff91" points="450.4864,-74.3781 441.4871,-79.9694 452.009,-81.2105 450.4864,-74.3781"/>
+</g>
+<!-- sourcefile~curr_and_fields_util.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node10" class="node">
+<title>sourcefile~curr_and_fields_util.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node10"><a xlink:href=".././sourcefile/curr_and_fields_util.f90.html" xlink:title="curr_and_fields_util.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="635,-186 499,-186 499,-162 635,-162 635,-186"/>
+<text text-anchor="middle" x="567" y="-171.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">curr_and_fields_util.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~curr_and_fields_util.f90&#45;&gt;sourcefile~init_grid_fields.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge15" class="edge">
+<title>sourcefile~curr_and_fields_util.f90&#45;&gt;sourcefile~init_grid_fields.f90</title>
+<path fill="none" stroke="#0091ff" stroke-dasharray="5,2" d="M530.0039,-186.0444C494.0405,-196.744 437.657,-210.8661 387.5,-212"/>
+<path fill="none" stroke="#0091ff" stroke-dasharray="5,2" d="M387.5,-212C348.3767,-212.8844 304.5942,-210.596 269.7212,-207.9864"/>
+<polygon fill="#0091ff" stroke="#0091ff" points="269.9082,-204.4905 259.6675,-207.2069 269.367,-211.4695 269.9082,-204.4905"/>
+</g>
+<!-- sourcefile~pic_evolve_in_time.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node11" class="node">
+<title>sourcefile~pic_evolve_in_time.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node11"><a xlink:href=".././sourcefile/pic_evolve_in_time.f90.html" xlink:title="pic_evolve_in_time.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="806,-186 673,-186 673,-162 806,-162 806,-186"/>
+<text text-anchor="middle" x="739.5" y="-171.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">pic_evolve_in_time.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~pic_evolve_in_time.f90&#45;&gt;sourcefile~init_grid_fields.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge17" class="edge">
+<title>sourcefile~pic_evolve_in_time.f90&#45;&gt;sourcefile~init_grid_fields.f90</title>
+<path fill="none" stroke="#0091ff" stroke-dasharray="5,2" d="M686.5627,-186.024C670.1151,-189.3856 651.8733,-192.7348 635,-195 525.7211,-209.6702 497.731,-209.5081 387.5,-212"/>
+</g>
+<!-- sourcefile~pic_evolve_in_time.f90&#45;&gt;sourcefile~curr_and_fields_util.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge21" class="edge">
+<title>sourcefile~pic_evolve_in_time.f90&#45;&gt;sourcefile~curr_and_fields_util.f90</title>
+<path fill="none" stroke="#ffda00" stroke-dasharray="5,2" d="M672.807,-174C663.8521,-174 654.6004,-174 645.466,-174"/>
+<polygon fill="#ffda00" stroke="#ffda00" points="645.225,-170.5001 635.2249,-174 645.2249,-177.5001 645.225,-170.5001"/>
+</g>
+<!-- sourcefile~window.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node13" class="node">
+<title>sourcefile~window.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node13"><a xlink:href=".././sourcefile/window.f90.html" xlink:title="window.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="603,-144 531,-144 531,-120 603,-120 603,-144"/>
+<text text-anchor="middle" x="567" y="-129.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">window.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~pic_evolve_in_time.f90&#45;&gt;sourcefile~window.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge25" class="edge">
+<title>sourcefile~pic_evolve_in_time.f90&#45;&gt;sourcefile~window.f90</title>
+<path fill="none" stroke="#0091ff" stroke-dasharray="5,2" d="M690.0684,-161.9645C665.764,-156.0469 636.6576,-148.9601 612.854,-143.1645"/>
+<polygon fill="#0091ff" stroke="#0091ff" points="613.5508,-139.7319 603.0066,-140.7668 611.8947,-146.5332 613.5508,-139.7319"/>
+</g>
+<!-- sourcefile~init_laser_field.f90&#45;&gt;sourcefile~init_grid_fields.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge14" class="edge">
+<title>sourcefile~init_laser_field.f90&#45;&gt;sourcefile~init_grid_fields.f90</title>
+<path fill="none" stroke="#0091ff" stroke-dasharray="5,2" d="M333.216,-104.0867C325.8936,-106.578 318.6284,-109.5276 312,-113 277.2327,-131.2132 243.5065,-162.146 223.4982,-182.3238"/>
+<polygon fill="#0091ff" stroke="#0091ff" points="220.7511,-180.1281 216.285,-189.7357 225.7677,-185.0102 220.7511,-180.1281"/>
+</g>
+<!-- sourcefile~window.f90&#45;&gt;sourcefile~run_data_info.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge10" class="edge">
+<title>sourcefile~window.f90&#45;&gt;sourcefile~run_data_info.f90</title>
+<path fill="none" stroke="#ffda00" stroke-dasharray="5,2" d="M530.6755,-132.4047C507.7845,-132.6598 477.6031,-132.9961 450.8551,-133.2941"/>
+<polygon fill="#ffda00" stroke="#ffda00" points="450.7544,-129.7949 440.7941,-133.4062 450.8325,-136.7945 450.7544,-129.7949"/>
+</g>
+<!-- sourcefile~start_all.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node14" class="node">
+<title>sourcefile~start_all.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node14"><a xlink:href=".././sourcefile/start_all.f90.html" xlink:title="start_all.F90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="778,-64 701,-64 701,-40 778,-40 778,-64"/>
+<text text-anchor="middle" x="739.5" y="-49.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">start_all.F90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~start_all.f90&#45;&gt;sourcefile~run_data_info.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge9" class="edge">
+<title>sourcefile~start_all.f90&#45;&gt;sourcefile~run_data_info.f90</title>
+<path fill="none" stroke="#ffda00" stroke-dasharray="5,2" d="M700.7004,-62.2912C665.9025,-71.2105 613.3369,-83.9201 567,-92"/>
+<path fill="none" stroke="#ffda00" stroke-dasharray="5,2" d="M567,-92C524.9597,-99.3307 478.0171,-110.419 442.6838,-119.3619"/>
+<polygon fill="#ffda00" stroke="#ffda00" points="441.3994,-116.0774 432.5755,-121.9418 443.1305,-122.86 441.3994,-116.0774"/>
+</g>
+<!-- sourcefile~start_all.f90&#45;&gt;sourcefile~set_init_param.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge13" class="edge">
+<title>sourcefile~start_all.f90&#45;&gt;sourcefile~set_init_param.f90</title>
+<path fill="none" stroke="#00ff91" stroke-dasharray="5,2" d="M700.982,-43.0933C681.3328,-38.8474 656.9966,-34.043 635,-31 573.6964,-22.5193 503.2878,-17.5744 453.2802,-14.8671"/>
+<polygon fill="#00ff91" stroke="#00ff91" points="453.4149,-11.3695 443.2448,-14.339 453.047,-18.3598 453.4149,-11.3695"/>
+</g>
+<!-- sourcefile~start_all.f90&#45;&gt;sourcefile~pic_in.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge20" class="edge">
+<title>sourcefile~start_all.f90&#45;&gt;sourcefile~pic_in.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M700.7876,-52C673.6587,-52 637.4048,-52 609.4798,-52"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="609.2215,-48.5001 599.2215,-52 609.2214,-55.5001 609.2215,-48.5001"/>
+</g>
+<!-- sourcefile~aladyn.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node15" class="node">
+<title>sourcefile~aladyn.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node15"><a xlink:href=".././sourcefile/aladyn.f90.html" xlink:title="ALaDyn.F90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="920,-144 844,-144 844,-120 920,-120 920,-144"/>
+<text text-anchor="middle" x="882" y="-129.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">ALaDyn.F90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~aladyn.f90&#45;&gt;sourcefile~diag_part_and_fields.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge8" class="edge">
+<title>sourcefile~aladyn.f90&#45;&gt;sourcefile~diag_part_and_fields.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M739.5,-292C591.4055,-360.4909 395.4274,-353.9235 286.6369,-342.9864"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="286.6948,-339.4735 276.3855,-341.9167 285.9682,-346.4357 286.6948,-339.4735"/>
+</g>
+<!-- sourcefile~aladyn.f90&#45;&gt;sourcefile~run_data_info.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge11" class="edge">
+<title>sourcefile~aladyn.f90&#45;&gt;sourcefile~run_data_info.f90</title>
+<path fill="none" stroke="#ffda00" stroke-dasharray="5,2" d="M844.0097,-119.8699C784.6444,-102.5568 666.3822,-74.6704 567,-92"/>
+</g>
+<!-- sourcefile~aladyn.f90&#45;&gt;sourcefile~pic_out_util.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge12" class="edge">
+<title>sourcefile~aladyn.f90&#45;&gt;sourcefile~pic_out_util.f90</title>
+<path fill="none" stroke="#48ff00" stroke-dasharray="5,2" d="M739.5,-292C703.4376,-308.1734 658.7135,-307.6714 623.842,-303.3888"/>
+<polygon fill="#48ff00" stroke="#48ff00" points="624.2023,-299.9056 613.8211,-302.0224 623.2565,-306.8414 624.2023,-299.9056"/>
+</g>
+<!-- sourcefile~aladyn.f90&#45;&gt;sourcefile~init_beam_part_distrib.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge18" class="edge">
+<title>sourcefile~aladyn.f90&#45;&gt;sourcefile~init_beam_part_distrib.f90</title>
+<path fill="none" stroke="#4800ff" stroke-dasharray="5,2" d="M875.817,-144.3379C859.0833,-176.1478 809.4172,-260.6432 739.5,-292"/>
+<path fill="none" stroke="#4800ff" stroke-dasharray="5,2" d="M739.5,-292C696.2751,-311.3857 681.9261,-277.4917 635,-271 581.3966,-263.5846 520.8318,-258.8724 473.0314,-255.9958"/>
+<polygon fill="#4800ff" stroke="#4800ff" points="473.2199,-252.5009 463.0321,-255.4095 472.8101,-259.4889 473.2199,-252.5009"/>
+</g>
+<!-- sourcefile~aladyn.f90&#45;&gt;sourcefile~pic_evolve_in_time.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge23" class="edge">
+<title>sourcefile~aladyn.f90&#45;&gt;sourcefile~pic_evolve_in_time.f90</title>
+<path fill="none" stroke="#48ff00" stroke-dasharray="5,2" d="M843.8126,-143.2552C827.2573,-148.1347 807.6419,-153.9161 789.9136,-159.1413"/>
+<polygon fill="#48ff00" stroke="#48ff00" points="788.8926,-155.7932 780.2901,-161.9777 790.8716,-162.5077 788.8926,-155.7932"/>
+</g>
+<!-- sourcefile~aladyn.f90&#45;&gt;sourcefile~start_all.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge27" class="edge">
+<title>sourcefile~aladyn.f90&#45;&gt;sourcefile~start_all.f90</title>
+<path fill="none" stroke="#4800ff" stroke-dasharray="5,2" d="M867.7547,-119.8058C853.3947,-107.9607 830.2332,-90.0476 808,-78 801.08,-74.2502 793.5035,-70.7942 785.992,-67.709"/>
+<polygon fill="#4800ff" stroke="#4800ff" points="787.1539,-64.4051 776.5666,-64.0052 784.5937,-70.9202 787.1539,-64.4051"/>
+</g>
+<!-- sourcefile~env_evolve_in_time.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_node16" class="node">
+<title>sourcefile~env_evolve_in_time.f90</title>
+<g id="a_sourcefile~~phys_param.f90~~AfferentGraph_node16"><a xlink:href=".././sourcefile/env_evolve_in_time.f90.html" xlink:title="env_evolve_in_time.f90">
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="808,-144 671,-144 671,-120 808,-120 808,-144"/>
+<text text-anchor="middle" x="739.5" y="-129.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">env_evolve_in_time.f90</text>
+</a>
+</g>
+</g>
+<!-- sourcefile~aladyn.f90&#45;&gt;sourcefile~env_evolve_in_time.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge28" class="edge">
+<title>sourcefile~aladyn.f90&#45;&gt;sourcefile~env_evolve_in_time.f90</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M843.8126,-132C835.7861,-132 827.0404,-132 818.1391,-132"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="818.0533,-128.5001 808.0533,-132 818.0532,-135.5001 818.0533,-128.5001"/>
+</g>
+<!-- sourcefile~env_evolve_in_time.f90&#45;&gt;sourcefile~curr_and_fields_util.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge22" class="edge">
+<title>sourcefile~env_evolve_in_time.f90&#45;&gt;sourcefile~curr_and_fields_util.f90</title>
+<path fill="none" stroke="#ffda00" stroke-dasharray="5,2" d="M690.0684,-144.0355C670.2192,-148.8684 647.1671,-154.4811 626.4165,-159.5334"/>
+<polygon fill="#ffda00" stroke="#ffda00" points="625.3269,-156.1963 616.4388,-161.9627 626.983,-162.9976 625.3269,-156.1963"/>
+</g>
+<!-- sourcefile~env_evolve_in_time.f90&#45;&gt;sourcefile~window.f90 -->
+<g id="sourcefile~~phys_param.f90~~AfferentGraph_edge26" class="edge">
+<title>sourcefile~env_evolve_in_time.f90&#45;&gt;sourcefile~window.f90</title>
+<path fill="none" stroke="#0091ff" stroke-dasharray="5,2" d="M670.8278,-132C651.5069,-132 630.9571,-132 613.2823,-132"/>
+<polygon fill="#0091ff" stroke="#0091ff" points="613.2389,-128.5001 603.2389,-132 613.2388,-135.5001 613.2389,-128.5001"/>
+</g>
+</g>
+</svg>
+</div><script>var pansourcefilephys_paramf90AfferentGraph = svgPanZoom('#sourcefilephys_paramf90AfferentGraph', {zoomEnabled: true,controlIconsEnabled: true, fit: true, center: true,}); </script><div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div><div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="-graph-help-label">Graph Key</h4></div><div class="modal-body">
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.40.1 (20161225.0304)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="202pt" height="32pt"
+ viewBox="0.00 0.00 201.50 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-28 197.5,-28 197.5,4 -4,4"/>
+<!-- Source File -->
+<g id="node1" class="node">
+<title>Source File</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="71,-24 0,-24 0,0 71,0 71,-24"/>
+<text text-anchor="middle" x="35.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#ffffff">Source File</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node2" class="node">
+<title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="#000000" points="193.5,-24 89.5,-24 89.5,0 193.5,0 193.5,-24"/>
+<text text-anchor="middle" x="141.5" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="#000000">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a file to a file which it depends on. A file
+    is dependent upon another if the latter must be compiled before the former
+    can be. Where possible, edges connecting nodes are given different colours to make them easier to distinguish in large graphs.
+    </p>
+    </div></div></div></div>
+      </div>
+    </div>
+      
+      <br>
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+<h3>Contents</h3>
+ 
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#mods-1">Modules</a></h3></div>
+  <div id="mods-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/phys_param.html">phys_param</a>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="panel panel-primary">
+  <div class="panel-heading text-left"><h3 class="panel-title">Source Code</h3></div>
+  <div class="list-group">
+    <a class="list-group-item" href="../sourcefile/phys_param.f90.html#src">phys_param.f90</a>
+  </div>
+</div>
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    <section>
+      <h2><span class="anchor" id="src"></span>Source Code</h2>
+    <div class="hl"><pre><span></span><a name="ln-1"></a><span class="c">!*****************************************************************************************************!</span>
+<a name="ln-2"></a><span class="c">!                            Copyright 2008-2020  The ALaDyn Collaboration                            !</span>
+<a name="ln-3"></a><span class="c">!*****************************************************************************************************!</span>
+<a name="ln-4"></a>
+<a name="ln-5"></a><span class="c">!*****************************************************************************************************!</span>
+<a name="ln-6"></a><span class="c">!  This file is part of ALaDyn.                                                                       !</span>
+<a name="ln-7"></a><span class="c">!                                                                                                     !</span>
+<a name="ln-8"></a><span class="c">!  ALaDyn is free software: you can redistribute it and/or modify                                     !</span>
+<a name="ln-9"></a><span class="c">!  it under the terms of the GNU General Public License as published by                               !</span>
+<a name="ln-10"></a><span class="c">!  the Free Software Foundation, either version 3 of the License, or                                  !</span>
+<a name="ln-11"></a><span class="c">!  (at your option) any later version.                                                                !</span>
+<a name="ln-12"></a><span class="c">!                                                                                                     !</span>
+<a name="ln-13"></a><span class="c">!  ALaDyn is distributed in the hope that it will be useful,                                          !</span>
+<a name="ln-14"></a><span class="c">!  but WITHOUT ANY WARRANTY; without even the implied warranty of                                     !</span>
+<a name="ln-15"></a><span class="c">!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                      !</span>
+<a name="ln-16"></a><span class="c">!  GNU General Public License for more details.                                                       !</span>
+<a name="ln-17"></a><span class="c">!                                                                                                     !</span>
+<a name="ln-18"></a><span class="c">!  You should have received a copy of the GNU General Public License                                  !</span>
+<a name="ln-19"></a><span class="c">!  along with ALaDyn.  If not, see &lt;http://www.gnu.org/licenses/&gt;.                                    !</span>
+<a name="ln-20"></a><span class="c">!*****************************************************************************************************!</span>
+<a name="ln-21"></a>
+<a name="ln-22"></a> <span class="k">module </span><span class="n">phys_param</span>
+<a name="ln-23"></a>  <span class="k">use </span><span class="n">precision_def</span>
+<a name="ln-24"></a>  <span class="k">implicit none</span>
+<a name="ln-25"></a><span class="k">  </span><span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="nb">epsilon</span> <span class="o">=</span> <span class="mf">1.0e-8</span>
+<a name="ln-26"></a>  <span class="c">!! Small parameter</span>
+<a name="ln-27"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">pi</span> <span class="o">=</span> <span class="mf">3.141592653589793</span><span class="p">,</span> <span class="p">&amp;</span>
+<a name="ln-28"></a>                         <span class="n">pi2</span> <span class="o">=</span> <span class="mf">6.283185307179586</span>
+<a name="ln-29"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">giant_field</span> <span class="o">=</span> <span class="mf">1.0e4</span>
+<a name="ln-30"></a>  <span class="c">!! Large control parameter for fields</span>
+<a name="ln-31"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">electron_charge_norm</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+<a name="ln-32"></a>  <span class="c">!! Normalized electron charge</span>
+<a name="ln-33"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">electron_mass_norm</span> <span class="o">=</span> <span class="mf">1.0</span>
+<a name="ln-34"></a>  <span class="c">!! Normalized electron mass</span>
+<a name="ln-35"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">proton_charge_norm</span> <span class="o">=</span> <span class="mf">1.0</span>
+<a name="ln-36"></a>  <span class="c">!! Normalized proton charge</span>
+<a name="ln-37"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">proton_mass_norm</span> <span class="o">=</span> <span class="mi">183</span><span class="mf">6.1527706</span> <span class="c">! in units of electron mass</span>
+<a name="ln-38"></a>  <span class="c">!! Normalized proton mass</span>
+<a name="ln-39"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">size_of_stretch_along_x</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="mf">4.</span>
+<a name="ln-40"></a>  <span class="c">!! Stretch parameter along the x direction</span>
+<a name="ln-41"></a>  <span class="c">!! (1/4 of the cells are stretched)</span>
+<a name="ln-42"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">size_of_stretch_along_y</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="mf">6.</span>
+<a name="ln-43"></a>  <span class="c">!! Stretch parameter along the y and z direction</span>
+<a name="ln-44"></a>  <span class="c">!! (1/6 of the cells are stretched per side)</span>
+<a name="ln-45"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">e_charge</span> <span class="o">=</span> <span class="mf">1.6021766</span><span class="o">*</span><span class="mf">1.e-7</span> <span class="c">!e charge in pC</span>
+<a name="ln-46"></a>  <span class="c">!! Electron charge in pC</span>
+<a name="ln-47"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">electron_mass</span> <span class="o">=</span> <span class="mf">0.510998928</span> <span class="c">!e mass in MeV</span>
+<a name="ln-48"></a>  <span class="c">!! Electron charge in MeV</span>
+<a name="ln-49"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">rc0</span> <span class="o">=</span> <span class="mf">2.81794033</span> <span class="c">!rc0=e^2/mc^2 classical electron radius, in units 10^-13[cm]</span>
+<a name="ln-50"></a>  <span class="c">!! classical electron radius \(\frac{e^2}{mc^2}\) in units 10^{-13} cm</span>
+<a name="ln-51"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">speed_of_light</span> <span class="o">=</span> <span class="mf">0.299792458</span> <span class="c">!mu/fs</span>
+<a name="ln-52"></a>  <span class="c">!! Speed of light in units \mu m/fs</span>
+<a name="ln-53"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">energy_unit</span> <span class="o">=</span> <span class="n">electron_mass</span><span class="o">*</span><span class="mf">1.e+06</span> <span class="c">!mc^2(eV)</span>
+<a name="ln-54"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">t_unit</span> <span class="o">=</span> <span class="mf">0.299792458</span><span class="o">/</span><span class="mf">0.510998928</span> <span class="c">!Tesla in GV/m units</span>
+<a name="ln-55"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">mg_unit</span> <span class="o">=</span> <span class="mf">0.299792458</span><span class="o">/</span><span class="mf">5.10998928</span> <span class="c">!MegaGauss in TV/m units</span>
+<a name="ln-56"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">fe_unit</span> <span class="o">=</span> <span class="mf">0.514</span> <span class="c">!field atomic unit TV/m</span>
+<a name="ln-57"></a>  <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">reference_density</span> <span class="o">=</span> <span class="mf">1.e6</span> <span class="c">! Reference density in parts/\mu^3 (equivalent to 10^18 parts/cm^3)</span>
+<a name="ln-58"></a>  <span class="c">!======================================</span>
+<a name="ln-59"></a>  <span class="c">!10 eV =&gt;  beta = 0.00625603 =&gt; gamma = 1.0000196 =&gt; beta*gamma = 0.00625615</span>
+<a name="ln-60"></a>  <span class="c">!20 eV =&gt;  beta = 0.00884723 =&gt; gamma = 1.0000391 =&gt; beta*gamma = 0.00884758</span>
+<a name="ln-61"></a>  <span class="c">!30 eV =&gt;  beta = 0.01083544 =&gt; gamma = 1.0000587 =&gt; beta*gamma = 0.01083608</span>
+<a name="ln-62"></a> <span class="k">end module</span>
+</pre></div>
+
+    </section>
+    </div>
+  </div>
+
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2020 <a rel="license" href="http://www.gnu.org/licenses/old-licenses/fdl-1.2.en.html">GNU Free Documentation License</a>
+                                          </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+             on 2020-07-30 
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> ALaDyn was developed by The ALaDyn Collaboration</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']
+      });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+    
+  </body>
+</html>
