@@ -23,44 +23,43 @@
   use precision_def
 
   implicit none
-  character (10), dimension (0:28), parameter :: species_name = [ &
-    ' Electron ', ' Hydrogen ', '  Helium  ', ' Lithium  ', &
-    'Berillium ', ' Boron    ', '  Carbon  ', ' Nitrogen ', &
-    ' Oxygen   ', ' Florine  ', '   Neon   ', ' Sodium   ', &
-    'Magnesium ', ' Aluminium', ' Silicon  ', 'Phosphorus', &
-    ' Solfur   ', ' Chlorine ', ' Argon    ', 'Potassium ', &
-    ' Calcium  ', ' Scandium ', ' Titanium ', '          ', &
-    ' Chromium ', 'Manganese ', '  Iron    ', '          ', &
-    '  Nickel  ' ]
+  character(10), dimension(0:28), parameter :: species_name = [ &
+                                               ' Electron ', ' Hydrogen ', '  Helium  ', ' Lithium  ', &
+                                               'Berillium ', ' Boron    ', '  Carbon  ', ' Nitrogen ', &
+                                               ' Oxygen   ', ' Florine  ', '   Neon   ', ' Sodium   ', &
+                                               'Magnesium ', ' Aluminium', ' Silicon  ', 'Phosphorus', &
+                                               ' Solfur   ', ' Chlorine ', ' Argon    ', 'Potassium ', &
+                                               ' Calcium  ', ' Scandium ', ' Titanium ', '          ', &
+                                               ' Chromium ', 'Manganese ', '  Iron    ', '          ', &
+                                               '  Nickel  ']
 
   integer, parameter :: an_max = 40
-  real (dp) :: v(an_max), vfact(an_max, 3), nstar(an_max, 3), &
-    c_nstar(an_max, 3)
-  real (dp) :: e_c(an_max, 3), e_b(an_max, 3), e_m(an_max, 3), &
-    v_norm(an_max, 3)
+  real(dp) :: v(an_max), vfact(an_max, 3), nstar(an_max, 3), &
+              c_nstar(an_max, 3)
+  real(dp) :: e_c(an_max, 3), e_b(an_max, 3), e_m(an_max, 3), &
+              v_norm(an_max, 3)
 
   integer :: nl_fact(0:an_max), nl_indx(0:an_max), &
-    ne_shell(1:6, 0:an_max)
+             ne_shell(1:6, 0:an_max)
   integer :: l_fact(an_max), z1_coll
-  real (dp) :: be(10, 0:an_max), p_nl(10, 0:an_max) !(nl shell,ion charge)
-  real (dp), allocatable :: wi(:, :, :), wsp(:, :, :, :), &
-    w_one_lev(:, :, :)
-  real (dp), allocatable :: sigma_coll(:, :, :), e_coll(:, :)
-  real (dp), parameter :: v_h = 13.5984 !The H ionizazion potential(eV)
-  real (dp), parameter :: e_unit = 0.511*1.e+06 !mc^2(eV)
-  real (dp), parameter :: omega_a = 41.3 ! 1/fs=E15/s
-  real (dp), parameter :: c_au = 137.0 ! speed of light in au
-  real (dp), parameter :: euler = 2.71828, omega_l = 0.057 !(laser frequency in a.u.)
-  real (dp), parameter :: pig = 3.141592653589793, tiny = 1.e-10
+  real(dp) :: be(10, 0:an_max), p_nl(10, 0:an_max) !(nl shell,ion charge)
+  real(dp), allocatable :: wi(:, :, :), wsp(:, :, :, :), &
+                           w_one_lev(:, :, :)
+  real(dp), allocatable :: sigma_coll(:, :, :), e_coll(:, :)
+  real(dp), parameter :: v_h = 13.5984 !The H ionizazion potential(eV)
+  real(dp), parameter :: e_unit = 0.511*1.e+06 !mc^2(eV)
+  real(dp), parameter :: omega_a = 41.3 ! 1/fs=E15/s
+  real(dp), parameter :: c_au = 137.0 ! speed of light in au
+  real(dp), parameter :: euler = 2.71828, omega_l = 0.057 !(laser frequency in a.u.)
+  real(dp), parameter :: pig = 3.141592653589793, tiny = 1.e-10
   integer, parameter :: n_ge = 10000, nec = 1000
-  real (dp) :: lstar, dge, d2ge, de_inv, deb_inv, dt_fs
-  real (dp) :: dgi, d2gi, dei_inv
+  real(dp) :: lstar, dge, d2ge, de_inv, deb_inv, dt_fs
+  real(dp) :: dgi, d2gi, dei_inv
 
  contains
   subroutine set_atomic_weight(at_number, w_number)
-   integer, intent (in) :: at_number
-   real (dp), intent (out) :: w_number
-
+   integer, intent(in) :: at_number
+   real(dp), intent(out) :: w_number
 
    select case (at_number)
    case (1) !H
@@ -93,8 +92,8 @@
   end subroutine
   !================================
   subroutine set_atoms_per_molecule(at_number, n_mol_atoms)
-   integer, intent (in) :: at_number
-   integer, intent (inout) :: n_mol_atoms
+   integer, intent(in) :: at_number
+   integer, intent(inout) :: n_mol_atoms
    !========================================
    ! This subroutine sets if the neutral gas
    ! Is mono- or diatomic
@@ -130,16 +129,16 @@
   end subroutine
   !================================
   subroutine set_ionization_coeff(an, sp_ionz)
-   integer, intent (in) :: an(:), sp_ionz
+   integer, intent(in) :: an(:), sp_ionz
    integer :: i, j, loc_zm
    ! The atomin number An identifies the element
    ! Z_max <= An indicates the local max ionization level allowed
    !==============================================
-   loc_zm = maxval(an(1:sp_ionz-1))
+   loc_zm = maxval(an(1:sp_ionz - 1))
    !===========================
-   allocate (wi(n_ge+1,loc_zm+1,sp_ionz))
-   allocate (wsp(0:n_ge+1,0:loc_zm,0:loc_zm,1:sp_ionz))
-   allocate (w_one_lev(0:n_ge+1,0:loc_zm,1:sp_ionz))
+   allocate (wi(n_ge + 1, loc_zm + 1, sp_ionz))
+   allocate (wsp(0:n_ge + 1, 0:loc_zm, 0:loc_zm, 1:sp_ionz))
+   allocate (w_one_lev(0:n_ge + 1, 0:loc_zm, 1:sp_ionz))
 
    ne_shell = 0
    l_fact = 1
@@ -785,17 +784,17 @@
     ! in common coefficients functions of(z,sp_ioniz)
     do i = 1, an(j) !V(i) is the potential for z=i-1 => z=i  ionization transition
      v_norm(i, j) = v(i)/v_h
-     e_c(i, j) = v_norm(i, j)*v_norm(i, j)/(16.*real(i,dp))
-     e_m(i, j) = omega_l*sqrt(v_norm(i,j))
-     nstar(i, j) = real(i, dp)/sqrt(v_norm(i,j))
-     vfact(i, j) = (v_norm(i,j))*sqrt(v_norm(i,j))
-     e_b(i, j) = 2.*vfact(i, j)/(3.*(2.*nstar(i,j)-1.))
+     e_c(i, j) = v_norm(i, j)*v_norm(i, j)/(16.*real(i, dp))
+     e_m(i, j) = omega_l*sqrt(v_norm(i, j))
+     nstar(i, j) = real(i, dp)/sqrt(v_norm(i, j))
+     vfact(i, j) = (v_norm(i, j))*sqrt(v_norm(i, j))
+     e_b(i, j) = 2.*vfact(i, j)/(3.*(2.*nstar(i, j) - 1.))
     end do
     lstar = sqrt(v(1)/v_h)
     lstar = 1./lstar - 1.
     do i = 1, an(j)
-     c_nstar(i, j) = (2.*euler/nstar(i,j))**(2*nstar(i,j))
-     c_nstar(i, j) = c_nstar(i, j)*l_fact(i)/(2.*pig*nstar(i,j))
+     c_nstar(i, j) = (2.*euler/nstar(i, j))**(2*nstar(i, j))
+     c_nstar(i, j) = c_nstar(i, j)*l_fact(i)/(2.*pig*nstar(i, j))
      c_nstar(i, j) = 0.5*v_norm(i, j)*c_nstar(i, j)
     end do
     !============= m=0 assumed
@@ -805,13 +804,13 @@
   end subroutine
   !================================
   subroutine set_impact_ioniz_wfunction(zm, imod)
-   integer, intent (in) :: zm, imod
+   integer, intent(in) :: zm, imod
    integer :: i, k, j, m, bc
-   real (dp) :: ei, uu, sigma_m, sigma_a
-   real (dp) :: g0, g1, g2, g3, fs, rf, gr
-   real (dp) :: eta(6), etap(6), qnl(6), sbell(7), efact, efact1
-   real (dp) :: a_bell(0:7, 6), mby(6), f_ion
-   real (dp), parameter :: lam = 0.067
+   real(dp) :: ei, uu, sigma_m, sigma_a
+   real(dp) :: g0, g1, g2, g3, fs, rf, gr
+   real(dp) :: eta(6), etap(6), qnl(6), sbell(7), efact, efact1
+   real(dp) :: a_bell(0:7, 6), mby(6), f_ion
+   real(dp), parameter :: lam = 0.067
    !=================== zm is the atomic number
    select case (imod)
 
@@ -834,14 +833,14 @@
     do k = z1_coll, zm - 1 !the ionization state
      qnl(1) = zm - ne_shell(1, k)
      do j = 2, 6
-      qnl(j) = zm - sum(ne_shell(1:j,k))
+      qnl(j) = zm - sum(ne_shell(1:j, k))
      end do
      do j = 1, nl_indx(k)
       p_nl(j, k) = be(j, k)
      end do
      m = nl_indx(k)
      do i = 1, nec
-      ei = p_nl(m, k)*(1.+dgi*real(i,dp))
+      ei = p_nl(m, k)*(1.+dgi*real(i, dp))
       e_coll(i, k) = ei/e_unit
      end do
      do j = 1, nl_indx(k)
@@ -854,22 +853,22 @@
        sigma_coll(i, j, k) = 0.0
        ei = e_coll(i, k)
        uu = ei/p_nl(j, k)
-       if (uu>1.) then
+       if (uu > 1.) then
         fs = 1.
-        if (uu<=1.70) fs = 2.5*(1.-1./uu)
-        rf = 1. + 0.054*(uu**lam)
-        g0 = (ei+1.)
-        g1 = g0*g0/(ei*(g0+1.))
+        if (uu <= 1.70) fs = 2.5*(1.-1./uu)
+        rf = 1.+0.054*(uu**lam)
+        g0 = (ei + 1.)
+        g1 = g0*g0/(ei*(g0 + 1.))
         g2 = ei/g0
         g2 = 0.5*g2*g2
-        g3 = (2.*ei+1.)/(g0*g0)
-        sigma_m = efact*g1*(1.-(1.-g2+g3*log(uu))/uu)
+        g3 = (2.*ei + 1.)/(g0*g0)
+        sigma_m = efact*g1*(1.-(1.-g2 + g3*log(uu))/uu)
         !================
-        g3 = 1.243*(ei+2.)/p_nl(j, k)
-        sigma_a = efact1*g1*(log(g3)-ei*(ei+2.)/(g0*g0))
+        g3 = 1.243*(ei + 2.)/p_nl(j, k)
+        sigma_a = efact1*g1*(log(g3) - ei*(ei + 2.)/(g0*g0))
         !Ei=Ei+etap(j)*P_nl(j,k)/sqrt(1.+qnl(j))
         sigma_a = fs*sigma_a
-        sigma_coll(i, j, k) = ne_shell(j, k)*rf*(sigma_a+sigma_m)
+        sigma_coll(i, j, k) = ne_shell(j, k)*rf*(sigma_a + sigma_m)
        end if
       end do
      end do
@@ -934,39 +933,39 @@
     do k = z1_coll, zm - 1 !the ionization state
      qnl(1) = zm - ne_shell(1, k)
      do j = 2, 6
-      qnl(j) = zm - sum(ne_shell(1:j,k))
+      qnl(j) = zm - sum(ne_shell(1:j, k))
      end do
      m = nl_indx(k)
      do i = 1, nec
-      ei = p_nl(m, k)*(1.+dgi*real(i,dp))
+      ei = p_nl(m, k)*(1.+dgi*real(i, dp))
       e_coll(i, k) = ei !(E,P) in eV
      end do
      do j = 1, nl_indx(k) !the subshells  index max nlindx=6
       bc = 5
-      if (j>4) bc = 7
+      if (j > 4) bc = 7
       g0 = e_unit/p_nl(j, k)
       do i = 1, nec
        sigma_coll(i, j, k) = 0.0
-       ei = p_nl(j, k)*(1.+dgi*real(i,dp))
+       ei = p_nl(j, k)*(1.+dgi*real(i, dp))
        uu = ei/p_nl(j, k)
-       if (uu>1.) then
+       if (uu > 1.) then
         sbell(1) = (1.-1./uu)
         do m = 2, bc
-         sbell(m) = (1.-1./uu)*sbell(m-1)
+         sbell(m) = (1.-1./uu)*sbell(m - 1)
         end do
-        g1 = (1.+2.*g0)/(uu+2.*g0)
-        g2 = (uu+g0)/(1.+g0)
+        g1 = (1.+2.*g0)/(uu + 2.*g0)
+        g2 = (uu + g0)/(1.+g0)
         g1 = g1*g2*g2
-        g2 = (1.+uu)*(uu+2.*g0)*(1.+g0)*(1.+g0)
-        g3 = g0*g0*(1.+2.*g0) + uu*(uu+2.*g0)*(1.+g0)*(1.+g0)
+        g2 = (1.+uu)*(uu + 2.*g0)*(1.+g0)*(1.+g0)
+        g3 = g0*g0*(1.+2.*g0) + uu*(uu + 2.*g0)*(1.+g0)*(1.+g0)
         gr = g1*(g2/g3)**1.5
         !==============
-        f_ion = 1. + 3.*(qnl(j)/(uu*zm))**mby(j)
+        f_ion = 1.+3.*(qnl(j)/(uu*zm))**mby(j)
         !=====================
-        efact = dot_product(a_bell(1:bc,j), sbell(1:bc))
-        sigma_coll(i, j, k) = (a_bell(0,j)*log(uu)+efact)/(p_nl(j,k)*ei)
+        efact = dot_product(a_bell(1:bc, j), sbell(1:bc))
+        sigma_coll(i, j, k) = (a_bell(0, j)*log(uu) + efact)/(p_nl(j, k)*ei)
         sigma_coll(i, j, k) = gr*f_ion*ne_shell(j, k)* &
-          sigma_coll(i, j, k)
+                              sigma_coll(i, j, k)
        end if
       end do
      end do

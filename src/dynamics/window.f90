@@ -28,7 +28,7 @@
   use grid_param
   use mpi_field_interface
   use mpi_part_interface
-  use run_data_info, only : part_numbers
+  use run_data_info, only: part_numbers
 
   implicit none
   !===============================
@@ -37,9 +37,9 @@
  contains
 
   subroutine add_particles(np, i1, i2, ic)
-   integer, intent (in) :: np, i1, i2, ic
+   integer, intent(in) :: np, i1, i2, ic
    integer :: n, ix, j, k, j2, k2
-   real (dp) :: u, tmp0, whz
+   real(dp) :: u, tmp0, whz
 
    tmp0 = t0_pl(ic)
    n = np
@@ -47,7 +47,7 @@
    part_ind = 0
    k2 = loc_nptz(ic)
    j2 = loc_npty(ic)
-   if (curr_ndim>2) then
+   if (curr_ndim > 2) then
     do k = 1, k2
      do j = 1, j2
       do ix = i1, i2
@@ -65,7 +65,7 @@
    else
     do j = 1, j2
      do ix = i1, i2
-      wgh = real(loc_wghyz(j,1,ic)*wghpt(ix,ic), sp)
+      wgh = real(loc_wghyz(j, 1, ic)*wghpt(ix, ic), sp)
       n = n + 1
       spec(ic)%part(n, 1) = xpt(ix, ic)
       spec(ic)%part(n, 2) = loc_ypt(j, ic)
@@ -74,10 +74,10 @@
      end do
     end do
    end if
-   if (tmp0>0.0) then
+   if (tmp0 > 0.0) then
     n = np
     call init_random_seed(mype)
-    if (curr_ndim>2) then
+    if (curr_ndim > 2) then
      do k = 1, k2
       do j = 1, j2
        do ix = i1, i2
@@ -104,13 +104,13 @@
   end subroutine
   !---------------------------
   subroutine particles_inject(xmx)
-   real (dp), intent (in) :: xmx
+   real(dp), intent(in) :: xmx
    integer :: ic, ix, npt_inj(4), np_old, np_new
    integer :: i1, i2, n, q
    integer :: j2, k2, ndv
    integer :: j, k
 
-   !========== inject particles from the right 
+   !========== inject particles from the right
    !   xmx is the box xmax grid value at current time after window move
    !   in Comoving frame xmax is fixed and particles are left advected
    !=================================
@@ -122,13 +122,13 @@
    ndv = nd2 + 1
    do ic = 1, nsp
     i1 = 1 + nptx(ic)
-    if (i1<=sptx_max(ic)) then
-    !while particle index is less then the max index
+    if (i1 <= sptx_max(ic)) then
+     !while particle index is less then the max index
      do ix = i1, sptx_max(ic)
-      if (xpt(ix,ic)>xmx) exit
+      if (xpt(ix, ic) > xmx) exit
      end do
      i2 = ix - 1
-     if (ix==sptx_max(ic)) i2 = ix
+     if (ix == sptx_max(ic)) i2 = ix
     else
      i2 = i1 - 1
     end if
@@ -166,10 +166,10 @@
      end select
      np_new = 0
      np_old = loc_npart(imody, imodz, imodx, ic)
-     np_new = max(np_old+npt_inj(ic), np_new)
-     call v_realloc( ebfp, np_new, ndv )
+     np_new = max(np_old + npt_inj(ic), np_new)
+     call v_realloc(ebfp, np_new, ndv)
      !=========================
-     if (size(spec(ic)%part,ic)<np_new) then
+     if (size(spec(ic)%part, ic) < np_new) then
       ebfp(1:np_old, 1:ndv) = spec(ic)%part(1:np_old, 1:ndv)
       deallocate (spec(ic)%part)
       allocate (spec(ic)%part(np_new, ndv))
@@ -195,62 +195,62 @@
     loc_xg(i, 2, p) = xh(i)
    end do
    ip = loc_xgrid(0)%ng
-   if (npe_xloc>2) then
+   if (npe_xloc > 2) then
     do p = 1, npe_xloc - 2
-     n_loc = loc_xgrid(p-1)%ng
-     loc_xg(0, 1:2, p) = loc_xg(n_loc, 1:2, p-1)
+     n_loc = loc_xgrid(p - 1)%ng
+     loc_xg(0, 1:2, p) = loc_xg(n_loc, 1:2, p - 1)
      n_loc = loc_xgrid(p)%ng
      do i = 1, n_loc + 1
       ii = i + ip
       loc_xg(i, 1, p) = x(ii)
       loc_xg(i, 2, p) = xh(ii)
      end do
-     loc_xgrid(p)%gmin = loc_xgrid(p-1)%gmax
+     loc_xgrid(p)%gmin = loc_xgrid(p - 1)%gmax
      ip = ip + n_loc
-     loc_xgrid(p)%gmax = x(ip+1)
+     loc_xgrid(p)%gmax = x(ip + 1)
     end do
    end if
    p = npe_xloc - 1
-   n_loc = loc_xgrid(p-1)%ng
-   loc_xg(0, 1:2, p) = loc_xg(n_loc, 1:2, p-1)
+   n_loc = loc_xgrid(p - 1)%ng
+   loc_xg(0, 1:2, p) = loc_xg(n_loc, 1:2, p - 1)
    n_loc = loc_xgrid(p)%ng
    do i = 1, n_loc + 1
     ii = i + ip
     loc_xg(i, 1, p) = x(ii)
     loc_xg(i, 2, p) = xh(ii)
    end do
-   loc_xgrid(p)%gmin = loc_xgrid(p-1)%gmax
+   loc_xgrid(p)%gmin = loc_xgrid(p - 1)%gmax
    ip = ip + n_loc
-   loc_xgrid(p)%gmax = x(ip+1)
+   loc_xgrid(p)%gmax = x(ip + 1)
   end subroutine
   !========================================
   subroutine comoving_coordinate(vb, w_nst, loc_it)
-   real (dp), intent (in) :: vb
-   integer, intent (in) :: w_nst, loc_it
+   real(dp), intent(in) :: vb
+   integer, intent(in) :: w_nst, loc_it
    integer :: i, ic, nshx
-   real (dp) :: dt_tot, dt_step
+   real(dp) :: dt_tot, dt_step
    logical, parameter :: mw = .true.
    !======================
-   ! In comoving x-coordinate the 
+   ! In comoving x-coordinate the
    ! [xmin <= x <= xmax] computational box is stationaty
-   ! xi= (x-vb*t) => xw is left-advected 
+   ! xi= (x-vb*t) => xw is left-advected
    ! fields are left-advected in the x-grid directely in the maxw. equations
    ! particles are left-advected:
    ! xp=xp-vb*dt inside the computational box is added in the eq. of motion and
    ! for moving coordinates at each w_nst steps
    ! xpt(ix,ic)=xpt(ix,ic)-vb*w_nst*dt outside the computational box
    ! then targ_in=targ_in -vb*w_nst*dt   targ_out=targ_out-vb*w_nst*dt
-   ! 
+   !
    !==================
-   if (loc_it==0) return
+   if (loc_it == 0) return
    dt_step = dt_loc
    dt_tot = 0.0
    do i = 1, w_nst
     dt_tot = dt_tot + dt_step
    end do
-   nshx = nint(dx_inv*dt_tot*vb) !the number of grid points x-shift for each w_nst step 
+   nshx = nint(dx_inv*dt_tot*vb) !the number of grid points x-shift for each w_nst step
    do i = 1, nx + 1
-    xw(i) = xw(i) - dx*nshx !moves backwards the grid xw 
+    xw(i) = xw(i) - dx*nshx !moves backwards the grid xw
    end do
    xw_max = xw_max - dx*nshx
    xw_min = xw_min - dx*nshx
@@ -267,21 +267,21 @@
    !======================
    call cell_part_dist(mw) !particles are redistributes along the
    if (pex1) then
-    if (targ_in<=xmax .and. targ_end>xmax) then
+    if (targ_in <= xmax .and. targ_end > xmax) then
      call particles_inject(xmax)
     end if
    end if
   end subroutine
   !====================================
   subroutine lp_window_xshift(witr, init_iter)
-   integer, intent (in) :: witr, init_iter
+   integer, intent(in) :: witr, init_iter
    integer :: i1, n1p, nc_env
    integer :: ix, nshx, wi2
-   real (dp), save :: xlapse, dt_step
+   real(dp), save :: xlapse, dt_step
    integer, save :: wi1
    logical, parameter :: mw = .true.
 
-   if (init_iter==0) then
+   if (init_iter == 0) then
     xlapse = 0.0
     wi1 = 0
     return
@@ -307,9 +307,9 @@
    loc_xgrid(imodx)%gmax = loc_xgrid(imodx)%gmax + dx*nshx
    xmn = xmn + dx*nshx
    wi2 = n1p - nshx
-   if (wi2<=0) then
+   if (wi2 <= 0) then
     write (6, '(a37,3i6)') 'Error in window shifting for MPI proc', &
-      imody, imodz, imodx
+     imody, imodz, imodx
     ier = 2
     return
    end if
@@ -317,18 +317,18 @@
    call fields_left_xshift(ebf, i1, wi2, 1, nfield, nshx)
    if (hybrid) then
     do ix = 1, nxf - nshx
-     fluid_x_profile(ix) = fluid_x_profile(ix+nshx)
+     fluid_x_profile(ix) = fluid_x_profile(ix + nshx)
     end do
     nxf = nxf - nshx
     call fluid_left_xshift(up, fluid_x_profile, fluid_yz_profile, i1, &
-      wi2, 1, nfcomp, nshx)
+                           wi2, 1, nfcomp, nshx)
     call fields_left_xshift(up0, i1, wi2, 1, nfcomp, nshx)
    end if
    if (envelope) then
     nc_env = size(env, 4)
     call fields_left_xshift(env, i1, wi2, 1, nc_env, nshx)
     if (Two_color) call fields_left_xshift(env1, i1, wi2, 1, nc_env, &
-      nshx)
+                                           nshx)
    end if
    !shifts fields data and inject right ebf(wi2+1:n1p) x-grid nshx new data
    !===========================
@@ -336,8 +336,8 @@
     call cell_part_dist(mw) !particles are redistributes along the
     ! right-shifted x-coordinate in MPI domains
     if (pex1) then
-     if (targ_in<=xmax) then
-      if (targ_end>xmax) then
+     if (targ_in <= xmax) then
+      if (targ_end > xmax) then
        call particles_inject(xmax)
       end if
      end if
