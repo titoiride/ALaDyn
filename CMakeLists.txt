@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 cmake_policy(SET CMP0074 NEW)
 if(MSYS)
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/msys2/")
+  list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/msys2/")
 endif()
 
 # uncomment the following definition to enable GDB attach to debug while running
@@ -18,6 +18,7 @@ endif()
 # Old species (provisional)
 # add_definitions(-DOLD_SPECIES)
 
+message(STATUS "ALaDyn: Building using the generator ${CMAKE_GENERATOR}")
 # Look for JSON-FORTRAN
 set(JSON_FORTRAN_SUPPORT TRUE CACHE BOOL "ALaDyn: Building ALaDyn with JSON-Fortran support")
 if( JSON_FORTRAN_SUPPORT )
@@ -47,6 +48,7 @@ if( JSON_FORTRAN_SUPPORT )
   endif()
 
   if( EXISTS ${JFORTRAN_PATH} AND NOT EXISTS ${JFORTRAN_LOCALS_PATH})
+    message(STATUS "JSON-Fortran: Now building the JSON-Fortran library")
     file(MAKE_DIRECTORY ${JFORTRAN_BINARY_PATH})
     set(CMAKE_INSTALL_MESSAGE LAZY)
     # Configure subproject into ${JFORTRAN_BINARY_PATH}
@@ -54,12 +56,14 @@ if( JSON_FORTRAN_SUPPORT )
     -DCMAKE_INSTALL_MESSAGE=LAZY
     -DCMAKE_INSTALL_PREFIX=${JFORTRAN_LOCALS_PATH}
     -DSKIP_DOC_GEN=TRUE
+    -G "${CMAKE_GENERATOR}"
     ${JFORTRAN_PATH} 
     WORKING_DIRECTORY ${JFORTRAN_BINARY_PATH})
     # Building and installing
     execute_process(COMMAND ${CMAKE_COMMAND}
     --build ${JFORTRAN_BINARY_PATH}
     --target install)
+    message(STATUS "JSON-Fortran: Built")
   endif()
 endif()
 
@@ -261,8 +265,9 @@ else()
 endif()
 
 set(jsonfortran-GNU_DIR ${JFORTRAN_BINARY_PATH})
+set(jsonfortran-Intel_DIR ${JFORTRAN_BINARY_PATH})
 if(JSON_FORTRAN_SUPPORT)
-  find_package ( jsonfortran-${CMAKE_Fortran_COMPILER_ID} 8.1.0)
+  find_package ( jsonfortran-${CMAKE_Fortran_COMPILER_ID} 8.1.0 REQUIRED)
 endif()
 
 string(APPEND CMAKE_CXX_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS}")

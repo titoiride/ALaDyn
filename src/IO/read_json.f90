@@ -97,7 +97,7 @@ module read_json
   
   call namelist_in%get('target_description', targ_desc, found)
   if ( .not. found ) then
-   write(6, *) "'Target_description' not found in json input"
+   ! write(6, *) "'Target_description' not found in json input"
   else
    allocate(parameters_out%targ_params)
    call read_json_targ( targ_desc, parameters_out%targ_params )
@@ -110,7 +110,7 @@ module read_json
   
   call namelist_in%get('laser', laser, found)
   if ( .not. found ) then
-   write(6, *) "'laser' not found in json input"
+   ! write(6, *) "'laser' not found in json input"
   else
    allocate(parameters_out%laser_params)
    call read_json_laser( laser, parameters_out%laser_params )
@@ -122,7 +122,7 @@ module read_json
   
   call namelist_in%get('beam_inject', beam_inject, found)
   if ( .not. found ) then
-   write(6, *) "'beam_inject' not found in json input"
+   ! write(6, *) "'beam_inject' not found in json input"
   else
    allocate(parameters_out%beam_params)
    call read_json_beam( beam_inject, parameters_out%beam_params )
@@ -135,7 +135,7 @@ module read_json
   
   call namelist_in%get('moving_window', window, found)
   if ( .not. found ) then
-   write(6, *) "'moving_window' not found in json input"
+   ! write(6, *) "'moving_window' not found in json input"
   else
    allocate(parameters_out%window_params)
    call read_json_window( window, parameters_out%window_params )
@@ -161,7 +161,7 @@ module read_json
   
   call namelist_in%get('tracking', tracking, found)
   if ( .not. found ) then
-   write(6, *) "'tracking' not found in json input"
+   ! write(6, *) "'tracking' not found in json input"
   else
    allocate(parameters_out%track_params)
    call read_json_tracking( tracking, parameters_out%track_params ) 
@@ -174,7 +174,7 @@ module read_json
   
   call namelist_in%get('mpiparams', mpi, found)
   if ( .not. found ) then
-   write(6, *) "'mpiparams' not found in json input"
+   ! write(6, *) "'mpiparams' not found in json input"
   else
    allocate(parameters_out%mpi_params)
    call read_json_mpi( mpi, parameters_out%mpi_params )
