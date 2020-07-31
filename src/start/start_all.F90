@@ -297,18 +297,6 @@ call gdbattach
    end if
    call stop_if_error(error)
 
-
-   !========= Check particle pusher
-   if ( n_substeps > 1 .and. pusher /= BORIS ) then
-    if (pe0) then
-     write(6, *) '******************************************'
-     write(6, *) ' WARNING: Substepping is only enabled for '
-     write(6, *) ' the Boris pusher. Reverting to that one. '
-     write(6, *) '******************************************'
-    end if
-    pusher = BORIS
-   end if
-
    !========= Check plasma target
    if ( ny_targ > ny ) then
     if (pe0) then
