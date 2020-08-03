@@ -37,21 +37,19 @@
   real(sp), private :: real_par(par_dim), part_real_par(par_dim)
   real(dp), allocatable, dimension(:, :), private :: pic_out_aux
 
+  character(13), dimension(20), parameter, private :: rpar = [' time =      ', &
+                                                              ' xmin =      ', ' xmax =      ', ' ymin =      ', ' ymax =      ', &
+                                                              ' zmin =      ', ' zmax =      ', ' w0_x =      ', ' w0_y =      ', &
+                                                              ' a0 =        ', ' lam0 =      ', ' mc2(MeV) =  ', ' n0(e18) =   ', &
+                                                              ' np/cell =   ', ' weight =    ', ' mass =      ', ' xmin_out =  ', &
+                                                              ' xmax_out =  ', ' ymax_out =  ', ' gam_min =   ']
 
-  character(13), dimension(20), parameter, private :: rpar = [ ' time =      ', &
-    ' xmin =      ', ' xmax =      ', ' ymin =      ', ' ymax =      ', &
-    ' zmin =      ', ' zmax =      ', ' w0_x =      ', ' w0_y =      ', &
-    ' a0 =        ', ' lam0 =      ', ' mc2(MeV) =  ', ' n0(e18) =   ', &
-    ' np/cell =   ', ' weight =    ', ' mass =      ', ' xmin_out =  ', &
-    ' xmax_out =  ', ' ymax_out =  ', ' gam_min =   ' ]
-
-  character(12), dimension(20), parameter, private :: ipar = [ ' npe =      ', &
-    ' nx =       ', ' ny =       ', ' nz =       ', ' model =    ', &
-    ' dmodel =   ', ' nsp =      ', ' curr_ndim =', ' mp/cell =  ', &
-    ' ion_ch =   ', ' tsch_ord = ', ' der_ord =  ', ' iform =    ', &
-    ' ph_sp_nc = ', ' f_version =', ' i_end =    ', ' nx_loc =   ', &
-    ' ny_loc =   ', ' nz_loc =   ', ' pjump  =   ' ]
-
+  character(12), dimension(20), parameter, private :: ipar = [' npe =      ', &
+                                                              ' nx =       ', ' ny =       ', ' nz =       ', ' model =    ', &
+                                                              ' dmodel =   ', ' nsp =      ', ' curr_ndim =', ' mp/cell =  ', &
+                                                              ' ion_ch =   ', ' tsch_ord = ', ' der_ord =  ', ' iform =    ', &
+                                                              ' ph_sp_nc = ', ' f_version =', ' i_end =    ', ' nx_loc =   ', &
+                                                              ' ny_loc =   ', ' nz_loc =   ', ' pjump  =   ']
 
   interface part_pdata_out
    module procedure part_pdata_out_new
@@ -60,18 +58,18 @@
  contains
 
   subroutine fluid_den_mom_out(fvar, cmp, flcomp)
-   real (dp), intent (in) :: fvar(:, :, :, :)
-   integer, intent (in) :: cmp, flcomp
-   character (9) :: fname = '         '
-   character (7), dimension (4), parameter :: flvar = [ 'Fdenout', &
-     'Flpxout', 'Flpyout', 'Flpzout' ]
+   real(dp), intent(in) :: fvar(:, :, :, :)
+   integer, intent(in) :: cmp, flcomp
+   character(9) :: fname = '         '
+   character(7), dimension(4), parameter :: flvar = ['Fdenout', &
+                                                     'Flpxout', 'Flpyout', 'Flpzout']
 
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3), i_end, cmp_name
    integer :: lun, i1, j1, k1
    logical :: sd
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 2
    !========================
    ! ns_index select ion species
@@ -92,11 +90,11 @@
     do iy = j1, nyp, jump
      do ix = i1, nxp, jump
       kk = kk + 1
-      wdata(kk) = real(fvar(ix,iy,iz,cmp), sp)
+      wdata(kk) = real(fvar(ix, iy, iz, cmp), sp)
      end do
     end do
    end do
-   if (cmp==flcomp) then
+   if (cmp == flcomp) then
     cmp_name = 1
    else
     cmp_name = cmp + 1
@@ -108,17 +106,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, i_end ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, i_end]
 
     write (fname, '(a7,i2.2)') flvar(cmp_name), iout
     open (10, file=foldername//'/'//fname//'.dat', form='formatted')
@@ -127,8 +125,8 @@
     write (10, *) ' Real parameters'
     write (10, '(4e14.5)') real_par
     close (10)
-    write (6, *) 'Field data written on file: ' // foldername // '/' // &
-      fname // '.dat'
+    write (6, *) 'Field data written on file: '//foldername//'/'// &
+     fname//'.dat'
 
     gr_dim(1) = nxh(1)
     gr_dim(2) = nyh(1)
@@ -143,25 +141,25 @@
     write (10) wdata(1:lenw)
    end if
 
-   if (mype>0) then
-    gr_dim(1) = nxh(imodx+1)
-    gr_dim(2) = nyh(imody+1)
-    gr_dim(3) = nzh(imodz+1)
+   if (mype > 0) then
+    gr_dim(1) = nxh(imodx + 1)
+    gr_dim(2) = nyh(imody + 1)
+    gr_dim(3) = nzh(imodz + 1)
     lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
     sd = .true.
-    call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype + 100)
    else
     sd = .false.
     do ix = 0, npe_xloc - 1
-     gr_dim(1) = nxh(ix+1)
+     gr_dim(1) = nxh(ix + 1)
      do iz = 0, npe_zloc - 1
-      gr_dim(3) = nzh(iz+1)
+      gr_dim(3) = nzh(iz + 1)
       do iy = 0, npe_yloc - 1
-       gr_dim(2) = nyh(iy+1)
-       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
-       if (ipe>0) then
+       gr_dim(2) = nyh(iy + 1)
+       ipe = iy + npe_yloc*(iz + npe_zloc*ix)
+       if (ipe > 0) then
         lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-        call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe + 100)
         write (lun) gr_dim
         write (lun) wdata(1:lenw)
        end if
@@ -187,8 +185,8 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Fluid density-momenta written on file: ' // &
-      foldername // '/' // fname // '.bin'
+    write (6, *) 'Fluid density-momenta written on file: '// &
+     foldername//'/'//fname//'.bin'
    end if
   end subroutine
 !=====================
@@ -321,26 +319,26 @@
    end if
   end subroutine
   !==================================
-  subroutine den_energy_out( ns_ind, cmp, cmp_loc )
-   integer, intent (in) :: ns_ind, cmp, cmp_loc
-!================ 
-   character (9) :: fname = '         '
-   character (7), dimension (1), parameter :: bpot = [ 'Beampot' ]
-   character (7), dimension (2), parameter :: el1 = [ 'Edenout', &
-     'Elenout' ]
-   character (7), dimension (2), parameter :: pr1 = [ 'Pdenout', &
-     'Prenout' ]
-   character (7), dimension (2), parameter :: io1 = [ 'H1dnout', &
-     'H1enout' ]
-   character (7), dimension (2), parameter :: io2 = [ 'H2dnout', &
-     'H2enout' ]
+  subroutine den_energy_out(ns_ind, cmp, cmp_loc)
+   integer, intent(in) :: ns_ind, cmp, cmp_loc
+!================
+   character(9) :: fname = '         '
+   character(7), dimension(1), parameter :: bpot = ['Beampot']
+   character(7), dimension(2), parameter :: el1 = ['Edenout', &
+                                                   'Elenout']
+   character(7), dimension(2), parameter :: pr1 = ['Pdenout', &
+                                                   'Prenout']
+   character(7), dimension(2), parameter :: io1 = ['H1dnout', &
+                                                   'H1enout']
+   character(7), dimension(2), parameter :: io2 = ['H2dnout', &
+                                                   'H2enout']
 
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3), i_end
    integer :: lun, i1, j1, k1
    logical :: sd
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 2
    !========================
    ! ns_index select ion species (electron,ions)
@@ -363,7 +361,7 @@
     do iy = j1, nyp, jump
      do ix = i1, nxp, jump
       kk = kk + 1
-      wdata(kk) = real(jc(ix,iy,iz,cmp_loc), sp)
+      wdata(kk) = real(jc(ix, iy, iz, cmp_loc), sp)
      end do
     end do
    end do
@@ -374,17 +372,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, i_end ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, i_end]
 
     select case (ns_ind)
     case (0)
@@ -392,13 +390,13 @@
     case (1)
      write (fname, '(a7,i2.2)') el1(cmp), iout
     case (2)
-     if (atomic_number(1)==1) then
+     if (atomic_number(1) == 1) then
       write (fname, '(a7,i2.2)') pr1(cmp), iout
      else
       write (fname, '(a7,i2.2)') io1(cmp), iout
      end if
     case (3)
-     if (atomic_number(2)==1) then
+     if (atomic_number(2) == 1) then
       write (fname, '(a7,i2.2)') pr1(cmp), iout
      else
       write (fname, '(a7,i2.2)') io2(cmp), iout
@@ -412,8 +410,8 @@
     write (10, *) ' Real parameters'
     write (10, '(4e14.5)') real_par
     close (10)
-    write (6, *) 'Field data written on file: ' // foldername // '/' // &
-      fname // '.dat'
+    write (6, *) 'Field data written on file: '//foldername//'/'// &
+     fname//'.dat'
 
     gr_dim(1) = nxh(1)
     gr_dim(2) = nyh(1)
@@ -428,25 +426,25 @@
     write (10) wdata(1:lenw)
    end if
 
-   if (mype>0) then
-    gr_dim(1) = nxh(imodx+1)
-    gr_dim(2) = nyh(imody+1)
-    gr_dim(3) = nzh(imodz+1)
+   if (mype > 0) then
+    gr_dim(1) = nxh(imodx + 1)
+    gr_dim(2) = nyh(imody + 1)
+    gr_dim(3) = nzh(imodz + 1)
     lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
     sd = .true.
-    call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype + 100)
    else
     sd = .false.
     do ix = 0, npe_xloc - 1
-     gr_dim(1) = nxh(ix+1)
+     gr_dim(1) = nxh(ix + 1)
      do iz = 0, npe_zloc - 1
-      gr_dim(3) = nzh(iz+1)
+      gr_dim(3) = nzh(iz + 1)
       do iy = 0, npe_yloc - 1
-       gr_dim(2) = nyh(iy+1)
-       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
-       if (ipe>0) then
+       gr_dim(2) = nyh(iy + 1)
+       ipe = iy + npe_yloc*(iz + npe_zloc*ix)
+       if (ipe > 0) then
         lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-        call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe + 100)
         write (lun) gr_dim
         write (lun) wdata(1:lenw)
        end if
@@ -472,22 +470,22 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Den_Energy_Momenta written on file: ' // foldername // &
-      '/' // fname // '.bin'
+    write (6, *) 'Den_Energy_Momenta written on file: '//foldername// &
+     '/'//fname//'.bin'
    end if
   end subroutine
 
   !============================
-  subroutine bden_energy_out( cmp_loc )
+  subroutine bden_energy_out(cmp_loc)
 
-   integer, intent (in) :: cmp_loc
-   character (9) :: fname = '         '
+   integer, intent(in) :: cmp_loc
+   character(9) :: fname = '         '
 
    integer :: ix, iy, iz, ip, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: i_end, i1, j1, k1
    integer :: lun, gr_dim(3)
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 2
    logical :: sd
 
@@ -505,7 +503,7 @@
     do iy = j1, nyp, jump
      do ix = i1, nxp, jump
       kk = kk + 1
-      wdata(kk) = real(jc(ix,iy,iz,cmp_loc), sp)
+      wdata(kk) = real(jc(ix, iy, iz, cmp_loc), sp)
      end do
     end do
    end do
@@ -516,17 +514,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, i_end ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, i_end]
 
     write (fname, '(a7,i2.2)') 'Bdenout', iout
     open (20, file=foldername//'/'//fname//'.dat', form='formatted')
@@ -535,8 +533,8 @@
     write (20, *) ' Real parameters'
     write (20, '(4e14.5)') real_par
     close (20)
-    write (6, *) 'Field data written on file: ' // foldername // '/' // &
-      fname // '.dat'
+    write (6, *) 'Field data written on file: '//foldername//'/'// &
+     fname//'.dat'
 
     gr_dim(1) = nxh(1)
     gr_dim(2) = nyh(1)
@@ -553,25 +551,25 @@
    end if
 
    if (prl) then
-    if (mype>0) then
-     gr_dim(1) = nxh(imodx+1)
-     gr_dim(2) = nyh(imody+1)
-     gr_dim(3) = nzh(imodz+1)
+    if (mype > 0) then
+     gr_dim(1) = nxh(imodx + 1)
+     gr_dim(2) = nyh(imody + 1)
+     gr_dim(3) = nzh(imodz + 1)
      lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
      sd = .true.
-     call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+     call exchange_pdata(sd, wdata, lenw, pe_min, mype + 100)
     else
      sd = .false.
      do ix = 0, npe_xloc - 1
-      gr_dim(1) = nxh(ix+1)
+      gr_dim(1) = nxh(ix + 1)
       do ip = 0, npe_zloc - 1
-       gr_dim(3) = nzh(ip+1)
+       gr_dim(3) = nzh(ip + 1)
        do iq = 0, npe_yloc - 1
-        gr_dim(2) = nyh(iq+1)
-        ipe = iq + npe_yloc*(ip+npe_zloc*ix)
-        if (ipe>0) then
+        gr_dim(2) = nyh(iq + 1)
+        ipe = iq + npe_yloc*(ip + npe_zloc*ix)
+        if (ipe > 0) then
          lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-         call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+         call exchange_pdata(sd, wdata, lenw, ipe, ipe + 100)
          write (lun) gr_dim
          write (lun) wdata(1:lenw)
         end if
@@ -601,21 +599,21 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Den_Energy_Momenta written on file: ' // foldername // &
-      '/' // fname // '.bin'
+    write (6, *) 'Den_Energy_Momenta written on file: '//foldername// &
+     '/'//fname//'.bin'
    end if
   end subroutine
   !==========================
-  subroutine ext_bfield_out( ef, f_ind )
-   real (dp), intent (in) :: ef(:, :, :, :)
-   character (8) :: fname = '        '
-   integer, intent (in) :: f_ind
+  subroutine ext_bfield_out(ef, f_ind)
+   real(dp), intent(in) :: ef(:, :, :, :)
+   character(8) :: fname = '        '
+   integer, intent(in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
    integer :: gr_dim(3)
    logical :: sd
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 2
 
    write (foldername, '(i4.4)') iout
@@ -633,7 +631,7 @@
     do iy = j1, nyp, jump
      do ix = i1, nxp, jump
       kk = kk + 1
-      wdata(kk) = real(ef(ix,iy,iz,f_ind), sp)
+      wdata(kk) = real(ef(ix, iy, iz, f_ind), sp)
      end do
     end do
    end do
@@ -644,17 +642,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, i_end ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, i_end]
 
     select case (f_ind)
     case (1)
@@ -671,8 +669,8 @@
     write (10, *) ' Real parameters'
     write (10, '(4e14.5)') real_par
     close (10)
-    write (6, *) 'Field data written on file: ' // foldername // '/' // &
-      fname // '.dat'
+    write (6, *) 'Field data written on file: '//foldername//'/'// &
+     fname//'.dat'
 
     gr_dim(1) = nxh(1)
     gr_dim(2) = nyh(1)
@@ -687,25 +685,25 @@
     write (10) wdata(1:lenw)
    end if
 
-   if (mype>0) then
-    gr_dim(1) = nxh(imodx+1)
-    gr_dim(2) = nyh(imody+1)
-    gr_dim(3) = nzh(imodz+1)
+   if (mype > 0) then
+    gr_dim(1) = nxh(imodx + 1)
+    gr_dim(2) = nyh(imody + 1)
+    gr_dim(3) = nzh(imodz + 1)
     lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
     sd = .true.
-    call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype + 100)
    else
     sd = .false.
     do ix = 0, npe_xloc - 1
-     gr_dim(1) = nxh(ix+1)
+     gr_dim(1) = nxh(ix + 1)
      do iz = 0, npe_zloc - 1
-      gr_dim(3) = nzh(iz+1)
+      gr_dim(3) = nzh(iz + 1)
       do iy = 0, npe_yloc - 1
-       gr_dim(2) = nyh(iy+1)
-       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
-       if (ipe>0) then
+       gr_dim(2) = nyh(iy + 1)
+       ipe = iy + npe_yloc*(iz + npe_zloc*ix)
+       if (ipe > 0) then
         lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-        call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe + 100)
         write (lun) gr_dim
         write (lun) wdata(1:lenw)
        end if
@@ -731,21 +729,21 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Fields written on file: ' // foldername // '/' // &
-      fname // '.bin'
+    write (6, *) 'Fields written on file: '//foldername//'/'// &
+     fname//'.bin'
    end if
   end subroutine
 
-  subroutine fields_out(ef, f_ind, f_var )
-   real (dp), intent (in) :: ef(:, :, :, :)
-   character (8) :: fname = '        '
-   integer, intent (in) :: f_ind, f_var
+  subroutine fields_out(ef, f_ind, f_var)
+   real(dp), intent(in) :: ef(:, :, :, :)
+   character(8) :: fname = '        '
+   integer, intent(in) :: f_ind, f_var
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
    integer :: gr_dim(3)
    logical :: sd
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 2
 
    write (foldername, '(i4.4)') iout
@@ -763,7 +761,7 @@
     do iy = j1, nyp, jump
      do ix = i1, nxp, jump
       kk = kk + 1
-      wdata(kk) = real(ef(ix,iy,iz,f_ind), sp)
+      wdata(kk) = real(ef(ix, iy, iz, f_ind), sp)
      end do
     end do
    end do
@@ -774,17 +772,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, i_end ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, i_end]
 
     select case (f_var)
     case (0)
@@ -794,7 +792,7 @@
     case (2)
      write (fname, '(a6,i2.2)') 'Eyfout', iout
     case (3)
-     if (nfield==3) then
+     if (nfield == 3) then
       write (fname, '(a6,i2.2)') 'Bzfout', iout
      else
       write (fname, '(a6,i2.2)') 'Ezfout', iout
@@ -813,8 +811,8 @@
     write (10, *) ' Real parameters'
     write (10, '(4e14.5)') real_par
     close (10)
-    write (6, *) 'Field data written on file: ' // foldername // '/' // &
-      fname // '.dat'
+    write (6, *) 'Field data written on file: '//foldername//'/'// &
+     fname//'.dat'
 
     gr_dim(1) = nxh(1)
     gr_dim(2) = nyh(1)
@@ -829,25 +827,25 @@
     write (10) wdata(1:lenw)
    end if
 
-   if (mype>0) then
-    gr_dim(1) = nxh(imodx+1)
-    gr_dim(2) = nyh(imody+1)
-    gr_dim(3) = nzh(imodz+1)
+   if (mype > 0) then
+    gr_dim(1) = nxh(imodx + 1)
+    gr_dim(2) = nyh(imody + 1)
+    gr_dim(3) = nzh(imodz + 1)
     lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
     sd = .true.
-    call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype + 100)
    else
     sd = .false.
     do ix = 0, npe_xloc - 1
-     gr_dim(1) = nxh(ix+1)
+     gr_dim(1) = nxh(ix + 1)
      do iz = 0, npe_zloc - 1
-      gr_dim(3) = nzh(iz+1)
+      gr_dim(3) = nzh(iz + 1)
       do iy = 0, npe_yloc - 1
-       gr_dim(2) = nyh(iy+1)
-       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
-       if (ipe>0) then
+       gr_dim(2) = nyh(iy + 1)
+       ipe = iy + npe_yloc*(iz + npe_zloc*ix)
+       if (ipe > 0) then
         lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-        call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe + 100)
         write (lun) gr_dim
         write (lun) wdata(1:lenw)
        end if
@@ -873,28 +871,28 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Fields written on file: ' // foldername // '/' // &
-      fname // '.bin'
+    write (6, *) 'Fields written on file: '//foldername//'/'// &
+     fname//'.bin'
    end if
   end subroutine
 
   !==========================
 
-  subroutine fields_out_new(ef, f_ind, var_ind )
-   real (dp), intent (in) :: ef(:, :, :, :)
-   character (8) :: fname = '        '
-   character (12) :: fnamel = '            '
-   character (17) :: fname_out = '                 '
-   character (21) :: fname_outl = '                     '
-   integer, intent (in) :: f_ind, var_ind
+  subroutine fields_out_new(ef, f_ind, var_ind)
+   real(dp), intent(in) :: ef(:, :, :, :)
+   character(8) :: fname = '        '
+   character(12) :: fnamel = '            '
+   character(17) :: fname_out = '                 '
+   character(21) :: fname_outl = '                     '
+   integer, intent(in) :: f_ind, var_ind
    integer :: ix, iy, iz, iq
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
-   integer (offset_kind) :: disp, disp_col
+   integer(offset_kind) :: disp, disp_col
    integer :: num_header_int, gr_dim(3), header(3)
-   real (dp), allocatable :: ascii_grid(:)
+   real(dp), allocatable :: ascii_grid(:)
    integer :: gridsize_x, gridsize_y, gridsize_z
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 4
 
    write (foldername, '(i4.4)') iout
@@ -913,7 +911,7 @@
     do iy = j1, nyp, jump
      do ix = i1, nxp, jump
       kk = kk + 1
-      wdata(kk) = real(ef(ix,iy,iz,f_ind), sp)
+      wdata(kk) = real(ef(ix, iy, iz, f_ind), sp)
      end do
     end do
    end do
@@ -923,16 +921,16 @@
    nz1 = sum(nzh(1:npe_zloc))
    nx1 = sum(nxh(1:npe_xloc))
 
-   real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-     real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-     real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-     real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-     real(b_charge,sp), real(vbeam,sp) ]
+   real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                     real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                     real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                     real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                     real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                     real(b_charge, sp), real(vbeam, sp)]
 
-   int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, nz1, &
-     loc_nyc_max, jump, ibx, iby, iform, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(1), lpf_ord, der_ord, file_version, i_end ]
+   int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, nz1, &
+                    loc_nyc_max, jump, ibx, iby, iform, model_id, dmodel_id, nsp, &
+                    curr_ndim, mp_per_cell(1), lpf_ord, der_ord, file_version, i_end]
 
    select case (var_ind)
    case (0)
@@ -942,7 +940,7 @@
    case (2)
     write (fname, '(a6,i2.2)') 'Eyfout', iout
    case (3)
-    if (nfield==3) then
+    if (nfield == 3) then
      write (fname, '(a6,i2.2)') 'Bzfout', iout
     else
      write (fname, '(a6,i2.2)') 'Ezfout', iout
@@ -958,7 +956,7 @@
    case (8)
     write (fname, '(a6,i2.2)') 'Eybout', iout
    case (9)
-    if (nfield==3) then
+    if (nfield == 3) then
      write (fname, '(a6,i2.2)') 'Bzbout', iout
     else
      write (fname, '(a6,i2.2)') 'Ezbout', iout
@@ -982,7 +980,7 @@
     gridsize_x = int(nx/jump)
     gridsize_y = int(ny/jump)
     gridsize_z = int(nz/jump)
-    allocate (ascii_grid(gridsize_x+1))
+    allocate (ascii_grid(gridsize_x + 1))
     kk = 0
     do iq = 1, nx, jump
      kk = kk + 1
@@ -990,10 +988,10 @@
     end do
     do iq = 1, kk
      write (10, '(es14.5)', advance='no') ascii_grid(iq)
-     if (mod(iq,8)==0) write (10, *) ''
+     if (mod(iq, 8) == 0) write (10, *) ''
     end do
     deallocate (ascii_grid)
-    allocate (ascii_grid(gridsize_y+1))
+    allocate (ascii_grid(gridsize_y + 1))
     kk = 0
     do iq = 1, ny, jump
      kk = kk + 1
@@ -1001,10 +999,10 @@
     end do
     do iq = 1, kk
      write (10, '(es14.5)', advance='no') ascii_grid(iq)
-     if (mod(iq,8)==0) write (10, *) ''
+     if (mod(iq, 8) == 0) write (10, *) ''
     end do
     deallocate (ascii_grid)
-    allocate (ascii_grid(gridsize_z+1))
+    allocate (ascii_grid(gridsize_z + 1))
     kk = 0
     do iq = 1, nz, jump
      kk = kk + 1
@@ -1012,48 +1010,48 @@
     end do
     do iq = 1, kk
      write (10, '(es14.5)', advance='no') ascii_grid(iq)
-     if (mod(iq,8)==0) write (10, *) ''
+     if (mod(iq, 8) == 0) write (10, *) ''
     end do
     close (10)
-    write (6, *) 'Fields parameters written on file: ' // foldername // &
-      '/' // fname // '.dat'
+    write (6, *) 'Fields parameters written on file: '//foldername// &
+     '/'//fname//'.dat'
    end if
 
-   gr_dim(1) = nxh(imodx+1)
-   gr_dim(2) = nyh(imody+1)
-   gr_dim(3) = nzh(imodz+1)
+   gr_dim(1) = nxh(imodx + 1)
+   gr_dim(2) = nyh(imody + 1)
+   gr_dim(3) = nzh(imodz + 1)
    lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
 
    write (fnamel, '(a8,a1,i3.3)') fname, '_', imodz
-   fname_out = foldername // '/' // fname // '.bin'
-   fname_outl = foldername // '/' // fnamel // '.bin'
+   fname_out = foldername//'/'//fname//'.bin'
+   fname_outl = foldername//'/'//fnamel//'.bin'
    num_header_int = 3
    header(1:3) = gr_dim(1:3)
-   disp = 4*mype*(num_header_int+lenw) ! da usare con mpi_write !assuming that all procs have the same grid size
-   disp_col = 4*imody*(num_header_int+lenw) ! con mpi_write_col !assuming that all procs have the same grid size
+   disp = 4*mype*(num_header_int + lenw) ! da usare con mpi_write !assuming that all procs have the same grid size
+   disp_col = 4*imody*(num_header_int + lenw) ! con mpi_write_col !assuming that all procs have the same grid size
 
    call mpi_write_field(wdata, lenw, header, num_header_int, disp, &
      fname_out)
 
    if (pe0) then
-    write (6, *) 'Fields written on file: ' // foldername // '/' // &
-      fname // '.bin'
+    write (6, *) 'Fields written on file: '//foldername//'/'// &
+     fname//'.bin'
    end if
 
   end subroutine
 
   !==========================
 
-  subroutine bfields_out(ef, ef1, f_ind )
-   real (dp), intent (in) :: ef(:, :, :, :), ef1(:, :, :, :)
-   character (8) :: fname = '        '
-   integer, intent (in) :: f_ind
+  subroutine bfields_out(ef, ef1, f_ind)
+   real(dp), intent(in) :: ef(:, :, :, :), ef1(:, :, :, :)
+   character(8) :: fname = '        '
+   integer, intent(in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lun, lenw, kk, nx1, ny1, nz1
    integer :: i1, j1, k1, i_end
    integer :: gr_dim(3)
    logical :: sd
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 2
 
    write (foldername, '(i4.4)') iout
@@ -1073,7 +1071,7 @@
      do iy = j1, nyp, jump
       do ix = i1, nxp, jump
        kk = kk + 1
-       wdata(kk) = real(ef(ix,iy,iz,f_ind), sp)
+       wdata(kk) = real(ef(ix, iy, iz, f_ind), sp)
       end do
      end do
     end do
@@ -1082,11 +1080,11 @@
      do iy = j1, nyp, jump
       do ix = i1, nxp, jump
        kk = kk + 1
-       if (abs(ef(ix,iy,iz,f_ind)+ef1(ix,iy,iz,f_ind))>1d34) then
+       if (abs(ef(ix, iy, iz, f_ind) + ef1(ix, iy, iz, f_ind)) > 1d34) then
         write (*, *) 'Error :: overflow in file output'
         write (*, '(A,4I4)') 'index:', ix, iy, iz, f_ind
        end if
-       wdata(kk) = real(ef(ix,iy,iz,f_ind)+ef1(ix,iy,iz,f_ind), sp)
+       wdata(kk) = real(ef(ix, iy, iz, f_ind) + ef1(ix, iy, iz, f_ind), sp)
       end do
      end do
     end do
@@ -1098,17 +1096,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, i_end ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, i_end]
 
     select case (f_ind)
     case (1)
@@ -1116,7 +1114,7 @@
     case (2)
      write (fname, '(a6,i2.2)') 'Eybout', iout
     case (3)
-     if (nfield==3) then
+     if (nfield == 3) then
       write (fname, '(a6,i2.2)') 'Bzbout', iout
      else
       write (fname, '(a6,i2.2)') 'Ezbout', iout
@@ -1135,8 +1133,8 @@
     write (10, *) ' Real parameters'
     write (10, '(4e14.5)') real_par
     close (10)
-    write (6, *) 'Field data written on file: ' // foldername // '/' // &
-      fname // '.dat'
+    write (6, *) 'Field data written on file: '//foldername//'/'// &
+     fname//'.dat'
 
     gr_dim(1) = nxh(1)
     gr_dim(2) = nyh(1)
@@ -1151,25 +1149,25 @@
     write (10) wdata(1:lenw)
    end if
 
-   if (mype>0) then
-    gr_dim(1) = nxh(imodx+1)
-    gr_dim(2) = nyh(imody+1)
-    gr_dim(3) = nzh(imodz+1)
+   if (mype > 0) then
+    gr_dim(1) = nxh(imodx + 1)
+    gr_dim(2) = nyh(imody + 1)
+    gr_dim(3) = nzh(imodz + 1)
     lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
     sd = .true.
-    call exchange_pdata(sd, wdata, lenw, pe_min, mype+200)
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype + 200)
    else
     sd = .false.
     do ix = 0, npe_xloc - 1
-     gr_dim(1) = nxh(ix+1)
+     gr_dim(1) = nxh(ix + 1)
      do iz = 0, npe_zloc - 1
-      gr_dim(3) = nzh(iz+1)
+      gr_dim(3) = nzh(iz + 1)
       do iy = 0, npe_yloc - 1
-       gr_dim(2) = nyh(iy+1)
-       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
-       if (ipe>0) then
+       gr_dim(2) = nyh(iy + 1)
+       ipe = iy + npe_yloc*(iz + npe_zloc*ix)
+       if (ipe > 0) then
         lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-        call exchange_pdata(sd, wdata, lenw, ipe, ipe+200)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe + 200)
         write (lun) gr_dim
         write (lun) wdata(1:lenw)
        end if
@@ -1195,23 +1193,23 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Fields written on file: ' // foldername // '/' // &
-      fname // '.bin'
+    write (6, *) 'Fields written on file: '//foldername//'/'// &
+     fname//'.bin'
    end if
   end subroutine
 
   !==========================
-  subroutine env_two_fields_out(ef, ef1, f_ind )
-   real (dp), intent (in) :: ef(:, :, :, :), ef1(:, :, :, :)
-   character (9) :: fname = '         '
-   integer, intent (in) :: f_ind
+  subroutine env_two_fields_out(ef, ef1, f_ind)
+   real(dp), intent(in) :: ef(:, :, :, :), ef1(:, :, :, :)
+   character(9) :: fname = '         '
+   integer, intent(in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3)
    integer :: i1, j1, k1, lun
    logical :: sd
-   real (dp) :: a2, avec
-   character (4) :: foldername
+   real(dp) :: a2, avec
+   character(4) :: foldername
    integer, parameter :: file_version = 2
 
    write (foldername, '(i4.4)') iout
@@ -1225,16 +1223,16 @@
    i1 = ix1
 
    kk = 0
-   if (f_ind==0) then
+   if (f_ind == 0) then
     do iz = k1, nzp, jump
      do iy = j1, nyp, jump
       do ix = i1, nxp, jump
        kk = kk + 1
        a2 = ef(ix, iy, iz, 1)*ef(ix, iy, iz, 1) + &
-         ef(ix, iy, iz, 2)*ef(ix, iy, iz, 2)
+            ef(ix, iy, iz, 2)*ef(ix, iy, iz, 2)
        avec = sqrt(a2)
        a2 = ef1(ix, iy, iz, 1)*ef1(ix, iy, iz, 1) + &
-         ef1(ix, iy, iz, 2)*ef1(ix, iy, iz, 2)
+            ef1(ix, iy, iz, 2)*ef1(ix, iy, iz, 2)
        avec = avec + sqrt(a2)
        wdata(kk) = real(avec, sp)
       end do
@@ -1245,8 +1243,8 @@
      do iy = j1, nyp, jump
       do ix = i1, nxp, jump
        kk = kk + 1
-       wdata(kk) = real(ef(ix,iy,iz,f_ind), sp)
-       wdata(kk) = wdata(kk) + real(ef1(ix,iy,iz,f_ind), sp)
+       wdata(kk) = real(ef(ix, iy, iz, f_ind), sp)
+       wdata(kk) = wdata(kk) + real(ef1(ix, iy, iz, f_ind), sp)
       end do
      end do
     end do
@@ -1257,17 +1255,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, ibeam ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, ibeam]
 
     select case (f_ind)
     case (0)
@@ -1291,25 +1289,25 @@
     write (10) wdata(1:lenw)
    end if
 
-   if (mype>0) then
-    gr_dim(1) = nxh(imodx+1)
-    gr_dim(2) = nyh(imody+1)
-    gr_dim(3) = nzh(imodz+1)
+   if (mype > 0) then
+    gr_dim(1) = nxh(imodx + 1)
+    gr_dim(2) = nyh(imody + 1)
+    gr_dim(3) = nzh(imodz + 1)
     lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
     sd = .true.
-    call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype + 100)
    else
     sd = .false.
     do ix = 0, npe_xloc - 1
-     gr_dim(1) = nxh(ix+1)
+     gr_dim(1) = nxh(ix + 1)
      do iz = 0, npe_zloc - 1
-      gr_dim(3) = nzh(iz+1)
+      gr_dim(3) = nzh(iz + 1)
       do iy = 0, npe_yloc - 1
-       gr_dim(2) = nyh(iy+1)
-       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
-       if (ipe>0) then
+       gr_dim(2) = nyh(iy + 1)
+       ipe = iy + npe_yloc*(iz + npe_zloc*ix)
+       if (ipe > 0) then
         lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-        call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe + 100)
         write (lun) gr_dim
         write (lun) wdata(1:lenw)
        end if
@@ -1335,23 +1333,23 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Fields written on file: ' // foldername // '/' // &
-      fname // '.bin'
+    write (6, *) 'Fields written on file: '//foldername//'/'// &
+     fname//'.bin'
    end if
   end subroutine
 
-  subroutine env_fields_out(ef, f_ind )
-   real (dp), intent (in) :: ef(:, :, :, :)
-   character (9) :: fname = '         '
-   integer, intent (in) :: f_ind
+  subroutine env_fields_out(ef, f_ind)
+   real(dp), intent(in) :: ef(:, :, :, :)
+   character(9) :: fname = '         '
+   integer, intent(in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
    integer :: gr_dim(3)
    integer :: i1, j1, k1, lun
    logical :: sd
-   character (4) :: foldername
+   character(4) :: foldername
    integer, parameter :: file_version = 2
-   real (dp) :: a2, avec
+   real(dp) :: a2, avec
 
    write (foldername, '(i4.4)') iout
 
@@ -1364,13 +1362,13 @@
    i1 = ix1
 
    kk = 0
-   if (f_ind<1) then
+   if (f_ind < 1) then
     do iz = k1, nzp, jump
      do iy = j1, nyp, jump
       do ix = i1, nxp, jump
        kk = kk + 1
        a2 = ef(ix, iy, iz, 1)*ef(ix, iy, iz, 1) + &
-         ef(ix, iy, iz, 2)*ef(ix, iy, iz, 2)
+            ef(ix, iy, iz, 2)*ef(ix, iy, iz, 2)
        avec = sqrt(a2)
        wdata(kk) = real(avec, sp)
       end do
@@ -1381,7 +1379,7 @@
      do iy = j1, nyp, jump
       do ix = i1, nxp, jump
        kk = kk + 1
-       wdata(kk) = real(ef(ix,iy,iz,f_ind), sp)
+       wdata(kk) = real(ef(ix, iy, iz, f_ind), sp)
       end do
      end do
     end do
@@ -1392,17 +1390,17 @@
     ny1 = sum(nyh(1:npe_yloc))
     nz1 = sum(nzh(1:npe_zloc))
 
-    real_par(1:20) = [ real(tnow,sp), real(xmin,sp), real(xmax,sp), &
-      real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-      real(w0_x,sp), real(w0_y,sp), real(n_over_nc,sp), real(a0,sp), &
-      real(lam0,sp), real(e0,sp), real(ompe,sp), real(targ_in,sp), &
-      real(targ_end,sp), real(gam0,sp), real(nb_over_np,sp), &
-      real(b_charge,sp), real(vbeam,sp) ]
+    real_par(1:20) = [real(tnow, sp), real(xmin, sp), real(xmax, sp), &
+                      real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                      real(w0_x, sp), real(w0_y, sp), real(n_over_nc, sp), real(a0, sp), &
+                      real(lam0, sp), real(e0, sp), real(ompe, sp), real(targ_in, sp), &
+                      real(targ_end, sp), real(gam0, sp), real(nb_over_np, sp), &
+                      real(b_charge, sp), real(vbeam, sp)]
 
-    int_par(1:20) = [ npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
-      loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
-      dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
-      file_version, ibeam ]
+    int_par(1:20) = [npe_yloc, npe_zloc, npe_xloc, nx1, ny1, &
+                     loc_nyc_max, nz1, loc_nzc_max, jump, iby, iform, model_id, &
+                     dmodel_id, nsp, curr_ndim, mp_per_cell(1), lpf_ord, der_ord, &
+                     file_version, ibeam]
 
     select case (f_ind)
     case (-1)
@@ -1428,25 +1426,25 @@
     write (10) wdata(1:lenw)
    end if
 
-   if (mype>0) then
-    gr_dim(1) = nxh(imodx+1)
-    gr_dim(2) = nyh(imody+1)
-    gr_dim(3) = nzh(imodz+1)
+   if (mype > 0) then
+    gr_dim(1) = nxh(imodx + 1)
+    gr_dim(2) = nyh(imody + 1)
+    gr_dim(3) = nzh(imodz + 1)
     lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
     sd = .true.
-    call exchange_pdata(sd, wdata, lenw, pe_min, mype+100)
+    call exchange_pdata(sd, wdata, lenw, pe_min, mype + 100)
    else
     sd = .false.
     do ix = 0, npe_xloc - 1
-     gr_dim(1) = nxh(ix+1)
+     gr_dim(1) = nxh(ix + 1)
      do iz = 0, npe_zloc - 1
-      gr_dim(3) = nzh(iz+1)
+      gr_dim(3) = nzh(iz + 1)
       do iy = 0, npe_yloc - 1
-       gr_dim(2) = nyh(iy+1)
-       ipe = iy + npe_yloc*(iz+npe_zloc*ix)
-       if (ipe>0) then
+       gr_dim(2) = nyh(iy + 1)
+       ipe = iy + npe_yloc*(iz + npe_zloc*ix)
+       if (ipe > 0) then
         lenw = gr_dim(1)*gr_dim(2)*gr_dim(3)
-        call exchange_pdata(sd, wdata, lenw, ipe, ipe+100)
+        call exchange_pdata(sd, wdata, lenw, ipe, ipe + 100)
         write (lun) gr_dim
         write (lun) wdata(1:lenw)
        end if
@@ -1472,8 +1470,8 @@
     end do
     write (10) gwdata(1:kk)
     close (10)
-    write (6, *) 'Fields written on file: ' // foldername // '/' // &
-      fname // '.bin'
+    write (6, *) 'Fields written on file: '//foldername//'/'// &
+     fname//'.bin'
    end if
   end subroutine
   !================================
@@ -1644,9 +1642,9 @@
    integer (dp) :: nptot_global_reduced
    integer :: ik, p, q, np, ip, ip_max, nptot
    integer :: lenp, ip_loc(npe), ndv, i_end
-   integer (offset_kind) :: disp, disp_col
-   real (dp) :: xx, yy, zz
-   character (4) :: foldername
+   integer(offset_kind) :: disp, disp_col
+   real(dp) :: xx, yy, zz
+   character(4) :: foldername
    integer, parameter :: file_version = 4
 
    write (foldername, '(i4.4)') iout
@@ -1655,8 +1653,8 @@
    np = loc_npart(imody, imodz, imodx, pid)
    call v_realloc( pic_out_aux, np, nd2+1 )
    ip = 0
-   if (np>0) then
-    if (ndim>2) then
+   if (np > 0) then
+    if (ndim > 2) then
      do p = 1, np, jmp
       yy = spec_in(pid)%part(p, 2)
       zz = spec_in(pid)%part(p, 3)
@@ -1686,18 +1684,18 @@
      end do
     end if
    end if
-   ip_loc(mype+1) = ip
+   ip_loc(mype + 1) = ip
 
-   ip = ip_loc(mype+1)
+   ip = ip_loc(mype + 1)
    call intvec_distribute(ip, ip_loc, npe)
 
    ! this differs from nptot_global since it represents just the reduced number of particles
    ! that will be present in the output (should be equal to nptot_global for p_jump=1)!
    nptot_global_reduced = 0
-   do ik=1,npe
-    nptot_global_reduced = nptot_global_reduced +ip_loc(ik)
+   do ik = 1, npe
+    nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
-   if (nptot_global<1e9) then
+   if (nptot_global < 1e9) then
     nptot = int(nptot_global_reduced)
    else
     nptot = -1
@@ -1705,10 +1703,10 @@
 
    ip_max = ip
    if (pe0) ip_max = maxval(ip_loc(1:npe))
-   lenp = ndv*ip_loc(mype+1)
+   lenp = ndv*ip_loc(mype + 1)
    allocate (pdata(lenp))
    ik = 0
-   do p = 1, ip_loc(mype+1)
+   do p = 1, ip_loc(mype + 1)
     do q = 1, nd2
      ik = ik + 1
      pdata(ik) = real(pic_out_aux(p,q), sp)
@@ -1719,25 +1717,25 @@
     ik = ik + 1
     pdata(ik) = real(charge, sp)
    end do
-   if (ik/=lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
-     ik
+   if (ik /= lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
+    ik
 
    call endian(i_end)
-   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
-     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-     real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
-     real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
-     real(j0_norm,sp), real(mass(pid),sp), real(xmin_out,sp), &
-     real(xmax_out,sp), real(ymax_out,sp), real(gam_min,sp) ]
+   part_real_par(1:20) = [real(timenow, sp), real(xmin, sp), real(xmax, sp), &
+                          real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                          real(w0_x, sp), real(w0_y, sp), real(a0, sp), real(lam0, sp), &
+                          real(e0, sp), real(n0_ref, sp), real(np_per_cell, sp), &
+                          real(j0_norm, sp), real(mass(pid), sp), real(xmin_out, sp), &
+                          real(xmax_out, sp), real(ymax_out, sp), real(gam_min, sp)]
 
-   part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(pid), ion_min(1), lpf_ord, der_ord, iform, ndv, &
-     file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
+   part_int_par(1:20) = [npe, nx, ny, nz, model_id, dmodel_id, nsp, &
+                         curr_ndim, mp_per_cell(pid), ion_min(1), lpf_ord, der_ord, iform, ndv, &
+                         file_version, i_end, nx_loc, ny_loc, nz_loc, pjump]
 
    write (fname, '(a6,i2.2)') part_files(pid), iout !serve sempre
    write (fnamel, '(a6,i2.2,a1,i3.3)') part_files(pid), iout, '_', imodz !usare con mpi_write_part_col
-   fname_out = foldername // '/' // fname // '.bin'
-   fname_outl = foldername // '/' // fnamel // '.bin'
+   fname_out = foldername//'/'//fname//'.bin'
+   fname_outl = foldername//'/'//fnamel//'.bin'
    disp = 0
    disp_col = 0
    if (pe0) then
@@ -1753,14 +1751,14 @@
     write (10, *) ' Number of particles in the output box'
     write (10, '(4i20)') nptot_global_reduced
     close (10)
-    write (6, *) 'Particles param written on file: ' // foldername // &
-      '/' // fname // '.dat'
+    write (6, *) 'Particles param written on file: '//foldername// &
+     '/'//fname//'.dat'
    else
     disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
    end if
 
-   if (mod(mype,npe_yloc)>0) disp_col = ndv*sum(ip_loc(imodz*npe_yloc+1: &
-     mype)) ! da usare con mpi_write_part_col
+   if (mod(mype, npe_yloc) > 0) disp_col = ndv*sum(ip_loc(imodz*npe_yloc + 1: &
+                                                          mype)) ! da usare con mpi_write_part_col
 
    disp = disp*4 ! sia gli int che i float sono di 4 bytes
    disp_col = disp_col*4
@@ -1769,8 +1767,8 @@
 
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
-    write (6, *) 'Particles data written on file: ' // foldername // &
-      '/' // fname // '.bin'
+    write (6, *) 'Particles data written on file: '//foldername// &
+     '/'//fname//'.bin'
     write (6, *) ' Output logical flag ', l_force_singlefile_output
    end if
   end subroutine
@@ -1787,9 +1785,9 @@
    integer (dp) :: nptot_global_reduced
    integer :: id_ch, ik, p, q, ip, ip_max, nptot
    integer :: jmp, ne, lenp, ip_loc(npe), ndv, i_end
-   integer (offset_kind) :: disp
-   real (dp) :: gam, pp(3)
-   character (4) :: foldername
+   integer(offset_kind) :: disp
+   real(dp) :: gam, pp(3)
+   character(4) :: foldername
    integer, parameter :: file_version = 4
 
    write (foldername, '(i4.4)') iout
@@ -1801,7 +1799,7 @@
    select case (nd2)
    case (4)
     ip = 0
-    if (ne>0) then
+    if (ne > 0) then
      do p = 1, ne
       pp(1:2) = spec_in(1)%part(p, 3:4)
       gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2))
@@ -1815,7 +1813,7 @@
     end if
    case (6)
     ip = 0
-    if (ne>0) then
+    if (ne > 0) then
      do p = 1, ne
       pp(1:3) = spec_in(1)%part(p, 4:6)
       gam = sqrt(1.+pp(1)*pp(1)+pp(2)*pp(2)+pp(3)*pp(3))
@@ -1828,16 +1826,16 @@
      end do
     end if
    end select
-   ip_loc(mype+1) = ip
+   ip_loc(mype + 1) = ip
 
-   ip = ip_loc(mype+1)
+   ip = ip_loc(mype + 1)
    call intvec_distribute(ip, ip_loc, npe)
    nptot_global_reduced = 0
    !nptot_global_reduced=sum(ip_loc(1:npe))
    do ik = 1, npe
     nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
-   if (nptot_global<1e9) then
+   if (nptot_global < 1e9) then
     nptot = int(nptot_global_reduced)
    else
     nptot = -1
@@ -1859,25 +1857,25 @@
     ik = ik + 1
     pdata(ik) = real(charge, sp)
    end do
-   if (ik/=lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
-     ik
+   if (ik /= lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
+    ik
 
    int_par = 0
    call endian(i_end)
 
-   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
-     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-     real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
-     real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
-     real(wgh_ion,sp), real(mass(1),sp), real(xp0_out,sp), &
-     real(xp1_out,sp), real(yp_out,sp), real(gam_in,sp) ]
+   part_real_par(1:20) = [real(timenow, sp), real(xmin, sp), real(xmax, sp), &
+                          real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                          real(w0_x, sp), real(w0_y, sp), real(a0, sp), real(lam0, sp), &
+                          real(e0, sp), real(n0_ref, sp), real(np_per_cell, sp), &
+                          real(wgh_ion, sp), real(mass(1), sp), real(xp0_out, sp), &
+                          real(xp1_out, sp), real(yp_out, sp), real(gam_in, sp)]
 
-   part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, &
-     ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, 0 ]
+   part_int_par(1:20) = [npe, nx, ny, nz, model_id, dmodel_id, nsp, &
+                         curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, &
+                         ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, 0]
 
    write (fname, '(a8,i2.2)') part_files(1), iout !serve sempre
-   fname_out = foldername // '/' // fname // '.bin'
+   fname_out = foldername//'/'//fname//'.bin'
    disp = 0
    if (pe0) then
     open (10, file=foldername//'/'//fname//'.dat', form='formatted')
@@ -1892,8 +1890,8 @@
     write (10, *) ' Number of particles in the output box'
     write (10, '(4i20)') nptot_global_reduced
     close (10)
-    write (6, *) 'Particles param written on file: ' // foldername // &
-      '/' // fname // '.dat'
+    write (6, *) 'Particles param written on file: '//foldername// &
+     '/'//fname//'.dat'
    else
     disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
    end if
@@ -1902,8 +1900,8 @@
    call mpi_write_part(pdata, lenp, ip, disp, fname_out)
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
-    write (6, *) 'Particles data written on file: ' // foldername // &
-      '/' // fname // '.bin'
+    write (6, *) 'Particles data written on file: '//foldername// &
+     '/'//fname//'.bin'
    end if
   end subroutine
 
@@ -1919,8 +1917,8 @@
    integer (dp) :: nptot_global_reduced
    integer :: id_ch, ik, p, q, ip, ip_max, nptot
    integer :: ne, lenp, ip_loc(npe), ndv, i_end
-   integer (offset_kind) :: disp
-   character (4) :: foldername
+   integer(offset_kind) :: disp
+   character(4) :: foldername
    integer, parameter :: file_version = 4
 
    write (foldername, '(i4.4)') iout
@@ -1940,16 +1938,16 @@
      end if
     end do
    end if
-   ip_loc(mype+1) = ip
+   ip_loc(mype + 1) = ip
 
-   ip = ip_loc(mype+1)
+   ip = ip_loc(mype + 1)
    call intvec_distribute(ip, ip_loc, npe)
    nptot_global_reduced = 0
    !nptot_global_reduced=sum(ip_loc(1:npe))
    do ik = 1, npe
     nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
-   if (nptot_global<1e9) then
+   if (nptot_global < 1e9) then
     nptot = int(nptot_global_reduced)
    else
     nptot = -1
@@ -1971,26 +1969,25 @@
     ik = ik + 1
     pdata(ik) = real(charge, sp)
    end do
-   if (ik/=lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
-     ik
+   if (ik /= lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
+    ik
 
    int_par = 0
    call endian(i_end)
 
-   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
-     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-     real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
-     real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
-     real(wgh_ion,sp), real(mass(1),sp), real(xp0_out,sp), &
-     real(xp1_out,sp), real(yp_out,sp), real(gam_min,sp) ]
+   part_real_par(1:20) = [real(timenow, sp), real(xmin, sp), real(xmax, sp), &
+                          real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                          real(w0_x, sp), real(w0_y, sp), real(a0, sp), real(lam0, sp), &
+                          real(e0, sp), real(n0_ref, sp), real(np_per_cell, sp), &
+                          real(wgh_ion, sp), real(mass(1), sp), real(xp0_out, sp), &
+                          real(xp1_out, sp), real(yp_out, sp), real(gam_min, sp)]
 
-
-   part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, ndv, &
-     file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
+   part_int_par(1:20) = [npe, nx, ny, nz, model_id, dmodel_id, nsp, &
+                         curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, ndv, &
+                         file_version, i_end, nx_loc, ny_loc, nz_loc, pjump]
 
    write (fname, '(a11,i2.2)') part_files(1), iout !serve sempre
-   fname_out = foldername // '/' // fname // '.bin'
+   fname_out = foldername//'/'//fname//'.bin'
    disp = 0
    if (pe0) then
     open (10, file=foldername//'/'//fname//'.dat', form='formatted')
@@ -2005,8 +2002,8 @@
     write (10, *) ' Number of particles in the output box'
     write (10, '(4i20)') nptot_global_reduced
     close (10)
-    write (6, *) 'Particles param written on file: ' // foldername // &
-      '/' // fname // '.dat'
+    write (6, *) 'Particles param written on file: '//foldername// &
+     '/'//fname//'.dat'
    else
     disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
    end if
@@ -2015,8 +2012,8 @@
    call mpi_write_part(pdata, lenp, ip, disp, fname_out)
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
-    write (6, *) 'Particles data written on file: ' // foldername // &
-      '/' // fname // '.bin'
+    write (6, *) 'Particles data written on file: '//foldername// &
+     '/'//fname//'.bin'
    end if
   end subroutine
   !==============================================
@@ -2031,9 +2028,9 @@
    integer (dp) :: nptot_global_reduced
    integer :: id_ch, ik, p, q, ip, ip_max, nptot
    integer :: jmp, ne, lenp, ip_loc(npe), ndv, i_end
-   integer (offset_kind) :: disp
-   real (sp) :: ch_ion
-   character (4) :: foldername
+   integer(offset_kind) :: disp
+   real(sp) :: ch_ion
+   character(4) :: foldername
    integer, parameter :: file_version = 4
 
    write (foldername, '(i4.4)') iout
@@ -2044,7 +2041,7 @@
    ne = loc_npart(imody, imodz, imodx, 1)
    call v_realloc( pic_out_aux, ne, nd2 + 1)
    ip = 0
-   if (ne>0) then
+   if (ne > 0) then
     do p = 1, ne
      wgh_cmp = spec_in(1)%part(p, id_ch)
      if (part_ind < 0) then
@@ -2055,16 +2052,16 @@
      end if
     end do
    end if
-   ip_loc(mype+1) = ip
+   ip_loc(mype + 1) = ip
 
-   ip = ip_loc(mype+1)
+   ip = ip_loc(mype + 1)
    call intvec_distribute(ip, ip_loc, npe)
    nptot_global_reduced = 0
    !nptot_global_reduced=sum(ip_loc(1:npe))
    do ik = 1, npe
     nptot_global_reduced = nptot_global_reduced + ip_loc(ik)
    end do
-   if (nptot_global<1e9) then
+   if (nptot_global < 1e9) then
     nptot = int(nptot_global_reduced)
    else
     nptot = -1
@@ -2086,26 +2083,25 @@
     ik = ik + 1
     pdata(ik) = real(charge, sp)
    end do
-   if (ik/=lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
-     ik
+   if (ik /= lenp) write (6, '(a16,3i8)') 'wrong pdata size', mype, lenp, &
+    ik
 
    int_par = 0
    call endian(i_end)
 
-   part_real_par(1:20) = [ real(timenow,sp), real(xmin,sp), real(xmax,sp), &
-     real(ymin,sp), real(ymax,sp), real(zmin,sp), real(zmax,sp), &
-     real(w0_x,sp), real(w0_y,sp), real(a0,sp), real(lam0,sp), &
-     real(e0,sp), real(n0_ref,sp), real(np_per_cell,sp), &
-     real(wgh_ion,sp), real(mass(1),sp), real(xp0_out,sp), &
-     real(xp1_out,sp), real(yp_out,sp), real(gam_min,sp) ]
+   part_real_par(1:20) = [real(timenow, sp), real(xmin, sp), real(xmax, sp), &
+                          real(ymin, sp), real(ymax, sp), real(zmin, sp), real(zmax, sp), &
+                          real(w0_x, sp), real(w0_y, sp), real(a0, sp), real(lam0, sp), &
+                          real(e0, sp), real(n0_ref, sp), real(np_per_cell, sp), &
+                          real(wgh_ion, sp), real(mass(1), sp), real(xp0_out, sp), &
+                          real(xp1_out, sp), real(yp_out, sp), real(gam_min, sp)]
 
-
-   part_int_par(1:20) = [ npe, nx, ny, nz, model_id, dmodel_id, nsp, &
-     curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, &
-     ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, pjump ]
+   part_int_par(1:20) = [npe, nx, ny, nz, model_id, dmodel_id, nsp, &
+                         curr_ndim, mp_per_cell(1), ion_min(1), lpf_ord, der_ord, iform, &
+                         ndv, file_version, i_end, nx_loc, ny_loc, nz_loc, pjump]
 
    write (fname, '(a8,i2.2)') part_files(1), iout !serve sempre
-   fname_out = foldername // '/' // fname // '.bin'
+   fname_out = foldername//'/'//fname//'.bin'
    disp = 0
    if (pe0) then
     open (10, file=foldername//'/'//fname//'.dat', form='formatted')
@@ -2120,8 +2116,8 @@
     write (10, *) ' Number of particles in the output box'
     write (10, '(4i20)') nptot_global_reduced
     close (10)
-    write (6, *) 'Particles param written on file: ' // foldername // &
-      '/' // fname // '.dat'
+    write (6, *) 'Particles param written on file: '//foldername// &
+     '/'//fname//'.dat'
    else
     disp = mype + ndv*sum(ip_loc(1:mype)) ! da usare con mpi_write_part
    end if
@@ -2130,8 +2126,8 @@
    call mpi_write_part(pdata, lenp, ip, disp, fname_out)
    if (allocated(pdata)) deallocate (pdata)
    if (pe0) then
-    write (6, *) 'Particles data written on file: ' // foldername // &
-      '/' // fname // '.bin'
+    write (6, *) 'Particles data written on file: '//foldername// &
+     '/'//fname//'.bin'
    end if
   end subroutine
   !================================

@@ -49,10 +49,10 @@
   !DIR$ ATTRIBUTES INLINE :: set_local_positions
   !================================
   subroutine set_part_gamma(pt_loc, np, nc)
-   real (dp), intent (inout) :: pt_loc(:, :)
-   integer, intent (in) :: np, nc
+   real(dp), intent(inout) :: pt_loc(:, :)
+   integer, intent(in) :: np, nc
    integer :: n
-   real (dp) :: gam2
+   real(dp) :: gam2
 
    select case (nc)
    case (2)
@@ -63,7 +63,7 @@
    case (3)
     do n = 1, np
      gam2 = pt_loc(n, 4)*pt_loc(n, 4) + pt_loc(n, 5)*pt_loc(n, 5) + &
-       pt_loc(n, 6)*pt_loc(n, 6)
+            pt_loc(n, 6)*pt_loc(n, 6)
      pt_loc(n, 4) = sqrt(1.+gam2)
     end do
    end select
@@ -71,10 +71,10 @@
   end subroutine
   !===================
   subroutine set_part_velocities(pt_loc, np, njc)
-   real (dp), intent (inout) :: pt_loc(:, :)
-   integer, intent (in) :: np, njc
+   real(dp), intent(inout) :: pt_loc(:, :)
+   integer, intent(in) :: np, njc
    integer :: n
-   real (dp) :: gam2, gam_inv
+   real(dp) :: gam2, gam_inv
 
    select case (njc)
    case (2)
@@ -87,7 +87,7 @@
    case (3)
     do n = 1, np
      gam2 = pt_loc(n, 4)*pt_loc(n, 4) + pt_loc(n, 5)*pt_loc(n, 5) + &
-       pt_loc(n, 6)*pt_loc(n, 6)
+            pt_loc(n, 6)*pt_loc(n, 6)
      gam_inv = 1./sqrt(1.+gam2)
      pt_loc(n, 4) = gam_inv*pt_loc(n, 4)
      pt_loc(n, 5) = gam_inv*pt_loc(n, 5)
@@ -98,16 +98,16 @@
   !==========================
   subroutine set_ho_grid_charge(sp_loc, pt, den, np, ic)
 
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp), intent (inout) :: den(:, :, :, :)
-   integer, intent (in) :: np, ic
-   real (dp) :: xp(3), dvol, ax0(0:3), ay0(0:3), az0(0:3)
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp), intent(inout) :: den(:, :, :, :)
+   integer, intent(in) :: np, ic
+   real(dp) :: xp(3), dvol, ax0(0:3), ay0(0:3), az0(0:3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
-   real (sp) :: wght
+   real(sp) :: wght
    !======================
    ! Computes charge density on a grid using cubic spline on uniform grid
-   !================================= 
+   !=================================
    ax0(0:3) = zero_dp
    ay0(0:3) = zero_dp
    az0(0:3) = zero_dp
@@ -119,14 +119,14 @@
    case (2)
     ch = 5
     do n = 1, np
-     pt(n, 1) = dx_inv*(sp_loc%part(n, 1)-xmn)
-     pt(n, 2) = dy_inv*(sp_loc%part(n, 2)-ymn)
+     pt(n, 1) = dx_inv*(sp_loc%part(n, 1) - xmn)
+     pt(n, 2) = dy_inv*(sp_loc%part(n, 2) - ymn)
      wgh_cmp = sp_loc%part(n, 5)
      pt(n, 4) = charge*wgh
     end do
     !==========================
     do n = 1, np
-     wght = real(pt(n,4), sp)
+     wght = real(pt(n, 4), sp)
      xp(1:2) = pt(n, 1:2)
 
      call cden_2d_wgh( xp, interp )
@@ -150,9 +150,9 @@
    case (3)
     ch = 7
     do n = 1, np
-     pt(n, 1) = dx_inv*(sp_loc%part(n, 1)-xmn)
-     pt(n, 2) = dy_inv*(sp_loc%part(n, 2)-ymn)
-     pt(n, 3) = dz_inv*(sp_loc%part(n, 3)-zmn)
+     pt(n, 1) = dx_inv*(sp_loc%part(n, 1) - xmn)
+     pt(n, 2) = dy_inv*(sp_loc%part(n, 2) - ymn)
+     pt(n, 3) = dz_inv*(sp_loc%part(n, 3) - zmn)
      wgh_cmp = sp_loc%part(n, 7)
      wght = charge*wgh
      pt(n, 4) = wght
@@ -190,17 +190,17 @@
   !==========================
   subroutine set_charge_on_ftgrid(sp_loc, pt, den, np, ic)
 
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp), intent (inout) :: den(:, :, :, :)
-   integer, intent (in) :: np, ic
-   real (dp) :: xp(3), dvol, ax0(0:2), ay0(0:2), az0(0:2)
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp), intent(inout) :: den(:, :, :, :)
+   integer, intent(in) :: np, ic
+   real(dp) :: xp(3), dvol, ax0(0:2), ay0(0:2), az0(0:2)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
-   real (sp) :: wght
-   real(dp) :: x1_loc,y1_loc,z1_loc
+   real(sp) :: wght
+   real(dp) :: x1_loc, y1_loc, z1_loc
    !======================
    ! Computes charge density on the superposed uniform ftgrid
-   !================================= 
+   !=================================
    ax0(0:2) = zero_dp
    ay0(0:2) = zero_dp
    az0(0:2) = zero_dp
@@ -215,14 +215,14 @@
    case (2)
     ch = 5
     do n = 1, np
-     pt(n, 1) = dx_inv*(sp_loc%part(n, 1)-x1_loc)
-     pt(n, 2) = dy_inv*(sp_loc%part(n, 2)-y1_loc)
+     pt(n, 1) = dx_inv*(sp_loc%part(n, 1) - x1_loc)
+     pt(n, 2) = dy_inv*(sp_loc%part(n, 2) - y1_loc)
      wgh_cmp = sp_loc%part(n, 5)
      pt(n, 4) = charge*wgh
     end do
     !==========================
     do n = 1, np
-     wght = real(pt(n,4), sp)
+     wght = real(pt(n, 4), sp)
      xp(1:2) = pt(n, 1:2)
 
      call qden_2d_wgh( xp, interp )
@@ -246,9 +246,9 @@
    case (3)
     ch = 7
     do n = 1, np
-     pt(n, 1) = dx_inv*(sp_loc%part(n, 1)-x1_loc)
-     pt(n, 2) = dy_inv*(sp_loc%part(n, 2)-y1_loc)
-     pt(n, 3) = dz_inv*(sp_loc%part(n, 3)-z1_loc)
+     pt(n, 1) = dx_inv*(sp_loc%part(n, 1) - x1_loc)
+     pt(n, 2) = dy_inv*(sp_loc%part(n, 2) - y1_loc)
+     pt(n, 3) = dz_inv*(sp_loc%part(n, 3) - z1_loc)
      wgh_cmp = sp_loc%part(n, 7)
      wght = charge*wgh
      pt(n, 4) = wght
@@ -399,13 +399,13 @@
 !=================================
   subroutine set_grid_charge_old(sp_loc, pt, den, np, ic)
 
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp), intent (inout) :: den(:, :, :, :)
-   integer, intent (in) :: np, ic
-   real (dp) :: xp(3), dvol, ax0(0:2), ay0(0:2), az0(0:2)
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp), intent(inout) :: den(:, :, :, :)
+   integer, intent(in) :: np, ic
+   real(dp) :: xp(3), dvol, ax0(0:2), ay0(0:2), az0(0:2)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
-   real (sp) :: wght
+   real(sp) :: wght
    !======================
    ! Computes charge density of species ic on a grid
    !=================================
@@ -448,7 +448,7 @@
     call set_local_2d_positions(pt, 1, np)
     !==========================
     do n = 1, np
-     wght = real(pt(n,4), sp)
+     wght = real(pt(n, 4), sp)
      xp(1:2) = pt(n, 1:2)
 
      call qden_2d_wgh( xp, interp )
@@ -736,12 +736,12 @@
   !==========================
   subroutine set_grid_env_den_energy_old(sp_loc, pt, eden, np, icp)
 
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp), intent (inout) :: eden(:, :, :, :)
-   integer, intent (in) :: np, icp
-   real (dp) :: dvol, gam2, gam_p
-   real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp(3), pp(3)
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp), intent(inout) :: eden(:, :, :, :)
+   integer, intent(in) :: np, icp
+   real(dp) :: dvol, gam2, gam_p
+   real(dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp(3), pp(3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
    !======================
    !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
@@ -753,7 +753,7 @@
    ay0(0:2) = 0.0
    az0(0:2) = 0.0
    spl = 2
-   if (np<1) return
+   if (np < 1) return
    select case (ndim)
    case (1)
     ch = 5
@@ -784,7 +784,7 @@
       i2 = i + i1
       dvol = ax0(i1)
       eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*charge
-      eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam_p-1)*dvol
+      eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam_p - 1)*dvol
      end do
     end do
    case (2)
@@ -793,7 +793,7 @@
      pt(n, 1:ch) = sp_loc%part(n, 1:ch)
     end do
     call set_local_2d_positions(pt, 1, np)
-    if (curr_ndim==2) then
+    if (curr_ndim == 2) then
      do n = 1, np
       pp(1:2) = sp_loc%part(n, 3:4)
       gam2 = pp(1)*pp(1) + pp(2)*pp(2)
@@ -824,12 +824,12 @@
         i2 = i + i1
         dvol = ax0(i1)*ay0(j1)
         eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*charge
-        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam_p-1.)*dvol
+        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam_p - 1.)*dvol
        end do
       end do
      end do
     end if
-    if (curr_ndim==3) then
+    if (curr_ndim == 3) then
      do n = 1, np
       pp(1:3) = sp_loc%part(n, 4:6)
       gam2 = pp(1)*pp(1) + pp(2)*pp(2) + pp(3)*pp(3)
@@ -861,7 +861,7 @@
         i2 = i + i1
         dvol = ax0(i1)*ay0(j1)
         eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*charge
-        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam_p-1.)*dvol
+        eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam_p - 1.)*dvol
        end do
       end do
      end do
@@ -910,7 +910,7 @@
         i2 = i + i1
         eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(i1)*dvol*charge
         eden(i2, j2, k2, 2) = eden(i2, j2, k2, 2) + &
-          (gam_p-1.)*ax0(i1)*dvol
+                              (gam_p - 1.)*ax0(i1)*dvol
        end do
       end do
      end do
@@ -1102,12 +1102,12 @@
   !=================================================
   subroutine set_grid_den_energy_old(sp_loc, pt, eden, np)
 
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp), intent (inout) :: eden(:, :, :, :)
-   integer, intent (in) :: np
-   real (dp) :: dvol, gam
-   real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp(3), pp(3)
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp), intent(inout) :: eden(:, :, :, :)
+   integer, intent(in) :: np
+   real(dp) :: dvol, gam
+   real(dp) :: ax0(0:2), ay0(0:2), az0(0:2), xp(3), pp(3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
    !======================
    !   Computes eden(grid,1)= n/n_0 and eden(grid,2)=<gam-1}n>/n_0
@@ -1120,14 +1120,14 @@
    az0(0:2) = zero_dp
    spl = 2
    ch = size(sp_loc%part, 2)
-   if (np<1) return
+   if (np < 1) return
    select case (ndim)
    case (1)
     j2 = 1
     do n = 1, np
-     xp(1) = dx_inv*(sp_loc%part(n,1)-xmn)
+     xp(1) = dx_inv*(sp_loc%part(n, 1) - xmn)
      pp(1:2) = sp_loc%part(n, 3:4)
-     gam = sqrt(pp(1)*pp(1)+pp(2)*pp(2)+1.)
+     gam = sqrt(pp(1)*pp(1) + pp(2)*pp(2) + 1.)
      wgh_cmp = sp_loc%part(n, ch)
 
      call qden_1d_wgh( xp, interp )
@@ -1139,7 +1139,7 @@
       i2 = i + i1
       dvol = ax0(i1)
       eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*charge
-      eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam-1.)*dvol
+      eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam - 1.)*dvol
      end do
     end do
    case (2)
@@ -1170,7 +1170,7 @@
        i2 = i + i1
        dvol = ax0(i1)*ay0(j1)
        eden(i2, j2, 1, 1) = eden(i2, j2, 1, 1) + dvol*charge
-       eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam-1.)*dvol
+       eden(i2, j2, 1, 2) = eden(i2, j2, 1, 2) + (gam - 1.)*dvol
       end do
      end do
     end do
@@ -1207,7 +1207,7 @@
         i2 = i + i1
         eden(i2, j2, k2, 1) = eden(i2, j2, k2, 1) + ax0(i1)*dvol*charge
         eden(i2, j2, k2, 2) = eden(i2, j2, k2, 2) + &
-          (gam-1.)*ax0(i1)*dvol
+                              (gam - 1.)*ax0(i1)*dvol
        end do
       end do
      end do
@@ -1218,14 +1218,14 @@
   !==============================================
   subroutine set_grid_charge_and_jx(sp_loc, pt, eden, np)
 
-   type (species), intent (in) :: sp_loc
-   real (dp), intent (inout) :: pt(:, :)
-   real (dp), intent (inout) :: eden(:, :, :, :)
-   integer, intent (in) :: np
-   real (dp) :: dvol, gam
-   real (dp) :: ax0(0:2), ay0(0:2), az0(0:2), vx, xp(3)
+   type(species), intent(in) :: sp_loc
+   real(dp), intent(inout) :: pt(:, :)
+   real(dp), intent(inout) :: eden(:, :, :, :)
+   integer, intent(in) :: np
+   real(dp) :: dvol, gam
+   real(dp) :: ax0(0:2), ay0(0:2), az0(0:2), vx, xp(3)
    integer :: i, j, k, i1, j1, k1, i2, j2, k2, n, ch, spl
-   real (sp) :: wght
+   real(sp) :: wght
    !======================
    !   Computes charge density and Jx current density at t^n current time
    !================================================
@@ -1237,7 +1237,7 @@
    az0(0:2) = zero_dp
    spl = 2
    ch = size(sp_loc%part, 2)
-   if (np<1) return
+   if (np < 1) return
    select case (ndim)
    case (2)
     do n = 1, np
@@ -1247,7 +1247,7 @@
     do n = 1, np
      xp(1:2) = pt(n, 1:2)
      wgh_cmp = pt(n, ch)
-     gam = sqrt(1.+pt(n,3)*pt(n,3)+pt(n,4)*pt(n,4))
+     gam = sqrt(1.+pt(n, 3)*pt(n, 3) + pt(n, 4)*pt(n, 4))
      vx = pt(n, 3)/gam
      wght = charge*wgh
 
@@ -1280,7 +1280,7 @@
     do n = 1, np
      xp(1:3) = pt(n, 1:3)
      wgh_cmp = pt(n, ch)
-     gam = sqrt(1.+pt(n,4)*pt(n,4)+pt(n,5)*pt(n,5)+pt(n,6)*pt(n,6))
+     gam = sqrt(1.+pt(n, 4)*pt(n, 4) + pt(n, 5)*pt(n, 5) + pt(n, 6)*pt(n, 6))
      vx = pt(n, 4)/gam
      wght = charge*wgh
 

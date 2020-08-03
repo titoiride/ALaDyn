@@ -43,9 +43,9 @@
   !============================
   subroutine env_den_collect(source_in)
 
-   real (dp), intent (inout) :: source_in(:, :, :, :)
+   real(dp), intent(inout) :: source_in(:, :, :, :)
    integer :: i, j, k, kk, jj, ic
-   real (dp) :: dery, derz
+   real(dp) :: dery, derz
 
    ic = 1
    if (prl) then
@@ -56,7 +56,7 @@
    !==================================
    if (stretch) then
     ic = 1
-    if (ndim==2) then
+    if (ndim == 2) then
      k = 1
      do j = jy1, jy2
       jj = j - gcy + 1
@@ -368,16 +368,16 @@
     !+++++++++++++++++++++++++++++++++++++++++++++++++++++++
     call set_env_momentum_density_flux(up, ebf, jc, ebf0, flux)
     !exit jc(1)=q^2*n/gam, jc(2:4) ponderomotive force on a grid
-    !ebf0= total fields flux(1:4)=(P,den)^n 
+    !ebf0= total fields flux(1:4)=(P,den)^n
     !============================
     call update_adam_bash_fluid_variables(up, up0, flux, ebf0)
     ! In up exit updated momenta-density variables u^{n+1}
     ! in  u0^{n} stores Dt*F(u^n), in flux(1:fdim)=(P,den)^{n+1/2}
 
-    flux(:, :, :, curr_ndim+2) = jc(:, :, :, 1)
+    flux(:, :, :, curr_ndim + 2) = jc(:, :, :, 1)
 
-   ! in flux(fdim+1) exit the fluid contribution of the sorce term q^2*n/gam
-   ! for the envelope field solver
+    ! in flux(fdim+1) exit the fluid contribution of the sorce term q^2*n/gam
+    ! for the envelope field solver
    end if
    jc(:, :, :, 1) = 0.0
    call set_env_density(spec_aux_in, jc, np, 1)
@@ -386,7 +386,7 @@
    ! to be added to the fluid contribution if (Hybrid)
    jc(:, :, :, 3) = jc(:, :, :, 1)
    if (hybrid) then
-    jc(:, :, :, 3) = jc(:, :, :, 3) + flux(:, :, :, curr_ndim+2)
+    jc(:, :, :, 3) = jc(:, :, :, 3) + flux(:, :, :, curr_ndim + 2)
    end if
    !===================
    ! in the envelope equation (A^{n-1},A^n)==> (A^n,A^{n+1})
@@ -405,9 +405,9 @@
    else
     call compute_ponderomotive_term_midtime(env, jc, oml, sp_left, sp_right)
    end if
-   ! In jc(1)= Phi= |A|^2/2 +|A_1|/2 at t^{n+1/2} 
+   ! In jc(1)= Phi= |A|^2/2 +|A_1|/2 at t^{n+1/2}
    if (hybrid) then
-    flux(:, :, :, curr_ndim+2) = jc(:, :, :, 1)
+    flux(:, :, :, curr_ndim + 2) = jc(:, :, :, 1)
     !stores in flux()
    end if
    call envelope_gradient(jc, sp_left, sp_right)
@@ -459,7 +459,7 @@
    !for vbeam >0 uses the xw=(x+vbeam*t)
    !x=xi=(xw-vbeam*t) fixed
    !+++++++++++++++++++++++++++++++++
-   if (w_speed>0.0) then ! moves the computational box with w_speed>0.
+   if (w_speed > 0.0) then ! moves the computational box with w_speed>0.
     if (t_loc >= wi_time) then
      if (t_loc < wf_time) then
       if (mod(iter_loc,w_sh) == 0) then

@@ -3,8 +3,11 @@ project(ALaDyn)
 enable_language(Fortran)
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 cmake_policy(SET CMP0074 NEW)
+if(MSYS)
+  list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/msys2/")
+endif()
 
 # uncomment the following definition to enable GDB attach to debug while running
 # add_definitions(-DENABLE_GDB_ATTACH)
@@ -14,6 +17,55 @@ endif()
 
 # Old species (provisional)
 # add_definitions(-DOLD_SPECIES)
+
+message(STATUS "ALaDyn: Building using the generator ${CMAKE_GENERATOR}")
+# Look for JSON-FORTRAN
+set(JSON_FORTRAN_SUPPORT TRUE CACHE BOOL "ALaDyn: Building ALaDyn with JSON-Fortran support")
+if( JSON_FORTRAN_SUPPORT )
+  message(STATUS "ALaDyn: Building ALaDyn with JSON-Fortran support")
+  set(JFORTRAN_BASE_PATH ${CMAKE_SOURCE_DIR}/third_party/json-fortran)
+  set(JFORTRAN_PATH ${JFORTRAN_BASE_PATH}/json-fortran_source)
+  set(JFORTRAN_LOCALS_PATH ${JFORTRAN_BASE_PATH}/json-fortran_locals)
+  set(JFORTRAN_SOURCE_PATH ${JFORTRAN_PATH}/src)
+  set(JFORTRAN_BINARY_PATH ${JFORTRAN_PATH}/build)
+  find_package(Git QUIET)
+  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+  # Update submodules as needed
+      option(GIT_SUBMODULE "Check submodules during build" ON)
+      if(GIT_SUBMODULE)
+          message(STATUS "ALaDyn: Submodule update")
+          execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                          RESULT_VARIABLE GIT_SUBMOD_RESULT)
+          if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+              message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+          endif()
+      endif()
+  endif()
+
+  if(NOT EXISTS "${JFORTRAN_PATH}/CMakeLists.txt")
+      message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+  endif()
+
+  if( EXISTS ${JFORTRAN_PATH} AND NOT EXISTS ${JFORTRAN_LOCALS_PATH})
+    message(STATUS "JSON-Fortran: Now building the JSON-Fortran library")
+    file(MAKE_DIRECTORY ${JFORTRAN_BINARY_PATH})
+    set(CMAKE_INSTALL_MESSAGE LAZY)
+    # Configure subproject into ${JFORTRAN_BINARY_PATH}
+    execute_process(COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_INSTALL_MESSAGE=LAZY
+    -DCMAKE_INSTALL_PREFIX=${JFORTRAN_LOCALS_PATH}
+    -DSKIP_DOC_GEN=TRUE
+    -G "${CMAKE_GENERATOR}"
+    ${JFORTRAN_PATH} 
+    WORKING_DIRECTORY ${JFORTRAN_BINARY_PATH})
+    # Building and installing
+    execute_process(COMMAND ${CMAKE_COMMAND}
+    --build ${JFORTRAN_BINARY_PATH}
+    --target install)
+    message(STATUS "JSON-Fortran: Built")
+  endif()
+endif()
 
 # you can force FFTW if necessary, avoiding MKL (which is preferred on Intel systems)
 set(FORCE_FFTW OFF CACHE BOOL "Forcing FFTW libraries")
@@ -31,10 +83,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Profiling" "Reports")
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 list(APPEND ALaDyn_Fortran_sources
   src/ALaDyn.F90
   src/cpp_lib/cpp_folder_tree.cpp
-  src/cpp_lib/find_last_addr.cpp 
+  src/cpp_lib/find_last_addr.cpp
   src/diagnostics/diag_part_and_fields.f90
   src/diagnostics/run_data_info.F90
   src/dynamics/boris_push.f90
@@ -58,6 +112,8 @@ list(APPEND ALaDyn_Fortran_sources
   src/IO/init_laser_field.f90
   src/IO/init_part_distrib.f90
   src/IO/init_beam_part_distrib.f90
+  src/IO/read_json.f90
+  src/IO/read_namelist.f90
   src/IO/pic_out.f90
   src/IO/pic_out_util.f90
   src/IO/psolve.f90
@@ -73,7 +129,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/parallel/mpi_curr_interface.f90
   src/parallel/parallel.F90
   src/start/pic_dump.f90
-  src/start/read_input.f90
+  src/start/read_input.F90
   src/start/set_init_param.f90
   src/start/start_all.F90
   src/start/system_utilities.f90
@@ -96,6 +152,7 @@ list(APPEND ALaDyn_Fortran_sources
   src/work/phys_param.f90
   src/work/precision_def.F90
   src/work/pstruct_data.F90
+  src/work/sim_params_types.f90
 )
 
 set(USING_PGI_COMPILER FALSE)
@@ -107,6 +164,9 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
   message(STATUS "ALaDyn: Using PGI Compiler")
   set(USING_PGI_COMPILER TRUE)
   add_definitions(-DUSING_PGI_COMPILER)
+  string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS_RELEASE ${CMAKE_Fortran_FLAGS_RELEASE})
+  string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG})
+  string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS})
   string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -r8 ")
   string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -r8 -g ")
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
@@ -125,6 +185,14 @@ elseif(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
     string(APPEND CMAKE_CXX_COMPILE_FLAGS " -march=core-avx2 -mavx2")
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -march=core-avx2 -mavx2")
     string(APPEND CMAKE_Fortran_FLAGS_DEBUG   " -march=core-avx2 -mavx2")
+  endif()
+  if(CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
+    message(STATUS "Adding argument mismatch tolerance flag and invalid boz, for MPICH compatibility")
+    string(APPEND CMAKE_Fortran_FLAGS_RELEASE   " -fallow-argument-mismatch -fallow-invalid-boz")
+    string(APPEND CMAKE_Fortran_FLAGS_DEBUG     " -fallow-argument-mismatch -fallow-invalid-boz")
+    string(APPEND CMAKE_Fortran_FLAGS_PROFILING " -fallow-argument-mismatch -fallow-invalid-boz")
+  else()
+    message(STATUS "No need to add argument mismatch tolerance flag and invalid boz")
   endif()
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
   message(STATUS "ALaDyn: Using Intel Compiler")
@@ -170,36 +238,19 @@ else()
   endif()
 endif()
 
+if(WIN32 AND USING_PGI_COMPILER)
+  find_package(MPI COMPONENTS C)
+  set(FORCE_OLD_MPI ON CACHE BOOL "Forcing old mpif.h linking" FORCE)
+else()
+  find_package(MPI COMPONENTS Fortran)
+endif()
+
 if(FORCE_OLD_MPI)
   message(STATUS "ALaDyn: MPI libraries are linked against mpif.h")
   add_definitions(-DFORCE_OLD_MPI)
 endif()
 if(FORCE_STATIC_LINK)
   string(APPEND CMAKE_Fortran_LINK_FLAGS " -static")
-endif()
-
-if(WIN32 AND USING_PGI_COMPILER)
-  if(FORCE_MSMPI_PATH_R2)
-    set(MPI_INCLUDE_PATH "C:/Program Files/Microsoft MPI/Inc")
-    message(STATUS "Forced MPI_INCLUDE_PATH: ${MPI_INCLUDE_PATH}")
-    set(MPI_LIBRARIES "C:/Program Files/Microsoft MPI/Lib/amd64/msmpi.lib")
-    message(STATUS "Forced MPI_LIBRARIES: ${MPI_LIBRARIES}")
-  elseif(FORCE_MSMPI_PATH_R1)
-    set(MPI_INCLUDE_PATH "C:/Program Files/Microsoft HPC Pack 2012/Inc")
-    message(STATUS "Forced MPI_INCLUDE_PATH: ${MPI_INCLUDE_PATH}")
-    set(MPI_LIBRARIES "C:/Program Files/Microsoft HPC Pack 2012/Lib/amd64/msmpi.lib")
-    message(STATUS "Forced MPI_LIBRARIES: ${MPI_LIBRARIES}")
-  else()
-    find_package(MPI COMPONENTS C REQUIRED)
-  endif()
-  list(GET MPI_INCLUDE_PATH -1 MPI_CUSTOM_PATH)
-  add_definitions(-DUSE_MPI_MODULE)
-  include_directories("${MPI_CUSTOM_PATH}/amd64")
-  list(APPEND ALaDyn_Fortran_sources "${MPI_CUSTOM_PATH}/mpi.f90")
-  set(MISSING_MPI_LIBRARY "${MPI_CUSTOM_PATH}/../Lib/amd64/msmpifec.lib")
-  list(APPEND MPI_LIBRARIES ${MISSING_MPI_LIBRARY})
-else()
-  find_package(MPI COMPONENTS Fortran REQUIRED)
 endif()
 
 if(UNIX AND USING_PGI_COMPILER AND NOT APPLE)
@@ -223,15 +274,16 @@ else()
   find_package(FFTW REQUIRED OPTIONAL_COMPONENTS MPI)
 endif()
 
+set(jsonfortran-GNU_DIR ${JFORTRAN_BINARY_PATH})
+set(jsonfortran-Intel_DIR ${JFORTRAN_BINARY_PATH})
+if(JSON_FORTRAN_SUPPORT)
+  find_package ( jsonfortran-${CMAKE_Fortran_COMPILER_ID} 8.1.0 REQUIRED)
+endif()
+
 string(APPEND CMAKE_CXX_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS}")
 string(APPEND CMAKE_CXX_LINK_FLAGS " ${MPI_LINK_FLAGS}")
 string(APPEND CMAKE_Fortran_COMPILE_FLAGS " ${MPI_COMPILE_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}")
 string(APPEND CMAKE_Fortran_LINK_FLAGS " ${MPI_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
-
-if(APPLE AND USING_PGI_COMPILER)
-  string(APPEND CMAKE_CXX_LINK_FLAGS " -read_only_relocs suppress")
-  #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
 
 include_directories(
   ${OTHER_INCLUDE_DIR}
@@ -255,6 +307,14 @@ if(MKL_FOUND)
   list(APPEND ALaDyn_Fortran_sources ${MKL_INCLUDE_DIR}/mkl_vsl.f90)
 endif()
 
+if(jsonfortran-${CMAKE_Fortran_COMPILER_ID}_FOUND)
+  include_directories (
+    ${jsonfortran_INCLUDE_DIRS}
+  )
+  message(STATUS "ALaDyn: JSON-Fortran has been found")
+  add_definitions(-DJSON_FORTRAN)
+endif()
+  
 add_executable(ALaDyn
   ${ALaDyn_Fortran_sources}
 )
@@ -308,6 +368,12 @@ endif()
 if(NUMA_LIBRARY)
   target_link_libraries(ALaDyn
     ${NUMA_LIBRARY}
+  )
+endif()
+
+if(jsonfortran-${CMAKE_Fortran_COMPILER_ID}_FOUND)
+  target_link_libraries(ALaDyn
+    jsonfortran-static
   )
 endif()
 

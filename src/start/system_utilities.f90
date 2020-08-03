@@ -26,14 +26,13 @@
 !--------------------------
 
   subroutine create_timestep_folder(iout)
-   integer, intent (in) :: iout
-   character (4) :: foldername
+   integer, intent(in) :: iout
+   character(4) :: foldername
 
    write (foldername, '(i4.4)') iout
    if (pe0) call create_folder(foldername)
 
   end subroutine
-
 
   subroutine create_initial_folders
 

@@ -20,11 +20,11 @@
 !*****************************************************************************************************!
 !===================================================
 !     Local grid structure under mpi domain decomposition
-!============== 
+!==============
 ! grid [1:n]   np=n+2  extended domain [1:np+2]
-! interior [3,np]   ghost [1:2], [np+1:np+2]  
-! 
-!             
+! interior [3,np]   ghost [1:2], [np+1:np+2]
+!
+!
 !             overlapping grid points
 !====================================================================
 !                                     1-----2---- 3--- 4   |      pey+1
@@ -35,7 +35,6 @@
 !      Left(pey-1)      [np+1:np+2]==> pey [1:2]        left  ghost data
 !===================================
 
-
  module mpi_field_interface
 
   use pstruct_data
@@ -45,16 +44,16 @@
   use util
 
   implicit none
-  integer, parameter, private :: x_parity(6) = [ -1, 1, 1, -1, 1, 1 ]
-  integer, parameter, private :: y_parity(6) = [ 1, -1, 1, 1, -1, 1 ]
-  integer, parameter, private :: z_parity(6) = [ 1, 1, -1, 1, 1, -1 ]
-  integer (hp_int), parameter :: lft = -1, rgt = 1
+  integer, parameter, private :: x_parity(6) = [-1, 1, 1, -1, 1, 1]
+  integer, parameter, private :: y_parity(6) = [1, -1, 1, 1, -1, 1]
+  integer, parameter, private :: z_parity(6) = [1, 1, -1, 1, 1, -1]
+  integer(hp_int), parameter :: lft = -1, rgt = 1
 
  contains
   !===========================
   subroutine field_xyzbd(ef, nc)
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   integer, intent (in) :: nc
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   integer, intent(in) :: nc
    integer :: ik, iy, ix, iz, str, stl
    integer :: i1, i2, j1, j2, k1, k2
    !==========================
@@ -71,12 +70,12 @@
    i2 = ix2
 
    if (pex0) then
-    if (ibx<2) then
+    if (ibx < 2) then
      do ik = 1, nc
       do iz = k1, k2
        do iy = j1, j2
-        ef(ix1-1, iy, iz, ik) = 2.*ef(ix1, iy, iz, ik) - &
-          ef(ix1+1, iy, iz, ik)
+        ef(ix1 - 1, iy, iz, ik) = 2.*ef(ix1, iy, iz, ik) - &
+                                  ef(ix1 + 1, iy, iz, ik)
        end do
       end do
      end do
@@ -84,45 +83,45 @@
     i1 = i1 - 1
    end if
    if (pex1) then
-    if (ibx==0) then
+    if (ibx == 0) then
      do ik = 1, nc
       do iz = k1, k2
        do iy = j1, j2
-        ef(ix2+1, iy, iz, ik) = 2.*ef(ix2, iy, iz, ik) - &
-          ef(ix2-1, iy, iz, ik)
+        ef(ix2 + 1, iy, iz, ik) = 2.*ef(ix2, iy, iz, ik) - &
+                                  ef(ix2 - 1, iy, iz, ik)
        end do
       end do
      end do
     end if
-    if (ibx==1) then
+    if (ibx == 1) then
      do ik = 1, nc
       do iz = k1, k2
        do iy = j1, j2
-        ef(ix2+1, iy, iz, ik) = x_parity(ik)*ef(ix2, iy, iz, ik)
+        ef(ix2 + 1, iy, iz, ik) = x_parity(ik)*ef(ix2, iy, iz, ik)
        end do
       end do
      end do
     end if
     i2 = i2 + 1
    end if
-   if (ndim<2) return
+   if (ndim < 2) return
 
    if (yl_bd) then
-    if (iby==0) then
+    if (iby == 0) then
      do ik = 1, nc
       do iz = k1, k2
        do ix = i1, i2
-        ef(ix, jy1-1, iz, ik) = 2.*ef(ix, jy1, iz, ik) - &
-          ef(ix, jy1+1, iz, ik)
+        ef(ix, jy1 - 1, iz, ik) = 2.*ef(ix, jy1, iz, ik) - &
+                                  ef(ix, jy1 + 1, iz, ik)
        end do
       end do
      end do
     end if
-    if (iby==1) then
+    if (iby == 1) then
      do ik = 1, nc
       do iz = k1, k2
        do ix = i1, i2
-        ef(ix, jy1-1, iz, ik) = y_parity(ik)*ef(ix, jy1+1, iz, ik)
+        ef(ix, jy1 - 1, iz, ik) = y_parity(ik)*ef(ix, jy1 + 1, iz, ik)
        end do
       end do
      end do
@@ -130,45 +129,45 @@
     j1 = j1 - 1
    end if
    if (yr_bd) then
-    if (iby==0) then
+    if (iby == 0) then
      do ik = 1, nc
       do iz = k1, k2
        do ix = i1, i2
-        ef(ix, jy2+1, iz, ik) = 2.*ef(ix, jy2, iz, ik) - &
-          ef(ix, jy2-1, iz, ik)
+        ef(ix, jy2 + 1, iz, ik) = 2.*ef(ix, jy2, iz, ik) - &
+                                  ef(ix, jy2 - 1, iz, ik)
        end do
       end do
      end do
     end if
-    if (iby==1) then
+    if (iby == 1) then
      do ik = 1, nc
       do iz = k1, k2
        do ix = i1, i2
-        ef(ix, jy2+1, iz, ik) = y_parity(ik)*ef(ix, jy2-1, iz, ik)
+        ef(ix, jy2 + 1, iz, ik) = y_parity(ik)*ef(ix, jy2 - 1, iz, ik)
        end do
       end do
      end do
     end if
     j2 = j2 + 1
    end if
-   if (ndim<3) return
+   if (ndim < 3) return
 
    if (zl_bd) then
-    if (ibz==0) then
+    if (ibz == 0) then
      do ik = 1, nc
       do iy = j1, j2
        do ix = i1, i2
-        ef(ix, iy, kz1-1, ik) = 2*ef(ix, iy, kz1, ik) - &
-          ef(ix, iy, kz1+1, ik)
+        ef(ix, iy, kz1 - 1, ik) = 2*ef(ix, iy, kz1, ik) - &
+                                  ef(ix, iy, kz1 + 1, ik)
        end do
       end do
      end do
     end if
-    if (ibz==1) then
+    if (ibz == 1) then
      do ik = 1, nc
       do iy = j1, j2
        do ix = i1, i2
-        ef(ix, iy, kz1-1, ik) = z_parity(ik)*ef(ix, iy, kz1+1, ik)
+        ef(ix, iy, kz1 - 1, ik) = z_parity(ik)*ef(ix, iy, kz1 + 1, ik)
        end do
       end do
      end do
@@ -176,21 +175,21 @@
     k1 = k1 - 1
    end if
    if (zr_bd) then
-    if (ibz==0) then
+    if (ibz == 0) then
      do ik = 1, nc
       do iy = j1, j2
        do ix = i1, i2
-        ef(ix, iy, kz2+1, ik) = 2*ef(ix, iy, kz2, ik) - &
-          ef(ix, iy, kz2-1, ik)
+        ef(ix, iy, kz2 + 1, ik) = 2*ef(ix, iy, kz2, ik) - &
+                                  ef(ix, iy, kz2 - 1, ik)
        end do
       end do
      end do
     end if
-    if (ibz==1) then
+    if (ibz == 1) then
      do ik = 1, nc
       do iy = j1, j2
        do ix = i1, i2
-        ef(ix, iy, kz1+1, ik) = z_parity(ik)*ef(ix, iy, kz1-1, ik)
+        ef(ix, iy, kz1 + 1, ik) = z_parity(ik)*ef(ix, iy, kz1 - 1, ik)
        end do
       end do
      end do
@@ -200,23 +199,23 @@
   end subroutine
   !========================================
   subroutine fluid_left_xshift(fld, den_x, den_yz, i1, i2, ic1, ic2, &
-    xsh)
+                               xsh)
 
-   integer, intent (in) :: i1, i2, ic1, ic2, xsh
-   real (dp), intent (inout) :: fld(:, :, :, :)
-   real (dp), intent (in) :: den_x(:), den_yz(:, :)
+   integer, intent(in) :: i1, i2, ic1, ic2, xsh
+   real(dp), intent(inout) :: fld(:, :, :, :)
+   real(dp), intent(in) :: den_x(:), den_yz(:, :)
    integer :: n1, ic, ii, ix, j, iy, iz, kk, lenws
    integer :: j1, j2, k1, k2
 
-   if (xsh==0) return
+   if (xsh == 0) return
 
    j1 = jy1
    j2 = jy2
    k1 = kz1
    k2 = kz2
-   n1=loc_xgrid(imodx)%ng
+   n1 = loc_xgrid(imodx)%ng
 
-   lenws = (ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
+   lenws = (ic2 + 1 - ic1)*(k2 + 1 - k1)*(j2 + 1 - j1)*xsh
    if (prlx) then
     !Sends to x-left side xsh data (i1:i1+xsh-1)
     !Recvs from x-right data(i2+1:i2+xsh)       i2=n1p-xsh
@@ -241,24 +240,24 @@
     do iz = k1, k2
      do iy = j1, j2
       do ix = i1, i2
-       fld(ix, iy, iz, ic) = fld(ix+xsh, iy, iz, ic)
+       fld(ix, iy, iz, ic) = fld(ix + xsh, iy, iz, ic)
       end do
      end do
     end do
    end do
-   if(xl_bd)then
+   if (xl_bd) then
     do ic = ic1, ic2
      do iz = k1, k2
       do iy = j1, j2
-       fld(i1-1, iy, iz, ic) = fld(i1+xsh-1, iy, iz, ic)
-        fld(i1, iy, iz, ic) = 0.5*fld(i1, iy, iz, ic) + &
-        0.25*(fld(i1+1,iy,iz,ic)+fld(i1-1,iy,iz,ic))
+       fld(i1 - 1, iy, iz, ic) = fld(i1 + xsh - 1, iy, iz, ic)
+       fld(i1, iy, iz, ic) = 0.5*fld(i1, iy, iz, ic) + &
+                             0.25*(fld(i1 + 1, iy, iz, ic) + fld(i1 - 1, iy, iz, ic))
       end do
      end do
     end do
    end if
-   if(pex1)then
-    do ic = ic1, ic2-1
+   if (pex1) then
+    do ic = ic1, ic2 - 1
      do iz = k1, k2
       do iy = j1, j2
        do ix = i2 + 1, i2 + xsh
@@ -284,12 +283,12 @@
      end do
     end do
    end if
-   if(pex1)then
+   if (pex1) then
     ic = ic2
     do iz = k1, k2
      do iy = j1, j2
       do ix = i2 + 1, i2 + xsh
-       ii=ix +imodx*n1
+       ii = ix + imodx*n1
        fld(ix, iy, iz, ic) = den_x(ii)*den_yz(iy, iz)
       end do
      end do
@@ -300,18 +299,17 @@
   !==================================
   subroutine fields_left_xshift(fld, i1, i2, ic1, ic2, xsh)
 
-   integer, intent (in) :: i1, i2, ic1, ic2, xsh
-   real (dp) :: fld(:, :, :, :)
+   integer, intent(in) :: i1, i2, ic1, ic2, xsh
+   real(dp) :: fld(:, :, :, :)
    integer :: ic, ix, j, iy, iz, kk, lenws
    integer :: j1, j2, k1, k2
 
-
-   if (xsh==0) return
+   if (xsh == 0) return
    j1 = jy1
    j2 = jy2
    k1 = kz1
    k2 = kz2
-   lenws = (ic2+1-ic1)*(k2+1-k1)*(j2+1-j1)*xsh
+   lenws = (ic2 + 1 - ic1)*(k2 + 1 - k1)*(j2 + 1 - j1)*xsh
    if (prlx) then
     !Sends to x-left side xsh data (i1:i1+xsh-1)
     !Recvs from x-right data(i2+1:i2+xsh)       i2=n1p-sh
@@ -336,9 +334,9 @@
     do iz = k1, k2
      do iy = j1, j2
       do ix = i1, i2
-       fld(ix, iy, iz, ic) = fld(ix+xsh, iy, iz, ic)
+       fld(ix, iy, iz, ic) = fld(ix + xsh, iy, iz, ic)
       end do
-      fld(i2+1:i2+xsh, iy, iz, ic) = 0.0
+      fld(i2 + 1:i2 + xsh, iy, iz, ic) = 0.0
      end do
     end do
    end do
@@ -363,8 +361,8 @@
   !=================================
   subroutine fill_ebfield_yzxbdsdata(fld, ic1, ic2, str, stl)
 
-   real (dp) :: fld(:, :, :, :)
-   integer, intent (in) :: ic1, ic2, str, stl
+   real(dp) :: fld(:, :, :, :)
+   integer, intent(in) :: ic1, ic2, str, stl
    integer :: ic, ix, j, iy, iz, kk, iy1, iy2, iz1, iz2, lenws, lenwr
    integer :: i1, i2, j1, j2, k1, k2
 
@@ -387,7 +385,7 @@
    !recvs from the left iy=[j1-1:j1-str] sign=-1
    !============================================
    if (prly) then
-    if (str>0) then
+    if (str > 0) then
      kk = 0
      do ic = ic1, ic2
       do iz = k1, k2
@@ -404,7 +402,7 @@
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, lft)
      if (yl_bd) then
-      if (iby<2) then
+      if (iby < 2) then
        aux2(1:lenwr) = 0.0
       end if
      end if
@@ -423,7 +421,7 @@
      iy1 = j1 - str
     end if
     !=========================
-    if (stl>0) then
+    if (stl > 0) then
      !=======================
      ! Extends data to the y-right, stl>2 allowed
      !Sends to the left stl data[j1:j1+stl-1]
@@ -447,7 +445,7 @@
      !======================= next indx=1 cart dim=1 sign=+1
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 1, rgt)
      if (yr_bd) then
-      if (iby<2) then
+      if (iby < 2) then
        aux2(1:lenwr) = 0.0
       end if
      end if
@@ -474,7 +472,7 @@
     !recvs from the left iz=[k1-1:k1-str] sign=-1
     !============================================
 
-    if (str>0) then
+    if (str > 0) then
      kk = 0
      do ic = ic1, ic2
       do j = 0, str - 1
@@ -491,7 +489,7 @@
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, lft)
      if (zl_bd) then
-      if (ibz<2) then
+      if (ibz < 2) then
        aux2(1:lenwr) = 0.0
       end if
      end if
@@ -509,7 +507,7 @@
      end do
      iz1 = k1 - str
     end if
-    if (stl>0) then
+    if (stl > 0) then
      ! Extends data to the z-right
      !Sends to the left stl data[k1:k1+stl-1]
      !Recvs from right [k2+1:k2+stl] f_data sign=+1
@@ -529,7 +527,7 @@
      lenwr = lenws
      call exchange_bdx_data(aux1, aux2, lenws, lenwr, 2, rgt)
      if (zr_bd) then
-      if (ibz<2) then
+      if (ibz < 2) then
        aux2(1:lenwr) = 0.0
       end if
      end if
@@ -550,24 +548,24 @@
    end if
    !===============================
    if (.not. prlx) then
-    if (ibx==2) then
-     if (str>0) then
+    if (ibx == 2) then
+     if (str > 0) then
       do ic = ic1, ic2
        do iz = iz1, iz2
         do iy = iy1, iy2
          do j = 1, str
-          fld(i1-j, iy, iz, ic) = fld(i2+1-j, iy, iz, ic)
+          fld(i1 - j, iy, iz, ic) = fld(i2 + 1 - j, iy, iz, ic)
          end do
         end do
        end do
       end do
      end if
-     if (stl>0) then
+     if (stl > 0) then
       do ic = ic1, ic2
        do iz = iz1, iz2
         do iy = iy1, iy2
          do j = 1, stl
-          fld(i2+j, iy, iz, ic) = fld(i1-1+j, iy, iz, ic)
+          fld(i2 + j, iy, iz, ic) = fld(i1 - 1 + j, iy, iz, ic)
          end do
         end do
        end do
@@ -581,7 +579,7 @@
    ! sends to the right ix=[i2:i2-str+1]
    !recvs from the left ix=[i1-1:i1-str] sign=-1
    !============================================
-   if (str>0) then
+   if (str > 0) then
     kk = 0
     do ic = ic1, ic2
      do iz = iz1, iz2
@@ -598,7 +596,7 @@
     lenwr = lenws
     call exchange_bdx_data(aux1, aux2, lenws, lenwr, 3, lft)
     if (xl_bd) then
-     if (ibx<2) then
+     if (ibx < 2) then
       aux2(1:lenwr) = 0.0
      end if
     end if
@@ -616,7 +614,7 @@
     end do
    end if
    !=======================
-   if (stl>0) then
+   if (stl > 0) then
     !=======================
     ! Extends data to the x-right
     !Sends to the left stl data[i1:i1+stl-1]
@@ -639,7 +637,7 @@
 
     call exchange_bdx_data(aux1, aux2, lenws, lenwr, 3, rgt)
     if (pex1) then
-     if (ibx<2) then
+     if (ibx < 2) then
       aux2(1:lenwr) = 0.0
      end if
     end if
@@ -932,8 +930,8 @@
   end subroutine
   !===============================
   subroutine fill_ebfield_xbdsdata(fld, ic1, ic2, str, stl)
-   real (dp) :: fld(:, :, :, :)
-   integer, intent (in) :: ic1, ic2, str, stl
+   real(dp) :: fld(:, :, :, :)
+   integer, intent(in) :: ic1, ic2, str, stl
    integer :: ic, ix, j, iy, iz, kk, lenws, lenwr
    integer :: i1, i2, j1, j2, k1, k2
    !============================
@@ -945,24 +943,24 @@
    k2 = kz2
 
    if (.not. prlx) then
-    if (ibx==2) then
-     if (str>0) then
+    if (ibx == 2) then
+     if (str > 0) then
       do ic = ic1, ic2
        do iz = k1, k2
         do iy = j1, j2
          do j = 1, str
-          fld(i1-j, iy, iz, ic) = fld(i2+1-j, iy, iz, ic)
+          fld(i1 - j, iy, iz, ic) = fld(i2 + 1 - j, iy, iz, ic)
          end do
         end do
        end do
       end do
      end if
-     if (stl>0) then
+     if (stl > 0) then
       do ic = ic1, ic2
        do iz = k1, k2
         do iy = j1, j2
          do j = 1, stl
-          fld(i2+j, iy, iz, ic) = fld(i1-1+j, iy, iz, ic)
+          fld(i2 + j, iy, iz, ic) = fld(i1 - 1 + j, iy, iz, ic)
          end do
         end do
        end do
@@ -972,7 +970,7 @@
     return
    end if
    !====================================
-   if (str>0) then
+   if (str > 0) then
     !Sends to x-right str data(i2+1-str)
     !Recvs from the x-left str data(i1-str) sign=-1
     kk = 0
@@ -991,7 +989,7 @@
     lenwr = lenws
     call exchange_bdx_data(aux1, aux2, lenws, lenwr, 3, lft)
     if (pex0) then
-     if (ibx<2) aux2(1:lenws) = 0.0
+     if (ibx < 2) aux2(1:lenws) = 0.0
     end if
     kk = 0
     do ic = ic1, ic2
@@ -1006,7 +1004,7 @@
      end do
     end do
    end if
-   if (stl>0) then
+   if (stl > 0) then
     !Sends to left data(ii1:i1+stl-1)
     !Recvs from the right str data(i2:i2+stl)
     kk = 0
@@ -1025,7 +1023,7 @@
     lenwr = lenws
     call exchange_bdx_data(aux1, aux2, lenws, lenwr, 3, rgt)
     if (pex1) then
-     if (ibx<2) aux2(1:lenws) = 0.0
+     if (ibx < 2) aux2(1:lenws) = 0.0
     end if
     kk = 0
     do ic = ic1, ic2

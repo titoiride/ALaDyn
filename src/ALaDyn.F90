@@ -29,7 +29,7 @@
   use run_data_info
   use pic_out_util
   use pic_out
-  use init_beam_part_distrib,only : beam_inject
+  use init_beam_part_distrib, only: beam_inject
   use pic_evolve, only: Lp_run
   use env_evolve, only: Env_run
   use util, only: write_warning
@@ -43,12 +43,12 @@
    write (6, *) 'START OF RUN'
    write (6, *) 'Running on ', npe, ' cpu'
    write (6, '(a32,3i4)') ' MPI decomposition along x-y-z: ', npe_xloc, &
-     npe_yloc, npe_zloc
+    npe_yloc, npe_zloc
   end if
   !====To activate/disactivate diagnostics in envar() en_data routines=========
   diag = .true.
   initial_time = .false.
-  if (iene==0) then
+  if (iene == 0) then
    diag = .false.
    iene = 1
   end if
@@ -60,11 +60,11 @@
    call Max_pmemory_check(spec, ebfp)
 #endif
   end if
-  if (pe0)then
+  if (pe0) then
    call initial_run_info(new_sim)
   end if
   !=============================
-  call CPU_TIME( unix_time_now )
+  call CPU_TIME(unix_time_now)
   unix_time_begin = unix_time_now
   unix_time_last_dump = unix_time_begin
 
@@ -123,7 +123,7 @@
      call error_message
      exit
     end if
-    if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
+    if (tnow + dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
     call mempool%clean( maxval(loc_npart(imody, imodz, imodx, 1:nsp)) )
    end do
@@ -166,7 +166,7 @@
      call error_message
      exit
     end if
-    if (tnow+dt_loc >= tmax) dt_loc = tmax - tnow
+    if (tnow + dt_loc >= tmax) dt_loc = tmax - tnow
     if (initial_time) initial_time = .false.
     call mempool%clean( maxval(loc_npart(imody, imodz, imodx, 1:nsp)) )
    end do
@@ -193,36 +193,36 @@
    end if
 
    if (tnow >= tout) then
-    call create_timestep_folder( iout )
+    call create_timestep_folder(iout)
 
     tout = tout + dtout
     if (diag) then
-     if (pe0) call en_data( ienout, iter, idata )
+     if (pe0) call en_data(ienout, iter, idata)
     end if
     !==================
     if (nvout > 0) then
      if (mod_ord == 2) then
       if (L_env_modulus) then
        i = 0
-       call env_fields_out( env, i )
-       if (Two_color) call env_fields_out(env1 , -1 ) !EXIT |A|
+       call env_fields_out(env, i)
+       if (Two_color) call env_fields_out(env1, -1) !EXIT |A|
       else
        if (Two_color) then
         do i = 1, 2
-         call env_two_fields_out(env, env1, i )
+         call env_two_fields_out(env, env1, i)
         end do
        else
         do i = 1, 2
-         call env_fields_out( env, i ) !EXIT [Ar,Ai]
+         call env_fields_out(env, i) !EXIT [Ar,Ai]
         end do
        end if
       end if
      end if
      do i = 1, nvout
       if (l_force_singlefile_output) then
-       call fields_out(ebf, i, i ) !i to label field name
+       call fields_out(ebf, i, i) !i to label field name
       else
-       call fields_out_new( ebf, i, i )
+       call fields_out_new(ebf, i, i)
       end if
      end do
     end if
@@ -239,7 +239,7 @@
       call prl_den_energy_interp(spec(i), ebfp, i, nden)
 #endif
       do iic = 1, min(2, nden)
-       call den_energy_out( i, iic, iic )
+       call den_energy_out(i, iic, iic)
       end do
      end do
     end if
@@ -262,14 +262,14 @@
     end if
     !if(tnow>0.)write(6,*)'exit pdata',mype
 
-    call CPU_TIME( unix_time_now )
+    call CPU_TIME(unix_time_now)
 
     if (pe0) then
      write (6, '(a10,i6,a10,e11.4,a10,e11.4)') 'iter = ', iter, ' t = ', &
-       tnow, ' dt = ', dt_loc
+      tnow, ' dt = ', dt_loc
      write (6, *) ' END DATA WRITE'
      write (6, '(a16,f12.3)') ' Time elapsed = ', &
-       unix_time_now - unix_time_begin
+      unix_time_now - unix_time_begin
     end if
     if (dump>0 .and. time_interval_dumps < 0.0) then
      if (iter>0) call dump_data(iter,tnow, spec, ebfp)
@@ -277,7 +277,7 @@
     iout = iout + 1
    end if
 
-   call CPU_TIME( unix_time_now )
+   call CPU_TIME(unix_time_now)
 
    !if((unix_time_now - unix_time_last_dump) > time_interval_dumps .and. time_interval_dumps > 0.0) then
    ! call dump_data(iter, tnow, spec)

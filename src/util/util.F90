@@ -39,64 +39,64 @@
 
   subroutine sort(part, np)
 
-   real (dp), intent (inout) :: part(:)
-   integer, intent (in) :: np
+   real(dp), intent(inout) :: part(:)
+   integer, intent(in) :: np
    integer :: ir, i, j, k, l, jstack
    integer, parameter :: m = 7, nstack = 50
-   real (dp) :: a
+   real(dp) :: a
    integer :: istack(nstack)
 
    jstack = 0
    ir = np
    l = 1
    do
-    if (ir-l<m) then
+    if (ir - l < m) then
      do j = l + 1, ir
       a = part(j)
       do i = j - 1, l, -1
-       if (part(i)<=a) exit
-       part(i+1) = part(i)
+       if (part(i) <= a) exit
+       part(i + 1) = part(i)
       end do
-      part(i+1) = a
+      part(i + 1) = a
      end do
-     if (jstack==0) return
+     if (jstack == 0) return
      ir = istack(jstack)
-     l = istack(jstack-1)
+     l = istack(jstack - 1)
      jstack = jstack - 2
     else
-     k = (l+ir)/2
-     call swap(k, l+1)
+     k = (l + ir)/2
+     call swap(k, l + 1)
 
-     if (part(l)>part(ir)) call swap(l, ir)
-     if (part(l+1)>part(ir)) call swap(l+1, ir)
-     if (part(l)>part(l+1)) call swap(l, l+1)
+     if (part(l) > part(ir)) call swap(l, ir)
+     if (part(l + 1) > part(ir)) call swap(l + 1, ir)
+     if (part(l) > part(l + 1)) call swap(l, l + 1)
 
      i = l + 1
      j = ir
-     a = part(l+1)
+     a = part(l + 1)
      do
       do
        i = i + 1
-       if (part(i)>=a) exit
+       if (part(i) >= a) exit
       end do
       do
        j = j - 1
-       if (part(j)<=a) exit
+       if (part(j) <= a) exit
       end do
-      if (j<i) exit
+      if (j < i) exit
       call swap(i, j)
      end do
-     part(l+1) = part(j)
+     part(l + 1) = part(j)
      part(j) = a
      jstack = jstack + 2
-     if (jstack>nstack) exit
-     if (ir-i+1>=j-l) then
+     if (jstack > nstack) exit
+     if (ir - i + 1 >= j - l) then
       istack(jstack) = ir
-      istack(jstack-1) = i
+      istack(jstack - 1) = i
       ir = j - 1
      else
       istack(jstack) = j - 1
-      istack(jstack-1) = l
+      istack(jstack - 1) = l
       l = i
      end if
     end if
@@ -105,8 +105,8 @@
   contains
 
    subroutine swap(i1, i2)
-    integer, intent (in) :: i1, i2
-    real (dp) :: temp
+    integer, intent(in) :: i1, i2
+    real(dp) :: temp
 
     temp = part(i1)
     part(i1) = part(i2)
@@ -120,64 +120,64 @@
 
   subroutine vsort(part, np, ndv, dir)
 
-   real (dp), intent (inout) :: part(:, :)
-   integer, intent (in) :: np, ndv, dir
+   real(dp), intent(inout) :: part(:, :)
+   integer, intent(in) :: np, ndv, dir
    integer :: ir, i, j, k, l, jstack
    integer, parameter :: m = 7, nstack = 50
-   real (dp) :: a(ndv), temp(ndv)
+   real(dp) :: a(ndv), temp(ndv)
    integer :: istack(nstack)
 
    jstack = 0
    ir = np
    l = 1
    do
-    if (ir-l<m) then
+    if (ir - l < m) then
      do j = l + 1, ir
       a(1:ndv) = part(1:ndv, j)
       do i = j - 1, l, -1
-       if (part(dir,i)<=a(dir)) exit
-       part(1:ndv, i+1) = part(1:ndv, i)
+       if (part(dir, i) <= a(dir)) exit
+       part(1:ndv, i + 1) = part(1:ndv, i)
       end do
-      part(1:ndv, i+1) = a(1:ndv)
+      part(1:ndv, i + 1) = a(1:ndv)
      end do
-     if (jstack==0) return
+     if (jstack == 0) return
      ir = istack(jstack)
-     l = istack(jstack-1)
+     l = istack(jstack - 1)
      jstack = jstack - 2
     else
-     k = (l+ir)/2
-     call swap(k, l+1, ndv)
+     k = (l + ir)/2
+     call swap(k, l + 1, ndv)
 
-     if (part(dir,l)>part(dir,ir)) call swap(l, ir, ndv)
-     if (part(dir,l+1)>part(dir,ir)) call swap(l+1, ir, ndv)
-     if (part(dir,l)>part(dir,l+1)) call swap(l, l+1, ndv)
+     if (part(dir, l) > part(dir, ir)) call swap(l, ir, ndv)
+     if (part(dir, l + 1) > part(dir, ir)) call swap(l + 1, ir, ndv)
+     if (part(dir, l) > part(dir, l + 1)) call swap(l, l + 1, ndv)
 
      i = l + 1
      j = ir
-     a(1:ndv) = part(1:ndv, l+1)
+     a(1:ndv) = part(1:ndv, l + 1)
      do
       do
        i = i + 1
-       if (part(dir,i)>=a(dir)) exit
+       if (part(dir, i) >= a(dir)) exit
       end do
       do
        j = j - 1
-       if (part(dir,j)<=a(dir)) exit
+       if (part(dir, j) <= a(dir)) exit
       end do
-      if (j<i) exit
+      if (j < i) exit
       call swap(i, j, ndv)
      end do
-     part(1:ndv, l+1) = part(1:ndv, j)
+     part(1:ndv, l + 1) = part(1:ndv, j)
      part(1:ndv, j) = a(1:ndv)
      jstack = jstack + 2
-     if (jstack>nstack) exit
-     if (ir-i+1>=j-l) then
+     if (jstack > nstack) exit
+     if (ir - i + 1 >= j - l) then
       istack(jstack) = ir
-      istack(jstack-1) = i
+      istack(jstack - 1) = i
       ir = j - 1
      else
       istack(jstack) = j - 1
-      istack(jstack-1) = l
+      istack(jstack - 1) = l
       l = i
      end if
     end if
@@ -186,7 +186,7 @@
   contains
 
    subroutine swap(i1, i2, nd)
-    integer, intent (in) :: i1, i2, nd
+    integer, intent(in) :: i1, i2, nd
 
     temp(1:nd) = part(1:nd, i1)
     part(1:nd, i1) = part(1:nd, i2)
@@ -198,14 +198,14 @@
 
   !===========================
   subroutine bunch_gen(ndm, n1, n2, sx, sy, sz, gm, ey, ez, cut, dg, &
-    bunch)
-   integer, intent (in) :: ndm, n1, n2
-   real (dp), intent (in) :: sx, sy, sz, gm, ey, ez, cut, dg
-   real (dp), intent (inout) :: bunch(:, :)
+                       bunch)
+   integer, intent(in) :: ndm, n1, n2
+   real(dp), intent(in) :: sx, sy, sz, gm, ey, ez, cut, dg
+   real(dp), intent(inout) :: bunch(:, :)
    integer :: i, j, np
-   real (dp) :: sigs(6)
-   real (dp) :: xm, ym, zm, pxm, pym, pzm
-   real (dp) :: v1, v2, rnd, a, np_norm
+   real(dp) :: sigs(6)
+   real(dp) :: xm, ym, zm, pxm, pym, pzm
+   real(dp) :: v1, v2, rnd, a, np_norm
 
    !============= ey,ez are emittances (in mm-microns)
    ! FIX emittances are ALWAYS a dimension times an angle...
@@ -229,7 +229,7 @@
       v1 = 2.0*v1 - 1.0
       v2 = 2.0*v2 - 1.0
       rnd = v1*v1 + v2*v2
-      if (rnd<1.0) exit
+      if (rnd < 1.0) exit
      end do
      rnd = sqrt(-2.0*log(rnd)/rnd)
      bunch(i, 2) = v1*rnd
@@ -240,9 +240,9 @@
       call random_number(rnd)
       rnd = 2.*rnd - 1.
       a = cut*rnd
-      if (a*a<1.) exit
+      if (a*a < 1.) exit
      end do
-     bunch(i,3) = a
+     bunch(i, 3) = a
     end do
     do j = 1, 4
      bunch(n1:n2, j) = sigs(j)*bunch(n1:n2, j)
@@ -253,10 +253,10 @@
     pxm = 0.0
     pym = 0.0
     ! Reset centering
-    xm = sum(bunch(n1:n2,1))
-    ym = sum(bunch(n1:n2,2))
-    pxm = sum(bunch(n1:n2,3))
-    pym = sum(bunch(n1:n2,4))
+    xm = sum(bunch(n1:n2, 1))
+    ym = sum(bunch(n1:n2, 2))
+    pxm = sum(bunch(n1:n2, 3))
+    pym = sum(bunch(n1:n2, 4))
 
     np = n2 + 1 - n1
     xm = xm/real(np, dp)
@@ -284,11 +284,11 @@
        v1 = 2.0*v1 - 1.0
        v2 = 2.0*v2 - 1.0
        rnd = v1*v1 + v2*v2
-       if (rnd<1.0) exit
+       if (rnd < 1.0) exit
       end do
       rnd = sqrt(-2.0*log(rnd)/rnd)
       bunch(i, j) = v1*rnd
-      bunch(i, j+1) = v2*rnd
+      bunch(i, j + 1) = v2*rnd
      end do
     enddo
     j = 1
@@ -299,9 +299,9 @@
       call random_number(rnd)
       rnd = 2.*rnd - 1.
       a = cut*rnd
-      if (a*a<1.) exit
+      if (a*a < 1.) exit
      end do
-     bunch(i, j+3) = a
+     bunch(i, j + 3) = a
     end do
 !======================
     do j = 1, 6
@@ -320,7 +320,7 @@
 
     ! Reset centering
     np = n2 + 1 - n1
-    np_norm=1./real(np, dp)
+    np_norm = 1./real(np, dp)
     xm = np_norm*sum(bunch(n1:n2, 1))
     ym = np_norm*sum(bunch(n1:n2, 2))
     zm = np_norm*sum(bunch(n1:n2, 3))

@@ -47,7 +47,7 @@
    type(species), allocatable, intent(inout), dimension(:) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
    integer :: ic, np, id_ch
-   real (dp) :: ef2_ion(1), loc_ef2_ion(1)
+   real(dp) :: ef2_ion(1), loc_ef2_ion(1)
    logical, parameter :: mw = .false.
    !============================
    call pfields_prepare(ebf, nfield, 2, 2)

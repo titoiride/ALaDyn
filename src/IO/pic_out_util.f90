@@ -37,26 +37,26 @@
    
  contains
   subroutine fill_density_data(den, ic)
-   real (dp), intent (inout) :: den(:, :, :, :)
-   integer, intent (in) :: ic
+   real(dp), intent(inout) :: den(:, :, :, :)
+   integer, intent(in) :: ic
    integer :: i, j, k, iy, iz, n_loc
 
    n_loc = loc_ygrid(imody)%ng
    do k = kz1, kz2
     do j = jy1, jy2 - 1
      iy = j + imody*n_loc
-     if (y(iy)>ymin_t .and. y(iy)<ymax_t) then
+     if (y(iy) > ymin_t .and. y(iy) < ymax_t) then
       do i = ix1, ix2 - 1
-       if (x(i)>=targ_in) den(i, j, k, ic) = den(i, j, k, ic) + 1.
+       if (x(i) >= targ_in) den(i, j, k, ic) = den(i, j, k, ic) + 1.
       end do
      end if
     end do
    end do
-   if (ndim<3) return
+   if (ndim < 3) return
    n_loc = loc_zgrid(imodz)%ng
    do k = kz1, kz2 - 1
     iz = k + imodz*n_loc
-    if (z(iz)>zmin_t .and. z(iz)<zmax_t) then
+    if (z(iz) > zmin_t .and. z(iz) < zmax_t) then
      do j = jy1, jy2 - 1
       do i = ix1, ix2 - 1
        den(i, j, k, ic) = den(i, j, k, ic) + 1.
@@ -165,7 +165,7 @@
    end do
    !===========================
    np = loc_npart(imody, imodz, imodx, ic)
-   if(part)then
+   if (part) then
     select case (cmp_out)
     case (1)
      call set_grid_charge(spec_in, spec_aux_in, jc, np, 1)
@@ -173,13 +173,13 @@
     case (2)
      !nden=2 exit density and energy density for each species
      if (envelope) then
-      if(ic==1)then
+      if (ic == 1) then
        do k = kz1, kz2
         do j = jy1, jy2
          do i = ix1, ix2
-          ar = .5*(env(i,j,k,1)+env(i,j,k,3))
-          ai = .5*(env(i,j,k,2)+env(i,j,k,4))
-          jc(i, j, k, 3) = 0.5*(ar*ar+ai*ai)
+          ar = .5*(env(i, j, k, 1) + env(i, j, k, 3))
+          ai = .5*(env(i, j, k, 2) + env(i, j, k, 4))
+          jc(i, j, k, 3) = 0.5*(ar*ar + ai*ai)
          end do
         end do
        end do
@@ -194,38 +194,38 @@
      ! gamma  for each species
      end if
     end select
-    if (prl) call fill_curr_yzxbdsdata(jc,cmp_out)
+    if (prl) call fill_curr_yzxbdsdata(jc, cmp_out)
     do kk = 1, cmp_out
      call den_zyxbd(jc, kk)
     end do
-    if (ic==1) jc(:, :, :, 1) = -jc(:, :, :, 1)
-    if (cmp_out==2) jc(:, :, :, 2) = mass(ic)*electron_mass* &
-     jc(:, :, :, 2)
-   !=========== energy density in Mev*n/n_0
+    if (ic == 1) jc(:, :, :, 1) = -jc(:, :, :, 1)
+    if (cmp_out == 2) jc(:, :, :, 2) = mass(ic)*electron_mass* &
+                                       jc(:, :, :, 2)
+    !=========== energy density in Mev*n/n_0
 
     if (stretch) then
      select case (ndim)
      case (2)
-     k = 1
-     do j = jy1, jy2
-      jj = j - gcy + 1
-      dery = loc_yg(jj, 3, imody)
-      do i = ix1, ix2
-       jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
-      end do
-     end do
-     case (3)
-     do k = kz1, kz2
-      kk = k - gcz + 1
-      derz = loc_zg(kk, 3, imodz)
+      k = 1
       do j = jy1, jy2
        jj = j - gcy + 1
-       dery = loc_yg(jj, 3, imody)*derz
+       dery = loc_yg(jj, 3, imody)
        do i = ix1, ix2
         jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
        end do
       end do
-     end do
+     case (3)
+      do k = kz1, kz2
+      kk = k - gcz + 1
+       derz = loc_zg(kk, 3, imodz)
+       do j = jy1, jy2
+        jj = j - gcy + 1
+        dery = loc_yg(jj, 3, imody)*derz
+        do i = ix1, ix2
+         jc(i, j, k, 1:cmp_out) = dery*jc(i, j, k, 1:cmp_out)
+        end do
+       end do
+      end do
      end select
     end if
    end if
@@ -237,7 +237,7 @@
    type(species), dimension(:), intent(in) :: spec_in
    real(dp), dimension(:, :), intent(inout) :: spec_aux_in
    integer :: np, ic, ft_mod, ft_sym
-   integer :: i1,i2,j1,j2,k1,k2
+   integer :: i1, i2, j1, j2, k1, k2
 
    jc(:, :, :, 1:2) = 0.0
    !curr_clean
@@ -249,19 +249,19 @@
    if (prl) then
     call fill_curr_yzxbdsdata(jc, 2)
    end if
-   if (nsp==1) then
+   if (nsp == 1) then
     call fill_density_data(jc, 1)
    else
-    if (dmodel_id==3) call fill_density_data(jc, 1)
+    if (dmodel_id == 3) call fill_density_data(jc, 1)
    end if
    jc(ix1:ix2, jy1:jy2, kz1:kz2, 1) = jc(ix1:ix2, jy1:jy2, kz1:kz2, 1) - &
-     jc(ix1:ix2, jy1:jy2, kz1:kz2, 2)
+                                      jc(ix1:ix2, jy1:jy2, kz1:kz2, 2)
    !============== jc(1)=rho-Jx=======================
 
    ft_mod = 2 !for cosine transform
    ft_sym = 2
    call fft_2d_psolv(jc, jc, ompe, nx, nx_loc, ny, ny_loc, nz, nz_loc, &
-     i1, i2, j1, j2, k1, k2, ft_mod, ft_sym, 0)
+                     i1, i2, j1, j2, k1, k2, ft_mod, ft_sym, 0)
 
    !==================================
   end subroutine

@@ -70,7 +70,7 @@
    dli_inv = params%dli_inv
    ratio = params%ratio
 
-   stretched = dli_inv*atan(ratio*(yp_in+const-xs)) + nl_stretch
+   stretched = dli_inv*atan(ratio*(yp_in + const - xs)) + nl_stretch
 
   end function
 
@@ -352,8 +352,8 @@
   end subroutine
 
   subroutine map3d_part_sind(pt, np, ic1, ic2)
-   integer, intent (in) :: np, ic1, ic2
-   real (dp), intent (inout) :: pt(:, :)
+   integer, intent(in) :: np, ic1, ic2
+   real(dp), intent(inout) :: pt(:, :)
 
    !========================
    !  enter the y=part(n,ic1) z=part(n,ic2) particle positions
@@ -363,8 +363,8 @@
    !    normalized to the (Dxi Dzi) cell sizes
    !==========================================
 
-   call map2dy_part_sind( np, ic1, pt)
-   call map2dz_part_sind( np, ic2, pt)
+   call map2dy_part_sind(np, ic1, pt)
+   call map2dz_part_sind(np, ic2, pt)
 
   end subroutine
   !========================================

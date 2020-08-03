@@ -27,14 +27,13 @@
    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
    !--- *** namelist *** ---!
-   namelist /number_bunches/n_bunches, l_particles, &
-     l_intdiagnostics_pwfa, l_intdiagnostics_classic, &
-     l_embunchevolution, number_of_slices
-   namelist /bunches/nb_tot, bunch_type, bunch_shape, particle_charge, &
-     rhob, xc_bunch, yc_bunch, zc_bunch, gam, sxb, syb, epsy, epsz, dg, &
-     charge_right, charge_left, sigma_cut_bunch, ppc_x_bunch, &
-     ppc_y_bunch, ppc_z_bunch
-
+   namelist /number_bunches/ n_bunches, l_particles, &
+    l_intdiagnostics_pwfa, l_intdiagnostics_classic, &
+    l_embunchevolution, number_of_slices
+   namelist /bunches/ nb_tot, bunch_type, bunch_shape, particle_charge, &
+    rhob, xc_bunch, yc_bunch, zc_bunch, gam, sxb, syb, epsy, epsz, dg, &
+    charge_right, charge_left, sigma_cut_bunch, ppc_x_bunch, &
+    ppc_y_bunch, ppc_z_bunch
 
    !--- reading number of bunches ---!
    open (nml_iounit, file=input_namelist_filename, status='old')
@@ -42,12 +41,11 @@
    l_intdiagnostics_pwfa = .false.
    l_intdiagnostics_classic = .true.
    l_embunchevolution = .true.
-   number_of_slices = [ 10, 0, 0, 0 ]
+   number_of_slices = [10, 0, 0, 0]
    read (nml_iounit, number_bunches, iostat=nml_ierr)
    nml_error_message = 'NUMBER_BUNCHES'
    close (nml_iounit)
-   if (nml_ierr>0) call print_at_screen_nml_error
-
+   if (nml_ierr > 0) call print_at_screen_nml_error
 
    !--> initialization
    yc_bunch = 0.0
@@ -71,7 +69,7 @@
    read (nml_iounit, bunches, iostat=nml_ierr)
    nml_error_message = 'BUNCHES'
    close (nml_iounit)
-   if (nml_ierr>0) call print_at_screen_nml_error
+   if (nml_ierr > 0) call print_at_screen_nml_error
 
    call select_number_of_bunch_particles()
   end subroutine
@@ -83,16 +81,15 @@
    !C
    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
-   namelist /twiss/l_twiss, alpha_twiss, beta_twiss
+   namelist /twiss/ l_twiss, alpha_twiss, beta_twiss
 
    open (nml_iounit, file=input_namelist_filename, status='old')
    l_twiss = .false. !bunch at waist
    read (nml_iounit, twiss, iostat=nml_ierr)
    nml_error_message = 'TWISS'
    close (nml_iounit)
-   if (nml_ierr>0) call print_at_screen_nml_error
+   if (nml_ierr > 0) call print_at_screen_nml_error
   end subroutine
-
 
   subroutine read_poloidal_field_namelist
    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -101,7 +98,7 @@
    !C
    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
-   namelist /bpoloidal/l_bpoloidal, b_ex_poloidal, radius_poloidal
+   namelist /bpoloidal/ l_bpoloidal, b_ex_poloidal, radius_poloidal
 
    open (nml_iounit, file=input_namelist_filename, status='old')
    l_bpoloidal = .false.
@@ -110,5 +107,5 @@
    read (nml_iounit, bpoloidal, iostat=nml_ierr)
    nml_error_message = 'BPOLOIDAL'
    close (nml_iounit)
-   if (nml_ierr>0) call print_at_screen_nml_error
+   if (nml_ierr > 0) call print_at_screen_nml_error
   end subroutine

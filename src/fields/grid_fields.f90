@@ -26,9 +26,9 @@
   use parallel
 
   implicit none
-  integer, parameter, private :: x_parity(6) = [ -1, 1, 1, -1, 1, 1 ]
-  integer, parameter, private :: y_parity(6) = [ 1, -1, 1, 1, -1, 1 ]
-  integer, parameter, private :: z_parity(6) = [ 1, 1, -1, 1, 1, -1 ]
+  integer, parameter, private :: x_parity(6) = [-1, 1, 1, -1, 1, 1]
+  integer, parameter, private :: y_parity(6) = [1, -1, 1, 1, -1, 1]
+  integer, parameter, private :: z_parity(6) = [1, 1, -1, 1, 1, -1]
   integer, dimension(2, 3), protected, private :: COEFF_2
   integer, dimension(2, 2), protected, private :: COEFF_1
   integer, dimension(2, 1), protected, private :: COEFF_0
@@ -41,12 +41,11 @@
 
  contains
 
-
   subroutine trid_der1(a, b, c, b1, c1, an, bn, n, ic1, ic2, ord)
-   real (dp), intent (in) :: a, b, c, b1, c1, an, bn
-   integer, intent (in) :: n, ic1, ic2, ord
+   real(dp), intent(in) :: a, b, c, b1, c1, an, bn
+   integer, intent(in) :: n, ic1, ic2, ord
    integer :: k, ic
-   real (dp) :: bet
+   real(dp) :: bet
    !==========================
    ! Solves
    ! a*ww(i-1)+b*ww(i)+c*ww(i+1)=u(i), i=2,3,..,n-1
@@ -54,10 +53,10 @@
    ! at the n-last row an*ww(n-1)+bn*ww(n)=u(n)
    ! first order boundary clusure
    !===============================
-   if (ord>0) then
+   if (ord > 0) then
     do ic = ic1, ic2
      ww0(1, ic) = ww0(1, ic) + ww0(2, ic)
-     ww0(n, ic) = ww0(n, ic) + ww0(n-1, ic)
+     ww0(n, ic) = ww0(n, ic) + ww0(n - 1, ic)
     end do
    end if
    !===================
@@ -68,18 +67,18 @@
     k = 2
     ww1(k) = c1/bet
     bet = b - a*ww1(k)
-    ww0(k, ic) = (ww0(k,ic)-a*ww0(k-1,ic))/bet
+    ww0(k, ic) = (ww0(k, ic) - a*ww0(k - 1, ic))/bet
     do k = 3, n - 1
      ww1(k) = c/bet
      bet = b - a*ww1(k)
-     ww0(k, ic) = (ww0(k,ic)-a*ww0(k-1,ic))/bet
+     ww0(k, ic) = (ww0(k, ic) - a*ww0(k - 1, ic))/bet
     end do
     k = n
     ww1(k) = c/bet
     bet = bn - an*ww1(k)
-    ww0(k, ic) = (ww0(k,ic)-an*ww0(k-1,ic))/bet
+    ww0(k, ic) = (ww0(k, ic) - an*ww0(k - 1, ic))/bet
     do k = n - 1, 1, -1
-     ww0(k, ic) = ww0(k, ic) - ww1(k+1)*ww0(k+1, ic)
+     ww0(k, ic) = ww0(k, ic) - ww1(k + 1)*ww0(k + 1, ic)
     end do
    end do
   end subroutine
@@ -138,16 +137,16 @@
       end do
      end do
     end do
-  end select
+   end select
 
   end subroutine
 
   subroutine enforce_continuity(curr)
 
-   real (dp), intent (inout) :: curr(:, :, :, :)
-   real (dp) :: aphy, aphz, shy, shz
+   real(dp), intent(inout) :: curr(:, :, :, :)
+   real(dp) :: aphy, aphz, shy, shz
    integer :: i, ii, j, k, jj, j01, k01
-   !===================== 3D Cartesian 
+   !===================== 3D Cartesian
    !Solves DJ_x/Dx =-[DJ_y/Dy+DJ_z/Dz +[Rho^{n+1}-Rho^n]/Dt]=
    ! Eneter curr(1)= Drho, curr(2)=J_y*Dt  curr(3)= J_z*Dt
    !=======================================
@@ -177,7 +176,7 @@
      shy = loc_yg(jj, 3, imody)*aphy
      do i = ix1, ix2
       curr(i, j, k, 1) = curr(i, j, k, 1) + shy*(curr(i, j, k, 2) - curr(i, j - &
-        1, k, 2))
+                                                                         1, k, 2))
      end do
     end do
    end do
@@ -223,9 +222,9 @@
   end subroutine
 
   subroutine field_xadvect(ef, dth, v_adv, ic1, ic2, isch)
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   real (dp), intent (in) :: dth, v_adv
-   integer, intent (in) :: ic1, ic2, isch
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   real(dp), intent(in) :: dth, v_adv
+   integer, intent(in) :: ic1, ic2, isch
    integer :: i1, n1p, i, j, k, ii, ic, ind
    real (dp) :: aphx, aphx_exp, aphx_impl, a, b, c, b1, c1, an, bn
    !real (dp), dimension (3), parameter :: RDER = [ -3., 4., -1. ]
@@ -239,14 +238,14 @@
    !==================
    !Explicit first order advection scheme
    !          E^{n+1}=(1-aphx_exp*D_x)E^n
-   !Semi-implicit advection scheme in x-coordinate 
+   !Semi-implicit advection scheme in x-coordinate
    !          E^n+1=E^n-aphx_impl*[D_xE^n+D_xE^{n+1}]
    !          (1+aphx_impl*D_x)E^{n+1}=(1-aphx_impl*D_x)E^n
-   !Fully-implicit advection scheme in x-coordinate 
+   !Fully-implicit advection scheme in x-coordinate
    !          (1+aphx_exp*D_x)E^{n+1}=E^n
    !================================
    aphx = dth*dx_inv
-   aphx_exp = 0.5*v_adv*aphx !v_adv*dt/2Dx   
+   aphx_exp = 0.5*v_adv*aphx !v_adv*dt/2Dx
    aphx_impl = 0.5*aphx_exp !v_adv*(dt/2Dx)/2
 
    ind = 1
@@ -264,7 +263,7 @@
     do ic = ic1, ic2
      do k = kz1, kz2
       do j = jy1, jy2
-       ef(i1-1, j, k, ic) = ef(i1+1, j, k, ic)
+       ef(i1 - 1, j, k, ic) = ef(i1 + 1, j, k, ic)
       end do
      end do
     end do
@@ -273,7 +272,7 @@
     do ic = ic1, ic2
      do k = kz1, kz2
       do j = jy1, jy2
-       ef(n1p+1, j, k, ic) = ef(n1p, j, k, ic)
+       ef(n1p + 1, j, k, ic) = ef(n1p, j, k, ic)
       end do
      end do
     end do
@@ -286,8 +285,8 @@
       do j = jy1, jy2
        do i = i1, n1p
         ii = i - 2
-        ww0(ii, 1) = ef(i, j, k, ic) - aphx_exp*(ef(i+1,j,k,ic)-ef(i-1,j &
-          ,k,ic))
+        ww0(ii, 1) = ef(i, j, k, ic) - aphx_exp*(ef(i + 1, j, k, ic) - ef(i - 1, j &
+                                                                          , k, ic))
        end do
        do i = i1, n1p
         ii = i - 2
@@ -305,8 +304,8 @@
       do j = jy1, jy2
        do i = i1, n1p
         ii = i - 2
-        ww0(ii, 1) = ef(i, j, k, ic) - aphx_impl*(ef(i+1,j,k,ic)-ef(i-1, &
-          j,k,ic))
+        ww0(ii, 1) = ef(i, j, k, ic) - aphx_impl*(ef(i + 1, j, k, ic) - ef(i - 1, &
+                                                                           j, k, ic))
        end do
        call trid_der1(a, b, c, b1, c1, an, bn, ii, 1, 1, 0)
        do i = i1, n1p
@@ -340,14 +339,14 @@
   !==================================
   subroutine pp_lapl(av, source, ic1, ic2)
 
-   real (dp), intent (inout) :: av(:, :, :, :)
-   real (dp), intent (inout) :: source(:, :, :, :)
+   real(dp), intent(inout) :: av(:, :, :, :)
+   real(dp), intent(inout) :: source(:, :, :, :)
 
-   integer, intent (in) :: ic1, ic2
+   integer, intent(in) :: ic1, ic2
    integer :: i, j, k, ic, jj, j01, j02, k01, k02, i01, i02
-   real (dp) :: dy2_inv, dz2_inv, cf(2), shy, shz, sphy, smhy, sphz, &
-     smhz
-   real (dp) :: dy4_inv(2), dz4_inv(2)
+   real(dp) :: dy2_inv, dz2_inv, cf(2), shy, shz, sphy, smhy, sphz, &
+               smhz
+   real(dp) :: dy4_inv(2), dz4_inv(2)
    !==========================
    ! is=1 adds  is=-1 subtracts the laaplacian term
    !==========================
@@ -355,7 +354,7 @@
    dz2_inv = dz_inv*dz_inv
    cf(1) = 1.
    cf(2) = .0
-   if (der_ord==4) then
+   if (der_ord == 4) then
     cf(1) = 4./3. !1-8*hord_der2/3
     cf(2) = -1./12. !2*(2*hord_der2-1)
    end if
@@ -746,13 +745,13 @@
   subroutine gradient(envg)
    real (dp), intent (inout) :: envg(:, :, :, :)
    integer :: i, j, k, i01, i02, j01, j02, k01, k02
-   real (dp) :: ax1, ax2, ay1, ay2, az1, az2, shz, shy, shp, shm
-   real (dp), parameter :: a_hcd = 13./12., b_hcd = -1./24.
+   real(dp) :: ax1, ax2, ay1, ay2, az1, az2, shz, shy, shp, shm
+   real(dp), parameter :: a_hcd = 13./12., b_hcd = -1./24.
    !=== second or fourth order central flux derivatives
    !==========================
    ! Enters envg(1)= |A|^2/2 exit grad|A|^2/2
    ! Boundary conditions have already been applied in env_bds
-   if (der_ord<4) then
+   if (der_ord < 4) then
     ax1 = dx_inv
     ay1 = dy_inv
     az1 = dz_inv
@@ -837,8 +836,8 @@
 
   !====================================
   subroutine env_maxw_solve(curr, evf, om0, dtl)
-   real (dp), intent (inout) :: curr(:, :, :, :), evf(:, :, :, :)
-   real (dp), intent (in) :: om0, dtl
+   real(dp), intent(inout) :: curr(:, :, :, :), evf(:, :, :, :)
+   real(dp), intent(in) :: om0, dtl
    integer :: i, j, k, ic
    real (dp) :: dt2, dx1_inv, dhx1_inv, aph_opt(2)
    real (dp) :: kfact, k2_fact, skfact
@@ -864,7 +863,7 @@
    dhx1_inv = 2.*dx1_inv
    aph_opt(1) = 1.
    aph_opt(2) = 0.
-   if (der_ord==3) then
+   if (der_ord == 3) then
     aph_opt(1) = dx1_inv*opt_der1
     aph_opt(2) = dx1_inv*0.5*(1.-opt_der1)
    end if
@@ -879,16 +878,16 @@
    !=================
    !  Computes D_{x} centered first derivatives of A and adds to S(A)
    call first_ader
-   !S_R => S_R -2*k0[D_xA_I]  
+   !S_R => S_R -2*k0[D_xA_I]
    !S_I => S_I +2*k0[D_xA_R]
    !
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix1, ix2
       curr(i, j, k, 1) = dt2*curr(i, j, k, 1) + 2.*evf(i, j, k, 1) - &
-        evf(i, j, k, 3) + kfact*evf(i, j, k, 4)
+                         evf(i, j, k, 3) + kfact*evf(i, j, k, 4)
       curr(i, j, k, 2) = dt2*curr(i, j, k, 2) + 2.*evf(i, j, k, 2) - &
-        evf(i, j, k, 4) - kfact*evf(i, j, k, 3)
+                         evf(i, j, k, 4) - kfact*evf(i, j, k, 3)
      end do
     end do
    end do
@@ -904,8 +903,8 @@
    end do
    
    !====================
-   !curr(1)=F_R=dt2*S_R+2*A_R^n-A_R^{n-1}-kfact*A_I^{n-1} 
-   !curr(2)=F_I=dt2*S_I+2*A_I^n-A_I^{n-1}+kfact*A_R^{n-1} 
+   !curr(1)=F_R=dt2*S_R+2*A_R^n-A_R^{n-1}-kfact*A_I^{n-1}
+   !curr(2)=F_I=dt2*S_I+2*A_I^n-A_I^{n-1}+kfact*A_R^{n-1}
    do k = kz1, kz2
     do j = jy1, jy2
      do i = ix1, ix2
@@ -916,19 +915,19 @@
    end do
   contains
    subroutine first_ader
-   !============
-   integer :: i01, i02
-   ! explicit second order [-2isin(k0dx)*Dx]A and add to S(A)
+    !============
+    integer :: i01, i02
+    ! explicit second order [-2isin(k0dx)*Dx]A and add to S(A)
     i01 = ix1
     i02 = ix2
-    if (der_ord<3) then
+    if (der_ord < 3) then
      do k = kz1, kz2
       do j = jy1, jy2
        do i = i01, i02
-        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i+1,j,k,2) - &
-         evf(i - 1, j, k, 2))
-        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i+1,j,k,1) - &
-         evf(i - 1, j, k, 1))
+        curr(i, j, k, 1) = curr(i, j, k, 1) - dx1_inv*(evf(i + 1, j, k, 2) - &
+                                                       evf(i - 1, j, k, 2))
+        curr(i, j, k, 2) = curr(i, j, k, 2) + dx1_inv*(evf(i + 1, j, k, 1) - &
+                                                       evf(i - 1, j, k, 1))
        end do
       end do
      end do
@@ -937,9 +936,13 @@
       do j = jy1, jy2
        do i = i01, i02
         curr(i, j, k, 1) = curr(i, j, k, 1) - aph_opt(1)*(evf(i + 1, j, k, 2) - &
-         evf(i - 1, j, k, 2)) - aph_opt(2)*(evf(i + 2, j, k, 2) - evf(i - 2, j, k, 2))
+                                                          evf(i - 1, j, k, 2)) - &
+                           aph_opt(2)*(evf(i + 2, j, k, 2) - &
+                                       evf(i - 2, j, k, 2))
         curr(i, j, k, 2) = curr(i, j, k, 2) + aph_opt(1)*(evf(i + 1, j, k, 1) - &
-         evf(i - 1, j, k, 1)) + aph_opt(2)*(evf(i + 2, j, k, 1) - evf(i - 2, j, k, 1))
+                                                          evf(i - 1, j, k, 1)) + &
+                           aph_opt(2)*(evf(i + 2, j, k, 1) - &
+                                       evf(i - 2, j, k, 1))
        end do
       end do
      end do
@@ -949,12 +952,12 @@
   end subroutine
   !==================================
   subroutine env_lpf_solve(curr, evf, ib, om0, dtl)
-   real (dp), intent (inout) :: curr(:, :, :, :), evf(:, :, :, :)
-   integer, intent (in) :: ib
-   real (dp), intent (in) :: om0, dtl
+   real(dp), intent(inout) :: curr(:, :, :, :), evf(:, :, :, :)
+   integer, intent(in) :: ib
+   real(dp), intent(in) :: om0, dtl
    integer :: i, j, k, ii, ic, ic1, n1
-   real (dp) :: dhx, dx1_inv, om2, aph1, dx_norm, dx2_norm
-   real (dp) :: adv, an, bn, der2_norm
+   real(dp) :: dhx, dx1_inv, om2, aph1, dx_norm, dx2_norm
+   real(dp) :: adv, an, bn, der2_norm
    !==========================
    ! EXPLICIT INTEGRATION of REDUCED ENVELOPE FIELD SOLVER
    !============================
@@ -998,12 +1001,12 @@
    !==================
    ! The M operator M=[k0*k0+D_xD_x]X = F   X=DA/Dtau
 
-   !   Explicit inversion 
+   !   Explicit inversion
    !M^{-1}=([1-Dx_norm^2]F)/k0*k0
    !===============
    call explicit_mat_inv
    !curr=M^{-1}F
-   if (ib>0) then !fixed coordinate system (x,t)
+   if (ib > 0) then !fixed coordinate system (x,t)
     !=======================
     !(1+Dt*D_x)A^{n+1}=(1-Dt*D_x)A^{n-1}+ M^{-1}F
     !==================================
@@ -1075,10 +1078,10 @@
      do j = jy1, jy2
       do i = ix1, ix2
        ii = i - 2
-       ww0(ii, 1) = om0*curr(i, j, k, 2) + dx1_inv*(curr(i+1,j,k,1)-curr &
-         (i-1,j,k,1))
-       ww0(ii, 2) = -om0*curr(i, j, k, 1) + dx1_inv*(curr(i+1,j,k,2)- &
-         curr(i-1,j,k,2))
+       ww0(ii, 1) = om0*curr(i, j, k, 2) + dx1_inv*(curr(i + 1, j, k, 1) - curr &
+                                                    (i - 1, j, k, 1))
+       ww0(ii, 2) = -om0*curr(i, j, k, 1) + dx1_inv*(curr(i + 1, j, k, 2) - &
+                                                     curr(i - 1, j, k, 2))
       end do
       do i = ix1, ix2
        ii = i - 2
@@ -1098,12 +1101,12 @@
       do j = jy1, jy2
        do i = ix1, ix2
         ii = i - 2
-        ww0(ii, 1) = dx2_norm*(curr(i+1,j,k,iic)-2.*curr(i,j,k,iic)+curr(i &
-          -1,j,k,iic))
+        ww0(ii, 1) = dx2_norm*(curr(i + 1, j, k, iic) - 2.*curr(i, j, k, iic) + curr(i &
+                                                                                     - 1, j, k, iic))
        end do
        do i = ix1, ix2
         ii = i - 2
-        curr(i, j, k, iic) = (curr(i,j,k,iic)-ww0(ii,1))/om2
+        curr(i, j, k, iic) = (curr(i, j, k, iic) - ww0(ii, 1))/om2
        end do
       end do
      end do
@@ -1157,7 +1160,7 @@
    stenc = 3
    !COEFF = - TRANSPOSE( COEFF_2 )
 
-   if(xl_bd) then
+   if (xl_bd) then
     if (ibx == 0) then
      do iic = comp1, comp2
       do k = k1, k2
@@ -1185,7 +1188,7 @@
     i1 = i1 - ptlft
    end if
 
-   if(xr_bd) then
+   if (xr_bd) then
     if (ibx == 0) then
      do iic = comp1, comp2
       do k = k1, k2
@@ -1321,12 +1324,12 @@
 
   subroutine bf_bds(ef, dtl, imbd)
 
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   integer, intent (in) :: imbd
-   real (dp), intent (in) :: dtl
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   integer, intent(in) :: imbd
+   real(dp), intent(in) :: dtl
 
    integer :: i, j, k, ii
-   real (dp) :: aphx, aphy, aphz
+   real(dp) :: aphx, aphy, aphz
 
    !=================
    ! Enter bf(4:6)=[Bx,By,Bz]
@@ -1350,25 +1353,25 @@
      aphx = loc_xg(ii, 3, imodx)*dx_inv*dtl
      do k = kz1, kz2
       do j = jy1, jy2
-       ef(ix1-1, j, k, nfield) = -(2.*ef(ix1,j,k,2)+(1.-aphx)*ef(ix1,j,k &
-         ,nfield))/(1.+aphx)
+       ef(ix1 - 1, j, k, nfield) = -(2.*ef(ix1, j, k, 2) + (1.-aphx)*ef(ix1, j, k &
+                                                                        , nfield))/(1.+aphx)
       end do
      end do
-     if (nfield>3) then
-     !==========================
-     !at x=0 minim. reflection (d/dt-d/dx)^{p-1}(Ez-By)=0
-     ! first order p=1 By=Ez at x=0 and equal time
-     !==========================
+     if (nfield > 3) then
+      !==========================
+      !at x=0 minim. reflection (d/dt-d/dx)^{p-1}(Ez-By)=0
+      ! first order p=1 By=Ez at x=0 and equal time
+      !==========================
       do k = kz1, kz2
        do j = jy1, jy2
-        ef(ix1-1, j, k, 5) = (2.*ef(ix1,j,k,3)-(1.-aphx)*ef(ix1,j,k,5))/ &
-          (1.+aphx)
+        ef(ix1 - 1, j, k, 5) = (2.*ef(ix1, j, k, 3) - (1.-aphx)*ef(ix1, j, k, 5))/ &
+                               (1.+aphx)
        end do
       end do
      end if
     end if
    end if
-   if (ndim<2) return
+   if (ndim < 2) return
    !------------------------------------
    !++++++++++++++++++++++++++++++++++++++ (Bz,Ex)
    !at y=-Ly minim. reflection (d/dt-d/dy)^{p-1}(Ex-Bz)=0
@@ -1384,35 +1387,35 @@
       aphy = loc_yg(ii, 3, imody)*dy_inv*dtl
       do k = kz1, kz2
        do i = ix1, ix2
-        ef(i, jy1-1, k, nfield) = 2.*ef(i, jy1, k, 1) - &
-          (1.-aphy)*ef(i, jy1, k, nfield)
-        ef(i, jy1-1, k, nfield) = ef(i, jy1-1, k, nfield)/(1.+aphy)
+        ef(i, jy1 - 1, k, nfield) = 2.*ef(i, jy1, k, 1) - &
+                                    (1.-aphy)*ef(i, jy1, k, nfield)
+        ef(i, jy1 - 1, k, nfield) = ef(i, jy1 - 1, k, nfield)/(1.+aphy)
        end do
       end do
-      if (nfield>3) then
+      if (nfield > 3) then
        !================================== (Bx,Ez)
        !at y=-Ly minim. reflection (d/dt-d/dy)^{p-1}(Ez+Bx)=0
        ! first order p=1 Bx=-Ez at y=-Ly and equal time
        !==========================================
        do k = kz1, kz2
         do i = ix1, ix2
-         ef(i, jy1-1, k, 4) = -2.*ef(i, jy1, k, 3) - &
-           (1.-aphy)*ef(i, jy1, k, 4)
-         ef(i, jy1-1, k, 4) = ef(i, jy1-1, k, 4)/(1.+aphy)
+         ef(i, jy1 - 1, k, 4) = -2.*ef(i, jy1, k, 3) - &
+                                (1.-aphy)*ef(i, jy1, k, 4)
+         ef(i, jy1 - 1, k, 4) = ef(i, jy1 - 1, k, 4)/(1.+aphy)
         end do
        end do
       end if
      case (1) !symmetric bds for (Bz,Bx) at ymin
       do k = kz1, kz2
        do i = ix1, ix2
-        ef(i, jy1-1, k, nfield) = ef(i, jy1, k, nfield)
+        ef(i, jy1 - 1, k, nfield) = ef(i, jy1, k, nfield)
         !ef(i,j1-1,k,nfield)=2.*ef(i,j1,k,nfield)-ef(i,j1+1,k,nfield)
        end do
       end do
-      if (nfield>3) then
+      if (nfield > 3) then
        do k = kz1, kz2
         do i = ix1, ix2
-         ef(i, jy1-1, k, 4) = ef(i, jy1, k, 4)
+         ef(i, jy1 - 1, k, 4) = ef(i, jy1, k, 4)
          !ef(i,j1-1,k,4)=2.*ef(i,j1,k,4)-ef(i,j1+1,k,4)
         end do
        end do
@@ -1420,7 +1423,7 @@
      end select
     end if
    end if
-   if (ndim<3) return
+   if (ndim < 3) return
    !at z=-Lz minim. reflection (d/dt-d/dz)^{p-1}(Bx-Ey)=0
    ! first order p=1 Bx=Ey at z=-Lz and equal time
    !at z=-Lz minim. reflection (d/dt-d/dz)^{p-1}(By+Ex)=0
@@ -1434,19 +1437,19 @@
       aphz = loc_zg(ii, 3, imodz)*dz_inv*dtl
       do j = jy1, jy2
        do i = ix1, ix2
-        ef(i, j, kz1-1, 4) = 2.*ef(i, j, kz1, 2) - &
-          (1.-aphz)*ef(i, j, kz1, 4)
-        ef(i, j, kz1-1, 4) = ef(i, j, kz1-1, 4)/(1.+aphz)
-        ef(i, j, kz1-1, 5) = -2.*ef(i, j, kz1, 1) - &
-          (1.-aphz)*ef(i, j, kz1, 5)
-        ef(i, j, kz1-1, 5) = ef(i, j, kz1-1, 5)/(1.+aphz)
+        ef(i, j, kz1 - 1, 4) = 2.*ef(i, j, kz1, 2) - &
+                               (1.-aphz)*ef(i, j, kz1, 4)
+        ef(i, j, kz1 - 1, 4) = ef(i, j, kz1 - 1, 4)/(1.+aphz)
+        ef(i, j, kz1 - 1, 5) = -2.*ef(i, j, kz1, 1) - &
+                               (1.-aphz)*ef(i, j, kz1, 5)
+        ef(i, j, kz1 - 1, 5) = ef(i, j, kz1 - 1, 5)/(1.+aphz)
        end do
       end do
      case (1) !symmetric bds for (Nx,By) at zmin
       do j = jy1, jy2
        do i = ix1, ix2
-        ef(i, j, kz1-1, 4) = ef(i, j, kz1, 4)
-        ef(i, j, kz1-1, 5) = ef(i, j, kz1, 5)
+        ef(i, j, kz1 - 1, 4) = ef(i, j, kz1, 4)
+        ef(i, j, kz1 - 1, 5) = ef(i, j, kz1, 5)
        end do
       end do
      end select
@@ -1455,11 +1458,11 @@
   end subroutine
   !====================================
   subroutine ef_bds(ef, dtl, imbd)
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   integer, intent (in) :: imbd
-   real (dp), intent (in) :: dtl
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   integer, intent(in) :: imbd
+   real(dp), intent(in) :: dtl
    integer :: i, j, k, ii
-   real (dp) :: aphx, aphy, aphz
+   real(dp) :: aphx, aphy, aphz
 
    aphx = 1
    aphy = 1
@@ -1478,7 +1481,7 @@
    ! first order p=1 Ey=Bz at x=L and equal time level
    !=====================
    ! aphx centered as Bz nx+1/2
-   if (ibx<2) then
+   if (ibx < 2) then
     if (xr_bd) then
      ii = ix2 - gcx + 1
      select case (ibx)
@@ -1486,18 +1489,18 @@
       aphx = loc_xg(ii, 4, imodx)*dx_inv*dtl
       do k = kz1, kz2
        do j = jy1, jy2
-        ef(ix2+1, j, k, 2) = (2.*ef(ix2,j,k,nfield)-(1.-aphx)*ef(ix2,j,k &
-          ,2))/(1.+aphx)
+        ef(ix2 + 1, j, k, 2) = (2.*ef(ix2, j, k, nfield) - (1.-aphx)*ef(ix2, j, k &
+                                                                        , 2))/(1.+aphx)
        end do
       end do
      case (1) !reflecting  only on the right boundary: (Ey,Ez, By,Bz) symmetric (continuous)
       do k = kz1, kz2
        do j = jy1, jy2
-        ef(ix2+1, j, k, 2) = ef(ix2, j, k, 2)
+        ef(ix2 + 1, j, k, 2) = ef(ix2, j, k, 2)
        end do
       end do
      end select
-     if (nfield>3) then
+     if (nfield > 3) then
       !====================
       !at x=Lx minim. reflection (d/dt+d/dx)^{p-1}(Ez+By)=0
       ! first order p=1 Ez=-Bz at x=L and equal time level
@@ -1506,14 +1509,14 @@
       case (0)
        do k = kz1, kz2
         do j = jy1, jy2
-         ef(ix2+1, j, k, 3) = -(2.*ef(ix2,j,k,5)+(1.-aphx)*ef(ix2,j,k,3) &
-           )/(1.+aphx)
+         ef(ix2 + 1, j, k, 3) = -(2.*ef(ix2, j, k, 5) + (1.-aphx)*ef(ix2, j, k, 3) &
+                                  )/(1.+aphx)
         end do
        end do
       case (1) !reflecting
        do k = kz1, kz2
         do j = jy1, jy2
-         ef(ix2+1, j, k, 3) = ef(ix2, j, k, 3)
+         ef(ix2 + 1, j, k, 3) = ef(ix2, j, k, 3)
         end do
        end do
       end select
@@ -1521,13 +1524,13 @@
     end if
    end if
    !===========================
-   if (ndim<2) return
+   if (ndim < 2) return
    !=========================== (Bz,Ex)
    !at y=Ly minim. reflection (d/dt+d/dy)^{p-1}(Ex+Bz)=0
    ! first order p=1 Ex=-Bz at y=Ly and equal time level
    !========================
    ! aphy centered as Bz field ny+1/2
-   if (iby<2) then
+   if (iby < 2) then
     if (yr_bd) then
      select case (imbd)
      case (0)
@@ -1535,33 +1538,33 @@
       aphy = loc_yg(ii, 4, imody)*dy_inv*dtl
       do k = kz1, kz2
        do i = ix1, ix2
-        ef(i, jy2+1, k, 1) = -(2.*ef(i,jy2,k,nfield)+(1.-aphy)*ef(i,jy2, &
-          k,1))/(1.+aphy)
+        ef(i, jy2 + 1, k, 1) = -(2.*ef(i, jy2, k, nfield) + (1.-aphy)*ef(i, jy2, &
+                                                                         k, 1))/(1.+aphy)
        end do
       end do
-      if (nfield>3) then
+      if (nfield > 3) then
        !====================== (Bz,Ex)
        !at y=Ly minim. reflection (d/dt+d/dy)^{p-1}(Ez-Bx)=0
        ! first order p=1 Ez=Bx at y=Ly and equal time level
        !================================
        do k = kz1, kz2
         do i = ix1, ix2
-         ef(i, jy2+1, k, 3) = (2.*ef(i,jy2,k,4)-(1.-aphy)*ef(i,jy2,k,3)) &
-           /(1.+aphy)
+         ef(i, jy2 + 1, k, 3) = (2.*ef(i, jy2, k, 4) - (1.-aphy)*ef(i, jy2, k, 3)) &
+                                /(1.+aphy)
         end do
        end do
       end if
      case (1) !symmetric bds for (Ex,Ez) at ymax boundary
       do k = kz1, kz2
        do i = ix1, ix2
-        ef(i, ix2+1, k, 1) = ef(i, ix2, k, 1)
+        ef(i, ix2 + 1, k, 1) = ef(i, ix2, k, 1)
         !ef(i,n2p+1,k,1)=2.*ef(i,n2p,k,1)-ef(i,n2p-1,k,1)
        end do
       end do
-      if (nfield>3) then
+      if (nfield > 3) then
        do k = kz1, kz2
         do i = ix1, ix2
-         ef(i, ix2+1, k, 3) = ef(i, ix2, k, 3)
+         ef(i, ix2 + 1, k, 3) = ef(i, ix2, k, 3)
          !ef(i,n2p+1,k,3)=2.*ef(i,n2p,k,3)-ef(i,n2p-1,k,3)
         end do
        end do
@@ -1570,7 +1573,7 @@
     end if
    end if
    !==============================
-   if (ndim<3) return
+   if (ndim < 3) return
    !==============================
    !at z=Lz minim. reflection
    ! (d/dt+d/dz)^{p-1}(Ex-By)=0
@@ -1580,7 +1583,7 @@
    !================================
    !========================================
    ! aphz centered as Bx,By at nz+1/2
-   if (ibz<2) then
+   if (ibz < 2) then
     if (zr_bd) then
      select case (imbd)
      case (0)
@@ -1588,17 +1591,17 @@
       aphz = loc_zg(ii, 4, imodz)*dz_inv*dtl
       do j = jy1, jy2
        do i = ix1, ix2
-        ef(i, j, kz2+1, 1) = (2.*ef(i,j,kz2,5)-(1.-aphz)*ef(i,j,kz2,1))/ &
-          (1.+aphz)
-        ef(i, j, kz2+1, 2) = -(2.*ef(i,j,kz2,4)+(1.-aphz)*ef(i,j,kz2,2)) &
-          /(1.+aphz)
+        ef(i, j, kz2 + 1, 1) = (2.*ef(i, j, kz2, 5) - (1.-aphz)*ef(i, j, kz2, 1))/ &
+                               (1.+aphz)
+        ef(i, j, kz2 + 1, 2) = -(2.*ef(i, j, kz2, 4) + (1.-aphz)*ef(i, j, kz2, 2)) &
+                               /(1.+aphz)
        end do
       end do
      case (1) !symmetric bds for (Ex,Ey) at zmax boundary
       do j = jy1, jy2
        do i = ix1, ix2
-        ef(i, j, kz2+1, 1) = ef(i, j, kz2, 1)
-        ef(i, j, kz2+1, 2) = ef(i, j, kz2, 2)
+        ef(i, j, kz2 + 1, 1) = ef(i, j, kz2, 1)
+        ef(i, j, kz2 + 1, 2) = ef(i, j, kz2, 2)
        end do
       end do
      end select
@@ -1607,11 +1610,11 @@
   end subroutine
   !=========================================
   subroutine potential_lapl(apf, curr, ic1, ic2)
-   real (dp), intent (inout) :: apf(:, :, :, :), curr(:, :, :, :)
+   real(dp), intent(inout) :: apf(:, :, :, :), curr(:, :, :, :)
 
-   integer, intent (in) :: ic1, ic2
+   integer, intent(in) :: ic1, ic2
    integer :: i, j, k, ic, i01, i02
-   real (dp) :: dx2, cf(2), dx4(2)
+   real(dp) :: dx2, cf(2), dx4(2)
    !Computes the Laplacian(apf) and accumulates on the source array curr
    !                 curr=laplcian(apf)+curr
    !========================================
@@ -1622,10 +1625,10 @@
    cf(1) = 1.
    cf(2) = 0.0
    ! Holds opt-second order or fourth order
-   ! for second derivative with: 
-   ! dord=3  hord_der2=-(1-nu*nu)/12  dord=4 hord_der2=-1/12    
-   if (der_ord>2) then
-    cf(1) = 1. - 4.*hord_der2
+   ! for second derivative with:
+   ! dord=3  hord_der2=-(1-nu*nu)/12  dord=4 hord_der2=-1/12
+   if (der_ord > 2) then
+    cf(1) = 1.-4.*hord_der2
     cf(2) = hord_der2
    end if
    dx4(1) = cf(1)*dx2
@@ -1634,35 +1637,35 @@
     do k = kz1, kz2
      do j = jy1, jy2
       do i = i01, i02
-       curr(i, j, k, ic) = curr(i, j, k, ic) + dx4(1)*(apf(i+1,j,k,ic)+ &
-         apf(i-1,j,k,ic)-2.*apf(i,j,k,ic))
+       curr(i, j, k, ic) = curr(i, j, k, ic) + dx4(1)*(apf(i + 1, j, k, ic) + &
+                                                       apf(i - 1, j, k, ic) - 2.*apf(i, j, k, ic))
       end do
      end do
     end do
    end do
-   if (der_ord>2) then
+   if (der_ord > 2) then
     do ic = ic1, ic2
      do k = kz1, kz2
       do j = jy1, jy2
        do i = i01, i02
-        curr(i, j, k, ic) = curr(i, j, k, ic) + dx4(2)*(apf(i+2,j,k,ic)+ &
-          apf(i-2,j,k,ic)-2.*apf(i,j,k,ic))
+        curr(i, j, k, ic) = curr(i, j, k, ic) + dx4(2)*(apf(i + 2, j, k, ic) + &
+                                                        apf(i - 2, j, k, ic) - 2.*apf(i, j, k, ic))
        end do
       end do
      end do
     end do
    end if
-   if (ndim>1) call pp_lapl(apf, curr, ic1, ic2)
+   if (ndim > 1) call pp_lapl(apf, curr, ic1, ic2)
   end subroutine
   !===========================
   subroutine rote(ef, dtf)
 
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   real (dp), intent (in) :: dtf
-   real (dp) :: aphx, aphy, aphz
-   real (dp) :: sdhy, sdhz
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   real(dp), intent(in) :: dtf
+   real(dp) :: aphx, aphy, aphz
+   real(dp) :: sdhy, sdhz
    integer :: i, j, k, jj, kk
-   real (dp) :: aph1, aph2
+   real(dp) :: aph1, aph2
 
    ! Enter ef(1:3)=[Ex,Ey,Ez], ef(4:6)=[Bx,By,Bz]
    ! SOLVES B=B-DT*rot[E]
@@ -1674,13 +1677,13 @@
    aph1 = aphx*se_coeff(1)
    aph2 = aphx*se_coeff(2)
    !============================
-   if (ndim==1) then
+   if (ndim == 1) then
     k = 1
     j = 1
     do i = ix1, ix2
      ef(i, j, k, nfield) = ef(i, j, k, nfield) - &
-       aph1*(ef(i+1,j,k,2)-ef(i,j,k,2)) - &
-       aph2*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
+                           aph1*(ef(i + 1, j, k, 2) - ef(i, j, k, 2)) - &
+                           aph2*(ef(i + 2, j, k, 2) - ef(i - 1, j, k, 2))
     end do
     return
    end if
@@ -1691,14 +1694,14 @@
      sdhy = loc_yg(jj, 4, imody)*aphy
      do i = ix1, ix2
       ef(i, j, k, nfield) = ef(i, j, k, nfield) - &
-        aph1*(ef(i+1,j,k,2)-ef(i,j,k,2)) + &
-        sdhy*(ef(i,j+1,k,1)-ef(i,j,k,1)) - &
-        aph2*(ef(i+2,j,k,2)-ef(i-1,j,k,2))
+                            aph1*(ef(i + 1, j, k, 2) - ef(i, j, k, 2)) + &
+                            sdhy*(ef(i, j + 1, k, 1) - ef(i, j, k, 1)) - &
+                            aph2*(ef(i + 2, j, k, 2) - ef(i - 1, j, k, 2))
      end do
     end do
    end do
-   if (nfield<6) return
-   if (ndim==3) then
+   if (nfield < 6) return
+   if (ndim == 3) then
     do k = kz1, kz2
      kk = k - gcz + 1
      sdhz = loc_zg(kk, 4, imodz)*aphz
@@ -1706,12 +1709,12 @@
       jj = j - gcy + 1
       sdhy = loc_yg(jj, 4, imody)*aphy
       do i = ix1, ix2
-       ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3) &
-         ) + sdhz*(ef(i,j,k+1,2)-ef(i,j,k,2))
+       ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i, j + 1, k, 3) - ef(i, j, k, 3) &
+                                               ) + sdhz*(ef(i, j, k + 1, 2) - ef(i, j, k, 2))
        ef(i, j, k, 5) = ef(i, j, k, 5) + &
-        aph1*(ef(i+1,j,k,3)-ef(i,j,k,3)) - &
-        sdhz*(ef(i,j,k+1,1)-ef(i,j,k,1)) + &
-        aph2*(ef(i+2,j,k,3)-ef(i-1,j,k, 3))
+                        aph1*(ef(i + 1, j, k, 3) - ef(i, j, k, 3)) - &
+                        sdhz*(ef(i, j, k + 1, 1) - ef(i, j, k, 1)) + &
+                        aph2*(ef(i + 2, j, k, 3) - ef(i - 1, j, k, 3))
       end do
      end do
     end do
@@ -1721,9 +1724,9 @@
      jj = j - gcy + 1
      sdhy = loc_yg(jj, 4, imody)*aphy
      do i = ix1, ix2
-      ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i,j+1,k,3)-ef(i,j,k,3))
-      ef(i, j, k, 5) = ef(i, j, k, 5) + aph1*(ef(i+1,j,k,3)-ef(i,j,k,3)) &
-       + aph2*(ef(i+2,j,k,3)-ef(i-1,j,k,3))
+      ef(i, j, k, 4) = ef(i, j, k, 4) - sdhy*(ef(i, j + 1, k, 3) - ef(i, j, k, 3))
+      ef(i, j, k, 5) = ef(i, j, k, 5) + aph1*(ef(i + 1, j, k, 3) - ef(i, j, k, 3)) &
+                       + aph2*(ef(i + 2, j, k, 3) - ef(i - 1, j, k, 3))
      end do
     end do
    end if
@@ -1732,10 +1735,10 @@
   !===============================
   subroutine rotb(ef, dtf)
 
-   real (dp), intent (inout) :: ef(:, :, :, :)
-   real (dp), intent (in) :: dtf
-   real (dp) :: sdy, sdz, aph1, aph2
-   real (dp) :: aphx, aphy, aphz
+   real(dp), intent(inout) :: ef(:, :, :, :)
+   real(dp), intent(in) :: dtf
+   real(dp) :: sdy, sdz, aph1, aph2
+   real(dp) :: aphx, aphy, aphz
    integer :: i, j, k, ii, jj, kk
    ! E=E+DT*rot[B]          Two-point Second order derivatives
    !==================== B=B-dt*rot(E) interior domain==========
@@ -1746,12 +1749,12 @@
    aphz = dtf*dz_inv
    aph1 = aphx*se_coeff(1)
    aph2 = aphx*se_coeff(2)
-   if (ndim==1) then
+   if (ndim == 1) then
     k = 1
     j = 1
     do i = ix1, ix2
-     ef(i, j, k, 2) = ef(i, j, k, 2) - aphx*(ef(i,j,k,nfield)-ef(i-1,j,k &
-       ,nfield))
+     ef(i, j, k, 2) = ef(i, j, k, 2) - aphx*(ef(i, j, k, nfield) - ef(i - 1, j, k &
+                                                                      , nfield))
     end do
    end if
    !=========================== NDIM > 1
@@ -1761,16 +1764,16 @@
      sdy = loc_yg(jj, 3, imody)*aphy
      do i = ix1, ix2
       ii = i - 2
-      ef(i, j, k, 1) = ef(i, j, k, 1) + sdy*(ef(i,j,k,nfield)-ef(i,j-1,k &
-        ,nfield))
+      ef(i, j, k, 1) = ef(i, j, k, 1) + sdy*(ef(i, j, k, nfield) - ef(i, j - 1, k &
+                                                                      , nfield))
       ef(i, j, k, 2) = ef(i, j, k, 2) - &
-       aph1*(ef(i,j,k,nfield)-ef(i-1,j,k,nfield)) - &
-       aph2*(ef(i+1,j,k,nfield)-ef(i-2,j,k,nfield))
+                       aph1*(ef(i, j, k, nfield) - ef(i - 1, j, k, nfield)) - &
+                       aph2*(ef(i + 1, j, k, nfield) - ef(i - 2, j, k, nfield))
      end do
     end do
    end do
-   if (nfield<6) return
-   if (ndim==3) then
+   if (nfield < 6) return
+   if (ndim == 3) then
     do k = kz1, kz2
      kk = k - gcz + 1
      sdz = aphz*loc_zg(kk, 3, imodz)
@@ -1779,12 +1782,12 @@
       sdy = aphy*loc_yg(jj, 3, imody)
       do i = ix1, ix2
        ii = i - 2
-       ef(i, j, k, 1) = ef(i, j, k, 1) - sdz*(ef(i,j,k,5)-ef(i,j,k-1,5))
-       ef(i, j, k, 2) = ef(i, j, k, 2) + sdz*(ef(i,j,k,4)-ef(i,j,k-1,4))
+       ef(i, j, k, 1) = ef(i, j, k, 1) - sdz*(ef(i, j, k, 5) - ef(i, j, k - 1, 5))
+       ef(i, j, k, 2) = ef(i, j, k, 2) + sdz*(ef(i, j, k, 4) - ef(i, j, k - 1, 4))
        ef(i, j, k, 3) = ef(i, j, k, 3) + &
-        aph1*(ef(i,j,k,5)-ef(i-1,j,k,5)) - &
-        sdy*(ef(i,j,k,4)-ef(i,j-1,k,4)) + &
-        aph2*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
+                        aph1*(ef(i, j, k, 5) - ef(i - 1, j, k, 5)) - &
+                        sdy*(ef(i, j, k, 4) - ef(i, j - 1, k, 4)) + &
+                        aph2*(ef(i + 1, j, k, 5) - ef(i - 2, j, k, 5))
       end do
      end do
     end do
@@ -1796,16 +1799,16 @@
      do i = ix1, ix2
       ii = i - 2
       ef(i, j, k, 3) = ef(i, j, k, 3) + &
-       aph1*(ef(i,j,k,5)-ef(i-1,j,k,5)) - &
-       sdy*(ef(i,j,k,4)-ef(i,j-1,k,4)) + &
-       aph2*(ef(i+1,j,k,5)-ef(i-2,j,k,5))
+                       aph1*(ef(i, j, k, 5) - ef(i - 1, j, k, 5)) - &
+                       sdy*(ef(i, j, k, 4) - ef(i, j - 1, k, 4)) + &
+                       aph2*(ef(i + 1, j, k, 5) - ef(i - 2, j, k, 5))
      end do
     end do
    end if
   end subroutine
   !=====================================
-  !=================================  
-  subroutine nc_fluid_density_momenta( flx, ef, dt_step, fcomp )
+  !=================================
+  subroutine nc_fluid_density_momenta(flx, ef, dt_step, fcomp)
    real(dp), intent(in) :: flx(:, :, :, :)
    real(dp), intent(inout) :: ef(:, :, :, :)
    real(dp), intent(in) :: dt_step
@@ -1824,7 +1827,7 @@
    !=========================
    ! Enter primitive variables in flux array flx(Px,Py,Pz,den,vx,vy,vz)
    ! fcomp=curr_ndim+1 components
-   flux_ind = 1 !=1 for pure upwind   
+   flux_ind = 1 !=1 for pure upwind
    !=2 for LxF fluxin density equation
    i01 = ix1
    if (xl_bd) i01 = ix1 + 2
@@ -1844,11 +1847,11 @@
    aphz = dt_step*dz_inv
    !===========================
    ! momenta-density
-   fcomp_tot = fcomp +1
+   fcomp_tot = fcomp + 1
    do k = kz1, kz2
     do j = jy1, jy2
-     do ic=1,fcomp_tot
-      do i=i01-2,i02+2
+     do ic = 1, fcomp_tot
+      do i = i01 - 2, i02 + 2
        var(i, ic) = flx(i, j, k, ic)
       end do
      end do
@@ -1870,7 +1873,7 @@
       end do
      end do
      do j = j01 - 2, j02 + 2
-      var(j, fcomp+1) = flx(i, j, k, fcomp+2)
+      var(j, fcomp + 1) = flx(i, j, k, fcomp + 2)
      end do
      call density_flux(var, ww0, fcomp, aphy, yl_bd, yr_bd, j01 - 2, j02 + 2)
      call momentum_flux(var, ww0, fcomp, yl_bd, yr_bd, j01 - 2, j02 + 2)
@@ -1882,7 +1885,7 @@
      end do
     end do
    end do
-   if (ndim<3) return
+   if (ndim < 3) return
    do j = jy1, jy2
     do i = ix1, ix2
      do ic = 1, fcomp
@@ -1892,7 +1895,7 @@
      end do
      ic = fcomp + 1
      do k = k01 - 2, k02 + 2
-      var(k, ic) = flx(i, j, k, fcomp+3)
+      var(k, ic) = flx(i, j, k, fcomp + 3)
      end do
      call density_flux(var, ww0, fcomp, aphz, zl_bd, zr_bd, k01 - 2, k02 + 2)
      call momentum_flux(var, ww0, fcomp, zl_bd, zr_bd, k01 - 2, k02 + 2)
