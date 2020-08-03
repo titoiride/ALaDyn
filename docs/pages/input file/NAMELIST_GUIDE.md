@@ -281,6 +281,7 @@ Copper    (atomic_number = 29) - mass_number = 63.54
   t_inject    = 0,
 /
 ```
+
 + `nb_1` is the number of particles in the injected bunch in units of `10^5`
 + `xc_1` is the longitudinal position of the bunch center
 + `gam_1` is the bunch mean gamma factor
@@ -291,7 +292,6 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 + `dg_1` is the bunch energy spread
 + `charge_1` is the bunch charge in pC
 + `t_inject` time at which the bunch is injected in the simulation box
-
 
 ## MOVING_WINDOW namelist block
 

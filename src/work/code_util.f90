@@ -28,7 +28,8 @@
   integer, parameter :: major_version = 8
   integer, parameter :: minor_version = 2
   character(6) :: sw_name = 'ALaDyn'
-  character(9) :: input_namelist_filename = 'input.nml'
+  character(:), allocatable :: input_namelist_filename
+  character(:), allocatable :: input_json_filename
   character(10) :: input_data_filename = 'input.data'
   integer, parameter :: maxv = 1, sumv = 0, minv = -1
   integer, parameter :: left = -1, right = 1

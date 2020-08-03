@@ -33,6 +33,7 @@
 
   implicit none
 
+  logical :: exist_json = .false.
  contains
 
   !> Start subroutine. It reads the input file, initializes
@@ -48,14 +49,17 @@
 #ifdef ENABLE_GDB_ATTACH
    call gdbattach
 #endif
-   call read_main_input
+   call read_main_input(parameters, exist_json)
+
+   call assign_parameters(parameters, exist_json)
+
+   call write_checklist(parameters, exist_json)
 
    call check_grid_size
 
    call set_initial_param
 
    !Read parameters from input.nml file
-
    call start_parallel(nd2, nsp, nsb)
 
    if (mpi_err > 0) then
@@ -103,7 +107,6 @@
      major_version, '.', minor_version, '                ='
     write (6, *) '======================================================'
     call create_initial_folders
-    call write_read_nml
    end if
    !call set_grid() to define global grid and grid
    !parameters

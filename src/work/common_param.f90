@@ -26,11 +26,14 @@
 
  module common_param
   use precision_def
-
+  use sim_params_types
+  
   implicit none
 
   integer, parameter :: ref_nlayer = 6, ref_nlas = 8, &
                         ref_nspec = 8
+  ! Parameters type
+  type(parameters_t) :: parameters
   !namelist input parameters
   integer :: nx, ny, nz, ny_targ
   integer :: n1ft, n2ft, n3ft
@@ -43,13 +46,13 @@
   integer :: atomic_number(ref_nlayer), n_mol_atoms(ref_nlayer)
   integer :: nb_laser, nb_1, np_per_xc(ref_nlayer), &
              np_per_yc(ref_nlayer)
-  real(dp) :: mass_number(3), t0_pl(4)
-  real(dp) :: lpx(7), lpy(2), n_over_nc, np1, np2, r_c
-  real(dp) :: t0_lp, xc_lp, tau_fwhm, w0_y, a0, lam0, &
-              lp_delay(ref_nlas)
-  real(dp) :: lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, a_symm_rat
-  real(dp) :: xc_1, gam_1, sxb_1, syb_1, epsy_1, epsz_1, dg_1, &
-              charge_1, ap1_twiss, bt1_twiss, t_inject
+  real (dp) :: mass_number(ref_nlayer), t0_pl(ref_nlayer)
+  real (dp) :: lpx(7), lpy(2), n_over_nc, np1, np2, r_c
+  real (dp) :: t0_lp, xc_lp, tau_fwhm, w0_y, a0, lam0, &
+    lp_delay(ref_nlas)
+  real (dp) :: lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, a_symm_rat
+  real (dp) :: xc_1, gam_1, sxb_1, syb_1, epsy_1, epsz_1, dg_1, &
+               charge_1, ap1_twiss,bt1_twiss, t_inject
   integer :: nouts, iene, nvout, nden, npout, nbout, jump, pjump, ncurr
   integer :: new_sim, id_new, dump
   real(dp) :: gam_min, xp0_out, xp1_out, yp_out
