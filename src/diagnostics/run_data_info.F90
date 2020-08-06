@@ -50,10 +50,8 @@
     mem_psize_max = 0.0
     call Part_numbers
     if (prl) then
-#if defined(OLD_SPECIES)
-     call Max_pmemory_check(spec, ebfp, ebfp0, ebfp1)
-#else
      call Max_pmemory_check(spec, ebfp)
+#if !defined(OLD_SPECIES)
      call Max_memory_pool_usage(mempool, used_memory)
 #endif
     end if
@@ -666,14 +664,10 @@
   end subroutine
   !---------------------------
 
-  subroutine Max_pmemory_check_old(spec_in, spec_aux_1_in, ebfp0_in, ebfp1_in, &
-    bunch_in, bunch_aux_in)
+  subroutine Max_pmemory_check_old(spec_in, spec_aux_1_in)
 
    type(species), dimension(:), intent(in) :: spec_in
    real(dp), dimension(:, :), allocatable, intent(in) :: spec_aux_1_in
-   real(dp), dimension(:, :), allocatable, intent(in) :: ebfp0_in, ebfp1_in
-   type(species), dimension(:), intent(in), optional :: bunch_in
-   real(dp), dimension(:, :), allocatable, intent(in), optional :: bunch_aux_in
    integer :: ndv1, ndv2
    integer :: ic
    real(dp) :: mem_loc(1), max_mem(1)
@@ -691,32 +685,6 @@
    if (allocated(spec_aux_1_in)) then
     ndv1 = size(spec_aux_1_in, 1)
     ndv2 = size(spec_aux_1_in, 2)
-    mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   end if
-   if (present(bunch_in) ) then
-    if (beam) then
-     do ic = 1, nsb
-      if (allocated(bunch_in(ic)%part)) then
-       ndv1 = size(bunch_in(ic)%part, 1)
-       ndv2 = size(bunch_in(ic)%part, 2)
-       mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-      end if
-     end do
-     if (allocated(bunch_aux_in)) then
-      ndv1 = size(bunch_aux_in, 1)
-      ndv2 = size(bunch_aux_in, 2)
-      mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-     end if
-    end if
-   end if
-   if (allocated(ebfp0_in)) then
-    ndv1 = size(ebfp0_in, 1)
-    ndv2 = size(ebfp0_in, 2)
-    mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
-   end if
-   if (allocated(ebfp1_in)) then
-    ndv1 = size(ebfp1_in, 1)
-    ndv2 = size(ebfp1_in, 2)
     mem_loc(1) = mem_loc(1) + real(ndv1*ndv2, dp)
    end if
    call allreduce_dpreal(maxv, mem_loc, max_mem, 1)

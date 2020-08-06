@@ -269,11 +269,12 @@
    !-----------------------------
   end subroutine
   !=======================================
-  subroutine env_lpf2_evolve_old(it_loc, spec_in, spec_aux_in)
+  subroutine env_lpf2_evolve_old(it_loc, spec_in, spec_aux_in, mempool)
 
    integer, intent (in) :: it_loc
    type(species), allocatable, intent(inout), dimension(:) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: np, ic, id_ch
    integer, parameter :: sp_left = 2, sp_right = 2
    real (dp) :: ef2_ion, loc_ef2_ion(2)

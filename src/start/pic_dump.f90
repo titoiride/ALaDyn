@@ -541,8 +541,9 @@
    if (pe0) write (6, *) 'END TOTAL DUMP WRITE'
   end subroutine
 
-  subroutine dump_data_old(it_loc, tloc, spec_in)
+  subroutine dump_data_old(it_loc, tloc, spec_in, spec_aux_in)
    type(species), dimension(:), intent(in) :: spec_in
+   real(dp), allocatable, dimension(:, :) ::spec_aux_in
    integer, intent (in) :: it_loc
    real (dp), intent (in) :: tloc
    character (9) :: fname = '         '

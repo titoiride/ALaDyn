@@ -52,13 +52,13 @@
 
 #if !defined(OLD_SPECIES)
    call initialize_tracking( spec, ebfp, mempool )
-#endif
    !==========================================================
    ! Initialize particles momentum
    !==========================================================
    do ic = 1, nsp
       call initialize_momenta( ebf, spec(ic), ebfp(ic), dt_loc, nfield, ic, initial_time, mempool)
    end do
+#endif
 
   end subroutine
 

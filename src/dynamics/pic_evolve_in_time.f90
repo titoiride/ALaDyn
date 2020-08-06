@@ -42,10 +42,11 @@
  
  contains
 
-  subroutine lpf2_evolve_old(iter_loc, spec_in, spec_aux_in)
+  subroutine lpf2_evolve_old(iter_loc, spec_in, spec_aux_in, mempool)
    integer, intent (in) :: iter_loc
    type(species), allocatable, intent(inout), dimension(:) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic, np, id_ch
    real(dp) :: ef2_ion(1), loc_ef2_ion(1)
    logical, parameter :: mw = .false.

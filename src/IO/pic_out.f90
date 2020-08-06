@@ -1627,9 +1627,10 @@
   end subroutine
   !================================
   subroutine part_pdata_out_old(spec_in, timenow, xmin_out, xmax_out, ymax_out, pid, &
-    jmp)
+    jmp, mempool)
 
    type(species), dimension(:), intent(in) :: spec_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    character (6), dimension (4), parameter :: part_files = [ 'Elpout', &
      'H1pout', 'Prpout', 'H2pout' ]
    character (8) :: fname

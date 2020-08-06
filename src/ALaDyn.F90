@@ -54,11 +54,7 @@
   end if
   call Part_numbers
   if (prl) then
-#if defined(OLD_SPECIES)
-   call Max_pmemory_check(spec, ebfp, ebfp0, ebfp1)
-#else
-   call Max_pmemory_check(spec, ebfp)
-#endif
+  call Max_pmemory_check(spec, ebfp)
   end if
   if (pe0) then
    call initial_run_info(new_sim)
@@ -235,7 +231,7 @@
      do i = 1, nsp
 #if !defined(OLD_SPECIES)
       call prl_den_energy_interp(spec(i), i, nden, mempool)
-#elif
+#else
       call prl_den_energy_interp(spec(i), ebfp, i, nden)
 #endif
       do iic = 1, min(2, nden)
@@ -272,7 +268,7 @@
       unix_time_now - unix_time_begin
     end if
     if (dump>0 .and. time_interval_dumps < 0.0) then
-     if (iter>0) call dump_data(iter,tnow, spec, ebfp)
+     if (iter>0) call dump_data(iter, tnow, spec, ebfp)
     end if
     iout = iout + 1
    end if

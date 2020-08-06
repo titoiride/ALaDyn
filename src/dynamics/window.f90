@@ -419,11 +419,12 @@
   end subroutine
   !====================================
   !========================================
-  subroutine comoving_coordinate_old(vb, w_nst, loc_it, spec_in, spec_aux_in)
+  subroutine comoving_coordinate_old(vb, w_nst, loc_it, spec_in, spec_aux_in, mempool)
    real (dp), intent (in) :: vb
    integer, intent (in) :: w_nst, loc_it
    type(species), allocatable, dimension(:), intent(inout) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: i, ic, nshx
    real(dp) :: dt_tot, dt_step
    logical, parameter :: mw = .true.
@@ -557,10 +558,11 @@
   end subroutine
   !==============================
   !====================================
-  subroutine lp_window_xshift_old(witr, init_iter, spec_in, spec_aux_in)
+  subroutine lp_window_xshift_old(witr, init_iter, spec_in, spec_aux_in, mempool)
    integer, intent (in) :: witr, init_iter
    type(species), allocatable, dimension(:), intent(inout) :: spec_in
    real(dp), allocatable, dimension(:, :), intent(inout) :: spec_aux_in
+   type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: i1, n1p, nc_env
    integer :: ix, nshx, wi2, ic
    real (dp), save :: xlapse, dt_step

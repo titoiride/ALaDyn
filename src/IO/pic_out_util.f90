@@ -149,7 +149,7 @@
    !======================
   end subroutine
   !============================
-  subroutine prl_den_energy_interp_old(spec_in, spec_aux_in, ic,cmp_out)
+  subroutine prl_den_energy_interp_old(spec_in, spec_aux_in, ic, cmp_out)
    type(species), intent(in) :: spec_in
    real(dp), dimension(:, :), intent(inout) :: spec_aux_in
    integer, intent (in) :: ic, cmp_out
