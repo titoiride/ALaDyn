@@ -1274,26 +1274,28 @@
          xx = loc_xg(ii, 1, imodx)
          xxh = loc_xg(ii, 2, imodx)
          !==== Ex(xxh,yy,zz)=========
-         coords(1) = xxh - xf0
-         coords(2) = yy - yc
-         coords(3) = zz - zc
-         if (g_prof) then
-          call get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
-         else
-          call get_2dlaser_fields_lp(coords, par_lp, fields)
-         end if
-         ex = ee0*fields(4) !  Ex(s-pol)= Bx(p-pol)
+        !  coords(1) = xxh - xf0
+        !  coords(2) = yy - yc
+        !  coords(3) = zz - zc
+        !  if (g_prof) then
+        !   call get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
+        !  else
+        !   call get_2dlaser_fields_lp(coords, par_lp, fields)
+        !  end if
+        !  ex = ee0*fields(4) !  Ex(s-pol)= Bx(p-pol)
+         ex = zero_dp
          ef(i, j, k, 1) = ef(i, j, k, 1) + ex
          !==== Ey(xx,yyh,zz) =========
-         coords(1) = xx - xf0
-         coords(2) = yyh - yc
-         coords(3) = zz - zc
-         if (g_prof) then
-          call get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
-         else
-          call get_2dlaser_fields_lp(coords, par_lp, fields)
-         end if
-         ey = -ee0*fields(3) !  Ey(s-pol)=-Ez(p-pol)
+         ! coords(1) = xx - xf0
+         ! coords(2) = yyh - yc
+         ! coords(3) = zz - zc
+         ! if (g_prof) then
+         !  call get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
+         ! else
+         !  call get_2dlaser_fields_lp(coords, par_lp, fields)
+         ! end if
+         ! ey = -ee0*fields(3) !  Ey(s-pol)=-Ez(p-pol)
+         ey = zero_dp
          ef(i, j, k, 2) = ef(i, j, k, 2) + ey
          !==== Ez(xx,yy,zzh) =========
          coords(1) = xx - xf0
@@ -1329,15 +1331,16 @@
          by = -ee0*fields(6) !  By(s-pol)=-Bz(p-pol)
          ef(i, j, k, 5) = ef(i, j, k, 5) + by
          !==== Bz(xxh,yyh,zz)=========
-         coords(1) = xxh - xf0
-         coords(2) = yyh - yc
-         coords(3) = zz - zc
-         if (g_prof) then
-          call get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
-         else
-          call get_2dlaser_fields_lp(coords, par_lp, fields)
-         end if
-         bz = ee0*fields(5) !  Bz(s-pol)= By(p-pol)
+         ! coords(1) = xxh - xf0
+         ! coords(2) = yyh - yc
+         ! coords(3) = zz - zc
+         ! if (g_prof) then
+         !  call get_2dlaser_gprof_fields_lp(coords, par_lp, fields)
+         ! else
+         !  call get_2dlaser_fields_lp(coords, par_lp, fields)
+         ! end if
+         ! bz = ee0*fields(5) !  Bz(s-pol)= By(p-pol)
+         bz = zero_dp
          ef(i, j, k, 6) = bz
         end do
        end do
