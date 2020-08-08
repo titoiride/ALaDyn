@@ -2447,9 +2447,9 @@
    type(memory_pool_t), pointer, intent(in) :: mempool
    real (dp), pointer, contiguous, dimension(:, :) :: xx => null()
    type(interp_coeff), pointer :: interp => null(), interp_old => null()
-   real (dp), dimension(0:4) :: axh, ayh, currx, curry
-   real (dp) :: dvol
-   integer :: i1, j1, i2, j2, n, ih, jh
+   real (dp), dimension(0:4) :: axh, ayh, currx, curry, axh0
+   real (dp) :: dvol, dvolh
+   integer :: i1, j1, i2, j2, j20, n, ih, jh
    integer :: x0, x1, y0, y1
    !==========================
    ! Iform=0 or 1 IMPLEMENTS the ESIRKEPOV SCHEME for LINEAR-QUADRATIC SHAPE
@@ -2602,6 +2602,7 @@
 
       axh(0:4) = zero_dp
       ayh(0:4) = zero_dp
+      axh0(0:4) = zero_dp
 
       ih = i(n) - ii0(n) + 1
 
@@ -2616,7 +2617,7 @@
       currx(4) = currx(3) - axh(4)
 
       do i1 = 1, 3
-       axh(i1) = axh(i1) + ax0(i1-1, n)
+       axh0(i1) = axh(i1) + ax0(i1-1, n)
       end do
      
       do i1 = 0, 4
@@ -2662,7 +2663,7 @@
        j2 = jh + j1
        do i1 = x0, x1
         i2 = ih + i1
-        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh(i1)*curry(j1)
+        jcurr(i2, j2, 1, 2) = jcurr(i2, j2, 1, 2) + axh0(i1)*curry(j1)
        end do
       end do
 
@@ -2675,17 +2676,14 @@
       end do
       !========== dt*J_z Vz*[Wy^0(Wx^0+0.5*Wx^1)+Wy^1*(Wx^1+0.5*Wx^0)]
       do j1 = 0, 2
-       j2 = jj0(n) + j1
-       dvol = ay0(j1, n)*xx(n, 1)
-       do i1 = x0, x1
-        i2 = i1 + ih
-        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + currx(i1)*dvol
-       end do
+       j20 = jj0(n) + j1
        j2 = j(n) + j1
-       dvol = ay1(j1, n)*xx(n, 1)
+       dvol = ay0(j1, n)*xx(n, 1)
+       dvolh = ay1(j1, n)*xx(n, 1)
        do i1 = x0, x1
         i2 = i1 + ih
-        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + curry(i1)*dvol
+        jcurr(i2, j20, 1, 3) = jcurr(i2, j20, 1, 3) + currx(i1)*dvol
+        jcurr(i2, j2, 1, 3) = jcurr(i2, j2, 1, 3) + curry(i1)*dvolh
        end do
       end do
      end do 
