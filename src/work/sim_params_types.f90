@@ -49,6 +49,8 @@ module sim_params_types
   integer :: ibz             = 0
   integer :: ibeam           = 1
   logical :: density_limiter = .false.
+  integer :: pusher          = 1
+  integer :: n_substeps      = 1
  end type
 
  type targ_description_parameters_t

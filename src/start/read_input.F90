@@ -105,6 +105,8 @@
     ibz = parameters_in%sim_params%ibz
     ibeam = parameters_in%sim_params%ibeam
     density_limiter = parameters_in%sim_params%density_limiter
+    pusher = parameters_in%sim_params%pusher
+    n_substeps = parameters_in%sim_params%n_substeps
 
     !==============================
     ! Assign target parameters
@@ -491,6 +493,8 @@
     call json%add(json_group, 'ibz', ibz)
     call json%add(json_group, 'ibeam', ibeam)
     call json%add(json_group, 'density_limiter', density_limiter)
+    call json%add(json_group, 'pusher', pusher)
+    call json%add(json_group, 'n_substeps', n_substeps)
     nullify(json_group)
 
     ! Add the target
@@ -500,15 +504,15 @@
       call json%add(json_group, 'nsp', nsp)
       call json%add(json_group, 'nsb', nsb)
       call json%add(json_group, 'ionz_lev', ionz_lev)
-      call json%add(json_group, 'ion_min', ion_min)
-      call json%add(json_group, 'ion_max', ion_max)
-      call json%add(json_group, 'atomic_number', atomic_number)
-      call json%add(json_group, 'mass_number', mass_number)
-      call json%add(json_group, 't0_pl', t0_pl)
-      call json%add(json_group, 'np_per_xc', np_per_xc)
-      call json%add(json_group, 'np_per_yc', np_per_yc)
-      call json%add(json_group, 'np_per_zc', np_per_zc)
-      call json%add(json_group, 'concentration', concentration)
+      call json%add(json_group, 'ion_min', ion_min(1: nsp-1))
+      call json%add(json_group, 'ion_max', ion_max(1: nsp-1))
+      call json%add(json_group, 'atomic_number', atomic_number(1: nsp-1))
+      call json%add(json_group, 'mass_number', mass_number(1: nsp-1))
+      call json%add(json_group, 't0_pl', t0_pl(1: nsp))
+      call json%add(json_group, 'np_per_xc', np_per_xc(1: nsp))
+      call json%add(json_group, 'np_per_yc', np_per_yc(1: nsp))
+      call json%add(json_group, 'np_per_zc', np_per_zc(1: nsp))
+      call json%add(json_group, 'concentration', concentration(1: nsp))
       call json%add(json_group, 'lpx', lpx)
       call json%add(json_group, 'lpy', lpy)
       call json%add(json_group, 'n0_ref', n0_ref)
@@ -531,7 +535,7 @@
       call json%add(json_group, 'w0_y', w0_y)
       call json%add(json_group, 'a0', a0)
       call json%add(json_group, 'lam0', lam0)
-      call json%add(json_group, 'lp_delay', lp_delay)
+      call json%add(json_group, 'lp_delay', lp_delay(1: nb_laser-1))
       call json%add(json_group, 'lp_offset', lp_offset)
       call json%add(json_group, 't1_lp', t1_lp)
       call json%add(json_group, 'tau1_fwhm', tau1_fwhm)
@@ -541,8 +545,8 @@
       call json%add(json_group, 'symmetrization_pulse', symmetrization_pulse)
       call json%add(json_group, 'a_symm_rat', a_symm_rat)
       call json%add(json_group, 'enable_ionization', enable_ionization)
-      call json%add(json_group, 'y0_cent', y0_cent)
-      call json%add(json_group, 'z0_cent', z0_cent)
+      call json%add(json_group, 'y0_cent', y0_cent(1: nb_laser))
+      call json%add(json_group, 'z0_cent', z0_cent(1: nb_laser))
       call json%add(json_group, 'y1_cent', y1_cent)
       call json%add(json_group, 'z1_cent', z1_cent)
       call json%add(json_group, 'incid_angle', incid_angle)
@@ -613,18 +617,18 @@
     if (parameters_in%exists_tracking) then
       call json%create_object(json_group, 'tracking')
       call json%add(p, json_group)
-      call json%add(json_group, 'p_tracking', p_tracking)
-      call json%add(json_group, 'every_track', every_track)
-      call json%add(json_group, 'nkjump', nkjump)
-      call json%add(json_group, 'txmin', txmin)
-      call json%add(json_group, 'txmax', txmax)
-      call json%add(json_group, 'tymin', tymin)
-      call json%add(json_group, 'tymax', tymax)
-      call json%add(json_group, 'tzmin', tzmin)
-      call json%add(json_group, 'tzmax', tzmax)
-      call json%add(json_group, 't_in', t_in)
-      call json%add(json_group, 't_out', t_out)
-      call json%add(json_group, 'a_on_particles', a_on_particles)
+      call json%add(json_group, 'p_tracking', p_tracking(1:nsp))
+      call json%add(json_group, 'every_track', every_track(1:nsp))
+      call json%add(json_group, 'nkjump', nkjump(1:nsp))
+      call json%add(json_group, 'txmin', txmin(1:nsp))
+      call json%add(json_group, 'txmax', txmax(1:nsp))
+      call json%add(json_group, 'tymin', tymin(1:nsp))
+      call json%add(json_group, 'tymax', tymax(1:nsp))
+      call json%add(json_group, 'tzmin', tzmin(1:nsp))
+      call json%add(json_group, 'tzmax', tzmax(1:nsp))
+      call json%add(json_group, 't_in', t_in(1:nsp))
+      call json%add(json_group, 't_out', t_out(1:nsp))
+      call json%add(json_group, 'a_on_particles', a_on_particles(1:nsp))
       nullify(json_group)
     end if
 

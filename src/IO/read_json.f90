@@ -243,6 +243,10 @@ module read_json
    default=sim_params_init%ibeam)
   call json%get(sim_json, 'density_limiter', sim_params%density_limiter, found, &
    default=sim_params_init%density_limiter)
+  call json%get(sim_json, 'pusher', sim_params%pusher, found, &
+   default=sim_params_init%pusher)
+  call json%get(sim_json, 'n_substeps', sim_params%n_substeps, found, &
+   default=sim_params_init%n_substeps)
 
   call json%destroy()
  end subroutine
