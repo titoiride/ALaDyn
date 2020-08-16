@@ -357,6 +357,8 @@ module read_json
    default=laser_params_init%z1_cent)
   call json%get(laser_json, 'incid_angle', laser_params%incid_angle, found, &
    default=laser_params_init%incid_angle)
+  call json%get(laser_json, 'improved_envelope', laser_params%improved_envelope, found, &
+   default=laser_params_init%improved_envelope)
 
   call json%destroy()
  end subroutine

@@ -102,6 +102,7 @@ module sim_params_types
   real(dp)                            :: y1_cent = zero_dp
   real(dp)                            :: z1_cent = zero_dp
   real(dp)                            :: incid_angle = zero_dp
+  logical                             :: improved_envelope = .false.
  end type
 
  type beam_parameters_t

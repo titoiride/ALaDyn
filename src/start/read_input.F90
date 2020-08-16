@@ -338,6 +338,7 @@
       y1_cent = parameters_in%laser_params%y1_cent
       z1_cent = parameters_in%laser_params%z1_cent
       incid_angle = parameters_in%laser_params%incid_angle
+      improved_envelope = parameters_in%laser_params%improved_envelope
     else
       nb_laser = 1
       a0 = zero_dp
