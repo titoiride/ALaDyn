@@ -1143,6 +1143,10 @@
     !==========================
     ap(1:np, 1:6) = zero_dp
     k2 = 1
+    if ( ANY(sp_loc%y(1:np) < ymin ) .or. ANY(sp_loc%y(1:np) > ymax ) ) then
+      write(6, *) 'Waning, out of Y'
+    end if
+
     xx(1:np, 1) = set_local_positions( sp_loc, X_COMP )
     xx(1:np, 2) = set_local_positions( sp_loc, Y_COMP )
     call qqh_2d_spline( xx(1:np, 1:2), interp, mempool )
