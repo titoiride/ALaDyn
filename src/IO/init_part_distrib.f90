@@ -332,7 +332,7 @@
     end do
    end do
   end subroutine
-  !--------------------------
+  !===========================================
   subroutine set_uniform_yz_distrib(nyh_in, nc)
 
    integer, intent(in) :: nyh_in, nc
@@ -486,6 +486,332 @@
    !==================
   end subroutine
   !===========================================
+  subroutine set_decreasing_yz_distrib(nyh_in, nc)
+   !! Defines a decreasing transverse macroparticle distribution
+   !! using the exponential function.
+   !! Starting from the center and considering the distribution symmetric,
+   !! the final distribution is constant for \Delta cells,
+   !! then falls exponentially with a exp(-y/L) law to 1 ppc,
+   !! where L is \Delta/3
+   integer, intent(in) :: nyh_in, nc
+   integer :: j, i, ic, delta, LL, ip, kk
+   integer :: npty_ne, nptz_ne
+   integer, allocatable, dimension(:, :) :: part_per_cell_y, part_per_cell_z
+   integer, allocatable, dimension(:) :: total_particles_y, total_particles_z
+   integer, allocatable, dimension(:) :: npyc, npzc
+   real(dp) :: yy, zz, dpy, dpz, disp, yold, zold
+   real(dp) :: zp_min, zp_max, yp_min, yp_max
+   integer :: nyl1, nzl1
+   real(dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :), temp_ypt(:, :)
+   !=================
+   !========= gridding the transverse target size
+   nyl1 = 1 + ny/2 - nyh_in/2 !=1 if nyh_in=ny
+   nzl1 = 1 + nz/2 - nyh_in/2 !=1 if nyh_in=nz
+   yp_min = ymin_t
+   yp_max = ymax_t
+   allocate(part_per_cell_y(ny/2, nc), source = zero)
+   allocate(total_particles_y(nc))
+   allocate(npyc(nc))
+   allocate(part_per_cell_z(nz/2, nc), source = zero)
+   allocate(total_particles_z(nc))
+   allocate(npzc(nc))
+   !=============================
+   ! Multispecies
+   !=============================
+
+   do ic = 1, nc
+    if (np_per_yc(ic) == 1) then
+     delta = ny/2
+    else
+     delta = (ny/2)/2
+     ! delta defines the number of cells in which the macroparticle number is
+     ! decreased
+    end if
+    LL = delta/3
+    ! LL is the exponential characteristic length
+    do i = 1, nyh_in - 1
+     kk = int(ABS(ny/2 - (i + nyl1 - 1) - 0.5) + 1)
+     if (kk - (nyh_in/2 - delta) < 0) then
+      part_per_cell_y(kk, ic) = np_per_yc(ic)
+     else
+      part_per_cell_y(kk, ic) = int(EXP(-real(kk - (nyh_in/2 - delta), dp)/LL)*(np_per_yc(ic) - 1) + 1)
+     end if
+    end do
+   end do
+
+   do ic = 1, nc
+    total_particles_y(ic) = 2*SUM(part_per_cell_y(:, ic), DIM=1)
+   end do
+
+   if (ndim == 3) then
+    do ic = 1, nc
+     if (np_per_zc(ic) == 1) then
+      delta = nz/2
+     else
+      delta = (nz/2)/2
+      ! delta defines the number of cells in which the macroparticle number is
+      ! decreased
+     end if
+     LL = delta/3
+     ! LL is the exponential characteristic length
+     do i = 1, nyh_in - 1
+      kk = ABS(nz/2 - (i + nzl1 - 1) - 0.5) + 1
+      if (kk - (nyh_in/2 - delta) < 0) then
+       part_per_cell_z(kk, ic) = np_per_zc(ic)
+      else
+       part_per_cell_z(kk, ic) = int(EXP(-real(kk - (nyh_in/2 - delta), dp)/LL)*(np_per_zc(ic) - 1) + 1)
+      end if
+     end do
+    end do
+   end if
+   
+   do ic = 1, nc
+    total_particles_z(ic) = 2*SUM(part_per_cell_z(:, ic), DIM=1)
+   end do
+
+   npyc(1:nc) = total_particles_y(1:nc)
+   npzc(1:nc) = 1
+   npty_ne = total_particles_y(1)
+   nptz_ne = total_particles_z(1)
+   npty = maxval(npyc(1:nc))
+   nptz = 1
+   
+   zp_min = zero_dp
+   zp_max = zero_dp
+   if (ndim == 3) then
+    zp_min = zmin_t !-Lz
+    zp_max = zmax_t !+Lz
+    npzc(1:nc) = total_particles_z(1:nc)
+    nptz = maxval(npzc(1:nc))
+   end if
+   allocate (ypt(npty, nc), source=zero_dp)
+   allocate (zpt(nptz, nc), source=zero_dp)
+   allocate (wy(npty, nc), source=one_dp)
+   allocate (wz(nptz, nc), source=one_dp)
+   allocate (wyz(npty, nptz, nc), source=one_dp)
+   !==================
+   allocate (loc_jmax(0:npe_yloc - 1, 1:nc))
+   allocate (loc_kmax(0:npe_zloc - 1, 1:nc))
+   allocate (loc_imax(0:npe_xloc - 1, 1:nc))
+   !====================
+   ! Uniform layers along y-z coordinates
+   !===============
+   ! Y direction
+   if (stretch) then
+    do ic = 1, nc
+     if (total_particles_y(ic) <= 0) cycle
+     ip = 0
+     dpy = dy/dy1(str_ygrid%sind(1))
+     dpy = dpy/part_per_cell_y(nyh_in/2, ic)
+     disp = -dpy*0.5
+     do i = 1, str_ygrid%sind(1)
+      kk = int(ABS(i - ny/2 - 0.5) + 1)
+      if (part_per_cell_y(kk, ic) <= 0 ) cycle 
+      dpy = dy/dy1(i)
+      dpy = dpy/part_per_cell_y(kk, ic)
+      do j = 1, part_per_cell_y(kk, ic)
+       disp = disp + dpy
+       ip = ip + 1
+       ypt(ip, ic) = yp_min + disp
+       wy(ip, ic) = real(np_per_yc(ic), dp)/(dy1h(i)*part_per_cell_y(kk, ic))
+      end do
+     end do
+     disp = ip + 0.5
+     do i = str_ygrid%sind(1) + 1, str_ygrid%sind(2)
+      kk = int(ABS(i - ny/2 - 0.5) + 1)
+      if (part_per_cell_y(kk, ic) <= 0 ) cycle 
+      yold = y(i)
+      dpy = dy/part_per_cell_y(kk, ic)
+      do j = 1, part_per_cell_y(kk, ic)
+       ip = ip + 1
+       ypt(ip, ic) = yold + dpy*0.5
+       yold = ypt(ip, ic)
+       wy(ip, ic) = real(np_per_yc(ic), dp)/part_per_cell_y(kk, ic)
+      end do
+     end do
+     dpy = dy/dy1(str_ygrid%sind(2))
+     dpy = dpy/part_per_cell_y(nyh_in/2, ic)
+     disp = 0
+     do i = str_ygrid%sind(2) + 1, ny
+      kk = int(ABS(i - ny/2 - 0.5) + 1)
+      if ( part_per_cell_y(kk, ic) <= 0 ) cycle
+      dpy = dy/dy1(i)
+      dpy = dpy/part_per_cell_y(kk, ic)
+      do j = 1, part_per_cell_y(kk, ic)
+       disp = disp + dpy
+       ip = ip + 1
+       ypt(ip, ic) = str_ygrid%smax + disp
+       wy(ip, ic) = real(np_per_yc(ic), dp)/(dy1h(i)*part_per_cell_y(kk, ic))
+      end do
+     end do
+     if (ip /= total_particles_y(ic)) then
+      write(6, *) 'Particle counting problem in set_decreasing_yz_distrib'
+     end if
+    end do
+   else
+    do ic = 1, nc
+     ip = 0
+     disp = -0.5*dy/part_per_cell_y(nyh_in/2, ic)
+     do i = 1, ny
+      ! Here we can have a cycle from 1 to ny because part_per_cell
+      ! is only different from zero in the domain where there are particles
+      kk = int(ABS(i - ny/2 - 0.5) + 1)
+      if ( part_per_cell_y(kk, ic) <= 0 ) cycle
+      dpy = dy/part_per_cell_y(kk, ic)
+      do j = 1, part_per_cell_y(kk, ic)
+       disp = disp + dpy
+       ip = ip + 1
+       ypt(ip, ic) = yp_min + disp
+       wy(ip, ic) = real(np_per_yc(ic), dp)/part_per_cell_y(kk, ic)
+      end do
+     end do
+     if (ip /= total_particles_y(ic)) then
+      write(6, *) 'Particle counting problem in set_decreasing_yz_distrib'
+     end if
+    end do
+   end if
+
+   do ic = 1, nc
+    do i = 1, npyc(ic)
+     wyz(i, 1, ic) = wy(i, ic)*wz(1, ic)
+    end do
+   end do
+
+   if (ndim == 3) then
+    ! Z direction
+    if (stretch) then
+     do ic = 1, nc
+      if (total_particles_z(ic) <= 0) cycle
+      ip = 0
+      dpz = dz/dz1(str_zgrid%sind(1))
+      dpz = dpz/part_per_cell_z(nyh_in/2, ic)
+      disp = -dpz*0.5
+      do i = 1, str_zgrid%sind(1)
+       kk = int(ABS(i - nz/2 - 0.5) + 1)
+       if (part_per_cell_z(kk, ic) <= 0 ) cycle 
+       dpz = dz/dz1(i)
+       dpz = dpz/part_per_cell_z(kk, ic)
+       do j = 1, part_per_cell_z(kk, ic)
+        disp = disp + dpz
+        ip = ip + 1
+        zpt(ip, ic) = zp_min + disp
+        wz(ip, ic) = real(np_per_zc(ic), dp)/(dz1h(i)*part_per_cell_z(kk, ic))
+       end do
+      end do
+      disp = ip + 0.5
+      do i = str_zgrid%sind(1) + 1, str_zgrid%sind(2)
+       kk = int(ABS(i - nz/2 - 0.5) + 1)
+       if (part_per_cell_z(kk, ic) <= 0 ) cycle 
+       zold = z(i)
+       dpz = dz/part_per_cell_z(kk, ic)
+       do j = 1, part_per_cell_z(kk, ic)
+        ip = ip + 1
+        zpt(ip, ic) = zold + dpz*0.5
+        zold = zpt(ip, ic)
+        wz(ip, ic) = real(np_per_zc(ic), dp)/part_per_cell_z(kk, ic)
+       end do
+      end do
+      dpz = dz/dz1(str_zgrid%sind(2))
+      dpz = dpz/part_per_cell_z(nyh_in/2, ic)
+      disp = 0
+      do i = str_zgrid%sind(2) + 1, nz
+       kk = int(ABS(i - nz/2 - 0.5) + 1)
+       if ( part_per_cell_z(kk, ic) <= 0 ) cycle
+       dpz = dz/dz1(i)
+       dpz = dpz/part_per_cell_z(kk, ic)
+       do j = 1, part_per_cell_z(kk, ic)
+        disp = disp + dpz
+        ip = ip + 1
+        zpt(ip, ic) = str_zgrid%smax + disp
+        wz(ip, ic) = real(np_per_zc(ic), dp)/(dz1h(i)*part_per_cell_z(kk, ic))
+       end do
+      end do
+      if (ip /= total_particles_z(ic)) then
+       write(6, *) 'Particle counting problem in set_decreasing_yz_distrib'
+      end if
+     end do
+    else
+     do ic = 1, nc
+      ip = 0
+      disp = -0.5*dz/part_per_cell_z(nyh_in/2, ic)
+      do i = 1, nz
+       kk = int(ABS(i - nz/2 - 0.5) + 1)
+       if ( part_per_cell_z(kk, ic) <= 0 ) cycle
+       dpz = dz/part_per_cell_z(kk, ic)
+       do j = 1, part_per_cell_z(kk, ic)
+        disp = disp + dpz
+        ip = ip + 1
+        zpt(ip, ic) = zp_min + disp
+        wz(ip, ic) = real(np_per_zc(ic), dp)/part_per_cell_z(kk, ic)
+       end do
+      end do
+      if (ip /= total_particles_z(ic)) then
+       write(6, *) 'Particle counting problem in set_decreasing_yz_distrib'
+      end if
+     end do
+    end if
+    do ic = 1, nc
+     do i = 1, npzc(ic)
+      do j = 1, npyc(ic)
+       wyz(j, i, ic) = wy(j, ic)*wz(i, ic)
+      end do
+     end do
+    end do
+   end if
+
+   if (chann_fact > 0.0) then
+    do ic = 1, nc
+     do i = 1, npzc(ic)
+      zz = zpt(i, ic)
+      do j = 1, npyc(ic)
+       yy = ypt(j, ic)
+       wyz(j, i, ic) = 1.+chann_fact*(yy*yy + zz*zz)/(w0_y*w0_y)
+      end do
+     end do
+    end do
+   end if
+
+   do ic = 1, nc
+    call set_pgrid_ind(npyc(ic), npzc(ic), ic) !exit loc_jmax,loc_kmax
+   end do
+   !===========================
+   loc_npty(1:nc) = loc_jmax(imody, 1:nc)
+   loc_nptz(1:nc) = loc_kmax(imodz, 1:nc)
+   !=============================
+   npty_ne = 1
+   nptz_ne = 1
+   npty_ne = maxval(loc_npty(1:nc))
+   nptz_ne = maxval(loc_nptz(1:nc))
+   !======================
+   allocate (loc_wghyz(npty_ne, nptz_ne, nc))
+   allocate (loc_ypt(npty_ne, nc))
+   allocate (loc_zpt(nptz_ne, nc))
+   loc_wghyz = 1.
+   temp_ypt = ypt
+   call mpi_yz_part_distrib(nc, loc_npty, loc_nptz, npyc, npzc, ymin_t, &
+                            zmin_t, wyz)
+
+   !=EXIT local to mpi (imody,imodz) tasks (loc_ypt,loc_zpt), weights (loc_wghyz)
+   ! => set in common in pstruct_data.f90 file/
+   ! and particle numbers (loc_npty,loc_nptz)
+   ! => set in common in grid_and_partices.f90 file/
+   !=====================================
+   !==================
+  end subroutine
+  !===========================================
+  subroutine set_yz_distrib( nyh_in, nc )
+   integer, intent(in) :: nyh_in, nc
+   logical :: decreasing
+
+   decreasing = decreasing_transverse 
+   if (decreasing) then
+    call set_decreasing_yz_distrib( nyh_in, nc )
+   else
+    call set_uniform_yz_distrib( nyh_in, nc )
+   end if
+
+  end subroutine
+  !===========================================
   subroutine multi_layer_gas_target_new(spec_in, spec_aux_in, layer_mod, nyh_in, xf0)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
@@ -506,7 +832,7 @@
    i1 = 0
    i2 = 0
    ic = 0
-   call set_uniform_yz_distrib(nyh_in, nsp)
+   call set_yz_distrib(nyh_in, nsp)
    !==========================
    xp_min = xmin
    xp_max = xmax
@@ -1019,7 +1345,7 @@
    i1 = 0
    i2 = 0
    ic = 0
-   call set_uniform_yz_distrib(nyh_in, nsp)
+   call set_yz_distrib(nyh_in, nsp)
    !==========================
    xp_min = xmin
    xp_max = xmax

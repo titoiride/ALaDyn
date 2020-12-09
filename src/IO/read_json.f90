@@ -284,6 +284,8 @@ module read_json
    default=targ_params_init%np_per_zc)
   call json%get(targ_json, 'concentration', targ_params%concentration, found, &
    default=targ_params_init%concentration)
+  call json%get(targ_json, 'transverse_dist', targ_params%transverse_dist, found, &
+   default=targ_params_init%transverse_dist)
   call json%get(targ_json, 'lpx', targ_params%lpx, found, &
    default=targ_params_init%lpx)
   call json%get(targ_json, 'lpy', targ_params%lpy, found, &

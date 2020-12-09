@@ -457,6 +457,11 @@
      write (60, *) ' zmin_t       zmax_t     '
      write (60, '(a2,2e11.4)') '  ', zmin_t, zmax_t
     end if
+    if (decreasing_transverse) then
+     write(60, *) ' Initial macroparticle number per cell is decreased&
+     & along the transverse axis'
+    end if
+
     write (60, *) '********** TARGET CONFIGURATION***********'
     if (wake) then
      select case (dmodel_id)

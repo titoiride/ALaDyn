@@ -59,6 +59,7 @@ module sim_params_types
   integer                             :: nsb                = 0
   integer                             :: ionz_lev           = 0
   integer                             :: ionz_model         = 1
+  integer                             :: transverse_dist     = 0
   integer,  allocatable, dimension(:) :: ion_min
   integer,  allocatable, dimension(:) :: ion_max
   integer,  allocatable, dimension(:) :: atomic_number

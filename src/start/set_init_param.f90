@@ -313,6 +313,10 @@
     c2_fact = lam0*lam0/(r_c*r_c)
     chann_fact = c1_fact*c2_fact/(pi*pi*n_over_nc)
    end if
+   !============================================================
+   ! Set if particle number per cell is decreasing transversally
+   !============================================================
+   decreasing_transverse = (transverse_dist == 1)
    !========== Laser parameters
    lp_intensity = 1.37*(a0/lam0)*(a0/lam0) !in units 10^18 W/cm^2
    lp_rad = w0_y*sqrt(2.*log(2.)) !FWHM focal spot

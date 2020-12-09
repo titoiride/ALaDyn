@@ -146,6 +146,7 @@ This enforces density positivity. **WARNING** Still in beta, use is not recommen
  np1              = 1.0,
  np2              = 10.0,
  r_c              = 0.0,
+ transverse_dist  = 0,
 /
 ```
 
@@ -214,7 +215,14 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 + `lpy(2)` defines the distance [μm] between wires (interwire size).
 + `n0_ref` is the reference density in units of `n_0=1e18 cm^-3`. Code equations are normalized to that density.
 + `r_c` is the plasma channel depth ==> `n/n_over_nc = 1 + w0_y^2*lambda_0^2/(r_c^2 *\pi ^2 *n_over_nc)(y^2+z^2)/w0_y^2`, where `w0_y` is the laser waist. If `r_c`=`w0_y` the channel is matched
-
++ `transverse_dist` is the transverse distribution type for macroparticles.
+  + If `transverse_dist = 0`, the distribution is uniform
+  + If `transverse_dist = 1`, the macroparticle per cell number decreases from the center to the sides of the box.
+  This option is convenient to unload the cpus and the memory by reducing the number of particles where an high number is
+  not required. Be careful to choose a box that is large enough to diminish the particle number in the actual sides and not
+  in the central part of the box.
+  With this option on, it is normal to have spikes in the density where the particles number changes, but such effect should be
+  mitigated by the dynamics.
 ## LASER namelist block
 
 ```fortran

@@ -43,7 +43,7 @@
   integer :: lpf_ord, der_ord, str_flag, iform, model_id, dmodel_id
   integer :: pusher, n_substeps
   integer :: nsp, nsb, ionz_lev, ionz_model, ion_min(ref_nlayer), &
-             ion_max(ref_nlayer)
+             ion_max(ref_nlayer), transverse_dist
   integer :: atomic_number(ref_nlayer), n_mol_atoms(ref_nlayer)
   integer :: nb_laser, nb_1, np_per_xc(ref_nlayer), &
              np_per_yc(ref_nlayer)
@@ -82,7 +82,7 @@
     lin_lp, circ_lp, relativistic, Two_color, improved_envelope
   logical :: enable_ionization(2), symmetrization_pulse
   logical :: charge_cons, high_gamma, test
-  logical :: density_limiter
+  logical :: density_limiter, decreasing_transverse
 
   integer :: nx_loc, ny_loc, nz_loc, npty, nptz, nptx_max, ncmp_max, &
              nx_alloc

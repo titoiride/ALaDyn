@@ -238,6 +238,7 @@
         lpy(1:2) = zero_dp
       end if
 
+      transverse_dist = parameters_in%targ_params%transverse_dist
       n0_ref = parameters_in%targ_params%n0_ref
       np1 = parameters_in%targ_params%np1
       np2 = parameters_in%targ_params%np2
@@ -514,6 +515,7 @@
       call json%add(json_group, 'np_per_yc', np_per_yc(1: nsp))
       call json%add(json_group, 'np_per_zc', np_per_zc(1: nsp))
       call json%add(json_group, 'concentration', concentration(1: nsp))
+      call json%add(json_group, 'transverse_dist', transverse_dist)
       call json%add(json_group, 'lpx', lpx)
       call json%add(json_group, 'lpy', lpy)
       call json%add(json_group, 'n0_ref', n0_ref)

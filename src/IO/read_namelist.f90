@@ -45,7 +45,7 @@
      dmodel_id, ibx, iby, ibz, ibeam, density_limiter, pusher, n_substeps
    namelist /target_description/nsp, nsb, ionz_lev, ionz_model, ion_min, &
      ion_max, atomic_number, mass_number, t0_pl, ppc, np_per_xc, &
-     np_per_yc, np_per_zc, concentration, lpx, lpy, n0_ref, np1, np2, &
+     np_per_yc, np_per_zc, concentration, transverse_dist, lpx, lpy, n0_ref, np1, np2, &
      r_c, l_disable_rng_seed
    namelist /laser/g_prof, nb_laser, t0_lp, xc_lp, tau_fwhm, w0_y, a0, &
      lam0, lp_delay, lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, &
@@ -93,6 +93,7 @@
    concentration(:) = zero_dp
    concentration(1) = one_dp
    n0_ref = 1.
+   transverse_dist = 0
    open (nml_iounit, file=input_namelist_filename, status='old')
    read (nml_iounit, target_description, iostat=nml_ierr)
    nml_error_message = 'TARGET_DESCRIPTION'
@@ -192,7 +193,7 @@
      dmodel_id, ibx, iby, ibz, ibeam, density_limiter, pusher, n_substeps
    namelist /target_description/nsp, nsb, ionz_lev, ionz_model, ion_min, &
      ion_max, atomic_number, mass_number, t0_pl, ppc, np_per_xc, &
-     np_per_yc, np_per_zc, concentration, lpx, lpy, n0_ref, np1, np2, &
+     np_per_yc, np_per_zc, concentration, transverse_dist, lpx, lpy, n0_ref, np1, np2, &
      r_c
    namelist /laser/g_prof, nb_laser, t0_lp, xc_lp, tau_fwhm, w0_y, a0, &
      lam0, lp_delay, lp_offset, t1_lp, tau1_fwhm, w1_y, a1, lam1, &

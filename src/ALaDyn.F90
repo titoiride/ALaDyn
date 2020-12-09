@@ -89,8 +89,8 @@
   !--------------------------
   
   subroutine Lp_cycle(mempool)
-   type(memory_pool_t), pointer, intent(in) :: mempool
    !! Collects the Laser-plasma dynamics evolved as a standard PIC.
+   type(memory_pool_t), pointer, intent(in) :: mempool
 
    ! ==============================================
    ! BEAM is for now deactivated with new particles
