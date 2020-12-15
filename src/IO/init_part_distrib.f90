@@ -523,11 +523,11 @@
     if (np_per_yc(ic) == 1) then
      delta = ny/2
     else
-     delta = (ny/2)/2
+     delta = (ny/2)/3
      ! delta defines the number of cells in which the macroparticle number is
      ! decreased
     end if
-    LL = delta/3
+    LL = delta/2
     ! LL is the exponential characteristic length
     do i = 1, nyh_in - 1
      kk = int(ABS(ny/2 - (i + nyl1 - 1) - 0.5) + 1)
@@ -548,11 +548,11 @@
      if (np_per_zc(ic) == 1) then
       delta = nz/2
      else
-      delta = (nz/2)/2
+      delta = (nz/2)/3
       ! delta defines the number of cells in which the macroparticle number is
       ! decreased
      end if
-     LL = delta/3
+     LL = delta/2
      ! LL is the exponential characteristic length
      do i = 1, nyh_in - 1
       kk = ABS(nz/2 - (i + nzl1 - 1) - 0.5) + 1
