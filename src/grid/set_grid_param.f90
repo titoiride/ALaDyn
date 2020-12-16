@@ -119,6 +119,7 @@
    xmin = x(1)
    if (ib == 2) xmax = x(n1 + 1)
    lx_box = xmax - xmin
+   str_xgrid%stretched_length = xmax - str_xgrid%smax
    xw_min = xmin
    xw_max = xmax
 
@@ -180,6 +181,7 @@
     end if
     ymin = y(1)
     ymax = y(n2 + 1)
+    str_ygrid%stretched_length = ymax - str_ygrid%smax
     ly_box = ymax - ymin
    end if
    dz = 1.
@@ -234,6 +236,7 @@
     zmin = z(1)
     zmax = z(n3 + 1)
     lz_box = zmax - zmin
+    str_zgrid%stretched_length = zmax - str_zgrid%smax
    end if
   end subroutine
   !================

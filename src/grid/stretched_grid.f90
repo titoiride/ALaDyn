@@ -39,7 +39,7 @@
   real(dp), parameter :: SYMM_CENTER = zero_dp
   
   public :: map2dx_part_sind, map2dy_part_sind, map2dz_part_sind, &
-   map3d_part_sind
+   map3d_part_sind, str_params, invert_stretched_grid, SYMM_CENTER
   
   interface map2dx_part_sind
    module procedure map2dx_part_sind_old

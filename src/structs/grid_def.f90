@@ -50,5 +50,7 @@
    !!Axis value on the boundary between stretched and unstretched grid (left side of the box)
    real (dp) :: smax
    !!Axis value on the boundary between stretched and unstretched grid (right side of the box)
+   real (dp) :: stretched_length
+   !!Length in microns (axis units) of the stretched section of the grid
   end type
  end module
