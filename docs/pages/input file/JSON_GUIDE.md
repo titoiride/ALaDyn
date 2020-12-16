@@ -229,6 +229,11 @@ Copper    (atomic_number = 29) - mass_number = 63.54
 + `transverse_dist` is the transverse distribution type for macroparticles.
   + If `transverse_dist = 0`, the distribution is uniform
   + If `transverse_dist = 1`, the macroparticle per cell number decreases from the center to the sides of the box.
+  The decreasing function is defined as
+  \[ (N - 1)*\exp(-r/L) + 1 \] where N is the macroparticle's number per cell
+  and the particle number decreases in the last
+  \( \Delta= \text{ny_targ}/3\) target cells.
+  The parameter \(L\) is defined to ensure that on the sides there is 1 p.p.c..
   This option is convenient to unload the cpus and the memory by reducing the number of particles where an high number is
   not required. Be careful to choose a box that is large enough to diminish the particle number in the actual sides and not
   in the central part of the box.
