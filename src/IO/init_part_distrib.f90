@@ -451,16 +451,16 @@
        wyz(j, i, ic) = wy(j, ic)*wz(i, ic)
       end do
      end do
-     if (chann_fact > 0.0) then
-      do i = 1, nptz_ne
-       zz = zpt(i, ic)
-       do j = 1, npty_ne
-        yy = ypt(j, ic)
-        wyz(j, i, ic) = 1.+chann_fact*(yy*yy + zz*zz)/(w0_y*w0_y)
-       end do
-      end do
-     end if
     end if !end ndim=3
+    if (chann_fact > 0.0) then
+     do i = 1, nptz_ne
+      zz = zpt(i, ic)
+      do j = 1, npty_ne
+       yy = ypt(j, ic)
+       wyz(j, i, ic) = 1.+chann_fact*(yy*yy + zz*zz)/(w0_y*w0_y)
+      end do
+     end do
+    end if
     call set_pgrid_ind(npty_ne, nptz_ne, ic) !exit loc_jmax,loc_kmax
    end do
    !===========================
