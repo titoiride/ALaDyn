@@ -204,7 +204,7 @@
        if (Two_color) call env_fields_out(env1, -1) !EXIT |A|
       else
        if (Two_color) then
-        do i = 1, 2
+        do i = 1, 4
          call env_two_fields_out(env, env1, i)
         end do
        else

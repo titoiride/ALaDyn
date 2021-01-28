@@ -915,6 +915,7 @@
    integer :: n1_loc, n2_loc, n3_loc, nypt_max, nzpt_max
    integer :: size_spec, size_spec_aux, size_prop, size_prop_aux
    real (dp) :: rdata(10), x0_new
+   logical, allocatable, dimension(:) :: mobilearray
    logical(c_bool) :: isempty
 
    !==============
@@ -1166,7 +1167,9 @@
    np_max = maxval(nps_loc(1:nsp))
    init_part(1:nsp) = 0
    if(np_max >0)then                    !READS particles (if any)
-    call p_alloc(spec_in, spec_aux_in, 0, ndv, init_part(1:nsp), nsp, lpf_ord, 1, mem_psize)
+    allocate(mobilearray(nsp), source=.false.)
+    call p_alloc(spec_in, spec_aux_in, 0, ndv, init_part(1:nsp), nsp, lpf_ord, 1, &
+      mem_psize, mobilearray)
     !=======================
     ic = 1
     lenw(1:npe) = 0

@@ -162,7 +162,7 @@
   !---------------------------
   subroutine count_inject_particles( xmx, np_old, np_new, initial_index, final_index )
    real (dp), intent (in) :: xmx
-   integer, intent(inout) :: np_old, np_new, initial_index, final_index
+   integer, allocatable, dimension(:), intent(inout) :: np_old, np_new, initial_index, final_index
    integer :: ic, ix, npt_inj(4)
    integer :: i1, i2
    integer :: j2, k2, ndv
@@ -212,12 +212,12 @@
      j2 = loc_npty(ic)
      npt_inj(ic) = (i2 - i1 + 1)*j2*k2
     end select
-    np_old = loc_npart(imody, imodz, imodx, ic)
-    np_new = max(np_old + npt_inj(ic), np_new)
+    np_old(ic) = loc_npart(imody, imodz, imodx, ic)
+    np_new(ic) = max(np_old(ic) + npt_inj(ic), np_new(ic))
     !=========================
-    loc_npart(imody, imodz, imodx, ic) = np_new
-    initial_index = i1
-    final_index = i2
+    loc_npart(imody, imodz, imodx, ic) = np_new(ic)
+    initial_index(ic) = i1
+    final_index(ic) = i2
    end do
 
   end subroutine
@@ -225,17 +225,17 @@
   subroutine particles_inject_new(spec_in, spec_aux_in, np_old, np_new, i1, i2, mempool)
    type(species_new), dimension(:), allocatable, intent(inout) :: spec_in
    type(species_aux), dimension(:), allocatable, intent(inout) :: spec_aux_in
-   integer, intent(in) :: np_new, np_old, i1, i2
+   integer, allocatable, dimension(:), intent(in) :: np_new, np_old, i1, i2
    type(memory_pool_t), pointer, intent(in) :: mempool
    integer :: ic, q
 
    do ic = 1, nsp
     if ( pex1 ) then
-     call spec_in(ic)%extend(np_new)
-     call spec_aux_in(ic)%extend(np_new)
+     call spec_in(ic)%extend(np_new(ic))
+     call spec_aux_in(ic)%extend(np_new(ic))
     end if
-    q = np_old
-    call add_particles(spec_in, spec_aux_in, q, i1, i2, ic, mempool)
+    q = np_old(ic)
+    call add_particles(spec_in, spec_aux_in, q, i1(ic), i2(ic), ic, mempool)
    end do
    !=======================
   end subroutine
@@ -369,7 +369,8 @@
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    type(memory_pool_t), pointer, intent(in) :: mempool
-   integer :: i, ic, nshx, np_new, np_old, i1, i2
+   integer, allocatable, dimension(:) :: np_new, np_old, i1, i2
+   integer :: i, ic, nshx
    real (dp) :: dt_tot, dt_step
    logical, parameter :: mw = .true.
    !======================
@@ -410,6 +411,10 @@
    do ic = 1, nsp
     call cell_part_dist(mw, spec_in(ic), spec_aux_in(ic), ic) !particles are redistributes along the
    end do
+   allocate(np_new(nsp), source=0)
+   allocate(np_old(nsp), source=0)
+   allocate(i1(nsp), source=0)
+   allocate(i2(nsp), source=0)
    call count_inject_particles(xmax, np_old, np_new, i1, i2)
    if (pex1) then
     if (targ_in<=xmax .and. targ_end>xmax) then
@@ -476,7 +481,8 @@
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    type(memory_pool_t), pointer, intent(in) :: mempool
-   integer :: i1, n1p, nc_env, np_new, np_old, in_ind, fin_ind
+   integer, allocatable, dimension(:) :: np_new, np_old, in_ind, fin_ind
+   integer :: i1, n1p, nc_env
    integer :: ix, nshx, wi2, ic
    real (dp), save :: xlapse, dt_step
    integer, save :: wi1
@@ -546,6 +552,10 @@
      call cell_part_dist(mw, spec_in(ic), spec_aux_in(ic), ic) !particles are redistributes along the
     end do
    end if
+   allocate(np_new(nsp), source=0)
+   allocate(np_old(nsp), source=0)
+   allocate(in_ind(nsp), source=0)
+   allocate(fin_ind(nsp), source=0)
    call count_inject_particles(loc_xgrid(imodx)%gmax, np_old, np_new, in_ind, fin_ind)
     ! right-shifted x-coordinate in MPI domains
    call part_numbers

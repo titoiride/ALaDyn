@@ -1129,6 +1129,10 @@
    ! Do not execute without particles
    !=================================
    if ( sp_loc%empty ) return
+   !======================================
+   ! Do not execute for immobile particles
+   !======================================
+   if ( .not. sp_loc%ismobile() ) return
    !========================================
    call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
    interp => mempool%interp
@@ -2467,6 +2471,10 @@
    ! Do not execute for test particles
    !=================================
    if ( sp_loc%istest() ) return
+   !=================================
+   ! Do not execute for immobile particles
+   !=================================
+   if ( .not. sp_loc%ismobile() ) return
    !=============================================================
    call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
    interp => mempool%interp
@@ -2958,6 +2966,10 @@
    ! Do not execute for test particles
    !=================================
    if ( sp_loc%istest() ) return
+   !=================================
+   ! Do not execute for immobile particles
+   !=================================
+   if ( .not. sp_loc%ismobile() ) return
    !=============================================================
    call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
    interp => mempool%interp
@@ -3337,6 +3349,10 @@
    ! Do not execute for test particles
    !=================================
    if ( sp_loc%istest() ) return
+   !=================================
+   ! Do not execute for immobile particles
+   !=================================
+   if ( .not. sp_loc%ismobile() ) return
    !=============================================================
    call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
    interp => mempool%interp
@@ -3549,6 +3565,10 @@
    ! Do not execute for test particles
    !=================================
    if ( sp_loc%istest() ) return
+   !=================================
+   ! Do not execute for immobile particles
+   !=================================
+   if ( .not. sp_loc%ismobile() ) return
    !=============================================================
    call interp_realloc(mempool%interp, np, sp_loc%pick_dimensions())
    interp => mempool%interp

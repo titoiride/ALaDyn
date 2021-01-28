@@ -949,6 +949,7 @@
    real(dp) :: uu, u2, xp_min, xp_max, u3, ramp_prefactor
    real(dp) :: xfsh, un(2), wgh_sp(nsp)
    real(dp), allocatable :: conc(:)
+   logical, allocatable, dimension(:) :: mobilebool
    integer :: nxl(6)
    integer :: nps_loc(4), last_particle_index(4), nptx_alloc(4)
    !==========================
@@ -964,6 +965,11 @@
    xp_max = xmax
    !==========================
    nxl = 0
+   !=================================
+   ! Array that defines if species is mobile.
+   ! We should consider setting it in the input file
+   allocate(mobilebool(nsp), source=.false.)
+   mobilebool(1) = .true.
    !============================
    ! Parameters for particle distribution along the x-coordinate
    !============================
@@ -1433,7 +1439,8 @@
     nps_loc(ic) = nptx_alloc(ic)*loc_jmax(imody, ic)*loc_kmax(imodz, ic)
    end do
    npmax = maxval(nps_loc(1:nsp))
-   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
+   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, &
+    lpf_ord, 1, mem_psize, mobilebool)
    !==================================
    !==================== Local distribution of nptx particles==================
    call mpi_x_part_distrib(nsp)
@@ -2246,10 +2253,16 @@
    real (dp) :: xfsh, l_inv
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
+   logical, allocatable, dimension(:) :: mobilebool
    !=================
    xp_min = xmin
    xp_max = xmax
    nxl = 0
+   !=================================
+   ! Array that defines if species is mobile.
+   ! We should consider setting it in the input file
+   allocate(mobilebool(nsp), source=.true.)
+   !=======================
    !========== uniform y-z distribution of El-Ion layers
    call set_uniform_yz_distrib(nyh_in, 6)
    !===============
@@ -2448,7 +2461,8 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
+   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, &
+   mem_psize, mobilebool)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -2509,9 +2523,14 @@
    real (dp) :: xfsh, wgh_sp(6)
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
+   logical, allocatable, dimension(:) :: mobilebool
    !=================
    xp_min = xmin
    xp_max = xmax
+   !=================================
+   ! Array that defines if species is mobile.
+   ! We should consider setting it in the input file
+   allocate(mobilebool(nsp), source=.true.)
    call set_uniform_yz_distrib(nyh_in, 6)
    !==============================
    nxl = 0
@@ -2702,7 +2721,8 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
+   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1,&
+   mem_psize, mobilebool)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -3019,6 +3039,11 @@
    real (dp) :: xfsh, l_inv, wgh_sp(7)
    integer :: nxl(6)
    integer :: ip_ion, ip_el, ip_pr
+   logical, allocatable, dimension(:) :: mobilebool
+   !=================================
+   ! Array that defines if species is mobile.
+   ! We should consider setting it in the input file
+   allocate(mobilebool(nsp), source=.true.)
    !=================
    call set_uniform_yz_distrib(nyh_in, 7)
    !===========================
@@ -3201,7 +3226,8 @@
    !======================
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
+   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1,&
+    mem_psize, mobilebool)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -3525,10 +3551,15 @@
    integer :: z2, nxl(6), nyl1, nlpy, nholes
    integer :: ip_ion, ip_el, ip_pr, nwires
    real (dp), allocatable :: wy(:, :), wz(:, :), wyz(:, :, :)
+   logical, allocatable, dimension(:) :: mobilebool
    !=================
    !++++++++++++++++ WARNING
    ! ONLY layers (3) and (4) n_over_nc, np2*n_over_nc layer (5)
    !============================
+   !=================================
+   ! Array that defines if species is mobile.
+   ! We should consider setting it in the input file
+   allocate(mobilebool(nsp), source=.true.)
    xp_min = xmin
    xp_max = xmax
    np_per_zcell(1:6) = 1
@@ -3916,7 +3947,8 @@
    !==============
    npmax = maxval(nps_loc(1:nsp))
    npmax = max(npmax, 1)
-   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, mem_psize)
+   call p_alloc(spec_in, spec_aux_in, npmax, nd2+1, nps_loc, nsp, lpf_ord, 1, &
+    mem_psize, mobilebool)
    !===========================
    ip_el = 0
    ip_pr = 0
@@ -4441,6 +4473,7 @@
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: nyh_in
    real (dp), intent (in) :: xf0
+   logical, allocatable, dimension(:) :: mobilebool
    write(6, *) 'Warning: one_layer_nano_tubes still not adapted to new species'
    ! integer :: p
    ! integer :: i, j, i1, i2, ic, k1, k2

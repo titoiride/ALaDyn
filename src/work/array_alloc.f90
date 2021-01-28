@@ -199,12 +199,14 @@
    fsize = fsize + bcomp*ng
   end subroutine
   !===========================
-  subroutine new_p_alloc(spec_in, spec_aux_in, npt_max, ndims, np_s, ns, lp, mid, msize)
+  subroutine new_p_alloc(spec_in, spec_aux_in, npt_max, ndims, np_s, ns, lp, mid, msize,&
+    mobilearray)
 
    type(species_new), allocatable, dimension(:), intent(inout) :: spec_in
    type(species_aux), allocatable, dimension(:), intent(inout) :: spec_aux_in
    integer, intent (in) :: npt_max, ndims, np_s(:), ns, lp, mid
    integer, intent (inout) :: msize
+   logical, allocatable, dimension(:), intent(in) :: mobilearray
    integer :: nsize, ic, allocstatus, ndim_tmp
    logical :: tracked
 
@@ -217,18 +219,18 @@
    allocate( spec_aux_in(ns), stat=allocstatus )
    nsize = 0
    do ic = 1, ns
-    call spec_in(ic)%new_species( np_s(ic), ndim_tmp, tracked=tracked)
+    call spec_in(ic)%new_species( np_s(ic), ndim_tmp, tracked=tracked, mobile=mobilearray(ic))
     nsize = nsize + spec_in(ic)%total_size()*spec_in(ic)%how_many()
     if (mid>0) then
-     call spec_aux_in(ic)%new_species( np_s(ic), ndim_tmp, tracked=tracked)
+     call spec_aux_in(ic)%new_species( np_s(ic), ndim_tmp, tracked=tracked, mobile=mobilearray(ic))
      nsize = nsize + spec_aux_in(ic)%total_size()*spec_aux_in(ic)%how_many()
     end if
    end do
    if (lp>2) then
-    call spec_aux_0%new_species( npt_max, ndim_tmp, tracked=tracked)
+    call spec_aux_0%new_species( npt_max, ndim_tmp, tracked=tracked, mobile=mobilearray(ic))
     nsize = nsize + spec_aux_0%total_size()*spec_aux_0%how_many()
     if (lp==4) then
-     call spec_aux_1%new_species( npt_max, ndim_tmp, tracked=tracked)
+     call spec_aux_1%new_species( npt_max, ndim_tmp, tracked=tracked, mobile=mobilearray(ic))
      nsize = nsize + spec_aux_1%total_size()*spec_aux_1%how_many()
     end if
    end if

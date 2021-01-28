@@ -1201,7 +1201,7 @@
   !==========================
   subroutine env_two_fields_out(ef, ef1, f_ind)
    real(dp), intent(in) :: ef(:, :, :, :), ef1(:, :, :, :)
-   character(9) :: fname = '         '
+   character(10) :: fname = '          '
    integer, intent(in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
@@ -1231,6 +1231,16 @@
        a2 = ef(ix, iy, iz, 1)*ef(ix, iy, iz, 1) + &
             ef(ix, iy, iz, 2)*ef(ix, iy, iz, 2)
        avec = sqrt(a2)
+       wdata(kk) = real(avec, sp)
+      end do
+     end do
+    end do
+   end if
+   if (f_ind == -1) then
+    do iz = k1, nzp, jump
+     do iy = j1, nyp, jump
+      do ix = i1, nxp, jump
+       kk = kk + 1
        a2 = ef1(ix, iy, iz, 1)*ef1(ix, iy, iz, 1) + &
             ef1(ix, iy, iz, 2)*ef1(ix, iy, iz, 2)
        avec = avec + sqrt(a2)
@@ -1238,13 +1248,23 @@
       end do
      end do
     end do
-   else
+   end if
+   if (f_ind == 1 .or. f_ind == 2) then
     do iz = k1, nzp, jump
      do iy = j1, nyp, jump
       do ix = i1, nxp, jump
        kk = kk + 1
        wdata(kk) = real(ef(ix, iy, iz, f_ind), sp)
-       wdata(kk) = wdata(kk) + real(ef1(ix, iy, iz, f_ind), sp)
+      end do
+     end do
+    end do
+   end if
+   if (f_ind == 3 .or. f_ind == 4) then
+    do iz = k1, nzp, jump
+     do iy = j1, nyp, jump
+      do ix = i1, nxp, jump
+       kk = kk + 1
+       wdata(kk) = real(ef1(ix, iy, iz, f_ind), sp)
       end do
      end do
     end do
@@ -1268,12 +1288,18 @@
                      file_version, ibeam]
 
     select case (f_ind)
+    case (-1)
+     write (fname, '(a8,i2.2)') 'A2envout', iout
     case (0)
-     write (fname, '(a7,i2.2)') 'Aenvout', iout
+     write (fname, '(a8,i2.2)') 'A1envout', iout
     case (1)
-     write (fname, '(a7,i2.2)') 'Renvout', iout
+     write (fname, '(a8,i2.2)') 'R1envout', iout
     case (2)
-     write (fname, '(a7,i2.2)') 'Ienvout', iout
+     write (fname, '(a8,i2.2)') 'I1envout', iout
+    case (3)
+     write (fname, '(a8,i2.2)') 'R2envout', iout
+    case (4)
+     write (fname, '(a8,i2.2)') 'I2envout', iout
     end select
 
     gr_dim(1) = nxh(1)
@@ -1340,7 +1366,7 @@
 
   subroutine env_fields_out(ef, f_ind)
    real(dp), intent(in) :: ef(:, :, :, :)
-   character(9) :: fname = '         '
+   character(10) :: fname = '          '
    integer, intent(in) :: f_ind
    integer :: ix, iy, iz, iq, ipe
    integer :: lenw, kk, nx1, ny1, nz1
@@ -1404,13 +1430,13 @@
 
     select case (f_ind)
     case (-1)
-     write (fname, '(a7,i2.2)') 'aenvout', iout
+     write (fname, '(a8,i2.2)') 'A2envout', iout
     case (0)
-     write (fname, '(a7,i2.2)') 'Aenvout', iout
+     write (fname, '(a8,i2.2)') 'A1envout', iout
     case (1)
-     write (fname, '(a7,i2.2)') 'Renvout', iout
+     write (fname, '(a8,i2.2)') 'R1envout', iout
     case (2)
-     write (fname, '(a7,i2.2)') 'Ienvout', iout
+     write (fname, '(a8,i2.2)') 'I1envout', iout
     end select
 
     gr_dim(1) = nxh(1)

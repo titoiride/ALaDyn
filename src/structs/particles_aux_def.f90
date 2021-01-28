@@ -144,11 +144,12 @@ module particles_aux_def
  !========================================
  ! CONSTRUCTOR
  !========================================
- subroutine new_species_aux( this, n_particles, curr_ndims, tracked, extra_outputs )
+ subroutine new_species_aux( this, n_particles, curr_ndims, tracked, mobile, extra_outputs )
   !! Constructor for the `species_new` type
   class(species_aux), intent(inout) :: this
   integer, intent(in) :: n_particles, curr_ndims
   logical, intent(in), optional :: tracked
+  logical, intent(in), optional :: mobile
   integer, intent(in), optional :: extra_outputs
   integer :: allocstatus
 
@@ -190,6 +191,12 @@ module particles_aux_def
    call this%track( tracked , allocate_now=.false.)
   else
    call this%track( .false. )
+  end if
+
+  if ( present(mobile) ) then
+   call this%set_mobile(mobile)
+  else
+   call this%set_mobile( .false. )
   end if
 
   if ( PRESENT(extra_outputs) ) then

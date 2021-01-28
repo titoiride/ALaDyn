@@ -90,7 +90,7 @@ module base_species
   !! Type containing all the tracking datas
   logical :: test = .false.
   !! Indicates if the species is test (generates current)
-  logical :: mobile = .true.
+  logical :: mobile = .false.
   !! Indicates either if the species moves or it's frozen
  contains
   procedure, public, pass :: istracked => istracked_scalars
@@ -215,6 +215,7 @@ module base_species
    procedure, pass :: set_dimensions
    procedure, pass :: set_extra_outputs
    procedure, public, pass :: set_highest_track_index
+   procedure, public, pass :: set_mobile
    procedure, public, pass :: set_name
    procedure, pass :: set_part_number
    procedure, pass :: set_properties
@@ -329,11 +330,12 @@ module base_species
   contains
   
   !==== Constructor ===
-  subroutine new_species_abstract( this, n_particles, curr_ndims, tracked, extra_outputs )
+  subroutine new_species_abstract( this, n_particles, curr_ndims, tracked, mobile, extra_outputs )
    !! Constructor for the `species_new` type
    class(base_species_T), intent(inout) :: this
    integer, intent(in) :: n_particles, curr_ndims
    logical, intent(in), optional :: tracked
+   logical, intent(in), optional :: mobile
    integer, intent(in), optional :: extra_outputs
    integer :: allocstatus
   
@@ -362,6 +364,12 @@ module base_species
     call this%track( tracked , allocate_now=.false. )
    else
     call this%track( .false. )
+   end if
+
+   if ( present(mobile) ) then
+    call this%set_mobile(mobile)
+   else
+    call this%set_mobile( .false. )
    end if
 
    if ( PRESENT(extra_outputs) ) then
@@ -1534,9 +1542,16 @@ module base_species
   !! properties dump to array. It MUST be updated if properties are changed
    integer :: psize
 
-   psize = 21
+   psize = 22
 
   end function
+
+  subroutine set_mobile( this, mobile )
+    class(base_species_T), intent(inout) :: this
+    logical, intent(in) :: mobile
+
+    this%properties%mobile = mobile
+  end
 
   subroutine set_tot_tracked_parts( this, n_tracked )
    class(base_species_T), intent(inout) :: this
@@ -1907,6 +1922,13 @@ module base_species
    i = i + 1
 
    temp_array(i) = real(this%properties%temperature, dp)
+   i = i + 1
+
+   if (this%properties%mobile) then
+    temp_array(i) = one_dp
+   else
+    temp_array(i) = zero_dp
+   end if
  
    call this%dump_tracking_to_array(track_data_array)
 
@@ -1938,6 +1960,13 @@ module base_species
    i = i + 1
 
    call this%set_temperature(array_in(i))
+   i = i + 1
+   
+   if (array_in(i) > 0) then
+    call this%set_mobile(.true.)
+   else
+    call this%set_mobile(.false.)
+   end if
    i = i + 1
 
    call this%read_tracking_from_array( array_in( i:ub ), this%how_many() )
