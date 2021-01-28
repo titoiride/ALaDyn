@@ -89,7 +89,7 @@ module sim_params_types
   real(dp)                            :: a0 = zero_dp
   real(dp)                            :: lam0 = one_dp
   real(dp), allocatable, dimension(:) :: lp_delay
-  real(dp), allocatable, dimension(:) :: lp_offset
+  real(dp)                            :: lp_offset = zero_dp
   real(dp)                            :: t1_lp = zero_dp
   real(dp)                            :: tau1_fwhm = zero_dp
   real(dp)                            :: w1_y = zero_dp

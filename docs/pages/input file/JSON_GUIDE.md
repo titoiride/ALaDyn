@@ -375,7 +375,7 @@ In fact, when left empty, they are filled with some default value that might be 
     "new_sim": 0,
     "id_new": 0,
     "dump": 0,
-    "L_env_modulus": true
+    "l_env_modulus": true
 }
 ```
 
@@ -406,7 +406,7 @@ In fact, when left empty, they are filled with some default value that might be 
 + `dump`
   + `1`: each processor will dump a binary file for every `nout` in order to  enable restart
   + `0`: dumps are suppressed
-+ `L_env_modulus` logical flag, only if `model_id=4`: if true the code generates the absolute value of the laser envelope amplitude, otherwise gives the real and imaginary part in two separate files
++ `l_env_modulus` logical flag, only if `model_id=4`: if true the code generates the absolute value of the laser envelope amplitude, otherwise gives the real and imaginary part in two separate files
 
 ## TRACKING namelist block (now disabled)
 

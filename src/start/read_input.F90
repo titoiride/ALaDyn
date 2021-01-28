@@ -282,10 +282,8 @@
         lp_delay(1:nb_laser - 1 ) = zero_dp
       end if
 
-      if (allocated(parameters_in%laser_params%lp_offset)) then
-        lp_offset = parameters_in%laser_params%lp_offset(1)
-      else
-        lp_offset = zero_dp
+      if (parameters_in%laser_params%lp_offset /= 0) then
+        lp_offset = parameters_in%laser_params%lp_offset
       end if
 
       t1_lp = parameters_in%laser_params%t1_lp

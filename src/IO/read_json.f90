@@ -50,7 +50,7 @@ module read_json
 
   ! Initializing the json file
   ! Enabling the comments on lines that start with !
-  call namelist_in%initialize(comment_char=json_CK_'!')
+  call namelist_in%initialize(comment_char=json_CK_'!', strict_integer_type_checking=.false.)
 
   ! Loading the file
   call namelist_in%load_file(trim(input_name))
