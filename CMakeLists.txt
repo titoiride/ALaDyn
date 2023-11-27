@@ -125,8 +125,8 @@ endif()
 # Add the source files
 add_subdirectory(src)
 
-message(STATUS "ALaDyn: Using ${CMAKE_FORTRAN_COMPILER_ID} Compiler")
-if(CMAKE_FORTRAN_COMPILER_ID STREQUAL "PGI")
+message(STATUS "ALaDyn: Using ${CMAKE_Fortran_COMPILER_ID} Compiler")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
     string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS_RELEASE
                          ${CMAKE_Fortran_FLAGS_RELEASE})
     string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS_DEBUG
@@ -134,7 +134,7 @@ if(CMAKE_FORTRAN_COMPILER_ID STREQUAL "PGI")
     string(REGEX REPLACE "-fPIE" "" CMAKE_Fortran_FLAGS ${CMAKE_Fortran_FLAGS})
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -r8 ")
     string(APPEND CMAKE_Fortran_FLAGS_DEBUG " -r8 -g ")
-elseif(CMAKE_FORTRAN_COMPILER_ID STREQUAL "GNU")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -fdefault-real-8")
     string(APPEND CMAKE_Fortran_FLAGS_DEBUG " -fdefault-real-8 -Wall -Wextra")
     string(APPEND CMAKE_Fortran_FLAGS_PROFILING
@@ -158,7 +158,7 @@ elseif(CMAKE_FORTRAN_COMPILER_ID STREQUAL "GNU")
         )
     endif()
 
-elseif(CMAKE_FORTRAN_COMPILER_ID STREQUAL "Intel")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     string(APPEND CMAKE_Fortran_FLAGS_RELEASE " -real-size 64")
     string(APPEND CMAKE_Fortran_FLAGS_DEBUG " -real-size 64 -diag-enable warn")
     string(
